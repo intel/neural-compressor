@@ -1,0 +1,34 @@
+calibration:
+  batch_size: 1                                    # calibration batch size
+  iteration: 1                                     # calibration iteration
+  activation_algo: max                             # activation calibration algoirithm: max (default) and kl
+  convolution_algo: direct                         # convolution algoirithm: direct (default), winograd_f4x3 and winograd_f2x3
+
+activation_quantization:
+  data_type: int8                                  # quantization data type: int8 (default)
+  mode: sym                                       # quantization mode: sym (symmetric, default) and asym (asymmetric)
+  granularity: tensor                              # quantization granularity: tensor (default) and channel
+
+weight_quantization:
+  data_type: int8                                  # quantization data type: int8 (default)
+  mode: sym                                        # quantization mode: sym (symmetric, default) and asym (asymmetric)
+  granularity: channel                             # quantization granularity: channel (default) and tensor
+
+tuning:
+  quantization_approach: ptq                       # quantization approach:
+                                                     # ptq (post-training quantization with activation/weight offline calibration, default)
+                                                     # ptq_online (post-training quantization with activation online calibration)
+                                                     # qat (quantization-aware training with online calibration)
+  timeout: 3600                                    # tuning timeout (seconds)
+  target: relative_accuracy                        # tuning target: absolute_accuracy (default), relative_accuracy, and performance
+  accuracy_loss: 0.01                              # the target of relative/absolute accuracy loss percentage: 1% (default)
+  performance_gain: 2.0                            # the target of performance speedup ratio: 2.0 (default)
+  tunable_op_types: [CONV2D, LINEAR]                 # tunable quantize operator types (a subset of framework-supported quantizable operator types)
+  customized_ops: {conv2d_1:[fp32, direct, sym], conv2d_2:[bf16]}    # customized operator instances
+  fallback: fp32                                   # tuning fallback data type: fp32 (default), bf16, and none
+  selection: down_top                              # tuning selection: structure [top_down (default), down_top], metric [mse, custom]
+  operator_percentage: 0.5                         # tuning operator percentage: 50% (default)
+  priority: [batch_size, iteration]                # tuning priority
+  strategy: random                                 # tuning strategy: random (default), bayesian, exhaustive
+  random_seed: 9527                                # random seed
+  snapshot_workspace: ./snapshot                   # tuning snapshot workspace

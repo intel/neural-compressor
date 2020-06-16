@@ -1,0 +1,19 @@
+framework:
+  - name: mxnet                                 #possible values are tensorflow, mxnet and pytorch
+
+device:
+  - name: cpu                                   #possible values are cpu, gpu
+
+calibration:
+  - dataloader: cal_loader
+
+tuning:
+  - dataloader: val_loader
+    metrics:
+      - name: accuracy                               # tuning metrics: accuracy 
+        goal: 0.01                                   # the tuning target of accuracy loss percentage: 1%
+    timeout: 3600                                    # tuning timeout (seconds)
+    random_seed: 9527                                # random seed
+
+    # advance usage
+    customized_ops: {conv2d_1:[fp32], conv2d_2:[int8, sym, channel]}    # customized operator instances

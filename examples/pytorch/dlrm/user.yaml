@@ -1,0 +1,11 @@
+calibration:
+  dataset: "/luster/imagenet"
+tuning:
+  metrics: accuracy                                # tuning target: accuracy (default), relative_accuracy, and performance
+           customized
+  target: 0.01                                     # the target of relative/absolute accuracy loss percentage: 1% (default)
+  timeout: 3600                                    # tuning timeout (seconds)
+  random_seed: 9527                                # random seed
+
+# advance
+  customized_ops: {conv2d_1:[fp32], conv2d_2:[int8, sym, channel]}    # customized operator instances

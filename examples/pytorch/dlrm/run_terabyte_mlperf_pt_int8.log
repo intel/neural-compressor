@@ -1,0 +1,305 @@
+command line args:  {"arch_sparse_feature_size": 128, "arch_embedding_size": "4-3-2", "do_int8_inference": true, "per_tensor_linear": false, "arch_mlp_bot": "13-512-256-128", "arch_mlp_top": "1024-1024-512-256-1", "arch_interaction_op": "dot", "arch_interaction_itself": false, "md_flag": false, "md_threshold": 200, "md_temperature": 0.3, "md_round_dims": false, "qr_flag": false, "qr_threshold": 200, "qr_operation": "mult", "qr_collisions": 4, "activation_function": "relu", "loss_function": "bce", "loss_weights": "1.0-1.0", "loss_threshold": 0.0, "round_targets": true, "data_size": 1, "num_batches": 0, "data_generation": "dataset", "data_trace_file": "./input/dist_emb_j.log", "data_set": "terabyte", "raw_data_file": "/mnt/local_disk3/dataset/dlrm/dlrm/input/day", "processed_data_file": "/mnt/local_disk3/dataset/dlrm/dlrm/input/terabyte_processed.npz", "data_randomize": "total", "data_trace_enable_padding": false, "max_ind_range": 40000000, "data_sub_sample_rate": 0.0, "num_indices_per_lookup": 10, "num_indices_per_lookup_fixed": false, "num_workers": 0, "memory_map": true, "mini_batch_size": 2048, "nepochs": 1, "learning_rate": 1.0, "print_precision": 5, "numpy_rand_seed": 123, "sync_dense_params": true, "inference_only": true, "save_onnx": false, "use_gpu": false, "print_freq": 2048, "test_freq": 102400, "test_mini_batch_size": 16384, "test_num_workers": 16, "print_time": true, "debug_mode": false, "enable_profiling": false, "plot_compute_graph": false, "save_int8": "", "save_model": "", "load_model": "/mnt/local_disk3/dataset/dlrm/dlrm_weight/terabyte_mlperf.pt", "mlperf_logging": true, "mlperf_acc_threshold": 0.0, "mlperf_auc_threshold": 0.8025, "mlperf_bin_loader": true, "mlperf_bin_shuffle": true}
+Using CPU...
+data file: /mnt/local_disk3/dataset/dlrm/dlrm/input/terabyte_processed_train.bin number of batches: 2048437
+data file: /mnt/local_disk3/dataset/dlrm/dlrm/input/terabyte_processed_test.bin number of batches: 5441
+Loading saved model /mnt/local_disk3/dataset/dlrm/dlrm_weight/terabyte_mlperf.pt
+Saved at: epoch = 0/1, batch = 1843200/2048437, ntbatch = 5441
+Training state: loss = 0.123055, accuracy = 96.696 %
+Testing state: loss = 0.125717, accuracy = 96.609 %
+do_int8_inference
+accuracy_criterion {'absolute': 0.01}
+dict_keys(['absolute'])
+{'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}
+{('emb_l.0', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.1', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.2', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.3', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.4', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.5', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.6', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.7', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.8', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.9', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.10', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.11', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.12', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.13', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.14', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.15', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.16', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.17', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.18', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.19', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.20', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.21', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.22', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.23', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.24', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('emb_l.25', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.0', <class 'torch.quantization.stubs.QuantStub'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.1.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.1.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.3.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.3.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.5.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.5.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('bot_l.7', <class 'torch.quantization.stubs.DeQuantStub'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.0', <class 'torch.quantization.stubs.QuantStub'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.1.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.1.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.3.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.3.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.5.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.5.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.7.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.7.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.9', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}, ('top_l.10', <class 'torch.quantization.stubs.DeQuantStub'>): {'activation': {'granularity': ['per_tensor'], 'mode': ['sym', 'asym'], 'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl']}, 'weight': {'granularity': ['per_channel'], 'mode': ['sym', 'asym'], 'data_type': ['int8', 'fp32'], 'algo': ['minmax']}}}
+36000 1592312844.3502827
+[{'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'uint8', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'fp32', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'int8', 'algo': 'minmax'}}, {'activation': {'granularity': 'per_tensor', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'kl'}, 'weight': {'granularity': 'per_channel', 'mode': 'asym', 'data_type': 'fp32', 'algo': 'minmax'}}]
+{'op': {('emb_l.0', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.1', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.2', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.3', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.4', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.5', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.6', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.7', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.8', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.9', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.10', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.11', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.12', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.13', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.14', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.15', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.16', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.17', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.18', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.19', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.20', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.21', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.22', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.23', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.24', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('emb_l.25', <class 'torch.nn.modules.sparse.EmbeddingBag'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.0', <class 'torch.quantization.stubs.QuantStub'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.1.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.1.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.3.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.3.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.5.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.5.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('bot_l.7', <class 'torch.quantization.stubs.DeQuantStub'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.0', <class 'torch.quantization.stubs.QuantStub'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.1.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.1.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.3.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.3.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.5.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.5.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.7.0', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.7.1', <class 'torch.nn.modules.activation.ReLU'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.9', <class 'torch.nn.modules.linear.Linear'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}, ('top_l.10', <class 'torch.quantization.stubs.DeQuantStub'>): {'activation': {'granularity': 'per_tensor', 'mode': 'sym', 'data_type': 'uint8', 'algo': 'minmax'}, 'weight': {'granularity': 'per_channel', 'mode': 'sym', 'data_type': 'int8', 'algo': 'minmax'}}}}
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+uint8
+emb_l.0
+emb_l.1
+emb_l.2
+emb_l.3
+emb_l.4
+emb_l.5
+emb_l.6
+emb_l.7
+emb_l.8
+emb_l.9
+emb_l.10
+emb_l.11
+emb_l.12
+emb_l.13
+emb_l.14
+emb_l.15
+emb_l.16
+emb_l.17
+emb_l.18
+emb_l.19
+emb_l.20
+emb_l.21
+emb_l.22
+emb_l.23
+emb_l.24
+emb_l.25
+bot_l.0
+bot_l.1.0
+bot_l.1.1
+bot_l.3.0
+bot_l.3.1
+bot_l.5.0
+bot_l.5.1
+bot_l.7
+top_l.0
+top_l.1.0
+top_l.1.1
+top_l.3.0
+top_l.3.1
+top_l.5.0
+top_l.5.1
+top_l.7.0
+top_l.7.1
+top_l.9
+top_l.10
+DLRM_Net(
+  (emb_l): ModuleList(
+    (0): EmbeddingBag(
+      39884406, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (1): EmbeddingBag(
+      39043, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (2): EmbeddingBag(
+      17289, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (3): EmbeddingBag(
+      7420, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (4): EmbeddingBag(
+      20263, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (5): EmbeddingBag(
+      3, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (6): EmbeddingBag(
+      7120, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (7): EmbeddingBag(
+      1543, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (8): EmbeddingBag(
+      63, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (9): EmbeddingBag(
+      38532951, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (10): EmbeddingBag(
+      2953546, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (11): EmbeddingBag(
+      403346, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (12): EmbeddingBag(
+      10, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (13): EmbeddingBag(
+      2208, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (14): EmbeddingBag(
+      11938, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (15): EmbeddingBag(
+      155, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (16): EmbeddingBag(
+      4, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (17): EmbeddingBag(
+      976, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (18): EmbeddingBag(
+      14, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (19): EmbeddingBag(
+      39979771, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (20): EmbeddingBag(
+      25641295, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (21): EmbeddingBag(
+      39664984, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (22): EmbeddingBag(
+      585935, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (23): EmbeddingBag(
+      12972, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (24): EmbeddingBag(
+      108, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (25): EmbeddingBag(
+      36, 128, mode=sum
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+  )
+  (bot_l): ModuleList(
+    (0): QuantStub(
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (1): LinearReLU(
+      (0): Linear(
+        in_features=13, out_features=512, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (2): Identity()
+    (3): LinearReLU(
+      (0): Linear(
+        in_features=512, out_features=256, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (4): Identity()
+    (5): LinearReLU(
+      (0): Linear(
+        in_features=256, out_features=128, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (6): Identity()
+    (7): DeQuantStub(
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+  )
+  (top_l): ModuleList(
+    (0): QuantStub(
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (1): LinearReLU(
+      (0): Linear(
+        in_features=479, out_features=1024, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (2): Identity()
+    (3): LinearReLU(
+      (0): Linear(
+        in_features=1024, out_features=1024, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (4): Identity()
+    (5): LinearReLU(
+      (0): Linear(
+        in_features=1024, out_features=512, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (6): Identity()
+    (7): LinearReLU(
+      (0): Linear(
+        in_features=512, out_features=256, bias=True
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+      (1): ReLU(
+        (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+      )
+    )
+    (8): Identity()
+    (9): Linear(
+      in_features=256, out_features=1, bias=True
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (10): DeQuantStub(
+      (activation_post_process): MinMaxObserver(min_val=tensor([]), max_val=tensor([]))
+    )
+    (11): Sigmoid()
+  )
+)

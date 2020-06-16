@@ -1,0 +1,17 @@
+framework: pytorch                                   # built-in values are tensorflow, mxnet and pytorch, allow user register new framework backend
+
+device: cpu
+
+calibration:
+  - batchsize: 1, 2, 4                               # TODO: discuss whether it's needed
+    iterations: 10, 50
+
+tuning:
+  - strategy: basic                                  # default setting, allow user config. values are basic, random, bayesian, mse
+    metric:                                          # only needed if user doesn't provide test_func
+      - topk: 1                                      # built-in metrics are topk, map, f1, allow user to register new metric
+    goal: 0.01                                       # allowed accuracy loss: 1%
+    timeout: 3                                       # tuning timeout (hour), 0 means early stop
+
+snapeshot:                                           # TODO: needed? or provide model name
+  - path: /path/to/snapshot
