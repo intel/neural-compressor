@@ -22,6 +22,11 @@ class MSETuneStrategy(TuneStrategy):
         super(MSETuneStrategy, self).__init__(model, cfg, dataloader, q_func, eval_dataloader, eval_func, dicts)
         self.ordered_ops = None
 
+    def __getstate__(self):
+        save_dict = super(MSETuneStrategy, self).__getstate__()
+        save_dict['ordered_ops'] = self.ordered_ops
+        return save_dict
+
     def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
         """
             caculate the euclidean distance between

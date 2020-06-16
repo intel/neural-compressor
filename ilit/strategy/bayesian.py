@@ -20,6 +20,11 @@ class BayesianTuneStrategy(TuneStrategy):
         super(BayesianTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts=None)
         self.bayes_opt = None
 
+    def __getstate__(self):
+        save_dict = super(BayesianTuneStrategy, self).__getstate__()
+        save_dict['bayes_opt'] = self.bayes_opt
+        return save_dict
+
     def params_to_tune_configs(self, params):
         op_cfgs = {}
         op_cfgs['op'] = {}
