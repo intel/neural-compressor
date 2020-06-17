@@ -48,11 +48,13 @@ class MxNetAdaptor(Adaptor):
         self.th_dict = None
         qconfig = self.__config_dict
         logger.info(qconfig)
+        # print mxnet quantization verbose for debug
+        # os.environ['MXNET_QUANTIZATION_VERBOSE'] = '1'
 
         # get symbol from FP32 model
         if isinstance(model, mx.gluon.HybridBlock):
             # transfer hybridblock to symbo
-            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(model, dataloader=dataloader)
+            sym, arg_params, aux_params, calib_data = self._get_gluon_symbol(model, dataloader=dataloader)
             data_names = [pair[0] for pair in calib_data.provide_data]
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -198,7 +200,7 @@ class MxNetAdaptor(Adaptor):
         '''
         if isinstance(model, mx.gluon.HybridBlock):
             # model.hybridblock()
-            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(network=model, dataloader=dataloader)
+            sym, arg_params, aux_params, calib_data = self._get_gluon_symbol(network=model, dataloader=dataloader)
             self.__config_dict['calib_data'] = calib_data
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -208,7 +210,7 @@ class MxNetAdaptor(Adaptor):
 
         return sym, arg_params, aux_params, calib_data
 
-    def query_quantizable_ops(self, model, calib_data):
+    def _query_quantizable_ops(self, model, calib_data):
         '''The function is used to run test on validation dataset.
 
            Args:
@@ -219,6 +221,8 @@ class MxNetAdaptor(Adaptor):
 
         sym, arg_params, aux_params, calib_data = self._check_model(model, calib_data)
         sym = sym.get_backend_symbol('MKLDNN_QUANTIZE')
+
+        _, calib_layer = mx.contrib.quantization._quantize_symbol(sym, mx.cpu(), offline_params=list(arg_params.keys()),)
 
         # get each op type
         dct = json.loads(sym.tojson())
@@ -239,8 +243,8 @@ class MxNetAdaptor(Adaptor):
         # now add conv/fc/dense layer as the must quantized layer
         # TODO: list real quantizable ops
         for _, opname_type in enumerate(symbol_layers):
-            self.quantizable_ops.append(opname_type)
-
+            if opname_type["name"] + "_output" in calib_layer:
+                self.quantizable_ops.append(opname_type)
 
         return self.quantizable_ops
 
@@ -262,7 +266,7 @@ class MxNetAdaptor(Adaptor):
                     'granularity': ['per_channel'], 'algo': ['minmax', 'kl']}
                 }
         # op_wise capability
-        quantizable_ops = self.query_quantizable_ops(model, self.qdataloader)
+        quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
         op_wise = OrderedDict()
         for _, opname_type in enumerate(quantizable_ops):
             optype = opname_type["type"]
@@ -489,7 +493,6 @@ class MxNetAdaptor(Adaptor):
         calib_minmax_layers = []
         calib_kl_layers = []
 
-
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
             if tune_cfg['op'][(op["name"], op["type"])]['activation']['data_type'] == 'fp32':
@@ -534,7 +537,7 @@ class MxNetAdaptor(Adaptor):
             "calib_minmax_layers": calib_minmax_layers,
         }
 
-    def get_gluon_symbol(self, network, dataloader):
+    def _get_gluon_symbol(self, network, dataloader):
 
         network.hybridize()
         calib_data = dataloader
