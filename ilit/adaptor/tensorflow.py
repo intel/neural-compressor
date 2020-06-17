@@ -1,7 +1,5 @@
 from .adaptor import adaptor_registry, Adaptor
 from ..utils import LazyImport
-#from .tf_utils.util import read_graph
-#from .tf_utils.graph_converter import GraphConverter
 
 from collections import OrderedDict
 import os
@@ -55,12 +53,11 @@ class TensorFlowAdaptor(Adaptor):
                                    outputs=self.input_output_info['outputs'], op_wise_config=self.op_wise_config, data_loader=data_loader)
         return converter.convert()
 
-    def query_quantizable_ops(self, model):
+    def query_quantizable_ops(self, graph):
         '''
             Return: Op name/Op type mapping which saved in OrderDict.
         '''
-        from .tf_utils.util import read_graph
-        graph_def = read_graph(model)
+        graph_def = graph.as_graph_def()
         tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool")
         conv_config = {
             'activation': {
@@ -151,5 +148,5 @@ class TensorFlowAdaptor(Adaptor):
                                    quantized_model,
                                    inputs=input_node_name,
                                    outputs=output_node_name,
-                                   data_loader=data_loader)
+                                   data_loader=dataloader)
         return converter.inspect_tensor(op_list, iteration_list)

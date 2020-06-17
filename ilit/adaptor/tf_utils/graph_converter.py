@@ -37,19 +37,17 @@ from src.adaptor.tf_utils.transform_graph.freeze_max_min import get_all_fp32_dat
 from src.adaptor.tf_utils.transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from src.adaptor.tf_utils.transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from src.adaptor.tf_utils.transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from src.adaptor.tf_utils.util import read_graph, write_graph
+from src.adaptor.tf_utils.util import write_graph
 from src.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from src.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
-
+from src.adaptor.tf_utils.quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
 import os
-import shlex
-import subprocess
 import sys
 import logging
-import threading,time
-
-from multiprocessing import Process
-
+import threading
+import time
+import numpy as np
+import ast
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -123,7 +121,7 @@ class OutputGrabber(object):
         and save the text in `capturedtext`.
         """
         while True:
-            char = os.read(self.pipe_out, 1).decode(self.origstream.encoding)
+            char = os.read(self.pipe_out, 1024).decode(self.origstream.encoding)
             if not char or self.escape_char in char:
                 break
             self.capturedtext += char
@@ -135,8 +133,7 @@ class GraphConverter:
                  inputs=[],
                  outputs=[],
                  op_wise_config={},
-                 data_loader=None,
-                 input_graph_is_binary=True):
+                 data_loader=None):
         """Convert graph.
 
         :param input_graph: input graph pb file.
@@ -146,10 +143,9 @@ class GraphConverter:
         :param excluded_ops: list of operations to be excluded from quantization.
         :param excluded_nodes: list of nodes to be excluded from quantization.
         :param per_channel: if set True, enables weight quantization channel-wise.
-        :param input_graph_is_binary: default True, whether input graph is binary.
         """
-        self.input_graph = input_graph
-        self.input_graph_binary_flag = input_graph_is_binary
+        # For iLit, the input_graph is not graph file path but Graph object.
+        self.input_graph = input_graph.as_graph_def()
         self.output_graph = output_graph
         self.inputs = inputs
         self.outputs = outputs
@@ -172,20 +168,25 @@ class GraphConverter:
         self._kl_keys = []
         self._print_node_mapping = {}
 
-    def load_graph(self,model_file):
+    def load_graph(self, model_file):
+
         graph = tf.Graph()
         graph_def = tf.GraphDef()
 
-        import os
-        file_ext = os.path.splitext(model_file)[1]
+        if not isinstance(model_file, graph_pb2.GraphDef):
+            file_ext = os.path.splitext(model_file)[1]
 
-        with open(model_file, "rb") as f:
-            if file_ext == '.pbtxt':
-                text_format.Merge(f.read(), graph_def)
-            else:
-                graph_def.ParseFromString(f.read())
-        with graph.as_default():
-            tf.import_graph_def(graph_def, name='')
+            with open(model_file, "rb") as f:
+                if file_ext == '.pbtxt':
+                    text_format.Merge(f.read(), graph_def)
+                else:
+                    graph_def.ParseFromString(f.read())
+
+            with graph.as_default():
+                tf.import_graph_def(graph_def, name='')
+        else:
+            with graph.as_default():
+                tf.import_graph_def(model_file, name='')
 
         return graph
 
@@ -200,16 +201,14 @@ class GraphConverter:
         config.inter_op_parallelism_threads = num_inter_threads
         config.intra_op_parallelism_threads = num_intra_threads
 
-        dataloader = self.data_loader("/lustre/dataset/tensorflow/imagenet",
-                                     224, 224, batch_size)
-
         with tf.Session() as sess:
             sess_graph = tf.compat.v1.Session(graph=graph, config=config)
             for batch in range(num_batches):
                 try:
-                    np_images = sess.run(dataloader[0])
+                    np_images = sess.run(self.data_loader[0])
                     predictions = sess_graph.run(output_tensor,
                                                 {input_tensor: np_images})
+
                     print("Processed %d batches."% (batch + 1))
                 except tf.errors.OutOfRangeError:
                     print("Running out of images from dataset.")
@@ -235,8 +234,6 @@ class GraphConverter:
                                                                            TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
-        if not gfile.Exists(self.input_graph):
-            raise ValueError('Input graph pb file %s does not exist.' % self.input_graph)
         if self.output_graph and not os.path.exists(os.path.dirname(self.output_graph)):
             raise ValueError('"output_graph" directory does not exist.')
 
@@ -309,7 +306,6 @@ class GraphConverter:
         for i in target_conv_op:
             if specified_op_list and i not in specified_op_list:
                 continue
-
             if node_name_mapping[
                     i +"_eightbit_quantized_conv"].op == 'QuantizedConv2DWithBiasSumAndRelu':
                 start_index = sorted_node_names.index(i)
@@ -336,17 +332,99 @@ class GraphConverter:
                       message="__KL:",
                       summarize=-1, dump_fp32=True).do_transformation()
         write_graph(self._fp32_origin_graph, self._fp32_logged_graph)
+        return self._fp32_origin_graph
 
-    def dump_tensor(self, op_list, iteration_list):
-        try:
-            self._quantize_graph()
-            self._get_fp32_print_node_names(op_list)
-            self._generate_calibration_data(self._fp32_logged_graph,
-                                            self._fp32_print_data, True)
-        except Exception as e:
-            print ("Failed to dump tensor due to {}".format(str(e)))
-        else:
-            return self._fp32_print_data
+    def _dequantize(self, data, scale_info):
+        original_shape = data.shape
+        size = data.size
+        new_data = data.reshape(size,)
+        max_value = 255 if scale_info[0].find("Relu") != -1 else 127
+        return np.array([float(i / max_value)
+                         for i in new_data]).reshape(original_shape)
+
+    def dump_tensor(self, original_op_list, iteration_list):
+        graph_node_name_mapping = {}
+        q_node_name = []
+        fp32_node_name = []
+        fp32_node_name_mapping = {}
+        q_node_scale = {}
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
+            self._fp32_origin_graph, self.outputs)
+
+        for node in sorted_graph.node:
+            graph_node_name_mapping[node.name] = node
+
+        for op_name in original_op_list:
+            # if op_name not in graph_node_name_mapping and '/'.join(
+            #         node.name.rsplit('/')[:-1]) in graph_node_name_mapping:
+            #     q_node_name.append(op_name)
+            if op_name.find("eightbit_requantize") != -1:
+                q_node_name.append(op_name)
+                q_node = graph_node_name_mapping[op_name]
+                q_out_min = graph_node_name_mapping[q_node.input[-2]].attr["value"].tensor.float_val[0]
+                q_out_max = graph_node_name_mapping[q_node.input[-1]].attr["value"].tensor.float_val[0]
+                q_node_scale[op_name] = (q_node.op, q_out_min, q_out_max)
+            else:
+                fp32_node_name.append(op_name)
+                if graph_node_name_mapping[op_name].op in (
+                        "Conv2D", "DepthwiseConv2dNative"):
+                    _, matched_nodes = FuseNodeStartWithConv2d(
+                        sorted_graph,
+                        self.outputs,
+                        # self.op_wise_config[node.name][0],
+                        False,
+                        op_name).get_longest_fuse()
+                    fp32_node_name_mapping[matched_nodes[-1]] = op_name
+                else:
+                    fp32_node_name_mapping[op_name] = op_name
+
+        InsertLogging(sorted_graph,
+                node_name_list=fp32_node_name_mapping.keys(),
+                message="__KL:",
+                summarize=-1, dump_fp32=True).do_transformation()
+
+        if q_node_name:
+            sorted_graph = InsertLogging(
+                sorted_graph,
+                node_name_list=q_node_name,
+                message="__KL:",
+                summarize=-1).do_transformation()
+        dump_tensor_data = []
+
+        with OutputGrabber(sys.stderr, True) as out:
+            self._inference(sorted_graph)
+
+        sys.stdout = sys.__stdout__ # reset
+        # sys.stderr = sys.__stderr__
+        self._parse_output(out.capturedtext, dump_tensor_data)
+
+        target_iteration = iteration_list[0] - 1 if iteration_list else 0
+        start_index = target_iteration*len (original_op_list)
+        end_index = (target_iteration + 1)*len (original_op_list)
+        result = {}
+        for i in dump_tensor_data[start_index: end_index]:
+            key = i.split('__print__')[0][1:]
+            data = i.split(':')[1].strip()
+            data = data.replace(' ', "', '")
+            quoto_index = None
+            for index, value in enumerate(data):
+                if value != '[':
+                    quoto_index = index
+                    break
+            data = data[:quoto_index] + "'" + data[
+                quoto_index:-quoto_index] + "'" + data[-quoto_index:]
+            data = data.replace("]][[", "']],[['")
+            data = data.replace("][", "'],['")
+
+            if key in fp32_node_name_mapping:
+                key = fp32_node_name_mapping[key]
+                result[key] = np.array(ast.literal_eval(data), dtype=np.float)
+            else:
+                result[key] = self._dequantize(
+                    np.array(ast.literal_eval(data), dtype=np.int),
+                    q_node_scale[key])
+
+        return result
 
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:
@@ -364,6 +442,7 @@ class GraphConverter:
                 self._generate_calibration_data(self._fp32_logged_graph,
                                                 self._fp32_print_data, True)
             self._insert_logging()
+
             self._generate_calibration_data(
                 self._int8_logged_graph, self._calibration_data)
             self._freeze_requantization_ranges(self._kl_op_dict, self._print_node_mapping)
@@ -374,12 +453,17 @@ class GraphConverter:
         finally:
             if not self.debug:
                 self._post_clean()
-            return self._tmp_graph_def
+
+            graph = tf.Graph()
+
+            with graph.as_default():
+                tf.import_graph_def(self._tmp_graph_def, name='')
+            return graph
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
 
-        self._tmp_graph_def = read_graph(self.input_graph, self.input_graph_binary_flag)
+        self._tmp_graph_def = self.input_graph
         dtypes = self._get_dtypes(self._tmp_graph_def)
         # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def, self.inputs, self.outputs, dtypes, False)
         self._tmp_graph_def = FuseColumnWiseMul(self._tmp_graph_def).do_transformation()
@@ -391,9 +475,6 @@ class GraphConverter:
 
     def _quantize_graph(self):
         """quantize graph."""
-
-        if not self._tmp_graph_def:
-            self._tmp_graph_def = read_graph(self.input_graph, self.input_graph_binary_flag)
 
         g = ops.Graph()
         with g.as_default():
@@ -436,12 +517,11 @@ class GraphConverter:
 
 
     def _generate_calibration_data(self, graph, output_data, enable_kl_algo=False):
-        with OutputGrabber(sys.stderr) as out:
+        with OutputGrabber(sys.stderr, True) as out:
             self._inference(graph)
 
         sys.stdout = sys.__stdout__ # reset
         # sys.stderr = sys.__stderr__
-
         self._parse_output(out.capturedtext, output_data)
         for line in output_data:
             if enable_kl_algo and line.rsplit(':')[0] in self._kl_keys:
