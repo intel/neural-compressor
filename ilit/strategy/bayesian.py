@@ -33,9 +33,11 @@ class BayesianTuneStrategy(TuneStrategy):
                 value = int(params[op[0]])
                 if value == len(configs):
                     value = len(configs) - 1
-                op_cfgs['op'][op] = configs[value]
+                op_cfgs['op'][op] = copy.deepcopy(configs[value])
+            elif len(configs) == 1:
+                op_cfgs['op'][op] = copy.deepcopy(configs[0])
             else:
-                op_cfgs['op'][op] = configs[0]
+                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[0])
         if len(self.calib_iter) > 1:
             value = int(params['calib_iter'])
             if value == len(self.calib_iter):
@@ -57,7 +59,10 @@ class BayesianTuneStrategy(TuneStrategy):
                 pbounds[op[0]] = (0, len(configs))
         if len(self.calib_iter) > 1:
             pbounds['calib_iter'] = (0, len(self.calib_iter))
-        self.bayes_opt = BayesianOptimization(pbounds=pbounds, random_seed=self.cfg.random_seed)
+        if len(pbounds) == 0:
+            raise StopIteration
+        if self.bayes_opt == None:
+            self.bayes_opt = BayesianOptimization(pbounds=pbounds, random_seed=self.cfg.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
             yield self.params_to_tune_configs(params)
