@@ -142,7 +142,7 @@ class TuneStrategy(object):
 
                 self.last_qmodel = self.adaptor.quantize(tune_cfg, self.model, self.calib_dataloader)
                 print('cfg', tune_cfg)
-                print('eval', self.last_qmodel)
+                # print('eval', self.last_qmodel)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)

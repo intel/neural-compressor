@@ -289,7 +289,7 @@ if __name__ == '__main__':
         from ilit import Tuner
         calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
         cnn_tuner = Tuner("./rn50.yaml")
-        cnn_tuner.tuning(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
+        cnn_tuner.tune(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
 
         if args.low_precision:
             sym, arg_params, aux_params = low_precison_convert(symbol_file,
