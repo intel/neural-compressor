@@ -85,7 +85,6 @@ class Timeout(object):
         self.seconds = seconds
 
     def __enter__(self):
-        print(self.seconds, time.time())
         self.die_after = time.time() + self.seconds
         return self
 

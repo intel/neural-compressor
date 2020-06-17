@@ -130,6 +130,7 @@ class TuneStrategy(object):
             # get fp32 model baseline
             if self.baseline is None:
                 self.baseline = self._evaluate(self.model, True)
+            print('FP32 baseline is:', self.baseline)
 
             for tune_cfg in self.next_tune_cfg():
                 evaluated = False
@@ -141,9 +142,8 @@ class TuneStrategy(object):
                     continue
 
                 self.last_qmodel = self.adaptor.quantize(tune_cfg, self.model, self.calib_dataloader)
-                print('cfg', tune_cfg)
-                # print('eval', self.last_qmodel)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
+                print('Tune result is:', self.last_tune_result)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
@@ -294,7 +294,6 @@ class TuneStrategy(object):
             dataloader = self.eval_dataloader
             metric = self.cfg.tuning.metric
             assert len(metric) == 1, "Only one metric should be specified!"
-            #print(metric)
             metric = METRICS[list(metric.keys())[0]](metric)
             def eval_func(model):
                 return self.adaptor.evaluate(model, dataloader, metric)
