@@ -27,6 +27,7 @@ class MxNetAdaptor(Adaptor):
         self.__config_dict = {}
         self.quantizable_ops = []
         self.logger = logger
+        self.qdataloader = input_output_info["q_dataloader"]
 
     def _get_backedn_graph(self, symbol, ctx):
         if ctx == mx.cpu():
@@ -51,7 +52,7 @@ class MxNetAdaptor(Adaptor):
         # get symbol from FP32 model
         if isinstance(model, mx.gluon.HybridBlock):
             # transfer hybridblock to symbo
-            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(model, qconfig)
+            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(model, dataloader=dataloader)
             data_names = [pair[0] for pair in calib_data.provide_data]
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -197,7 +198,7 @@ class MxNetAdaptor(Adaptor):
         '''
         if isinstance(model, mx.gluon.HybridBlock):
             # model.hybridblock()
-            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(network=model, config=config)
+            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(network=model, dataloader=dataloader)
             self.__config_dict['calib_data'] = calib_data
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -207,22 +208,16 @@ class MxNetAdaptor(Adaptor):
 
         return sym, arg_params, aux_params, calib_data
 
-    def query_quantizable_ops(self, model):
+    def query_quantizable_ops(self, model, calib_data):
         '''The function is used to run test on validation dataset.
 
            Args:
                model (object): The model to do calibration.
         '''
         if len(self.quantizable_ops) != 0:
-            self.quantizable_ops = []
-
-        if isinstance(model, mx.gluon.HybridBlock):
-            params = model.collect_params()
-            #TODO: add HybridBlock op type
-            self.quantizable_ops =[{'op_name' : layer} for layer in params]
             return self.quantizable_ops
 
-        sym, arg_params, aux_params = model
+        sym, arg_params, aux_params, calib_data = self._check_model(model, calib_data)
         sym = sym.get_backend_symbol('MKLDNN_QUANTIZE')
 
         # get each op type
@@ -231,7 +226,6 @@ class MxNetAdaptor(Adaptor):
         for item in dct['nodes']:
             op_type.append(item['op'])
 
-        fp32_ops = []
         symbol_layers = []
         sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         name_type = zip(sym_all_layers, op_type)
@@ -245,22 +239,8 @@ class MxNetAdaptor(Adaptor):
         # now add conv/fc/dense layer as the must quantized layer
         # TODO: list real quantizable ops
         for _, opname_type in enumerate(symbol_layers):
-            if opname_type["type"] in ["_sg_mkldnn_conv", \
-                "_sg_mkldnn_fully_connected", "conv2d", "fully_connected"]:
-                self.quantizable_ops.append(opname_type)
-                continue
-            '''
-            pre = index-1 if index != 0 else index
-            later = index+1 if index != len(symbol_layers)-1 else index
-            if ("conv" in [symbol_layers[pre], symbol_layers[later]]) or \
-                ("fc" in [symbol_layers[pre], symbol_layers[later]]) or \
-                ("dense" in [symbol_layers[pre], symbol_layers[later]]):
-                quantizable_ops.append(layer_name)
-            else:
-                fp32_ops.append(layer_name)
-            '''
-        # print("Must quantized layers:" + str(self.quantizable_ops))
-        # print("fp32 layers:" + str(len(fp32_ops)))
+            self.quantizable_ops.append(opname_type)
+
 
         return self.quantizable_ops
 
@@ -282,7 +262,7 @@ class MxNetAdaptor(Adaptor):
                     'granularity': ['per_channel'], 'algo': ['minmax', 'kl']}
                 }
         # op_wise capability
-        quantizable_ops = self.query_quantizable_ops(model)
+        quantizable_ops = self.query_quantizable_ops(model, self.qdataloader)
         op_wise = OrderedDict()
         for _, opname_type in enumerate(quantizable_ops):
             optype = opname_type["type"]
@@ -509,8 +489,6 @@ class MxNetAdaptor(Adaptor):
         calib_minmax_layers = []
         calib_kl_layers = []
 
-        op = self.quantizable_ops[1]
-        model_wise_config = tune_cfg['op'][(op["name"], op["type"])]
 
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
@@ -556,12 +534,10 @@ class MxNetAdaptor(Adaptor):
             "calib_minmax_layers": calib_minmax_layers,
         }
 
-    def get_gluon_symbol(self, network, config):
-        # if logger:
-            # logger.info('Export HybridBlock')
+    def get_gluon_symbol(self, network, dataloader):
+
         network.hybridize()
-        calib_data = config['calib_data']
-        ctx = config['ctx']
+        calib_data = dataloader
 
         if calib_data is not None:
             if isinstance(calib_data, mx.io.DataIter):
@@ -590,9 +566,6 @@ class MxNetAdaptor(Adaptor):
             network.export(prefix, epoch=0)
             symnet, args, auxs = mx.model.load_checkpoint(prefix, 0)
 
-
-        if ctx == mx.cpu():
-            symnet = symnet.get_backend_symbol('MKLDNN_QUANTIZE')
         self.__config_dict['calib_data'] = calib_data
 
         return symnet, args, auxs, calib_data
@@ -646,10 +619,10 @@ class MxNetAdaptor(Adaptor):
         if not isinstance(ctx, mx.context.Context):
             raise ValueError('currently only supports single ctx, while received %s' % str(ctx))
         if calib_data is None:
-            raise ValueError('calib_data must be provided when calib_mode=%s' % calib_mode)
+            raise ValueError('calib_data must be provided when doing calibration!')
         if not isinstance(calib_data, mx.io.DataIter):
-            raise ValueError('calib_data must be of DataIter type when calib_mode=%s,'
-                            ' while received type %s' % (calib_mode, str(type(calib_data))))
+            raise ValueError('calib_data must be of DataIter type ,'
+                            ' while received type %s' % (str(type(calib_data))))
 
         data_names = [pair[0] for pair in calib_data.provide_data]
         # label_names = [pair[0] for pair in calib_data.provide_label]
