@@ -146,7 +146,6 @@ class MxNetAdaptor(Adaptor):
                 )
         mod.set_params(arg_params, aux_params)
 
-        tic = time.time()
         batch_num = 0
         for batch in dataIter:
             mod.forward(batch, is_train=False)
@@ -159,9 +158,6 @@ class MxNetAdaptor(Adaptor):
             if batch_num >= 2:
                 break
 
-        speed = batch_num / (time.time() - tic)
-        print("acc is %f" % acc)
-        print("speed is %f" % speed)
         return acc, speed
 
     def _mxnet_gluon_forward(self, gluon_model, dataloader, metrics):
@@ -169,24 +165,19 @@ class MxNetAdaptor(Adaptor):
         data_l, label_l = pre_process(dataloader)
         metric = metrics[0]
         metric.reset()
-        tic = time.time()
         batch_num = 0
         # pdb.set_trace()
         for data, label in zip(data_l, label_l):
             out = gluon_model(*data)
             metric.update(label, out)
             batch_num += len(data_l[0][0])
-        speed = batch_num / (time.time() - tic)
-        print("speed is: %f samples/s" % speed)
         res = metric.get()
         if len(res) == 1:
             acc = res[1]
-            print("%s is: %.4f." % (res[0], res[1]))
 
         else:
             acc = res[1][0]
-            print("%s is %.4f." % (res[0][0], res[1][0]))
-            print("%s is %.4f." % (res[0][1], res[1][1]))
+
         return acc, speed
 
     def _check_model(self, model, dataloader):
@@ -404,15 +395,14 @@ class MxNetAdaptor(Adaptor):
             return iter_tensor
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
-        int8_ops_th = {}
+        int8_ops_th = self.th_dict
         op_list_convert = []
+        sym = model[0]
+        sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         for item in op_list:
-            # if item in self.quantizable_ops:
-            #     item = item + "_output"
-            #     if item in self.th_dict:
-            #         int8_ops_th.update(self.th_dict[item + "_output"])
-            #     item = "quantized_" + item
-                
+            if "quantized_" + item in sym_all_layers:
+                item = "quantized_" + item
+                int8_ops_th
             if not item.endswith("_output"):
                 item += "_output"
             op_list_convert.append(item)
@@ -420,15 +410,18 @@ class MxNetAdaptor(Adaptor):
         inspected_tensor = self._inspect_tensor(model, dataloader, op_list_convert, iteration_list)
         inspected_tensor_convert = {}
         for op, tensor in inspected_tensor.items():
-            if op in int8_ops_th:
-                op_min = int8_ops_th[op]['min']
-                op_max = int8_ops_th[op]['max']
-                tensor = mx.nd.contrib.dequantize(tensor, min_range=op_min, max_range=op_max, out_type='float32')
-                assert tensor.dtype == np.float32
-            if op.endswith("_output"):
-                op = op[:-7]
             if op.startswith("quantized_"):
                 op = op[10:]
+                if op in int8_ops_th:
+                    op_min = mx.nd.array(int8_ops_th[op][0])
+                    op_max = mx.nd.array(int8_ops_th[op][1])
+                    #TODO: deal hard code dtype
+                    tensor = mx.nd.contrib.dequantize(mx.nd.array(tensor, dtype='uint8'), \
+                        min_range=op_min, max_range=op_max, out_type='float32').asnumpy()
+                    assert tensor.dtype == np.float32
+            if op.endswith("_output"):
+                op = op[:-7]
+
             inspected_tensor_convert.update({op: tensor})
 
         return inspected_tensor_convert

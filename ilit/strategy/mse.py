@@ -94,13 +94,17 @@ class MSETuneStrategy(TuneStrategy):
             self.ordered_ops = sorted(ops_mse.keys(),key=lambda key:ops_mse[key], reverse=True)
 
         op_cfgs = copy.deepcopy(best_cfg)
-        if ops_acc != None:
-            ordered_ops = sorted(ops_acc.keys(), key=lambda key:ops_acc[key], reverse=True)
+        if ops_mse != None:
+            ordered_ops = sorted(ops_mse.keys(), key=lambda key:ops_mse[key], reverse=True)
             for op in ordered_ops:
-                old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                op_cfgs['op'][op]['activation'] = {'data_type':'fp32'}
-                if 'weight' in op_cfgs['op'][op].keys():
-                    op_cfgs['op'][op]['weight'] = {'data_type':'fp32'}
+                for key, value in op_cfgs['op'].items():
+                    if op in key:
+                        op = key
+                        old_cfg = copy.deepcopy(op_cfgs['op'][key])
+                        op_cfgs['op'][key]['activation'] = {'data_type':'fp32'}
+                        if 'weight' in value.keys():
+                            op_cfgs['op'][key]['weight'] = {'data_type':'fp32'}
+                        break
                 yield op_cfgs
                 acc, _ = self.last_tune_result
                 if acc <= best_acc:
