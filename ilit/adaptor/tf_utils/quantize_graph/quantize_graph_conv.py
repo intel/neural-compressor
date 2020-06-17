@@ -8,7 +8,6 @@ from src.adaptor.tf_utils.quantize_graph.quantize_graph_base import QuantizeNode
 
 import logging
 
-
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
     patterns = [["Conv2D", "BiasAdd", "AddN", "Relu"],
                 ["Conv2D", "BiasAdd", "AddN", "Relu6"],
@@ -315,8 +314,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
     def get_longest_fuse(self):
         self._get_op_list()
-        matched_rule, _ = self._is_match(self.sorted_patterns)
-        return matched_rule
+        matched_rule, matched_node_name= self._is_match(self.sorted_patterns)
+        return matched_rule, matched_node_name
 
     def apply_the_transform(self):
         # self._reset_output_node_maps()

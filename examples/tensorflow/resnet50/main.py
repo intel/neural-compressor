@@ -84,6 +84,7 @@ def inference(graph):
     num_inter_threads = 2
     num_intra_threads = 28
     num_batches = 100
+
     input_tensor = graph.get_tensor_by_name(input_layer + ":0")
     output_tensor = graph.get_tensor_by_name(output_layer + ":0")
 
@@ -135,9 +136,9 @@ def inference(graph):
     return total_accuracy1 / num_processed_images
 
 if __name__ == '__main__':
-    fp32_graph = load_graph('/lustre/models/resnet50_fp32_.pb')
-    at = ilit.Tuner("tf.yaml")
+    fp32_graph = load_graph('/path/to/resnet50.pb')
+    at = iLit.Tuner("tf.yaml")
     rn50_input_output = {"inputs": ['input'], "outputs": ['predict']}
     dataloader = prepare_dataloader(data_location="/lustre/dataset/tensorflow/imagenet", input_height=224, input_width=224, batch_size=32)
     at.tune(fp32_graph, q_dataloader=dataloader,
-            eval_func=inference, dicts=rn50_input_output)
+            eval_func=inference, model_specific_cfg=rn50_input_output)
