@@ -1,16 +1,15 @@
-framework: pytorch                                   # built-in values are tensorflow, mxnet and pytorch, allow user register new framework backend
+framework: pytorch                                   # user specified. the built-in values are tensorflow, mxnet and pytorch, allow user register new framework backend
 
-device: cpu
+device: cpu                                          # default value. other value is: gpu
 
-calibration:
-  - batchsize: 1, 2, 4                               # TODO: discuss whether it's needed
-    iterations: 10, 50
-    algo:                                            # default setting of PTQ, allow user config
+calibration:                                         # this field takes effect when post_training_static_quant is set
+  - iterations: 10, 50
+    algo:
       - weight:  kl
       - activation: minmax
 
-quantization:                                        # default setting of PTQ, allow user config
-  - approach: post_training_static_quant             # other possible values are: post_training_dynamic_quant / quant_aware_training
+quantization:
+  - approach: post_training_static_quant             # default value. other possible values are: post_training_dynamic_quant / quant_aware_training
   - weight: 
       - granularity: per_channel
         mode: asym
@@ -21,15 +20,14 @@ quantization:                                        # default setting of PTQ, a
         data_type: int8
 
 tuning:
-  - strategy: basic                                  # default setting, allow user config. values are basic, random, bayesian, mse
-    metric:                                          # only needed if user doesn't provide test_func
+  - strategy: basic                                  # default value. other values are basic, random, exhaustive, bayesian, mse
+    metric:                                          # needed if user doesn't provide eval_func in ilit.tune()
       - topk: 1                                      # built-in metrics are topk, map, f1, allow user to register new metric
     accuracy_criterion:
-      - relative:  0.01                               # allowed accuracy loss: 1%
-      - absolute:  0.01                              # allowed accuracy loss: 1%
-    objective: xxx# objective function with accuracy driven, possible values are performance, modelsize, footprint
-    timeout: 3                                       # tuning timeout (hour), 0 means early stop
-    random_seed: 9527                                # random seed for deterministic running
+      - absolute:  0.01                              # default value, other value is relative. this example allows absolute accuracy loss: 1%
+    objective: performance                           # default value, other values are performance, modelsize, footprint. it's objective with accuracy driven
+    timeout: 3                                       # tuning timeout (seconds), 0 means early stop
+    random_seed: 9527                                # random seed for deterministic tuning
 
 snapshot:
-  - path: /path/to/snapshot
+  - path: /path/to/snapshot                          # the directory path to save snapshot. if not specified, iLiT will save snapshot to caller model with timestamp postfix

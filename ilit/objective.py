@@ -26,8 +26,6 @@ class Objective(object):
                                       {'relative': 0.01} or {'absolute': 0.01}
     '''
     def __init__(self, accuracy_criterion):
-        print('accuracy_criterion', accuracy_criterion)
-        print(accuracy_criterion.keys())
         assert isinstance(accuracy_criterion, dict) and len(accuracy_criterion)
         k, v = list(accuracy_criterion.items())[0]
         assert k in ['relative', 'absolute']

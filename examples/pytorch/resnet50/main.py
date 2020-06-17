@@ -248,11 +248,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.evaluate:
         #validate(val_loader, model, criterion, args)
-        #import ilit
-        import sys
-        sys.path.append("/home/ftian/auto-tuning/")
-        from src import tuner as ilit
-        tuner = ilit.Tuner("/home/ftian/auto-tuning/examples/pytorch/resnet50/conf.yaml")
+        import ilit
+        tuner = ilit.Tuner("./conf.yaml")
         tuner.tune(model, train_loader, eval_dataloader=val_loader)
         return
 

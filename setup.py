@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="ilit",
-    version="1.0 alpha",
+    version="1.0a0",
     author="Intel MLP/MLPC Team",
     author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com",
     description="Repository of low precision inference toolkit",

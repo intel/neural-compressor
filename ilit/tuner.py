@@ -1,10 +1,7 @@
-import copy
-import json
 import os
 import sys
-import time
 import inspect
-import signal
+from datetime import datetime
 import pickle
 from .conf import Conf
 from .strategy import STRATEGIES
@@ -79,6 +76,7 @@ class Tuner(object):
                                               1. inputs/outputs related info required by tensorflow if needed.
                                               2. customized_ops defined by user to set constraint on specified ops.
                                               {
+                                                'resume_file': '/path/to/resume/file'
                                                 'customized_ops':
                                                    {
                                                      'op1': {
@@ -99,31 +97,28 @@ class Tuner(object):
                                               }
 
         '''
-        # check if interrupted tuning procedure exists. if yes, it will resume the whole auto tune process.
         if self.cfg.snapshot:
             self.snapshot = os.path.dirname(str(self.cfg.snapshot))
         else:
-            self.snapshot = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+            self.snapshot = os.path.dirname(os.path.abspath(inspect.stack()[1][1]))
 
         strategy = 'basic'
         if self.cfg.tuning.strategy:
             strategy = self.cfg.tuning.strategy.lower()
             assert strategy.lower() in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
 
-        if 'customized_ops' in model_specific_cfg:
-            self.cfg.customized_ops = model_specific_cfg['customized_ops']
-        if 'inputs' in model_specific_cfg:
-            self.cfg.inputs = model_specific_cfg['inputs']
-        if 'outputs' in model_specific_cfg:
-            self.cfg.outputs = model_specific_cfg['outputs']
+        self.cfg.customized_ops = model_specific_cfg.get('customized_ops', None)
+        self.cfg.inputs = model_specific_cfg.get('inputs', None)
+        self.cfg.outputs = model_specific_cfg.get('outputs', None)
+        self.cfg.resume_file = model_specific_cfg.get('resume_file', None)
 
         dicts = None
-        resume_file = self.snapshot + '/resume.pickle'
-        if os.path.exists(resume_file):
-            with open(resume_file, 'rb') as f:
-                if input("\nFound snapshot, Resume? (y/n)> ").lower().startswith('y'):
-                    resume_strategy = pickle.load(f)
-                    dicts = resume_strategy.__dict__
+        # check if interrupted tuning procedure exists. if yes, it will resume the whole auto tune process.
+        if self.cfg.resume_file:
+            assert os.path.exists(self.cfg.resume_file), "The specified resume file {} doesn't exist!".format(self.cfg.resume_file)
+            with open(self.cfg.resume_file, 'rb') as f:
+                resume_strategy = pickle.load(f)
+                dicts = resume_strategy.__dict__
 
         self.strategy = STRATEGIES[strategy](model, self.cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)
 
@@ -142,9 +137,8 @@ class Tuner(object):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        with open(path + '/resume.pickle', 'wb') as f:
+        fname = path + '/resume' + datetime.today().strftime('%Y-%m-%d-%H-%M-%S') + '.ilit'
+        with open(fname, 'wb') as f:
             pickle.dump(self.strategy, f, protocol=pickle.HIGHEST_PROTOCOL)
+            print("\nSaving snapshot to {}".format(fname))
 
-if __name__ == "__main__":
-    at = Tuner('/home/ftian/auto-tuning/src/conf.yaml')
-    at.tuning(None)
