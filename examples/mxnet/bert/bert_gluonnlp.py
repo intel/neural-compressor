@@ -521,14 +521,14 @@ def log_eval(batch_id, batch_num, metric, step_loss, log_interval):
                ','.join([i + ':%.4f' for i in metric_nm])
     logging.info(eval_str, batch_id + 1, batch_num, step_loss / log_interval, *metric_val)
 
-def test_func(graph, customized_args):
+def test_func(graph):
     logging.basicConfig(level=logging.DEBUG,
                         datefmt='[%H:%M:%S]',
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger("MXNet-Demo")
 
-    dev_data_list=customized_args.customized_dict['dev_data_list']
-    metric=customized_args.customized_dict['metric']
+    # dev_data_list=customized_args.customized_dict['dev_data_list']
+    # metric=customized_args.customized_dict['metric']
 
     graph.hybridize(static_alloc=True, static_shape=True)
     tic = time.time()
@@ -536,7 +536,7 @@ def test_func(graph, customized_args):
     for segment, dev_data in dev_data_list:
         metric_nm, metric_val = evaluate(model=graph, 
                                          loader_dev=dev_data, 
-                                         metric=metric, 
+                                         metric=task.metrics, 
                                          segment=segment)
         total_iter += len(dev_data)
     toc = time.time()
@@ -550,7 +550,7 @@ def test_func(graph, customized_args):
     logger.info("%s is %.4f." % (metric_nm[1], F1))
     logger.info("speed is %.2f samples/s" % speed)
 
-    return acc, speed
+    return acc
 
 def load_params(prefix, epoch):
     """Load params from a file
@@ -678,33 +678,11 @@ def train(metric):
                     break
             mx.nd.waitall()
 
-        # inference on dev data
+        # iLiT auto-tuning
         if auto_tuning and only_inference:
-            for _, dev_data in dev_data_list:
-                _calib_data = dev_data
-                # data_list, label_list = get_calib_data(dev_data)
-
-            collector = None
-            calib_data={}
-            # calib_data['data'] = data_list
-            # calib_data['label'] = label_list
-            calib_data['calib'] = _calib_data
-            customized_args = {
-                'dataloader':dev_data_list,
-                'metric':metric,
-                'calib_data':calib_data,
-                'prefix': "bert_MRPC",
-                'data_names': None,
-                'label_names': None,
-                'pre_process': pre_process,
-                'post_process': post_process,
-            }
-            
-            import sys
-            sys.path.append("/home/pengxiny/quantization/auto-tuning/")
-            from src import tuner as iliT
-            # creating calibration data iterator
-            bert_tuner = iliT.Tuner("./bert.yaml")
+            calib_data = dev_data_list[0][1]
+            import ilit
+            bert_tuner = ilit.Tuner("./bert.yaml")
             bert_tuner.tune(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
 
             return
@@ -758,28 +736,8 @@ def train(metric):
     for segment, test_data in test_data_list:
         test(test_data, segment)
 
-def pre_process(dev_data_list):
-    dataloader_l = []
-    for _, dev_data in dev_data_list:
-        dataloader_l.append(dev_data)
-    
-    data_l = []
-    label_l = []
-    for dataloader in dataloader_l:
-        for batch_id, seqs in enumerate(dataloader):
-            input_ids, segment_ids, valid_length, label = seqs
-            input_ids = input_ids.as_in_context(ctx)
-            segment_ids = segment_ids.as_in_context(ctx)
-            valid_length = valid_length.as_in_context(ctx).astype('float32')
-            label = label.as_in_context(ctx)
-            
-            data_l.append([input_ids, segment_ids, valid_length])
-            label_l.append([label])
 
-    return data_l, label_l
 
-def post_process(output):
-    return [output]
 
 def evaluate(model, loader_dev, metric, segment):
     """Evaluate the model on validation dataset."""

@@ -51,6 +51,8 @@ class TuneStrategy(object):
             input_output_info["inputs"] = cfg["inputs"]
         if "outputs" in cfg:
             input_output_info["outputs"] = cfg["outputs"]
+        if q_dataloader is not None:
+            input_output_info["q_dataloader"] = q_dataloader
 
         framework = cfg.framework.lower()
         self.adaptor = FRAMEWORKS[framework](input_output_info)
