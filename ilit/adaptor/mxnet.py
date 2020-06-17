@@ -116,17 +116,16 @@ class MxNetAdaptor(Adaptor):
         '''
 
         if isinstance(model, mx.gluon.HybridBlock):
-            acc, speed = self._mxnet_gluon_forward(model, dataloader, metric)
+            acc = self._mxnet_gluon_forward(model, dataloader, metric)
 
         elif isinstance(model[0], mx.symbol.symbol.Symbol):
             assert isinstance(dataloader, mx.io.DataIter), \
                     'need mx.io.DataIter. but recived %s' % str(type(dataloader))
             dataloader.reset()
-            acc, speed = self._mxnet_symbol_forward(model, dataloader, metric)
+            acc = self._mxnet_symbol_forward(model, dataloader, metric)
 
         else:
             raise ValueError("Unknow graph tyep: %s" %(str(type(model))))
-        logger.info("acc is: %f, speed is: %f" %(acc, speed))
 
         return acc
 
@@ -155,10 +154,10 @@ class MxNetAdaptor(Adaptor):
             acc = metric.evaluate(output, label)
             batch_num += dataIter.batch_size
             # for test, only forward 2 iters
-            if batch_num >= 2:
-                break
+            # if batch_num >= 2:
+            #     break
 
-        return acc, speed
+        return acc
 
     def _mxnet_gluon_forward(self, gluon_model, dataloader, metrics):
 
@@ -178,7 +177,7 @@ class MxNetAdaptor(Adaptor):
         else:
             acc = res[1][0]
 
-        return acc, speed
+        return acc
 
     def _check_model(self, model, dataloader):
         '''The function is used to check model and calib_data, if not symbol and dataiter, then transfer it to.
@@ -231,8 +230,6 @@ class MxNetAdaptor(Adaptor):
             if name not in arg_params_list and item not in aux_params_list:
                 symbol_layers.append({"name": name, "type":type})
 
-        # now add conv/fc/dense layer as the must quantized layer
-        # TODO: list real quantizable ops
         for _, opname_type in enumerate(symbol_layers):
             if opname_type["name"] + "_output" in calib_layer:
                 self.quantizable_ops.append(opname_type)
