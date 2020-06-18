@@ -85,6 +85,7 @@ class PyTorchAdaptor(Adaptor):
 
     def evaluate(self, model, dataloader, metric=None):
         assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+        model.to('cpu')
         model.eval()
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):

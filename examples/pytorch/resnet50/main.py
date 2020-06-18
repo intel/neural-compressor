@@ -21,6 +21,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from torchvision.models.resnet import BasicBlock, Bottleneck
 
 import subprocess
 
@@ -60,6 +61,8 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
+parser.add_argument('-t', '--tune', dest='tune', action='store_true',
+                    help='tune best int8 model on calibration dataset')
 parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                     help='use pre-trained model')
 parser.add_argument('--world-size', default=-1, type=int,
@@ -124,6 +127,19 @@ def main():
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
 
+def fuse_resnext_modules(model):
+    torch.quantization.fuse_modules(model, [['conv1', 'bn1', 'relu']], inplace=True)
+    for mod in model.modules():
+        if type(mod) == Bottleneck:
+            torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
+            torch.quantization.fuse_modules(mod, [['conv2', 'bn2', 'relu2']], inplace=True)
+            torch.quantization.fuse_modules(mod, [['conv3', 'bn3']], inplace=True)
+            if mod.downsample:
+                torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
+        if type(mod) == BasicBlock:
+            torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
+            if mod.downsample:
+                torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
@@ -245,7 +261,11 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
-        #validate(val_loader, model, criterion, args)
+        validate(val_loader, model, criterion, args)
+
+    if args.tune:
+        model.eval()
+        #fuse_resnext_modules(model.module)
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
         tuner.tune(model, train_loader, eval_dataloader=val_loader)
