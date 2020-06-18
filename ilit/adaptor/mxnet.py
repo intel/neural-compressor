@@ -48,11 +48,13 @@ class MxNetAdaptor(Adaptor):
         self.th_dict = None
         qconfig = self.__config_dict
         logger.info(qconfig)
+        # print mxnet quantization verbose for debug
+        # os.environ['MXNET_QUANTIZATION_VERBOSE'] = '1'
 
         # get symbol from FP32 model
         if isinstance(model, mx.gluon.HybridBlock):
             # transfer hybridblock to symbo
-            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(model, dataloader=dataloader)
+            sym, arg_params, aux_params, calib_data = self._get_gluon_symbol(model, dataloader=dataloader)
             data_names = [pair[0] for pair in calib_data.provide_data]
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -114,17 +116,16 @@ class MxNetAdaptor(Adaptor):
         '''
 
         if isinstance(model, mx.gluon.HybridBlock):
-            acc, speed = self._mxnet_gluon_forward(model, dataloader, metric)
+            acc = self._mxnet_gluon_forward(model, dataloader, metric)
 
         elif isinstance(model[0], mx.symbol.symbol.Symbol):
             assert isinstance(dataloader, mx.io.DataIter), \
                     'need mx.io.DataIter. but recived %s' % str(type(dataloader))
             dataloader.reset()
-            acc, speed = self._mxnet_symbol_forward(model, dataloader, metric)
+            acc = self._mxnet_symbol_forward(model, dataloader, metric)
 
         else:
             raise ValueError("Unknow graph tyep: %s" %(str(type(model))))
-        logger.info("acc is: %f, speed is: %f" %(acc, speed))
 
         return acc
 
@@ -144,7 +145,6 @@ class MxNetAdaptor(Adaptor):
                 )
         mod.set_params(arg_params, aux_params)
 
-        tic = time.time()
         batch_num = 0
         for batch in dataIter:
             mod.forward(batch, is_train=False)
@@ -154,38 +154,30 @@ class MxNetAdaptor(Adaptor):
             acc = metric.evaluate(output, label)
             batch_num += dataIter.batch_size
             # for test, only forward 2 iters
-            if batch_num >= 2:
-                break
+            # if batch_num >= 1:
+            #     break
 
-        speed = batch_num / (time.time() - tic)
-        print("acc is %f" % acc)
-        print("speed is %f" % speed)
-        return acc, speed
+        return acc
 
     def _mxnet_gluon_forward(self, gluon_model, dataloader, metrics):
 
         data_l, label_l = pre_process(dataloader)
         metric = metrics[0]
         metric.reset()
-        tic = time.time()
         batch_num = 0
         # pdb.set_trace()
         for data, label in zip(data_l, label_l):
             out = gluon_model(*data)
             metric.update(label, out)
             batch_num += len(data_l[0][0])
-        speed = batch_num / (time.time() - tic)
-        print("speed is: %f samples/s" % speed)
         res = metric.get()
         if len(res) == 1:
             acc = res[1]
-            print("%s is: %.4f." % (res[0], res[1]))
 
         else:
             acc = res[1][0]
-            print("%s is %.4f." % (res[0][0], res[1][0]))
-            print("%s is %.4f." % (res[0][1], res[1][1]))
-        return acc, speed
+
+        return acc
 
     def _check_model(self, model, dataloader):
         '''The function is used to check model and calib_data, if not symbol and dataiter, then transfer it to.
@@ -198,7 +190,7 @@ class MxNetAdaptor(Adaptor):
         '''
         if isinstance(model, mx.gluon.HybridBlock):
             # model.hybridblock()
-            sym, arg_params, aux_params, calib_data = self.get_gluon_symbol(network=model, dataloader=dataloader)
+            sym, arg_params, aux_params, calib_data = self._get_gluon_symbol(network=model, dataloader=dataloader)
             self.__config_dict['calib_data'] = calib_data
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -208,7 +200,7 @@ class MxNetAdaptor(Adaptor):
 
         return sym, arg_params, aux_params, calib_data
 
-    def query_quantizable_ops(self, model, calib_data):
+    def _query_quantizable_ops(self, model, calib_data):
         '''The function is used to run test on validation dataset.
 
            Args:
@@ -219,6 +211,8 @@ class MxNetAdaptor(Adaptor):
 
         sym, arg_params, aux_params, calib_data = self._check_model(model, calib_data)
         sym = sym.get_backend_symbol('MKLDNN_QUANTIZE')
+
+        _, calib_layer = mx.contrib.quantization._quantize_symbol(sym, mx.cpu(), offline_params=list(arg_params.keys()),)
 
         # get each op type
         dct = json.loads(sym.tojson())
@@ -236,11 +230,9 @@ class MxNetAdaptor(Adaptor):
             if name not in arg_params_list and item not in aux_params_list:
                 symbol_layers.append({"name": name, "type":type})
 
-        # now add conv/fc/dense layer as the must quantized layer
-        # TODO: list real quantizable ops
         for _, opname_type in enumerate(symbol_layers):
-            self.quantizable_ops.append(opname_type)
-
+            if opname_type["name"] + "_output" in calib_layer:
+                self.quantizable_ops.append(opname_type)
 
         return self.quantizable_ops
 
@@ -262,7 +254,7 @@ class MxNetAdaptor(Adaptor):
                     'granularity': ['per_channel'], 'algo': ['minmax', 'kl']}
                 }
         # op_wise capability
-        quantizable_ops = self.query_quantizable_ops(model, self.qdataloader)
+        quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
         op_wise = OrderedDict()
         for _, opname_type in enumerate(quantizable_ops):
             optype = opname_type["type"]
@@ -400,31 +392,36 @@ class MxNetAdaptor(Adaptor):
             return iter_tensor
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
-        int8_ops_th = {}
+        int8_ops_th = self.th_dict
         op_list_convert = []
+        sym = model[0]
+        sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         for item in op_list:
-            # if item in self.quantizable_ops:
-            #     item = item + "_output"
-            #     if item in self.th_dict:
-            #         int8_ops_th.update(self.th_dict[item + "_output"])
-            #     item = "quantized_" + item
-                
-            if not item.endswith("_output"):
-                item += "_output"
-            op_list_convert.append(item)
+            op_name = item[0]
+            if "quantized_" + op_name in sym_all_layers:
+                op_name = "quantized_" + op_name
+            if not op_name.endswith("_output"):
+                op_name += "_output"
+            op_list_convert.append(op_name)
         
         inspected_tensor = self._inspect_tensor(model, dataloader, op_list_convert, iteration_list)
         inspected_tensor_convert = {}
         for op, tensor in inspected_tensor.items():
-            if op in int8_ops_th:
-                op_min = int8_ops_th[op]['min']
-                op_max = int8_ops_th[op]['max']
-                tensor = mx.nd.contrib.dequantize(tensor, min_range=op_min, max_range=op_max, out_type='float32')
-                assert tensor.dtype == np.float32
-            if op.endswith("_output"):
-                op = op[:-7]
             if op.startswith("quantized_"):
                 op = op[10:]
+                if op in int8_ops_th:
+                    op_min = mx.nd.array(int8_ops_th[op][0])
+                    op_max = mx.nd.array(int8_ops_th[op][1])
+                    #TODO: deal hard code dtype
+                    tensor = mx.nd.contrib.dequantize(mx.nd.array(tensor, dtype='uint8'), \
+                        min_range=op_min, max_range=op_max, out_type='float32').asnumpy()
+                    assert tensor.dtype == np.float32
+            if op.endswith("_output"):
+                op = op[:-7]
+            for item in op_list:
+                if op in item:
+                    op = item
+                    break
             inspected_tensor_convert.update({op: tensor})
 
         return inspected_tensor_convert
@@ -489,7 +486,6 @@ class MxNetAdaptor(Adaptor):
         calib_minmax_layers = []
         calib_kl_layers = []
 
-
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
             if tune_cfg['op'][(op["name"], op["type"])]['activation']['data_type'] == 'fp32':
@@ -534,7 +530,7 @@ class MxNetAdaptor(Adaptor):
             "calib_minmax_layers": calib_minmax_layers,
         }
 
-    def get_gluon_symbol(self, network, dataloader):
+    def _get_gluon_symbol(self, network, dataloader):
 
         network.hybridize()
         calib_data = dataloader
