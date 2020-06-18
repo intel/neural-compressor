@@ -66,11 +66,11 @@ class MSETuneStrategy(TuneStrategy):
                     op_cfg = copy.deepcopy(self.opwise_quant_cfgs[op])
                     if len(op_cfg) > 0:
                         if tune_cfg not in op_cfg:
-                            op_cfgs['op'][op] = op_cfg[0]
+                            op_cfgs['op'][op] = copy.deepcopy(op_cfg[0])
                         else:
-                            op_cfgs['op'][op] = tune_cfg
+                            op_cfgs['op'][op] = copy.deepcopy(tune_cfg)
                     else:
-                        op_cfgs['op'][op] = self.opwise_tune_cfgs[op][0]
+                        op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
 
                 yield op_cfgs
                 acc, _ = self.last_tune_result
