@@ -62,7 +62,7 @@ class MxNetAdaptor(Adaptor):
         self.__config_dict['calib_data'] = dataloader
         self.th_dict = None
         qconfig = self.__config_dict
-        logger.info(qconfig)
+        # logger.info(qconfig)
         # print mxnet quantization verbose for debug
         # os.environ['MXNET_QUANTIZATION_VERBOSE'] = '1'
 
@@ -178,7 +178,7 @@ class MxNetAdaptor(Adaptor):
             batch_num += dataIter.batch_size
             # for test, only forward 2 iters
             # if batch_num >= 1:
-            #     break
+            #    break
 
         return acc
 
@@ -188,7 +188,6 @@ class MxNetAdaptor(Adaptor):
         metric = metrics[0]
         metric.reset()
         batch_num = 0
-        # pdb.set_trace()
         for data, label in zip(data_l, label_l):
             out = gluon_model(*data)
             metric.update(label, out)
@@ -426,7 +425,7 @@ class MxNetAdaptor(Adaptor):
             if not op_name.endswith("_output"):
                 op_name += "_output"
             op_list_convert.append(op_name)
-        
+        dataloader.reset()
         inspected_tensor = self._inspect_tensor(model, dataloader, op_list_convert, iteration_list)
         inspected_tensor_convert = {}
         for op, tensor in inspected_tensor.items():
