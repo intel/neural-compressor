@@ -19,7 +19,7 @@ class TensorFlowAdaptor(Adaptor):
         super(TensorFlowAdaptor, self).__init__(framework_specific_info)
 
         self.op_wise_config = {}
-        self.framework_specific_info = input_output_info
+        self.framework_specific_info = framework_specific_info
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         # TODO add the op-wise config parse
