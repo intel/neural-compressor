@@ -84,9 +84,7 @@ class MSETuneStrategy(TuneStrategy):
 
         # Inspect FP32 and dequantized tensor
         if self.ordered_ops == None:
-            op_lists = []
-            for op_name, _ in self.opwise_quant_cfgs.keys():
-                op_lists.append(op_name)
+            op_lists = self.opwise_quant_cfgs.keys()
             fp32_tensor_dict = self.adaptor.inspect_tensor(self.model, self.calib_dataloader, op_lists, [1])
             dequantize_tensor_dict = self.adaptor.inspect_tensor(best_qmodel, self.calib_dataloader, op_lists, [1])
             
@@ -97,14 +95,11 @@ class MSETuneStrategy(TuneStrategy):
         if ops_mse != None:
             ordered_ops = sorted(ops_mse.keys(), key=lambda key:ops_mse[key], reverse=True)
             for op in ordered_ops:
-                for key, value in op_cfgs['op'].items():
-                    if op in key:
-                        op = key
-                        old_cfg = copy.deepcopy(op_cfgs['op'][key])
-                        op_cfgs['op'][key]['activation'] = {'data_type':'fp32'}
-                        if 'weight' in value.keys():
-                            op_cfgs['op'][key]['weight'] = {'data_type':'fp32'}
-                        break
+                old_cfg = copy.deepcopy(op_cfgs['op'][op])
+                op_cfgs['op'][op]['activation'] = {'data_type':'fp32'}
+                if 'weight' in op_cfgs['op'][op].keys():
+                    op_cfgs['op'][op]['weight'] = {'data_type':'fp32'}
+
                 yield op_cfgs
                 acc, _ = self.last_tune_result
                 if acc <= best_acc:

@@ -154,8 +154,8 @@ class MxNetAdaptor(Adaptor):
             acc = metric.evaluate(output, label)
             batch_num += dataIter.batch_size
             # for test, only forward 2 iters
-            # if batch_num >= 2:
-            #     break
+            if batch_num >= 1:
+                break
 
         return acc
 
@@ -397,12 +397,12 @@ class MxNetAdaptor(Adaptor):
         sym = model[0]
         sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         for item in op_list:
-            if "quantized_" + item in sym_all_layers:
-                item = "quantized_" + item
-                int8_ops_th
-            if not item.endswith("_output"):
-                item += "_output"
-            op_list_convert.append(item)
+            op_name = item[0]
+            if "quantized_" + op_name in sym_all_layers:
+                op_name = "quantized_" + op_name
+            if not op_name.endswith("_output"):
+                op_name += "_output"
+            op_list_convert.append(op_name)
         
         inspected_tensor = self._inspect_tensor(model, dataloader, op_list_convert, iteration_list)
         inspected_tensor_convert = {}
@@ -418,7 +418,10 @@ class MxNetAdaptor(Adaptor):
                     assert tensor.dtype == np.float32
             if op.endswith("_output"):
                 op = op[:-7]
-
+            for item in op_list:
+                if op in item:
+                    op = item
+                    break
             inspected_tensor_convert.update({op: tensor})
 
         return inspected_tensor_convert
