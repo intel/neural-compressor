@@ -126,12 +126,12 @@ class Tuner(object):
         except KeyboardInterrupt:
             self._save()
 
-        if self.best_qmodel:
+        if self.strategy.best_qmodel:
             print("Specified timeout is reached! Found a quantized model which meet accuracy goal. Exit...")
         else:
             print("Specified timeout is reached! Not found any quantized model which meet accuracy goal. Exit...")
 
-        return self.best_qmodel
+        return self.strategy.best_qmodel
 
     def _save(self):
         '''restore the tuning process if interrupted
