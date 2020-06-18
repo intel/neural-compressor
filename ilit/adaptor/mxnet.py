@@ -11,6 +11,7 @@ import logging
 import shutil
 import tempfile
 import json
+import re
 from tempfile import TemporaryDirectory
 
 mx = LazyImport("mxnet")
@@ -20,6 +21,16 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("iLit-MXNet")
 
+def _check_version(v1, v2):
+    d1=re.split('\.', v1)
+    d2=re.split('\.',v2)
+    d1=[int(d1[i]) for i in range(len(d1))]
+    d2=[int(d2[i]) for i in range(len(d2))]
+
+    if d1 >= d2:
+        return True
+    return False
+
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
     def __init__(self, input_output_info):
@@ -28,6 +39,9 @@ class MxNetAdaptor(Adaptor):
         self.quantizable_ops = []
         self.logger = logger
         self.qdataloader = input_output_info["q_dataloader"]
+        # MXNet version check
+        if not _check_version(mx.__version__, '1.6.0'):
+            raise Exception("Need MXNet version >= 1.6.0, but get version: %s" %(mx.__version__))
 
     def _get_backedn_graph(self, symbol, ctx):
         if ctx == mx.cpu():
@@ -64,12 +78,20 @@ class MxNetAdaptor(Adaptor):
         sym = self._get_backedn_graph(sym, qconfig['ctx'])
 
         # 1. quantize_symbol
-        qsym, calib_layer = mx.contrib.quantization._quantize_symbol(sym, qconfig['ctx'], excluded_symbols=qconfig['excluded_sym_names'],
-                                            excluded_operators=qconfig['excluded_op_names'],
-                                            offline_params=list(arg_params.keys()),
-                                            quantized_dtype=qconfig['quantized_dtype'],
-                                            quantize_mode=qconfig['quantize_mode'],
-                                            quantize_granularity=qconfig['quantize_granularity'])
+        if _check_version(mx.__version__, '1.7.0'):
+            qsym, calib_layer = mx.contrib.quantization._quantize_symbol(sym, qconfig['ctx'], excluded_symbols=qconfig['excluded_sym_names'],
+                                                excluded_operators=qconfig['excluded_op_names'],
+                                                offline_params=list(arg_params.keys()),
+                                                quantized_dtype=qconfig['quantized_dtype'],
+                                                quantize_mode=qconfig['quantize_mode'],
+                                                quantize_granularity=qconfig['quantize_granularity'])
+        else:
+            qsym, calib_layer = mx.contrib.quantization._quantize_symbol(sym, qconfig['ctx'], excluded_symbols=qconfig['excluded_sym_names'],
+                                                excluded_operators=qconfig['excluded_op_names'],
+                                                offline_params=list(arg_params.keys()),
+                                                quantized_dtype=qconfig['quantized_dtype'],
+                                                quantize_mode=qconfig['quantize_mode'],)
+        
         # 2. Do calibration to get th_dict
         th_dict = self._get_calibration_th(sym, arg_params, aux_params, calib_layer, qconfig)
         self.th_dict = th_dict
