@@ -46,16 +46,16 @@ class TuneStrategy(object):
     def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = cfg
-        input_output_info = {}
+        framework_specific_info = {}
         if "inputs" in cfg:
-            input_output_info["inputs"] = cfg["inputs"]
+            framework_specific_info["inputs"] = cfg["inputs"]
         if "outputs" in cfg:
-            input_output_info["outputs"] = cfg["outputs"]
+            framework_specific_info["outputs"] = cfg["outputs"]
         if q_dataloader is not None:
-            input_output_info["q_dataloader"] = q_dataloader
+            framework_specific_info["q_dataloader"] = q_dataloader
 
         framework = cfg.framework.lower()
-        self.adaptor = FRAMEWORKS[framework](input_output_info)
+        self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         self.calib_dataloader = q_dataloader
         self.q_func = q_func
@@ -132,7 +132,7 @@ class TuneStrategy(object):
             # get fp32 model baseline
             if self.baseline is None:
                 self.baseline = self._evaluate(self.model, True)
-            print('FP32 baseline is:', self.baseline)
+            print('FP32 baseline is: [{:.4f}, {:.4f}]'.format(*self.baseline))
 
             for tune_cfg in self.next_tune_cfg():
                 evaluated = False
@@ -145,14 +145,12 @@ class TuneStrategy(object):
 
                 self.last_qmodel = self.adaptor.quantize(tune_cfg, self.model, self.calib_dataloader)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
-                print('Tune result is:', self.last_tune_result)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
                 self.evaluated_cfgs.append([saved_tune_cfg, saved_last_tune_result])
 
                 if self.stop(t):
-                    print("Specified timeout is reached! Exit...")
                     break
 
     def _intersect(self, src_list, dst_list):
@@ -328,18 +326,19 @@ class TuneStrategy(object):
                timeout (Timeout) The timeout instantiate object in utils.py
 
         '''
+        need_stop = False
+
+        if self.objective.compare(self.best_tune_result):
+            self.best_tune_result = self.last_tune_result
+            self.best_qmodel = self.last_qmodel
+
+        print('Tune result is: [{:.4f}, {:.4f}]'.format(*self.last_tune_result), 'Best tune result is: [{:.4f}, {:.4f}]'.format(*self.best_tune_result))
+
         if timeout.timed_out:
-            if self.best_tune_result is None:
-                self.best_tune_result = self.last_tune_result
-                self.best_qmodel = self.last_qmodel
-            return True
-        elif self.objective.compare(self.best_tune_result) and timeout.seconds == 0:
-            self.best_tune_result = self.last_tune_result
-            self.best_qmodel = self.last_qmodel
-            return True
-        elif self.objective.compare(self.best_tune_result):
-            self.best_tune_result = self.last_tune_result
-            self.best_qmodel = self.last_qmodel
-            return False
+            need_stop = True
+        elif timeout.seconds == 0 and self.best_tune_result:
+            need_stop = True
         else:
-            return False
+            need_stop = False
+
+        return need_stop

@@ -1,6 +1,5 @@
 import os
 import sys
-import inspect
 from datetime import datetime
 import pickle
 from .conf import Conf
@@ -100,7 +99,7 @@ class Tuner(object):
         if self.cfg.snapshot:
             self.snapshot = os.path.dirname(str(self.cfg.snapshot))
         else:
-            self.snapshot = os.path.dirname(os.path.abspath(inspect.stack()[1][1]))
+            self.snapshot = './'
 
         strategy = 'basic'
         if self.cfg.tuning.strategy:
@@ -127,6 +126,13 @@ class Tuner(object):
         except KeyboardInterrupt:
             self._save()
 
+        if self.best_qmodel:
+            print("Specified timeout is reached! Found a quantized model which meet accuracy goal. Exit...")
+        else:
+            print("Specified timeout is reached! Not found any quantized model which meet accuracy goal. Exit...")
+
+        return self.best_qmodel
+
     def _save(self):
         '''restore the tuning process if interrupted
 
@@ -137,8 +143,8 @@ class Tuner(object):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        fname = path + '/resume' + datetime.today().strftime('%Y-%m-%d-%H-%M-%S') + '.ilit'
+        fname = path + '/ilit-' + datetime.today().strftime('%Y-%m-%d-%H-%M-%S') + '.snapshot'
         with open(fname, 'wb') as f:
             pickle.dump(self.strategy, f, protocol=pickle.HIGHEST_PROTOCOL)
-            print("\nSaving snapshot to {}".format(fname))
+            print("\nSave snapshot to {}".format(fname))
 

@@ -7,8 +7,8 @@ torch = LazyImport('torch')
 
 @adaptor_registry
 class PyTorchAdaptor(Adaptor):
-    def __init__(self, input_output_info):
-        super(PyTorchAdaptor, self).__init__(input_output_info)
+    def __init__(self, framework_specific_info):
+        super(PyTorchAdaptor, self).__init__(framework_specific_info)
         """
         # Map for swapping float module to quantized ones
         DEFAULT_MODULE_MAPPING = {
@@ -283,5 +283,3 @@ class PyTorchAdaptor(Adaptor):
     def inspect_tensor(self, model):
         pass
 
-    def save(self, model, path):
-        torch.save(model.state_dict(), path)
