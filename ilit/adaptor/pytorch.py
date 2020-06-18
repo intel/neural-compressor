@@ -61,6 +61,11 @@ class PyTorchAdaptor(Adaptor):
 
         op_cfgs = self._cfg_to_qconfig(tune_cfg)
         self._propagate_qconfig(q_model, op_cfgs)
+        # sanity check common API misusage
+        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
+            print("None of the submodule got qconfig applied. Make sure you "
+                      "passed correct configuration through `qconfig_dict` or "
+                      "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)
         q_model.eval()
 
@@ -182,9 +187,8 @@ class PyTorchAdaptor(Adaptor):
 
     def _propagate_qconfig(self, model, op_qcfgs):
         fallback_ops = []
-        ops = []
         for k, v in op_qcfgs.items():
-            if v == None:
+            if v is None:
                 fallback_ops.append(k)
             else:
                 op_qcfg = {k: v}
@@ -193,14 +197,16 @@ class PyTorchAdaptor(Adaptor):
         if fallback_ops:
             self._fallback_quantizable_ops_recursively(model, '', fallback_ops)
 
-    def _propagate_qconfig_recursively(self, model, prefix, op_qcfg):
+    def _propagate_qconfig_recursively(self, model, prefix, op_qcfg, qconfig_parent=None):
+        model_qconfig = qconfig_parent
         for name, child in model.named_children():
             op_name = prefix + name
             if op_name in op_qcfg:
                 child.qconfig = op_qcfg[op_name]
-                return
-            else:
-                self._propagate_qconfig_recursively(child, op_name + '.', op_qcfg)
+                model_qconfig = op_qcfg[op_name]
+            elif model_qconfig is not None:
+                child.qconfig = model_qconfig
+            self._propagate_qconfig_recursively(child, op_name + '.', op_qcfg, model_qconfig)
 
     def _fallback_quantizable_ops_recursively(self, model, prefix, fallback_ops):
         class DequantQuantWrapper(torch.nn.Module):
@@ -258,8 +264,7 @@ class PyTorchAdaptor(Adaptor):
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         for name, child in model.named_children():
             op_name = prefix + name
-            if len(child._modules) == 0 and type(child) in self.q_mapping.keys(): # \
-                    #and not (isinstance(child, torch.quantization.QuantStub) or isinstance(child, torch.quantization.DeQuantStub)):
+            if type(child) in self.q_mapping.keys():
                 quantizable_ops.append((op_name, type(child)))
             else:
                 self._get_quantizable_ops_recursively(child, op_name + '.', quantizable_ops)
