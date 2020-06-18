@@ -33,12 +33,13 @@ def _check_version(v1, v2):
 
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
-    def __init__(self, input_output_info):
-        super(MxNetAdaptor, self).__init__(input_output_info)
+    def __init__(self, framework_specific_info):
+        super(MxNetAdaptor, self).__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []
         self.logger = logger
-        self.qdataloader = input_output_info["q_dataloader"]
+        self.qdataloader = framework_specific_info["q_dataloader"]
+
         # MXNet version check
         if not _check_version(mx.__version__, '1.6.0'):
             raise Exception("Need MXNet version >= 1.6.0, but get version: %s" %(mx.__version__))
@@ -456,29 +457,6 @@ class MxNetAdaptor(Adaptor):
                {'src_op1': 'dst_op1'}
         '''
         raise notimplementederror
-
-    def save(self, model):
-        '''The function is used by tune strategy class for saving model.
-
-           Args:
-               model (object): The model to do calibration.
-        '''
-        output_dir = './quantize_model/'
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        ckpt_name = 'iLit' + '_quantized_model'
-        params_saved = os.path.join(output_dir, ckpt_name)
-        if isinstance(model, mx.gluon.HybridBlock):
-            logger.info("Save MXNet HybridBlock quantization model!")
-            model.export(params_saved, epoch=0)
-            logging.info('Saving quantized model at %s', output_dir)
-        else:
-            logger.info('Saving symbol into file at %s' % ckpt_name)
-            symbol, arg_params, aux_params = model
-            symbol.save(params_saved+'-symbol.json')
-            save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in arg_params.items()}
-            save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
-            mx.nd.save(params_saved+'-0000.params', save_dict)
 
     def _cfg_to_qconfig(self, tune_cfg):
 

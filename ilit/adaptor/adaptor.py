@@ -26,7 +26,7 @@ class Adaptor(object):
     '''The base class of framework adaptor layer.
 
     '''
-    def __init__(self, input_output_info):
+    def __init__(self, framework_specific_info):
         pass
 
     @abstractmethod
@@ -92,11 +92,3 @@ class Adaptor(object):
         '''
         raise notimplementederror
 
-    @abstractmethod
-    def save(self, model, path):
-        '''The function is used by tune strategy class for saving model.
-
-           Args:
-               model (object): The model to do calibration.
-        '''
-        raise notimplementederror
