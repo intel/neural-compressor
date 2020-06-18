@@ -3,8 +3,8 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_base import QuantizeNodeBase
+from .quantize_graph_common import QuantizeGraphHelper as helper
+from .quantize_graph_base import QuantizeNodeBase
 
 import logging
 

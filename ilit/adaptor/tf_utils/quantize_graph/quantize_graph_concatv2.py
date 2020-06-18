@@ -1,8 +1,8 @@
 #  -*- coding: utf-8 -*-
 from tensorflow.python.framework import dtypes
 from tensorflow.core.framework import node_def_pb2
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_base import QuantizeNodeBase
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
+from .quantize_graph_base import QuantizeNodeBase
+from .quantize_graph_common import QuantizeGraphHelper as helper
 
 import re
 

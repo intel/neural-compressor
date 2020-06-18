@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 Intel Corporation
+# Copyright (c) 2020 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,8 +47,14 @@ import tensorflow as tf
 import accuracy_preprocessing as preprocessing
 import accuracy_datasets as datasets
 
-NUM_TEST_IMAGES = 50000
+import argparse
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
 
+from ilit import tuner as iLit
+
+NUM_TEST_IMAGES = 50000
 
 def load_graph(model_file):
     graph = tf.Graph()
@@ -143,10 +149,26 @@ def inference(graph):
     return total_accuracy1 / num_processed_images
 
 if __name__ == "__main__":
-    fp32_graph = load_graph('/lustre/models/mobilenet_fp32_.pb')
-    at = ilit.Tuner("tf.yaml")
-    mob_input_output = {"inputs": ['input'], "outputs": ["MobilenetV1/Predictions/Reshape_1"]}
-    dataloader = prepare_dataloader(data_location="/lustre/dataset/tensorflow/imagenet", input_height=224, input_width=224, batch_size=32)
+    parser = argparse.ArgumentParser(description='Tensorflow Resnet50-v1.0 demo for iLit')
+    parser.add_argument('--input_graph', type=str, default='')
+    parser.add_argument('--config', type=str, default='')
+    parser.add_argument('--inputs', type=str, default='', help='input tensor')
+    parser.add_argument('--outputs', type=str, required='', help='output tensor')
+    parser.add_argument('--data_location', type=str, required='', help='param file path')
+    parser.add_argument('--input_height', type=int, default=224, help='input height')
+    parser.add_argument('--intput_width', type=int, default=224, help='output height')
+    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--num_batches', type=int, default=100)
+    parser.add_argument('--num_inter_threads', type=int, default=2)
+    parser.add_argument('--num_intra_threads', type=int, default=28)
+
+    args = parser.parse_args()
+
+    fp32_graph = load_graph(args.input_graph)
+    at = iLit.Tuner(args.config)
+    dataloader = prepare_dataloader(data_location=args.data_location, input_height=args.input_height, input_width=args.intput_width, batch_size=args.batch_size)
+    rn50_input_output = {"inputs": args.inputs.split(' '), "outputs": args.outputs.split(' '), "num_batches": args.num_batches}
+
     at.tune(fp32_graph, q_dataloader=dataloader,
             eval_func=inference, dicts=mob_input_output)
     

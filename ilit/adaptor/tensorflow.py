@@ -3,6 +3,7 @@ from ..utils import LazyImport
 
 from collections import OrderedDict
 import os
+import multiprocessing
 
 tensorflow = LazyImport('tensorflow')
 
@@ -20,6 +21,35 @@ class TensorFlowAdaptor(Adaptor):
 
         self.op_wise_config = {}
         self.framework_specific_info = framework_specific_info
+
+    def evaluate(self, graph, dataloader, metric=None):
+        input_tensor = graph.get_tensor_by_name(self.framework_specific_info['inputs'][0] + ":0")
+        output_tensor = graph.get_tensor_by_name(self.framework_specific_info['outputs'][0] + ":0")
+
+        import tensorflow as tf
+
+        num_inter_threads = 2
+        num_intra_threads = 28
+        num_batches = 100
+
+        config = tf.ConfigProto()
+        config.inter_op_parallelism_threads = num_inter_threads
+        config.intra_op_parallelism_threads = num_intra_threads
+        with tf.Session() as sess:
+            sess_graph = tf.compat.v1.Session(graph=graph, config=config)
+            for batch in range(num_batches):
+                try:
+                    np_images, np_labels = sess.run([dataloader[0][0], dataloader[1][0]])
+
+                    predictions = sess_graph.run(output_tensor,
+                                                 {input_tensor: np_images})
+                    acc = metric.evaluate(predictions, np_labels)
+
+                    print("Processed %d batches." % (batch + 1))
+                except tf.errors.OutOfRangeError:
+                    print("Running out of images from dataset.")
+                    break
+        return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         # TODO add the op-wise config parse
@@ -42,7 +72,7 @@ class TensorFlowAdaptor(Adaptor):
                                    outputs=self.framework_specific_info['outputs'], op_wise_config=self.op_wise_config, data_loader=data_loader)
         return converter.convert()
 
-    def query_quantizable_ops(self, graph):
+    def _query_quantizable_ops(self, graph):
         '''
             Return: Op name/Op type mapping which saved in OrderDict.
         '''
@@ -95,7 +125,7 @@ class TensorFlowAdaptor(Adaptor):
                 },
             }
         }
-        self.query_quantizable_ops(model)
+        self._query_quantizable_ops(model)
         capability['opwise'] = self.quantizable_op_details
         return capability
 

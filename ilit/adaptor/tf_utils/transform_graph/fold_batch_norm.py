@@ -28,7 +28,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.platform import tf_logging
-from src.adaptor.tf_utils.transform_graph.graph_transform_base import GraphTransformBase
+from .graph_transform_base import GraphTransformBase
 
 
 class FoldBatchNormNodes(GraphTransformBase):

@@ -27,20 +27,20 @@ from tensorflow.python.framework import graph_util
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 
 # from src.adaptor.tf_utils.quantize_graph import GraphRewriter
-from src.adaptor.tf_utils.transform_graph.strip_unused import StripUnusedNodes
-from src.adaptor.tf_utils.transform_graph.fold_batch_norm import FoldBatchNormNodes
-from src.adaptor.tf_utils.transform_graph.insert_logging import InsertLogging
-from src.adaptor.tf_utils.transform_graph.freeze_max_min import freeze_max
-from src.adaptor.tf_utils.transform_graph.freeze_max_min import freeze_min
-from src.adaptor.tf_utils.transform_graph.freeze_max_min import freeze_requantization_range
-from src.adaptor.tf_utils.transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram, combine_histogram
-from src.adaptor.tf_utils.transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
-from src.adaptor.tf_utils.transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
-from src.adaptor.tf_utils.transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from src.adaptor.tf_utils.util import write_graph
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
+from .transform_graph.strip_unused import StripUnusedNodes
+from .transform_graph.fold_batch_norm import FoldBatchNormNodes
+from .transform_graph.insert_logging import InsertLogging
+from .transform_graph.freeze_max_min import freeze_max
+from .transform_graph.freeze_max_min import freeze_min
+from .transform_graph.freeze_max_min import freeze_requantization_range
+from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram, combine_histogram
+from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
+from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
+from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
+from .util import write_graph
+from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
 import os
 import sys
 import logging
@@ -204,8 +204,9 @@ class GraphConverter:
         with tf.Session() as sess:
             sess_graph = tf.compat.v1.Session(graph=graph, config=config)
             for batch in range(num_batches):
+
                 try:
-                    np_images = sess.run(self.data_loader[0])
+                    np_images = sess.run(self.data_loader[0][0])
                     predictions = sess_graph.run(output_tensor,
                                                 {input_tensor: np_images})
 

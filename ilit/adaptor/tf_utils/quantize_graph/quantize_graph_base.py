@@ -11,8 +11,8 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.client import session
 from tensorflow.python.ops import array_ops
 
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
-
+# from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
+from .quantize_graph_common import QuantizeGraphHelper as helper
 import logging
 import tensorflow as tf
 import numpy as np

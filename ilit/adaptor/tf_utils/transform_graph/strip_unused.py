@@ -24,7 +24,7 @@ from tensorflow.python.framework import graph_util
 
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
-from src.adaptor.tf_utils.transform_graph.graph_transform_base import GraphTransformBase
+from .graph_transform_base import GraphTransformBase
 
 import copy
 

@@ -24,7 +24,7 @@ import numpy as np
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
-from src.adaptor.tf_utils.transform_graph.graph_transform_base import GraphTransformBase
+from .graph_transform_base import GraphTransformBase
 
 
 class RerangeQuantizedConcat(GraphTransformBase):

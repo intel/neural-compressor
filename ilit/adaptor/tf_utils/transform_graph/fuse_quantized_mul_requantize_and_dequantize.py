@@ -24,8 +24,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
-from src.adaptor.tf_utils.transform_graph.graph_transform_base import GraphTransformBase
-
+from .graph_transform_base import GraphTransformBase
 
 class FuseQuantizedMulRequantizeAndDequantize(GraphTransformBase):
     """

@@ -3,8 +3,8 @@
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_base import QuantizeNodeBase
-from src.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
+from .quantize_graph_base import QuantizeNodeBase
+from .quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithPad(QuantizeNodeBase):
