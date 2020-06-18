@@ -1,2 +1,3 @@
 *.pyc
 .vscode
+*/__pycache__
