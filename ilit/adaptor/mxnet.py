@@ -154,8 +154,8 @@ class MxNetAdaptor(Adaptor):
             acc = metric.evaluate(output, label)
             batch_num += dataIter.batch_size
             # for test, only forward 2 iters
-            if batch_num >= 1:
-                break
+            # if batch_num >= 1:
+            #     break
 
         return acc
 
