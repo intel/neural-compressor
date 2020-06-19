@@ -112,23 +112,6 @@ class DLRM_Net(nn.Module):
             # construct fully connected operator
             LL = nn.Linear(int(n), int(m), bias=True)
 
-            # initialize the weights
-            # with torch.no_grad():
-            # custom Xavier input, output or two-sided fill
-            mean = 0.0  # std_dev = np.sqrt(variance)
-            std_dev = np.sqrt(2 / (m + n))  # np.sqrt(1 / m) # np.sqrt(1 / n)
-            W = np.random.normal(mean, std_dev, size=(m, n)).astype(np.float32)
-            std_dev = np.sqrt(1 / m)  # np.sqrt(2 / (m + 1))
-            bt = np.random.normal(mean, std_dev, size=m).astype(np.float32)
-            # approach 1
-            LL.weight.data = torch.tensor(W, requires_grad=True)
-            LL.bias.data = torch.tensor(bt, requires_grad=True)
-            # approach 2
-            # LL.weight.data.copy_(torch.tensor(W))
-            # LL.bias.data.copy_(torch.tensor(bt))
-            # approach 3
-            # LL.weight = Parameter(torch.tensor(W),requires_grad=True)
-            # LL.bias = Parameter(torch.tensor(bt),requires_grad=True)
             layers.append(LL)
 
             # construct sigmoid or relu operator
@@ -154,26 +137,8 @@ class DLRM_Net(nn.Module):
                 _m = m[i]
                 base = max(m)
                 EE = PrEmbeddingBag(n, _m, base)
-                # use np initialization as below for consistency...
-                # W = np.random.uniform(
-                #     low=-np.sqrt(1 / n), high=np.sqrt(1 / n), size=(n, _m)
-                # ).astype(np.float32)
-                # EE.embs.weight.data = torch.tensor(W, requires_grad=True)
-
             else:
                 EE = nn.EmbeddingBag(n, m, mode="sum", sparse=True)
-
-                # initialize embeddings
-                # nn.init.uniform_(EE.weight, a=-np.sqrt(1 / n), b=np.sqrt(1 / n))
-                # W = np.random.uniform(
-                #     low=-np.sqrt(1 / n), high=np.sqrt(1 / n), size=(n, m)
-                # ).astype(np.float32)
-                # approach 1
-                # EE.weight.data = torch.tensor(W, requires_grad=True)
-                # approach 2
-                # EE.weight.data.copy_(torch.tensor(W))
-                # approach 3
-                # EE.weight = Parameter(torch.tensor(W),requires_grad=True)
 
             emb_l.append(EE)
 
@@ -310,18 +275,12 @@ class DLRM_Net(nn.Module):
         dense_x, lS_o, lS_i = inputs
         # process dense features (using bottom mlp), resulting in a row vector
         x = self.apply_mlp(dense_x, self.bot_l)
-        # debug prints
-        # print("intermediate")
-        # print(x.detach().cpu().numpy())
 
         # process sparse features(using embeddings), resulting in a list of row vectors
         ly = self.apply_emb(lS_o, lS_i, self.emb_l)
-        # for y in ly:
-        #     print(y.detach().cpu().numpy())
 
         # interact features (dense and sparse)
         z = self.interact_features(x, ly)
-        # print(z.detach().cpu().numpy())
 
         # obtain probability of a click (using top mlp)
         p = self.apply_mlp(z, self.top_l)
@@ -387,13 +346,9 @@ class DLRM_Net(nn.Module):
         # The output is a list of tensors scattered across devices according to the
         # distribution of dense_x.
         x = parallel_apply(self.bot_l_replicas, dense_x, None, device_ids)
-        # debug prints
-        # print(x)
 
         # embeddings
         ly = self.apply_emb(lS_o, lS_i, self.emb_l)
-        # debug prints
-        # print(ly)
 
         # butterfly shuffle (implemented inefficiently for now)
         # WARNING: Note that at this point we have the result of the embedding lookup
@@ -411,16 +366,12 @@ class DLRM_Net(nn.Module):
             t_list.append(y)
         # adjust the list to be ordered per device
         ly = list(map(lambda y: list(y), zip(*t_list)))
-        # debug prints
-        # print(ly)
 
         # interactions
         z = []
         for k in range(ndevices):
             zk = self.interact_features(x[k], ly[k])
             z.append(zk)
-        # debug prints
-        # print(z)
 
         # top mlp
         # WARNING: Note that the self.top_l is a list of top mlp modules that
@@ -531,6 +482,7 @@ if __name__ == "__main__":
     parser.add_argument("--mlperf-auc-threshold", type=float, default=0.0)
     parser.add_argument("--mlperf-bin-loader", action='store_true', default=False)
     parser.add_argument("--mlperf-bin-shuffle", action='store_true', default=False)
+    parser.add_argument("--do-ilit-tune", action='store_true', default=False)
     args = parser.parse_args()
 
     if args.mlperf_logging:
@@ -740,7 +692,6 @@ if __name__ == "__main__":
         print("initial parameters (weights and bias):")
         for param in dlrm.parameters():
             print(param.detach().cpu().numpy())
-        # print(dlrm)
 
     if use_gpu:
         # Custom Model-Data Parallel
@@ -802,9 +753,6 @@ if __name__ == "__main__":
                 loss_ws_ = loss_ws[T.data.view(-1).long()].view_as(T)
                 loss_fn_ = loss_fn(Z, T.to(device))
             loss_sc_ = loss_ws_ * loss_fn_
-            # debug prints
-            # print(loss_ws_)
-            # print(loss_fn_)
             return loss_sc_.mean()
 
     def eval_func(model):
@@ -850,7 +798,6 @@ if __name__ == "__main__":
                 ld_model = torch.load(
                     args.load_model,
                     map_location=torch.device('cuda')
-                    # map_location=lambda storage, loc: storage.cuda(0)
                 )
         else:
             # when targeting inference on CPU
@@ -894,7 +841,24 @@ if __name__ == "__main__":
             )
         )
 
-
+    if args.do_ilit_tune:
+        print('do_ilit_tune')
+        fuse_list = []
+        for i in range(0, len(dlrm.bot_l), 2):
+            fuse_list.append(["bot_l.%d" % (i), "bot_l.%d" % (i + 1)])
+        dlrm = fuse_modules(dlrm, fuse_list)
+        fuse_list = []
+        for i in range(0, len(dlrm.top_l) - 2, 2):
+            fuse_list.append(["top_l.%d" % (i), "top_l.%d" % (i + 1)])
+        dlrm = fuse_modules(dlrm, fuse_list)
+        dlrm.bot_l.insert(0, QuantStub())
+        dlrm.bot_l.append(DeQuantStub())
+        dlrm.top_l.insert(0, QuantStub())
+        dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
+        import ilit
+        tuner = ilit.Tuner("./conf.yaml")
+        tuner.tune(dlrm, test_ld, eval_func=eval_func)
+        exit(0)
 
     if args.do_int8_inference and args.inference_only:
         print('do_int8_inference')
@@ -910,47 +874,38 @@ if __name__ == "__main__":
         dlrm.bot_l.append(DeQuantStub())
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-        # dlrm.qconfig = default_per_channel_qconfig
-        # if args.per_tensor_linear:
-        #     dlrm.bot_l.qconfig = default_qconfig
-        #     dlrm.top_l.qconfig = default_qconfig
-        # dlrm = prepare(dlrm)
-        # j = 0
-        # for j, (inputs, T) in enumerate(test_ld):
-        #     Z = dlrm_wrap(inputs, use_gpu, device)
-        #     if j > nbatches * 0.05:
-        #         break
-        # print("convert")
-        # dlrm = convert(dlrm)
-        # print("convert done")
-        # if not (args.save_int8 == ""):
-        #      print("Saving model to {}".format(args.save_int8))
-        #      torch.save(
-        #               {
-        #                   "epoch": ld_k,
-        #                   "nepochs": ld_nepochs,
-        #                   "nbatches": ld_nbatches,
-        #                   "nbatches_test": ld_nbatches_test,
-        #                   "iter": ld_j,
-        #                   "state_dict": dlrm.state_dict(),
-        #                   "train_acc": ld_gA,
-        #                   "train_loss": ld_gL,
-        #                   "test_acc": ld_gA_test,
-        #                   "test_loss": ld_gL_test,
-        #                   "total_loss": ld_total_loss,
-        #                   "total_accu": ld_total_accu,
-        #               },
-        #               args.save_int8,
-        #           )
-
-        import sys
-        sys.path.append("/home/torch/penghuic/auto-tuning/")
-        from src import tuner as ilit
-        tuner = ilit.Tuner("/home/torch/penghuic/auto-tuning/examples/pytorch/DLRM/conf.yaml")
-        tuner.tune(dlrm, test_ld, eval_func=eval_func)
-        exit(0)
-
-
+        dlrm.qconfig = default_per_channel_qconfig
+        if args.per_tensor_linear:
+            dlrm.bot_l.qconfig = default_qconfig
+            dlrm.top_l.qconfig = default_qconfig
+        dlrm = prepare(dlrm)
+        j = 0
+        for j, (inputs, T) in enumerate(test_ld):
+            Z = dlrm_wrap(inputs, use_gpu, device)
+            if j > nbatches * 0.05:
+                break
+        print("convert")
+        dlrm = convert(dlrm)
+        print("convert done")
+        if not (args.save_int8 == ""):
+             print("Saving model to {}".format(args.save_int8))
+             torch.save(
+                      {
+                          "epoch": ld_k,
+                          "nepochs": ld_nepochs,
+                          "nbatches": ld_nbatches,
+                          "nbatches_test": ld_nbatches_test,
+                          "iter": ld_j,
+                          "state_dict": dlrm.state_dict(),
+                          "train_acc": ld_gA,
+                          "train_loss": ld_gL,
+                          "test_acc": ld_gA_test,
+                          "test_loss": ld_gL_test,
+                          "total_loss": ld_total_loss,
+                          "total_accu": ld_total_accu,
+                      },
+                      args.save_int8,
+                  )
 
     print("time/loss/accuracy (if enabled):")
     with torch.autograd.profiler.profile(args.enable_profiling, use_gpu) as prof:
@@ -1019,10 +974,6 @@ if __name__ == "__main__":
                     optimizer.zero_grad()
                     # backward pass
                     E.backward()
-                    # debug prints (check gradient norm)
-                    # for l in mlp.layers:
-                    #     if hasattr(l, 'weight'):
-                    #          print(l.weight.grad.norm().item())
 
                     # optimizer
                     optimizer.step()
@@ -1106,9 +1057,6 @@ if __name__ == "__main__":
                                         validation_results['roc_auc'],
                                     )
                         )
-                    # Uncomment the line below to print out the total time with overhead
-                    # print("Accumulated time so far: {}" \
-                    # .format(time_wrap(use_gpu) - accum_time_begin))
                     total_iter = 0
                     total_samp = 0
 
@@ -1191,24 +1139,12 @@ if __name__ == "__main__":
                             # 'roc_curve' :  sklearn.metrics.roc_curve,
                         }
 
-                        # print("Compute time for validation metric : ", end="")
-                        # first_it = True
                         validation_results = {}
                         for metric_name, metric_function in metrics.items():
-                            # if first_it:
-                            #     first_it = False
-                            # else:
-                            #     print(", ", end="")
-                            # metric_compute_start = time_wrap(False)
                             validation_results[metric_name] = metric_function(
                                 targets,
                                 scores
                             )
-                            # metric_compute_end = time_wrap(False)
-                            # met_time = metric_compute_end - metric_compute_start
-                            # print("{} {:.4f}".format(metric_name, 1000 * (met_time)),
-                            #      end="")
-                        # print(" ms")
                         gA_test = validation_results['accuracy']
                         gL_test = validation_results['loss']
                     else:
@@ -1271,9 +1207,6 @@ if __name__ == "__main__":
                                 gL_test, gA_test * 100, best_gA_test * 100
                             )
                         )
-                    # Uncomment the line below to print out the total time with overhead
-                    # print("Total test time for this group: {}" \
-                    # .format(time_wrap(use_gpu) - accum_test_time_begin))
 
                     if (args.mlperf_logging
                         and (args.mlperf_acc_threshold > 0)
@@ -1307,9 +1240,6 @@ if __name__ == "__main__":
             + " visualization. Then, uncomment its import above as well as"
             + " three lines below and run the code again."
         )
-        # V = Z.mean() if args.inference_only else E
-        # dot = make_dot(V, params=dict(dlrm.named_parameters()))
-        # dot.render('dlrm_s_pytorch_graph') # write .pdf file
 
     # test prints
     if not args.inference_only and args.debug_mode:
