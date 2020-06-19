@@ -265,10 +265,10 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.tune:
         model.eval()
-        #fuse_resnext_modules(model.module)
+        fuse_resnext_modules(model.module)
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
-        tuner.tune(model, train_loader, eval_dataloader=val_loader)
+        q_model = tuner.tune(model, train_loader, eval_dataloader=val_loader)
         return
 
     for epoch in range(args.start_epoch, args.epochs):

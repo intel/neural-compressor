@@ -199,8 +199,8 @@ class PyTorchAdaptor(Adaptor):
             self._fallback_quantizable_ops_recursively(model, '', fallback_ops)
 
     def _propagate_qconfig_recursively(self, model, prefix, op_qcfg, qconfig_parent=None):
-        model_qconfig = qconfig_parent
         for name, child in model.named_children():
+            model_qconfig = qconfig_parent
             op_name = prefix + name
             if op_name in op_qcfg:
                 child.qconfig = op_qcfg[op_name]
