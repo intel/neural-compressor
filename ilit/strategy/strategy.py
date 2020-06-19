@@ -334,7 +334,7 @@ class TuneStrategy(object):
 
         print('Tune result is: ', '[{:.4f}, {:.4f}]'.format(*self.last_tune_result) if self.last_tune_result else None, 'Best tune result is: ', '[{:.4f}, {:.4f}]'.format(*self.best_tune_result) if self.best_tune_result else None)
 
-        if timeout.timed_out:
+        if timeout.seconds != 0 and timeout.timed_out:
             need_stop = True
         elif timeout.seconds == 0 and self.best_tune_result:
             need_stop = True

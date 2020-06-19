@@ -22,9 +22,6 @@ class Tuner(object):
     '''
     def __init__(self, conf_fname):
         self.cfg  = Conf(conf_fname).cfg
-        self._customized_ops = None
-        self._inputs = None
-        self._outputs = None
 
     def tune(self, model, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, model_specific_cfg=dict()):
         r'''The main entry point of automatic quantization tuning.
