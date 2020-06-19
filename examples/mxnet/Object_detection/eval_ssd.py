@@ -208,6 +208,26 @@ if __name__ == '__main__':
         net.export(prefix, epoch=0)
         sys.exit()
 
+    def test_func(graph):
+        val_dataset, val_metric = get_dataset(args.dataset, args.data_shape)
+        val_data = get_dataloader(
+        val_dataset, args.data_shape, args.batch_size, args.num_workers)
+        classes = val_dataset.classes  # class names
+
+        size = len(val_dataset)
+        ctx = [mx.cpu()]
+        results = validate(graph, val_data, ctx, classes, size, val_metric)
+
+        mAP = float(results[-1][-1])
+
+        return mAP
+        
+    # Doing iLiT auto-tuning here
+    import ilit
+    bert_tuner = ilit.Tuner("./ssd.yaml")
+    bert_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=test_func)
+    sys.exit()
+
     # eval
     names, values = validate(net, val_data, ctx, classes, len(val_dataset), val_metric)
     for k, v in zip(names, values):
