@@ -102,10 +102,7 @@ class Tuner(object):
                                               }
 
         '''
-        if self.cfg.snapshot:
-            self.snapshot = os.path.dirname(str(self.cfg.snapshot))
-        else:
-            self.snapshot = './'
+        self.snapshot_path = self.cfg.snapshot.path if self.cfg.snapshot else './'
 
         strategy = 'basic'
         if self.cfg.tuning.strategy:
@@ -145,12 +142,12 @@ class Tuner(object):
            Return: dict to contain all info needed by resume
 
         '''
-        path = self.snapshot
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        fname = path + '/ilit-' + datetime.today().strftime('%Y-%m-%d-%H-%M-%S') + '.snapshot'
+        from pathlib import Path
+        path = Path(self.snapshot_path)
+        path.mkdir(exist_ok=True, parents=True)
+        
+        fname = self.snapshot_path + '/ilit-' + datetime.today().strftime(
+            '%Y-%m-%d-%H-%M-%S') + '.snapshot'
         with open(fname, 'wb') as f:
             pickle.dump(self.strategy, f, protocol=pickle.HIGHEST_PROTOCOL)
-            print("\nSave snapshot to {}".format(fname))
-
+            print("\nSave snapshot to {}".format(os.path.abspath(fname)))
