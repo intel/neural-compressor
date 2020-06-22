@@ -1,20 +1,10 @@
-from typing import Union, Optional, List, Tuple, Text, BinaryIO
-import io
-import pathlib
 import torch
 import math
 irange = range
 
 
-def make_grid(
-    tensor: Union[torch.Tensor, List[torch.Tensor]],
-    nrow: int = 8,
-    padding: int = 2,
-    normalize: bool = False,
-    range: Optional[Tuple[int, int]] = None,
-    scale_each: bool = False,
-    pad_value: int = 0,
-) -> torch.Tensor:
+def make_grid(tensor, nrow=8, padding=2,
+              normalize=False, range=None, scale_each=False, pad_value=0):
     """Make a grid of images.
 
     Args:
@@ -91,26 +81,15 @@ def make_grid(
         for x in irange(xmaps):
             if k >= nmaps:
                 break
-            # Tensor.copy_() is a valid method but seems to be missing from the stubs
-            # https://pytorch.org/docs/stable/tensors.html#torch.Tensor.copy_
-            grid.narrow(1, y * height + padding, height - padding).narrow(  # type: ignore[attr-defined]
-                2, x * width + padding, width - padding
-            ).copy_(tensor[k])
+            grid.narrow(1, y * height + padding, height - padding)\
+                .narrow(2, x * width + padding, width - padding)\
+                .copy_(tensor[k])
             k = k + 1
     return grid
 
 
-def save_image(
-    tensor: Union[torch.Tensor, List[torch.Tensor]],
-    fp: Union[Text, pathlib.Path, BinaryIO],
-    nrow: int = 8,
-    padding: int = 2,
-    normalize: bool = False,
-    range: Optional[Tuple[int, int]] = None,
-    scale_each: bool = False,
-    pad_value: int = 0,
-    format: Optional[str] = None,
-) -> None:
+def save_image(tensor, fp, nrow=8, padding=2,
+               normalize=False, range=None, scale_each=False, pad_value=0, format=None):
     """Save a given Tensor into an image file.
 
     Args:

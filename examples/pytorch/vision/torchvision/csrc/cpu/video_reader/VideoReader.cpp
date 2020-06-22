@@ -311,7 +311,7 @@ torch::List<torch::Tensor> readVideo(
         videoFrame = torch::zeros(
             {numVideoFrames, outHeight, outWidth, numChannels}, torch::kByte);
         expectedWrittenBytes =
-            (size_t)numVideoFrames * outHeight * outWidth * numChannels;
+            numVideoFrames * outHeight * outWidth * numChannels;
       }
 
       videoFramePts = torch::zeros({numVideoFrames}, torch::kLong);

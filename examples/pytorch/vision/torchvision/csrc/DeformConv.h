@@ -19,7 +19,7 @@ at::Tensor DeformConv2d_forward(
     const std::pair<int, int>& dilation,
     const int groups,
     const int offset_groups) {
-  if (input.is_cuda()) {
+  if (input.type().is_cuda()) {
 #if defined(WITH_CUDA) || defined(WITH_HIP)
     return DeformConv2d_forward_cuda(
         input.contiguous(),
@@ -58,7 +58,7 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> DeformConv2d_backward
     const std::pair<int, int>& dilation,
     const int groups,
     const int offset_groups) {
-  if (grad.is_cuda()) {
+  if (grad.type().is_cuda()) {
 #if defined(WITH_CUDA) || defined(WITH_HIP)
     return DeformConv2d_backward_cuda(
         grad.contiguous(),
@@ -88,15 +88,21 @@ std::tuple<at::Tensor, at::Tensor, at::Tensor, at::Tensor> DeformConv2d_backward
       offset_groups);
 }
 
+using namespace at;
+using torch::Tensor;
+using torch::autograd::AutogradContext;
+using torch::autograd::Variable;
+using torch::autograd::variable_list;
+
 class DeformConv2dFunction
     : public torch::autograd::Function<DeformConv2dFunction> {
  public:
-  static torch::autograd::variable_list forward(
-      torch::autograd::AutogradContext* ctx,
-      torch::autograd::Variable input,
-      torch::autograd::Variable weight,
-      torch::autograd::Variable offset,
-      torch::autograd::Variable bias,
+  static variable_list forward(
+      AutogradContext* ctx,
+      Variable input,
+      Variable weight,
+      Variable offset,
+      Variable bias,
       int64_t stride_h,
       int64_t stride_w,
       int64_t pad_h,
@@ -131,9 +137,9 @@ class DeformConv2dFunction
     };
   }
 
-  static torch::autograd::variable_list backward(
-      torch::autograd::AutogradContext* ctx,
-      torch::autograd::variable_list grad_output) {
+  static variable_list backward(
+      AutogradContext* ctx,
+      variable_list grad_output) {
     auto saved = ctx->get_saved_variables();
     auto input = saved[0];
     auto weight = saved[1];
@@ -170,14 +176,14 @@ class DeformConv2dFunction
         grad_weight,
         grad_offset,
         grad_bias,
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
-        torch::autograd::Variable(),
+        Variable(),
+        Variable(),
+        Variable(),
+        Variable(),
+        Variable(),
+        Variable(),
+        Variable(),
+        Variable(),
     };
   }
 };

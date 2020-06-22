@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from torchvision.ops import misc as misc_nn_ops
+
 from torchvision.ops import MultiScaleRoIAlign
 
 from ..utils import load_state_dict_from_url
@@ -219,13 +221,13 @@ class KeypointRCNNHeads(nn.Sequential):
     def __init__(self, in_channels, layers):
         d = []
         next_feature = in_channels
-        for out_channels in layers:
-            d.append(nn.Conv2d(next_feature, out_channels, 3, stride=1, padding=1))
+        for l in layers:
+            d.append(misc_nn_ops.Conv2d(next_feature, l, 3, stride=1, padding=1))
             d.append(nn.ReLU(inplace=True))
-            next_feature = out_channels
+            next_feature = l
         super(KeypointRCNNHeads, self).__init__(*d)
         for m in self.children():
-            if isinstance(m, nn.Conv2d):
+            if isinstance(m, misc_nn_ops.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
                 nn.init.constant_(m.bias, 0)
 
@@ -235,7 +237,7 @@ class KeypointRCNNPredictor(nn.Module):
         super(KeypointRCNNPredictor, self).__init__()
         input_features = in_channels
         deconv_kernel = 4
-        self.kps_score_lowres = nn.ConvTranspose2d(
+        self.kps_score_lowres = misc_nn_ops.ConvTranspose2d(
             input_features,
             num_keypoints,
             deconv_kernel,
@@ -251,9 +253,10 @@ class KeypointRCNNPredictor(nn.Module):
 
     def forward(self, x):
         x = self.kps_score_lowres(x)
-        return torch.nn.functional.interpolate(
-            x, scale_factor=float(self.up_scale), mode="bilinear", align_corners=False, recompute_scale_factor=False
+        x = misc_nn_ops.interpolate(
+            x, scale_factor=float(self.up_scale), mode="bilinear", align_corners=False
         )
+        return x
 
 
 model_urls = {
@@ -267,7 +270,7 @@ model_urls = {
 
 def keypointrcnn_resnet50_fpn(pretrained=False, progress=True,
                               num_classes=2, num_keypoints=17,
-                              pretrained_backbone=True, trainable_backbone_layers=3, **kwargs):
+                              pretrained_backbone=True, **kwargs):
     """
     Constructs a Keypoint R-CNN model with a ResNet-50-FPN backbone.
 
@@ -311,19 +314,11 @@ def keypointrcnn_resnet50_fpn(pretrained=False, progress=True,
     Arguments:
         pretrained (bool): If True, returns a model pre-trained on COCO train2017
         progress (bool): If True, displays a progress bar of the download to stderr
-        pretrained_backbone (bool): If True, returns a model with backbone pre-trained on Imagenet
-        num_classes (int): number of output classes of the model (including the background)
-        trainable_backbone_layers (int): number of trainable (not frozen) resnet layers starting from final block.
-            Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable.
     """
-    assert trainable_backbone_layers <= 5 and trainable_backbone_layers >= 0
-    # dont freeze any layers if pretrained model or backbone is not used
-    if not (pretrained or pretrained_backbone):
-        trainable_backbone_layers = 5
     if pretrained:
         # no need to download the backbone if pretrained is set
         pretrained_backbone = False
-    backbone = resnet_fpn_backbone('resnet50', pretrained_backbone, trainable_layers=trainable_backbone_layers)
+    backbone = resnet_fpn_backbone('resnet50', pretrained_backbone)
     model = KeypointRCNN(backbone, num_classes, num_keypoints=num_keypoints, **kwargs)
     if pretrained:
         key = 'keypointrcnn_resnet50_fpn_coco'

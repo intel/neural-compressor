@@ -1,5 +1,4 @@
 import torch
-from torch import Tensor
 import math
 from PIL import Image, ImageOps, ImageEnhance, __version__ as PILLOW_VERSION
 try:
@@ -11,9 +10,6 @@ from numpy import sin, cos, tan
 import numbers
 from collections.abc import Sequence, Iterable
 import warnings
-
-from . import functional_pil as F_pil
-from . import functional_tensor as F_t
 
 
 def _is_pil_image(img):
@@ -84,92 +80,6 @@ def to_tensor(pic):
         return img.float().div(255)
     else:
         return img
-
-
-def pil_to_tensor(pic):
-    """Convert a ``PIL Image`` to a tensor of the same type.
-
-    See ``AsTensor`` for more details.
-
-    Args:
-        pic (PIL Image): Image to be converted to tensor.
-
-    Returns:
-        Tensor: Converted image.
-    """
-    if not(_is_pil_image(pic)):
-        raise TypeError('pic should be PIL Image. Got {}'.format(type(pic)))
-
-    if accimage is not None and isinstance(pic, accimage.Image):
-        nppic = np.zeros([pic.channels, pic.height, pic.width], dtype=np.float32)
-        pic.copyto(nppic)
-        return torch.as_tensor(nppic)
-
-    # handle PIL Image
-    img = torch.as_tensor(np.asarray(pic))
-    img = img.view(pic.size[1], pic.size[0], len(pic.getbands()))
-    # put it from HWC to CHW format
-    img = img.permute((2, 0, 1))
-    return img
-
-
-def convert_image_dtype(image: torch.Tensor, dtype: torch.dtype = torch.float) -> torch.Tensor:
-    """Convert a tensor image to the given ``dtype`` and scale the values accordingly
-
-    Args:
-        image (torch.Tensor): Image to be converted
-        dtype (torch.dtype): Desired data type of the output
-
-    Returns:
-        (torch.Tensor): Converted image
-
-    .. note::
-
-        When converting from a smaller to a larger integer ``dtype`` the maximum values are **not** mapped exactly.
-        If converted back and forth, this mismatch has no effect.
-
-    Raises:
-        RuntimeError: When trying to cast :class:`torch.float32` to :class:`torch.int32` or :class:`torch.int64` as
-            well as for trying to cast :class:`torch.float64` to :class:`torch.int64`. These conversions might lead to
-            overflow errors since the floating point ``dtype`` cannot store consecutive integers over the whole range
-            of the integer ``dtype``.
-    """
-    if image.dtype == dtype:
-        return image
-
-    if image.dtype.is_floating_point:
-        # float to float
-        if dtype.is_floating_point:
-            return image.to(dtype)
-
-        # float to int
-        if (image.dtype == torch.float32 and dtype in (torch.int32, torch.int64)) or (
-            image.dtype == torch.float64 and dtype == torch.int64
-        ):
-            msg = f"The cast from {image.dtype} to {dtype} cannot be performed safely."
-            raise RuntimeError(msg)
-
-        eps = 1e-3
-        return image.mul(torch.iinfo(dtype).max + 1 - eps).to(dtype)
-    else:
-        # int to float
-        if dtype.is_floating_point:
-            max = torch.iinfo(image.dtype).max
-            image = image.to(dtype)
-            return image / max
-
-        # int to int
-        input_max = torch.iinfo(image.dtype).max
-        output_max = torch.iinfo(dtype).max
-
-        if input_max > output_max:
-            factor = (input_max + 1) // (output_max + 1)
-            image = image // factor
-            return image.to(dtype)
-        else:
-            factor = (output_max + 1) // (input_max + 1)
-            image = image.to(dtype)
-            return image * factor
 
 
 def to_pil_image(pic, mode=None):
@@ -392,12 +302,6 @@ def pad(img, padding, fill=0, padding_mode='constant'):
         'Padding mode should be either constant, edge, reflect or symmetric'
 
     if padding_mode == 'constant':
-        if isinstance(fill, numbers.Number):
-            fill = (fill,) * len(img.getbands())
-        if len(fill) != len(img.getbands()):
-            raise ValueError('fill should have the same number of elements '
-                             'as the number of channels in the image '
-                             '({}), got {} instead'.format(len(img.getbands()), len(fill)))
         if img.mode == 'P':
             palette = img.getpalette()
             image = ImageOps.expand(img, border=padding, fill=fill)
@@ -497,22 +401,19 @@ def resized_crop(img, top, left, height, width, size, interpolation=Image.BILINE
     return img
 
 
-def hflip(img: Tensor) -> Tensor:
-    """Horizontally flip the given PIL Image or torch Tensor.
+def hflip(img):
+    """Horizontally flip the given PIL Image.
 
     Args:
-        img (PIL Image or Torch Tensor): Image to be flipped. If img
-            is a Tensor, it is expected to be in [..., H, W] format,
-            where ... means it can have an arbitrary number of trailing
-            dimensions.
+        img (PIL Image): Image to be flipped.
 
     Returns:
-        PIL Image:  Horizontally flipped image.
+        PIL Image:  Horizontall flipped image.
     """
-    if not isinstance(img, torch.Tensor):
-        return F_pil.hflip(img)
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return F_t.hflip(img)
+    return img.transpose(Image.FLIP_LEFT_RIGHT)
 
 
 def _parse_fill(fill, img, min_pil_version):
@@ -602,22 +503,19 @@ def perspective(img, startpoints, endpoints, interpolation=Image.BICUBIC, fill=N
     return img.transform(img.size, Image.PERSPECTIVE, coeffs, interpolation, **opts)
 
 
-def vflip(img: Tensor) -> Tensor:
-    """Vertically flip the given PIL Image or torch Tensor.
+def vflip(img):
+    """Vertically flip the given PIL Image.
 
     Args:
-        img (PIL Image or Torch Tensor): Image to be flipped. If img
-            is a Tensor, it is expected to be in [..., H, W] format,
-            where ... means it can have an arbitrary number of trailing
-            dimensions.
+        img (PIL Image): Image to be flipped.
 
     Returns:
         PIL Image:  Vertically flipped image.
     """
-    if not isinstance(img, torch.Tensor):
-        return F_pil.vflip(img)
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return F_t.vflip(img)
+    return img.transpose(Image.FLIP_TOP_BOTTOM)
 
 
 def five_crop(img, size):
@@ -692,61 +590,67 @@ def ten_crop(img, size, vertical_flip=False):
     return first_five + second_five
 
 
-def adjust_brightness(img: Tensor, brightness_factor: float) -> Tensor:
+def adjust_brightness(img, brightness_factor):
     """Adjust brightness of an Image.
 
     Args:
-        img (PIL Image or Torch Tensor): Image to be adjusted.
+        img (PIL Image): PIL Image to be adjusted.
         brightness_factor (float):  How much to adjust the brightness. Can be
             any non negative number. 0 gives a black image, 1 gives the
             original image while 2 increases the brightness by a factor of 2.
 
     Returns:
-        PIL Image or Torch Tensor: Brightness adjusted image.
+        PIL Image: Brightness adjusted image.
     """
-    if not isinstance(img, torch.Tensor):
-        return F_pil.adjust_brightness(img, brightness_factor)
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return F_t.adjust_brightness(img, brightness_factor)
+    enhancer = ImageEnhance.Brightness(img)
+    img = enhancer.enhance(brightness_factor)
+    return img
 
 
-def adjust_contrast(img: Tensor, contrast_factor: float) -> Tensor:
+def adjust_contrast(img, contrast_factor):
     """Adjust contrast of an Image.
 
     Args:
-        img (PIL Image or Torch Tensor): Image to be adjusted.
+        img (PIL Image): PIL Image to be adjusted.
         contrast_factor (float): How much to adjust the contrast. Can be any
             non negative number. 0 gives a solid gray image, 1 gives the
             original image while 2 increases the contrast by a factor of 2.
 
     Returns:
-        PIL Image or Torch Tensor: Contrast adjusted image.
+        PIL Image: Contrast adjusted image.
     """
-    if not isinstance(img, torch.Tensor):
-        return F_pil.adjust_contrast(img, contrast_factor)
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return F_t.adjust_contrast(img, contrast_factor)
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(contrast_factor)
+    return img
 
 
-def adjust_saturation(img: Tensor, saturation_factor: float) -> Tensor:
+def adjust_saturation(img, saturation_factor):
     """Adjust color saturation of an image.
 
     Args:
-        img (PIL Image or Torch Tensor): Image to be adjusted.
+        img (PIL Image): PIL Image to be adjusted.
         saturation_factor (float):  How much to adjust the saturation. 0 will
             give a black and white image, 1 will give the original image while
             2 will enhance the saturation by a factor of 2.
 
     Returns:
-        PIL Image or Torch Tensor: Saturation adjusted image.
+        PIL Image: Saturation adjusted image.
     """
-    if not isinstance(img, torch.Tensor):
-        return F_pil.adjust_saturation(img, saturation_factor)
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
 
-    return F_t.adjust_saturation(img, saturation_factor)
+    enhancer = ImageEnhance.Color(img)
+    img = enhancer.enhance(saturation_factor)
+    return img
 
 
-def adjust_hue(img: Tensor, hue_factor: float) -> Tensor:
+def adjust_hue(img, hue_factor):
     """Adjust hue of an image.
 
     The image hue is adjusted by converting the image to HSV and
@@ -771,10 +675,26 @@ def adjust_hue(img: Tensor, hue_factor: float) -> Tensor:
     Returns:
         PIL Image: Hue adjusted image.
     """
-    if not isinstance(img, torch.Tensor):
-        return F_pil.adjust_hue(img, hue_factor)
+    if not(-0.5 <= hue_factor <= 0.5):
+        raise ValueError('hue_factor is not in [-0.5, 0.5].'.format(hue_factor))
 
-    raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    input_mode = img.mode
+    if input_mode in {'L', '1', 'I', 'F'}:
+        return img
+
+    h, s, v = img.convert('HSV').split()
+
+    np_h = np.array(h, dtype=np.uint8)
+    # uint8 addition take cares of rotation across boundaries
+    with np.errstate(over='ignore'):
+        np_h += np.uint8(hue_factor * 255)
+    h = Image.fromarray(np_h, 'L')
+
+    img = Image.merge('HSV', (h, s, v)).convert(input_mode)
+    return img
 
 
 def adjust_gamma(img, gamma, gain=1):

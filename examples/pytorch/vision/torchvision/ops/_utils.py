@@ -27,7 +27,7 @@ def convert_boxes_to_roi_format(boxes):
 
 
 def check_roi_boxes_shape(boxes):
-    if isinstance(boxes, (list, tuple)):
+    if isinstance(boxes, list):
         for _tensor in boxes:
             assert _tensor.size(1) == 4, \
                 'The shape of the tensor in the boxes list is not correct as List[Tensor[L, 4]]'

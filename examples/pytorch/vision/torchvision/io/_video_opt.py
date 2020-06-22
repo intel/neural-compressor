@@ -34,6 +34,7 @@ default_timebase = Fraction(0, 1)
 
 # simple class for torch scripting
 # the complex Fraction class from fractions module is not scriptable
+@torch.jit.script
 class Timebase(object):
     __annotations__ = {"numerator": int, "denominator": int}
     __slots__ = ["numerator", "denominator"]
@@ -48,6 +49,7 @@ class Timebase(object):
         self.denominator = denominator
 
 
+@torch.jit.script
 class VideoMetaData(object):
     __annotations__ = {
         "has_video": bool,
@@ -82,8 +84,7 @@ class VideoMetaData(object):
 
 
 def _validate_pts(pts_range):
-    # type: (List[int]) -> None
-
+    # type: (List[int])
     if pts_range[1] > 0:
         assert (
             pts_range[0] <= pts_range[1]

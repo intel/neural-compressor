@@ -30,7 +30,7 @@ def get_dist(pkgname):
         return None
 
 
-version = '0.7.0a0'
+version = '0.6.0a0'
 sha = 'Unknown'
 package_name = 'torchvision'
 
@@ -184,9 +184,7 @@ def get_extensions():
         video_reader_src = glob.glob(os.path.join(video_reader_src_dir, "*.cpp"))
         base_decoder_src_dir = os.path.join(this_dir, 'torchvision', 'csrc', 'cpu', 'decoder')
         base_decoder_src = glob.glob(
-            os.path.join(base_decoder_src_dir, "*.cpp"))
-        # exclude tests
-        base_decoder_src = [x for x in base_decoder_src if '_test.cpp' not in x]
+            os.path.join(base_decoder_src_dir, "[!sync_decoder_test,!utils_test]*.cpp"))
 
         combined_src = video_reader_src + base_decoder_src
 

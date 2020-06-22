@@ -138,6 +138,7 @@ def fuse_resnext_modules(model):
                 torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
         if type(mod) == BasicBlock:
             torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
+            torch.quantization.fuse_modules(mod, [['conv2', 'bn2']], inplace=True)
             if mod.downsample:
                 torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
 

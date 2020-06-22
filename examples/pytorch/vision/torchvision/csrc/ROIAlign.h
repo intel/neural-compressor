@@ -21,7 +21,7 @@ at::Tensor ROIAlign_forward(
     const bool aligned) // The flag for pixel shift
 // along each axis.
 {
-  if (input.is_cuda()) {
+  if (input.type().is_cuda()) {
 #if defined(WITH_CUDA) || defined(WITH_HIP)
     return ROIAlign_forward_cuda(
         input,
@@ -57,7 +57,7 @@ at::Tensor ROIAlign_backward(
     const int width,
     const int sampling_ratio,
     const bool aligned) {
-  if (grad.is_cuda()) {
+  if (grad.type().is_cuda()) {
 #if defined(WITH_CUDA) || defined(WITH_HIP)
     return ROIAlign_backward_cuda(
         grad,
@@ -89,12 +89,18 @@ at::Tensor ROIAlign_backward(
       aligned);
 }
 
+using namespace at;
+using torch::Tensor;
+using torch::autograd::AutogradContext;
+using torch::autograd::Variable;
+using torch::autograd::variable_list;
+
 class ROIAlignFunction : public torch::autograd::Function<ROIAlignFunction> {
  public:
-  static torch::autograd::variable_list forward(
-      torch::autograd::AutogradContext* ctx,
-      torch::autograd::Variable input,
-      torch::autograd::Variable rois,
+  static variable_list forward(
+      AutogradContext* ctx,
+      Variable input,
+      Variable rois,
       const double spatial_scale,
       const int64_t pooled_height,
       const int64_t pooled_width,
@@ -118,9 +124,9 @@ class ROIAlignFunction : public torch::autograd::Function<ROIAlignFunction> {
     return {result};
   }
 
-  static torch::autograd::variable_list backward(
-      torch::autograd::AutogradContext* ctx,
-      torch::autograd::variable_list grad_output) {
+  static variable_list backward(
+      AutogradContext* ctx,
+      variable_list grad_output) {
     // Use data saved in forward
     auto saved = ctx->get_saved_variables();
     auto rois = saved[0];
@@ -138,18 +144,18 @@ class ROIAlignFunction : public torch::autograd::Function<ROIAlignFunction> {
         ctx->saved_data["sampling_ratio"].toInt(),
         ctx->saved_data["aligned"].toBool());
     return {grad_in,
-            torch::autograd::Variable(),
-            torch::autograd::Variable(),
-            torch::autograd::Variable(),
-            torch::autograd::Variable(),
-            torch::autograd::Variable(),
-            torch::autograd::Variable()};
+            Variable(),
+            Variable(),
+            Variable(),
+            Variable(),
+            Variable(),
+            Variable()};
   }
 };
 
-at::Tensor roi_align(
-    const at::Tensor& input,
-    const at::Tensor& rois,
+Tensor roi_align(
+    const Tensor& input,
+    const Tensor& rois,
     const double spatial_scale,
     const int64_t pooled_height,
     const int64_t pooled_width,

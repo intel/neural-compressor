@@ -224,10 +224,3 @@ UCF101
 .. autoclass:: UCF101
   :members: __getitem__
   :special-members:
-
-CelebA
-~~~~~~
-
-.. autoclass:: CelebA
-  :members: __getitem__
-  :special-members:

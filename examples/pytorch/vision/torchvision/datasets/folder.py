@@ -81,7 +81,7 @@ class DatasetFolder(VisionDataset):
             both extensions and is_valid_file should not be passed.
 
      Attributes:
-        classes (list): List of the class names sorted alphabetically.
+        classes (list): List of the class names.
         class_to_idx (dict): Dict with items (class_name, class_index).
         samples (list): List of (sample path, class_index) tuples
         targets (list): The class_index value for each image in the dataset
@@ -94,10 +94,8 @@ class DatasetFolder(VisionDataset):
         classes, class_to_idx = self._find_classes(self.root)
         samples = make_dataset(self.root, class_to_idx, extensions, is_valid_file)
         if len(samples) == 0:
-            msg = "Found 0 files in subfolders of: {}\n".format(self.root)
-            if extensions is not None:
-                msg += "Supported extensions are: {}".format(",".join(extensions))
-            raise RuntimeError(msg)
+            raise (RuntimeError("Found 0 files in subfolders of: " + self.root + "\n"
+                                "Supported extensions are: " + ",".join(extensions)))
 
         self.loader = loader
         self.extensions = extensions
@@ -122,7 +120,7 @@ class DatasetFolder(VisionDataset):
         """
         classes = [d.name for d in os.scandir(dir) if d.is_dir()]
         classes.sort()
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
 
     def __getitem__(self, index):
@@ -195,7 +193,7 @@ class ImageFolder(DatasetFolder):
             and check if the file is a valid file (used to check of corrupt files)
 
      Attributes:
-        classes (list): List of the class names sorted alphabetically.
+        classes (list): List of the class names.
         class_to_idx (dict): Dict with items (class_name, class_index).
         imgs (list): List of (image path, class_index) tuples
     """

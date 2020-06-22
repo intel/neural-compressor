@@ -8,7 +8,7 @@ steps:
   inputs:
     awsCredentials: 'Pytorch S3 bucket'
     bucketName: 'pytorch'
-    sourceFolder: 'packaging/windows/output'
+    sourceFolder: 'packaging/windows/output/${{ parameters.cudaVer }}'
     globExpressions: '*.whl'
     targetFolder: 'whl/nightly/${{ parameters.cuVer }}/'
     filesAcl: 'public-read'

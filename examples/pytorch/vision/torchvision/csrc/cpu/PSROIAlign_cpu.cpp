@@ -336,12 +336,11 @@ std::tuple<at::Tensor, at::Tensor> PSROIAlign_forward_cpu(
     return std::make_tuple(output, channel_mapping);
   }
 
-  auto input_ = input.contiguous(), rois_ = rois.contiguous();
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(
       input.scalar_type(), "PSROIAlign_forward", [&] {
         PSROIAlignForwardCPU<scalar_t>(
             output_size,
-            input_.data_ptr<scalar_t>(),
+            input.contiguous().data_ptr<scalar_t>(),
             spatial_scale,
             channels,
             height,
@@ -349,7 +348,7 @@ std::tuple<at::Tensor, at::Tensor> PSROIAlign_forward_cpu(
             pooled_height,
             pooled_width,
             sampling_ratio,
-            rois_.data_ptr<scalar_t>(),
+            rois.contiguous().data_ptr<scalar_t>(),
             channels_out,
             output.data_ptr<scalar_t>(),
             channel_mapping.data_ptr<int>());
@@ -393,12 +392,11 @@ at::Tensor PSROIAlign_backward_cpu(
 
   int channels_out = channels / (pooled_height * pooled_width);
 
-  auto grad_ = grad.contiguous(), rois_ = rois.contiguous();
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(
       grad.scalar_type(), "PSROIAlign_backward", [&] {
         PSROIAlignBackwardCPU<scalar_t>(
             grad.numel(),
-            grad_.data_ptr<scalar_t>(),
+            grad.contiguous().data_ptr<scalar_t>(),
             channel_mapping.data_ptr<int>(),
             num_rois,
             spatial_scale,
@@ -410,7 +408,7 @@ at::Tensor PSROIAlign_backward_cpu(
             sampling_ratio,
             channels_out,
             grad_input.data_ptr<scalar_t>(),
-            rois_.data_ptr<scalar_t>());
+            rois.contiguous().data_ptr<scalar_t>());
       });
   return grad_input;
 }

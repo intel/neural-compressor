@@ -2,8 +2,8 @@
 #include <ATen/TensorUtils.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDAGuard.h>
-#include <THC/THCAtomics.cuh>
 #include <stdio.h>
+#include <ATen/cuda/CUDAApplyUtils.cuh>
 
 #include "cuda_helpers.h"
 
@@ -302,8 +302,8 @@ std::tuple<at::Tensor, at::Tensor> PSROIAlign_forward_cuda(
     const int pooled_width,
     const int sampling_ratio) {
   // Check if input tensors are CUDA tensors
-  AT_ASSERTM(input.is_cuda(), "input must be a CUDA tensor");
-  AT_ASSERTM(rois.is_cuda(), "rois must be a CUDA tensor");
+  AT_ASSERTM(input.type().is_cuda(), "input must be a CUDA tensor");
+  AT_ASSERTM(rois.type().is_cuda(), "rois must be a CUDA tensor");
 
   at::TensorArg input_t{input, "input", 1}, rois_t{rois, "rois", 2};
 
@@ -337,17 +337,16 @@ std::tuple<at::Tensor, at::Tensor> PSROIAlign_forward_cuda(
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
   dim3 grid(std::min(
-    ceil_div(static_cast<int64_t>(output_size), static_cast<int64_t>(512)),
+      at::cuda::ATenCeilDiv(
+          static_cast<int64_t>(output_size), static_cast<int64_t>(512)),
       static_cast<int64_t>(4096)));
   dim3 block(512);
 
-  auto input_ = input.contiguous(),
-       rois_ = rois.contiguous();
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(
       input.scalar_type(), "PSROIAlign_forward", [&] {
         PSROIAlignForwardCUDA<scalar_t><<<grid, block, 0, stream>>>(
             output_size,
-            input_.data_ptr<scalar_t>(),
+            input.contiguous().data_ptr<scalar_t>(),
             spatial_scale,
             channels,
             height,
@@ -355,7 +354,7 @@ std::tuple<at::Tensor, at::Tensor> PSROIAlign_forward_cuda(
             pooled_height,
             pooled_width,
             sampling_ratio,
-            rois_.data_ptr<scalar_t>(),
+            rois.contiguous().data_ptr<scalar_t>(),
             channels_out,
             output.data_ptr<scalar_t>(),
             channel_mapping.data_ptr<int>());
@@ -378,10 +377,10 @@ at::Tensor PSROIAlign_backward_cuda(
     const int height,
     const int width) {
   // Check if input tensors are CUDA tensors
-  AT_ASSERTM(grad.is_cuda(), "grad must be a CUDA tensor");
-  AT_ASSERTM(rois.is_cuda(), "rois must be a CUDA tensor");
+  AT_ASSERTM(grad.type().is_cuda(), "grad must be a CUDA tensor");
+  AT_ASSERTM(rois.type().is_cuda(), "rois must be a CUDA tensor");
   AT_ASSERTM(
-      channel_mapping.is_cuda(),
+      channel_mapping.type().is_cuda(),
       "channel_mapping must be a CUDA tensor");
 
   at::TensorArg grad_t{grad, "grad", 1}, rois_t{rois, "rois", 2},
@@ -400,7 +399,8 @@ at::Tensor PSROIAlign_backward_cuda(
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
   dim3 grid(std::min(
-    ceil_div(static_cast<int64_t>(grad.numel()), static_cast<int64_t>(512)),
+      at::cuda::ATenCeilDiv(
+          static_cast<int64_t>(grad.numel()), static_cast<int64_t>(512)),
       static_cast<int64_t>(4096)));
   dim3 block(512);
 
@@ -412,13 +412,11 @@ at::Tensor PSROIAlign_backward_cuda(
 
   int channels_out = channels / (pooled_height * pooled_width);
 
-  auto grad_ = grad.contiguous(),
-       rois_ = rois.contiguous();
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(
       grad.scalar_type(), "PSROIAlign_backward", [&] {
         PSROIAlignBackwardCUDA<scalar_t><<<grid, block, 0, stream>>>(
             grad.numel(),
-            grad_.data_ptr<scalar_t>(),
+            grad.contiguous().data_ptr<scalar_t>(),
             channel_mapping.data_ptr<int>(),
             num_rois,
             spatial_scale,
@@ -430,7 +428,7 @@ at::Tensor PSROIAlign_backward_cuda(
             sampling_ratio,
             channels_out,
             grad_input.data_ptr<scalar_t>(),
-            rois_.data_ptr<scalar_t>());
+            rois.contiguous().data_ptr<scalar_t>());
       });
   AT_CUDA_CHECK(cudaGetLastError());
   return grad_input;

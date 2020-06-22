@@ -129,20 +129,6 @@ class ONNXExporterTester(unittest.TestCase):
         model = ops.RoIPool((pool_h, pool_w), 2)
         self.run_model(model, [(x, rois)])
 
-    def test_resize_images(self):
-        class TransformModule(torch.nn.Module):
-            def __init__(self_module):
-                super(TransformModule, self_module).__init__()
-                self_module.transform = self._init_test_generalized_rcnn_transform()
-
-            def forward(self_module, images):
-                return self_module.transform.resize(images, None)[0]
-
-        input = torch.rand(3, 10, 20)
-        input_test = torch.rand(3, 100, 150)
-        self.run_model(TransformModule(), [(input,), (input_test,)],
-                       input_names=["input1"], dynamic_axes={"input1": [0, 1, 2, 3]})
-
     def test_transform_images(self):
 
         class TransformModule(torch.nn.Module):
@@ -335,10 +321,10 @@ class ONNXExporterTester(unittest.TestCase):
 
     def get_test_images(self):
         image_url = "http://farm3.staticflickr.com/2469/3915380994_2e611b1779_z.jpg"
-        image = self.get_image_from_url(url=image_url, size=(100, 320))
+        image = self.get_image_from_url(url=image_url, size=(200, 300))
 
         image_url2 = "https://pytorch.org/tutorials/_static/img/tv_tutorial/tv_image05.png"
-        image2 = self.get_image_from_url(url=image_url2, size=(250, 380))
+        image2 = self.get_image_from_url(url=image_url2, size=(250, 200))
 
         images = [image]
         test_images = [image2]
@@ -346,17 +332,11 @@ class ONNXExporterTester(unittest.TestCase):
 
     def test_faster_rcnn(self):
         images, test_images = self.get_test_images()
-        dummy_image = [torch.ones(3, 100, 100) * 0.3]
+
         model = models.detection.faster_rcnn.fasterrcnn_resnet50_fpn(pretrained=True, min_size=200, max_size=300)
         model.eval()
         model(images)
-        # Test exported model on images of different size, or dummy input
-        self.run_model(model, [(images,), (test_images,), (dummy_image,)], input_names=["images_tensors"],
-                       output_names=["outputs"],
-                       dynamic_axes={"images_tensors": [0, 1, 2, 3], "outputs": [0, 1, 2, 3]},
-                       tolerate_small_mismatch=True)
-        # Test exported model for an image with no detections on other images
-        self.run_model(model, [(dummy_image,), (images,)], input_names=["images_tensors"],
+        self.run_model(model, [(images,), (test_images,)], input_names=["images_tensors"],
                        output_names=["outputs"],
                        dynamic_axes={"images_tensors": [0, 1, 2, 3], "outputs": [0, 1, 2, 3]},
                        tolerate_small_mismatch=True)
@@ -395,26 +375,17 @@ class ONNXExporterTester(unittest.TestCase):
 
         assert torch.all(out2.eq(out_trace2))
 
+    @unittest.skip("Disable test until export of interpolate script module to ONNX is fixed")
     def test_mask_rcnn(self):
         images, test_images = self.get_test_images()
-        dummy_image = [torch.ones(3, 100, 100) * 0.3]
+
         model = models.detection.mask_rcnn.maskrcnn_resnet50_fpn(pretrained=True, min_size=200, max_size=300)
         model.eval()
         model(images)
-        # Test exported model on images of different size, or dummy input
-        self.run_model(model, [(images,), (test_images,), (dummy_image,)],
+        self.run_model(model, [(images,), (test_images,)],
                        input_names=["images_tensors"],
-                       output_names=["boxes", "labels", "scores", "masks"],
-                       dynamic_axes={"images_tensors": [0, 1, 2, 3], "boxes": [0, 1], "labels": [0],
-                                     "scores": [0], "masks": [0, 1, 2, 3]},
-                       tolerate_small_mismatch=True)
-        # TODO: enable this test once dynamic model export is fixed
-        # Test exported model for an image with no detections on other images
-        self.run_model(model, [(dummy_image,), (images,)],
-                       input_names=["images_tensors"],
-                       output_names=["boxes", "labels", "scores", "masks"],
-                       dynamic_axes={"images_tensors": [0, 1, 2, 3], "boxes": [0, 1], "labels": [0],
-                                     "scores": [0], "masks": [0, 1, 2, 3]},
+                       output_names=["outputs"],
+                       dynamic_axes={"images_tensors": [0, 1, 2, 3], "outputs": [0, 1, 2, 3]},
                        tolerate_small_mismatch=True)
 
     # Verify that heatmaps_to_keypoints behaves the same in tracing.
@@ -445,19 +416,26 @@ class ONNXExporterTester(unittest.TestCase):
         assert torch.all(out2[0].eq(out_trace2[0]))
         assert torch.all(out2[1].eq(out_trace2[1]))
 
+    @unittest.skip("Disable test until export of interpolate script module to ONNX is fixed")
     def test_keypoint_rcnn(self):
+        class KeyPointRCNN(torch.nn.Module):
+            def __init__(self):
+                super(KeyPointRCNN, self).__init__()
+                self.model = models.detection.keypoint_rcnn.keypointrcnn_resnet50_fpn(
+                    pretrained=True, min_size=200, max_size=300)
+
+            def forward(self, images):
+                output = self.model(images)
+                # TODO: The keypoints_scores require the use of Argmax that is updated in ONNX.
+                #       For now we are testing all the output of KeypointRCNN except keypoints_scores.
+                #       Enable When Argmax is updated in ONNX Runtime.
+                return output[0]['boxes'], output[0]['labels'], output[0]['scores'], output[0]['keypoints']
+
         images, test_images = self.get_test_images()
-        dummy_images = [torch.ones(3, 100, 100) * 0.3]
-        model = models.detection.keypoint_rcnn.keypointrcnn_resnet50_fpn(pretrained=True, min_size=200, max_size=300)
+        model = KeyPointRCNN()
         model.eval()
         model(images)
-        self.run_model(model, [(images,), (test_images,), (dummy_images,)],
-                       input_names=["images_tensors"],
-                       output_names=["outputs1", "outputs2", "outputs3", "outputs4"],
-                       dynamic_axes={"images_tensors": [0, 1, 2, 3]},
-                       tolerate_small_mismatch=True)
-
-        self.run_model(model, [(dummy_images,), (test_images,)],
+        self.run_model(model, [(images,), (test_images,)],
                        input_names=["images_tensors"],
                        output_names=["outputs1", "outputs2", "outputs3", "outputs4"],
                        dynamic_axes={"images_tensors": [0, 1, 2, 3]},
