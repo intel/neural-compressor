@@ -4,6 +4,7 @@ from ..utils import LazyImport
 from collections import OrderedDict
 import os
 import multiprocessing
+import subprocess
 
 tensorflow = LazyImport('tensorflow')
 
@@ -19,7 +20,8 @@ class TensorFlowAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
         super(TensorFlowAdaptor, self).__init__(framework_specific_info)
 
-        self.op_wise_config = {}
+        self.quantize_config = {}
+        self.quantize_config['op_wise_config'] = {}
         self.framework_specific_info = framework_specific_info
 
     def evaluate(self, graph, dataloader, metric=None):
@@ -29,31 +31,37 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
 
         num_inter_threads = 2
-        num_intra_threads = 28
-        num_batches = 100
+        num_intra_threads = int(
+            subprocess.check_output(
+                'cat /proc/cpuinfo | grep "cpu cores"|uniq|cut -d ":" -f 2',
+                shell=True))
 
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.inter_op_parallelism_threads = num_inter_threads
         config.intra_op_parallelism_threads = num_intra_threads
-        with tf.Session() as sess:
-            sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-            for batch in range(num_batches):
-                try:
-                    np_images, np_labels = sess.run([dataloader[0][0], dataloader[1][0]])
 
-                    predictions = sess_graph.run(output_tensor,
-                                                 {input_tensor: np_images})
-                    acc = metric.evaluate(predictions, np_labels)
+        sess_graph = tf.compat.v1.Session(graph=graph, config=config)
+        print ("Start to evaluate model...")
+        # batch = 0
+        for content in dataloader:
+            try:
+                np_images, np_labels = content[0], content[1]
 
-                    print("Processed %d batches." % (batch + 1))
-                except tf.errors.OutOfRangeError:
-                    print("Running out of images from dataset.")
-                    break
+                predictions = sess_graph.run(output_tensor,
+                                                {input_tensor: np_images})
+                # print("Processed %d batches."% (batch + 1))
+                # batch += 1
+                acc = metric.evaluate(predictions, np_labels)
+
+            except tf.errors.OutOfRangeError:
+                print("Running out of images from dataset.")
+                break
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         # TODO add the op-wise config parse
         self.excluded_nodes = []
+        self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
 
@@ -62,14 +70,15 @@ class TensorFlowAdaptor(Adaptor):
                 continue
             is_perchannel = tuning_cfg['op'][each_op_info]['activation']['granularity'] == 'perchannel'
             algo = tuning_cfg['op'][each_op_info]['activation']['algo']
-            self.op_wise_config[op_name] = (is_perchannel, algo)
+            self.quantize_config['op_wise_config'][op_name] = (
+                is_perchannel, algo)
 
     def quantize(self, tune_cfg, model, data_loader):
         quantized_model = os.path.join(os.getcwd() + "tf_quantized.model")
         self.tuning_cfg_to_fw(tune_cfg)
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model, quantized_model, inputs=self.framework_specific_info['inputs'],
-                                   outputs=self.framework_specific_info['outputs'], op_wise_config=self.op_wise_config, data_loader=data_loader)
+                                   outputs=self.framework_specific_info['outputs'], qt_config=self.quantize_config, data_loader=data_loader)
         return converter.convert()
 
     def _query_quantizable_ops(self, graph):
@@ -104,7 +113,8 @@ class TensorFlowAdaptor(Adaptor):
                     node.name, self.unify_op_type_mapping[node.op]
                 )] = conv_config if self.unify_op_type_mapping[node.op].find(
                     "Conv") != -1 else non_conv_config
-                self.op_wise_config[node.name] = (False, "minmax")
+                self.quantize_config['op_wise_config'][node.name] = (
+                    False, "minmax")
 
         return self.quantizable_op_details
 
@@ -141,4 +151,3 @@ class TensorFlowAdaptor(Adaptor):
                                    outputs=output_node_name,
                                    data_loader=dataloader)
         return converter.inspect_tensor(op_list, iteration_list)
-

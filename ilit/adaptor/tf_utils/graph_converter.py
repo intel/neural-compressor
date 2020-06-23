@@ -48,6 +48,7 @@ import threading
 import time
 import numpy as np
 import ast
+import subprocess
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -132,7 +133,7 @@ class GraphConverter:
                  output_graph,
                  inputs=[],
                  outputs=[],
-                 op_wise_config={},
+                 qt_config={},
                  data_loader=None):
         """Convert graph.
 
@@ -154,7 +155,8 @@ class GraphConverter:
         # self.excluded_ops = excluded_ops
         # self.excluded_nodes = excluded_nodes
         self.algo = "Direct"
-        self.op_wise_config = op_wise_config
+        self.calib_iteration = qt_config['calib_iteration']
+        self.op_wise_config = qt_config['op_wise_config']
         self._low_precision_mode = 'eightbit'
         self._calibration_data = []
         self._fp32_print_data = []
@@ -190,7 +192,7 @@ class GraphConverter:
 
         return graph
 
-    def _inference(self, input_graph, batch_size=1, num_batches=10, num_inter_threads=2, num_intra_threads=28):
+    def _inference(self, input_graph):
         graph = self.load_graph(input_graph)
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
         output_tensor = graph.get_tensor_by_name(self.outputs[0] + ":0")
@@ -198,22 +200,28 @@ class GraphConverter:
         import tensorflow as tf
 
         config = tf.ConfigProto()
-        config.inter_op_parallelism_threads = num_inter_threads
-        config.intra_op_parallelism_threads = num_intra_threads
+        config.inter_op_parallelism_threads = 2
+        config.intra_op_parallelism_threads = int(
+            subprocess.check_output(
+                'cat /proc/cpuinfo | grep "cpu cores"|uniq|cut -d ":" -f 2',
+                shell=True))
 
-        with tf.Session() as sess:
-            sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-            for batch in range(num_batches):
+        quantize_batch = 0
+        sess_graph = tf.compat.v1.Session(graph=graph, config=config)
+        print ("Start to quantize graph...")
+        for content in self.data_loader:
+            try:
+                np_images = content[0]
+                predictions = sess_graph.run(output_tensor,
+                                            {input_tensor: np_images})
 
-                try:
-                    np_images = sess.run(self.data_loader[0][0])
-                    predictions = sess_graph.run(output_tensor,
-                                                {input_tensor: np_images})
-
-                    print("Processed %d batches."% (batch + 1))
-                except tf.errors.OutOfRangeError:
-                    print("Running out of images from dataset.")
+                # print("Processed %d batches."% (quantize_batch + 1))
+                quantize_batch += 1
+                if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
                     break
+            except tf.errors.OutOfRangeError:
+                print("Running out of images from dataset.")
+                break
 
     def _check_tf_version(self):
         is_supported_version = False

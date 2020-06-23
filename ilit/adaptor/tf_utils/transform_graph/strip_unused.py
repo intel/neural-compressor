@@ -26,6 +26,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from .graph_transform_base import GraphTransformBase
 
+import tensorflow as tf
 import copy
 
 
@@ -90,6 +91,6 @@ class StripUnusedNodes(GraphTransformBase):
         if not_found:
             raise KeyError("The following input nodes were not found: %s" % not_found)
 
-        output_graph_def = graph_util.extract_sub_graph(inputs_replaced_graph_def,
+        output_graph_def = tf.compat.v1.graph_util.extract_sub_graph(inputs_replaced_graph_def,
                                                         self.output_node_names)
         return output_graph_def
