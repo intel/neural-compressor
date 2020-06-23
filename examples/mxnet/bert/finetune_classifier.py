@@ -165,11 +165,6 @@ parser.add_argument(
     action='store_true',
     help='Use with --only_inference, If set, will use auto-tuning tool to do INT8 inference.')
 parser.add_argument(
-    '--auto_tuning_config',
-    type=str,
-    default='./bert.yaml',
-    help='Config for auto-tuning tool. Must provide when use --auto_tuning.')
-parser.add_argument(
     '--dtype',
     type=str,
     default='float32',
@@ -243,7 +238,6 @@ if args.dtype == 'float16':
 # model and loss
 only_inference = args.only_inference
 auto_tuning = args.auto_tuning
-auto_tuning_config = args.auto_tuning_config
 model_name = args.bert_model
 dataset = args.bert_dataset
 pretrained_bert_parameters = args.pretrained_bert_parameters
