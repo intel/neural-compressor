@@ -1,8 +1,7 @@
 framework: mxnet                               #possible values are tensorflow, mxnet and pytorch
 
 tuning:
-    metric:
-      - topk: 1                                  # tuning metrics: accuracy 
+
     accuracy_criterion: 
       - absolute: 0.01                          # the tuning target of accuracy loss percentage: 1%
     timeout: 3600                                # tuning timeout (seconds)
