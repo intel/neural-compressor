@@ -3,7 +3,7 @@ framework: pytorch                               #possible values are tensorflow
 device: cpu
 
 tuning:
-    strategy: bayesian 
+    #strategy: bayesian 
     metric:
       - topk: 1                                  # tuning metrics: accuracy 
     accuracy_criterion:
