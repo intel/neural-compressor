@@ -70,7 +70,9 @@ class TensorFlowAdaptor(Adaptor):
             if tuning_cfg['op'][each_op_info]['activation']['data_type'] == 'fp32':
                 self.excluded_nodes.append(op_name)
                 continue
-            is_perchannel = tuning_cfg['op'][each_op_info]['activation']['granularity'] == 'perchannel'
+            is_perchannel = False
+            if 'weight' in tuning_cfg['op'][each_op_info]:
+                is_perchannel = tuning_cfg['op'][each_op_info]['weight']['granularity'] == 'per_channel'
             algo = tuning_cfg['op'][each_op_info]['activation']['algo']
             self.quantize_config['op_wise_config'][op_name] = (
                 is_perchannel, algo)
@@ -97,18 +99,23 @@ class TensorFlowAdaptor(Adaptor):
             'activation': {
                 'data_type': ['uint8', 'fp32'],
                 'algo': ['minmax', 'kl'],
-                'mode': ['sym']
+                'mode': ['sym'],
+                'granularity': ['per_tensor']
             },
             'weight': {
                 'data_type': ['int8', 'fp32'],
-                'algo': ['kl']
+                'algo': ['minmax'],
+                'mode': ['sym'],
+                'granularity': ['per_channel', 'per_tensor']
+
             }
         }
         non_conv_config = {
             'activation': {
                 'data_type': ['uint8', 'fp32'],
                 'algo': ['minmax'],
-                'mode': ['sym']
+                'mode': ['sym'],
+                'granularity': ['per_tensor']
             },
         }
 
@@ -118,7 +125,7 @@ class TensorFlowAdaptor(Adaptor):
                 self.quantizable_op_details[(
                     node.name, self.unify_op_type_mapping[node.op]
                 )] = conv_config if self.unify_op_type_mapping[node.op].find(
-                    "Conv") != -1 else non_conv_config
+                    "conv2d") != -1 else non_conv_config
                 self.quantize_config['op_wise_config'][node.name] = (
                     False, "minmax")
 
