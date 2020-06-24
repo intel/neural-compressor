@@ -1,31 +1,18 @@
 framework: tensorflow                                 #possible values are tensorflow, mxnet and pytorch
 
-device: cpu
 
 calibration:                                         
-  - iterations: 1, 5, 10, 20
-    algo:                                            
-      - weight: minmax
-      - activation: minmax
+  - iterations: 1, 5, 10
 
-quantization:                                        # default setting of PTQ, allow user config
-  - approach: post_training_static_quant             # other possible values are: post_training_dynamic_quant / quant_aware_training
+quantization:                                        
   - weight:
-      - granularity: per_tensor
-        mode: asym
-        data_type: int8
-  - activation:
-      - granularity: per_tensor
-        mode: asym
-        data_type: int8
+      - granularity: per_channel
 
 tuning:
     metric:
       - topk: 1                                     
     accuracy_criterion:
-      - absolute: 0.01                              # the tuning target of accuracy loss percentage: 1%
+      - absolute: 0.01                              
     timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed                       
 
-snapshot:
-  - path: /path/to/snapshot

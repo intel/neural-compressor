@@ -203,7 +203,7 @@ if __name__ == '__main__':
     at = iLit.Tuner(args.config)
 
     dataloader = Dataloader(args.data_location, 'validation',
-                            args.input_height, args.intput_width,
+                            args.input_height, args.input_width,
                             args.batch_size)
 
     rn50_input_output = {
