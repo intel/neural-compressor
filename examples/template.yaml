@@ -26,7 +26,7 @@ tuning:
     accuracy_criterion:
       - relative:  0.01                              # default value, other value is relative. this example allows relative accuracy loss: 1%
     objective: performance                           # default value, other values are performance, modelsize, footprint. it's objective with accuracy driven
-    timeout: 3                                       # tuning timeout (seconds), 0 means early stop
+    timeout: 0                                       # tuning timeout (seconds), 0 means early stop
     random_seed: 9527                                # random seed for deterministic tuning
 
 snapshot:

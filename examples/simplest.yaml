@@ -10,7 +10,7 @@ tuning:
     metric:                                          # only needed if user doesn't provide test_func
       - topk: 1                                      # built-in metrics are topk, map, f1, allow user to register new metric
     goal: 0.01                                       # allowed accuracy loss: 1%
-    timeout: 3600                                    # tuning timeout (seconds), 0 means early stop
+    timeout: 0                                       # tuning timeout (seconds), 0 means early stop
 
 snapeshot:
   - path: /path/to/snapshot

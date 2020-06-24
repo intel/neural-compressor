@@ -1,4 +1,4 @@
-framework: tensorflow                                 #possible values are tensorflow, mxnet and pytorch
+framework: tensorflow                                # possible values are tensorflow, mxnet and pytorch
 
 device: cpu
 
