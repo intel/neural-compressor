@@ -24,6 +24,9 @@ import warnings
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss
+from torch.utils import mkldnn as mkldnn_utils
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from .activations import gelu, gelu_new, swish
 from .configuration_bert import BertConfig
@@ -146,7 +149,7 @@ class BertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, bf16=False):
         super().__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
@@ -156,6 +159,7 @@ class BertEmbeddings(nn.Module):
         # any TensorFlow checkpoint file
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.bf16 = bf16
 
     def forward(self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None):
         if input_ids is not None:
@@ -177,13 +181,15 @@ class BertEmbeddings(nn.Module):
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
         embeddings = inputs_embeds + position_embeddings + token_type_embeddings
+        if self.bf16:
+            embeddings = embeddings.to(torch.bfloat16)
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings)
         return embeddings
 
 
 class BertSelfAttention(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv = False, bf16=False, mkldnn_train=False):
         super().__init__()
         if config.hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
             raise ValueError(
@@ -191,15 +197,24 @@ class BertSelfAttention(nn.Module):
                 "heads (%d)" % (config.hidden_size, config.num_attention_heads)
             )
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
         self.num_attention_heads = config.num_attention_heads
         self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
+        self.mix_qkv = mix_qkv
+        if not self.mix_qkv:
+            self.query = nn.Linear(config.hidden_size, self.all_head_size)
+            self.key = nn.Linear(config.hidden_size, self.all_head_size)
+            self.value = nn.Linear(config.hidden_size, self.all_head_size)
+        else:
+            self.mixed = nn.Linear(config.hidden_size, 3 * self.all_head_size)
 
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
+        self.bf16 = bf16
+        self.mkldnn_train = mkldnn_train
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
@@ -215,25 +230,46 @@ class BertSelfAttention(nn.Module):
         encoder_attention_mask=None,
         output_attentions=False,
     ):
-        mixed_query_layer = self.query(hidden_states)
+        if self.mkldnn_train:
+            hidden_states = hidden_states.to_mkldnn()
+        if not self.mix_qkv:
+           mixed_query_layer = self.query(hidden_states)
 
-        # If this is instantiated as a cross-attention module, the keys
-        # and values come from an encoder; the attention mask needs to be
-        # such that the encoder's padding tokens are not attended to.
-        if encoder_hidden_states is not None:
-            mixed_key_layer = self.key(encoder_hidden_states)
-            mixed_value_layer = self.value(encoder_hidden_states)
-            attention_mask = encoder_attention_mask
+            # If this is instantiated as a cross-attention module, the keys
+            # and values come from an encoder; the attention mask needs to be
+            # such that the encoder's padding tokens are not attended to.
+            if encoder_hidden_states is not None:
+                mixed_key_layer = self.key(encoder_hidden_states)
+                mixed_value_layer = self.value(encoder_hidden_states)
+                attention_mask = encoder_attention_mask
+            else:
+                mixed_key_layer = self.key(hidden_states)
+                mixed_value_layer = self.value(hidden_states)
         else:
-            mixed_key_layer = self.key(hidden_states)
-            mixed_value_layer = self.value(hidden_states)
+            hidden_states = self.quant(hidden_states)
+            mixed_layer = self.mixed(hidden_states)
+            with context.SetLUTEnabled(True):
+                mixed_layer = self.dequant(mixed_layer)
+            mixed_layer = torch.chunk(mixed_layer, 3, dim = 2)
+            mixed_query_layer = mixed_layer[0]
+            mixed_key_layer = mixed_layer[1]
+            mixed_value_layer = mixed_layer[2] 
+        if self.mkldnn_train:
+            mixed_query_layer = mixed_query_layer.to_dense()
+            mixed_key_layer = mixed_key_layer.to_dense()
+            mixed_value_layer = mixed_value_layer.to_dense()
 
         query_layer = self.transpose_for_scores(mixed_query_layer)
         key_layer = self.transpose_for_scores(mixed_key_layer)
         value_layer = self.transpose_for_scores(mixed_value_layer)
 
         # Take the dot product between "query" and "key" to get the raw attention scores.
+        if self.bf16:
+            query_layer = query_layer.to(torch.float)
+            key_layer = key_layer.to(torch.float)
         attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
+        if self.bf16:
+            attention_scores = attention_scores.to(torch.bfloat16)
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
         if attention_mask is not None:
             # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
@@ -250,7 +286,13 @@ class BertSelfAttention(nn.Module):
         if head_mask is not None:
             attention_probs = attention_probs * head_mask
 
+        if self.bf16:
+            attention_probs = attention_probs.to(torch.float)
+            value_layer = value_layer.to(torch.float)
         context_layer = torch.matmul(attention_probs, value_layer)
+        if self.bf16:
+            attention_probs = attention_probs.to(torch.bfloat16)
+            context_layer = context_layer.to(torch.bfloat16)
 
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
@@ -261,24 +303,37 @@ class BertSelfAttention(nn.Module):
 
 
 class BertSelfOutput(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mkldnn_train=False):
         super().__init__()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.mkldnn_train = mkldnn_train
+        self.skip_add = nn.quantized.FloatFunctional()
 
     def forward(self, hidden_states, input_tensor):
+        if self.mkldnn_train:
+            hidden_states = hidden_states.to_mkldnn()
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        with context.SetLUTEnabled(True):
+            hidden_states = self.dequant(hidden_states)
+        if self.mkldnn_train:
+            hidden_states = hidden_states.to_dense()
         hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        hidden_states_input = self.skip_add.add(hidden_states + input_tensor)
+        hidden_states = self.LayerNorm(hidden_states_input)
         return hidden_states
 
 
 class BertAttention(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv = False, bf16=False, mkldnn_train=False):
         super().__init__()
-        self.self = BertSelfAttention(config)
-        self.output = BertSelfOutput(config)
+        self.mix_qkv = mix_qkv
+        self.self = BertSelfAttention(config, mix_qkv=self.mix_qkv, bf16=bf16, mkldnn_train=mkldnn_train)
+        self.output = BertSelfOutput(config, mkldnn_train=mkldnn_train)
         self.pruned_heads = set()
 
     def prune_heads(self, heads):
@@ -317,43 +372,67 @@ class BertAttention(nn.Module):
 
 
 class BertIntermediate(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv = False, bf16=False, mkldnn_train=False):
         super().__init__()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
-        if isinstance(config.hidden_act, str):
+
+        if mix_qkv:
+            self.intermediate_act_fn = nn.GELU()
+        elif isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
+        self.mkldnn_train = mkldnn_train
 
     def forward(self, hidden_states):
+        if self.mkldnn_train:
+            hidden_states = hidden_states.to_mkldnn()
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+         if self.mkldnn_train:
+            hidden_states = hidden_states.to_dense()
         hidden_states = self.intermediate_act_fn(hidden_states)
         return hidden_states
 
 
 class BertOutput(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mkldnn_train=False, mkldnn_train=False):
         super().__init__()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
         self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.mkldnn_train = mkldnn_train
+        self.skip_add = nn.quantized.FloatFunctional()
 
     def forward(self, hidden_states, input_tensor):
+        if self.mkldnn_train:
+            hidden_states = hidden_states.to_mkldnn()
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        with context.SetLUTEnabled(True):
+            hidden_states = self.dequant(hidden_states)
+        if self.mkldnn_train:
+            hidden_states = hidden_states.to_dense()
         hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        hidden_states_input = self.skip_add.add(hidden_states + input_tensor)
+        hidden_states = self.LayerNorm(hidden_states_input)
         return hidden_states
 
 
 class BertLayer(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
         super().__init__()
-        self.attention = BertAttention(config)
+        self.mix_qkv = mix_qkv
+        self.attention = BertAttention(config, mix_qkv=self.mix_qkv, bf16=bf16, mkldnn_train=mkldnn_train)
         self.is_decoder = config.is_decoder
         if self.is_decoder:
-            self.crossattention = BertAttention(config)
-        self.intermediate = BertIntermediate(config)
-        self.output = BertOutput(config)
+            self.crossattention = BertAttention(config, bf16=bf16, mkldnn_train=mkldnn_train)
+        self.intermediate = BertIntermediate(config, mix_qkv=mix_qkv, bf16=bf16, mkldnn_train=mkldnn_train)
+        self.output = BertOutput(config, mkldnn_train=mkldnn_train)
 
     def forward(
         self,
@@ -389,10 +468,11 @@ class BertLayer(nn.Module):
 
 
 class BertEncoder(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
         super().__init__()
         self.output_hidden_states = config.output_hidden_states
-        self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
+        self.mix_qkv=mix_qkv
+        self.layer = nn.ModuleList([BertLayer(config, mix_qkv=self.mix_qkv, bf16=bf16, mkldnn_train=mkldnn_train) for _ in range(config.num_hidden_layers)])
 
     def forward(
         self,
@@ -435,16 +515,26 @@ class BertEncoder(nn.Module):
 
 
 class BertPooler(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, mkldnn_train=False):
         super().__init__()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
+        self.mkldnn_train = mkldnn_train
 
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
+        if self.mkldnn_train:
+            first_token_tensor = first_token_tensor.to_mkldnn()
+        first_token_tensor = self.quant(first_token_tensor)
         pooled_output = self.dense(first_token_tensor)
+        with context.SetLUTEnabled(True):
+            pooled_output = self.dequant(pooled_output)
+        if self.mkldnn_train:
+            pooled_output = pooled_output.to_dense()
         pooled_output = self.activation(pooled_output)
         return pooled_output
 
@@ -620,15 +710,17 @@ class BertModel(BertPreTrainedModel):
 
     """
 
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
         super().__init__(config)
         self.config = config
+        self.mix_qkv = mix_qkv
 
-        self.embeddings = BertEmbeddings(config)
-        self.encoder = BertEncoder(config)
-        self.pooler = BertPooler(config)
+        self.embeddings = BertEmbeddings(config, bf16)
+        self.encoder = BertEncoder(config, mix_qkv=self.mix_qkv, bf16=bf16, mkldnn_train=mkldnn_train)
+        self.pooler = BertPooler(config, mkldnn_train=mkldnn_train)
 
         self.init_weights()
+        self.bf16 =bf16
 
     def get_input_embeddings(self):
         return self.embeddings.word_embeddings
@@ -740,6 +832,8 @@ class BertModel(BertPreTrainedModel):
         embedding_output = self.embeddings(
             input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids, inputs_embeds=inputs_embeds
         )
+        if self.bf16:
+            extended_attention_mask = extended_attention_mask.to(torch.bfloat16)
         encoder_outputs = self.encoder(
             embedding_output,
             attention_mask=extended_attention_mask,
@@ -1197,15 +1291,20 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
     BERT_START_DOCSTRING,
 )
 class BertForSequenceClassification(BertPreTrainedModel):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
         super().__init__(config)
         self.num_labels = config.num_labels
+        self.mix_qkv = mix_qkv
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
         self.bert = BertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
+        self.bf16 = bf16
+        self.mkldnn_train = mkldnn_train
 
     @add_start_docstrings_to_callable(BERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
     def forward(
@@ -1273,15 +1372,24 @@ class BertForSequenceClassification(BertPreTrainedModel):
         pooled_output = outputs[1]
 
         pooled_output = self.dropout(pooled_output)
+        if self.mkldnn_train:
+            pooled_output = pooled_output.to_mkldnn()
+        pooled_output = self.quant(pooled_output)
         logits = self.classifier(pooled_output)
-
+        with context.SetLUTEnabled(True):
+            logits = self.dequant(logits)
+        if self.mkldnn_train:
+            logits = logits.to_dense()
         outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
 
         if labels is not None:
             if self.num_labels == 1:
                 #  We are doing regression
                 loss_fct = MSELoss()
-                loss = loss_fct(logits.view(-1), labels.view(-1))
+                if self.bf16:
+                    loss = loss_fct(logits.view(-1), labels.view(-1).bfloat16())
+                else:
+                    loss = loss_fct(logits.view(-1), labels.view(-1))
             else:
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
@@ -1506,11 +1614,13 @@ class BertForTokenClassification(BertPreTrainedModel):
     BERT_START_DOCSTRING,
 )
 class BertForQuestionAnswering(BertPreTrainedModel):
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False):
         super().__init__(config)
         self.num_labels = config.num_labels
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
-        self.bert = BertModel(config)
+        self.bert = BertModel(config, mix_qkv=mix_qkv)
         self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
@@ -1589,8 +1699,10 @@ class BertForQuestionAnswering(BertPreTrainedModel):
         )
 
         sequence_output = outputs[0]
-
+        sequence_output = self.quant(sequence_output)
         logits = self.qa_outputs(sequence_output)
+        with context.SetLUTEnabled(True):
+            logits = self.dequant(logits)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)

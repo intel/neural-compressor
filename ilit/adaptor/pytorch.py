@@ -73,7 +73,12 @@ class PyTorchAdaptor(Adaptor):
         assert iterations >= 1
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):
-                output = q_model(input)
+                if isinstance(input, list) or isinstance(input, tuple):
+                    output = q_model(input)
+                elif isinstance(input, dict):
+                    output = q_model(**input)
+                else:
+                    assert False, "input should be tuple or dict!"
 
                 iterations -= 1
                 if iterations == 0:
@@ -89,7 +94,12 @@ class PyTorchAdaptor(Adaptor):
         model.eval()
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):
-                output = model(input)
+                if isinstance(input, list) or isinstance(input, tuple):
+                    output = model(input)
+                elif isinstance(input, dict):
+                    output = model(**input)
+                else:
+                    assert False, "input should be tuple or dict!"
                 acc = metric.evaluate(output, label)
         return acc
 
@@ -189,10 +199,11 @@ class PyTorchAdaptor(Adaptor):
     def _propagate_qconfig(self, model, op_qcfgs):
         fallback_ops = []
         for k, v in op_qcfgs.items():
-            if v is None and k[1] != torch.quantization.QuantStub and k[1] != torch.quantization.DeQuantStub:
+            if v is None and k[1] != torch.quantization.QuantStub \
+                and k[1] != torch.quantization.DeQuantStub and k[1] != torch.nn.quantized.FloatFunctional:
                 fallback_ops.append(k[0])
             else:
-                if v is None and (k[1] == torch.quantization.QuantStub or k[1] == torch.quantization.DeQuantStub):
+                if v is None:
                     weights_observer = self._observer('minmax', 'asym', 'per_channel', 'int8')
                     activation_observer = self._observer('minmax', 'sym', 'per_tensor', 'uint8')
                     v = torch.quantization.QConfig(activation=activation_observer, weight=weights_observer)
