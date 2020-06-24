@@ -73,12 +73,12 @@ class PyTorchAdaptor(Adaptor):
         assert iterations >= 1
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):
-                if isinstance(input, list) or isinstance(input, tuple):
-                    output = q_model(input)
-                elif isinstance(input, dict):
+                if isinstance(input, dict):
                     output = q_model(**input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    output = q_model(*input)
                 else:
-                    assert False, "input should be tuple or dict!"
+                    output = q_model(input)
 
                 iterations -= 1
                 if iterations == 0:
@@ -94,12 +94,12 @@ class PyTorchAdaptor(Adaptor):
         model.eval()
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):
-                if isinstance(input, list) or isinstance(input, tuple):
-                    output = model(input)
-                elif isinstance(input, dict):
+                if isinstance(input, dict):
                     output = model(**input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    output = model(*input)
                 else:
-                    assert False, "input should be tuple or dict!"
+                    output = model(input)
                 acc = metric.evaluate(output, label)
         return acc
 

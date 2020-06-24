@@ -76,6 +76,8 @@ class Conf(object):
                 if key == 'activation':
                     for w_key in cfg.quantization.activation.keys():
                         assert w_key in ['granularity', 'scheme', 'dtype']
+        else:
+            cfg.quantization = {}
 
         if not cfg.quantization.approach:
             cfg.quantization.approach = 'post_training_static_quant'
@@ -86,6 +88,8 @@ class Conf(object):
                 assert key in ['strategy', 'metric', 'accuracy_criterion', 'objective', 'timeout', 'random_seed']
                 if key == 'strategy':
                     assert cfg.tuning.strategy in STRATEGIES, "The strategy {} specified in yaml file is NOT supported".format(cfg.tuning.strategy)
+        else:
+            cfg.tuning = {}
 
         if not cfg.tuning.strategy:
             cfg.tuning.strategy = 'basic'
