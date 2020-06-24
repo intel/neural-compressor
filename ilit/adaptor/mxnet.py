@@ -270,10 +270,10 @@ class MxNetAdaptor(Adaptor):
         # model_wise capability
         # TODO: weight granularity
         model_wise = {
-                'activation': {'data_type': ['uint8', 'fp32'], \
-                    'granularity': ['per_channel'], 'algo': ['minmax', 'kl']},
-                'weight': {'data_type': ['uint8', 'fp32'], \
-                    'granularity': ['per_channel'], 'algo': ['minmax', 'kl']}
+                'activation': {'dtype': ['uint8', 'fp32'], \
+                    'granularity': ['per_channel'], 'algorithm': ['minmax', 'kl']},
+                'weight': {'dtype': ['uint8', 'fp32'], \
+                    'granularity': ['per_channel'], 'algorithm': ['minmax', 'kl']}
                 }
         # op_wise capability
         quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
@@ -283,39 +283,39 @@ class MxNetAdaptor(Adaptor):
             if optype in ['_sg_mkldnn_conv','conv2d']:
                 op_capability = {
                     'activation': {
-                        'data_type': ['uint8', 'fp32'],
-                        'algo': ['minmax', 'kl'],
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax', 'kl'],
                         'granularity': ['per_channel']},
                     'weight': {
-                        'data_type':['uint8', 'fp32'],
+                        'dtype':['uint8', 'fp32'],
                         'granularity': ['per_channel']}
                     }
             elif optype in ['_sg_fully_connected','fully_connected']:
                 op_capability = {
                     'activation': {
-                        'data_type': ['uint8', 'fp32'],
-                        'algo': ['minmax', 'kl'],
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax', 'kl'],
                         'granularity': ['per_channel']},
 
                     'weight': {
-                        'data_type':['uint8', 'fp32'],
+                        'dtype':['uint8', 'fp32'],
                         'granularity': ['per_channel']}
                     }
             elif optype in ['relu']:
                 op_capability = {
                     'activation': {
-                        'data_type': ['uint8', 'fp32'],
-                        'algo': ['minmax', 'kl'],
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax', 'kl'],
                         'granularity': ['per_tensor']}
                     }
             else:
                 op_capability = {
                     'activation': {
-                            'data_type': ['uint8', 'fp32'],
-                            'algo': ['minmax', 'kl'],
+                            'dtype': ['uint8', 'fp32'],
+                            'algorithm': ['minmax', 'kl'],
                             'granularity': ['per_channel']},
                     'weight': {
-                            'data_type':['uint8', 'fp32'],
+                            'dtype':['uint8', 'fp32'],
                             'granularity': ['per_channel']}
                     }
 
@@ -465,15 +465,15 @@ class MxNetAdaptor(Adaptor):
             'calib_iteration': 10,
             'op': {
                ['op1', 'CONV2D']: {
-                 'activation':  {'data_type': 'uint8', 'algo': 'minmax', 'mode':'sym', 'granularity': 'per_tensor'},
-                 'weight': {'data_type': 'int8', 'algo': 'kl', 'mode':'asym', 'granularity': 'per_channel'}
+                 'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
+                 'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
                },
                ['op2', 'RELU]: {
-                 'activation': {'data_type': 'int8', 'mode': 'asym', 'granularity': 'per_tensor', 'algo': 'minmax'}
+                 'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
                },
                ['op3', 'CONV2D']: {
-                 'activation':  {'data_type': 'fp32'},
-                 'weight': {'data_type': 'fp32'}
+                 'activation':  {'dtype': 'fp32'},
+                 'weight': {'dtype': 'fp32'}
                },
                ...
             }
@@ -487,13 +487,13 @@ class MxNetAdaptor(Adaptor):
 
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
-            if tune_cfg['op'][(op["name"], op["type"])]['activation']['data_type'] == 'fp32':
+            if tune_cfg['op'][(op["name"], op["type"])]['activation']['dtype'] == 'fp32':
                 excluded_sym_names.append(op["name"])
                 continue
-            # get calib algo per op
-            if tune_cfg['op'][(op["name"], op["type"])]['activation']['algo'] == 'minmax':
+            # get calib algorithm per op
+            if tune_cfg['op'][(op["name"], op["type"])]['activation']['algorithm'] == 'minmax':
                 calib_minmax_layers.append(op["name"] + "_output")
-            elif tune_cfg['op'][(op["name"], op["type"])]['activation']['algo'] == 'kl':
+            elif tune_cfg['op'][(op["name"], op["type"])]['activation']['algorithm'] == 'kl':
                 calib_kl_layers.append(op["name"] + "_output")
 
         LayerOutputCollector = None

@@ -55,13 +55,15 @@ class Conf(object):
 
         if 'calibration' in cfg.keys():
             for key in cfg.calibration.keys():
-                assert key in ['iterations', 'algo']
-                if key == 'algo':
-                    for algo_key in cfg.calibration.algo.keys():
+                assert key in ['iterations', 'algorithm']
+                if key == 'algorithm':
+                    for algo_key in cfg.calibration.algorithm.keys():
                         assert algo_key in ['weight', 'activation']
 
         if 'device' in cfg.keys():
             assert cfg.device in ['cpu', 'gpu']
+        else:
+            cfg.device = 'cpu'
 
         if 'quantization' in cfg.keys():
             for key in cfg.quantization.keys():
@@ -70,10 +72,13 @@ class Conf(object):
                     assert cfg.quantization.approach.lower() in ['post_training_static_quant', 'post_training_dynamic_quant'], "TODO: quant_aware_training is not supported yet."
                 if key == 'weight':
                     for w_key in cfg.quantization.weight.keys():
-                        assert w_key in ['granularity', 'mode', 'data_type']
+                        assert w_key in ['granularity', 'scheme', 'dtype']
                 if key == 'activation':
                     for w_key in cfg.quantization.activation.keys():
-                        assert w_key in ['granularity', 'mode', 'data_type']
+                        assert w_key in ['granularity', 'scheme', 'dtype']
+
+        if not cfg.quantization.approach:
+            cfg.quantization.approach = 'post_training_static_quant'
 
         if 'tuning' in cfg.keys():
             assert 'accuracy_criterion' in {key.lower() for key in cfg.tuning.keys()}
@@ -81,6 +86,17 @@ class Conf(object):
                 assert key in ['strategy', 'metric', 'accuracy_criterion', 'objective', 'timeout', 'random_seed']
                 if key == 'strategy':
                     assert cfg.tuning.strategy in STRATEGIES, "The strategy {} specified in yaml file is NOT supported".format(cfg.tuning.strategy)
+
+        if not cfg.tuning.strategy:
+            cfg.tuning.strategy = 'basic'
+        if not cfg.tuning.timeout:
+            cfg.tuning.timeout = 0
+        if not cfg.tuning.random_seed:
+            cfg.tuning.random_seed = 1978
+        if not cfg.tuning.objective:
+            cfg.tuning.objective = 'performance'
+        if not cfg.tuning.accuracy_criterion:
+            cfg.tuning.accuracy_criterion = {'relative': 0.01}
 
         if 'snapshot' in cfg.keys():
             assert 'path' in cfg.snapshot.keys() and isinstance(cfg.snapshot.path, str)

@@ -4,7 +4,7 @@ device: cpu
 
 calibration:                                         
   - iterations: 1, 5, 10, 20
-    algo:                                            
+    algorithm:
       - weight: minmax
       - activation: minmax
 
@@ -12,12 +12,12 @@ quantization:                                        # default setting of PTQ, a
   - approach: post_training_static_quant             # other possible values are: post_training_dynamic_quant / quant_aware_training
   - weight:
       - granularity: per_tensor
-        mode: asym
-        data_type: int8
+        scheme: asym
+        dtype: int8
   - activation:
       - granularity: per_tensor
-        mode: asym
-        data_type: int8
+        scheme: asym
+        dtype: int8
 
 tuning:
     metric:

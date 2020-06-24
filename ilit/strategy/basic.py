@@ -56,13 +56,13 @@ class BasicTuneStrategy(TuneStrategy):
         for op, configs in reversed(self.opwise_tune_cfgs.items()):
             op_cfgs = copy.deepcopy(best_cfg)
             for cfg in configs:
-                if 'fp32' == cfg['activation']['data_type']:
+                if 'fp32' == cfg['activation']['dtype']:
                     op_cfgs['op'][op]['activation'].clear()
-                    op_cfgs['op'][op]['activation']['data_type'] = 'fp32'
+                    op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
                     if 'weight' in cfg:
-                        assert cfg['weight']['data_type'] == 'fp32'
+                        assert cfg['weight']['dtype'] == 'fp32'
                         op_cfgs['op'][op]['weight'].clear()
-                        op_cfgs['op'][op]['weight']['data_type'] = 'fp32'
+                        op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
             yield op_cfgs
             acc, _ = self.last_tune_result
             if acc > best_acc:
@@ -73,9 +73,9 @@ class BasicTuneStrategy(TuneStrategy):
             ordered_ops = sorted(ops_acc.keys(), key=lambda key:ops_acc[key], reverse=True)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                op_cfgs['op'][op]['activation']['data_type'] = 'fp32'
+                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
                 if 'weight' in op_cfgs['op'][op]:
-                    op_cfgs['op'][op]['weight']['data_type'] = 'fp32'
+                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
                 yield op_cfgs
                 acc, _ = self.last_tune_result
                 if acc <= best_acc:

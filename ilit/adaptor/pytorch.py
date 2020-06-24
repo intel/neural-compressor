@@ -41,16 +41,16 @@ class PyTorchAdaptor(Adaptor):
           'activation':
             {
               'granularity': ['per_tensor'],
-              'mode': ['sym', 'asym'],
-              'data_type':['uint8', 'fp32'],
-              'algo': ['minmax', 'kl'],
+              'scheme': ['sym', 'asym'],
+              'dtype':['uint8', 'fp32'],
+              'algorithm': ['minmax', 'kl'],
             },
           'weight':
             {
               'granularity': ['per_channel'],
-              'mode': ['sym', 'asym'],
-              'data_type':['int8', 'fp32'],
-              'algo': ['minmax'],
+              'scheme': ['sym', 'asym'],
+              'dtype':['int8', 'fp32'],
+              'algorithm': ['minmax'],
             }
         }
 
@@ -110,15 +110,15 @@ class PyTorchAdaptor(Adaptor):
             'calib_iteration': 10,
             'op': {
                ('op1', 'CONV2D'): {
-                 'activation':  {'data_type': 'uint8', 'algo': 'minmax', 'mode':'sym', 'granularity': 'per_tensor'},
-                 'weight': {'data_type': 'int8', 'algo': 'kl', 'mode':'asym', 'granularity': 'per_channel'}
+                 'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
+                 'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
                },
                ('op2', 'RELU): {
-                 'activation': {'data_type': 'int8', 'mode': 'asym', 'granularity': 'per_tensor', 'algo': 'minmax'}
+                 'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
                },
                ('op3', 'CONV2D'): {
-                 'activation':  {'data_type': 'fp32'},
-                 'weight': {'data_type': 'fp32'}
+                 'activation':  {'dtype': 'fp32'},
+                 'weight': {'dtype': 'fp32'}
                },
                ...
             }
@@ -130,62 +130,62 @@ class PyTorchAdaptor(Adaptor):
             assert isinstance(value, dict)
             assert 'weight' in value
             assert 'activation' in value
-            if value['activation']['data_type'] == 'fp32':
-                assert value['weight']['data_type'] == 'fp32'
+            if value['activation']['dtype'] == 'fp32':
+                assert value['weight']['dtype'] == 'fp32'
                 op_qcfgs[key] = None
             else:
                 weight = value['weight']
                 activation = value['activation']
 
-                mode = weight['mode']
-                gran = weight['granularity']
-                algo = weight['algo']
-                dtype = weight['data_type']
-                weights_observer = self._observer(algo, mode, gran, dtype)
+                scheme = weight['scheme']
+                granularity = weight['granularity']
+                algorithm = weight['algorithm']
+                dtype = weight['dtype']
+                weights_observer = self._observer(algorithm, scheme, granularity, dtype)
 
-                mode = activation['mode']
-                gran = activation['granularity']
-                algo = activation['algo']
-                dtype = activation['data_type']
-                activation_observer = self._observer(algo, mode, gran, dtype)
+                scheme = activation['scheme']
+                granularity = activation['granularity']
+                algorithm = activation['algorithm']
+                dtype = activation['dtype']
+                activation_observer = self._observer(algorithm, scheme, granularity, dtype)
 
                 qconfig = torch.quantization.QConfig(activation=activation_observer, weight=weights_observer)
                 op_qcfgs[key] = qconfig
 
         return op_qcfgs
 
-    def _observer(self, algo, mode, granularity, dtype):
-        if algo == 'minmax':
+    def _observer(self, algorithm, scheme, granularity, dtype):
+        if algorithm == 'minmax':
             if granularity == 'per_channel':
                 observer = torch.quantization.PerChannelMinMaxObserver
-                if mode == 'sym':
+                if scheme == 'sym':
                     qscheme = torch.per_channel_symmetric
                 else:
-                    assert mode == 'asym'
+                    assert scheme == 'asym'
                     qscheme = torch.per_channel_affine
             else:
                 assert granularity == 'per_tensor'
                 observer = torch.quantization.MinMaxObserver
-                if mode == 'sym':
+                if scheme == 'sym':
                     qscheme = torch.per_tensor_symmetric
                 else:
-                    assert mode == 'asym'
+                    assert scheme == 'asym'
                     qscheme = torch.per_tensor_affine
         else:
-            assert algo == 'kl'
+            assert algorithm == 'kl'
             observer = torch.quantization.HistogramObserver
             if granularity == 'per_channel':
-                if mode == 'sym':
+                if scheme == 'sym':
                     qscheme = torch.per_channel_symmetric
                 else:
-                    assert mode == 'asym'
+                    assert scheme == 'asym'
                     qscheme = torch.per_channel_affine
             else:
                 assert granularity == 'per_tensor'
-                if mode == 'sym':
+                if scheme == 'sym':
                     qscheme = torch.per_tensor_symmetric
                 else:
-                    assert mode == 'asym'
+                    assert scheme == 'asym'
                     qscheme = torch.per_tensor_affine
 
         if dtype == 'int8':

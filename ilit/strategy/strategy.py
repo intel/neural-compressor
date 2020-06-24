@@ -93,7 +93,7 @@ class TuneStrategy(object):
 
         self.modelwise_quant_cfgs = []
         for cfg in self.modelwise_tune_cfgs:
-            if cfg['activation']['data_type'] not in ['fp32']:
+            if cfg['activation']['dtype'] not in ['fp32']:
                 self.modelwise_quant_cfgs.append(cfg)
 
         self.opwise_quant_cfgs = OrderedDict()
@@ -101,7 +101,7 @@ class TuneStrategy(object):
             cfg_list = self.opwise_tune_cfgs[key]
             new_list = []
             for cfg in cfg_list:
-                if cfg['activation']['data_type'] not in ['fp32']:
+                if cfg['activation']['dtype'] not in ['fp32']:
                     new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 
@@ -194,23 +194,23 @@ class TuneStrategy(object):
 
         src = {'weight': OrderedDict(), 'activation': OrderedDict()}
 
-        if self.cfg.calibration and self.cfg.calibration.algo and self.cfg.calibration.algo.weight:
-            src['weight']['algo'] = [self.cfg.calibration.algo.weight]
+        if self.cfg.calibration and self.cfg.calibration.algorithm and self.cfg.calibration.algorithm.weight:
+            src['weight']['algorithm'] = [self.cfg.calibration.algorithm.weight]
         if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.granularity:
             src['weight']['granularity'] = [self.cfg.quantization.weight.granularity]
-        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.mode:
-            src['weight']['mode'] = [self.cfg.quantization.weight.mode]
-        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.data_type:
-            src['weight']['data_type'] = [self.cfg.quantization.weight.data_type]
+        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.scheme:
+            src['weight']['scheme'] = [self.cfg.quantization.weight.scheme]
+        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.dtype:
+            src['weight']['dtype'] = [self.cfg.quantization.weight.dtype]
 
-        if self.cfg.calibration and self.cfg.calibration.algo and self.cfg.calibration.algo.activation:
-            src['activation']['algo'] = [self.cfg.calibration.algo.activation]
+        if self.cfg.calibration and self.cfg.calibration.algorithm and self.cfg.calibration.algorithm.activation:
+            src['activation']['algorithm'] = [self.cfg.calibration.algorithm.activation]
         if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.granularity:
             src['activation']['granularity'] = [self.cfg.quantization.activation.granularity]
-        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.mode:
-            src['activation']['mode'] = [self.cfg.quantization.activation.mode]
-        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.data_type:
-            src['activation']['data_type'] = [self.cfg.quantization.activation.data_type]
+        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.scheme:
+            src['activation']['scheme'] = [self.cfg.quantization.activation.scheme]
+        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.dtype:
+            src['activation']['dtype'] = [self.cfg.quantization.activation.dtype]
 
         return self._merge_dicts(src, dst)
 
@@ -239,22 +239,22 @@ class TuneStrategy(object):
         valid_cfgs = []
         quant_dtype = ['int8', 'uint8', 'int4', 'uint4']
         for cfg in cfg_lists:
-            dtype = cfg['activation']['data_type']
+            dtype = cfg['activation']['dtype']
             if dtype not in quant_dtype:
                 cfg['activation'].clear()
-                cfg['activation']['data_type'] = dtype
+                cfg['activation']['dtype'] = dtype
 
             if 'weight' in cfg:
-                dtype = cfg['weight']['data_type']
+                dtype = cfg['weight']['dtype']
                 if dtype not in quant_dtype:
                     cfg['weight'].clear()
-                    cfg['weight']['data_type'] = dtype
-                if (cfg['weight']['data_type'] != cfg['activation']['data_type'] and \
-                    cfg['weight']['data_type'] not in quant_dtype and cfg['activation']['data_type'] not in quant_dtype) or \
-                    (cfg['weight']['data_type'] != cfg['activation']['data_type'] and \
-                    cfg['weight']['data_type'] in quant_dtype and cfg['activation']['data_type'] not in quant_dtype) or \
-                    (cfg['weight']['data_type'] != cfg['activation']['data_type'] and \
-                   cfg['weight']['data_type'] not in quant_dtype and cfg['activation']['data_type'] in quant_dtype):
+                    cfg['weight']['dtype'] = dtype
+                if (cfg['weight']['dtype'] != cfg['activation']['dtype'] and \
+                    cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
+                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and \
+                    cfg['weight']['dtype'] in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
+                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and \
+                   cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] in quant_dtype):
                     continue
 
             valid_cfgs.append(cfg)

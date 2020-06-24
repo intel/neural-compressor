@@ -85,15 +85,15 @@ class Tuner(object):
                                                 'customized_ops':
                                                    {
                                                      'op1': {
-                                                       'activation':  {'data_type': ['uint8', 'fp32'], 'algo': ['minmax', 'kl'], 'mode':['sym']},
-                                                       'weight': {'data_type': ['int8', 'fp32'], 'algo': ['kl']}
+                                                       'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
+                                                       'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
                                                      },
                                                      'op2': {
-                                                       'activation': {'data_type': ['int8'], 'mode': ['sym'], 'granularity': ['per_tensor'], 'algo': ['minmax', 'kl']},
+                                                       'activation': {'dtype': ['int8'], 'scheme': ['sym'], 'granularity': ['per_tensor'], 'algorithm': ['minmax', 'kl']},
                                                      },
                                                      'op3': {
-                                                       'activation':  {'data_type': ['fp32']},
-                                                       'weight': {'data_type': ['fp32']}
+                                                       'activation':  {'dtype': ['fp32']},
+                                                       'weight': {'dtype': ['fp32']}
                                                      },
                                                      ...
                                                    },

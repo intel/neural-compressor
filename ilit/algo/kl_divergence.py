@@ -1,6 +1,6 @@
 import math
 class KL_Divergence(object):
-    '''The class of supporting KL divergence calibration algorithem.
+    '''The class of supporting KL divergence calibration algorithm.
 
        Args:
            TODO:
@@ -58,7 +58,7 @@ class KL_Divergence(object):
                       num_bins,
                       quantized_type,
                       num_quantized_bins=255):
-        '''The interface of getting threshold per KL divergency algorithem.
+        '''The interface of getting threshold per KL divergency algorithm.
 
            Args:
                historgram (tensor list): The tensor numpy array list including all ops in each iteration.

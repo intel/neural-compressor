@@ -8,7 +8,7 @@ class MSETuneStrategy(TuneStrategy):
     '''The tuning strategy using MSE policy in tuning space.
 
        This MSE policy runs fp32 model and int8 model seperately to get all activation tensors,
-       and then compares those tensors by MSE algo to order all ops with MSE distance for deciding
+       and then compares those tensors by MSE algorithm to order all ops with MSE distance for deciding
        the impact of each op to final accuracy. It will be used to define opwise tuning space by priority
 
        Args:
@@ -96,9 +96,9 @@ class MSETuneStrategy(TuneStrategy):
             ordered_ops = sorted(ops_mse.keys(), key=lambda key:ops_mse[key], reverse=True)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                op_cfgs['op'][op]['activation'] = {'data_type':'fp32'}
+                op_cfgs['op'][op]['activation'] = {'dtype':'fp32'}
                 if 'weight' in op_cfgs['op'][op].keys():
-                    op_cfgs['op'][op]['weight'] = {'data_type':'fp32'}
+                    op_cfgs['op'][op]['weight'] = {'dtype':'fp32'}
 
                 yield op_cfgs
                 acc, _ = self.last_tune_result

@@ -67,15 +67,15 @@ class TensorFlowAdaptor(Adaptor):
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
 
-            if tuning_cfg['op'][each_op_info]['activation']['data_type'] == 'fp32':
+            if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
                 self.excluded_nodes.append(op_name)
                 continue
             is_perchannel = False
             if 'weight' in tuning_cfg['op'][each_op_info]:
                 is_perchannel = tuning_cfg['op'][each_op_info]['weight']['granularity'] == 'per_channel'
-            algo = tuning_cfg['op'][each_op_info]['activation']['algo']
+            algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
             self.quantize_config['op_wise_config'][op_name] = (
-                is_perchannel, algo)
+                is_perchannel, algorithm)
 
     def quantize(self, tune_cfg, model, data_loader):
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
@@ -97,24 +97,23 @@ class TensorFlowAdaptor(Adaptor):
             "Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool", "ConcatV2", "MatMul")
         conv_config = {
             'activation': {
-                'data_type': ['uint8', 'fp32'],
-                'algo': ['minmax', 'kl'],
-                'mode': ['sym'],
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'scheme': ['sym'],
                 'granularity': ['per_tensor']
             },
             'weight': {
-                'data_type': ['int8', 'fp32'],
-                'algo': ['minmax'],
-                'mode': ['sym'],
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax'],
+                'scheme': ['sym'],
                 'granularity': ['per_channel', 'per_tensor']
-
             }
         }
         non_conv_config = {
             'activation': {
-                'data_type': ['uint8', 'fp32'],
-                'algo': ['minmax'],
-                'mode': ['sym'],
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax'],
+                'scheme': ['sym'],
                 'granularity': ['per_tensor']
             },
         }
@@ -135,16 +134,16 @@ class TensorFlowAdaptor(Adaptor):
         capability = {
             'modelwise': {
                 'activation': {
-                    'data_type': ['uint8', 'fp32'],
-                    'mode': ['sym'],
+                    'dtype': ['uint8', 'fp32'],
+                    'scheme': ['sym'],
                     'granularity': ['per_tensor'],
-                    'algo': ['minmax', 'kl']
+                    'algorithm': ['minmax', 'kl']
                 },
                 'weight': {
-                    'data_type': ['int8',  'fp32'],
-                    'mode': ['sym',],
+                    'dtype': ['int8',  'fp32'],
+                    'scheme': ['sym',],
                     'granularity': ['per_channel', 'per_tensor'],
-                    'algo': ['minmax']
+                    'algorithm': ['minmax']
                 },
             }
         }

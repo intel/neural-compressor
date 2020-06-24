@@ -4,7 +4,7 @@ device: cpu                                          # default value. other valu
 
 calibration:                                         # this field takes effect when post_training_static_quant is set
   - iterations: 10, 50
-    algorithem:
+    algorithm:
       - weight:  kl
       - activation: minmax
 
