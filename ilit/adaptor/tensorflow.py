@@ -14,7 +14,9 @@ class TensorFlowAdaptor(Adaptor):
             "Conv2D": "conv2d",
             "DepthwiseConv2dNative": "conv2d",
             "MaxPool": "pooling",
-            "AvgPool": "pooling"
+            "AvgPool": "pooling",
+            "ConcatV2": "concat",
+            "MatMul": "matmul"
         }
 
     def __init__(self, framework_specific_info):
@@ -74,11 +76,14 @@ class TensorFlowAdaptor(Adaptor):
                 is_perchannel, algo)
 
     def quantize(self, tune_cfg, model, data_loader):
-        quantized_model = os.path.join(os.getcwd() + "tf_quantized.model")
+        quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
         from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(model, quantized_model, inputs=self.framework_specific_info['inputs'],
-                                   outputs=self.framework_specific_info['outputs'], qt_config=self.quantize_config, data_loader=data_loader)
+        converter = GraphConverter(model, quantized_model,
+                                   inputs=self.framework_specific_info['inputs'],
+                                   outputs=self.framework_specific_info['outputs'],
+                                   qt_config=self.quantize_config,
+                                   data_loader=data_loader)
         return converter.convert()
 
     def _query_quantizable_ops(self, graph):
@@ -86,7 +91,8 @@ class TensorFlowAdaptor(Adaptor):
             Return: Op name/Op type mapping which saved in OrderDict.
         '''
         graph_def = graph.as_graph_def()
-        tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool")
+        tf_quantizable_op_type = (
+            "Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool", "ConcatV2", "MatMul")
         conv_config = {
             'activation': {
                 'data_type': ['uint8', 'fp32'],
@@ -101,7 +107,7 @@ class TensorFlowAdaptor(Adaptor):
         non_conv_config = {
             'activation': {
                 'data_type': ['uint8', 'fp32'],
-                'algo': ['minmax', 'kl'],
+                'algo': ['minmax'],
                 'mode': ['sym']
             },
         }
@@ -140,10 +146,10 @@ class TensorFlowAdaptor(Adaptor):
         return capability
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
-        quantized_model = os.path.join(os.getcwd() + "tf_quantized.model")
+        quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
 
-        input_node_name = ['input']
-        output_node_name = ['predict']
+        input_node_name = self.framework_specific_info['inputs']
+        output_node_name = self.framework_specific_info['outputs']
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,

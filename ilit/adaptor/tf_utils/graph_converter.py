@@ -560,8 +560,9 @@ class GraphConverter:
         self._tmp_graph_def = graph_util.remove_training_nodes(self._tmp_graph_def, self.outputs)
         self._tmp_graph_def = FoldBatchNormNodes(self._tmp_graph_def).do_transform()
         RerangeQuantizedConcat(self._tmp_graph_def).do_transformation()
-        write_graph(self._tmp_graph_def, self.output_graph)
-        logging.info('Converted graph file is saved to: %s', self.output_graph)
+        if self.debug:
+            write_graph(self._tmp_graph_def, self.output_graph)
+            logging.info('Converted graph file is saved to: %s', self.output_graph)
 
     def _get_dtypes(self, in_graph_def):
         # TODO: keep dtypes list order as input list?
