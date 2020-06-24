@@ -44,7 +44,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
 
-from ilit import tuner as iLit
+from ilit import tuner as iLiT
 
 
 def load_graph(model_file):
@@ -104,7 +104,7 @@ class Dataloader(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Tensorflow Resnet50-v1.0 demo for iLit')
+        description='Tensorflow Resnet50-v1.0 demo for iLiT')
     parser.add_argument('--input_graph', type=str, default='')
     parser.add_argument('--config', type=str, default='')
     parser.add_argument('--inputs', type=str, default='', help='input tensor')
@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
 
     fp32_graph = load_graph(args.input_graph)
-    at = iLit.Tuner(args.config)
+    at = iLiT.Tuner(args.config)
 
     dataloader = Dataloader(args.data_location, 'validation',
                             args.input_height, args.input_width,

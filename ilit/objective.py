@@ -2,7 +2,7 @@ from abc import abstractmethod
 import time
 import tracemalloc
 
-'''The objectives supported by iLit, which is driven by accuracy.
+'''The objectives supported by iLiT, which is driven by accuracy.
    To support new objective, developer just need implement a new subclass in this file.
 '''
 OBJECTIVES = {}
@@ -19,7 +19,7 @@ def objective_registry(cls):
     return cls
 
 class Objective(object):
-    '''The base class of objectives supported by iLit.
+    '''The base class of objectives supported by iLiT.
 
        Args:
            accuracy_criterion (dict): The dict of supported accuracy criterion.

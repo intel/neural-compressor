@@ -19,7 +19,7 @@ mx = LazyImport("mxnet")
 logging.basicConfig(level=logging.INFO,
                     datefmt='[%H:%M:%S]',
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("iLit-MXNet")
+logger = logging.getLogger("iLiT-MXNet")
 
 def _check_version(v1, v2):
     d1=re.split('\.', v1)

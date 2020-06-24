@@ -52,7 +52,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
 
-from ilit import tuner as iLit
+from ilit import tuner as iLiT
 
 NUM_TEST_IMAGES = 50000
 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     return total_accuracy1/num_processed_images
 
   fp32_graph = load_graph(args.input_graph)
-  at = iLit.Tuner(args.config)
+  at = iLiT.Tuner(args.config)
   dataloader = Dataloader(args.data_location, 'validation',
                           args.input_height, args.input_width,
                           args.batch_size)

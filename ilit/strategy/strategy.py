@@ -8,7 +8,7 @@ from ..objective import OBJECTIVES
 from ..metric import METRICS
 from ..utils import Timeout
 
-'''The tuning strategies supported by iLit, including basic, random, bayesian and mse.
+'''The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
 
    User could add new strategies by implementing new TuneStrategy subclass under this directory.
    The naming convention of new strategy subclass should be something like ABCTuneStrategy, user

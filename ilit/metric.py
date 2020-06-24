@@ -5,7 +5,7 @@ import numpy as np
 #from pycocotools import coco
 #from pycocotools import cocoeval
 
-'''The metrics supported by iLit.
+'''The metrics supported by iLiT.
    To support new metric, developer just need implement a new subclass in this file.
 '''
 METRICS = {}
@@ -22,7 +22,7 @@ def metric_registry(cls):
     return cls
 
 class Metric(object):
-    '''The base class of metrics supported by iLit.
+    '''The base class of metrics supported by iLiT.
 
        Args:
            name (string): The name of supported metric.
