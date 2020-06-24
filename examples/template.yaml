@@ -4,7 +4,7 @@ device: cpu                                          # default value. other valu
 
 calibration:                                         # this field takes effect when post_training_static_quant is set
   - iterations: 10, 50
-    algo:
+    algorithem:
       - weight:  kl
       - activation: minmax
 
@@ -12,22 +12,22 @@ quantization:
   - approach: post_training_static_quant             # default value. other possible values are: post_training_dynamic_quant / quant_aware_training
   - weight: 
       - granularity: per_channel
-        mode: asym
-        data_type: int8
+        scheme: asym
+        dtype: int8
   - activation:
       - granularity: per_tensor
-        mode: asym
-        data_type: int8
+        scheme: asym
+        dtype: int8
 
 tuning:
   - strategy: basic                                  # default value. other values are basic, random, exhaustive, bayesian, mse
     metric:                                          # needed if user doesn't provide eval_func in ilit.tune()
       - topk: 1                                      # built-in metrics are topk, map, f1, allow user to register new metric
     accuracy_criterion:
-      - absolute:  0.01                              # default value, other value is relative. this example allows absolute accuracy loss: 1%
+      - relative:  0.01                              # default value, other value is relative. this example allows relative accuracy loss: 1%
     objective: performance                           # default value, other values are performance, modelsize, footprint. it's objective with accuracy driven
     timeout: 3                                       # tuning timeout (seconds), 0 means early stop
     random_seed: 9527                                # random seed for deterministic tuning
 
 snapshot:
-  - path: /path/to/snapshot                          # the directory path to save snapshot. if not specified, iLiT will save snapshot to caller model with timestamp postfix
+  - path: /path/to/snapshot                          # the directory path to save snapshot. if not specified, iLiT will save snapshot to caller working directory with timestamp postfix

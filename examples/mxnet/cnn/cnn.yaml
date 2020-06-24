@@ -4,6 +4,6 @@ tuning:
     metric:
       - topk: 1                                  # tuning metrics: accuracy 
     accuracy_criterion: 
-      - absolute: 0.01                          # the tuning target of accuracy loss percentage: 1%
+      - relative: 0.01                          # the tuning target of accuracy loss percentage: 1%
     timeout: 3600                                # tuning timeout (seconds)
     random_seed: 9527                            # random seed
