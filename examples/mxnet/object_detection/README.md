@@ -6,10 +6,10 @@ From [GluonCV SSD](https://github.com/dmlc/gluon-cv/blob/master/scripts/detectio
 # Quantization with iLiT
 ```
 # SSD-Mobilenet1.0
-python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=256 --datasete coco
+python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=256 --dataset coco
 
 # SSD-ResNet50_v1
-python eval_ssd.py --network=renset50_v1 --data-shape=512 --batch-size=256 --datasete coco
+python eval_ssd.py --network=renset50_v1 --data-shape=512 --batch-size=256 --dataset coco
 ```
 
 # Dependancy
