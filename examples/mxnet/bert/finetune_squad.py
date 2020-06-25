@@ -904,4 +904,3 @@ if __name__ == '__main__':
         import ilit
         bert_tuner = ilit.Tuner("./bert.yaml")
         bert_tuner.tune(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
-
