@@ -31,8 +31,7 @@ from coco_detection_evaluator import CocoDetectionEvaluator
 from coco_label_map import category_map
 
 IMAGE_SIZE = 300
-# COCO_NUM_VAL_IMAGES = 4952
-COCO_NUM_VAL_IMAGES = 10
+COCO_NUM_VAL_IMAGES = 4952
 
 import os
 
@@ -274,9 +273,7 @@ class model_infer:
                 evaluator.add_single_detected_image_info(image_id, detection)
                 if iter * self.args.batch_size >= COCO_NUM_VAL_IMAGES:
                     res = evaluator.evaluate()
-                    print (1111, res)
                     return res['DetectionBoxes_Precision/mAP']
-                    # break
 
     def run(self):
         if self.args.accuracy_only:
