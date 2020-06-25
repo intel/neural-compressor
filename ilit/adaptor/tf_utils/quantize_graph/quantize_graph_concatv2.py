@@ -53,9 +53,15 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
             self._add_dequantize_result_node(quantized_concat_name,
                                              original_node.name)
 
+    def _quantizable_concat(self, node):
+        for input_node_name in node.input[:node.attr['N'].i]:
+            if self.node_name_mapping[helper.node_name_from_input(input_node_name)].node.op != "Dequantize":
+                return False
+        return True
+
     def _apply_concatv2_quantization(self):
         for _, v in self.node_name_mapping.items():
-            if v.node.op in ("ConcatV2") and not re.search(
+            if v.node.op in ("ConcatV2") and self._quantizable_concat(v.node) and not re.search(
                     r'map(_\d+)?/while', v.node.name) and dtypes.as_dtype(
                         v.node.attr["T"].type) == dtypes.float32:
                 self._apply_concatv2_transform(v.node)

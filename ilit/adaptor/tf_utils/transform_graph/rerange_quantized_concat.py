@@ -31,54 +31,86 @@ class RerangeQuantizedConcat(GraphTransformBase):
     """
     This class implements the rerange_quantize concat graph transform.
     """
-    fused_requantized_bias_op = ("QuantizedConv2DWithBiasAndRequantize",
-                                 "QuantizedConv2DWithBiasAndReluAndRequantize",
-                                 "QuantizedConv2DWithBiasSumAndReluAndRequantize",
-                                 "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize")
+    fused_requantized_bias_op = (
+        "QuantizedConv2DWithBiasAndRequantize",
+        "QuantizedConv2DWithBiasAndReluAndRequantize",
+        "QuantizedConv2DWithBiasSumAndReluAndRequantize",
+        "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize")
 
-    offset_map = {"QuantizedConv2DAndRequantize": 6,
-                  "QuantizedConv2DAndReluAndRequantize": 6,
-                  "QuantizedConv2DWithBiasAndRequantize": 7,
-                  "QuantizedConv2DWithBiasAndReluAndRequantize": 7,
-                  "QuantizedConv2DWithBiasSumAndReluAndRequantize": 7,
-                  "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize": 7}
+    offset_map = {
+        "QuantizedConv2DAndRequantize": 6,
+        "QuantizedConv2DAndReluAndRequantize": 6,
+        "QuantizedConv2DWithBiasAndRequantize": 7,
+        "QuantizedConv2DWithBiasAndReluAndRequantize": 7,
+        "QuantizedConv2DWithBiasSumAndReluAndRequantize": 7,
+        "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize": 7
+    }
 
     def __init__(self, input_pb):
         super(RerangeQuantizedConcat, self).__init__(input_pb)
 
         self.parse_input_pb()
         self.concat_node_input_mapping = {}
+        self.rerange_concat_node = []
 
-    def _analyze_concat_node(self):
-        """
-        Parse the graph to get concat's node inputs.
-        Returns:
-            The dict that key is concat node's name while value are the
-            concat op's input nodeDef.
-        """
+    def _analyze_concat_node_recursively(self, quantized_conv_nodes,
+                                         input_node):
+        op_type = input_node.op
+        if op_type == "QuantizedConcatV2":
+            can_rerange = True
+            concat_input_num = input_node.attr['N'].i
+            for index in range(concat_input_num):
+                concat_input_node = self.node_mapping[
+                    self.get_node_name_from_input(input_node.input[index])]
+                concat_input_node_op_type = concat_input_node.op
+                if concat_input_node_op_type in self.offset_map:
+                    quantized_conv_nodes.append(concat_input_node)
+                elif concat_input_node_op_type in ("QuantizedMaxPool",
+                                                   "QuantizedAvgPool"):
+                    another_concat_node = self.node_mapping[
+                        self.get_node_name_from_input(
+                            concat_input_node.input[0])]
+                    if not self._analyze_concat_node_recursively(
+                            quantized_conv_nodes, another_concat_node):
+                        can_rerange = False
+                        break
+                elif concat_input_node_op_type == "QuantizedConcatV2":
+                    if not self._analyze_concat_node_recursively(
+                            quantized_conv_nodes, concat_input_node):
+                        can_rerange = False
+                        break
+                else:
+                    can_rerange = False
+                    break
 
+            return can_rerange
+        elif op_type == "QuantizedConv2DWithBiasAndReluAndRequantize":
+            can_rerange = True
+            quantized_conv_nodes.append(input_node)
+            return can_rerange
+        else:
+            return False
+
+    def do_transformation(self):
         for _, node in enumerate(self.input_graph.node):
-            if node.op == "QuantizedConcatV2":
-                concat_node_input_node = []
-                for i in range(node.attr['N'].i):
-                    input_node = self.node_mapping[self.get_node_name_from_input(node.input[i])]
-                    input_node_op = input_node.op
-                    if input_node_op in self.offset_map:
-                        concat_node_input_node.append(input_node)
+            if node.op != "QuantizedConcatV2":
+                continue
+            quantized_conv_nodes = []
+            can_rerange = self._analyze_concat_node_recursively(
+                quantized_conv_nodes, node)
+            if not can_rerange:
+                continue
 
-                self.concat_node_input_mapping[node.name] = concat_node_input_node
-
-    def _calc_concat_scale(self):
-        """
-        Update the all conv's op scale which connected to concat op.
-        """
-        for node_name in self.concat_node_input_mapping:
+            self.rerange_concat_node.append(node.name)
             combined_min = np.finfo(np.float64).max
             combined_max = -combined_min
-            for node_input in self.concat_node_input_mapping[node_name]:
-                offset_value = self.offset_map[node_input.op]
-                min_value_node = self.node_mapping[node_input.input[offset_value]]
-                max_value_node = self.node_mapping[node_input.input[offset_value + 1]]
+
+            for node in quantized_conv_nodes:
+
+                offset_value = self.offset_map[node.op]
+                min_value_node = self.node_mapping[node.input[offset_value]]
+                max_value_node = self.node_mapping[node.input[offset_value +
+                                                              1]]
                 min_value = min_value_node.attr['value'].tensor.float_val[0]
                 max_value = max_value_node.attr['value'].tensor.float_val[0]
                 if min_value < combined_min:
@@ -86,17 +118,22 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 if max_value > combined_max:
                     combined_max = max_value
 
-            for node_input in self.concat_node_input_mapping[node_name]:
-                offset_value = self.offset_map[node_input.op]
-                min_value_node = self.node_mapping[node_input.input[offset_value]]
-                max_value_node = self.node_mapping[node_input.input[offset_value + 1]]
+            for node in quantized_conv_nodes:
+                offset_value = self.offset_map[node.op]
+                min_value_node = self.node_mapping[node.input[offset_value]]
+                max_value_node = self.node_mapping[node.input[offset_value +
+                                                              1]]
                 min_value_node.attr["value"].CopyFrom(
-                    attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                        float(combined_min), dtypes.float32, [])))
+                    attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(
+                            float(combined_min), dtypes.float32, [])))
 
                 max_value_node.attr["value"].CopyFrom(
-                    attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                        float(combined_max), dtypes.float32, [])))
+                    attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(
+                            float(combined_max), dtypes.float32, [])))
+        self._update_bias()
+        return self.input_graph
 
     def _update_bias(self):
         """
@@ -106,64 +143,91 @@ class RerangeQuantizedConcat(GraphTransformBase):
             current_node = self.node_mapping[node_name]
             current_node_op = current_node.op
             if current_node_op in self.fused_requantized_bias_op:
-                bias_node = self.node_mapping[self.get_node_name_from_input(current_node.input[2])]
-                bias_node_type = current_node.attr['Tbias']
+                done = False
+                another_conv_node = None
+                original_conv_node = current_node
+                while not done:
+                    current_node = self.node_mapping[
+                        self.get_node_name_from_input(current_node.input[0])]
+                    if current_node.op in self.offset_map:
+                        another_conv_node = current_node
+                        done = True
+                    elif current_node.op == "QuantizedConcatV2":
+                        if current_node.name not in self.rerange_concat_node:
+                            done = True
+                    elif current_node.op not in ("QuantizedMaxPool",
+                                                 "QuantizedAvgPool"):
+                        done = True
+
+                if not another_conv_node:
+                    continue
+
+                bias_node = self.node_mapping[self.get_node_name_from_input(
+                    original_conv_node.input[2])]
+                bias_node_type = original_conv_node.attr['Tbias']
 
                 if bias_node_type.type != dtypes.float32 or bias_node_type.type == dtypes.qint32:
                     continue
-                input_node_name = self.get_node_name_from_input(current_node.input[0])
-                if self.node_mapping[input_node_name].op == "QuantizeV2":
-                    continue
 
-                found_last_conv_flag = False
-                input_node = current_node
-                last_conv_node = None
+                min_filter_node = self.node_mapping[
+                    original_conv_node.input[5]]
+                max_filter_node = self.node_mapping[
+                    original_conv_node.input[6]]
 
-                while not found_last_conv_flag:
-                    input_node = self.node_mapping[self.get_node_name_from_input(input_node.input[0])]
-                    if input_node.op in self.offset_map:
-                        found_last_conv_flag = True
-                        last_conv_node = input_node
-                    elif input_node.op in "QuantizedConcatV2":
-                        found_last_conv_flag = False
-                    elif input_node.op not in ("QuantizedMaxPool", "QuantizedAvgPool",):
-                        found_last_conv_flag = True
+                channel_size = 1 if not min_filter_node.attr[
+                    'value'].tensor.tensor_shape.dim else min_filter_node.attr[
+                        'value'].tensor.tensor_shape.dim[0].size
 
-                if not last_conv_node:
-                    continue
+                if channel_size == 1:
+                    max_filter_tensor = []
+                    min_filter_tensor = []
+                    max_filter_tensor.append(
+                        (max_filter_node.attr['value'].tensor.float_val)[0])
+                    min_filter_tensor.append(
+                        (min_filter_node.attr['value'].tensor.float_val)[0])
+                else:
+                    max_filter_tensor = tensor_util.MakeNdarray(
+                        max_filter_node.attr['value'].tensor)
+                    min_filter_tensor = tensor_util.MakeNdarray(
+                        min_filter_node.attr['value'].tensor)
 
-                min_filter_node = self.node_mapping[current_node.input[5]]
-                max_filter_node = self.node_mapping[current_node.input[6]]
-                min_filter = min_filter_node.attr['value'].tensor.float_val[0]
-                max_filter = max_filter_node.attr['value'].tensor.float_val[0]
-                offset_value = self.offset_map[current_node_op]
-                min_freezed_output_node = self.node_mapping[last_conv_node.input[offset_value]]
-                max_freezed_output_node = self.node_mapping[last_conv_node.input[offset_value + 1]]
-                min_input = min_freezed_output_node.attr['value'].tensor.float_val[0]
-                max_input = max_freezed_output_node.attr['value'].tensor.float_val[0]
+                offset_value = self.offset_map[another_conv_node.op]
+                min_freezed_output_node = self.node_mapping[
+                    another_conv_node.input[offset_value]]
+                max_freezed_output_node = self.node_mapping[
+                    another_conv_node.input[offset_value + 1]]
+                min_input = min_freezed_output_node.attr[
+                    'value'].tensor.float_val[0]
+                max_input = max_freezed_output_node.attr[
+                    'value'].tensor.float_val[0]
 
-                bias_scale = 255.0 * 127.0 / (
-                    max(abs(max_input), abs(min_input)) * max(abs(max_filter), abs(min_filter)))
-
-                bias_tensor = (tensor_util.MakeNdarray(bias_node.attr['value'].tensor))
+                bias_tensor = (tensor_util.MakeNdarray(
+                    bias_node.attr['value'].tensor))
                 bias_length = bias_tensor.shape[0]
-                q_bias = []
-                for i in range(bias_length):
-                    q_bias.append(int(bias_tensor[i] * bias_scale))
-                current_node.attr['Tbias'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.qint32.as_datatype_enum))
-                bias_node.attr['dtype'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.qint32.as_datatype_enum))
+                scales = []
+                for i in range(channel_size):
+                    scales.append(255.0 * 127.0 /
+                                  (max(abs(max_input), abs(min_input)) *
+                                   max(abs(max_filter_tensor[i]),
+                                       abs(min_filter_tensor[i]))))
+                int32_bias = []
+                if channel_size > 1:
+                    for i in range(bias_length):
+                        int32_bias.append(int(bias_tensor[i] * scales[i]))
+                else:
+                    for i in range(bias_length):
+                        int32_bias.append(int(bias_tensor[i] * scales[0]))
 
-                bias_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(q_bias, dtypes.int32, bias_tensor.shape)))
-                bias_node.attr['value'].tensor.dtype = dtypes.qint32.as_datatype_enum
+                original_conv_node.attr['Tbias'].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        type=dtypes.qint32.as_datatype_enum))
+                bias_node.attr['dtype'].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        type=dtypes.qint32.as_datatype_enum))
 
-    def do_transformation(self):
-        """
-        Execute the rerange_quantized_concat graph transformation.
-        Return: Transformed grafhdef
-        """
-        self._analyze_concat_node()
-        if self.concat_node_input_mapping:  # Concat node is found and need to do transformation.
-            self._calc_concat_scale()
-            self._update_bias()
-        return self.input_graph
+                bias_node.attr['value'].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(
+                            int32_bias, dtypes.int32, bias_tensor.shape)))
+                bias_node.attr[
+                    'value'].tensor.dtype = dtypes.qint32.as_datatype_enum

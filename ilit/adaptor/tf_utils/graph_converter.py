@@ -195,8 +195,10 @@ class GraphConverter:
     def _inference(self, input_graph):
         graph = self.load_graph(input_graph)
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
-        output_tensor = graph.get_tensor_by_name(self.outputs[0] + ":0")
-
+        output_tensor = [
+            graph.get_tensor_by_name(x + ":0")
+            for x in self.outputs
+        ]
         import tensorflow as tf
 
         config = tf.ConfigProto()
