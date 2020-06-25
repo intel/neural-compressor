@@ -31,8 +31,7 @@ def _check_version(v1, v2):
         return True
     return False
 
-from mxnet.io import DataIter, DataDesc, DataBatch 
-class _DataIterWrapper(DataIter):
+class _DataIterWrapper(mx.io.DataIter):
     """DataIter wrapper for general iterator, e.g., gluon dataloader"""
     def __init__(self, calib_data):
         self._data = calib_data
@@ -48,10 +47,10 @@ class _DataIterWrapper(DataIter):
 
         num_input = len(data_example)
         assert num_input > 0
-        self.provide_data = [DataDesc(name='data', shape=(data_example[0].shape))]
+        self.provide_data = [mx.io.DataDesc(name='data', shape=(data_example[0].shape))]
         # data0, data1, ..., label
         if num_input >= 3:
-            self.provide_data = [DataDesc(name='data{}'.format(i), shape=x.shape)
+            self.provide_data = [mx.io.DataDesc(name='data{}'.format(i), shape=x.shape)
                                  for i, x in enumerate(data_example[0:-1])]
         self.batch_size = data_example[0].shape[0]
         self.reset()
@@ -61,7 +60,7 @@ class _DataIterWrapper(DataIter):
 
     def next(self):
         next_data = next(self._iter)
-        return DataBatch(data=next_data)
+        return mx.io.DataBatch(data=next_data)
         
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
