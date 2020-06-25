@@ -5,28 +5,33 @@ from .strategy import STRATEGIES
 class YamlAttr(dict):
     ''' access yaml using attributes instead of using the dictionary notation.
     '''
-    def __getattr__(self, name):
-        try:
-            value = self[name]
+    def __init__(self, value=None):
+        if value is None:
+            pass
+        elif isinstance(value, dict):
+            for key in value:
+                self.__setitem__(key, value[key])
+        else:
+            raise TypeError('expected dict')
 
-            if isinstance(value, dict):
-                value = YamlAttr(value)
-            if isinstance(value, list):
-                for val in value:
-                    value = YamlAttr(val)
+    def __getitem__(self, key):
+        value = self.get(key, None)
+        return value
 
-            return value
-        except Exception as e:
-            return None
-
-    def __setattr__(self, name, value):
-        self[name] = value
+    def __setitem__(self, key, value):
+        if isinstance(value, dict) and not isinstance(value, YamlAttr):
+            value = YamlAttr(value)
+        if isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict):
+            value = YamlAttr(value[0])
+        super(YamlAttr, self).__setitem__(key, value)
 
     def __getstate__(self):
         return self.__dict__
 
     def __setstate__(self, d):
         self.__dict__.update(d)
+
+    __setattr__, __getattr__  = __setitem__, __getitem__
 
 class Conf(object):
     ''' config parser.
@@ -69,7 +74,7 @@ class Conf(object):
             for key in cfg.quantization.keys():
                 assert key in ['approach', 'weight', 'activation']
                 if key == 'approach':
-                    assert cfg.quantization.approach.lower() in ['post_training_static_quant', 'post_training_dynamic_quant'], "TODO: quant_aware_training is not supported yet."
+                    assert cfg.quantization.approach.lower() in ['post_training_static_quant', 'post_training_dynamic_quant'], "quant_aware_training is not supported yet."
                 if key == 'weight':
                     for w_key in cfg.quantization.weight.keys():
                         assert w_key in ['granularity', 'scheme', 'dtype']
