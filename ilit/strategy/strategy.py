@@ -47,14 +47,12 @@ class TuneStrategy(object):
         self.model = model
         self.cfg = cfg
         framework_specific_info = {}
-        if "inputs" in cfg:
-            framework_specific_info["inputs"] = cfg["inputs"]
-        if "outputs" in cfg:
-            framework_specific_info["outputs"] = cfg["outputs"]
-        if q_dataloader is not None:
-            framework_specific_info["q_dataloader"] = q_dataloader
+        if cfg.framework.name.lower() == 'tensorflow':
+            framework_specific_info = {"inputs": cfg.framework.inputs, "outputs": cfg.framework.outputs}
+        if cfg.framework.name.lower() == 'mxnet':
+            framework_specific_info = {"q_dataloader": q_dataloader}
 
-        framework = cfg.framework.lower()
+        framework = cfg.framework.name.lower()
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         self.calib_dataloader = q_dataloader
@@ -72,11 +70,6 @@ class TuneStrategy(object):
         if cfg.tuning.objective:
             objective = cfg.tuning.objective.lower()
         self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion)
-
-        self.customized_ops = cfg.customized_ops
-        # inputs and outputs attributes are specifically used by tensorflow adaptor.
-        self.inputs = cfg.inputs
-        self.outputs = cfg.outputs
 
         self.modelwise_tune_space = self._modelwise_tune_space(model)
         self.opwise_tune_space = self._opwise_tune_space(model)
@@ -223,8 +216,8 @@ class TuneStrategy(object):
         for k, v in opwise.items():
             opwise[k] = self._merge_dicts(self.modelwise_tune_space, opwise[k])
 
-        if self.customized_ops:
-            for k, v in self.customized_ops.items():
+        if self.cfg.tuning.ops:
+            for k, v in self.cfg.tuning.ops.items():
                 for k_op, _ in opwise.items():
                     if k == k_op[0]:
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
