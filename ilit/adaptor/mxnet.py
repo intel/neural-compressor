@@ -31,6 +31,37 @@ def _check_version(v1, v2):
         return True
     return False
 
+class _DataIterWrapper(mx.io.DataIter):
+    """DataIter wrapper for general iterator, e.g., gluon dataloader"""
+    def __init__(self, calib_data):
+        self._data = calib_data
+        try:
+            calib_iter = iter(calib_data)
+        except TypeError as e:
+            raise TypeError('calib_data is not a valid iterator. {}'.format(str(e)))
+        data_example = next(calib_iter)
+        if isinstance(data_example, (list, tuple)):
+            data_example = list(data_example)
+        else:
+            data_example = [data_example]
+
+        num_input = len(data_example)
+        assert num_input > 0
+        self.provide_data = [mx.io.DataDesc(name='data', shape=(data_example[0].shape))]
+        # data0, data1, ..., label
+        if num_input >= 3:
+            self.provide_data = [mx.io.DataDesc(name='data{}'.format(i), shape=x.shape)
+                                 for i, x in enumerate(data_example[0:-1])]
+        self.batch_size = data_example[0].shape[0]
+        self.reset()
+
+    def reset(self):
+        self._iter = iter(self._data)
+
+    def next(self):
+        next_data = next(self._iter)
+        return mx.io.DataBatch(data=next_data)
+        
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
@@ -536,15 +567,15 @@ class MxNetAdaptor(Adaptor):
 
         if calib_data is not None:
             if isinstance(calib_data, mx.io.DataIter):
-                dshapes = calib_data.provide_data
+                data_info = calib_data.provide_data
             else:
-                calib_data, dshapes = mx.contrib.quantization._as_data_iter(calib_data)
-        data_shapes = dshapes
+                calib_data = _DataIterWrapper(calib_data)
+                data_info = calib_data.provide_data
 
-        if not data_shapes:
-            raise ValueError('data_shapes required')
+        if not data_info:
+            raise ValueError('need provide_data to infer data shape.')
         data_nd = []
-        for shape in data_shapes:
+        for shape in data_info:
             data_nd.append(mx.nd.zeros(shape.shape))
         while True:
             try:
