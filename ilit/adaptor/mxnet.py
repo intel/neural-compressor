@@ -62,9 +62,6 @@ class MxNetAdaptor(Adaptor):
         self.__config_dict['calib_data'] = dataloader
         self.th_dict = None
         qconfig = self.__config_dict
-        # logger.info(qconfig)
-        # print mxnet quantization verbose for debug
-        # os.environ['MXNET_QUANTIZATION_VERBOSE'] = '1'
 
         # get symbol from FP32 model
         if isinstance(model, mx.gluon.HybridBlock):

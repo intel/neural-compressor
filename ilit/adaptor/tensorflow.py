@@ -4,10 +4,8 @@ import subprocess
 from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport
-from .tf_utils.graph_converter import GraphConverter
 
 tensorflow = LazyImport('tensorflow')
-
 
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
@@ -110,6 +108,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
+        from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
                                    inputs=self.inputs,
@@ -207,6 +206,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
 
+        from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
                                    inputs=self.inputs,
