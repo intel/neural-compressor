@@ -1,89 +1,82 @@
 import os
-import sys
+from pathlib import Path
 from datetime import datetime
 import pickle
 from .conf.config import Conf
 from .strategy import STRATEGIES
 
 class Tuner(object):
-    r'''Tuner class automatically searches for optimal quantization recipes for low precision model inference,
-        achieving best tuning objectives like inference performance within accuracy loss constraints.
+    """Tuner class automatically searches for optimal quantization recipes for low precision model inference,
+       achieving best tuning objectives like inference performance within accuracy loss constraints.
 
-        Tuner abstracts out the differences of quantization APIs across various DL frameworks and brings a
-        unified API for automatic quantization that works on frameworks including tensorflow, pytorch and mxnet.
+       Tuner abstracts out the differences of quantization APIs across various DL frameworks and brings a
+       unified API for automatic quantization that works on frameworks including tensorflow, pytorch and mxnet.
 
-        Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria (<1% or <0.1% etc.)
-        and tuning objectives (performance, memory footprint etc.). Tuner class provides a flexible configuration
-        interface via YAML for users to specify these parameters.
+       Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria (<1% or <0.1% etc.)
+       and tuning objectives (performance, memory footprint etc.). Tuner class provides a flexible configuration
+       interface via YAML for users to specify these parameters.
 
-        Args:
-            conf_fname (string): The name of YAML configuration file containing accuracy goal, tuning objective
-                                 and preferred quantization algorithms etc.
-    '''
+    Args:
+        conf_fname (string): The path to the YAML configuration file containing accuracy goal, tuning objective
+                             and preferred calibration & quantization tuning space etc.
+
+    """    
     def __init__(self, conf_fname):
         self.cfg  = Conf(conf_fname).cfg
 
     def tune(self, model, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, resume_file=None):
-        r'''The main entry point of automatic quantization tuning.
+        """The main entry point of automatic quantization tuning.
 
-            This interface works on all the DL frameworks that iLiT supports and provides three usages:
-            a) Direct calibration: User specifies fp32 "model" and calibration dataset "q_dataloader"
-               without providing evaludation dataset "eval_dataloader" or function "eval_func".
-               Quantized model is generated and returned directly after calibration. No iterative
-               auto-tuning is conducted.
+           This interface works on all the DL frameworks that iLiT supports and provides two usages:
+           a) Calibration and tuning with pre-defined evaluation metrics: User specifies fp32 "model",
+              calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader". The calibrated
+              and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
+              in the configuration file. The evaluation tells the tuner whether the quantized model meets
+              the accuracy criteria. If not, the tuner starts a new calibration and tuning flow.
 
-            b) Calibration and tuning with pre-defined evaluation metrics: User specifies fp32 "model",
-               calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader". The calibrated
-               and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
-               in the configuration file. The evaluation tells the tuner whether the quantized model meets
-               the accuracy criteria. If not, the tuner starts a new calibration and tuning flow.
+           b) Calibration and tuning with custom evaluation: User specifies fp32 "model", calibration dataset
+              and a custom "eval_func" which encapsulates the evaluation dataset by itself. The calibrated
+              and quantized model is evaluated with "eval_func". The "eval_func" tells the tuner whether
+              the quantized model meets the accuracy criteria. If not, the Tuner starts a new calibration
+              and tuning flow.
 
-            c) Calibration and tuning with custom evaluation: User specifies fp32 "model", calibration dataset
-               and a custom "eval_func" which encapsulates the evaluation dataset by itself. The calibrated
-               and quantized model is evaluated with "eval_func". The "eval_func" tells the tuner whether
-               the quantized model meets the accuracy criteria. If not, the Tuner starts a new calibration
-               and tuning flow.
+        Args:
+            model (object):                        For Tensorflow model, it's a path to frozen pb or loaded graph_def object.
+                                                   For PyTorch model, it's torch.nn.model instance.
+                                                   For MXNet model, it's mxnet.symbol.Symbol or gluon.HybirdBlock instance.
+            q_dataloader (generator):              Data loader for calibration, mandatory for post-training quantization.
+                                                   It is iterable and should yield a tuple (input, label) for calibration
+                                                   dataset containing label, or yield (input, _) for label-free calibration
+                                                   dataset. The input could be a object, list, tuple or dict, depending on
+                                                   user implementation, as well as it can be taken as model input.
+            q_func (function, optional):           Reserved for future use.
+            eval_dataloader (generator, optional): Data loader for evaluation. It is iterable and should yield a tuple
+                                                   of (input, label). The input could be a object, list, tuple or dict,
+                                                   depending on user implementation, as well as it can be taken as model
+                                                   input. The label should be able to take as input of supported
+                                                   metrics. If this parameter is not None, user needs to specify
+                                                   pre-defined evaluation metrics through configuration file and should
+                                                   set "eval_func" paramter as None. Tuner will combine model,
+                                                   eval_dataloader and pre-defined metrics to run evaluation process.
+            eval_func (function, optional):        The evaluation function provided by user. This function takes model
+                                                   as parameter, and evaluation dataset and metrics should be encapsulated
+                                                   in this function implementation and outputs a higher-is-better accuracy
+                                                   scalar value.
 
-            Args:
-                model (object):             For Tensorflow, it's frozen pb or graph_def.
-                                            For PyTorch, it's torch.nn.model instance.
-                                            For MXNet, it's mxnet.symbol.Symbol or gluon.HybirdBlock instance.
+                                                   The pseudo code should be something like:
 
-                q_dataloader (optional):    Data loader for calibration, mandatory for post-training quantization.
-                                            It is iterable and should yield a tuple of "input" and "label", or
-                                            "input". Whether to contain "label" is specified in configuration
-                                            file. The "input" should be taken as model input, and the "label"
-                                            should be able to take as input of supported metrics.
+                                                   def eval_func(model):
+                                                        input, label = dataloader()
+                                                        output = model(input)
+                                                        accuracy = metric(output, label)
+                                                        return accuracy
+            resume_file (string, optional):        The path to the resume snapshot file. The resume snapshot file is
+                                                   saved when user press ctrl+c to interrupt tuning process.
 
-                q_func (optional):          Reserved for future use.
+        Returns:
+            quantized model: best qanitized model found, otherwise return None
 
-                eval_dataloader (optional): Data loader for evaluation. It is iterable and should yield a tuple
-                                            of "input" and "label". The "input" should be able to take as model
-                                            input, and the "label" should be able to take as input of supported
-                                            metrics. If this parameter is not None, user needs to specify
-                                            pre-defined evaluation metrics through configuration file and should
-                                            set "eval_func" paramter as None. Auto-tuner will combine model,
-                                            eval_dataloader and pre-defined metrics to run evaluation process.
-
-                eval_func (optional):       The evaluation function provided by user. This function takes model
-                                            as parameter, and evaluation dataset and metrics should be encapsulated
-                                            in this function implementation and outputs a higher-is-better accuracy
-                                            scalar value.
-
-                                            The pseudo code should be something like:
-
-                                            def eval_func(model):
-                                                 input = dataloader()
-                                                 output = model(input)
-                                                 accuracy = metric(output, label)
-                                                 return accuracy
-
-                resume_file (optional):     The path to the resume snapshot file. The resume snapshot file is
-                                            saved when user press ctrl+c to interrupt tuning process.
-
-            Return:
-                best qanitized model in tuning space, otherwise return None
-        '''
+        """
         self.snapshot_path = self.cfg.snapshot.path if self.cfg.snapshot else './'
 
         strategy = 'basic'
@@ -115,12 +108,8 @@ class Tuner(object):
         return self.strategy.best_qmodel
 
     def _save(self):
-        '''restore the tuning process if interrupted
-
-           Return: dict to contain all info needed by resume
-
-        '''
-        from pathlib import Path
+        """save current tuning state to snapshot for resuming.
+        """        
         path = Path(self.snapshot_path)
         path.mkdir(exist_ok=True, parents=True)
         

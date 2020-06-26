@@ -1,5 +1,4 @@
 from abc import abstractmethod
-import time
 import copy
 import itertools
 from collections import OrderedDict
@@ -8,7 +7,7 @@ from ..objective import OBJECTIVES
 from ..metric import METRICS
 from ..utils.utility import Timeout
 
-'''The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
+"""The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
 
    User could add new strategies by implementing new TuneStrategy subclass under this directory.
    The naming convention of new strategy subclass should be something like ABCTuneStrategy, user
@@ -16,15 +15,18 @@ from ..utils.utility import Timeout
 
    STRATEGIES variable is used to store all implelmented TuneStrategy subclasses to support
    different tuning strategies.
-'''
+"""
 STRATEGIES = {}
 
 def strategy_registry(cls):
-    '''The class decorator used to register all TuneStrategy subclasses.
+    """The class decorator used to register all TuneStrategy subclasses.
 
-       Args:
-           cls (class): The class of register.
-    '''
+    Args:
+        cls (class): The class of register.
+
+    Returns:
+        cls: The class of register.
+    """    
     assert cls.__name__.endswith('TuneStrategy'), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
     if cls.__name__[:-len('TuneStrategy')].lower() in STRATEGIES:
         raise ValueError('Cannot have two strategies with the same name')
@@ -32,17 +34,39 @@ def strategy_registry(cls):
     return cls
 
 class TuneStrategy(object):
-    '''The base class of tuning strategy.
+    """The base class of tuning strategy.
 
-       Args:
-           model (object): The model user specified.
-           cfg (object): The configuration user specified.
-           q_dataloder (object): The class object of framework adaptor.
-           q_func (object): The class object of framework adaptor.
-           baseline (tuple): The baseline of fp32 model.
-           calibration_loader (optional): The calibration data feeder provided by user.
-           eval_func (optional): The test function provided by user.
-    '''
+    Args:
+        model (object):                        The FP32 model specified for low precision tuning.
+        cfg (YamlAttr):                        The tuning configuration user specified.
+        q_dataloader (generator):              Data loader for calibration, mandatory for post-training quantization.
+                                               It is iterable and should yield a tuple (input, label) for calibration
+                                               dataset containing label, or yield (input, _) for label-free calibration
+                                               dataset. The input could be a object, list, tuple or dict, depending on
+                                               user implementation, as well as it can be taken as model input.
+        q_func (function, optional):           Reserved for future use.
+        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable and should yield a tuple
+                                               of (input, label). The input could be a object, list, tuple or dict,
+                                               depending on user implementation, as well as it can be taken as model
+                                               input. The label should be able to take as input of supported
+                                               metrics. If this parameter is not None, user needs to specify
+                                               pre-defined evaluation metrics through configuration file and should
+                                               set "eval_func" paramter as None. Tuner will combine model,
+                                               eval_dataloader and pre-defined metrics to run evaluation process.
+        eval_func (function, optional):        The evaluation function provided by user. This function takes model
+                                               as parameter, and evaluation dataset and metrics should be encapsulated
+                                               in this function implementation and outputs a higher-is-better accuracy
+                                               scalar value.
+
+                                               The pseudo code should be something like:
+
+                                               def eval_func(model):
+                                                    input, label = dataloader()
+                                                    output = model(input)
+                                                    accuracy = metric(output, label)
+                                                    return accurac
+        dicts (dict, optional):                The dict containing resume information. Defaults to None.
+    """        
     def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = cfg
