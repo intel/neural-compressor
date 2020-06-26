@@ -80,7 +80,7 @@ class MSETuneStrategy(TuneStrategy):
                     best_qmodel = self.last_qmodel
 
         if best_cfg == None:
-            raise StopIteration
+            return
 
         # Inspect FP32 and dequantized tensor
         if self.ordered_ops == None:
@@ -107,6 +107,5 @@ class MSETuneStrategy(TuneStrategy):
                 else:
                     best_acc = acc
 
-        raise StopIteration
-
+        return
 

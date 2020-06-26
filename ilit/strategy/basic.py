@@ -50,7 +50,7 @@ class BasicTuneStrategy(TuneStrategy):
                     best_cfg = copy.deepcopy(op_cfgs)
 
         if best_cfg == None:
-            raise StopIteration
+            return
 
         ops_acc = OrderedDict()
         for op, configs in reversed(self.opwise_tune_cfgs.items()):
@@ -83,4 +83,4 @@ class BasicTuneStrategy(TuneStrategy):
                 else:
                     best_acc = acc
 
-        raise StopIteration
+        return

@@ -1,4 +1,5 @@
-framework: pytorch                               # possible values are tensorflow, mxnet and pytorch
+framework:
+  - name: pytorch                                # possible values are tensorflow, mxnet and pytorch
 
 tuning:
     accuracy_criterion:

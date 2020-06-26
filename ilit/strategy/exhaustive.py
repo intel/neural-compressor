@@ -34,5 +34,5 @@ class ExhaustiveTuneStrategy(TuneStrategy):
 
                 yield op_cfgs
 
-        raise StopIteration
+        return
 

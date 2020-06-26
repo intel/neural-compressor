@@ -60,7 +60,7 @@ class BayesianTuneStrategy(TuneStrategy):
         if len(self.calib_iter) > 1:
             pbounds['calib_iter'] = (0, len(self.calib_iter))
         if len(pbounds) == 0:
-            raise StopIteration
+            return
         if self.bayes_opt == None:
             self.bayes_opt = BayesianOptimization(pbounds=pbounds, random_seed=self.cfg.random_seed)
         while True:

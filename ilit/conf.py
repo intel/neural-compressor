@@ -55,8 +55,14 @@ class Conf(object):
         for key in cfg.keys():
             assert key in ['framework', 'device', 'calibration', 'quantization', 'tuning', 'snapshot']
 
-        assert 'framework' in cfg.keys() and isinstance(cfg.framework, str)
-        assert cfg.framework in FRAMEWORKS, "The framework {} specified in yaml file is NOT supported".format(cfg.framework)
+        assert 'framework' in cfg and 'name' in cfg.framework and isinstance(cfg.framework.name, str)
+        assert cfg.framework.name.lower() in FRAMEWORKS, "The framework {} specified in yaml file is NOT supported".format(cfg.framework.name)
+
+        if cfg.framework.name.lower() == 'tensorflow':
+            assert cfg.framework.inputs and cfg.framework.outputs, "TensorFlow backend requires user to specify the graph inputs and outputs"
+        else:
+            cfg.framework.inputs = None
+            cfg.framework.outputs = None
 
         if 'calibration' in cfg.keys():
             for key in cfg.calibration.keys():
@@ -74,13 +80,13 @@ class Conf(object):
             for key in cfg.quantization.keys():
                 assert key in ['approach', 'weight', 'activation']
                 if key == 'approach':
-                    assert cfg.quantization.approach.lower() in ['post_training_static_quant', 'post_training_dynamic_quant'], "quant_aware_training is not supported yet."
+                    assert cfg.quantization.approach.lower() in ['post_training_static_quant'], "post_training_dynamic_quant and quant_aware_training are not supported yet."
                 if key == 'weight':
                     for w_key in cfg.quantization.weight.keys():
                         assert w_key in ['granularity', 'scheme', 'dtype']
                 if key == 'activation':
-                    for w_key in cfg.quantization.activation.keys():
-                        assert w_key in ['granularity', 'scheme', 'dtype']
+                    for a_key in cfg.quantization.activation.keys():
+                        assert a_key in ['granularity', 'scheme', 'dtype']
         else:
             cfg.quantization = {}
 
@@ -90,20 +96,37 @@ class Conf(object):
         if 'tuning' in cfg.keys():
             assert 'accuracy_criterion' in {key.lower() for key in cfg.tuning.keys()}
             for key in cfg.tuning.keys():
-                assert key in ['strategy', 'metric', 'accuracy_criterion', 'objective', 'timeout', 'random_seed']
+                assert key in ['strategy', 'metric', 'accuracy_criterion', 'objective', 'timeout', 'random_seed', 'ops']
                 if key == 'strategy':
-                    assert cfg.tuning.strategy in STRATEGIES, "The strategy {} specified in yaml file is NOT supported".format(cfg.tuning.strategy)
+                    assert cfg.tuning.strategy.lower() in STRATEGIES, "The strategy {} specified in yaml file is NOT supported".format(cfg.tuning.strategy)
+                if key == 'ops':
+                    assert isinstance(cfg.tuning.ops, dict)
+                    for op in cfg.tuning.ops.keys():
+                        op_value = cfg.tuning.ops[op]
+                        assert isinstance(op_value, dict)
+                        for attr in op_value.keys():
+                            assert attr in ['activation', 'weight']
+                            assert isinstance(op_value[attr], dict)
+                            for attr_key in op_value[attr].keys():
+                                assert attr_key in ['granularity', 'scheme', 'dtype', 'algorithm']
         else:
             cfg.tuning = {}
 
         if not cfg.tuning.strategy:
             cfg.tuning.strategy = 'basic'
+
+        if cfg.tuning.strategy.lower() == 'mse':
+            assert cfg.framework.name.lower() != 'pytorch', "The MSE strategy doesn't support PyTorch framework"
+
         if not cfg.tuning.timeout:
             cfg.tuning.timeout = 0
+
         if not cfg.tuning.random_seed:
             cfg.tuning.random_seed = 1978
+
         if not cfg.tuning.objective:
             cfg.tuning.objective = 'performance'
+
         if not cfg.tuning.accuracy_criterion:
             cfg.tuning.accuracy_criterion = {'relative': 0.01}
 

@@ -1,4 +1,5 @@
-framework: pytorch                               # possible values are tensorflow, mxnet and pytorch
+framework:
+  - name: pytorch                                # possible values are tensorflow, mxnet and pytorch
 
 tuning:
     metric:
@@ -7,4 +8,3 @@ tuning:
       - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                   # tuning timeout (seconds)
     random_seed: 9527                            # random seed
-
