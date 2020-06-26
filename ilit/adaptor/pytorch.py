@@ -1,5 +1,5 @@
 from .adaptor import adaptor_registry, Adaptor
-from ..utils import LazyImport, AverageMeter
+from ..utils.utility import LazyImport, AverageMeter
 import copy
 from collections import OrderedDict
 

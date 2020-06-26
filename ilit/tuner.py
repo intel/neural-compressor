@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime
 import pickle
-from .conf import Conf
+from .conf.config import Conf
 from .strategy import STRATEGIES
 
 class Tuner(object):

@@ -1,5 +1,5 @@
 from .adaptor import adaptor_registry, Adaptor
-from ..utils import LazyImport
+from ..utils.utility import LazyImport
 
 from collections import OrderedDict
 import os

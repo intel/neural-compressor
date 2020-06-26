@@ -1,7 +1,7 @@
 from .adaptor import adaptor_registry, Adaptor
-from ..utils import LazyImport
-from ..algo.kl_divergence import KL_Divergence
-from ..algo.collect_layer_histogram import LayerHistogramCollector
+from ..utils.utility import LazyImport
+from ..utils.kl_divergence import KL_Divergence
+from ..utils.collect_layer_histogram import LayerHistogramCollector
 from collections import OrderedDict
 import numpy as np
 

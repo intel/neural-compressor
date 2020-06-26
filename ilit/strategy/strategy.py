@@ -6,7 +6,7 @@ from collections import OrderedDict
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..metric import METRICS
-from ..utils import Timeout
+from ..utils.utility import Timeout
 
 '''The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
 
