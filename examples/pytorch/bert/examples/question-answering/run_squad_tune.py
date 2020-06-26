@@ -514,7 +514,7 @@ def main():
     parser.add_argument("--mkldnn_eval", action='store_true',
                         help="evaluation with MKLDNN")
     parser.add_argument("--do_ilit_tune", action='store_true',
-                        help="run iLit tool to tune int8 acc.")
+                        help="run iLiT tool to tune int8 acc.")
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="SQuAD task")
 

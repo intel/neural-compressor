@@ -26,7 +26,7 @@ from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_infe
 from tensorflow.python.framework import dtypes
 
 import datasets
-from ilit import tuner as iLit
+from ilit import tuner as iLiT
 
 # override by args
 INPUTS = "input" 
@@ -169,7 +169,7 @@ class eval_classifier_optimized_graph:
 
   def auto_tune(self):
       fp32_graph = load_graph(self.args.input_graph)
-      at = iLit.Tuner(self.args.config)
+      at = iLiT.Tuner(self.args.config)
       dataloader = Dataloader(self.args.data_location, 'validation',
                               self.args.image_size, self.args.image_size,
                               self.args.batch_size, self.args.num_cores,

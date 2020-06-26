@@ -24,7 +24,7 @@ import numpy as np
 import tensorflow as tf
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
-from ilit import tuner as iLit
+from ilit import tuner as iLiT
 
 from tensorflow.python.data.experimental import parallel_interleave
 from tensorflow.python.data.experimental import map_and_batch
@@ -37,7 +37,6 @@ from coco_label_map import category_map
 
 IMAGE_SIZE = 300
 COCO_NUM_VAL_IMAGES = 4952
-
 
 def parse_and_preprocess(serialized_example):
     # Dense features in Example proto.
@@ -343,8 +342,8 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
     infer = model_infer(args)
-
-    at = iLit.Tuner(args.config)
+    
+    at = iLiT.Tuner(args.config)
 
     output_graph = at.tune(infer.get_graph(),
                            q_dataloader=infer,

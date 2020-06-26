@@ -495,7 +495,7 @@ def main():
     parser.add_argument("--do_bf16", action='store_true',
                         help="run bf16 evaluation / training.")
     parser.add_argument("--do_ilit_tune", action='store_true',
-                        help="run iLit tool to tune int8 acc.")
+                        help="run iLiT tool to tune int8 acc.")
 
     args = parser.parse_args()
 
