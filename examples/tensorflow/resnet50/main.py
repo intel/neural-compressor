@@ -107,11 +107,7 @@ if __name__ == '__main__':
         description='Tensorflow Resnet50-v1.0 demo for iLiT')
     parser.add_argument('--input_graph', type=str, default='')
     parser.add_argument('--config', type=str, default='')
-    parser.add_argument('--inputs', type=str, default='', help='input tensor')
-    parser.add_argument('--outputs',
-                        type=str,
-                        required='',
-                        help='output tensor')
+
     parser.add_argument('--data_location',
                         type=str,
                         required='',
@@ -206,14 +202,9 @@ if __name__ == '__main__':
                             args.input_height, args.input_width,
                             args.batch_size)
 
-    rn50_input_output = {
-        "inputs": args.inputs.split(' '),
-        "outputs": args.outputs.split(' ')}
-
     at.tune(
         fp32_graph,
         q_dataloader=dataloader,
         # eval_func=eval_inference, model_specific_cfg=rn50_input_output)
         eval_func=None,
-        eval_dataloader=dataloader,
-        model_specific_cfg=rn50_input_output)
+        eval_dataloader=dataloader)

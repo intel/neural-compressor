@@ -1,11 +1,13 @@
 framework:
-  - name: tensorflow                                # possible values are tensorflow, mxnet and pytorch
+  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    inputs: image_tensor
+    outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
 calibration:                                         
   - iterations: 1, 5, 10, 20
     algorithm:                                            
       - weight: minmax
-      - activation: minmax
+        activation: minmax
 
 tuning:
     accuracy_criterion:

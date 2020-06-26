@@ -1,6 +1,7 @@
 framework:
   - name: tensorflow                                 # possible values are tensorflow, mxnet and pytorch
-
+    inputs: input
+    outputs: predict
 device: cpu
 
 calibration:                                         

@@ -348,11 +348,8 @@ if __name__ == "__main__":
     infer = model_infer(args)
     
     at = iLit.Tuner(args.config)
-    object_detection_input_output = {
-        "inputs":  args.inputs.split(' '),
-        "outputs": args.outputs.split(' ')}
+
 
     output_graph = at.tune(infer.get_graph(),
                            q_dataloader=infer,
-                           eval_func=infer.accuracy_check,
-                           model_specific_cfg=object_detection_input_output)
+                           eval_func=infer.accuracy_check)

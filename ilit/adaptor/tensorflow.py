@@ -25,10 +25,14 @@ class TensorFlowAdaptor(Adaptor):
         self.quantize_config = {}
         self.quantize_config['op_wise_config'] = {}
         self.framework_specific_info = framework_specific_info
+        self.inputs = self.framework_specific_info['inputs'].split(',')
+        self.outputs = self.framework_specific_info['outputs'].split(',')
 
     def evaluate(self, graph, dataloader, metric=None):
-        input_tensor = graph.get_tensor_by_name(self.framework_specific_info['inputs'][0] + ":0")
-        output_tensor = graph.get_tensor_by_name(self.framework_specific_info['outputs'][0] + ":0")
+        input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
+        output_tensor = [
+            graph.get_tensor_by_name(x + ":0") for x in self.outputs
+        ]
 
         import tensorflow as tf
 
@@ -53,7 +57,7 @@ class TensorFlowAdaptor(Adaptor):
                                                 {input_tensor: np_images})
                 # print("Processed %d batches."% (batch + 1))
                 # batch += 1
-                acc = metric.evaluate(predictions, np_labels)
+                acc = metric.evaluate(predictions[0], np_labels)
 
             except tf.errors.OutOfRangeError:
                 print("Running out of images from dataset.")
@@ -82,8 +86,8 @@ class TensorFlowAdaptor(Adaptor):
         self.tuning_cfg_to_fw(tune_cfg)
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model, quantized_model,
-                                   inputs=self.framework_specific_info['inputs'],
-                                   outputs=self.framework_specific_info['outputs'],
+                                   inputs=self.inputs,
+                                   outputs=self.outputs,
                                    qt_config=self.quantize_config,
                                    data_loader=data_loader)
         return converter.convert()
@@ -154,12 +158,10 @@ class TensorFlowAdaptor(Adaptor):
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
 
-        input_node_name = self.framework_specific_info['inputs']
-        output_node_name = self.framework_specific_info['outputs']
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
-                                   inputs=input_node_name,
-                                   outputs=output_node_name,
+                                   inputs=self.inputs,
+                                   outputs=self.outputs,
                                    data_loader=dataloader)
         return converter.inspect_tensor(op_list, iteration_list)
