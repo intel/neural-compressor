@@ -1,5 +1,5 @@
 framework:
-  - name: tensorflow                                # possible values are tensorflow, mxnet and pytorch
+  - name: tensorflow                                
 
 calibration:                                         
   - iterations: 1, 5, 10

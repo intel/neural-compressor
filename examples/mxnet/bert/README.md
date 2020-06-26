@@ -24,7 +24,7 @@ python3 finetune_squad.py \
 ```
  
 
-# Dependancy
+# Dependency
 
 ```
 pip install mxnet-mkl gluonnlp

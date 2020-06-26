@@ -12,7 +12,7 @@ python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=256 --da
 python eval_ssd.py --network=renset50_v1 --data-shape=512 --batch-size=256 --dataset coco
 ```
 
-# Dependancy
+# Dependency
 
 ```
 pip install mxnet-mkl gluoncv
