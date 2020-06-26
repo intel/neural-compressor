@@ -35,6 +35,14 @@ OUTPUTS = "predict"
 INCEPTION_V3_IMAGE_SIZE = 224
 
 def load_graph(model_file):
+  """This is a function to load TF graph from pb file
+
+  Args:
+      model_file (string): TF pb file local path
+
+  Returns:
+      graph: TF graph object
+  """
   graph = tf.Graph()
   graph_def = tf.compat.v1.GraphDef()
 
@@ -52,36 +60,50 @@ def load_graph(model_file):
   return graph
 
 class Dataloader(object):
-    '''
-    This is a example class that wrapped the model specified parameters,
+  """This is a example class that wrapped the model specified parameters,
     such as dataset path, batch size.
     And more importantly, it provides the ability to iterate the dataset.
-    '''
+  Yields:
+      tuple: yield data and label 2 numpy array
+  """
     def __init__(self, data_location, subset, input_height, input_width,
                  batch_size, num_cores, resize_method='crop', mean_value=[0.0,0.0,0.0], label_adjust=False):
-        self.batch_size = batch_size
-        self.subset = subset
-        self.dataset = datasets.ImagenetData(data_location)
-        self.total_image = self.dataset.num_examples_per_epoch(self.subset)
-        self.preprocessor = self.dataset.get_image_preprocessor()(
-            input_height,
-            input_width,
-            batch_size,
-            num_cores,
-            resize_method,
-            mean_value)
-        self.label_adjust = label_adjust
-        self.n = int(self.total_image / self.batch_size)
+      """dataloader generator
 
-    def __iter__(self):
-        images, labels = self.preprocessor.minibatch(self.dataset, subset=self.subset,
-                         cache_data=False)
-        with tf.compat.v1.Session() as sess:
-            for i in range(self.n):
-                image, label = sess.run([images, labels])
-                if self.label_adjust:
-                    label -= 1
-                yield image, label
+      Args:
+          data_location (str): tf recorder local path
+          subset (str): training or validation part
+          input_height (int): input image size
+          input_width (int): input image size
+          batch_size (int): dataloader batch size
+          num_cores (int): parallel 
+          resize_method (str, optional): data preprocession methods. Defaults to 'crop'.
+          mean_value (list, optional): data mean value. Defaults to [0.0,0.0,0.0].
+          label_adjust (bool, optional): adjust the label value. Defaults to False.
+      """
+      self.batch_size = batch_size
+      self.subset = subset
+      self.dataset = datasets.ImagenetData(data_location)
+      self.total_image = self.dataset.num_examples_per_epoch(self.subset)
+      self.preprocessor = self.dataset.get_image_preprocessor()(
+          input_height,
+          input_width,
+          batch_size,
+          num_cores,
+          resize_method,
+          mean_value)
+      self.label_adjust = label_adjust
+      self.n = int(self.total_image / self.batch_size)
+
+  def __iter__(self):
+      images, labels = self.preprocessor.minibatch(self.dataset, subset=self.subset,
+                        cache_data=False)
+      with tf.compat.v1.Session() as sess:
+          for i in range(self.n):
+              image, label = sess.run([images, labels])
+              if self.label_adjust:
+                  label -= 1
+              yield image, label
 
 class eval_classifier_optimized_graph:
   """Evaluate image classifier with optimized TensorFlow graph"""
@@ -168,6 +190,11 @@ class eval_classifier_optimized_graph:
     self.validate_args()
 
   def auto_tune(self):
+    """This is iLiT tuning part to generate a quantized pb
+
+    Returns:
+        graph: it will return a quantized pb
+    """
       fp32_graph = load_graph(self.args.input_graph)
       at = iLiT.Tuner(self.args.config)
       dataloader = Dataloader(self.args.data_location, 'validation',
@@ -175,16 +202,12 @@ class eval_classifier_optimized_graph:
                               self.args.batch_size, self.args.num_cores,
                               self.args.resize_method, 
                               [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
-      model_input_output = {
-                          "inputs": self.args.input.split(' '),
-                          "outputs": self.args.output.split(' ')}
       q_model = at.tune(
                           fp32_graph,
                           q_dataloader=dataloader,
                           # eval_func=iself.eval_inference)
                           eval_func=None,
-                          eval_dataloader=dataloader,
-                          model_specific_cfg=model_input_output)
+                          eval_dataloader=dataloader)
       return q_model
 
   def eval_inference(self, infer_graph):

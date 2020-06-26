@@ -153,14 +153,12 @@ class RecordInputImagePreprocessor(object):
 
       ds = ds.apply(
         parallel_interleave(
-          tf.data.TFRecordDataset, cycle_length=self.num_cores, block_length=5,
-          sloppy=True,
-          buffer_output_elements=10000, prefetch_input_elements=10000))
+          tf.data.TFRecordDataset, cycle_length=self.num_cores))
 
       if cache_data:
         ds = ds.take(1).cache().repeat()
 
-      ds = ds.prefetch(buffer_size=10000)
+      ds = ds.prefetch(buffer_size=self.batch_size)
 
       # num of parallel batches not greater than 56
       max_num_parallel_batches = min(56, 2 * self.num_cores)
@@ -168,8 +166,7 @@ class RecordInputImagePreprocessor(object):
         map_and_batch(
           map_func=self.parse_and_preprocess,
           batch_size=self.batch_size,
-          #num_parallel_batches=max_num_parallel_batches,
-          num_parallel_batches=56,
+          num_parallel_batches=max_num_parallel_batches,
           num_parallel_calls=None))
 
       ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
