@@ -80,6 +80,7 @@ import torch.nn as nn
 from torch.nn.parallel.parallel_apply import parallel_apply
 from torch.nn.parallel.replicate import replicate
 from torch.nn.parallel.scatter_gather import gather, scatter
+from torch.utils.data import DataLoader
 # quotient-remainder trick
 from tricks.qr_embedding_bag import QREmbeddingBag
 # mixed-dimension trick
@@ -265,14 +266,13 @@ class DLRM_Net(nn.Module):
 
         return R
 
-    def forward(self, inputs):
+    def forward(self, dense_x, lS_o, lS_i):
         if self.ndevices <= 1:
-            return self.sequential_forward(inputs)
+            return self.sequential_forward(dense_x, lS_o, lS_i)
         else:
-            return self.parallel_forward(inputs)
+            return self.parallel_forward(dense_x, lS_o, lS_i)
 
-    def sequential_forward(self, inputs):
-        dense_x, lS_o, lS_i = inputs
+    def sequential_forward(self, dense_x, lS_o, lS_i):
         # process dense features (using bottom mlp), resulting in a row vector
         x = self.apply_mlp(dense_x, self.bot_l)
 
@@ -293,8 +293,7 @@ class DLRM_Net(nn.Module):
 
         return z
 
-    def parallel_forward(self, inputs):
-        dense_x, lS_o, lS_i = inputs
+    def parallel_forward(self, dense_x, lS_o, lS_i):
         ### prepare model (overwrite) ###
         # WARNING: # of devices must be >= batch size in parallel_forward call
         batch_size = dense_x.size()[0]
@@ -395,6 +394,13 @@ class DLRM_Net(nn.Module):
         return z0
 
 
+class DLRM_DataLoader(DataLoader):
+    def __init__(self, loader=None):
+        self.loader = loader
+    def __iter__(self):
+        for X_test, lS_o_test, lS_i_test, T in self.loader:
+            yield (X_test, lS_o_test, lS_i_test), T
+
 if __name__ == "__main__":
     ### import packages ###
     import sys
@@ -482,7 +488,7 @@ if __name__ == "__main__":
     parser.add_argument("--mlperf-auc-threshold", type=float, default=0.0)
     parser.add_argument("--mlperf-bin-loader", action='store_true', default=False)
     parser.add_argument("--mlperf-bin-shuffle", action='store_true', default=False)
-    parser.add_argument("--do-ilit-tune", action='store_true', default=False)
+    parser.add_argument("--do-iLiT-tune", action='store_true', default=False)
     args = parser.parse_args()
 
     if args.mlperf_logging:
@@ -722,8 +728,7 @@ if __name__ == "__main__":
             torch.cuda.synchronize()
         return time.time()
 
-    def dlrm_wrap(inputs, use_gpu, device):
-        X, lS_o, lS_i = inputs
+    def dlrm_wrap(X, lS_o, lS_i, use_gpu, device):
         if use_gpu:  # .cuda()
             # lS_i can be either a list of tensors or a stacked tensor.
             # Handle each case below:
@@ -737,7 +742,7 @@ if __name__ == "__main__":
                 lS_i)
             )
         else:
-            return dlrm(inputs)
+            return dlrm(X, lS_o, lS_i)
 
     def loss_fn_wrap(Z, T, use_gpu, device):
         if args.loss_function == "mse" or args.loss_function == "bce":
@@ -758,8 +763,8 @@ if __name__ == "__main__":
     def eval_func(model):
         scores = []
         targets = []
-        for j, (inputs, T) in enumerate(test_ld):
-            Z = model(inputs)
+        for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
+            Z = model(X_test, lS_o_test, lS_i_test)
             S = Z.detach().cpu().numpy()  # numpy array
             T = T.detach().cpu().numpy()  # numpy array
             scores.append(S)
@@ -841,8 +846,9 @@ if __name__ == "__main__":
             )
         )
 
-    if args.do_ilit_tune:
-        print('do_ilit_tune')
+    if args.do_iLiT_tune:
+        print('do_iLiT_tune')
+        eval_dataloader = DLRM_DataLoader(test_ld)
         fuse_list = []
         for i in range(0, len(dlrm.bot_l), 2):
             fuse_list.append(["bot_l.%d" % (i), "bot_l.%d" % (i + 1)])
@@ -857,7 +863,29 @@ if __name__ == "__main__":
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
-        tuner.tune(dlrm, test_ld, eval_func=eval_func)
+        tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
+
+        # run int8 model without iLiT tuning
+        dlrm.qconfig = torch.quantization.QConfig(activation=torch.quantization.observer.MinMaxObserver.with_args(reduce_range=False),
+            weight=torch.quantization.default_weight_observer)
+        if args.per_tensor_linear:
+            dlrm.bot_l.qconfig = default_qconfig
+            dlrm.top_l.qconfig = default_qconfig
+        prepare(dlrm, inplace=True)
+        j = 0
+        for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
+            Z = dlrm_wrap(X_test, lS_o_test, lS_i_test, use_gpu, device)
+            if j > nbatches * 0.05:
+                break
+        print("convert")
+        convert(dlrm, inplace=True)
+        print("convert done")
+        import time
+        start = time.time()
+        accuracy = eval_func(dlrm)
+        end = time.time()
+        total_time = end - start
+        print('int8 result is: ', '[{:.4f}, {:.4f}]'.format(accuracy, total_time))
         exit(0)
 
     if args.do_int8_inference and args.inference_only:
@@ -865,27 +893,28 @@ if __name__ == "__main__":
         fuse_list = []
         for i in range(0, len(dlrm.bot_l), 2):
             fuse_list.append(["bot_l.%d" % (i), "bot_l.%d" % (i + 1)])
-        dlrm = fuse_modules(dlrm, fuse_list)
+        dlrm = fuse_modules(dlrm, fuse_list, inplace=True)
         fuse_list = []
         for i in range(0, len(dlrm.top_l) - 2, 2):
             fuse_list.append(["top_l.%d" % (i), "top_l.%d" % (i + 1)])
-        dlrm = fuse_modules(dlrm, fuse_list)
+        dlrm = fuse_modules(dlrm, fuse_list, inplace=True)
         dlrm.bot_l.insert(0, QuantStub())
         dlrm.bot_l.append(DeQuantStub())
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-        dlrm.qconfig = default_per_channel_qconfig
+        dlrm.qconfig = torch.quantization.QConfig(activation=torch.quantization.observer.MinMaxObserver.with_args(reduce_range=False),
+            weight=torch.quantization.default_weight_observer)
         if args.per_tensor_linear:
             dlrm.bot_l.qconfig = default_qconfig
             dlrm.top_l.qconfig = default_qconfig
-        dlrm = prepare(dlrm)
+        dlrm = prepare(dlrm, inplace=True)
         j = 0
-        for j, (inputs, T) in enumerate(test_ld):
-            Z = dlrm_wrap(inputs, use_gpu, device)
+        for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
+            Z = dlrm_wrap(X_test, lS_o_test, lS_i_test, use_gpu, device)
             if j > nbatches * 0.05:
                 break
         print("convert")
-        dlrm = convert(dlrm)
+        dlrm = convert(dlrm, inplace=True)
         print("convert done")
         if not (args.save_int8 == ""):
              print("Saving model to {}".format(args.save_int8))
@@ -920,7 +949,7 @@ if __name__ == "__main__":
             if args.mlperf_logging:
                 scores = []
                 targets = []
-            for j, (inputs, T) in enumerate(test_ld):
+            for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
                 if j < skip_upto_batch:
                     continue
 
@@ -948,7 +977,7 @@ if __name__ == "__main__":
                 '''
 
                 # forward pass
-                Z = dlrm_wrap(inputs, use_gpu, device)
+                Z = dlrm_wrap(X_test, lS_o_test, lS_i_test, use_gpu, device)
 
                 # loss
                 E = loss_fn_wrap(Z, T, use_gpu, device)
@@ -1075,7 +1104,7 @@ if __name__ == "__main__":
                         scores = []
                         targets = []
 
-                    for i, (inputs_test, T_test) in enumerate(test_ld):
+                    for i, (X_test, lS_o_test, lS_i_test, T_test) in enumerate(test_ld):
                         # early exit if nbatches was set by the user and was exceeded
                         if nbatches > 0 and i >= nbatches:
                             break
@@ -1084,7 +1113,7 @@ if __name__ == "__main__":
 
                         # forward pass
                         Z_test = dlrm_wrap(
-                            inputs_test, use_gpu, device
+                            X_test, lS_o_test, lS_i_test, use_gpu, device
                         )
                         if args.mlperf_logging:
                             S_test = Z_test.detach().cpu().numpy()  # numpy array
