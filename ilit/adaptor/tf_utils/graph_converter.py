@@ -196,6 +196,11 @@ class GraphConverter:
         return graph
 
     def _inference(self, input_graph):
+        """Run the calibration on the input graph 
+
+        Args:
+            input_graph (tf.compat.v1.GraphDef): input graph
+        """
         graph = self.load_graph(input_graph)
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
         output_tensor = [

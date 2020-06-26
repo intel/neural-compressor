@@ -39,10 +39,6 @@ IMAGE_SIZE = 300
 COCO_NUM_VAL_IMAGES = 4952
 
 
-
-
-
-
 def parse_and_preprocess(serialized_example):
     # Dense features in Example proto.
     feature_map = {
@@ -146,6 +142,11 @@ class model_infer:
         return self.infer_graph
 
     def __iter__(self):
+        """Enable the generator for q_dataloader
+
+        Yields:
+            [Tensor]: images
+        """
         data_graph = tf.Graph()
         with data_graph.as_default():
             self.input_images, self.bbox, self.label, self.image_id = self.get_input(
@@ -230,12 +231,11 @@ class model_infer:
 
         return images, bbox, label, image_id
 
-
-
     def accuracy_check(self, input_graph=None):
         print("Inference for accuracy check.")
         if input_graph:
             self.infer_graph = input_graph
+            # Need to reset the input_tensor/output_tensor
             self.input_tensor = self.infer_graph.get_tensor_by_name(
                 self.input_layer + ":0")
             self.output_tensors = [
@@ -340,16 +340,11 @@ if __name__ == "__main__":
                             default=200,
                             type=int)
     arg_parser.add_argument('--config', type=str, default='')
-    arg_parser.add_argument('--inputs', type=str, default='', help='input tensor')
-    arg_parser.add_argument('--outputs',
-                        type=str,
-                        required='',
-                        help='output tensor')
+
     args = arg_parser.parse_args()
     infer = model_infer(args)
 
     at = iLit.Tuner(args.config)
-
 
     output_graph = at.tune(infer.get_graph(),
                            q_dataloader=infer,

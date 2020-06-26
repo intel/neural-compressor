@@ -23,13 +23,22 @@ class TensorFlowAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
         super(TensorFlowAdaptor, self).__init__(framework_specific_info)
 
-        self.quantize_config = {}
-        self.quantize_config['op_wise_config'] = {}
+        self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
         self.inputs = self.framework_specific_info['inputs'].split(',')
         self.outputs = self.framework_specific_info['outputs'].split(',')
 
     def evaluate(self, graph, dataloader, metric=None):
+        """Evaluate the model for specified metric on validation dataset.
+
+        Args:
+            graph (tf.compat.v1.GraphDef): the model for evaluate/
+            dataloader (generator): generate the data and labels.
+            metric (object, optional): Depends on model category. Defaults to None.
+
+        Returns:
+            [float]: evaluation result, the larger is better.
+        """
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
         output_tensor = [
             graph.get_tensor_by_name(x + ":0") for x in self.outputs
@@ -66,6 +75,11 @@ class TensorFlowAdaptor(Adaptor):
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
+        """Parse the iLiT wrapped configuration to Tensorflow.
+
+        Args:
+            tuning_cfg (dict): configuration for quantization.
+        """
         self.excluded_nodes = []
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         for each_op_info in tuning_cfg['op']:
@@ -84,6 +98,16 @@ class TensorFlowAdaptor(Adaptor):
                                                                algorithm)
 
     def quantize(self, tune_cfg, model, data_loader):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization configuration
+            model (tf.compat.v1.GraphDef): fp32 model
+            data_loader (generator): generator the data and labels
+
+        Returns:
+            tf.compat.v1.GraphDef: the quantized model
+        """
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
         converter = GraphConverter(model,
@@ -95,9 +119,11 @@ class TensorFlowAdaptor(Adaptor):
         return converter.convert()
 
     def _query_quantizable_ops(self, graph):
-        '''
-            Return: Op name/Op type mapping which saved in OrderDict.
-        '''
+        """Collect the op-wise configuration for quantization.
+
+        Returns:
+            OrderDict: op-wise configuration.
+        """
         graph_def = graph.as_graph_def()
         tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool",
                                   "AvgPool", "ConcatV2", "MatMul")
@@ -137,6 +163,14 @@ class TensorFlowAdaptor(Adaptor):
         return self.quantizable_op_details
 
     def query_fw_capability(self, model):
+        """Collect the model-wise and op-wise configuration for quantization.
+
+        Args:
+            model (tf.compat.v1.GraphDef): model definition.
+
+        Returns:
+            [dict]: model-wise & op-wise configuration for quantization.
+        """
         capability = {
             'modelwise': {
                 'activation': {
@@ -160,6 +194,17 @@ class TensorFlowAdaptor(Adaptor):
         return capability
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+        """Collect the specified tensor's output on specified iteration.
+
+        Args:
+            model (tf.compat.v1.GraphDef): model definition.
+            dataloader (generator): generate the data and labels
+            op_list (list, optional): the specified op names' list. Defaults to [].
+            iteration_list (list, optional): the specified iteration. Defaults to [].
+
+        Returns:
+            [dict]: the key is op_name while the value is the ndarray tensor.
+        """
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
 
         converter = GraphConverter(model,
