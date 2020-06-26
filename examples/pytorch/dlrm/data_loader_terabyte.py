@@ -84,7 +84,7 @@ def _transform_features(
     feature_count = x_cat_batch.shape[1]
     lS_o = torch.arange(batch_size).reshape(1, -1).repeat(feature_count, 1)
 
-    return (x_int_batch, lS_o, x_cat_batch.t()), y_batch.view(-1, 1)
+    return x_int_batch, lS_o, x_cat_batch.t(), y_batch.view(-1, 1)
 
 
 def _batch_generator(
