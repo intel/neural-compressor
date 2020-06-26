@@ -322,8 +322,12 @@ class TuneStrategy(object):
         need_stop = False
 
         if self.objective.compare(self.best_tune_result):
+            del self.best_tune_result
+            del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
+        else:
+            del self.last_qmodel
 
         print('Tune result is: ', '[{:.4f}, {:.4f}]'.format(*self.last_tune_result) if self.last_tune_result else None, 'Best tune result is: ', '[{:.4f}, {:.4f}]'.format(*self.best_tune_result) if self.best_tune_result else None)
 

@@ -57,7 +57,7 @@ class PyTorchAdaptor(Adaptor):
     def quantize(self, tune_cfg, model, dataloader):
         assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
 
-        q_model = copy.deepcopy(model)
+        q_model = copy.deepcopy(model.eval())
 
         op_cfgs = self._cfg_to_qconfig(tune_cfg)
         self._propagate_qconfig(q_model, op_cfgs)
@@ -67,7 +67,6 @@ class PyTorchAdaptor(Adaptor):
                       "passed correct configuration through `qconfig_dict` or "
                       "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)
-        q_model.eval()
 
         iterations = tune_cfg.get('calib_iteration', 1)
         assert iterations >= 1
@@ -301,6 +300,6 @@ class PyTorchAdaptor(Adaptor):
 
         return q_capability
 
-    def inspect_tensor(self, model):
+    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         pass
 

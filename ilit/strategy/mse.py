@@ -55,7 +55,6 @@ class MSETuneStrategy(TuneStrategy):
         op_cfgs = {}
         best_cfg = None
         best_acc = 0
-        best_qmodel = None
 
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)
@@ -77,7 +76,6 @@ class MSETuneStrategy(TuneStrategy):
                 if acc > best_acc:
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
-                    best_qmodel = self.last_qmodel
 
         if best_cfg == None:
             return
@@ -86,8 +84,9 @@ class MSETuneStrategy(TuneStrategy):
         if self.ordered_ops == None:
             op_lists = self.opwise_quant_cfgs.keys()
             fp32_tensor_dict = self.adaptor.inspect_tensor(self.model, self.calib_dataloader, op_lists, [1])
+            best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
             dequantize_tensor_dict = self.adaptor.inspect_tensor(best_qmodel, self.calib_dataloader, op_lists, [1])
-            
+
             ops_mse = {op:self.mse_metric_gap(fp32_tensor_dict[op], dequantize_tensor_dict[op]) for op in op_lists}
             self.ordered_ops = sorted(ops_mse.keys(),key=lambda key:ops_mse[key], reverse=True)
 
