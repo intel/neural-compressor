@@ -11,6 +11,7 @@ import os.path as osp
 import inspect
 import time
 import yaml
+import sys
 
 def print_info():
     print(inspect.stack()[1][1],":",inspect.stack()[1][2],":", inspect.stack()[1][3])
@@ -94,3 +95,24 @@ class Timeout(object):
     @property
     def timed_out(self):
         return time.time() > self.die_after
+
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif isinstance(obj, list):
+        size += sum([get_size(item, seen) for item in obj])
+    else:
+        size += sum([get_size(v, seen) for v in dir(obj)])
+
+    return size

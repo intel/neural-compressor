@@ -1,6 +1,8 @@
 from abc import abstractmethod
 import time
+import sys
 import tracemalloc
+from .utils.utility import get_size
 
 '''The objectives supported by iLiT, which is driven by accuracy.
    To support new objective, developer just need implement a new subclass in this file.
@@ -111,7 +113,7 @@ class Footprint(Objective):
             last_peak = 0
 
         assert self.baseline, "baseline variable of Objective class should be set before reference."
-        base_acc, base_peak = baseline
+        base_acc, base_peak = self.baseline
 
         acc_target = base_acc - float(self.acc_goal) if not self.relative else base_acc * (1 - float(self.acc_goal))
         if acc >= acc_target and (last_peak == 0 or peak < last_peak):
@@ -139,8 +141,28 @@ class ModelSize(Objective):
     def __init__(self, accuracy_criterion):
         super(ModelSize, self).__init__(accuracy_criterion)
 
-    def compare(self, baseline, accuracy_criterion):
-        pass
+    def compare(self, last):
+        acc, size = self.val
 
-    def evaluate(self, eval_func, model):
-        pass
+        if last != None:
+            _, last_size = last
+        else:
+            last_size = 0
+
+        assert self.baseline, "baseline variable of Objective class should be set before reference."
+        base_acc, base_size = self.baseline
+
+        acc_target = base_acc - float(self.acc_goal) if not self.relative else base_acc * (1 - float(self.acc_goal))
+        if acc >= acc_target and (last_size == 0 or size < last_size):
+            return True
+        else:
+            return False
+
+    def evaluate(self, eval_func, model, baseline):
+        accuracy = eval_func(model)
+        model_size = get_size(model)
+        if baseline:
+            self.baseline = accuracy, model_size
+
+        self.val = accuracy, model_size
+        return self.val
