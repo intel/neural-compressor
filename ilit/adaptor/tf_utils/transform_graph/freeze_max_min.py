@@ -30,6 +30,7 @@ import numpy as np
 import math
 import functools
 
+
 def parse_input_graph(input_graph_def):
     input_node_map = {}
     for node in input_graph_def.node:
@@ -54,9 +55,12 @@ def get_valid_log(max_min_log):
             print("Invalid line")
         else:
             loop_times = int(semi_count / 2)
-            semi_index = [index for index, value in enumerate(i) if value == ";"]
+            semi_index = [
+                index for index, value in enumerate(i) if value == ";"
+            ]
             for index in range(loop_times - 1):
-                output.append(i[semi_index[index * 2]: semi_index[index * 2 + 2]])
+                output.append(i[semi_index[index * 2]:semi_index[index * 2 +
+                                                                 2]])
             output.append(i[semi_index[loop_times * 2 - 2]:])
     return output
 
@@ -144,20 +148,27 @@ def combine_histogram(old_hist, arr):
     """
     new_max = np.max(arr)
     new_min = np.min(arr)
-    new_th =  max(abs(new_min), abs(new_max))
+    new_th = max(abs(new_min), abs(new_max))
     (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
     if new_th <= old_th:
-        hist, _ = np.histogram(arr, bins=len(old_hist), range=(-old_th, old_th))
-        return (old_hist + hist, old_hist_edges, min(old_min, new_min), max(old_max, new_max), old_th)
+        hist, _ = np.histogram(arr,
+                               bins=len(old_hist),
+                               range=(-old_th, old_th))
+        return (old_hist + hist, old_hist_edges, min(old_min, new_min),
+                max(old_max, new_max), old_th)
     else:
         old_num_bins = len(old_hist)
         old_step = 2 * old_th / old_num_bins
         half_increased_bins = int((new_th - old_th) // old_step + 1)
         new_num_bins = half_increased_bins * 2 + old_num_bins
         new_th = half_increased_bins * old_step + old_th
-        hist, hist_edges = np.histogram(arr, bins=new_num_bins, range=(-new_th, new_th))
-        hist[half_increased_bins:new_num_bins - half_increased_bins] += old_hist
-        return (hist, hist_edges, min(old_min, new_min), max(old_max, new_max), new_th)
+        hist, hist_edges = np.histogram(arr,
+                                        bins=new_num_bins,
+                                        range=(-new_th, new_th))
+        hist[half_increased_bins:new_num_bins -
+             half_increased_bins] += old_hist
+        return (hist, hist_edges, min(old_min, new_min), max(old_max,
+                                                             new_max), new_th)
 
 
 def get_tensor_histogram(tensor_data, bins=2048):
@@ -168,7 +179,6 @@ def get_tensor_histogram(tensor_data, bins=2048):
     hist, hist_edeges = np.histogram(tensor_data, bins=2048, range=(-th, th))
 
     return (hist, hist_edeges, max_val, min_val, th)
-
 
 
 def get_optimal_scaling_factor(tensor_details, num_quantized_bins=255):
@@ -262,20 +272,23 @@ def parse_requantization_ranges_kl_fp32(fp32_log, print_node_mapping):
     for node_name in single_keys_prefix:
         content_str = node_name + kl_appendix
         content_set = []
-        key_name = print_node_mapping[node_name[1:].split('__print')[0]] + '_eightbit_requant_range'
+        key_name = print_node_mapping[node_name[1:].split('__print')
+                                      [0]] + '_eightbit_requant_range'
         for line in valid_data:
             if line.find(content_str) != -1:
                 content_set.append(line.split(content_str)[-1])
             else:
                 pass
 
-        all_transformed_data = functools.reduce(lambda a, b: a + b, content_set)
+        all_transformed_data = functools.reduce(lambda a, b: a + b,
+                                                content_set)
 
         kl = get_optimal_scaling_factor(
             get_all_fp32_data(all_transformed_data))
 
         result[key_name] = kl
     return result
+
 
 def parse_requantization_ranges_kl(log_path):
     valid_lines = get_valid_log(log_path)
@@ -414,17 +427,21 @@ def generate_output_graph_ranges(input_node_map, range_info):
             min_node.op = "Const"
             min_node.name = node + "/frozen_min"
             inputs_to_rename[node + ":0"] = min_node.name + ":0"
-            min_node.attr["dtype"].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
-            min_node.attr["value"].CopyFrom(attr_value_pb2.AttrValue(
-                tensor=tensor_util.make_tensor_proto(float(range_info[node][0]), dtypes.float32, [])))
+            min_node.attr["dtype"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            min_node.attr["value"].CopyFrom(
+                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+                    float(range_info[node][0]), dtypes.float32, [])))
 
             max_node = node_def_pb2.NodeDef()
             max_node.op = "Const"
             max_node.name = node + "/frozen_max"
             inputs_to_rename[node + ":1"] = max_node.name + ":0"
-            max_node.attr["dtype"].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
-            max_node.attr["value"].CopyFrom(attr_value_pb2.AttrValue(
-                tensor=tensor_util.make_tensor_proto(float(range_info[node][1]), dtypes.float32, [])))
+            max_node.attr["dtype"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            max_node.attr["value"].CopyFrom(
+                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+                    float(range_info[node][1]), dtypes.float32, [])))
             output_graph_def.node.extend([min_node, max_node])
         else:
             new_node = node_def_pb2.NodeDef()
@@ -463,9 +480,11 @@ def generate_output_graph(input_node_map, max_name_value, is_max=True):
             new_node_postfix = "/frozen_max_only" if is_max else "/frozen_min_only"
             new_node.name = node + new_node_postfix
             inputs_to_rename[node] = new_node.name + ":0"
-            new_node.attr["dtype"].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
-            new_node.attr["value"].CopyFrom(attr_value_pb2.AttrValue(
-                tensor=tensor_util.make_tensor_proto(float(max_name_value[node]), dtypes.float32, [])))
+            new_node.attr["dtype"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            new_node.attr["value"].CopyFrom(
+                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+                    float(max_name_value[node]), dtypes.float32, [])))
         else:
             new_node = node_def_pb2.NodeDef()
             new_node.CopyFrom(input_node_map[node])
@@ -493,7 +512,8 @@ def generate_output_graph(input_node_map, max_name_value, is_max=True):
 
 def freeze_requantization_range(input_graph_def,
                                 max_min_log,
-                                tensor_histogram=None, print_node_mapping=None):
+                                tensor_histogram=None,
+                                print_node_mapping=None):
     """
     Freeze requantization range graph transformation
     :param input_graph_def: input graphdef

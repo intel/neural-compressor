@@ -106,7 +106,7 @@ class FuseColumnWiseMul(GraphTransformBase):
                 if len(mul_value_node_tensor.tensor_shape.dim
                        ) != 1 or mul_value_node_tensor.tensor_shape.dim[
                            0].size != weights_col:
-                    print ("Invalid Mul OP fusion.")
+                    print("Invalid Mul OP fusion.")
 
                 mul_value_node_list = [
                     i for i in tensor_util.MakeNdarray(

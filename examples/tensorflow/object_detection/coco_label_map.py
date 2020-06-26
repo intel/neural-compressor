@@ -99,5 +99,3 @@ category_map = {
     89: 'hair drier',
     90: 'toothbrush'
 }
-
-

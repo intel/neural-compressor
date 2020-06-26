@@ -27,6 +27,7 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.core.framework import types_pb2 as types
 
+
 def get_fuse_index(input_node_map, input_name_list):
     conv_op_list = ("QuantizedConv2DWithBiasAndRelu",
                     "QuantizedDepthwiseConv2DWithBiasAndRelu",
@@ -122,9 +123,10 @@ def generate_output_graph(input_graph_def, input_node_map, fuse_op_list,
                 bias_length = bias_tensor.shape[0]
                 scales = []
                 for i in range(channel_size):
-                    scales.append(
-                        255.0 * 127.0 / (max(abs(max_input), abs(min_input)) *
-                                         max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
+                    scales.append(255.0 * 127.0 /
+                                  (max(abs(max_input), abs(min_input)) *
+                                   max(abs(max_filter_tensor[i]),
+                                       abs(min_filter_tensor[i]))))
                 int32_bias = []
                 if channel_size > 1:
                     for i in range(bias_length):
@@ -281,7 +283,9 @@ def generate_output_graph(input_graph_def, input_node_map, fuse_op_list,
             new_node.attr["out_type"].CopyFrom(
                 attr_value_pb2.AttrValue(type=uint8_type))
 
-            summand_op_type = uint8_type if dtypes.as_dtype(original_summand_node.attr["T"].type) == uint8_type else int8_type
+            summand_op_type = uint8_type if dtypes.as_dtype(
+                original_summand_node.attr["T"].type
+            ) == uint8_type else int8_type
 
             if summand_op_type == int8_type:
                 new_node.op = "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize"

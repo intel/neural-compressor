@@ -16,10 +16,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     """
 
     """
-    def __init__(self,
-                 input_graph,
-                 output_node_names,
-                 op_wise_config):
+    def __init__(self, input_graph, output_node_names, op_wise_config):
         """Quantize Graph For Intel Cpu
 
         Arguments:
@@ -59,12 +56,13 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
     def do_transform(self):
         # if self.excluded_ops:
-            # for op_type in self.excluded_ops:
-            #     del self.transformers[op_type]
+        # for op_type in self.excluded_ops:
+        #     del self.transformers[op_type]
 
         for _, node in enumerate(self.input_graph.node):
             if node in self.input_graph.node and node.op in self.transformers.keys(
-            ) and (not self.op_wise_config or node.name in self.op_wise_config):
+            ) and (not self.op_wise_config
+                   or node.name in self.op_wise_config):
                 if len(self.transformers[node.op]) > 1:
                     last_fuse_ops_count = 0
                     last_longest_fuse_worker = None

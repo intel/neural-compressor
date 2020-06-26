@@ -52,10 +52,9 @@ import tensorflow as tf
 
 
 class COCOWrapper(coco.COCO):
-  """Wrapper for the pycocotools COCO class."""
-
-  def __init__(self, dataset, detection_type='bbox'):
-    """COCOWrapper constructor.
+    """Wrapper for the pycocotools COCO class."""
+    def __init__(self, dataset, detection_type='bbox'):
+        """COCOWrapper constructor.
 
     See http://mscoco.org/dataset/#format for a description of the format.
     By default, the coco.COCO class constructor reads from a JSON file.
@@ -70,18 +69,18 @@ class COCOWrapper(coco.COCO):
     Raises:
       ValueError: if detection_type is unsupported.
     """
-    supported_detection_types = ['bbox', 'segmentation']
-    if detection_type not in supported_detection_types:
-      raise ValueError('Unsupported detection type: {}. '
-                       'Supported values are: {}'.format(
-                           detection_type, supported_detection_types))
-    self._detection_type = detection_type
-    coco.COCO.__init__(self)
-    self.dataset = dataset
-    self.createIndex()
+        supported_detection_types = ['bbox', 'segmentation']
+        if detection_type not in supported_detection_types:
+            raise ValueError('Unsupported detection type: {}. '
+                             'Supported values are: {}'.format(
+                                 detection_type, supported_detection_types))
+        self._detection_type = detection_type
+        coco.COCO.__init__(self)
+        self.dataset = dataset
+        self.createIndex()
 
-  def LoadAnnotations(self, annotations):
-    """Load annotations dictionary into COCO datastructure.
+    def LoadAnnotations(self, annotations):
+        """Load annotations dictionary into COCO datastructure.
 
     See http://mscoco.org/dataset/#format for a description of the annotations
     format.  As above, this function replicates the default behavior of the API
@@ -101,40 +100,42 @@ class COCOWrapper(coco.COCO):
       ValueError: if annotations do not correspond to the images contained
         in self.
     """
-    results = coco.COCO()
-    results.dataset['images'] = [img for img in self.dataset['images']]
+        results = coco.COCO()
+        results.dataset['images'] = [img for img in self.dataset['images']]
 
-    tf.compat.v1.logging.info('Loading and preparing annotation results...')
-    tic = time.time()
+        tf.compat.v1.logging.info(
+            'Loading and preparing annotation results...')
+        tic = time.time()
 
-    if not isinstance(annotations, list):
-      raise ValueError('annotations is not a list of objects')
-    annotation_img_ids = [ann['image_id'] for ann in annotations]
-    if (set(annotation_img_ids) != (set(annotation_img_ids)
-                                    & set(self.getImgIds()))):
-      raise ValueError('Results do not correspond to current coco set')
-    results.dataset['categories'] = copy.deepcopy(self.dataset['categories'])
-    if self._detection_type == 'bbox':
-      for idx, ann in enumerate(annotations):
-        bb = ann['bbox']
-        ann['area'] = bb[2] * bb[3]
-        ann['id'] = idx + 1
-        ann['iscrowd'] = 0
-    elif self._detection_type == 'segmentation':
-      for idx, ann in enumerate(annotations):
-        ann['area'] = mask.area(ann['segmentation'])
-        ann['bbox'] = mask.toBbox(ann['segmentation'])
-        ann['id'] = idx + 1
-        ann['iscrowd'] = 0
-    tf.compat.v1.logging.info('DONE (t=%0.2fs)', (time.time() - tic))
+        if not isinstance(annotations, list):
+            raise ValueError('annotations is not a list of objects')
+        annotation_img_ids = [ann['image_id'] for ann in annotations]
+        if (set(annotation_img_ids) != (set(annotation_img_ids)
+                                        & set(self.getImgIds()))):
+            raise ValueError('Results do not correspond to current coco set')
+        results.dataset['categories'] = copy.deepcopy(
+            self.dataset['categories'])
+        if self._detection_type == 'bbox':
+            for idx, ann in enumerate(annotations):
+                bb = ann['bbox']
+                ann['area'] = bb[2] * bb[3]
+                ann['id'] = idx + 1
+                ann['iscrowd'] = 0
+        elif self._detection_type == 'segmentation':
+            for idx, ann in enumerate(annotations):
+                ann['area'] = mask.area(ann['segmentation'])
+                ann['bbox'] = mask.toBbox(ann['segmentation'])
+                ann['id'] = idx + 1
+                ann['iscrowd'] = 0
+        tf.compat.v1.logging.info('DONE (t=%0.2fs)', (time.time() - tic))
 
-    results.dataset['annotations'] = annotations
-    results.createIndex()
-    return results
+        results.dataset['annotations'] = annotations
+        results.createIndex()
+        return results
 
 
 class COCOEvalWrapper(cocoeval.COCOeval):
-  """Wrapper for the pycocotools COCOeval class.
+    """Wrapper for the pycocotools COCOeval class.
 
   To evaluate, create two objects (groundtruth_dict and detections_list)
   using the conventions listed at http://mscoco.org/dataset/#format.
@@ -147,10 +148,12 @@ class COCOEvalWrapper(cocoeval.COCOeval):
 
     metrics = evaluator.ComputeMetrics()
   """
-
-  def __init__(self, groundtruth=None, detections=None, agnostic_mode=False,
-               iou_type='bbox'):
-    """COCOEvalWrapper constructor.
+    def __init__(self,
+                 groundtruth=None,
+                 detections=None,
+                 agnostic_mode=False,
+                 iou_type='bbox'):
+        """COCOEvalWrapper constructor.
 
     Note that for the area-based metrics to be meaningful, detection and
     groundtruth boxes must be in image coordinates measured in pixels.
@@ -164,33 +167,35 @@ class COCOEvalWrapper(cocoeval.COCOeval):
         class labels, treating all detections as proposals.
       iou_type: IOU type to use for evaluation. Supports `bbox` or `segm`.
     """
-    cocoeval.COCOeval.__init__(self, groundtruth, detections,
-                               iouType=iou_type)
-    if agnostic_mode:
-      self.params.useCats = 0
+        cocoeval.COCOeval.__init__(self,
+                                   groundtruth,
+                                   detections,
+                                   iouType=iou_type)
+        if agnostic_mode:
+            self.params.useCats = 0
 
-  def GetCategory(self, category_id):
-    """Fetches dictionary holding category information given category id.
+    def GetCategory(self, category_id):
+        """Fetches dictionary holding category information given category id.
 
     Args:
       category_id: integer id
     Returns:
       dictionary holding 'id', 'name'.
     """
-    return self.cocoGt.cats[category_id]
+        return self.cocoGt.cats[category_id]
 
-  def GetAgnosticMode(self):
-    """Returns true if COCO Eval is configured to evaluate in agnostic mode."""
-    return self.params.useCats == 0
+    def GetAgnosticMode(self):
+        """Returns true if COCO Eval is configured to evaluate in agnostic mode."""
+        return self.params.useCats == 0
 
-  def GetCategoryIdList(self):
-    """Returns list of valid category ids."""
-    return self.params.catIds
+    def GetCategoryIdList(self):
+        """Returns list of valid category ids."""
+        return self.params.catIds
 
-  def ComputeMetrics(self,
-                     include_metrics_per_category=False,
-                     all_metrics_per_category=False):
-    """Computes detection metrics.
+    def ComputeMetrics(self,
+                       include_metrics_per_category=False,
+                       all_metrics_per_category=False):
+        """Computes detection metrics.
 
     Args:
       include_metrics_per_category: If True, will include metrics per category.
@@ -231,67 +236,66 @@ class COCOEvalWrapper(cocoeval.COCOeval):
     Raises:
       ValueError: If category_stats does not exist.
     """
-    self.evaluate()
-    self.accumulate()
-    self.summarize()
+        self.evaluate()
+        self.accumulate()
+        self.summarize()
 
-    summary_metrics = OrderedDict([
-        ('Precision/mAP', self.stats[0]),
-        ('Precision/mAP@.50IOU', self.stats[1]),
-        ('Precision/mAP@.75IOU', self.stats[2]),
-        ('Precision/mAP (small)', self.stats[3]),
-        ('Precision/mAP (medium)', self.stats[4]),
-        ('Precision/mAP (large)', self.stats[5]),
-        ('Recall/AR@1', self.stats[6]),
-        ('Recall/AR@10', self.stats[7]),
-        ('Recall/AR@100', self.stats[8]),
-        ('Recall/AR@100 (small)', self.stats[9]),
-        ('Recall/AR@100 (medium)', self.stats[10]),
-        ('Recall/AR@100 (large)', self.stats[11])
-    ])
-    if not include_metrics_per_category:
-      return summary_metrics, {}
-    if not hasattr(self, 'category_stats'):
-      raise ValueError('Category stats do not exist')
-    per_category_ap = OrderedDict([])
-    if self.GetAgnosticMode():
-      return summary_metrics, per_category_ap
-    for category_index, category_id in enumerate(self.GetCategoryIdList()):
-      category = self.GetCategory(category_id)['name']
-      # Kept for backward compatilbility
-      per_category_ap['PerformanceByCategory/mAP/{}'.format(
-          category)] = self.category_stats[0][category_index]
-      if all_metrics_per_category:
-        per_category_ap['Precision mAP ByCategory/{}'.format(
-            category)] = self.category_stats[0][category_index]
-        per_category_ap['Precision mAP@.50IOU ByCategory/{}'.format(
-            category)] = self.category_stats[1][category_index]
-        per_category_ap['Precision mAP@.75IOU ByCategory/{}'.format(
-            category)] = self.category_stats[2][category_index]
-        per_category_ap['Precision mAP (small) ByCategory/{}'.format(
-            category)] = self.category_stats[3][category_index]
-        per_category_ap['Precision mAP (medium) ByCategory/{}'.format(
-            category)] = self.category_stats[4][category_index]
-        per_category_ap['Precision mAP (large) ByCategory/{}'.format(
-            category)] = self.category_stats[5][category_index]
-        per_category_ap['Recall AR@1 ByCategory/{}'.format(
-            category)] = self.category_stats[6][category_index]
-        per_category_ap['Recall AR@10 ByCategory/{}'.format(
-            category)] = self.category_stats[7][category_index]
-        per_category_ap['Recall AR@100 ByCategory/{}'.format(
-            category)] = self.category_stats[8][category_index]
-        per_category_ap['Recall AR@100 (small) ByCategory/{}'.format(
-            category)] = self.category_stats[9][category_index]
-        per_category_ap['Recall AR@100 (medium) ByCategory/{}'.format(
-            category)] = self.category_stats[10][category_index]
-        per_category_ap['Recall AR@100 (large) ByCategory/{}'.format(
-            category)] = self.category_stats[11][category_index]
+        summary_metrics = OrderedDict([
+            ('Precision/mAP', self.stats[0]),
+            ('Precision/mAP@.50IOU', self.stats[1]),
+            ('Precision/mAP@.75IOU', self.stats[2]),
+            ('Precision/mAP (small)', self.stats[3]),
+            ('Precision/mAP (medium)', self.stats[4]),
+            ('Precision/mAP (large)', self.stats[5]),
+            ('Recall/AR@1', self.stats[6]), ('Recall/AR@10', self.stats[7]),
+            ('Recall/AR@100', self.stats[8]),
+            ('Recall/AR@100 (small)', self.stats[9]),
+            ('Recall/AR@100 (medium)', self.stats[10]),
+            ('Recall/AR@100 (large)', self.stats[11])
+        ])
+        if not include_metrics_per_category:
+            return summary_metrics, {}
+        if not hasattr(self, 'category_stats'):
+            raise ValueError('Category stats do not exist')
+        per_category_ap = OrderedDict([])
+        if self.GetAgnosticMode():
+            return summary_metrics, per_category_ap
+        for category_index, category_id in enumerate(self.GetCategoryIdList()):
+            category = self.GetCategory(category_id)['name']
+            # Kept for backward compatilbility
+            per_category_ap['PerformanceByCategory/mAP/{}'.format(
+                category)] = self.category_stats[0][category_index]
+            if all_metrics_per_category:
+                per_category_ap['Precision mAP ByCategory/{}'.format(
+                    category)] = self.category_stats[0][category_index]
+                per_category_ap['Precision mAP@.50IOU ByCategory/{}'.format(
+                    category)] = self.category_stats[1][category_index]
+                per_category_ap['Precision mAP@.75IOU ByCategory/{}'.format(
+                    category)] = self.category_stats[2][category_index]
+                per_category_ap['Precision mAP (small) ByCategory/{}'.format(
+                    category)] = self.category_stats[3][category_index]
+                per_category_ap['Precision mAP (medium) ByCategory/{}'.format(
+                    category)] = self.category_stats[4][category_index]
+                per_category_ap['Precision mAP (large) ByCategory/{}'.format(
+                    category)] = self.category_stats[5][category_index]
+                per_category_ap['Recall AR@1 ByCategory/{}'.format(
+                    category)] = self.category_stats[6][category_index]
+                per_category_ap['Recall AR@10 ByCategory/{}'.format(
+                    category)] = self.category_stats[7][category_index]
+                per_category_ap['Recall AR@100 ByCategory/{}'.format(
+                    category)] = self.category_stats[8][category_index]
+                per_category_ap['Recall AR@100 (small) ByCategory/{}'.format(
+                    category)] = self.category_stats[9][category_index]
+                per_category_ap['Recall AR@100 (medium) ByCategory/{}'.format(
+                    category)] = self.category_stats[10][category_index]
+                per_category_ap['Recall AR@100 (large) ByCategory/{}'.format(
+                    category)] = self.category_stats[11][category_index]
 
-    return summary_metrics, per_category_ap
+        return summary_metrics, per_category_ap
 
 
 def _ConvertBoxToCOCOFormat(box):
-  """Converts a box in [ymin, xmin, ymax, xmax] format to COCO format.
+    """Converts a box in [ymin, xmin, ymax, xmax] format to COCO format.
 
   This is a utility function for converting from our internal
   [ymin, xmin, ymax, xmax] convention to the convention used by the COCO API
@@ -303,12 +307,16 @@ def _ConvertBoxToCOCOFormat(box):
   Returns:
     a list of floats representing [xmin, ymin, width, height]
   """
-  return [float(box[1]), float(box[0]), float(box[3] - box[1]),
-          float(box[2] - box[0])]
+    return [
+        float(box[1]),
+        float(box[0]),
+        float(box[3] - box[1]),
+        float(box[2] - box[0])
+    ]
 
 
 def _RleCompress(masks):
-  """Compresses mask using Run-length encoding provided by pycocotools.
+    """Compresses mask using Run-length encoding provided by pycocotools.
 
   Args:
     masks: uint8 numpy array of shape [mask_height, mask_width] with values in
@@ -317,7 +325,7 @@ def _RleCompress(masks):
   Returns:
     A pycocotools Run-length encoding of the mask.
   """
-  return mask.encode(np.asfortranarray(masks))
+    return mask.encode(np.asfortranarray(masks))
 
 
 def ExportSingleImageGroundtruthToCoco(image_id,
@@ -327,7 +335,7 @@ def ExportSingleImageGroundtruthToCoco(image_id,
                                        groundtruth_classes,
                                        groundtruth_masks=None,
                                        groundtruth_is_crowd=None):
-  """Export groundtruth of a single image to COCO format.
+    """Export groundtruth of a single image to COCO format.
 
   This function converts groundtruth detection annotations represented as numpy
   arrays to dictionaries that can be ingested by the COCO evaluation API. Note
@@ -362,57 +370,54 @@ def ExportSingleImageGroundtruthToCoco(image_id,
       have the correct shapes or (3) if image_ids are not integers
   """
 
-  if len(groundtruth_classes.shape) != 1:
-    raise ValueError('groundtruth_classes is '
-                     'expected to be of rank 1.')
-  if len(groundtruth_boxes.shape) != 2:
-    raise ValueError('groundtruth_boxes is expected to be of '
-                     'rank 2.')
-  if groundtruth_boxes.shape[1] != 4:
-    raise ValueError('groundtruth_boxes should have '
-                     'shape[1] == 4.')
-  num_boxes = groundtruth_classes.shape[0]
-  if num_boxes != groundtruth_boxes.shape[0]:
-    raise ValueError('Corresponding entries in groundtruth_classes, '
-                     'and groundtruth_boxes should have '
-                     'compatible shapes (i.e., agree on the 0th dimension).'
-                     'Classes shape: %d. Boxes shape: %d. Image ID: %s' % (
-                         groundtruth_classes.shape[0],
-                         groundtruth_boxes.shape[0], image_id))
-  has_is_crowd = groundtruth_is_crowd is not None
-  if has_is_crowd and len(groundtruth_is_crowd.shape) != 1:
-    raise ValueError('groundtruth_is_crowd is expected to be of rank 1.')
-  groundtruth_list = []
-  for i in range(num_boxes):
-    if groundtruth_classes[i] in category_id_set:
-      iscrowd = groundtruth_is_crowd[i] if has_is_crowd else 0
-      export_dict = {
-          'id':
-              next_annotation_id + i,
-          'image_id':
-              image_id,
-          'category_id':
-              int(groundtruth_classes[i]),
-          'bbox':
-              list(_ConvertBoxToCOCOFormat(groundtruth_boxes[i, :])),
-          'area':
-              float((groundtruth_boxes[i, 2] - groundtruth_boxes[i, 0]) *
-                    (groundtruth_boxes[i, 3] - groundtruth_boxes[i, 1])),
-          'iscrowd':
-              iscrowd
-      }
-      if groundtruth_masks is not None:
-        export_dict['segmentation'] = _RleCompress(groundtruth_masks[i])
-      groundtruth_list.append(export_dict)
-  return groundtruth_list
+    if len(groundtruth_classes.shape) != 1:
+        raise ValueError('groundtruth_classes is ' 'expected to be of rank 1.')
+    if len(groundtruth_boxes.shape) != 2:
+        raise ValueError('groundtruth_boxes is expected to be of ' 'rank 2.')
+    if groundtruth_boxes.shape[1] != 4:
+        raise ValueError('groundtruth_boxes should have ' 'shape[1] == 4.')
+    num_boxes = groundtruth_classes.shape[0]
+    if num_boxes != groundtruth_boxes.shape[0]:
+        raise ValueError(
+            'Corresponding entries in groundtruth_classes, '
+            'and groundtruth_boxes should have '
+            'compatible shapes (i.e., agree on the 0th dimension).'
+            'Classes shape: %d. Boxes shape: %d. Image ID: %s' %
+            (groundtruth_classes.shape[0], groundtruth_boxes.shape[0],
+             image_id))
+    has_is_crowd = groundtruth_is_crowd is not None
+    if has_is_crowd and len(groundtruth_is_crowd.shape) != 1:
+        raise ValueError('groundtruth_is_crowd is expected to be of rank 1.')
+    groundtruth_list = []
+    for i in range(num_boxes):
+        if groundtruth_classes[i] in category_id_set:
+            iscrowd = groundtruth_is_crowd[i] if has_is_crowd else 0
+            export_dict = {
+                'id':
+                next_annotation_id + i,
+                'image_id':
+                image_id,
+                'category_id':
+                int(groundtruth_classes[i]),
+                'bbox':
+                list(_ConvertBoxToCOCOFormat(groundtruth_boxes[i, :])),
+                'area':
+                float((groundtruth_boxes[i, 2] - groundtruth_boxes[i, 0]) *
+                      (groundtruth_boxes[i, 3] - groundtruth_boxes[i, 1])),
+                'iscrowd':
+                iscrowd
+            }
+            if groundtruth_masks is not None:
+                export_dict['segmentation'] = _RleCompress(
+                    groundtruth_masks[i])
+            groundtruth_list.append(export_dict)
+    return groundtruth_list
 
 
-def ExportSingleImageDetectionBoxesToCoco(image_id,
-                                          category_id_set,
-                                          detection_boxes,
-                                          detection_scores,
+def ExportSingleImageDetectionBoxesToCoco(image_id, category_id_set,
+                                          detection_boxes, detection_scores,
                                           detection_classes):
-  """Export detections of a single image to COCO format.
+    """Export detections of a single image to COCO format.
 
   This function converts detections represented as numpy arrays to dictionaries
   that can be ingested by the COCO evaluation API. Note that the image_ids
@@ -441,43 +446,46 @@ def ExportSingleImageDetectionBoxesToCoco(image_id,
       lists do not have the correct shapes or (3) if image_ids are not integers.
   """
 
-  if len(detection_classes.shape) != 1 or len(detection_scores.shape) != 1:
-    raise ValueError('All entries in detection_classes and detection_scores'
-                     'expected to be of rank 1.')
-  if len(detection_boxes.shape) != 2:
-    raise ValueError('All entries in detection_boxes expected to be of '
-                     'rank 2.')
-  if detection_boxes.shape[1] != 4:
-    raise ValueError('All entries in detection_boxes should have '
-                     'shape[1] == 4.')
-  num_boxes = detection_classes.shape[0]
-  if not num_boxes == detection_boxes.shape[0] == detection_scores.shape[0]:
-    raise ValueError('Corresponding entries in detection_classes, '
-                     'detection_scores and detection_boxes should have '
-                     'compatible shapes (i.e., agree on the 0th dimension). '
-                     'Classes shape: %d. Boxes shape: %d. '
-                     'Scores shape: %d' % (
-                         detection_classes.shape[0], detection_boxes.shape[0],
-                         detection_scores.shape[0]
-                     ))
-  detections_list = []
-  for i in range(num_boxes):
-    if detection_classes[i] in category_id_set:
-      detections_list.append({
-          'image_id': image_id,
-          'category_id': int(detection_classes[i]),
-          'bbox': list(_ConvertBoxToCOCOFormat(detection_boxes[i, :])),
-          'score': float(detection_scores[i])
-      })
-  return detections_list
+    if len(detection_classes.shape) != 1 or len(detection_scores.shape) != 1:
+        raise ValueError(
+            'All entries in detection_classes and detection_scores'
+            'expected to be of rank 1.')
+    if len(detection_boxes.shape) != 2:
+        raise ValueError('All entries in detection_boxes expected to be of '
+                         'rank 2.')
+    if detection_boxes.shape[1] != 4:
+        raise ValueError('All entries in detection_boxes should have '
+                         'shape[1] == 4.')
+    num_boxes = detection_classes.shape[0]
+    if not num_boxes == detection_boxes.shape[0] == detection_scores.shape[0]:
+        raise ValueError(
+            'Corresponding entries in detection_classes, '
+            'detection_scores and detection_boxes should have '
+            'compatible shapes (i.e., agree on the 0th dimension). '
+            'Classes shape: %d. Boxes shape: %d. '
+            'Scores shape: %d' %
+            (detection_classes.shape[0], detection_boxes.shape[0],
+             detection_scores.shape[0]))
+    detections_list = []
+    for i in range(num_boxes):
+        if detection_classes[i] in category_id_set:
+            detections_list.append({
+                'image_id':
+                image_id,
+                'category_id':
+                int(detection_classes[i]),
+                'bbox':
+                list(_ConvertBoxToCOCOFormat(detection_boxes[i, :])),
+                'score':
+                float(detection_scores[i])
+            })
+    return detections_list
 
 
-def ExportSingleImageDetectionMasksToCoco(image_id,
-                                          category_id_set,
-                                          detection_masks,
-                                          detection_scores,
+def ExportSingleImageDetectionMasksToCoco(image_id, category_id_set,
+                                          detection_masks, detection_scores,
                                           detection_classes):
-  """Export detection masks of a single image to COCO format.
+    """Export detection masks of a single image to COCO format.
 
   This function converts detections represented as numpy arrays to dictionaries
   that can be ingested by the COCO evaluation API. We assume that
@@ -505,26 +513,30 @@ def ExportSingleImageDetectionMasksToCoco(image_id,
       lists do not have the correct shapes or (3) if image_ids are not integers.
   """
 
-  if len(detection_classes.shape) != 1 or len(detection_scores.shape) != 1:
-    raise ValueError('All entries in detection_classes and detection_scores'
-                     'expected to be of rank 1.')
-  num_boxes = detection_classes.shape[0]
-  if not num_boxes == len(detection_masks) == detection_scores.shape[0]:
-    raise ValueError('Corresponding entries in detection_classes, '
-                     'detection_scores and detection_masks should have '
-                     'compatible lengths and shapes '
-                     'Classes length: %d.  Masks length: %d. '
-                     'Scores length: %d' % (
-                         detection_classes.shape[0], len(detection_masks),
-                         detection_scores.shape[0]
-                     ))
-  detections_list = []
-  for i in range(num_boxes):
-    if detection_classes[i] in category_id_set:
-      detections_list.append({
-          'image_id': image_id,
-          'category_id': int(detection_classes[i]),
-          'segmentation': _RleCompress(detection_masks[i]),
-          'score': float(detection_scores[i])
-      })
-  return detections_list
+    if len(detection_classes.shape) != 1 or len(detection_scores.shape) != 1:
+        raise ValueError(
+            'All entries in detection_classes and detection_scores'
+            'expected to be of rank 1.')
+    num_boxes = detection_classes.shape[0]
+    if not num_boxes == len(detection_masks) == detection_scores.shape[0]:
+        raise ValueError('Corresponding entries in detection_classes, '
+                         'detection_scores and detection_masks should have '
+                         'compatible lengths and shapes '
+                         'Classes length: %d.  Masks length: %d. '
+                         'Scores length: %d' %
+                         (detection_classes.shape[0], len(detection_masks),
+                          detection_scores.shape[0]))
+    detections_list = []
+    for i in range(num_boxes):
+        if detection_classes[i] in category_id_set:
+            detections_list.append({
+                'image_id':
+                image_id,
+                'category_id':
+                int(detection_classes[i]),
+                'segmentation':
+                _RleCompress(detection_masks[i]),
+                'score':
+                float(detection_scores[i])
+            })
+    return detections_list

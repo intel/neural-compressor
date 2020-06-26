@@ -26,6 +26,7 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 from .graph_transform_base import GraphTransformBase
 
+
 class FuseQuantizedMulRequantizeAndDequantize(GraphTransformBase):
     """
     Fuse QuantizedMatMulWithBiasAndRelu with requantize .

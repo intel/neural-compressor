@@ -56,7 +56,8 @@ def write_graph(out_graph_def, out_graph_file):
     :return: None.
     """
     if not isinstance(out_graph_def, tf.compat.v1.GraphDef):
-        raise ValueError('out_graph_def is not instance of TensorFlow GraphDef.')
+        raise ValueError(
+            'out_graph_def is not instance of TensorFlow GraphDef.')
     if out_graph_file and not os.path.exists(os.path.dirname(out_graph_file)):
         raise ValueError('"output_graph" directory does not exists.')
     f = gfile.GFile(out_graph_file, 'wb')
@@ -94,12 +95,14 @@ def split_shared_inputs(in_graph, ops=[]):
                         input_map[input_node_name].append(node.name)
                         new_input_node = node_def_pb2.NodeDef()
                         new_input_node.CopyFrom(node_map[input_node_name])
-                        new_input_node.name = input_node_name + '_' + str(len(input_map[input_node_name]))
+                        new_input_node.name = input_node_name + '_' + str(
+                            len(input_map[input_node_name]))
                         node.input[input_idx] = new_input_node.name
                         output_graph_def.node.extend([new_input_node])
                     else:
                         input_map[input_node_name] = [node.name]
         output_graph_def.node.extend([node])
-    rewrite_graph = os.path.join(os.path.dirname(in_graph), 'frozen_inference_graph_rewrite.pb')
+    rewrite_graph = os.path.join(os.path.dirname(in_graph),
+                                 'frozen_inference_graph_rewrite.pb')
     write_graph(output_graph_def, rewrite_graph)
     return rewrite_graph

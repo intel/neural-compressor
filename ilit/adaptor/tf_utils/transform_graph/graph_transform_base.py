@@ -40,7 +40,8 @@ class GraphTransformBase(object):
                 with gfile.Open(input_pb, 'rb') as f:
                     self.input_graph.ParseFromString(f.read())
             except Exception as e:
-                logging.error("Failed to read input pb: {} due to {}".format(input_pb, str(e)))
+                logging.error("Failed to read input pb: {} due to {}".format(
+                    input_pb, str(e)))
 
         self.node_mapping = {}
         self.node_name_list = []

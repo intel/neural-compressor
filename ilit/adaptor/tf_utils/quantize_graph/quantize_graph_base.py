@@ -42,7 +42,8 @@ class QuantizeGraphBase(object):
 
     def remove_dead_nodes(self, input_graph, output_names):
         """Removes nodes that are no longer needed for inference from the graph."""
-        return tf.compat.v1.graph_util.extract_sub_graph(input_graph, output_names)
+        return tf.compat.v1.graph_util.extract_sub_graph(
+            input_graph, output_names)
 
     def get_supported_fusion_node(self):
         return self.transformers.keys()

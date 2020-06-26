@@ -31,7 +31,8 @@ import copy
 
 
 class StripUnusedNodes(GraphTransformBase):
-    def __init__(self, input_graph_def, input_node_names, output_node_names, placeholder_type_enum):
+    def __init__(self, input_graph_def, input_node_names, output_node_names,
+                 placeholder_type_enum):
         self.input_node_names = input_node_names
         self.output_node_names = output_node_names
         self.placeholder_type_enum = placeholder_type_enum
@@ -74,11 +75,12 @@ class StripUnusedNodes(GraphTransformBase):
                 if isinstance(self.placeholder_type_enum, list):
                     input_node_index = self.input_node_names.index(node.name)
                     placeholder_node.attr["dtype"].CopyFrom(
-                        attr_value_pb2.AttrValue(type=self.placeholder_type_enum[
-                            input_node_index]))
+                        attr_value_pb2.AttrValue(
+                            type=self.placeholder_type_enum[input_node_index]))
                 else:
                     placeholder_node.attr["dtype"].CopyFrom(
-                        attr_value_pb2.AttrValue(type=self.placeholder_type_enum))
+                        attr_value_pb2.AttrValue(
+                            type=self.placeholder_type_enum))
                 if "_output_shapes" in node.attr:
                     placeholder_node.attr["_output_shapes"].CopyFrom(
                         node.attr["_output_shapes"])
@@ -89,8 +91,9 @@ class StripUnusedNodes(GraphTransformBase):
                 inputs_replaced_graph_def.node.extend([copy.deepcopy(node)])
 
         if not_found:
-            raise KeyError("The following input nodes were not found: %s" % not_found)
+            raise KeyError("The following input nodes were not found: %s" %
+                           not_found)
 
-        output_graph_def = tf.compat.v1.graph_util.extract_sub_graph(inputs_replaced_graph_def,
-                                                        self.output_node_names)
+        output_graph_def = tf.compat.v1.graph_util.extract_sub_graph(
+            inputs_replaced_graph_def, self.output_node_names)
         return output_graph_def

@@ -1,23 +1,24 @@
-from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport
-
-from collections import OrderedDict
 import os
-import multiprocessing
 import subprocess
 
+from collections import OrderedDict
+from .adaptor import adaptor_registry, Adaptor
+from ..utils.utility import LazyImport
+from .tf_utils.graph_converter import GraphConverter
+
 tensorflow = LazyImport('tensorflow')
+
 
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
-            "Conv2D": "conv2d",
-            "DepthwiseConv2dNative": "conv2d",
-            "MaxPool": "pooling",
-            "AvgPool": "pooling",
-            "ConcatV2": "concat",
-            "MatMul": "matmul"
-        }
+        "Conv2D": "conv2d",
+        "DepthwiseConv2dNative": "conv2d",
+        "MaxPool": "pooling",
+        "AvgPool": "pooling",
+        "ConcatV2": "concat",
+        "MatMul": "matmul"
+    }
 
     def __init__(self, framework_specific_info):
         super(TensorFlowAdaptor, self).__init__(framework_specific_info)
@@ -47,14 +48,14 @@ class TensorFlowAdaptor(Adaptor):
         config.intra_op_parallelism_threads = num_intra_threads
 
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        print ("Start to evaluate model...")
+        print("Start to evaluate model...")
         # batch = 0
         for content in dataloader:
             try:
                 np_images, np_labels = content[0], content[1]
 
                 predictions = sess_graph.run(output_tensor,
-                                                {input_tensor: np_images})
+                                             {input_tensor: np_images})
                 # print("Processed %d batches."% (batch + 1))
                 # batch += 1
                 acc = metric.evaluate(predictions[0], np_labels)
@@ -65,7 +66,6 @@ class TensorFlowAdaptor(Adaptor):
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
-        # TODO add the op-wise config parse
         self.excluded_nodes = []
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         for each_op_info in tuning_cfg['op']:
@@ -76,16 +76,18 @@ class TensorFlowAdaptor(Adaptor):
                 continue
             is_perchannel = False
             if 'weight' in tuning_cfg['op'][each_op_info]:
-                is_perchannel = tuning_cfg['op'][each_op_info]['weight']['granularity'] == 'per_channel'
-            algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
-            self.quantize_config['op_wise_config'][op_name] = (
-                is_perchannel, algorithm)
+                is_perchannel = tuning_cfg['op'][each_op_info]['weight'][
+                    'granularity'] == 'per_channel'
+            algorithm = tuning_cfg['op'][each_op_info]['activation'][
+                'algorithm']
+            self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
+                                                               algorithm)
 
     def quantize(self, tune_cfg, model, data_loader):
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
-        from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(model, quantized_model,
+        converter = GraphConverter(model,
+                                   quantized_model,
                                    inputs=self.inputs,
                                    outputs=self.outputs,
                                    qt_config=self.quantize_config,
@@ -97,8 +99,8 @@ class TensorFlowAdaptor(Adaptor):
             Return: Op name/Op type mapping which saved in OrderDict.
         '''
         graph_def = graph.as_graph_def()
-        tf_quantizable_op_type = (
-            "Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool", "ConcatV2", "MatMul")
+        tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool",
+                                  "AvgPool", "ConcatV2", "MatMul")
         conv_config = {
             'activation': {
                 'dtype': ['uint8', 'fp32'],
@@ -129,8 +131,8 @@ class TensorFlowAdaptor(Adaptor):
                     node.name, self.unify_op_type_mapping[node.op]
                 )] = conv_config if self.unify_op_type_mapping[node.op].find(
                     "conv2d") != -1 else non_conv_config
-                self.quantize_config['op_wise_config'][node.name] = (
-                    False, "minmax")
+                self.quantize_config['op_wise_config'][node.name] = (False,
+                                                                     "minmax")
 
         return self.quantizable_op_details
 
@@ -144,8 +146,10 @@ class TensorFlowAdaptor(Adaptor):
                     'algorithm': ['minmax', 'kl']
                 },
                 'weight': {
-                    'dtype': ['int8',  'fp32'],
-                    'scheme': ['sym',],
+                    'dtype': ['int8', 'fp32'],
+                    'scheme': [
+                        'sym',
+                    ],
                     'granularity': ['per_channel', 'per_tensor'],
                     'algorithm': ['minmax']
                 },
@@ -158,7 +162,6 @@ class TensorFlowAdaptor(Adaptor):
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
 
-        from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
                                    inputs=self.inputs,

@@ -18,13 +18,18 @@
 #
 
 from __future__ import division
-
+import os
+import time
+import numpy as np
 import tensorflow as tf
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
+from ilit import tuner as iLit
+
 from tensorflow.python.data.experimental import parallel_interleave
 from tensorflow.python.data.experimental import map_and_batch
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from tensorflow.python.framework import dtypes
-import time
 
 from argparse import ArgumentParser
 from coco_detection_evaluator import CocoDetectionEvaluator
@@ -33,13 +38,9 @@ from coco_label_map import category_map
 IMAGE_SIZE = 300
 COCO_NUM_VAL_IMAGES = 4952
 
-import os
 
-import numpy as np
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
 
-from ilit import tuner as iLit
+
 
 
 def parse_and_preprocess(serialized_example):
@@ -346,7 +347,7 @@ if __name__ == "__main__":
                         help='output tensor')
     args = arg_parser.parse_args()
     infer = model_infer(args)
-    
+
     at = iLit.Tuner(args.config)
 
 
