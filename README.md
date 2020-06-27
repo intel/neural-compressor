@@ -22,8 +22,8 @@ Currently supported tuning strategies are:
 
 # Documentation
 
-* [Introduction](Introduction.md) explains iLiT infrastructure, design philosophy, supported functionality, details of tuning strategy implementations and tuning result on popular models.
-* [Tutorial](Tutorial.md) provides
+* [Introduction](docs/introduction.md) explains iLiT infrastructure, design philosophy, supported functionality, details of tuning strategy implementations and tuning result on popular models.
+* [Tutorial](docs/tutorial.md) provides
 comprehensive step-by-step instructions of how to enable iLiT on sample models.
 
 # Install from source 

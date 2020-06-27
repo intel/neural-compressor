@@ -35,10 +35,10 @@ class Tuner(object):
               the accuracy criteria. If not, the tuner starts a new calibration and tuning flow.
 
            b) Calibration and tuning with custom evaluation: User specifies fp32 "model", calibration dataset
-              and a custom "eval_func" which encapsulates the evaluation dataset by itself. The calibrated
-              and quantized model is evaluated with "eval_func". The "eval_func" tells the tuner whether
-              the quantized model meets the accuracy criteria. If not, the Tuner starts a new calibration
-              and tuning flow.
+              "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset by itself.
+              The calibrated and quantized model is evaluated with "eval_func". The "eval_func" tells the
+              tuner whether the quantized model meets the accuracy criteria. If not, the Tuner starts a new
+              calibration and tuning flow.
 
         Args:
             model (object):                        For Tensorflow model, it's a path to frozen pb or loaded graph_def object.

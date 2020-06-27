@@ -140,11 +140,12 @@ class TuneStrategy(object):
         raise notimplementederror
 
     def traverse(self):
-        """The main traverse logic, which could be override by some concrete strategy which needs more hook.
+        """The main traverse logic, which could be override by some concrete strategy which needs more hooks.
         """
         with Timeout(self.cfg.tuning.timeout) as t:
             # get fp32 model baseline
             if self.baseline is None:
+                print('Getting FP32 model baseline...')
                 self.baseline = self._evaluate(self.model, True)
             print('FP32 baseline is: [{:.4f}, {:.4f}]'.format(*self.baseline))
 
@@ -181,12 +182,17 @@ class TuneStrategy(object):
     def _merge_dicts(self, src, dst):
         """Helper function to merge src dict into dst dict.
 
+           If the key in src doesn't exist in dst, then add this key and value
+           pair to dst.
+           If the key in src is in dst and the value intersects with the one in
+           dst, then override the value in dst with the intersect value.
+
         Args:
-            src (dict): [description]
-            dst (dict): [description]
+            src (dict): The source dict merged from
+            dst (dict): The source dict merged to
 
         Returns:
-            dict: [description]
+            dict: The merged dict from src to dst
         """        
         for key in src:
             if key in dst:
