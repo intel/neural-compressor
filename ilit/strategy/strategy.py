@@ -103,8 +103,10 @@ class TuneStrategy(object):
             self.opwise_tune_cfgs[key] = self._tune_cfgs(self.opwise_tune_space[key])
 
         self.calib_iter = cfg.calibration.iterations if cfg.calibration and cfg.calibration.iterations else None
-        if self.calib_iter:
+        if self.calib_iter and isinstance(self.calib_iter, str):
             self.calib_iter = self.calib_iter.split(',')
+        elif self.calib_iter and isinstance(self.calib_iter, int):
+            self.calib_iter = [self.calib_iter]
         else:
             self.calib_iter = [1]
 

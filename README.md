@@ -58,6 +58,7 @@ iLiT requires to install intel optimized framework version for MxNet, PyTorch, T
 # Tuning Zoo
 
 Below table is the tuning result using iLiT.
+
 | Model               | Framework  | Tuning Strategy | FP32 Accuracy Baseline | INT8 Tuning Accuracy | FP32/INT8 Perf Ratio |
 |---------------------|------------|-----------------|------------------------|----------------------|----------------------|
 | BERT-Base MRPC      | MxNet      |                 |                        |                      |                      |
