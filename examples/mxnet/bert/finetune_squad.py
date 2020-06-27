@@ -50,13 +50,12 @@ import mxnet as mx
 
 import gluonnlp as nlp
 from gluonnlp.data import SQuAD
-from gluonnlp.data.bert.glue import concat_sequences
-from gluonnlp.data.bert.squad import improve_answer_span, \
-    tokenize_and_align_positions, get_doc_spans, align_position2doc_spans, \
-    check_is_max_context, convert_squad_examples
 from gluonnlp.calibration import BertLayerCollector
 from model.qa import BertForQALoss, BertForQA
 from bert_qa_evaluate import get_F1_EM, predict, PredResult
+from data.preprocessing_utils import improve_answer_span, \
+    concat_sequences, tokenize_and_align_positions, get_doc_spans, align_position2doc_spans, \
+    check_is_max_context, convert_squad_examples
 
 np.random.seed(6)
 random.seed(6)
@@ -422,7 +421,7 @@ def train():
 
     log.info('Start Training')
 
-    optimizer_params = {'learning_rate': lr, 'wd': 0.01}
+    optimizer_params = {'learning_rate': lr}
     param_dict = net.collect_params()
     if args.comm_backend == 'horovod':
         trainer = hvd.DistributedTrainer(param_dict, optimizer, optimizer_params)
@@ -845,6 +844,7 @@ def preprocess_dataset(tokenizer,
     print('Done! Transform dataset costs %.2f seconds.' % (end - start))
     return data_feature
 
+
 def gen_dataset():
     """generate dataset for iLiT."""
     log.info('Loading dev data...')
@@ -904,3 +904,4 @@ if __name__ == '__main__':
         import ilit
         bert_tuner = ilit.Tuner("./bert.yaml")
         bert_tuner.tune(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
+

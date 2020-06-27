@@ -751,8 +751,6 @@ if __name__ == '__main__':
         # iLiT auto-tuning
         if only_inference:
             calib_data = dev_data_list[0][1]
-            import sys
-            sys.path.append("/home/pengxiny/quantization/LowPrecisionInferenceTool/")
             import ilit
             bert_tuner = ilit.Tuner("./bert.yaml")
             bert_tuner.tune(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
