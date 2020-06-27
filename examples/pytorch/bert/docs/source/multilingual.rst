@@ -47,7 +47,6 @@ The different languages this model/tokenizer handles, as well as the ids of thes
 
 .. code-block::
 
-    # Continuation of the previous script
     print(tokenizer.lang2id)  # {'en': 0, 'fr': 1}
 
 
@@ -55,7 +54,6 @@ These ids should be used when passing a language parameter during a model pass. 
 
 .. code-block::
 
-    # Continuation of the previous script
     input_ids = torch.tensor([tokenizer.encode("Wikipedia was used to")]) # batch size of 1
 
 
@@ -64,7 +62,6 @@ filled with the appropriate language ids, of the same size as input_ids. For eng
 
 .. code-block::
 
-    # Continuation of the previous script
     language_id = tokenizer.lang2id['en']  # 0
     langs = torch.tensor([language_id] * input_ids.shape[1])  # torch.tensor([0, 0, 0, ..., 0])
 
@@ -76,11 +73,10 @@ You can then feed it all as input to your model:
 
 .. code-block::
 
-    # Continuation of the previous script
     outputs = model(input_ids, langs=langs)
 
 
-The example `run_generation.py <https://github.com/huggingface/transformers/blob/master/examples/text-generation/run_generation.py>`__
+The example `run_generation.py <https://github.com/huggingface/transformers/blob/master/examples/run_generation.py>`__
 can generate text using the CLM checkpoints from XLM, using the language embeddings.
 
 XLM without Language Embeddings
@@ -105,15 +101,3 @@ BERT has two checkpoints that can be used for multi-lingual tasks:
 
 These checkpoints do not require language embeddings at inference time. They should identify the language
 used in the context and infer accordingly.
-
-XLM-RoBERTa
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-XLM-RoBERTa was trained on 2.5TB of newly created clean CommonCrawl data in 100 languages. It provides strong
-gains over previously released multi-lingual models like mBERT or XLM on downstream taks like classification,
-sequence labeling and question answering.
-
-Two XLM-RoBERTa checkpoints can be used for multi-lingual tasks:
-
-- ``xlm-roberta-base`` (Masked language modeling, 100 languages)
-- ``xlm-roberta-large`` (Masked language modeling, 100 languages)

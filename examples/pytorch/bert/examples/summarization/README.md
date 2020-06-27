@@ -1,47 +1,61 @@
-### Get CNN Data
+# Text Summarization with Pretrained Encoders
+
+This folder contains part of the code necessary to reproduce the results on abstractive summarization from the article [Text Summarization with Pretrained Encoders](https://arxiv.org/pdf/1908.08345.pdf) by [Yang Liu](https://nlp-yang.github.io/) and [Mirella Lapata](https://homepages.inf.ed.ac.uk/mlap/). It can also be used to summarize any document.
+
+The original code can be found on the Yang Liu's [github repository](https://github.com/nlpyang/PreSumm).
+
+The model is loaded with the pre-trained weights for the abstractive summarization model trained on the CNN/Daily Mail dataset with an extractive and then abstractive tasks.
+
+## Setup
+
+```
+git clone https://github.com/huggingface/transformers && cd transformers
+pip install [--editable] .
+pip install nltk py-rouge
+cd examples/summarization
+```
+
+## Reproduce the authors' results on ROUGE
+
 To be able to reproduce the authors' results on the CNN/Daily Mail dataset you first need to download both CNN and Daily Mail datasets [from Kyunghyun Cho's website](https://cs.nyu.edu/~kcho/DMQA/) (the links next to "Stories") in the same folder. Then uncompress the archives by running:
 
 ```bash
-wget https://s3.amazonaws.com/datasets.huggingface.co/summarization/cnn_dm.tgz
-tar -xzvf cnn_dm.tgz
+tar -xvf cnn_stories.tgz && tar -xvf dailymail_stories.tgz
 ```
 
-this should make a directory called cnn_dm/ with files like `test.source`.
-To use your own data, copy that files format. Each article to be summarized is on its own line.
+And move all the stories to the same folder. We will refer as `$DATA_PATH` the path to where you uncompressed both archive. Then run the following in the same folder as `run_summarization.py`:
 
-### Evaluation
-
-To create summaries for each article in dataset, run:
 ```bash
-python evaluate_cnn.py <path_to_test.source> test_generations.txt <model-name>  --score_path rouge_scores.txt
+python run_summarization.py \
+    --documents_dir $DATA_PATH \
+    --summaries_output_dir $SUMMARIES_PATH \ # optional
+    --to_cpu false \
+    --batch_size 4 \
+    --min_length 50 \
+    --max_length 200 \
+    --beam_size 5 \
+    --alpha 0.95 \
+    --block_trigram true \
+    --compute_rouge true
 ```
-The default batch size, 8, fits in 16GB GPU memory, but may need to be adjusted to fit your system.
 
-### Training
-Run/modify `finetune_bart.sh` or `finetune_t5.sh`
+The scripts executes on GPU if one is available and if `to_cpu` is not set to `true`. Inference on multiple GPUs is not suported yet. The ROUGE scores will be displayed in the console at the end of evaluation and written in a `rouge_scores.txt` file. The script takes 30 hours to compute with a single Tesla V100 GPU and a batch size of 10 (300,000 texts to summarize).
 
-### Stanford CoreNLP Setup
+## Summarize any text
+
+Put the documents that you would like to summarize in a folder (the path to which is referred to as `$DATA_PATH` below) and run the following in the same folder as `run_summarization.py`:
+
+```bash
+python run_summarization.py \
+    --documents_dir $DATA_PATH \
+    --summaries_output_dir $SUMMARIES_PATH \ # optional
+    --to_cpu false \
+    --batch_size 4 \
+    --min_length 50 \
+    --max_length 200 \
+    --beam_size 5 \
+    --alpha 0.95 \
+    --block_trigram true \
 ```
-ptb_tokenize () {
-    cat $1 | java edu.stanford.nlp.process.PTBTokenizer -ioFileList -preserveLines > $2
-}
 
-sudo apt install openjdk-8-jre-headless
-sudo apt-get install ant
-wget http://nlp.stanford.edu/software/stanford-corenlp-full-2018-10-05.zip
-unzip stanford-corenlp-full-2018-10-05.zip
-cd stanford-corenlp-full-2018-10-05
-export CLASSPATH=stanford-corenlp-3.9.2.jar:stanford-corenlp-3.9.2-models.jar
-```
-Then run `ptb_tokenize` on `test.target` and your generated hypotheses.
-### Rouge Setup
-Install `files2rouge` following the instructions at [here](https://github.com/pltrdy/files2rouge).
-I also needed to run `sudo apt-get install libxml-parser-perl`
-
-```python
-from files2rouge import files2rouge
-from files2rouge import settings
-files2rouge.run(<path_to_tokenized_hypo>,
-                <path_to_tokenized_target>,
-               saveto='rouge_output.txt')
-```
+You may want to play around with `min_length`, `max_length` and `alpha` to suit your use case. If you want to compute ROUGE on another dataset you will need to tweak the stories/summaries import in `utils_summarization.py` and tell it where to fetch the reference summaries.

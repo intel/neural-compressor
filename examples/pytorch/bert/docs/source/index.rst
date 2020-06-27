@@ -50,8 +50,6 @@ The library currently contains PyTorch and Tensorflow implementations, pre-train
 9. `CTRL <https://github.com/pytorch/fairseq/tree/master/examples/ctrl>`_ (from Salesforce), released together with the paper `CTRL: A Conditional Transformer Language Model for Controllable Generation <https://www.github.com/salesforce/ctrl>`_ by Nitish Shirish Keskar*, Bryan McCann*, Lav R. Varshney, Caiming Xiong and Richard Socher.
 10. `CamemBERT <https://huggingface.co/transformers/model_doc/camembert.html>`_ (from FAIR, Inria, Sorbonne Université) released together with the paper `CamemBERT: a Tasty French Language Model <https://arxiv.org/abs/1911.03894>`_ by Louis Martin, Benjamin Muller, Pedro Javier Ortiz Suarez, Yoann Dupont, Laurent Romary, Eric Villemonte de la Clergerie, Djame Seddah, and Benoît Sagot.
 11. `ALBERT <https://github.com/google-research/ALBERT>`_ (from Google Research), released together with the paper a `ALBERT: A Lite BERT for Self-supervised Learning of Language Representations <https://arxiv.org/abs/1909.11942>`_ by Zhenzhong Lan, Mingda Chen, Sebastian Goodman, Kevin Gimpel, Piyush Sharma, Radu Soricut.
-12. `XLM-RoBERTa <https://github.com/pytorch/fairseq/tree/master/examples/xlmr>`_ (from Facebook AI), released together with the paper `Unsupervised Cross-lingual Representation Learning at Scale <https://arxiv.org/abs/1911.02116>`_ by Alexis Conneau*, Kartikay Khandelwal*, Naman Goyal, Vishrav Chaudhary, Guillaume Wenzek, Francisco Guzmán, Edouard Grave, Myle Ott, Luke Zettlemoyer and Veselin Stoyanov.
-13. `FlauBERT <https://github.com/getalp/Flaubert>`_ (from CNRS) released with the paper `FlauBERT: Unsupervised Language Model Pre-training for French <https://arxiv.org/abs/1912.05372>`_ by Hang Le, Loïc Vial, Jibril Frej, Vincent Segonne, Maximin Coavoux, Benjamin Lecouteux, Alexandre Allauzen, Benoît Crabbé, Laurent Besacier, Didier Schwab.
 
 .. toctree::
     :maxdepth: 2
@@ -59,11 +57,7 @@ The library currently contains PyTorch and Tensorflow implementations, pre-train
 
     installation
     quickstart
-    glossary
-    summary
     pretrained_models
-    usage
-    model_sharing
     examples
     notebooks
     serialization
@@ -81,7 +75,6 @@ The library currently contains PyTorch and Tensorflow implementations, pre-train
     main_classes/configuration
     main_classes/model
     main_classes/tokenizer
-    main_classes/pipelines
     main_classes/optimizer_schedules
     main_classes/processors
 
@@ -90,7 +83,6 @@ The library currently contains PyTorch and Tensorflow implementations, pre-train
     :caption: Package Reference
 
     model_doc/auto
-    model_doc/encoderdecoder
     model_doc/bert
     model_doc/gpt
     model_doc/transformerxl
@@ -102,12 +94,3 @@ The library currently contains PyTorch and Tensorflow implementations, pre-train
     model_doc/ctrl
     model_doc/camembert
     model_doc/albert
-    model_doc/xlmroberta
-    model_doc/flaubert
-    model_doc/bart
-    model_doc/t5
-    model_doc/electra
-    model_doc/dialogpt
-    model_doc/reformer
-    model_doc/marian
-    model_doc/longformer

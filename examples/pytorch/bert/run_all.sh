@@ -54,10 +54,10 @@ function run_model {
 
   ARGS="$7 $8"
   MAX_SEQ_LENGTH=128
-  SCRIPTS=examples/text-classification/run_glue_tune.py
+  SCRIPTS=examples/run_glue_tune.py
   if [[ "$TASK_NAME" == "SQuAD" ]]; then
     MAX_SEQ_LENGTH=384
-    SCRIPTS=examples/question-answering/run_squad_tune.py
+    SCRIPTS=examples/run_squad_tune.py
     # ARGS="$7 $8 --doc_stride 128"    
     ARGS="$7 $8"
   fi

@@ -19,27 +19,32 @@
 # In this template, replace all the XXX (various casings) with your model name
 ####################################################
 
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import json
 import logging
+import math
+import os
+import sys
+from io import open
 
+import numpy as np
 import tensorflow as tf
 
 from .configuration_xxx import XxxConfig
-from .file_utils import add_start_docstrings
 from .modeling_tf_utils import TFPreTrainedModel, get_initializer, shape_list
-
+from .file_utils import add_start_docstrings
 
 logger = logging.getLogger(__name__)
 
 ####################################################
-# This list contrains shortcut names for some of
-# the pretrained weights provided with the models
+# This dict contrains shortcut names and associated url
+# for the pretrained weights provided with the models
 ####################################################
-TF_XXX_PRETRAINED_MODEL_ARCHIVE_LIST = [
-    "xxx-base-uncased",
-    "xxx-large-uncased",
-]
-
+TF_XXX_PRETRAINED_MODEL_ARCHIVE_MAP = {
+    'xxx-base-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/xxx-base-uncased-tf_model.h5",
+    'xxx-large-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/xxx-large-uncased-tf_model.h5",
+}
 
 ####################################################
 # TF 2.0 Models are constructed using Keras imperative API by sub-classing
@@ -59,20 +64,12 @@ TF_XXX_PRETRAINED_MODEL_ARCHIVE_LIST = [
 #
 # See the conversion methods in modeling_tf_pytorch_utils.py for more details
 ####################################################
-
-TFXxxAttention = tf.keras.layers.Layer
-
-TFXxxIntermediate = tf.keras.layers.Layer
-
-TFXxxOutput = tf.keras.layers.Layer
-
-
 class TFXxxLayer(tf.keras.layers.Layer):
     def __init__(self, config, **kwargs):
-        super().__init__(**kwargs)
-        self.attention = TFXxxAttention(config, name="attention")
-        self.intermediate = TFXxxIntermediate(config, name="intermediate")
-        self.transformer_output = TFXxxOutput(config, name="output")
+        super(TFXxxLayer, self).__init__(**kwargs)
+        self.attention = TFXxxAttention(config, name='attention')
+        self.intermediate = TFXxxIntermediate(config, name='intermediate')
+        self.transformer_output = TFXxxOutput(config, name='output')
 
     def call(self, inputs, training=False):
         hidden_states, attention_mask, head_mask = inputs
@@ -91,7 +88,7 @@ class TFXxxLayer(tf.keras.layers.Layer):
 ####################################################
 class TFXxxMainLayer(tf.keras.layers.Layer):
     def __init__(self, config, **kwargs):
-        super().__init__(**kwargs)
+        super(TFXxxMainLayer, self).__init__(**kwargs)
 
     def _resize_token_embeddings(self, new_num_tokens):
         raise NotImplementedError  # Not implemented yet in the library fr TF 2.0 models
@@ -99,9 +96,7 @@ class TFXxxMainLayer(tf.keras.layers.Layer):
     def _prune_heads(self, heads_to_prune):
         raise NotImplementedError  # Not implemented yet in the library fr TF 2.0 models
 
-    def call(
-        self, inputs, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, training=False
-    ):
+    def call(self, inputs, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, training=False):
         # We allow three types of multi-inputs:
         # - traditional keyword arguments in the call method
         # - all the arguments provided as a dict in the first positional argument of call
@@ -116,11 +111,11 @@ class TFXxxMainLayer(tf.keras.layers.Layer):
             head_mask = inputs[4] if len(inputs) > 4 else head_mask
             assert len(inputs) <= 5, "Too many inputs."
         elif isinstance(inputs, dict):
-            input_ids = inputs.get("input_ids")
-            attention_mask = inputs.get("attention_mask", attention_mask)
-            token_type_ids = inputs.get("token_type_ids", token_type_ids)
-            position_ids = inputs.get("position_ids", position_ids)
-            head_mask = inputs.get("head_mask", head_mask)
+            input_ids = inputs.get('input_ids')
+            attention_mask = inputs.get('attention_mask', attention_mask)
+            token_type_ids = inputs.get('token_type_ids', token_type_ids)
+            position_ids = inputs.get('position_ids', position_ids)
+            head_mask = inputs.get('head_mask', head_mask)
             assert len(inputs) <= 5, "Too many inputs."
         else:
             input_ids = inputs
@@ -151,7 +146,7 @@ class TFXxxMainLayer(tf.keras.layers.Layer):
         # attention_probs has shape bsz x n_heads x N x N
         # input head_mask has shape [num_heads] or [num_hidden_layers x num_heads]
         # and head_mask is converted to shape [num_hidden_layers x batch x num_heads x seq_length x seq_length]
-        if head_mask is not None:
+        if not head_mask is None:
             raise NotImplementedError
         else:
             head_mask = [None] * self.num_hidden_layers
@@ -176,10 +171,10 @@ class TFXxxMainLayer(tf.keras.layers.Layer):
 ####################################################
 class TFXxxPreTrainedModel(TFPreTrainedModel):
     """ An abstract class to handle weights initialization and
-        a simple interface for downloading and loading pretrained models.
+        a simple interface for dowloading and loading pretrained models.
     """
-
     config_class = XxxConfig
+    pretrained_model_archive_map = TF_XXX_PRETRAINED_MODEL_ARCHIVE_MAP
     base_model_prefix = "transformer"
 
 
@@ -215,7 +210,7 @@ XXX_START_DOCSTRING = r"""    The XXX model was proposed in
             `model({'input_ids': input_ids, 'token_type_ids': token_type_ids})`
 
     Parameters:
-        config (:class:`~transformers.XxxConfig`): Model configuration class with all the parameters of the model.
+        config (:class:`~transformers.XxxConfig`): Model configuration class with all the parameters of the model. 
             Initializing with a config file does not load the weights associated with the model, only the configuration.
             Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model weights.
 """
@@ -229,13 +224,13 @@ XXX_INPUTS_DOCSTRING = r"""
             (a) For sequence pairs:
 
                 ``tokens:         [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]``
-
+                
                 ``token_type_ids:   0   0  0    0    0     0       0   0   1  1  1  1   1   1``
 
             (b) For single sequences:
 
                 ``tokens:         [CLS] the dog is hairy . [SEP]``
-
+                
                 ``token_type_ids:   0   0   0   0  0     0   0``
 
             Xxx is a model with absolute position embeddings so it's usually advised to pad the inputs on
@@ -266,12 +261,8 @@ XXX_INPUTS_DOCSTRING = r"""
             than the model's internal embedding lookup matrix.
 """
 
-
-@add_start_docstrings(
-    "The bare Xxx Model transformer outputing raw hidden-states without any specific head on top.",
-    XXX_START_DOCSTRING,
-    XXX_INPUTS_DOCSTRING,
-)
+@add_start_docstrings("The bare Xxx Model transformer outputing raw hidden-states without any specific head on top.",
+                      XXX_START_DOCSTRING, XXX_INPUTS_DOCSTRING)
 class TFXxxModel(TFXxxPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
@@ -288,7 +279,7 @@ class TFXxxModel(TFXxxPreTrainedModel):
             list of ``tf.Tensor`` (one for the output of each layer + the output of the embeddings)
             of shape ``(batch_size, sequence_length, hidden_size)``:
             Hidden-states of the model at the output of each layer plus the initial embedding outputs.
-        **attentions**: (`optional`, returned when ``output_attentions=True``)
+        **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``tf.Tensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
 
@@ -304,22 +295,17 @@ class TFXxxModel(TFXxxPreTrainedModel):
         last_hidden_states = outputs[0]  # The last hidden-state is the first element of the output tuple
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
-        super().__init__(config, *inputs, **kwargs)
-        self.transformer = TFXxxMainLayer(config, name="transformer")
+        super(TFXxxModel, self).__init__(config, *inputs, **kwargs)
+        self.transformer = TFXxxMainLayer(config, name='transformer')
 
     def call(self, inputs, **kwargs):
         outputs = self.transformer(inputs, **kwargs)
         return outputs
 
 
-TFXxxMLMHead = tf.keras.layers.Layer
-
-
-@add_start_docstrings(
-    """Xxx Model with a `language modeling` head on top. """, XXX_START_DOCSTRING, XXX_INPUTS_DOCSTRING
-)
+@add_start_docstrings("""Xxx Model with a `language modeling` head on top. """,
+    XXX_START_DOCSTRING, XXX_INPUTS_DOCSTRING)
 class TFXxxForMaskedLM(TFXxxPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
@@ -329,7 +315,7 @@ class TFXxxForMaskedLM(TFXxxPreTrainedModel):
             list of ``Numpy array`` or ``tf.Tensor`` (one for the output of each layer + the output of the embeddings)
             of shape ``(batch_size, sequence_length, hidden_size)``:
             Hidden-states of the model at the output of each layer plus the initial embedding outputs.
-        **attentions**: (`optional`, returned when ``output_attentions=True``)
+        **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``Numpy array`` or ``tf.Tensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
 
@@ -345,30 +331,26 @@ class TFXxxForMaskedLM(TFXxxPreTrainedModel):
         prediction_scores = outputs[0]
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
-        super().__init__(config, *inputs, **kwargs)
+        super(TFXxxForMaskedLM, self).__init__(config, *inputs, **kwargs)
 
-        self.transformer = TFXxxMainLayer(config, name="transformer")
-        self.mlm = TFXxxMLMHead(config, self.transformer.embeddings, name="mlm")
+        self.transformer = TFXxxMainLayer(config, name='transformer')
+        self.mlm = TFXxxMLMHead(config, self.transformer.embeddings, name='mlm')
 
     def call(self, inputs, **kwargs):
         outputs = self.transformer(inputs, **kwargs)
 
         sequence_output = outputs[0]
-        prediction_scores = self.mlm(sequence_output, training=kwargs.get("training", False))
+        prediction_scores = self.mlm(sequence_output, training=kwargs.get('training', False))
 
         outputs = (prediction_scores,) + outputs[2:]  # Add hidden states and attention if they are here
 
         return outputs  # prediction_scores, (hidden_states), (attentions)
 
 
-@add_start_docstrings(
-    """Xxx Model transformer with a sequence classification/regression head on top (a linear layer on top of
+@add_start_docstrings("""Xxx Model transformer with a sequence classification/regression head on top (a linear layer on top of
     the pooled output) e.g. for GLUE tasks. """,
-    XXX_START_DOCSTRING,
-    XXX_INPUTS_DOCSTRING,
-)
+    XXX_START_DOCSTRING, XXX_INPUTS_DOCSTRING)
 class TFXxxForSequenceClassification(TFXxxPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
@@ -378,7 +360,7 @@ class TFXxxForSequenceClassification(TFXxxPreTrainedModel):
             list of ``Numpy array`` or ``tf.Tensor`` (one for the output of each layer + the output of the embeddings)
             of shape ``(batch_size, sequence_length, hidden_size)``:
             Hidden-states of the model at the output of each layer plus the initial embedding outputs.
-        **attentions**: (`optional`, returned when ``output_attentions=True``)
+        **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``Numpy array`` or ``tf.Tensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
 
@@ -394,23 +376,22 @@ class TFXxxForSequenceClassification(TFXxxPreTrainedModel):
         logits = outputs[0]
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
-        super().__init__(config, *inputs, **kwargs)
+        super(TFXxxForSequenceClassification, self).__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
 
-        self.transformer = TFXxxMainLayer(config, name="transformer")
+        self.transformer = TFXxxMainLayer(config, name='transformer')
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
-        self.classifier = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
-        )
+        self.classifier = tf.keras.layers.Dense(config.num_labels,
+                                                kernel_initializer=get_initializer(config.initializer_range),
+                                                name='classifier')
 
     def call(self, inputs, **kwargs):
         outputs = self.transformer(inputs, **kwargs)
 
         pooled_output = outputs[1]
 
-        pooled_output = self.dropout(pooled_output, training=kwargs.get("training", False))
+        pooled_output = self.dropout(pooled_output, training=kwargs.get('training', False))
         logits = self.classifier(pooled_output)
 
         outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
@@ -418,12 +399,9 @@ class TFXxxForSequenceClassification(TFXxxPreTrainedModel):
         return outputs  # logits, (hidden_states), (attentions)
 
 
-@add_start_docstrings(
-    """Xxx Model with a token classification head on top (a linear layer on top of
+@add_start_docstrings("""Xxx Model with a token classification head on top (a linear layer on top of
     the hidden-states output) e.g. for Named-Entity-Recognition (NER) tasks. """,
-    XXX_START_DOCSTRING,
-    XXX_INPUTS_DOCSTRING,
-)
+    XXX_START_DOCSTRING, XXX_INPUTS_DOCSTRING)
 class TFXxxForTokenClassification(TFXxxPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
@@ -433,7 +411,7 @@ class TFXxxForTokenClassification(TFXxxPreTrainedModel):
             list of ``Numpy array`` or ``tf.Tensor`` (one for the output of each layer + the output of the embeddings)
             of shape ``(batch_size, sequence_length, hidden_size)``:
             Hidden-states of the model at the output of each layer plus the initial embedding outputs.
-        **attentions**: (`optional`, returned when ``output_attentions=True``)
+        **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``Numpy array`` or ``tf.Tensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
 
@@ -449,23 +427,22 @@ class TFXxxForTokenClassification(TFXxxPreTrainedModel):
         scores = outputs[0]
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
-        super().__init__(config, *inputs, **kwargs)
+        super(TFXxxForTokenClassification, self).__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
 
-        self.transformer = TFXxxMainLayer(config, name="transformer")
+        self.transformer = TFXxxMainLayer(config, name='transformer')
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
-        self.classifier = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
-        )
+        self.classifier = tf.keras.layers.Dense(config.num_labels,
+                                                kernel_initializer=get_initializer(config.initializer_range),
+                                                name='classifier')
 
     def call(self, inputs, **kwargs):
         outputs = self.transformer(inputs, **kwargs)
 
         sequence_output = outputs[0]
 
-        sequence_output = self.dropout(sequence_output, training=kwargs.get("training", False))
+        sequence_output = self.dropout(sequence_output, training=kwargs.get('training', False))
         logits = self.classifier(sequence_output)
 
         outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
@@ -473,12 +450,9 @@ class TFXxxForTokenClassification(TFXxxPreTrainedModel):
         return outputs  # scores, (hidden_states), (attentions)
 
 
-@add_start_docstrings(
-    """Xxx Model with a span classification head on top for extractive question-answering tasks like SQuAD (a linear layers on top of
+@add_start_docstrings("""Xxx Model with a span classification head on top for extractive question-answering tasks like SQuAD (a linear layers on top of
     the hidden-states output to compute `span start logits` and `span end logits`). """,
-    XXX_START_DOCSTRING,
-    XXX_INPUTS_DOCSTRING,
-)
+    XXX_START_DOCSTRING, XXX_INPUTS_DOCSTRING)
 class TFXxxForQuestionAnswering(TFXxxPreTrainedModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
@@ -490,7 +464,7 @@ class TFXxxForQuestionAnswering(TFXxxPreTrainedModel):
             list of ``Numpy array`` or ``tf.Tensor`` (one for the output of each layer + the output of the embeddings)
             of shape ``(batch_size, sequence_length, hidden_size)``:
             Hidden-states of the model at the output of each layer plus the initial embedding outputs.
-        **attentions**: (`optional`, returned when ``output_attentions=True``)
+        **attentions**: (`optional`, returned when ``config.output_attentions=True``)
             list of ``Numpy array`` or ``tf.Tensor`` (one for each layer) of shape ``(batch_size, num_heads, sequence_length, sequence_length)``:
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention heads.
 
@@ -506,15 +480,14 @@ class TFXxxForQuestionAnswering(TFXxxPreTrainedModel):
         start_scores, end_scores = outputs[:2]
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
-        super().__init__(config, *inputs, **kwargs)
+        super(TFXxxForQuestionAnswering, self).__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
 
-        self.transformer = TFXxxMainLayer(config, name="transformer")
-        self.qa_outputs = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="qa_outputs"
-        )
+        self.transformer = TFXxxMainLayer(config, name='transformer')
+        self.qa_outputs = tf.keras.layers.Dense(config.num_labels,
+                                                kernel_initializer=get_initializer(config.initializer_range),
+                                                name='qa_outputs')
 
     def call(self, inputs, **kwargs):
         outputs = self.transformer(inputs, **kwargs)
