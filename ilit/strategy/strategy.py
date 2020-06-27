@@ -64,7 +64,7 @@ class TuneStrategy(object):
                                                     input, label = dataloader()
                                                     output = model(input)
                                                     accuracy = metric(output, label)
-                                                    return accurac
+                                                    return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
     """        
     def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
@@ -129,22 +129,17 @@ class TuneStrategy(object):
 
     @abstractmethod
     def next_tune_cfg(self):
-        '''The generator of yielding next tuning config to traverse by concrete strategies
+        """The generator of yielding next tuning config to traverse by concrete strategies
            according to last tuning result.
 
-           Args:
-               qmodel (quantized model): It's the quanitzed model by last tuning result. If None, it means initial state.
-               current_tune_result (tuple): It's the return objective value by last tuning result.
-
-           Return:
-               tune_config (dict) it's a dict containing the tuning configuration to run.
-        '''
+        Yields:
+            tune_config (dict): It's a dict containing the tuning configuration to run.
+        """        
         raise notimplementederror
 
     def traverse(self):
-        '''The main traverse logic, which could be override by some concrete strategy which needs more hook.
-
-        '''
+        """The main traverse logic, which could be override by some concrete strategy which needs more hook.
+        """
         with Timeout(self.cfg.tuning.timeout) as t:
             # get fp32 model baseline
             if self.baseline is None:
@@ -182,8 +177,15 @@ class TuneStrategy(object):
         return dst_list
 
     def _merge_dicts(self, src, dst):
-        '''Merges src dict into dst dict'''
+        """Helper function to merge src dict into dst dict.
 
+        Args:
+            src (dict): [description]
+            dst (dict): [description]
+
+        Returns:
+            dict: [description]
+        """        
         for key in src:
             if key in dst:
                 if isinstance(dst[key], dict) and isinstance(src[key], dict):
