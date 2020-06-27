@@ -18,10 +18,10 @@ class RandomTuneStrategy(TuneStrategy):
 
         np.random.seed(self.cfg.random_seed)
         op_cfgs = {}
-        op_cfgs['calib_iter'] = np.random.choice(self.calib_iter)
+        op_cfgs['calib_iteration'] = int(np.random.choice(self.calib_iter))
         op_cfgs['op'] = {}
         for op, configs in self.opwise_tune_cfgs.items():
-            op_cfgs['op'][op] = int(np.random.choice(configs))
+            op_cfgs['op'][op] = np.random.choice(configs)
 
         yield op_cfgs
 

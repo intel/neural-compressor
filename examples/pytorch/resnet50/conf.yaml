@@ -2,7 +2,7 @@ framework:
   - name: pytorch                                # possible values are tensorflow, mxnet and pytorch
 
 tuning:
-    metric:
+  - metric:
       - topk: 1                                  # tuning metrics: accuracy 
     accuracy_criterion:
       - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
