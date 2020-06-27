@@ -42,19 +42,33 @@ import warnings
 from functools import partial
 import numpy as np
 import mxnet as mx
-from mxnet import gluon, ndarray
+from mxnet import gluon
 from mxnet.contrib.amp import amp
 import gluonnlp as nlp
 from gluonnlp.data import BERTTokenizer
-from gluonnlp.data.classification import get_task
-from gluonnlp.data.bert.glue import truncate_seqs_equal, concat_sequences
 from gluonnlp.model import BERTClassifier, RoBERTaClassifier
 from gluonnlp.calibration import BertLayerCollector
-
-from pudb import set_trace
-# set_trace()
+from data.classification import MRPCTask, QQPTask, RTETask, STSBTask, SSTTask
+from data.classification import QNLITask, CoLATask, MNLITask, WNLITask, XNLITask
+from data.classification import LCQMCTask, ChnSentiCorpTask
+from data.preprocessing_utils import truncate_seqs_equal, concat_sequences
 
 nlp.utils.check_version('0.9', warning_only=True)
+
+tasks = {
+    'MRPC': MRPCTask(),
+    'QQP': QQPTask(),
+    'QNLI': QNLITask(),
+    'RTE': RTETask(),
+    'STS-B': STSBTask(),
+    'CoLA': CoLATask(),
+    'MNLI': MNLITask(),
+    'WNLI': WNLITask(),
+    'SST': SSTTask(),
+    'XNLI': XNLITask(),
+    'LCQMC': LCQMCTask(),
+    'ChnSentiCorp': ChnSentiCorpTask()
+}
 
 parser = argparse.ArgumentParser(
     description='BERT fine-tune examples for classification/regression tasks.',
@@ -103,7 +117,7 @@ parser.add_argument(
     default=128,
     help='Maximum length of the sentence pairs')
 parser.add_argument(
-    '--round_to', type=int, default=128,
+    '--round_to', type=int, default=None,
     help='The length of padded sequences will be rounded up to be multiple of this argument.'
          'When round to is set to 8, training throughput may increase for mixed precision'
          'training on GPUs with tensorcores.')
@@ -120,8 +134,7 @@ parser.add_argument(
 parser.add_argument(
     '--task_name',
     type=str,
-    choices=['MRPC', 'QNLI', 'RTE', 'STS-B', 'CoLA',
-             'MNLI', 'WNLI', 'SST', 'XNLI', 'LCQMC', 'ChnSentiCorp'],
+    choices=tasks.keys(),
     help='The name of the task to fine-tune. Choices include MRPC, QQP, '
          'QNLI, RTE, STS-B, CoLA, MNLI, WNLI, SST.')
 parser.add_argument(
@@ -160,10 +173,6 @@ parser.add_argument(
     '--only_inference',
     action='store_true',
     help='If set, we skip training and only perform inference on dev and test data.')
-parser.add_argument(
-    '--auto_tuning',
-    action='store_true',
-    help='Use with --only_inference, If set, will use auto-tuning tool to do INT8 inference.')
 parser.add_argument(
     '--dtype',
     type=str,
@@ -229,7 +238,7 @@ mx.random.seed(args.seed)
 
 ctx = mx.cpu() if args.gpu is None else mx.gpu(args.gpu)
 
-task = get_task(task_name)
+task = tasks[task_name]
 
 # data type with mixed precision training
 if args.dtype == 'float16':
@@ -237,7 +246,6 @@ if args.dtype == 'float16':
 
 # model and loss
 only_inference = args.only_inference
-auto_tuning = args.auto_tuning
 model_name = args.bert_model
 dataset = args.bert_dataset
 pretrained_bert_parameters = args.pretrained_bert_parameters
@@ -439,7 +447,7 @@ def calibration(net, dev_data_list, num_calib_batches, quantized_dtype, calib_mo
         net = mx.contrib.quantization.quantize_net_v2(net, quantized_dtype=quantized_dtype,
                                                       exclude_layers=[],
                                                       quantize_mode='smart',
-                                                      quantize_granularity='tensor-wise',
+                                                      quantize_granularity='channel-wise',
                                                       calib_data=dev_data,
                                                       calib_mode=calib_mode,
                                                       num_calib_examples=num_calib_examples,
@@ -514,58 +522,6 @@ def log_eval(batch_id, batch_num, metric, step_loss, log_interval):
     eval_str = '[Batch %d/%d] loss=%.4f, metrics:' + \
                ','.join([i + ':%.4f' for i in metric_nm])
     logging.info(eval_str, batch_id + 1, batch_num, step_loss / log_interval, *metric_val)
-
-def test_func(graph):
-    logging.basicConfig(level=logging.DEBUG,
-                        datefmt='[%H:%M:%S]',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger("MXNet-Demo")
-
-    # dev_data_list=customized_args.customized_dict['dev_data_list']
-    # metric=customized_args.customized_dict['metric']
-
-    graph.hybridize(static_alloc=True, static_shape=True)
-    tic = time.time()
-    total_iter = 0
-    for segment, dev_data in dev_data_list:
-        metric_nm, metric_val = evaluate(model=graph, 
-                                         loader_dev=dev_data, 
-                                         metric=task.metrics, 
-                                         segment=segment)
-        total_iter += len(dev_data)
-    toc = time.time()
-
-    acc = metric_val[0]
-    F1 = metric_val[1]
-    speed = dev_batch_size * total_iter / (toc - tic)
-
-    logger.info('Auto_tuning test DONE!')
-    logger.info("%s is %.4f." % (metric_nm[0], acc))
-    logger.info("%s is %.4f." % (metric_nm[1], F1))
-    logger.info("speed is %.2f samples/s" % speed)
-
-    return acc
-
-def load_params(prefix, epoch):
-    """Load params from a file
-    """
-    # save_dict = nd.load("%s-%04d.params" % (prefix, epoch))
-    save_dict = ndarray.load(prefix)
-    arg_params = {}
-    aux_params = {}
-    if not save_dict:
-        logging.warning("Params file '%s' is empty", '%s-%04d.params' % (prefix, epoch))
-        return (arg_params, aux_params)
-    for k, v in save_dict.items():
-        if ':' in k:
-            tp, name = k.split(":", 1)
-            if tp == "arg":
-                arg_params[name] = v
-            if tp == "aux":
-                aux_params[name] = v
-        else:
-            arg_params[k] = v
-    return (arg_params, aux_params)
 
 
 def train(metric):
@@ -672,24 +628,9 @@ def train(metric):
                     break
             mx.nd.waitall()
 
-        # iLiT auto-tuning
-        if auto_tuning and only_inference:
-            calib_data = dev_data_list[0][1]
-            import ilit
-            bert_tuner = ilit.Tuner("./bert.yaml")
-            bert_tuner.tune(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
-
-            return
-
-        # profiling switch
-        is_profiler_on = os.getenv('MXNET_PROFILING', False)
-        if is_profiler_on:
-            mx.profiler.set_config(profile_symbolic=True, profile_imperative=True, profile_memory=False,
-                                profile_api=False, filename='profile.json', aggregate_stats=True)
-        mx.profiler.set_state('run')
-        
+        # inference on dev data
         for segment, dev_data in dev_data_list:
-            metric_nm, metric_val = evaluate(model, dev_data, metric, segment)
+            metric_nm, metric_val = evaluate(dev_data, metric, segment)
             if best_metric is None or metric_val >= best_metric:
                 best_metric = metric_val
                 patience = args.early_stop
@@ -697,11 +638,6 @@ def train(metric):
                 if args.early_stop is not None:
                     patience -= 1
             metric_history.append((epoch_id, metric_nm, metric_val))
-        
-        if is_profiler_on:
-            mx.profiler.set_state('stop')
-            print(mx.profiler.dumps())
-            logger.info('Profiling End !')
 
         if not only_inference:
             # save params
@@ -729,8 +665,6 @@ def train(metric):
     # inference on test data
     for segment, test_data in test_data_list:
         test(test_data, segment)
-
-
 
 
 def evaluate(model, loader_dev, metric, segment):
@@ -770,14 +704,39 @@ def evaluate(model, loader_dev, metric, segment):
                  dev_batch_size * len(loader_dev) / (toc - tic))
     return metric_nm, metric_val
 
+def test_func(graph):
+    logging.basicConfig(level=logging.DEBUG,
+                        datefmt='[%H:%M:%S]',
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger("MXNet-Demo")
+
+    # dev_data_list=customized_args.customized_dict['dev_data_list']
+    # metric=customized_args.customized_dict['metric']
+
+    graph.hybridize(static_alloc=True, static_shape=True)
+    tic = time.time()
+    total_iter = 0
+    for segment, dev_data in dev_data_list:
+        metric_nm, metric_val = evaluate(model=graph, 
+                                         loader_dev=dev_data, 
+                                         metric=task.metrics, 
+                                         segment=segment)
+        total_iter += len(dev_data)
+    toc = time.time()
+
+    acc = metric_val[0]
+    F1 = metric_val[1]
+    speed = dev_batch_size * total_iter / (toc - tic)
+
+    logger.info('Auto_tuning test DONE!')
+    logger.info("%s is %.4f." % (metric_nm[0], acc))
+    logger.info("%s is %.4f." % (metric_nm[1], F1))
+    logger.info("speed is %.2f samples/s" % speed)
+
+    return acc
 
 if __name__ == '__main__':
     if only_calibration:
-        calibration(model,
-                        dev_data_list,
-                        num_calib_batches,
-                        quantized_dtype,
-                        calib_mode)
         try:
             calibration(model,
                         dev_data_list,
@@ -788,4 +747,12 @@ if __name__ == '__main__':
             nlp.utils.version.check_version('1.7.0', warning_only=True, library=mx)
             warnings.warn('INT8 Quantization for BERT need mxnet-mkl >= 1.6.0b20200115')
     else:
-        train(task.metrics)
+        # train(task.metrics)
+        # iLiT auto-tuning
+        if only_inference:
+            calib_data = dev_data_list[0][1]
+            import sys
+            sys.path.append("/home/pengxiny/quantization/LowPrecisionInferenceTool/")
+            import ilit
+            bert_tuner = ilit.Tuner("./bert.yaml")
+            bert_tuner.tune(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
