@@ -49,6 +49,7 @@ import time
 import numpy as np
 import ast
 import subprocess
+import copy
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -124,8 +125,8 @@ class OutputGrabber(object):
         """
         while True:
             char = os.read(self.pipe_out,
-                           1024).decode(self.origstream.encoding)
-            if not char or self.escape_char in char:
+                           10240).decode(self.origstream.encoding)
+            if not char or self.escape_char == char[-1]:
                 break
             self.capturedtext += char
 
@@ -386,22 +387,32 @@ class GraphConverter:
         q_node_scale = {}
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(
             self._fp32_origin_graph, self.outputs)
-
+        graph_q_node_name = []
+        op_name_type_dict = {}
+        quantized_node_name_postfix = '_eightbit_requantize'
         for node in sorted_graph.node:
-            graph_node_name_mapping[node.name] = node
+            node_name = node.name
+            if node.op.find("Quantized") != -1:
+                node_name = node.name.split(quantized_node_name_postfix)[0]
+                graph_q_node_name.append(node_name)
+            graph_node_name_mapping[node_name] = node
+        
+        for op_info in original_op_list:
+            op_name = op_info[0]
+            op_type = op_info[1]
 
-        for op_name in original_op_list:
-            # if op_name not in graph_node_name_mapping and '/'.join(
-            #         node.name.rsplit('/')[:-1]) in graph_node_name_mapping:
-            #     q_node_name.append(op_name)
-            if op_name.find("eightbit_requantize") != -1:
-                q_node_name.append(op_name)
+            if op_type not in ( "conv2d"):
+                continue
+            op_name_type_dict[op_name] = op_type
+
+            if op_name in graph_q_node_name:
+                q_node_name.append(op_name + quantized_node_name_postfix)
                 q_node = graph_node_name_mapping[op_name]
                 q_out_min = graph_node_name_mapping[
                     q_node.input[-2]].attr["value"].tensor.float_val[0]
                 q_out_max = graph_node_name_mapping[
                     q_node.input[-1]].attr["value"].tensor.float_val[0]
-                q_node_scale[op_name] = (q_node.op, q_out_min, q_out_max)
+                q_node_scale[op_name + quantized_node_name_postfix] = (q_node.op, q_out_min, q_out_max)
             else:
                 fp32_node_name.append(op_name)
                 if graph_node_name_mapping[op_name].op in (
@@ -412,7 +423,8 @@ class GraphConverter:
                         # self.op_wise_config[node.name][0],
                         False,
                         op_name).get_longest_fuse()
-                    fp32_node_name_mapping[matched_nodes[-1]] = op_name
+                    if matched_nodes:
+                        fp32_node_name_mapping[matched_nodes[-1]] = op_name
                 else:
                     fp32_node_name_mapping[op_name] = op_name
 
@@ -456,9 +468,10 @@ class GraphConverter:
 
             if key in fp32_node_name_mapping:
                 key = fp32_node_name_mapping[key]
-                result[key] = np.array(ast.literal_eval(data), dtype=np.float)
+                result[(key, op_name_type_dict[key])] = np.array(ast.literal_eval(data), dtype=np.float)
             else:
-                result[key] = self._dequantize(
+                result_key = key.split(quantized_node_name_postfix)[0]
+                result[(result_key, op_name_type_dict[result_key])] = self._dequantize(
                     np.array(ast.literal_eval(data), dtype=np.int),
                     q_node_scale[key])
 
@@ -514,7 +527,8 @@ class GraphConverter:
             self._tmp_graph_def, self.outputs)
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
-        write_graph(self._tmp_graph_def, self._fp32_optimized_graph)
+        if self.debug:
+            write_graph(self._tmp_graph_def, self._fp32_optimized_graph)
         self._fp32_origin_graph = self._tmp_graph_def
 
     def _quantize_graph(self):

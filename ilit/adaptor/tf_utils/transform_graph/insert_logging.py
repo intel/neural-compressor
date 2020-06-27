@@ -44,8 +44,13 @@ class InsertLogging(GraphTransformBase):
         [dtypes.qint8.as_datatype_enum],
         "QuantizedConv2DWithBiasSumAndReluAndRequantize":
         [dtypes.quint8.as_datatype_enum],
+        "QuantizedDepthwiseConv2DWithBiasAndReluAndRequantize":
+        [dtypes.quint8.as_datatype_enum],
         "QuantizedConv2DWithBias": [dtypes.qint32.as_datatype_enum],
         "Relu": [dtypes.float32.as_datatype_enum],
+        "Relu6": [dtypes.float32.as_datatype_enum],
+        "AvgPool": [dtypes.float32.as_datatype_enum],
+        "MaxPool": [dtypes.float32.as_datatype_enum],
         "BiasAdd": [dtypes.float32.as_datatype_enum],
         "Max": [dtypes.float32.as_datatype_enum],
         "Min": [dtypes.float32.as_datatype_enum]

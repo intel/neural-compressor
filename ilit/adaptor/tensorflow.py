@@ -205,11 +205,11 @@ class TensorFlowAdaptor(Adaptor):
             [dict]: the key is op_name while the value is the ndarray tensor.
         """
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
-
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
                                    inputs=self.inputs,
                                    outputs=self.outputs,
+                                   qt_config=self.quantize_config,
                                    data_loader=dataloader)
         return converter.inspect_tensor(op_list, iteration_list)

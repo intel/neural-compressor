@@ -87,7 +87,7 @@ class MSETuneStrategy(TuneStrategy):
             best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
             dequantize_tensor_dict = self.adaptor.inspect_tensor(best_qmodel, self.calib_dataloader, op_lists, [1])
 
-            ops_mse = {op:self.mse_metric_gap(fp32_tensor_dict[op], dequantize_tensor_dict[op]) for op in op_lists}
+            ops_mse = {op:self.mse_metric_gap(fp32_tensor_dict[op], dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
             self.ordered_ops = sorted(ops_mse.keys(),key=lambda key:ops_mse[key], reverse=True)
 
         op_cfgs = copy.deepcopy(best_cfg)
