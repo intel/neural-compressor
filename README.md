@@ -1,30 +1,30 @@
-Intel Low Precision Inference Toolkit (iLiT)
+Intel Low Precision Inference Tool (iLiT)
 =========================================
 
-Intel Low Precision Inference Toolkit (iLiT) is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU, and support 5 automatic accuracy-driven tuning strategies, along with objectives like performance, model size, or memory footprint, it also rovides the easy extension capability for new backends, tuning strategies, metrics and objectives.
+Intel Low Precision Inference Tool (iLiT) is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional bjectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
 
 > **WARNING**
 >
 > GPU support is under development.
 
 Currently supported Intel optimized DL frameworks are:
-* [Apache\* MXNet](https://mxnet.apache.org)
-* [PyTorch\*](https://pytorch.org/)
 * [Tensorflow\*](https://www.tensorflow.org)
+* [PyTorch\*](https://pytorch.org/)
+* [Apache\* MXNet](https://mxnet.apache.org)
 
 Currently supported tuning strategies are:
 * [Basic](Introduction.md#Basic\ Strategy)
 * [Random](Introduction.md#Random\ Strategy)
 * [Exhaustive](Introduction.md#Exhaustive\ Strategy)
-* [Bayersian](Introduction.md#Bayersian\ Strategy)
+* [Bayesian](Introduction.md#Bayesian\ Strategy)
 * [MSE](Introduction.md#MSE\ Strategy)
 
 
 # Documentation
 
-* [Introduction](Introduction.md) explains iLiT infrastructure, d esign philosophy, supported functionality, details of tuning strategy implementations and tuning result on popular models.
+* [Introduction](Introduction.md) explains iLiT infrastructure, design philosophy, supported functionality, details of tuning strategy implementations and tuning result on popular models.
 * [Tutorial](Tutorial.md) provides
-comprehensive step-by-step instructions of how to enable iLiT on example models.
+comprehensive step-by-step instructions of how to enable iLiT on sample models.
 
 # Install from source 
 
@@ -53,7 +53,7 @@ iLiT supports systems based on Intel 64 architecture or compatible processors.
 
 ### Software
 
-iLiT requires to install intel optimized framework version for MxNet, PyTorch, TensorFlow.
+iLiT requires to install Intel optimized framework version for TensorFlow, PyTorch, and MXNet.
 
 # Tuning Zoo
 
@@ -61,16 +61,16 @@ Below table is the tuning result using iLiT.
 
 | Model               | Framework  | Tuning Strategy | FP32 Accuracy Baseline | INT8 Tuning Accuracy | FP32/INT8 Perf Ratio |
 |---------------------|------------|-----------------|------------------------|----------------------|----------------------|
-| BERT-Base MRPC      | MxNet      |                 |                        |                      |                      |
-| BERT-Base SQUAD     | MxNet      |                 |                        |                      |                      |
-| ResNet50 V1         | MxNet      |                 |                        |                      |                      |
-| MobileNet V1        | MxNet      |                 |                        |                      |                      |
-| MobileNet V2        | MxNet      |                 |                        |                      |                      |
-| SSD-MobileNet V1    | MxNet      |                 |                        |                      |                      |
-| SSD-ResNet50        | MxNet      |                 |                        |                      |                      |
-| SqueezeNet V1       | MxNet      |                 |                        |                      |                      |
-| ResNet18            | MxNet      |                 |                        |                      |                      |
-| Inception V3        | MxNet      |                 |                        |                      |                      |
+| BERT-Base MRPC      | MXNet      |                 |                        |                      |                      |
+| BERT-Base SQUAD     | MXNet      |                 |                        |                      |                      |
+| ResNet50 V1         | MXNet      |                 |                        |                      |                      |
+| MobileNet V1        | MXNet      |                 |                        |                      |                      |
+| MobileNet V2        | MXNet      |                 |                        |                      |                      |
+| SSD-MobileNet V1    | MXNet      |                 |                        |                      |                      |
+| SSD-ResNet50        | MXNet      |                 |                        |                      |                      |
+| SqueezeNet V1       | MXNet      |                 |                        |                      |                      |
+| ResNet18            | MXNet      |                 |                        |                      |                      |
+| Inception V3        | MXNet      |                 |                        |                      |                      |
 | DLRM                | PyTorch    |                 |                        |                      |                      |
 | BERT-Large MRPC     | PyTorch    |                 |                        |                      |                      |
 | BERT-Large SQUAD    | PyTorch    |                 |                        |                      |                      |
@@ -101,7 +101,7 @@ Below table is the tuning result using iLiT.
 Please submit your questions, feature requests, and bug reports on the
 [GitHub issues](https://github.com/intel/lp-inference-kit/issues) page.
 
-You may reach out to project maintainers privately at mlp.mlpc.dl@intel.com.
+You may reach out to [iLiT Maintainers](ilit.maintainers@intel.com).
 
 # Contributing
 
@@ -149,8 +149,8 @@ If you use iLiT in your research or wish to refer to the tuning results publishe
 ```
 @misc{iLiT,
   author =       {Feng Tian and Chuanqi Wang and Guoming Zhang and
-                  Penghui Cheng and Pengxin Yuan and Haohao Shen and Jiong Gong},
-  title =        {intel low precision inference tool},
+                  Penghui Cheng and Pengxin Yuan and Haihao Shen and Jiong Gong},
+  title =        {Intel Low Precision Inference Tool},
   howpublished = {\url{https://github.com/intel/lp-inference-kit}},
   year =         {2020}
 }
