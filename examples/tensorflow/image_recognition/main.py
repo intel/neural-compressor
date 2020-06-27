@@ -15,13 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# SPDX-License-Identifier: EPL-2.0
-#
 
 import time
 from argparse import ArgumentParser
 
 import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from tensorflow.python.framework import dtypes
 
@@ -66,44 +65,45 @@ class Dataloader(object):
   Yields:
       tuple: yield data and label 2 numpy array
   """
-    def __init__(self, data_location, subset, input_height, input_width,
-                 batch_size, num_cores, resize_method='crop', mean_value=[0.0,0.0,0.0], label_adjust=False):
-      """dataloader generator
+  def __init__(self, data_location, subset, input_height, input_width,
+                batch_size, num_cores, resize_method='crop', mean_value=[0.0,0.0,0.0], label_adjust=False):
+    """dataloader generator
 
-      Args:
-          data_location (str): tf recorder local path
-          subset (str): training or validation part
-          input_height (int): input image size
-          input_width (int): input image size
-          batch_size (int): dataloader batch size
-          num_cores (int): parallel 
-          resize_method (str, optional): data preprocession methods. Defaults to 'crop'.
-          mean_value (list, optional): data mean value. Defaults to [0.0,0.0,0.0].
-          label_adjust (bool, optional): adjust the label value. Defaults to False.
-      """
-      self.batch_size = batch_size
-      self.subset = subset
-      self.dataset = datasets.ImagenetData(data_location)
-      self.total_image = self.dataset.num_examples_per_epoch(self.subset)
-      self.preprocessor = self.dataset.get_image_preprocessor()(
-          input_height,
-          input_width,
-          batch_size,
-          num_cores,
-          resize_method,
-          mean_value)
-      self.label_adjust = label_adjust
-      self.n = int(self.total_image / self.batch_size)
+    Args:
+        data_location (str): tf recorder local path
+        subset (str): training or validation part
+        input_height (int): input image size
+        input_width (int): input image size
+        batch_size (int): dataloader batch size
+        num_cores (int): parallel 
+        resize_method (str, optional): data preprocession methods. Defaults to 'crop'.
+        mean_value (list, optional): data mean value. Defaults to [0.0,0.0,0.0].
+        label_adjust (bool, optional): adjust the label value. Defaults to False.
+    """
+    self.batch_size = batch_size
+    self.subset = subset
+    self.dataset = datasets.ImagenetData(data_location)
+    self.total_image = self.dataset.num_examples_per_epoch(self.subset)
+    self.preprocessor = self.dataset.get_image_preprocessor()(
+        input_height,
+        input_width,
+        batch_size,
+        num_cores,
+        resize_method,
+        mean_value)
+    self.label_adjust = label_adjust
+    self.n = int(self.total_image / self.batch_size)
+    self.n = 50
 
   def __iter__(self):
-      images, labels = self.preprocessor.minibatch(self.dataset, subset=self.subset,
-                        cache_data=False)
-      with tf.compat.v1.Session() as sess:
-          for i in range(self.n):
-              image, label = sess.run([images, labels])
-              if self.label_adjust:
-                  label -= 1
-              yield image, label
+    images, labels = self.preprocessor.minibatch(self.dataset, subset=self.subset,
+                      cache_data=False)
+    with tf.compat.v1.Session() as sess:
+        for i in range(self.n):
+            image, label = sess.run([images, labels])
+            if self.label_adjust:
+                label -= 1
+            yield image, label
 
 class eval_classifier_optimized_graph:
   """Evaluate image classifier with optimized TensorFlow graph"""
@@ -195,20 +195,20 @@ class eval_classifier_optimized_graph:
     Returns:
         graph: it will return a quantized pb
     """
-      fp32_graph = load_graph(self.args.input_graph)
-      at = iLiT.Tuner(self.args.config)
-      dataloader = Dataloader(self.args.data_location, 'validation',
-                              self.args.image_size, self.args.image_size,
-                              self.args.batch_size, self.args.num_cores,
-                              self.args.resize_method, 
-                              [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
-      q_model = at.tune(
-                          fp32_graph,
-                          q_dataloader=dataloader,
-                          # eval_func=iself.eval_inference)
-                          eval_func=None,
-                          eval_dataloader=dataloader)
-      return q_model
+    fp32_graph = load_graph(self.args.input_graph)
+    at = iLiT.Tuner(self.args.config)
+    dataloader = Dataloader(self.args.data_location, 'validation',
+                            self.args.image_size, self.args.image_size,
+                            self.args.batch_size, self.args.num_cores,
+                            self.args.resize_method,  
+                            [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
+    q_model = at.tune(
+                        fp32_graph,
+                        q_dataloader=dataloader,
+                        # eval_func=iself.eval_inference)
+                        eval_func=None,
+                        eval_dataloader=dataloader)
+    return q_model
 
   def eval_inference(self, infer_graph):
     """run benchmark with optimized graph"""
