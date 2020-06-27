@@ -99,9 +99,7 @@ Below table is the tuning result using iLiT.
 # Support
 
 Please submit your questions, feature requests, and bug reports on the
-[GitHub issues](https://github.com/intel/lp-inference-kit/issues) page.
-
-You may reach out to [iLiT Maintainers](ilit.maintainers@intel.com).
+[GitHub issues](https://github.com/intel/lp-inference-kit/issues) page. You may also reach out to ilit.maintainers@intel.com.
 
 # Contributing
 
