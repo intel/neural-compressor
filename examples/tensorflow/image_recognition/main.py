@@ -93,7 +93,6 @@ class Dataloader(object):
         mean_value)
     self.label_adjust = label_adjust
     self.n = int(self.total_image / self.batch_size)
-    self.n = 50
 
   def __iter__(self):
     images, labels = self.preprocessor.minibatch(self.dataset, subset=self.subset,
@@ -235,9 +234,8 @@ class eval_classifier_optimized_graph:
         preprocessor = dataset.get_image_preprocessor()(
           self.args.image_size, self.args.image_size, self.args.batch_size,
           num_cores=self.args.num_cores,
-          #resize_method='bilinear')
-          resize_method=self.args.resize_method,)
-          #mean_value=[self.args.r_mean,self.args.g_mean,self.args.b_mean])
+          resize_method=self.args.resize_method,
+          mean_value=[self.args.r_mean,self.args.g_mean,self.args.b_mean])
         images, labels = preprocessor.minibatch(dataset, subset='validation')
       else:
         print("Inference with dummy data.")
@@ -252,8 +250,7 @@ class eval_classifier_optimized_graph:
     infer_sess = tf.compat.v1.Session(graph=infer_graph, config=infer_config)
 
     num_processed_images = 0
-    #num_remaining_images = datasets.IMAGENET_NUM_VAL_IMAGES
-    num_remaining_images = 50000
+    num_remaining_images = datasets.IMAGENET_NUM_VAL_IMAGES
 
     if (not self.args.accuracy_only):
       iteration = 0
