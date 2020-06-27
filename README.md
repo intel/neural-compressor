@@ -148,8 +148,7 @@ If you use iLiT in your research or wish to refer to the tuning results publishe
 
 ```
 @misc{iLiT,
-  author =       {Feng Tian and Chuanqi Wang and Guoming Zhang and
-                  Penghui Cheng and Pengxin Yuan and Haihao Shen and Jiong Gong},
+  author =       {Feng Tian, Chuanqi Wang, Guoming Zhang, Penghui Cheng, Pengxin Yuan, Haihao Shen, and Jiong Gong},
   title =        {Intel Low Precision Inference Tool},
   howpublished = {\url{https://github.com/intel/lp-inference-kit}},
   year =         {2020}
