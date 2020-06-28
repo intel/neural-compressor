@@ -56,8 +56,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 # miscellaneous
 import builtins
 import functools
-# import bisect
-# import shutil
 import time
 import json
 # data generation
@@ -92,11 +90,6 @@ from torch.quantization import \
     quantize, prepare, convert, fuse_modules
 from torch.quantization import QuantWrapper, QuantStub, DeQuantStub, \
     default_per_channel_qconfig, QConfig, default_qconfig
-
-
-# from torchviz import make_dot
-# import torch.nn.functional as Functional
-# from torch.nn.parameter import Parameter
 
 exc = getattr(builtins, "IOError", "FileNotFoundError")
 
