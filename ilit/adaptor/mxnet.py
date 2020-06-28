@@ -22,10 +22,19 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger("iLiT-MXNet")
 
 def _check_version(v1, v2):
-    d1=re.split('\.', v1)
-    d2=re.split('\.',v2)
-    d1=[int(d1[i]) for i in range(len(d1))]
-    d2=[int(d2[i]) for i in range(len(d2))]
+    """version checkout functioin.
+
+    Args:
+        v1 (str): first version number.
+        v2 (str): sencond version number.
+
+    Returns:
+        boolen: True if v1 > v2, else False.
+    """    
+    d1 = re.split('\.', v1)
+    d2 = re.split('\.', v2)
+    d1 = [int(d1[i]) for i in range(len(d1))]
+    d2 = [int(d2[i]) for i in range(len(d2))]
 
     if d1 >= d2:
         return True
@@ -33,6 +42,11 @@ def _check_version(v1, v2):
 
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
+    """The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """    
     def __init__(self, framework_specific_info):
         super(MxNetAdaptor, self).__init__(framework_specific_info)
         self.__config_dict = {}
@@ -51,12 +65,17 @@ class MxNetAdaptor(Adaptor):
             pass
 
     def quantize(self, tune_cfg, model, dataloader):
-        '''The function is used to do calibration and quanitization in post-training quantization.
+        """The function is used to do MXNet calibration and quanitization in post-training quantization.
            It is used to do quanization in quantization-aware training.
 
-           Args:
-               model (object): The model to do calibration.
-        '''
+        Args:
+            tune_cfg (dict): quantization config.
+            model : model need to do quantization.
+            dataloader : calibration dataset.
+
+        Returns:
+            (dict): quantized model
+        """
         self.cfg = tune_cfg
         self._cfg_to_qconfig(tune_cfg)
         self.__config_dict['calib_data'] = dataloader
@@ -66,7 +85,8 @@ class MxNetAdaptor(Adaptor):
         # get symbol from FP32 model
         if isinstance(model, mx.gluon.HybridBlock):
             # transfer hybridblock to symbo
-            sym, arg_params, aux_params, calib_data = self._get_gluon_symbol(model, dataloader=dataloader)
+            sym, arg_params, aux_params, calib_data = \
+                self._get_gluon_symbol(model, dataloader=dataloader)
             data_names = [pair[0] for pair in calib_data.provide_data]
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -77,19 +97,23 @@ class MxNetAdaptor(Adaptor):
 
         # 1. quantize_symbol
         if _check_version(mx.__version__, '1.7.0'):
-            qsym, calib_layer = mx.contrib.quantization._quantize_symbol(sym, qconfig['ctx'], excluded_symbols=qconfig['excluded_sym_names'],
-                                                excluded_operators=qconfig['excluded_op_names'],
-                                                offline_params=list(arg_params.keys()),
-                                                quantized_dtype=qconfig['quantized_dtype'],
-                                                quantize_mode=qconfig['quantize_mode'],
-                                                quantize_granularity=qconfig['quantize_granularity'])
+            qsym, calib_layer = mx.contrib.quantization._quantize_symbol(
+                sym, qconfig['ctx'],
+                excluded_symbols=qconfig['excluded_sym_names'],
+                excluded_operators=qconfig['excluded_op_names'],
+                offline_params=list(arg_params.keys()),
+                quantized_dtype=qconfig['quantized_dtype'],
+                quantize_mode=qconfig['quantize_mode'],
+                quantize_granularity=qconfig['quantize_granularity'])
         else:
-            qsym, calib_layer = mx.contrib.quantization._quantize_symbol(sym, qconfig['ctx'], excluded_symbols=qconfig['excluded_sym_names'],
-                                                excluded_operators=qconfig['excluded_op_names'],
-                                                offline_params=list(arg_params.keys()),
-                                                quantized_dtype=qconfig['quantized_dtype'],
-                                                quantize_mode=qconfig['quantize_mode'],)
-        
+            qsym, calib_layer = mx.contrib.quantization._quantize_symbol(
+                sym, qconfig['ctx'],
+                excluded_symbols=qconfig['excluded_sym_names'],
+                excluded_operators=qconfig['excluded_op_names'],
+                offline_params=list(arg_params.keys()),
+                quantized_dtype=qconfig['quantized_dtype'],
+                quantize_mode=qconfig['quantize_mode'],)
+
         # 2. Do calibration to get th_dict
         th_dict = self._get_calibration_th(sym, arg_params, aux_params, calib_layer, qconfig)
         self.th_dict = th_dict
@@ -110,9 +134,9 @@ class MxNetAdaptor(Adaptor):
                 prefix = os.path.join(tmpdirname, 'tmp')
                 param_name = '%s-%04d.params' % (prefix + 'net-quantized', 0)
                 save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu())
-                            for k, v in qarg_params.items()}
+                             for k, v in qarg_params.items()}
                 save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu())
-                                for k, v in aux_params.items()})
+                                  for k, v in aux_params.items()})
                 mx.ndarray.save(param_name, save_dict)
                 net.collect_params().load(param_name, cast_dtype=True, dtype_source='saved')
                 net.collect_params().reset_ctx(self.__config_dict['ctx'])
@@ -121,20 +145,25 @@ class MxNetAdaptor(Adaptor):
         return (qsym, qarg_params, aux_params)
 
     def train(self, model, dataloader):
-        '''The function is used to do training in quantization-aware training.
+        """The function is used to do training in quantization-aware training.
 
-           Args:
-               model (object): The model to do calibration.
-        '''
+        Args:
+            model (object): The model to do calibration.
+            dataloader (object): The dataset do do QAT.
+        """        
         raise notimplementederror
 
     def evaluate(self, model, dataloader, metric):
-        '''The function is used to run evaluation on validation dataset.
+        """The function is used to run evaluation on validation dataset.
 
-           Args:
-               model (object): The model to do calibration.
-        '''
+        Args:
+            model (object): model to do evaluate.
+            dataloader (object): dataset to do evaluate.
+            metric (iLiT metric object): evaluate metric.
 
+        Returns:
+            acc: evaluate result.
+        """
         if isinstance(model, mx.gluon.HybridBlock):
             acc = self._mxnet_gluon_forward(model, dataloader, metric)
 
@@ -160,8 +189,8 @@ class MxNetAdaptor(Adaptor):
                             label_names=label_name
                             )
         mod.bind(for_training=False,
-                data_shapes=dataIter.provide_data,
-                label_shapes=dataIter.provide_label
+                 data_shapes=dataIter.provide_data,
+                 label_shapes=dataIter.provide_label
                 )
         mod.set_params(arg_params, aux_params)
 
@@ -199,17 +228,19 @@ class MxNetAdaptor(Adaptor):
         return acc
 
     def _check_model(self, model, dataloader):
-        '''The function is used to check model and calib_data, if not symbol and dataiter, then transfer it to.
+        """The function is used to check model and calib_data,
+           if not symbol and dataiter, then transfer it to.
 
-           Args:
-                model (object): The model to do calibration.
-                config:
-           Return:
-                sym, arg_params, aux_params
-        '''
+        Args:
+            model (object): The model to do calibration.
+            config:
+        Return:
+            sym, arg_params, aux_params
+        """
         if isinstance(model, mx.gluon.HybridBlock):
             # model.hybridblock()
-            sym, arg_params, aux_params, calib_data = self._get_gluon_symbol(network=model, dataloader=dataloader)
+            sym, arg_params, aux_params, calib_data = \
+                self._get_gluon_symbol(network=model, dataloader=dataloader)
             self.__config_dict['calib_data'] = calib_data
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
@@ -220,18 +251,26 @@ class MxNetAdaptor(Adaptor):
         return sym, arg_params, aux_params, calib_data
 
     def _query_quantizable_ops(self, model, calib_data):
-        '''The function is used to run test on validation dataset.
+        """Query quantizable ops of the given model.
 
-           Args:
-               model (object): The model to do calibration.
-        '''
+        Args:
+            model (Symbol or HybridBlock): model to query.
+            calib_data (DataIter or Dataloader): dataset to do calibration.
+
+        Returns:
+            list: quantizable ops of the given model.
+        """
         if len(self.quantizable_ops) != 0:
             return self.quantizable_ops
 
         sym, arg_params, aux_params, calib_data = self._check_model(model, calib_data)
         sym = sym.get_backend_symbol('MKLDNN_QUANTIZE')
 
-        _, calib_layer = mx.contrib.quantization._quantize_symbol(sym, mx.cpu(), offline_params=list(arg_params.keys()),)
+        _, calib_layer = mx.contrib.quantization._quantize_symbol(
+                         sym,
+                         mx.cpu(),
+                         offline_params=list(arg_params.keys()),
+                        )
 
         # get each op type
         dct = json.loads(sym.tojson())
@@ -256,21 +295,31 @@ class MxNetAdaptor(Adaptor):
         return self.quantizable_ops
 
     def query_fused_patterns(self, model):
-        '''The function is used to run fused patterns in framework.
+        """The function is used to run fused patterns in framework.
 
-           Args:
-               model (object): The model to do calibration.
-        '''
+        Args:
+            model (object): The model to do calibration.
+        """
         raise notimplementederror
 
     def query_fw_capability(self, model):
+        """Query MXNet quantization capability on the model/op level with the specific model.
+
+        Args:
+            model (Symbol or HybridBlock): model to query.
+
+        Returns:
+            (dict): modelwise and opwise config.
+        """        
         # model_wise capability
         # TODO: weight granularity
         model_wise = {
                 'activation': {'dtype': ['uint8', 'fp32'], \
-                    'granularity': ['per_channel'], 'algorithm': ['minmax', 'kl']},
+                               'granularity': ['per_channel'], \
+                               'algorithm': ['minmax', 'kl']},
                 'weight': {'dtype': ['uint8', 'fp32'], \
-                    'granularity': ['per_channel'], 'algorithm': ['minmax', 'kl']}
+                           'granularity': ['per_channel'], \
+                           'algorithm': ['minmax', 'kl']}
                 }
         # op_wise capability
         quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
@@ -321,21 +370,22 @@ class MxNetAdaptor(Adaptor):
         return {'modelwise': model_wise, 'opwise': op_wise}
 
     def _inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
-        '''The function is used by tune strategy class for dumping tensor info.
+        """The function is used by tune strategy class for dumping tensor info.
 
-           Args:
-               model (object): The model to do calibration.
-               dataloader: The data to do forword.
-               op_list: list of inspect tensors.
-               iteration_list: list of inspect iterations
-           Return:
-               Numpy Array Dict
-                if iteration_list is empty:
-                    {'op1':  tensor, ...}
-                if iteration_list is not empty:
-                    {"iteration_1": {'op1': tensor, ...}
-                     "iteration_2": {'op1': tensor, ...}}
-        '''
+        Args:
+            model (object): The model to do calibration.
+            dataloader: The data to do forword.
+            op_list: list of inspect tensors.
+            iteration_list: list of inspect iterations
+        
+        Return:
+            Numpy Array Dict
+            if iteration_list is empty:
+                {'op1':  tensor, ...}
+            if iteration_list is not empty:
+                {"iteration_1": {'op1': tensor, ...}
+                    "iteration_2": {'op1': tensor, ...}}
+        """
         import ctypes
         from mxnet.base import _LIB, check_call, py_str
         from mxnet.base import c_array, c_str, mx_uint, c_str_array
@@ -446,37 +496,40 @@ class MxNetAdaptor(Adaptor):
         return inspected_tensor_convert
 
     def mapping(self, src_model, dst_model):
-        '''The function is used to create a dict to map tensor name of src model to tensor name of dst model.
+        """The function is used to create a dict to map tensor name of src model to tensor name of dst model.
 
-           Return:
-               Dict
-               {'src_op1': 'dst_op1'}
-        '''
+        Return:
+            Dict
+            {'src_op1': 'dst_op1'}
+        """
         raise notimplementederror
 
     def _cfg_to_qconfig(self, tune_cfg):
+        """Convert the stratage config to MXNet quantization config.
 
-        '''cfg should be a format like below:
-        {
-            'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']], 'fp32': [['CONV2D', 'RELU', 'BN']]},
-            'calib_iteration': 10,
-            'op': {
-               ['op1', 'CONV2D']: {
-                 'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
-                 'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
-               },
-               ['op2', 'RELU]: {
-                 'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
-               },
-               ['op3', 'CONV2D']: {
-                 'activation':  {'dtype': 'fp32'},
-                 'weight': {'dtype': 'fp32'}
-               },
-               ...
+        Args:
+            tune_cfg (dict): tune config from iLiT stratage.
+            cfg should be a format like below:
+            {
+                'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']], 'fp32': [['CONV2D', 'RELU', 'BN']]},
+                'calib_iteration': 10,
+                'op': {
+                ['op1', 'CONV2D']: {
+                    'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
+                    'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
+                },
+                ['op2', 'RELU]: {
+                    'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
+                },
+                ['op3', 'CONV2D']: {
+                    'activation':  {'dtype': 'fp32'},
+                    'weight': {'dtype': 'fp32'}
+                },
+                ...
+                }
             }
-          }
 
-        '''
+        """
         excluded_sym_names = []
         excluded_op_names = []
         calib_minmax_layers = []
@@ -527,7 +580,15 @@ class MxNetAdaptor(Adaptor):
         }
 
     def _get_gluon_symbol(self, network, dataloader):
+        """Convert symbol model and DataIter from gluon model HybridBlock/Dataloader.
 
+        Args:
+            network (HybridBlock): gluon HybridBlock model
+            dataloader (Dataloader): gluon Dataloader
+
+        Returns:
+            tuple: symbol model and DataIter
+        """        
         class _DataIterWrapper(mx.io.DataIter):
             """DataIter wrapper for general iterator, e.g., gluon dataloader"""
             def __init__(self, calib_data):
@@ -594,7 +655,17 @@ class MxNetAdaptor(Adaptor):
         return symnet, args, auxs, calib_data
 
     def _get_optimal_thresholds(self, hist_dict, quantized_dtype, num_quantized_bins=255, logger=None):
-        """Given a ndarray dict, find the optimal threshold for quantizing each value of the key."""
+        """Given a ndarray dict, find the optimal threshold for quantizing each value of the key.
+
+        Args:
+            hist_dict (dict): dict of each layer output tensor, format as {layer_name: tensor}
+            quantized_dtype (str): quantized data type
+            num_quantized_bins (int, optional): num_quantized_bins. Defaults to 255.
+            logger (logger, optional): logger. Defaults to None.
+
+        Returns:
+            th_dict: optimal_thresholds
+        """
         assert isinstance(hist_dict, dict)
         if logger is not None:
             logger.info('Calculating optimal thresholds for quantization using KL divergence'
@@ -623,12 +694,24 @@ class MxNetAdaptor(Adaptor):
                 th_dict[name] = (-th, th)
             del hist_dict[name]  # release the memory
             if logger:
-
                 logger.debug('layer=%s, min_val=%f, max_val=%f, th=%f, '
                             % (name, min_val, max_val, th))
         return th_dict
 
     def _get_calibration_th(self, sym, arg_params, aux_params, calib_layer, qconfig):
+        """Calculate the calibration value of each layer. the calibration method can be min/max or KL
+           on different layers.
+
+        Args:
+            sym : model symbol file
+            arg_params : arg_params
+            aux_params : aux_params
+            calib_layer : layers need to do calibration
+            qconfig (dict): quantization config
+
+        Returns:
+            th_dict (dict): dict include the calibration value of each layer.
+        """        
         # calib_mode = qconfig['calib_mode']
         ctx = qconfig['ctx']
         calib_data = qconfig['calib_data']
@@ -685,6 +768,15 @@ class MxNetAdaptor(Adaptor):
         return th_dict
 
     def _merge_dicts(self, src, dst):
+        """Merge src dict to dst dict
+
+        Args:
+            src (dict): source dict
+            dst (dict): dest dict
+
+        Returns:
+            dst (dict):
+        """        
         '''Merges src calib th dict into dst calib th dict'''
         for key in src:
             assert key not in dst, "%s layer can not do KL and minmax calibration together!" % key

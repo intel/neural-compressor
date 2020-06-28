@@ -1,32 +1,34 @@
 from abc import abstractmethod
 import time
-import sys
 import tracemalloc
 from .utils.utility import get_size
 
-'''The objectives supported by iLiT, which is driven by accuracy.
+"""The objectives supported by iLiT, which is driven by accuracy.
    To support new objective, developer just need implement a new subclass in this file.
-'''
+"""
 OBJECTIVES = {}
 
 def objective_registry(cls):
-    '''The class decorator used to register all Objective subclasses.
+    """The class decorator used to register all Objective subclasses.
 
-       Args:
-           cls (class): The class of register.
-    '''
+    Args:
+        cls (class): The class of register.
+
+    Returns:
+        cls (class): The class of register.
+    """
     if cls.__name__.lower() in OBJECTIVES:
         raise ValueError('Cannot have two objectives with the same name')
     OBJECTIVES[cls.__name__.lower()] = cls
     return cls
 
 class Objective(object):
-    '''The base class of objectives supported by iLiT.
+    """The base class of objectives supported by iLiT.
 
-       Args:
-           accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                      {'relative': 0.01} or {'absolute': 0.01}
-    '''
+    Args:
+        accuracy_criterion (dict): The dict of supported accuracy criterion.
+                                    {'relative': 0.01} or {'absolute': 0.01}
+    """
     def __init__(self, accuracy_criterion):
         assert isinstance(accuracy_criterion, dict) and len(accuracy_criterion) == 1
         k, v = list(accuracy_criterion.items())[0]
@@ -40,30 +42,35 @@ class Objective(object):
 
     @abstractmethod
     def compare(self, last):
-        '''The interface of comparing if metric reaches the goal with acceptable accuracy loss.
+        """The interface of comparing if metric reaches the goal with acceptable accuracy loss.
 
-           Args:
-               last (tuple): The tuple of last metric.
-               accuracy_criterion (float): The allowed accuracy absolute loss.
-        '''
+        Args:
+            last (tuple): The tuple of last metric.
+            accuracy_criterion (float): The allowed accuracy absolute loss.
+        """
         raise notimplementederror
 
     @abstractmethod
     def evaluate(self, eval_func, model, baseline=False):
-        '''The interface of calculating the objective.
+        """The interface of calculating the objective.
 
-        '''
+        Args:
+            eval_func (function): function to do evaluation.
+            model (object): model to do evaluation.
+            baseline (bool, optional): Whether do baseline evaluation. if baseline=True, mean
+                                        evaluation with origin FP32 model, else evaluation with
+                                        quantized model. Defaults to False.
+
+        """
         raise notimplementederror
 
 @objective_registry
 class Performance(Objective):
-    '''The class of calculating topk metric, which usually is used in classification.
-
-       Args:
-           predict (tensor): The tensor of predict result.
-           label (tensor): The tensor of ground truth.
-           topk (integer): The top k number interested.
-    '''
+    """The objective class of calculating performance when running quantize model.
+    Args:
+        accuracy_criterion (dict): The dict of supported accuracy criterion.
+                                    {'relative': 0.01} or {'absolute': 0.01}
+    """
     def __init__(self, accuracy_criterion):
         super(Performance, self).__init__(accuracy_criterion)
 
@@ -76,9 +83,10 @@ class Performance(Objective):
             last_perf = 0
 
         assert self.baseline, "baseline of Objective class should be set before reference."
-        base_acc, base_perf = self.baseline
+        base_acc, _ = self.baseline
 
-        acc_target = base_acc - float(self.acc_goal) if not self.relative else base_acc * (1 - float(self.acc_goal))
+        acc_target = base_acc - float(self.acc_goal) if not self.relative \
+                     else base_acc * (1 - float(self.acc_goal))
         if acc >= acc_target and (last_perf == 0 or perf < last_perf):
             return True
         else:
@@ -98,9 +106,12 @@ class Performance(Objective):
 
 @objective_registry
 class Footprint(Objective):
-    '''The objective class of calculating peak memory footprint when running quantize model.
+    """The objective class of calculating peak memory footprint when running quantize model.
 
-    '''
+    Args:
+        accuracy_criterion (dict): The dict of supported accuracy criterion.
+                                    {'relative': 0.01} or {'absolute': 0.01}
+    """
     def __init__(self, accuracy_criterion):
         super(Footprint, self).__init__(accuracy_criterion)
 
@@ -113,9 +124,10 @@ class Footprint(Objective):
             last_peak = 0
 
         assert self.baseline, "baseline variable of Objective class should be set before reference."
-        base_acc, base_peak = self.baseline
+        base_acc, _ = self.baseline
 
-        acc_target = base_acc - float(self.acc_goal) if not self.relative else base_acc * (1 - float(self.acc_goal))
+        acc_target = base_acc - float(self.acc_goal) if not self.relative \
+                     else base_acc * (1 - float(self.acc_goal))
         if acc >= acc_target and (last_peak == 0 or peak < last_peak):
             return True
         else:
@@ -124,7 +136,7 @@ class Footprint(Objective):
     def evaluate(self, eval_func, model, baseline):
         tracemalloc.start()
         accuracy = eval_func(model)
-        _, peak =  tracemalloc.get_traced_memory()
+        _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
         if baseline:
@@ -135,9 +147,12 @@ class Footprint(Objective):
 
 @objective_registry
 class ModelSize(Objective):
-    '''The class of calculating quanitzed model size.
+    """The objective class of calculating model size when running quantize model.
 
-    '''
+    Args:
+        accuracy_criterion (dict): The dict of supported accuracy criterion.
+                                    {'relative': 0.01} or {'absolute': 0.01}
+    """
     def __init__(self, accuracy_criterion):
         super(ModelSize, self).__init__(accuracy_criterion)
 
@@ -150,9 +165,10 @@ class ModelSize(Objective):
             last_size = 0
 
         assert self.baseline, "baseline variable of Objective class should be set before reference."
-        base_acc, base_size = self.baseline
+        base_acc, _ = self.baseline
 
-        acc_target = base_acc - float(self.acc_goal) if not self.relative else base_acc * (1 - float(self.acc_goal))
+        acc_target = base_acc - float(self.acc_goal) if not self.relative \
+                     else base_acc * (1 - float(self.acc_goal))
         if acc >= acc_target and (last_size == 0 or size < last_size):
             return True
         else:

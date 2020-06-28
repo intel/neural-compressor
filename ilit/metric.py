@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from sklearn.metrics import *
+from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
 
 #from pycocotools import coco
@@ -11,51 +11,54 @@ import numpy as np
 METRICS = {}
 
 def metric_registry(cls):
-    '''The class decorator used to register all Metric subclasses.
-
-       Args:
-           cls (class): The class of register.
-    '''
+    """The class decorator used to register all Metric subclasses.
+    
+    Returns:
+        cls (class): The class of register.
+    """
     if cls.__name__.lower() in METRICS:
         raise ValueError('Cannot have two metrics with the same name')
     METRICS[cls.__name__.lower()] = cls
     return cls
 
 class Metric(object):
-    '''The base class of metrics supported by iLiT.
+    """The base class of metrics supported by iLiT.
 
-       Args:
-           name (string): The name of supported metric.
-    '''
+    Args:
+        name (string): The name of supported metric.
+
+    """
     def __init__(self, name):
         self.name = name
 
     @abstractmethod
     def compare(self, target):
-        '''The interface of comparing if metric reaches the goal.
+        """The interface of comparing if metric reaches the goal.
 
-           Args:
-               target (Metric): The object of target metric.
-        '''
+        Args:
+            target (Metric): The object of target metric.
+        """
         raise notimplementederror
 
     @abstractmethod
     def evaluate(self, predict, ground_truth):
-        '''The interface of comparing if metric reaches the goal.
+        """The interface of metric computation.
 
-           Args:
-               predict (Tensor): The predict tensor.
-               ground_truth (Tensor): The ground truth tensor.
-        '''
+        Args:
+            predict (Tensor): The predict tensor.
+            ground_truth (Tensor): The ground truth tensor.
+
+        """
         raise notimplementederror
 
 @metric_registry
 class Topk(Metric):
-    '''The class of calculating topk metric, which usually is used in classification.
+    """The class of calculating topk metric, which usually is used in classification.
 
-       Args:
-           topk (dict): The dict of topk for configuration.
-    '''
+    Args:
+        topk (dict): The dict of topk for configuration.
+
+    """
     def __init__(self, topk):
         super(Topk, self).__init__('topk')
         assert isinstance(topk, dict)
@@ -67,6 +70,17 @@ class Topk(Metric):
         self.acc = 0
 
     def evaluate(self, predict, label):
+        """Compute the Topk metric value of given inputs.
+
+        Args:
+            predict (Tensor): The predict tensor.
+            ground_truth (Tensor): The ground truth tensor.
+
+        Returns:
+            float: topk metric value.
+
+        """
+
         predict = predict.argsort()[..., -self.k:]
         if self.k == 1:
             correct = accuracy_score(predict, label, normalize=False)
@@ -86,16 +100,28 @@ class Topk(Metric):
         return self.acc
 
     def compare(self, target):
+        """Comparing if Topk metric reaches the goal.
+
+        Args:
+            target (Metric value): The baseline value of target metric.
+
+        Returns:
+            boolen: whether this metric value bigger than target value.
+
+        """
         return self.acc > target.acc
 
 
 @metric_registry
 class CocoMAP(Metric):
-    '''The class of calculating mAP metric, which usually is used in object detection.
+    """The class of calculating mAP metric, which usually is used in object detection.
 
-       Args:
-           mean_ap(dict): The dict of mean AP for configuration.
-    '''
+    Args:
+        mean_ap(dict): The dict of mean AP for configuration.
+
+    Returns:
+
+    """
     def __init__(self, mean_ap):
         super(MAP, self).__init__('map')
         assert isinstance(mean_ap, dict)
@@ -110,14 +136,17 @@ class CocoMAP(Metric):
         self.summary_metrics = {}
 
     def evaluate(self, detection_info, ground_truth_info):
-        ''' evaluate mAP between detection and ground_truths
+        """Evaluate mAP between detection and ground_truths.
 
-            Args:
-                detection_info (list): list all detection results, each item for each pic, define as:
-                                        [image_id(optional), detection_classes, detection_boxes, detection_scores]
-                ground_truth_info (list): list all ground_truth, each item for each pic, define as:
-                                        [image_id(optional), groundtruth_classes, groundtruth_boxes]
-        '''
+        Args:
+            detection_info (list): list all detection results, each item for each pic, define as:
+                        [image_id(optional), detection_classes, detection_boxes, detection_scores]
+            ground_truth_info (list): list all ground_truth, each item for each pic, define as:
+                        [image_id(optional), groundtruth_classes, groundtruth_boxes]
+
+        Returns:
+            float: mAP metric value of the given inputs.
+        """
         assert detection_info.shape[0] == ground_truth_info.shape[0], \
             "Pic number of predict should be same as ground_truth!"
         for dt, gd in zip(detection_info, ground_truth_info):
@@ -126,13 +155,13 @@ class CocoMAP(Metric):
             image_id = dt[0]
 
             self.cocoGtWrapper(image_id=image_id,
-                                groundtruth_classes=gd[1],
-                                groundtruth_boxes=gd[2])
+                               groundtruth_classes=gd[1],
+                               groundtruth_boxes=gd[2])
 
             self.cocoDtWrapper(image_id=image_id,
-                                detection_classes=dt[1],
-                                detection_boxes=dt[2],
-                                detection_scores=dt[3])
+                               detection_classes=dt[1],
+                               detection_boxes=dt[2],
+                               detection_scores=dt[3])
 
         evaluator = self.COCOEvalWrapper()
         evaluator.evaluate()
@@ -160,10 +189,22 @@ class CocoMAP(Metric):
 
     # can use diff mAP metric with diff Wrapper here, eg: VOC, COCO ...
     def COCOEvalWrapper(self,):
+        """Wrapper evaluator as a COCOeval.
+
+        Returns:
+            [type]: [description]
+        """
         evaluator = cocoeval.COCOeval(cocoDt=self.cocoDtWrapper, cocoGt=self.cocoGtWrapper)
         return evaluator
 
     def cocoGtWrapper(self, image_id, groundtruth_classes, groundtruth_boxes):
+        """Wrapper inputs as the format of COCOGt
+
+        Args:
+            image_id (int): image ids, must align with cocoDt.
+            groundtruth_classes (numpy array): ground truth classes of the specific image id.
+            groundtruth_boxes (numpy array): ground truth boxes of the specific image id.
+        """
         assert len(groundtruth_classes.shape) == 1, \
             'groundtruth_classes is expected to be of rank 1.'
         assert len(groundtruth_boxes.shape) == 2, \
@@ -182,7 +223,14 @@ class CocoMAP(Metric):
             self.GroundTruths.append(single_gbox_dict)
 
     def cocoDtWrapper(self, image_id, detection_classes, detection_boxes, detection_scores):
+        """Wrapper inputs as the format of COCODt
 
+        Args:
+            image_id (int): image ids, must align with cocoGt.
+            detection_classes (numpy array): evaluated classes of the specific image id.
+            detection_boxes (numpy array): evaluated boxes of the specific image id.
+            detection_scores (numpy array): evaluated scores of each classes.
+        """
         assert len(detection_classes.shape) == 1 or len(detection_scores.shape) == 1, \
             'detection_classes is expected to be of rank 1.'
         assert len(detection_boxes.shape) == 2, \
@@ -207,7 +255,7 @@ class CocoMAP(Metric):
         [ymin, xmin, ymax, xmax] convention to the convention used by the COCO API
         i.e., [xmin, ymin, width, height].
         Args:
-            box: a [ymin, xmin, ymax, xmax] numpy array
+            box: a numpy array like [ymin, xmin, ymax, xmax]
         Returns:
             a list of floats representing [xmin, ymin, width, height]
         """
@@ -216,12 +264,12 @@ class CocoMAP(Metric):
 
 @metric_registry
 class F1(Metric):
-    '''The class of calculating f1 metric, which usually is used in NLP, such as BERT.
+    """The class of calculating f1 metric, which usually is used in NLP, such as BERT.
 
-       Args:
-           f1 (dict): The dict of f1 for configuration.
-                      If multi-class, need provide the average config(micro, macro, weighted).
-    '''
+    Args:
+        f1 (dict): The dict of f1 for configuration.
+                    If multi-class, need provide the average config(micro, macro, weighted).
+    """
     def __init__(self, f1):
         super(F1, self).__init__('f1')
         assert isinstance(f1, dict)
@@ -229,10 +277,19 @@ class F1(Metric):
         self.acc = 0
 
     def evaluate(self, predict, label):
+        """Compute the F1 metric value of given inputs
+
+        Args:
+            predict (numpy array): predictions
+            label (numpy array): labels
+
+        Returns:
+            acc: F1 metric value
+        """
         # binary label
         if predict.shape[1] == 2:
             predict = predict.argmax(axis=-1)
-            self.acc = f1_score(predict, label,average='binary')
+            self.acc = f1_score(predict, label, average='binary')
         # multi label
         else:
             assert 'average' in self.f1_config.keys()
@@ -242,6 +299,14 @@ class F1(Metric):
         return self.acc
 
     def compare(self, target):
+        """Comparing if F1 metric reaches the goal.
+
+        Args:
+            target (numpy array): target F1 score 
+
+        Returns:
+            [type]: [description]
+        """
         return self.acc > target.acc
 
 
