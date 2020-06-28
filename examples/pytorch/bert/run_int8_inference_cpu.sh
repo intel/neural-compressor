@@ -62,7 +62,7 @@ do
     startid=$(($i*$NUM_CORES+$j*$NUM_THREAD))
     endid=$(($i*$NUM_CORES+$j*$NUM_THREAD+$NUM_THREAD-1))
     OMP_NUM_THREADS=$NUM_THREAD numactl --physcpubind=$startid-$endid --membind=$i \
-python ./examples/text-classification/run_glue_tune.py --model_type bert \
+python ./examples/run_glue_tune.py --model_type bert \
         --model_name_or_path bert-large-uncased \
         --task_name ${TASK_NAME} \
         --do_eval \

@@ -31,7 +31,7 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torch.utils.data.distributed import DistributedSampler
 from torch.quantization import quantize, prepare, convert, propagate_qconfig_, add_observer_
 from torch.quantization import \
-QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -41,21 +41,20 @@ except:
 from tqdm import tqdm, trange
 
 from transformers import (WEIGHTS_NAME, BertConfig,
-                                  BertForSequenceClassification, BertTokenizer,
-                                  RobertaConfig,
-                                  RobertaForSequenceClassification,
-                                  RobertaTokenizer,
-                                  XLMConfig, XLMForSequenceClassification,
-                                  XLMTokenizer, XLNetConfig,
-                                  XLNetForSequenceClassification,
-                                  XLNetTokenizer,
-                                  DistilBertConfig,
-                                  DistilBertForSequenceClassification,
-                                  DistilBertTokenizer,
-                                  AlbertConfig,
-                                  AlbertForSequenceClassification, 
-                                  AlbertTokenizer,
-                                )
+                          BertForSequenceClassification, BertTokenizer,
+                          RobertaConfig,
+                          RobertaForSequenceClassification,
+                          RobertaTokenizer,
+                          XLMConfig, XLMForSequenceClassification,
+                          XLMTokenizer, XLNetConfig,
+                          XLNetForSequenceClassification,
+                          XLNetTokenizer,
+                          DistilBertConfig,
+                          DistilBertForSequenceClassification,
+                          DistilBertTokenizer,
+                          AlbertConfig,
+                          AlbertForSequenceClassification, 
+                          AlbertTokenizer)
 
 from transformers import AdamW, get_linear_schedule_with_warmup
 
@@ -66,8 +65,8 @@ from transformers import glue_convert_examples_to_features as convert_examples_t
 
 logger = logging.getLogger(__name__)
 
-# ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, XLMConfig, 
-#                                                                                 RobertaConfig, DistilBertConfig)), ())
+ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, XLMConfig, 
+                                                                                RobertaConfig, DistilBertConfig)), ())
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
@@ -241,17 +240,14 @@ def fallback_layer(model, layer_name="", exculde_layers={}):
            fallback_layer(sub_model, sub_model_layer_name, exculde_layers)
 
 
-def evaluate(args, model, tokenizer, prefix="", calibration=False, log_acc=False):
+def evaluate(args, model, tokenizer, prefix="", calibration=False):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
-    eval_outputs_dirs = (args.output_dir, args.output_dir + '-MM') if args.task_name == "mnli" else (args.output_dir,)
 
     results = {}
-    for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
+    for eval_task in eval_task_names:
         eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, evaluate=True)
 
-        if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
-            os.makedirs(eval_output_dir)
         if calibration:
            args.eval_batch_size = 16
         else:
@@ -291,9 +287,11 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False, log_acc=False
                           'labels':         batch[3]}
                 if args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
-                start = timeit.default_timer()
+                if nb_eval_steps >= args.warmup:
+                    start = timeit.default_timer()
                 outputs = model(**inputs)
-                total_time += (timeit.default_timer() - start)
+                if nb_eval_steps >= args.warmup:
+                    total_time += (timeit.default_timer() - start)
                 tmp_eval_loss, logits = outputs[:2]
 
                 eval_loss += tmp_eval_loss.mean().item()
@@ -312,7 +310,11 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False, log_acc=False
                 else:
                     preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                     out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
-        logger.info("***** Total time cost {} s *****".format(total_time))
+        if nb_eval_steps >= args.warmup:
+            perf = (len(eval_dataloader)-args.warmup) * args.eval_batch_size / total_time
+            logger.info("***** perfformance {} samples/s *****".format(perf))
+        else:
+            logger.info("*****no perfformance, please check dataset length and warmup number *****")
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
             preds = np.argmax(preds, axis=1)
@@ -321,22 +323,11 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False, log_acc=False
         result = compute_metrics(eval_task, preds, out_label_ids)
         results.update(result)
 
-        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
-        with open(output_eval_file, "w") as writer:
-            logger.info("***** Eval results {} *****".format(prefix))
-            for key in sorted(result.keys()):
-                logger.info("  %s = %s", key, str(result[key]))
-                writer.write("%s = %s\n" % (key, str(result[key])))
+        logger.info("***** Eval results {} *****".format(prefix))
+        for key in sorted(result.keys()):
+            logger.info("  %s = %s", key, str(result[key]))
 
-        bert_task_acc_keys = ['f1', 'mcc', 'spearmanr', 'acc']
-        for key in bert_task_acc_keys:
-            if key in results.keys():
-                if log_acc:
-                    logger.info("Finally Eval {}:{}".format(key, results[key]))
-                # fp32_acc = results[key]
-                break
-
-    return results
+    return results, perf
 
 def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     if args.local_rank not in [-1, 0] and not evaluate:
@@ -345,7 +336,9 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     processor = processors[task]()
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
-    cached_features_file = os.path.join(args.data_dir, 'cached_{}_{}_{}_{}'.format(
+    if not os.path.exists("./dataset_cached"):
+        os.makedirs("./dataset_cached")
+    cached_features_file = os.path.join("./dataset_cached", 'cached_{}_{}_{}_{}'.format(
         'dev' if evaluate else 'train',
         list(filter(None, args.model_name_or_path.split('/'))).pop(),
         str(args.max_seq_length),
@@ -412,7 +405,7 @@ def main():
     parser.add_argument("--model_type", default=None, type=str, required=True,
                         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
     parser.add_argument("--model_name_or_path", default=None, type=str, required=True,
-                        help="Path to pre-trained model or shortcut name selected in the list")
+                        help="Path to pre-trained model or shortcut name selected in the list;" + ", ".join(ALL_MODELS))
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="The name of the task to train selected in the list: " + ", ".join(processors.keys()))
     parser.add_argument("--output_dir", default=None, type=str, required=True,
@@ -496,6 +489,8 @@ def main():
                         help="run bf16 evaluation / training.")
     parser.add_argument("--do_ilit_tune", action='store_true',
                         help="run iLiT tool to tune int8 acc.")
+    parser.add_argument("--warmup", type=int, default=2,
+                        help="warmup for performance")
 
     args = parser.parse_args()
 
@@ -623,8 +618,14 @@ def main():
 
             if args.do_ilit_tune:
                 def eval_func_for_ilit(model):
-                    result = evaluate(args, model, tokenizer, prefix=prefix)
-                    return result["acc_and_f1"]
+                    result, perf = evaluate(args, model, tokenizer, prefix=prefix)
+                    bert_task_acc_keys = ['acc_and_f1', 'f1', 'mcc', 'spearmanr', 'acc']
+                    for key in bert_task_acc_keys:
+                        if key in result.keys():
+                            logger.info("Finally Eval {}:{}".format(key, result[key]))
+                            acc = result[key]
+                            break
+                    return acc
 
                 model = model_class.from_pretrained(checkpoint, mix_qkv=True)
                 model.to(args.device)
@@ -661,14 +662,14 @@ def main():
                 propagate_qconfig_(model)
                 fallback_layer(model, layer_name = "", exculde_layers = fallback_layers)
                 add_observer_(model)
-                result = evaluate(args, model, tokenizer, prefix=global_step, calibration = True)
+                result, _ = evaluate(args, model, tokenizer, prefix=global_step, calibration = True)
                 convert(model, inplace=True)
                 quantized_model_path = args.task_name + "_quantized_model"
                 if not os.path.exists(quantized_model_path):
                          os.makedirs(quantized_model_path)
                 model.save_pretrained(quantized_model_path)
                 print(model)
-                result = evaluate(args, model, tokenizer, prefix=prefix)
+                result, _ = evaluate(args, model, tokenizer, prefix=prefix)
             if args.do_int8_inference:
                model = model_class.from_pretrained(checkpoint, mix_qkv=True)
                model.to(args.device)
@@ -689,11 +690,7 @@ def main():
                model_bin_file = os.path.join(quantized_model_path,"pytorch_model.bin" )
                state_dict = torch.load(model_bin_file)
                model.load_state_dict(state_dict)
-               result = evaluate(args, model, tokenizer, prefix=prefix)
-               #print(model)
-               #with torch.autograd.profiler.profile() as prof:
-               #     result = evaluate(args, model, tokenizer, prefix=prefix)
-               #print(prof.key_averages().table(sort_by="cpu_time_total"))
+               result, _ = evaluate(args, model, tokenizer, prefix=prefix)
 
     return results
 

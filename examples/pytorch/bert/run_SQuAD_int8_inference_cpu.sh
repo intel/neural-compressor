@@ -58,7 +58,7 @@ do
     startid=$(($i*$NUM_CORES+$j*$NUM_THREAD))
     endid=$(($i*$NUM_CORES+$j*$NUM_THREAD+$NUM_THREAD-1))
     OMP_NUM_THREADS=$NUM_THREAD numactl --physcpubind=$startid-$endid --membind=$i \
-python ./examples/question-answering/run_squad_tune.py \
+python ./examples/run_squad_tune.py \
      --model_type bert     \
      --model_name_or_path bert-large-uncased-whole-word-masking   \
      --do_eval \

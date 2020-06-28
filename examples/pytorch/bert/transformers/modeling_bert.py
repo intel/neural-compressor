@@ -367,16 +367,16 @@ class BertAttention(nn.Module):
 
 
 class BertIntermediate(nn.Module):
-    def __init__(self, config, mix_qkv = False, bf16=False, mkldnn_train=False):
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
         super(BertIntermediate, self).__init__()
         self.quant = QuantStub()
         self.dequant = DeQuantStub()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
         if isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
-        # if mix_qkv:
-        #     self.intermediate_act_fn = nn.GELU()
-        # elif isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
-            self.intermediate_act_fn = ACT2FN[config.hidden_act]
+            if mix_qkv:
+                self.intermediate_act_fn = nn.GELU()
+            elif isinstance(config.hidden_act, str) or (sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)):
+                self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
         self.mkldnn_train = mkldnn_train

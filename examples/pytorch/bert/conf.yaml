@@ -5,7 +5,7 @@ device: cpu
 
 tuning:
     accuracy_criterion:
-      - relative: 0.007                           # the tuning target of accuracy loss percentage: 1%
+      - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                   # tuning timeout (seconds)
     random_seed: 9527                            # random seed
 

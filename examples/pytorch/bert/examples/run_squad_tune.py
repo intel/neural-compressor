@@ -32,7 +32,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from torch.quantization import quantize, prepare, convert, propagate_qconfig_, add_observer_
 from torch.quantization import \
-QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -217,8 +217,9 @@ def train(args, train_dataset, model, tokenizer):
 def evaluate(args, model, tokenizer, prefix="", calibration=False):
     dataset, examples, features = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=True)
 
-    if not os.path.exists(args.output_dir) and args.local_rank in [-1, 0]:
-        os.makedirs(args.output_dir)
+    dataset_cached = "./dataset_cached"
+    if not os.path.exists(dataset_cached):
+        os.makedirs(dataset_cached)
 
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
 
@@ -243,7 +244,7 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
         print(model)
 
     all_results = []
-    start_time = timeit.default_timer()
+    evalTime = 0
     nb_eval_steps = 0
 
     for batch in tqdm(eval_dataloader, desc="Evaluating"):
@@ -268,6 +269,8 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
             if args.model_type in ['xlnet', 'xlm']:
                 inputs.update({'cls_index': batch[4], 'p_mask': batch[5]})
 
+            if nb_eval_steps >= args.warmup:
+                start_time = timeit.default_timer()
             outputs = model(**inputs)
 
         for i, example_index in enumerate(example_indices):
@@ -299,17 +302,22 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
                 )
 
             all_results.append(result)
-        nb_eval_steps +=1 
+            if nb_eval_steps >= args.warmup:
+                evalTime += (timeit.default_timer() - start_time)
 
-    evalTime = timeit.default_timer() - start_time
-    logger.info("  Evaluation done in total %f secs (%f sec per example)", evalTime, evalTime / len(dataset))
+        nb_eval_steps += 1 
+    if nb_eval_steps >= args.warmup:
+        perf = (len(eval_dataloader)-args.warmup) * args.eval_batch_size / evalTime
+        logger.info("Evaluation done in total %f secs (%f samples/sec)", evalTime, (len(dataset) - args.warmup) * args.eval_batch_size / evalTime)
+    else:
+        logger.info("*****no perfformance, please check dataset length and warmup number *****")
 
     # Compute predictions
-    output_prediction_file = os.path.join(args.output_dir, "predictions_{}.json".format(prefix))
-    output_nbest_file = os.path.join(args.output_dir, "nbest_predictions_{}.json".format(prefix))
+    output_prediction_file = os.path.join(dataset_cached, "predictions_{}.json".format(prefix))
+    output_nbest_file = os.path.join(dataset_cached, "nbest_predictions_{}.json".format(prefix))
 
     if args.version_2_with_negative:
-        output_null_log_odds_file = os.path.join(args.output_dir, "null_odds_{}.json".format(prefix))
+        output_null_log_odds_file = os.path.join(dataset_cached, "null_odds_{}.json".format(prefix))
     else:
         output_null_log_odds_file = None
 
@@ -332,7 +340,7 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
     # Compute the F1 and exact scores.
     if not calibration:
        results = squad_evaluate(examples, predictions)
-       return results
+       return results, perf
 
 class Bert_DataLoader(DataLoader):
     def __init__(self, loader=None, model_type=None, device='cpu'):
@@ -352,12 +360,15 @@ class Bert_DataLoader(DataLoader):
             example_indices = batch[3]
             yield outputs, example_indices
 
+
 def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=False):
     if args.local_rank not in [-1, 0] and not evaluate:
         torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
 
     # Load data features from cache or dataset file
-    input_dir = args.data_dir if args.data_dir else "."
+    input_dir = "./dataset_cached"
+    if not os.path.exists(input_dir):
+        os.makedirs(input_dir)
     cached_features_file = os.path.join(input_dir, 'cached_{}_{}_{}'.format(
         'dev' if evaluate else 'train',
         list(filter(None, args.model_name_or_path.split('/'))).pop(),
@@ -365,10 +376,11 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
     )
 
     # Init features and dataset from cache if it exists
-    if os.path.exists(cached_features_file) and not args.overwrite_cache and not output_examples:
+    if os.path.exists(cached_features_file) and not args.overwrite_cache:
         logger.info("Loading features from cached file %s", cached_features_file)
         features_and_dataset = torch.load(cached_features_file)
-        features, dataset = features_and_dataset["features"], features_and_dataset["dataset"]
+        features, dataset, examples = features_and_dataset["features"], features_and_dataset["dataset"], \
+            features_and_dataset["examples"] 
     else:
         logger.info("Creating features from dataset file at %s", input_dir)
 
@@ -399,7 +411,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
 
         if args.local_rank in [-1, 0]:
             logger.info("Saving features into cached file %s", cached_features_file)
-            torch.save({"features": features, "dataset": dataset}, cached_features_file)
+            torch.save({"features": features, "dataset": dataset, "examples": examples}, cached_features_file)
 
     if args.local_rank == 0 and not evaluate:
         torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
@@ -517,6 +529,8 @@ def main():
                         help="run iLiT tool to tune int8 acc.")
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="SQuAD task")
+    parser.add_argument("--warmup", type=int, default=5,
+                        help="warmup for performance")
 
 
     args = parser.parse_args()
@@ -530,7 +544,7 @@ def main():
         raise ValueError("Output directory ({}) already exists and is not empty. Use --overwrite_output_dir to overcome.".format(args.output_dir))
 
     mix_qkv = False
-    if args.do_calibration or args.do_int8_inference:
+    if args.do_calibration or args.do_int8_inference or args.do_ilit_tune:
        mix_qkv = True
 
     # Setup distant debugging if needed
@@ -643,16 +657,22 @@ def main():
                model.to(args.device)
 
                # Evaluate
-               result = evaluate(args, model, tokenizer, prefix=global_step)
+               result, _ = evaluate(args, model, tokenizer, prefix=global_step)
                result = dict((k + ('_{}'.format(global_step) if global_step else ''), v) for k, v in result.items())
                results.update(result)
 
             if args.do_ilit_tune:
                 def eval_func_for_ilit(model):
-                    result = evaluate(args, model, tokenizer)
+                    result, _ = evaluate(args, model, tokenizer)
                     for key in sorted(result.keys()):
                         logger.info("  %s = %s", key, str(result[key]))
-                    return result["best_f1"]
+                    bert_task_acc_keys = ['best_f1', 'f1', 'mcc', 'spearmanr', 'acc']
+                    for key in bert_task_acc_keys:
+                        if key in result.keys():
+                            logger.info("Finally Eval {}:{}".format(key, result[key]))
+                            acc = result[key]
+                            break
+                    return acc
 
                 model = model_class.from_pretrained(checkpoint, force_download=True, mix_qkv=True)
                 model.to(args.device)
@@ -673,13 +693,13 @@ def main():
                propagate_qconfig_(model)
                add_observer_(model)
                # Evaluate
-               result = evaluate(args, model, tokenizer, prefix=global_step, calibration=True)
+               evaluate(args, model, tokenizer, prefix=global_step, calibration=True)
                convert(model, inplace = True)
                quantized_model_path = "squad" + str(global_step) + "_quantized_model" 
                if not os.path.exists(quantized_model_path):
                         os.makedirs(quantized_model_path)
                model.save_pretrained(quantized_model_path)
-               result = evaluate(args, model, tokenizer, prefix=global_step)   
+               result, _ = evaluate(args, model, tokenizer, prefix=global_step)   
                result = dict((k + ('_{}'.format(global_step) if global_step else ''), v) for k, v in result.items())
                results.update(result)
             if args.do_int8_inference:
@@ -697,9 +717,8 @@ def main():
                state_dict = torch.load(model_bin_file)
                model.load_state_dict(state_dict)
                print(model)
-               #result = evaluate(args, model, tokenizer, prefix=global_step)
                with torch.autograd.profiler.profile() as prof:
-                    result = evaluate(args, model, tokenizer, prefix=global_step)
+                    result, _ = evaluate(args, model, tokenizer, prefix=global_step)
                print(prof.key_averages().table(sort_by="cpu_time_total"))
                result = dict((k + ('_{}'.format(global_step) if global_step else ''), v) for k, v in result.items())
                results.update(result)
