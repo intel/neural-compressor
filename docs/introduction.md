@@ -68,11 +68,11 @@ This strategy is used to sequentially traverse all the possible tuning configs i
 
 ### Bayersian Strategy
 
-TODO
+Bayesian optimization is a sequential design strategy for global optimization of black-box functions. The strategy refers to the Bayesian optimization package [bayesian-optimization] (https://github.com/fmfn/BayesianOptimization) and changes it to a discrete version that complies with the iLiT strategy standard. It uses Gaussian Processes to define the prior/posterior distribution over the black-box function, and then finds the tuning config that maximizes the expected improvement.
 
 ### MSE Strategy
 
-TODO
+This strategy is very similar to the basic strategy. It needs to get the tensors for each Operator of raw FP32 models and the quantized model based on best model-wise tuning config. And then calculate the MSE (Mean Squared Error) for each operator, sort those operators according to the MSE value, finally do the op-wise fallback in this order.
 
 # Objectives
 
