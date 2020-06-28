@@ -14,7 +14,7 @@ def metric_registry(cls):
     """The class decorator used to register all Metric subclasses.
     
     Returns:
-        cls (class): The class of register.
+        cls (object): The class of register.
     """
     if cls.__name__.lower() in METRICS:
         raise ValueError('Cannot have two metrics with the same name')
@@ -118,9 +118,6 @@ class CocoMAP(Metric):
 
     Args:
         mean_ap(dict): The dict of mean AP for configuration.
-
-    Returns:
-
     """
     def __init__(self, mean_ap):
         super(MAP, self).__init__('map')
@@ -192,7 +189,7 @@ class CocoMAP(Metric):
         """Wrapper evaluator as a COCOeval.
 
         Returns:
-            [type]: [description]
+            evaluator (object): wrappered coco evaluator.
         """
         evaluator = cocoeval.COCOeval(cocoDt=self.cocoDtWrapper, cocoGt=self.cocoGtWrapper)
         return evaluator
@@ -255,9 +252,9 @@ class CocoMAP(Metric):
         [ymin, xmin, ymax, xmax] convention to the convention used by the COCO API
         i.e., [xmin, ymin, width, height].
         Args:
-            box: a numpy array like [ymin, xmin, ymax, xmax]
+            box (list): a numpy array like [ymin, xmin, ymax, xmax]
         Returns:
-            a list of floats representing [xmin, ymin, width, height]
+            list: list of floats representing [xmin, ymin, width, height]
         """
         return [float(box[1]), float(box[0]), float(box[3] - box[1]),
                 float(box[2] - box[0])]
@@ -280,11 +277,11 @@ class F1(Metric):
         """Compute the F1 metric value of given inputs
 
         Args:
-            predict (numpy array): predictions
-            label (numpy array): labels
+            predict (numpy array): predictions.
+            label (numpy array): labels.
 
         Returns:
-            acc: F1 metric value
+            acc (float): F1 metric value.
         """
         # binary label
         if predict.shape[1] == 2:
@@ -302,10 +299,10 @@ class F1(Metric):
         """Comparing if F1 metric reaches the goal.
 
         Args:
-            target (numpy array): target F1 score 
+            target (numpy array): target F1 score.
 
         Returns:
-            [type]: [description]
+            boolen: If metric acc bigger than target metric acc.
         """
         return self.acc > target.acc
 

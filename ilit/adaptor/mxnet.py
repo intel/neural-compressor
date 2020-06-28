@@ -70,8 +70,8 @@ class MxNetAdaptor(Adaptor):
 
         Args:
             tune_cfg (dict): quantization config.
-            model : model need to do quantization.
-            dataloader : calibration dataset.
+            model (object): model need to do quantization.
+            dataloader (object): calibration dataset.
 
         Returns:
             (dict): quantized model
@@ -233,9 +233,9 @@ class MxNetAdaptor(Adaptor):
 
         Args:
             model (object): The model to do calibration.
-            config:
-        Return:
-            sym, arg_params, aux_params
+            dataloader (object): Used to when check a gluon model.
+        Returns:
+            tuple: Symbol model include sym, arg_params, aux_params.
         """
         if isinstance(model, mx.gluon.HybridBlock):
             # model.hybridblock()
@@ -374,11 +374,11 @@ class MxNetAdaptor(Adaptor):
 
         Args:
             model (object): The model to do calibration.
-            dataloader: The data to do forword.
-            op_list: list of inspect tensors.
-            iteration_list: list of inspect iterations
+            dataloader (object): The data to do forword.
+            op_list (list): list of inspect tensors.
+            iteration_list (list): list of inspect iterations.
         
-        Return:
+        Returns:
             Numpy Array Dict
             if iteration_list is empty:
                 {'op1':  tensor, ...}
@@ -498,36 +498,36 @@ class MxNetAdaptor(Adaptor):
     def mapping(self, src_model, dst_model):
         """The function is used to create a dict to map tensor name of src model to tensor name of dst model.
 
-        Return:
+        Returns:
             Dict
             {'src_op1': 'dst_op1'}
         """
         raise notimplementederror
 
     def _cfg_to_qconfig(self, tune_cfg):
-        """Convert the stratage config to MXNet quantization config.
+        """Convert the strategy config to MXNet quantization config.
 
         Args:
-            tune_cfg (dict): tune config from iLiT stratage.
-            cfg should be a format like below:
-            {
-                'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']], 'fp32': [['CONV2D', 'RELU', 'BN']]},
-                'calib_iteration': 10,
-                'op': {
-                ['op1', 'CONV2D']: {
-                    'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
-                    'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
-                },
-                ['op2', 'RELU]: {
-                    'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
-                },
-                ['op3', 'CONV2D']: {
-                    'activation':  {'dtype': 'fp32'},
-                    'weight': {'dtype': 'fp32'}
-                },
-                ...
-                }
-            }
+            tune_cfg (dict): tune config from iLiT strategy.
+                            cfg should be a format like below:
+                            {
+                                'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']], 'fp32': [['CONV2D', 'RELU', 'BN']]},
+                                'calib_iteration': 10,
+                                'op': {
+                                ['op1', 'CONV2D']: {
+                                    'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
+                                    'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
+                                },
+                                ['op2', 'RELU]: {
+                                    'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
+                                },
+                                ['op3', 'CONV2D']: {
+                                    'activation':  {'dtype': 'fp32'},
+                                    'weight': {'dtype': 'fp32'}
+                                },
+                                ...
+                                }
+                            }
 
         """
         excluded_sym_names = []
@@ -572,8 +572,6 @@ class MxNetAdaptor(Adaptor):
             "calib_data": calib_data,
             "num_calib_examples":num_calib_examples,
             "iteration":iteration,
-            # "label_names":Label_names,
-            # "data_names":Data_names,
             "exclude_layers_match":[],
             "calib_kl_layers": calib_kl_layers,
             "calib_minmax_layers": calib_minmax_layers,
@@ -583,11 +581,11 @@ class MxNetAdaptor(Adaptor):
         """Convert symbol model and DataIter from gluon model HybridBlock/Dataloader.
 
         Args:
-            network (HybridBlock): gluon HybridBlock model
-            dataloader (Dataloader): gluon Dataloader
+            network (HybridBlock): gluon HybridBlock model.
+            dataloader (Dataloader): gluon Dataloader.
 
         Returns:
-            tuple: symbol model and DataIter
+            tuple: symbol model and DataIter.
         """        
         class _DataIterWrapper(mx.io.DataIter):
             """DataIter wrapper for general iterator, e.g., gluon dataloader"""
@@ -658,13 +656,13 @@ class MxNetAdaptor(Adaptor):
         """Given a ndarray dict, find the optimal threshold for quantizing each value of the key.
 
         Args:
-            hist_dict (dict): dict of each layer output tensor, format as {layer_name: tensor}
-            quantized_dtype (str): quantized data type
+            hist_dict (dict): dict of each layer output tensor, format as {layer_name: tensor}.
+            quantized_dtype (str): quantized data type.
             num_quantized_bins (int, optional): num_quantized_bins. Defaults to 255.
             logger (logger, optional): logger. Defaults to None.
 
         Returns:
-            th_dict: optimal_thresholds
+            th_dict (dict): optimal_thresholds of each layer tensor.
         """
         assert isinstance(hist_dict, dict)
         if logger is not None:
@@ -676,9 +674,6 @@ class MxNetAdaptor(Adaptor):
         ilit_kl = KL_Divergence()
         for name in layer_names:
             assert name in hist_dict
-            # min_val, max_val, th, divergence = \
-            #     _get_optimal_threshold(hist_dict[name], quantized_dtype,
-            #                            num_quantized_bins=num_quantized_bins)
             (hist, hist_edges, min_val, max_val, _) = hist_dict[name]
             th = ilit_kl.get_threshold(hist,
                                         hist_edges,
@@ -703,16 +698,15 @@ class MxNetAdaptor(Adaptor):
            on different layers.
 
         Args:
-            sym : model symbol file
-            arg_params : arg_params
-            aux_params : aux_params
-            calib_layer : layers need to do calibration
-            qconfig (dict): quantization config
+            sym (object): model symbol file.
+            arg_params (object): arg_params.
+            aux_params (object): aux_params.
+            calib_layer (list): layers need to do calibration.
+            qconfig (dict): quantization config.
 
         Returns:
             th_dict (dict): dict include the calibration value of each layer.
         """        
-        # calib_mode = qconfig['calib_mode']
         ctx = qconfig['ctx']
         calib_data = qconfig['calib_data']
         num_calib_examples = qconfig['num_calib_examples']
@@ -771,13 +765,12 @@ class MxNetAdaptor(Adaptor):
         """Merge src dict to dst dict
 
         Args:
-            src (dict): source dict
-            dst (dict): dest dict
+            src (dict): source dict.
+            dst (dict): dest dict.
 
         Returns:
-            dst (dict):
+            dst (dict): merged dict.
         """        
-        '''Merges src calib th dict into dst calib th dict'''
         for key in src:
             assert key not in dst, "%s layer can not do KL and minmax calibration together!" % key
             if not isinstance(src[key], dict):

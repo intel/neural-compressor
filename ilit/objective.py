@@ -12,10 +12,10 @@ def objective_registry(cls):
     """The class decorator used to register all Objective subclasses.
 
     Args:
-        cls (class): The class of register.
+        cls (object): The class of register.
 
     Returns:
-        cls (class): The class of register.
+        cls (object): The class of register.
     """
     if cls.__name__.lower() in OBJECTIVES:
         raise ValueError('Cannot have two objectives with the same name')
