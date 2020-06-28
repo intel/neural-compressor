@@ -11,8 +11,8 @@ class ExhaustiveTuneStrategy(TuneStrategy):
            adaptor (object): The class object of framework adaptor.
            baseline (tuple): The baseline of fp32 model.
     '''
-    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None):
-        super(ExhaustiveTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func)
+    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
+        super(ExhaustiveTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)
 
     def next_tune_cfg(self):
         # generate tuning space according to user chosen tuning strategy
