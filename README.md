@@ -153,7 +153,7 @@ See accompanying [LICENSE](LICENSE) file for full license text and copyright not
 
 ## Citing
 
-If you use iLiT in your research or wish to refer to the tuning results published in the [Tuning Zoo](#Tuning-Zoo)), please use the following BibTeX entry.
+If you use iLiT in your research or wish to refer to the tuning results published in the [Tuning Zoo](#Tuning\ Zoo), please use the following BibTeX entry.
 
 ```
 @misc{iLiT,
