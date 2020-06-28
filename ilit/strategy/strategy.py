@@ -169,6 +169,15 @@ class TuneStrategy(object):
                     break
 
     def _intersect(self, src_list, dst_list):
+        """Get the intersection result from two lists
+
+        Args:
+            src_list (list): The source list intersected from
+            dst_list (list): The dest list intersected to
+
+        Returns:
+            list: The list containing the intersection result of two lists 
+        """        
         if src_list is None:
             return dst_list
 
@@ -211,11 +220,14 @@ class TuneStrategy(object):
         return dst
 
     def _modelwise_tune_space(self, model):
-        '''Merge user yaml config with framework model wise capability.
+        """Merge user yaml config with framework model wise capability.
 
-           Return:
-               modelwise_tune_space (dict) The override model wise tunining configs
-        '''
+        Args:
+            model (object): The FP32 model to tune.
+
+        Returns:
+            dict: The override model wise tunining space
+        """
         capability = self.adaptor.query_fw_capability(model)
         dst = capability['modelwise']
 
@@ -242,8 +254,14 @@ class TuneStrategy(object):
         return self._merge_dicts(src, dst)
 
     def _opwise_tune_space(self, model):
-        '''Generate all tuning spaces for op wise.
-        '''
+        """Generate all tuning spaces for op wise.
+
+        Args:
+            model (object): The FP32 model to tune.
+
+        Returns:
+            dict: The opwise tunining space
+        """
         capability = self.adaptor.query_fw_capability(model)
         opwise = capability['opwise']
 
@@ -259,7 +277,14 @@ class TuneStrategy(object):
         return opwise
 
     def _tune_cfgs(self, tune_space):
-        # generate all possible tuning combinations for each op or model wise tuning.
+        """generate all possible tuning combinations for each op or model wise tuning.
+
+        Args:
+            tune_space (dict): The tuning space to be expanded.
+
+        Returns:
+            dict: The expanded tuning configs
+        """        
         cfg_lists = self._tune_cfgs_recursively(tune_space)
 
         # remove unreasonable tuning combinations
@@ -291,6 +316,14 @@ class TuneStrategy(object):
         return valid_cfgs
 
     def _tune_cfgs_recursively(self, cfg_dict):
+        """Helper function of recursively generating all combinations.
+
+        Args:
+            cfg_dict (dict): The dict of conf space.
+
+        Returns:
+            list: List containing all combinations
+        """        
         assert isinstance(cfg_dict, dict)
         combinations = OrderedDict()
         for key in cfg_dict:
@@ -306,12 +339,15 @@ class TuneStrategy(object):
         return lists
 
     def _evaluate(self, model, baseline=False):
-        '''The interface of evaluating model.
+        """The interface of evaluating model.
 
-           Return:
-               model (object) it's the model to evaluate.
-               baseline (bool) it's TRUE if the evaluated model is FP32 baseline model.
-        '''
+        Args:
+            model (object): The model to be evaluated.
+            baseline (bool, optional): TRUE if the evaluated model is FP32 baseline model.
+
+        Returns:
+            Objective: The objective value evaluated
+        """
         if self.eval_func:
             val = self.objective.evaluate(self.eval_func, model, baseline)
         else:
@@ -328,6 +364,11 @@ class TuneStrategy(object):
         return val
 
     def __getstate__(self):
+        """Magic method for pickle saving.
+
+        Returns:
+            dict: Saved dict for resuming
+        """        
         save_dict = {
             'baseline': self.baseline,
             'cfg': self.cfg,
@@ -344,15 +385,22 @@ class TuneStrategy(object):
         return save_dict
 
     def __setstate__(self, d):
+        """Magic method for pickle loading.
+
+        Args:
+            d (dict): The dict to load.
+        """        
         self.__dict__.update(d)
 
     def stop(self, timeout):
-        '''Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
+        """Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
 
-           Args:
-               timeout (Timeout) The timeout instantiate object in utils.py
+        Args:
+            timeout (Timeout): The timeout object instantiated in utils.py
 
-        '''
+        Returns:
+            bool: True if need stop, otherwise False
+        """        
         need_stop = False
 
         if self.objective.compare(self.best_tune_result):
