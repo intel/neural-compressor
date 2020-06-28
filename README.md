@@ -96,6 +96,17 @@ Below table is the tuning result using iLiT.
 | Inception V4        | TensorFlow |                 |                        |                      |                      |
 | Inception ResNet V2 | TensorFlow |                 |                        |                      |                      |
 
+
+# Known Issues
+
+1. KL Divergence Algorithm is very slow at TensorFlow
+
+   Due to TensorFlow not supporting tensor dump naturally, current solution of dumping the tensor content is adding print op and dumpping the value to stdout. So if the model to tune is a TensorFlow model, please restrict calibration.algorithm.activation and calibration.algorithm.weight in user yaml config file to minmax.
+
+2. MSE tuning strategy doesn't work with PyTorch adaptor layer
+
+   MSE tuning strategy requires to compare FP32 tensor and INT8 tensor to decide which op has impact on final quantization accuracy. PyTorch adaptor layer doesn't implement this inspect tensor interface. So if the model to tune is a PyTorch model, please not choose MSE tuning strategy.
+
 # Support
 
 Please submit your questions, feature requests, and bug reports on the
