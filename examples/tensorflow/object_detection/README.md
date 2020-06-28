@@ -11,7 +11,7 @@ This document is used to list steps of reproducing Tensorflow ssd_resnet50_v1 iL
 # Install iLiT
 pip instal iLiT
 ```
-### 2 .Install Intel Tensorflow 1.15/2.0/2.1
+### 2. Install Intel Tensorflow 1.15/2.0/2.1
 ```shell
 pip intel-tensorflow==1.15.2 [2.0,2.1]
 ```
@@ -22,7 +22,7 @@ cd examples/tensorflow/object_detection && pip install -r requirements.txt
 ```
 
 ### 4. Prepare Dataset
-Download CoCo Dataset
+Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
 ### 5. Download Frozen PB
 ```shell
