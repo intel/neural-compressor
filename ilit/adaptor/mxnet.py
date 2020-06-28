@@ -463,7 +463,7 @@ class MxNetAdaptor(Adaptor):
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         int8_ops_th = self.th_dict
         op_list_convert = []
-        sym = model[0]
+        sym, arg_params, aux_params, dataloader = self._check_model(self, model, dataloader)
         sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         for item in op_list:
             op_name = item[0]

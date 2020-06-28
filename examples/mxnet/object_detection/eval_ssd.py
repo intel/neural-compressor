@@ -208,7 +208,7 @@ if __name__ == '__main__':
         net.export(prefix, epoch=0)
         sys.exit()
 
-    def test_func(graph):
+    def eval_func(graph):
         val_dataset, val_metric = get_dataset(args.dataset, args.data_shape)
         val_data = get_dataloader(
         val_dataset, args.data_shape, args.batch_size, args.num_workers)
@@ -224,8 +224,8 @@ if __name__ == '__main__':
         
     # Doing iLiT auto-tuning here
     import ilit
-    bert_tuner = ilit.Tuner("./ssd.yaml")
-    bert_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=test_func)
+    ssd_tuner = ilit.Tuner("./ssd.yaml")
+    ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
     sys.exit()
 
     # eval
