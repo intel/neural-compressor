@@ -173,6 +173,9 @@ class GraphConverter:
         self._kl_op_dict = {}
         self._kl_keys = []
         self._print_node_mapping = {}
+        self._enable_kl_op_names = [
+            k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
+        ]
 
     def load_graph(self, model_file):
 
@@ -218,7 +221,7 @@ class GraphConverter:
 
         quantize_batch = 0
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        print("Start to quantize graph...")
+        print("Sampling data...")
         for content in self.data_loader:
             try:
                 np_images = content[0]
@@ -396,7 +399,7 @@ class GraphConverter:
                 node_name = node.name.split(quantized_node_name_postfix)[0]
                 graph_q_node_name.append(node_name)
             graph_node_name_mapping[node_name] = node
-        
+
         for op_info in original_op_list:
             op_name = op_info[0]
             op_type = op_info[1]
@@ -487,9 +490,8 @@ class GraphConverter:
         """
         try:
             self._quantize_graph()
-            #TODO need to add the op-wise print op for KL.
-            if self.algo == "KL":
-                self._get_fp32_print_node_names()
+            if self._enable_kl_op_names:
+                self._get_fp32_print_node_names(self._enable_kl_op_names)
                 self._generate_calibration_data(self._fp32_logged_graph,
                                                 self._fp32_print_data, True)
             self._insert_logging()
@@ -507,7 +509,6 @@ class GraphConverter:
                 self._post_clean()
 
             graph = tf.Graph()
-
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
             return graph

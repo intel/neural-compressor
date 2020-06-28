@@ -15,7 +15,8 @@ class TensorFlowAdaptor(Adaptor):
         "MaxPool": "pooling",
         "AvgPool": "pooling",
         "ConcatV2": "concat",
-        "MatMul": "matmul"
+        "MatMul": "matmul",
+        "Pad": "pad"
     }
 
     def __init__(self, framework_specific_info):
@@ -125,7 +126,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         graph_def = graph.as_graph_def()
         tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool",
-                                  "AvgPool", "ConcatV2", "MatMul")
+                                  "AvgPool", "ConcatV2", "MatMul", "Pad")
         conv_config = {
             'activation': {
                 'dtype': ['uint8', 'fp32'],
