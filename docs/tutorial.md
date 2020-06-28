@@ -99,7 +99,7 @@ tuning:
 
 -[Recommendation](../examples/pytorch/dlrm/DLRM_README.md), including DLRM.
 
--[NLP](../examples/pytorch/bert/README.md) Including all 10 BERT task exampls.
+-[NLP](../examples/pytorch/bert/BERT_README.md) Including all 10 BERT task exampls.
 
 -[CNN](../examples/pytorch/resnet/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
 

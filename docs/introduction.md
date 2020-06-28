@@ -46,6 +46,8 @@ Intel Low Precision Tool (iLiT) is a opensource python library to help users to 
 
    To add a new metric, user just need inherit "Metric" class and implement a subclass in metric.py.
 
+   To add a new objective, user just need inherit "Objective" class and implement a subclass in objective.py.
+
 # Workflow
 
 <div align="left">
@@ -56,7 +58,7 @@ Intel Low Precision Tool (iLiT) is a opensource python library to help users to 
 
 ### Basic Strategy
 
-This strategy is iLiT default tuning strategy, which does model-wise tuning by adjusting gloabl tuning parameters, such as calibration related parameters, kl or minmax algo, quantization related parameters, symmetric or asymmetric, per_channel or per_tensor. If the model-wise tuning result doesn't meet accuracy goal, this strategy will attempt to do op-wise fallback from bottom to top to prioritize which fallback op has biggest impact on final accuracy, and then do incremental fallback till achieving the accuracy goal.
+This strategy is iLiT default tuning strategy, which does model-wise tuning by adjusting gloabl tuning parameters, such as calibration related parameters, kl or minmax algo, quantization related parameters, symmetric or asymmetric, per_channel or per_tensor. If the model-wise tuning result does not meet accuracy goal, this strategy will attempt to do op-wise fallback from bottom to top to prioritize which fallback op has biggest impact on final accuracy, and then do incremental fallback till achieving the accuracy goal.
 
 ### Random Strategy
 
@@ -68,7 +70,7 @@ This strategy is used to sequentially traverse all the possible tuning configs i
 
 ### Bayersian Strategy
 
-Bayesian optimization is a sequential design strategy for global optimization of black-box functions. The strategy refers to the Bayesian optimization package [bayesian-optimization] (https://github.com/fmfn/BayesianOptimization) and changes it to a discrete version that complies with the iLiT strategy standard. It uses Gaussian Processes to define the prior/posterior distribution over the black-box function, and then finds the tuning config that maximizes the expected improvement.
+Bayesian optimization is a sequential design strategy for global optimization of black-box functions. The strategy refers to the Bayesian optimization package [bayesian-optimization](https://github.com/fmfn/BayesianOptimization) and changes it to a discrete version that complies with the iLiT strategy standard. It uses Gaussian Processes to define the prior/posterior distribution over the black-box function, and then finds the tuning config that maximizes the expected improvement.
 
 ### MSE Strategy
 
@@ -80,7 +82,7 @@ iLiT supports below 3 build-in objectives:
 
 ### 1. Performance
 
-This objective is used to measure performance of quantized model with accuracy driven. It's default objective iLiT supported.
+This objective is used to measure performance of quantized model with accuracy driven. It is default objective iLiT supported.
 
 ### 2. Memory Footprint
 
