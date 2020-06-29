@@ -59,38 +59,18 @@ iLiT requires to install Intel optimized framework version for TensorFlow, PyTor
 
 The followings are the examples integrated with iLiT for auto tuning.
 
-| Model                                                                  | Framework  |
-|------------------------------------------------------------------------|------------|
-| [ResNet50 V1](examples/mxnet/cnn/README.md)                            | MXNet      |
-| [MobileNet V1](examples/mxnet/cnn/README.md)                           | MXNet      |
-| [MobileNet V2](examples/mxnet/cnn/README.md)                           | MXNet      |
-| [SSD-ResNet50](examples/mxnet/object_detection/README.md)              | MXNet      |
-| [SqueezeNet V1](examples/mxnet/cnn/README.md)                          | MXNet      |
-| [ResNet18](examples/mxnet/cnn/README.md)                               | MXNet      |
-| [Inception V3](examples/mxnet/cnn/README.md)                           | MXNet      |
-| [DLRM](examples/pytorch/dlrm/DLRM_README.md)                           | PyTorch    |
-| [BERT-Large MRPC](examples/pytorch/dlrm/DLRM_README.md)                | PyTorch    |
-| [BERT-Large SQUAD](examples/pytorch/bert/BERT_README.md)               | PyTorch    |
-| [BERT-Large CoLA](examples/pytorch/bert/BERT_README.md)                | PyTorch    |
-| [BERT-Base STS-B](examples/pytorch/bert/BERT_README.md)                | PyTorch    |
-| [BERT-Base CoLA](examples/pytorch/bert/BERT_README.md)                 | PyTorch    |
-| [BERT-Base MRPC](examples/pytorch/bert/BERT_README.md)                 | PyTorch    |
-| [BERT-Base SST-2](examples/pytorch/bert/BERT_README.md)                | PyTorch    |
-| [BERT-Base RTE](examples/pytorch/bert/BERT_README.md)                  | PyTorch    |
-| [BERT-Large RTE](examples/pytorch/bert/BERT_README.md)                 | PyTorch    |
-| [BERT-Large QNLI](examples/pytorch/bert/BERT_README.md)                | PyTorch    |
-| [ResNet50 V1.5](examples/pytorch/resnet/README.md)                     | PyTorch    |
-| [ResNet18](examples/pytorch/resnet/README.md)                          | PyTorch    |
-| [ResNet101](examples/pytorch/resnet/README.md)                         | PyTorch    |
-| [ResNet50 V1](examples/tensorflow/image_recognition/README.md)         | TensorFlow |
-| [ResNet50 V1.5](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
-| [ResNet101](examples/tensorflow/image_recognition/README.md)           | TensorFlow |
-| [Inception V1](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
-| [Inception V2](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
-| [Inception V3](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
-| [Inception V4](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
-| [Inception ResNet V2](examples/tensorflow/image_recognition/README.md) | TensorFlow |
-| [SSD ResNet50 V1](examples/tensorflow/object_detection/README.md)      | TensorFlow |
+| Model                                                     | Framework | Model                                                   | Framework | Model                                                                  | Framework  |
+|-----------------------------------------------------------|-----------|---------------------------------------------------------|-----------|------------------------------------------------------------------------|------------|
+| [ResNet50 V1](examples/mxnet/cnn/README.md)               | MXNet     | [BERT-Large RTE](examples/pytorch/bert/BERT_README.md)  | PyTorch   | [ResNet18](examples/pytorch/resnet/README.md)                          | PyTorch    |
+| [MobileNet V1](examples/mxnet/cnn/README.md)              | MXNet     | [BERT-Large QNLI](examples/pytorch/bert/BERT_README.md) | PyTorch   | [ResNet50 V1](examples/tensorflow/image_recognition/README.md)         | TensorFlow |
+| [MobileNet V2](examples/mxnet/cnn/README.md)              | MXNet     | [BERT-Large CoLA](examples/pytorch/bert/BERT_README.md) | PyTorch   | [ResNet50 V1.5](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
+| [SSD-ResNet50](examples/mxnet/object_detection/README.md) | MXNet     | [BERT-Base SST-2](examples/pytorch/bert/BERT_README.md) | PyTorch   | [ResNet101](examples/tensorflow/image_recognition/README.md)           | TensorFlow |
+| [SqueezeNet V1](examples/mxnet/cnn/README.md)             | MXNet     | [BERT-Base RTE](examples/pytorch/bert/BERT_README.md)   | PyTorch   | [Inception V1](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
+| [ResNet18](examples/mxnet/cnn/README.md)                  | MXNet     | [BERT-Base STS-B](examples/pytorch/bert/BERT_README.md) | PyTorch   | [Inception V2](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
+| [Inception V3](examples/mxnet/cnn/README.md)              | MXNet     | [BERT-Base CoLA](examples/pytorch/bert/BERT_README.md)  | PyTorch   | [Inception V3](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
+| [DLRM](examples/pytorch/dlrm/DLRM_README.md)              | PyTorch   | [BERT-Base MRPC](examples/pytorch/bert/BERT_README.md)  | PyTorch   | [Inception V4](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
+| [BERT-Large MRPC](examples/pytorch/dlrm/DLRM_README.md)   | PyTorch   | [ResNet101](examples/pytorch/resnet/README.md)          | PyTorch   | [Inception ResNet V2](examples/tensorflow/image_recognition/README.md) | TensorFlow |
+| [BERT-Large SQUAD](examples/pytorch/bert/BERT_README.md)  | PyTorch   | [ResNet50 V1.5](examples/pytorch/resnet/README.md)      | PyTorch   | [SSD ResNet50 V1](examples/tensorflow/object_detection/README.md)      | TensorFlow |
 
 
 # Known Issues
