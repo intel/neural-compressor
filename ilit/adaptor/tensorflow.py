@@ -84,7 +84,8 @@ class TensorFlowAdaptor(Adaptor):
             op_name = each_op_info[0]
 
             if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
-                self.quantize_config['op_wise_config'].pop(op_name)
+                if op_name in self.quantize_config['op_wise_config']:
+                    self.quantize_config['op_wise_config'].pop(op_name)
                 continue
 
             is_perchannel = False

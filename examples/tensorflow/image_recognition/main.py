@@ -25,7 +25,6 @@ from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_infe
 from tensorflow.python.framework import dtypes
 
 import datasets
-from ilit import tuner as iLiT
 
 # override by args
 INPUTS = "input" 
@@ -194,17 +193,18 @@ class eval_classifier_optimized_graph:
     Returns:
         graph: it will return a quantized pb
     """
+    import ilit
     fp32_graph = load_graph(self.args.input_graph)
-    at = iLiT.Tuner(self.args.config)
+    tuner = ilit.Tuner(self.args.config)
     dataloader = Dataloader(self.args.data_location, 'validation',
                             self.args.image_size, self.args.image_size,
                             self.args.batch_size, self.args.num_cores,
                             self.args.resize_method,  
                             [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
-    q_model = at.tune(
+    q_model = tuner.tune(
                         fp32_graph,
                         q_dataloader=dataloader,
-                        # eval_func=iself.eval_inference)
+                        # eval_func=self.eval_inference)
                         eval_func=None,
                         eval_dataloader=dataloader)
     return q_model

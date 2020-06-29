@@ -93,16 +93,17 @@ class BasicTuneStrategy(TuneStrategy):
                         op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
             yield op_cfgs
             acc, _ = self.last_tune_result
-            if acc > best_acc:
-                ops_acc[op] = acc
+            ops_acc[op] = acc
 
         op_cfgs = copy.deepcopy(best_cfg)
         if ops_acc != None:
             ordered_ops = sorted(ops_acc.keys(), key=lambda key:ops_acc[key], reverse=True)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
+                op_cfgs['op'][op]['activation'].clear()
                 op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
                 if 'weight' in op_cfgs['op'][op]:
+                    op_cfgs['op'][op]['weight'].clear()
                     op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
                 yield op_cfgs
                 acc, _ = self.last_tune_result
@@ -110,5 +111,14 @@ class BasicTuneStrategy(TuneStrategy):
                     op_cfgs['op'][op] = copy.deepcopy(old_cfg)
                 else:
                     best_acc = acc
+
+            op_cfgs = copy.deepcopy(best_cfg)
+            for op in ordered_ops:
+                op_cfgs['op'][op]['activation'].clear()
+                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
+                if 'weight' in op_cfgs['op'][op]:
+                    op_cfgs['op'][op]['weight'].clear()
+                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
+                yield op_cfgs
 
         return

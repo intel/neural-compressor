@@ -113,21 +113,31 @@ class MSETuneStrategy(TuneStrategy):
             ops_mse = {op:self.mse_metric_gap(fp32_tensor_dict[op], dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
             self.ordered_ops = sorted(ops_mse.keys(),key=lambda key:ops_mse[key], reverse=True)
 
-        op_cfgs = copy.deepcopy(best_cfg)
         if ops_mse != None:
             ordered_ops = sorted(ops_mse.keys(), key=lambda key:ops_mse[key], reverse=True)
+            op_cfgs = copy.deepcopy(best_cfg)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                op_cfgs['op'][op]['activation'] = {'dtype':'fp32'}
-                if 'weight' in op_cfgs['op'][op].keys():
-                    op_cfgs['op'][op]['weight'] = {'dtype':'fp32'}
-
+                op_cfgs['op'][op]['activation'].clear()
+                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
+                if 'weight' in op_cfgs['op'][op]:
+                    op_cfgs['op'][op]['weight'].clear()
+                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
                 yield op_cfgs
                 acc, _ = self.last_tune_result
                 if acc <= best_acc:
                     op_cfgs['op'][op] = copy.deepcopy(old_cfg)
                 else:
                     best_acc = acc
+
+            op_cfgs = copy.deepcopy(best_cfg)
+            for op in ordered_ops:
+                op_cfgs['op'][op]['activation'].clear()
+                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
+                if 'weight' in op_cfgs['op'][op]:
+                    op_cfgs['op'][op]['weight'].clear()
+                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
+                yield op_cfgs
 
         return
 
