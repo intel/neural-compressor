@@ -1,9 +1,9 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Intel Optimized Tensorflow image recognition models iLiT tuning zoo result.
+This document is used to list steps of reproducing Intel Optimized TensorFlow image recognition models iLiT tuning zoo result.
 
-> **Note**
+> **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. We use 1.15.2 as an example.
 
 # Prerequisite
@@ -23,7 +23,41 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
 
+### 3. Prepare pre-trained model
+  In this version, iLiT just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
+
+  1. Download the checkpoint file from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models)
+  ```shell
+  wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz
+  tar -xvf inception_v1_2016_08_28.tar.gz
+  ```
+
+  2. Exporting the Inference Graph
+  ```shell
+  git clone https://github.com/tensorflow/models
+  cd models/research/slim
+  python export_inference_graph.py \
+          --alsologtostderr \
+          --model_name=inception_v1 \
+          --output_file=/tmp/inception_v1_inf_graph.pb
+  ```
+
+  3. Use [Netron](https://lutzroeder.github.io/netron/) to get the input/output layer name of inference graph pb, for Inception_v1 the output layer name is `InceptionV1/Logits/Predictions/Reshape_1`
+
+  4. Freezing the exported Graph, please use the tool `freeze_graph.py` in [tensorflow](https://github.com/tensorflow/tensorflow/blob/v1.15.2/tensorflow/python/tools/freeze_graph.py) repo 
+  ```shell
+  python freeze_graph.py \
+          --input_graph=/tmp/inception_v1_inf_graph.pb \
+          --input_checkpoint=./inception_v1.ckpt \
+          --input_binary=true \
+          --output_graph=./frozen_inception_v1_new.pb \
+          --output_node_names=InceptionV1/Logits/Predictions/Reshape_1
+  ```
+
 # Run
+
+> *Note*: 
+> The model name with `*` means it comes from [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), please follow the step [Prepare pre-trained model](#3-prepare-pre-trained-model) to get the pb files.
 
 ### 1. ResNet50 V1
 
@@ -34,7 +68,9 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/resnet50_fp32_pretrained_model.pb -i input -o predict -r -d /PATH/TO/imagenet/ --resize_method crop --config ./resnet50_v1.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/resnet50_fp32_pretrained_model.pb \
+          -i input -o predict -r -d /PATH/TO/imagenet/ \
+          --resize_method crop --config ./resnet50_v1.yaml
   ```
 
 ### 2. ResNet50 V1.5
@@ -46,7 +82,10 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/resnet50_v1.pb -i input_tensor -o softmax_tensor -r -d /PATH/TO/imagenet/ --resize_method=crop --r_mean 123.68 --g_mean 116.78 --b_mean 103.94 --config ./resnet50_v1_5.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/resnet50_v1.pb \
+          -i input_tensor -o softmax_tensor -r -d /PATH/TO/imagenet/ \
+          --resize_method=crop --r_mean 123.68 --g_mean 116.78 --b_mean 103.94 \
+          --config ./resnet50_v1_5.yaml
   ```
 
 ### 3. ResNet101
@@ -58,7 +97,9 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/resnet101_fp32_pretrained_model.pb -i input -o resnet_v1_101/predictions/Reshape_1 -r -d /PATH/TO/imagenet/ --image_size 224 --resize_method vgg --label_adjust --config ./resnet101.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/resnet101_fp32_pretrained_model.pb \
+          -i input -o resnet_v1_101/predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
+          --image_size 224 --resize_method vgg --label_adjust --config ./resnet101.yaml
   ```
 
 ### 4. MobileNet V1
@@ -70,28 +111,36 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/mobilenet_v1_1.0_224_frozen.pb -i input -o MobilenetV1/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ --resize_method bilinear --config ./mobilenet_v1.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/mobilenet_v1_1.0_224_frozen.pb \
+          -i input -o MobilenetV1/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
+          --resize_method bilinear --config ./mobilenet_v1.yaml
   ```
 
-### 5. MobileNet V2
+### 5. MobileNet V2*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/frozen_mobilenet_v2.pb -i input -o MobilenetV2/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ --resize_method bilinear --config ./mobilenet_v2.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_mobilenet_v2.pb \
+          -i input -o MobilenetV2/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
+          --resize_method bilinear --config ./mobilenet_v2.yaml
   ```
 
-### 6. Inception V1
+### 6. Inception V1*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/frozen_inception_v1.pb -i input -o InceptionV1/Logits/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/  --image_size 224 --resize_method bilinear --config ./inceptionv1.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_inception_v1.pb \
+          -i input -o InceptionV1/Logits/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
+          --image_size 224 --resize_method bilinear --config ./inceptionv1.yaml
   ```
 
-### 7. Inception V2
+### 7. Inception V2*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/frozen_inception_v2.pb -i input -o InceptionV2/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/  --image_size 224 --resize_method bilinear --config ./inceptionv2.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_inception_v2.pb \
+          -i input -o InceptionV2/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
+          --image_size 224 --resize_method bilinear --config ./inceptionv2.yaml
   ```
 
 ### 8. Inception V3
@@ -103,7 +152,9 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/inceptionv3_fp32_pretrained_model.pb -i input -o predict -r -d /PATH/TO/imagenet/  --image_size 299 --resize_method bilinear --config ./inceptionv3.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/inceptionv3_fp32_pretrained_model.pb \
+          -i input -o predict -r -d /PATH/TO/imagenet/  --image_size 299 \
+          --resize_method bilinear --config ./inceptionv3.yaml
   ```
 
 ### 9. Inception V4
@@ -115,14 +166,18 @@ This document is used to list steps of reproducing Intel Optimized Tensorflow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/inceptionv4_fp32_pretrained_model.pb -i input -o InceptionV4/Logits/Predictions -r -d /PATH/TO/imagenet/  --image_size 299 --resize_method bilinear --config ./inceptionv4.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/inceptionv4_fp32_pretrained_model.pb \
+          -i input -o InceptionV4/Logits/Predictions -r -d /PATH/TO/imagenet/  --image_size 299 \
+          --resize_method bilinear --config ./inceptionv4.yaml
   ```
 
-### 10. Inception ResNet V2
+### 10. Inception ResNet V2*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 1 -e 28 -g /PATH/TO/frozen_inception_resnet_v2.pb -i input -o InceptionResnetV2/Logits/Predictions -r -d /PATH/TO/imagenet/  --image_size 299 --resize_method bilinear --config ./irv2.yaml
+  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_inception_resnet_v2.pb \
+          -i input -o InceptionResnetV2/Logits/Predictions -r -d /PATH/TO/imagenet/  \
+          --image_size 299 --resize_method bilinear --config ./irv2.yaml
   ```
 
 Examples of enabling iLiT auto tuning on TensorFlow ResNet50 V1.5
@@ -138,7 +193,7 @@ iLiT supports two usages:
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which is built-in supported by iLiT. So here we integrate Tensorflow [ResNet50 V1.5](https://github.com/IntelAI/models/tree/v1.6.0/models/image_recognition/tensorflow/resnet50v1_5/inference) in [Intel Models](https://github.com/IntelAI/models/tree/v1.6.0) with iLiT by the first use case for simplicity. 
+As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which is built-in supported by iLiT. So here we integrate Tensorflow [ResNet50 V1.5](https://github.com/IntelAI/models/tree/v1.6.0/models/image_recognition/tensorflow/resnet50v1_5/inference) in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0) with iLiT by the first use case for simplicity. 
 
 ### Write Yaml config file
 
@@ -270,6 +325,7 @@ q_graph = evaluate_opt_graph.auto_tune()
 ```
 We can use below cmd to test it.
 ```shell
-python eval_image_classifier_inference.py -b 10 -a 1 -e 28 -m resnet50_v1_5 -g /PATH/TO/resnet50_v1.pb -d /PATH/TO/imagenet/
+python eval_image_classifier_inference.py -b 10 -a 28 -e 1 -m resnet50_v1_5 \
+        -g /PATH/TO/resnet50_v1.pb -d /PATH/TO/imagenet/
 ```
 The iLiT tune() function will return a best quantized model during timeout constrain.

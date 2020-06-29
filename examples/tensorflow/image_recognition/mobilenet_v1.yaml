@@ -4,16 +4,15 @@ framework:
     outputs: MobilenetV1/Predictions/Reshape_1
 
 calibration:                                         
-  - iterations: 2,7
+  - iterations: 2,5
     algorithm:  
-        activation: kl
+        activation: minmax
 
 quantization: 
     weight:
       - granularity: per_channel
 
 tuning:
-  - strategy: mse
     metric:  
       - topk: 1
     accuracy_criterion:

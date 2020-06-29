@@ -4,9 +4,9 @@ framework:
     outputs: MobilenetV2/Predictions/Reshape_1
 
 calibration:                                         
-  - iterations: 2,7
+  - iterations: 2,5
     algorithm:  
-        activation: kl
+        activation: minmax
 
 quantization: 
     weight:
