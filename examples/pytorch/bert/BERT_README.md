@@ -47,7 +47,7 @@ This document is used to list steps of reproducing PyTorch BERT iLiT tuning zoo 
   Before running any of these GLUE tasks you should download the [GLUE data](https://gluebenchmark.com/tasks)
 
 ### 3. Prepare pretrained model
-  pretrained models is in google driver
+  please refer to https://github.com/huggingface/transformers, and fine tune the model to get pretrained model.
 
 # Run
 
