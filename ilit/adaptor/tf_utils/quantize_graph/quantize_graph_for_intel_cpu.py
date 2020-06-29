@@ -55,14 +55,9 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
             self.input_graph, self.transformers.keys())
 
     def do_transform(self):
-        # if self.excluded_ops:
-        # for op_type in self.excluded_ops:
-        #     del self.transformers[op_type]
-
         for _, node in enumerate(self.input_graph.node):
             if node in self.input_graph.node and node.op in self.transformers.keys(
-            ) and (not self.op_wise_config
-                   or node.name in self.op_wise_config):
+            ) and node.name in self.op_wise_config:
                 if len(self.transformers[node.op]) > 1:
                     last_fuse_ops_count = 0
                     last_longest_fuse_worker = None

@@ -79,14 +79,14 @@ class TensorFlowAdaptor(Adaptor):
         Args:
             tuning_cfg (dict): configuration for quantization.
         """
-        self.excluded_nodes = []
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
 
             if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
-                self.excluded_nodes.append(op_name)
+                self.quantize_config['op_wise_config'].pop(op_name)
                 continue
+
             is_perchannel = False
             if 'weight' in tuning_cfg['op'][each_op_info]:
                 is_perchannel = tuning_cfg['op'][each_op_info]['weight'][
@@ -207,6 +207,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         from .tf_utils.graph_converter import GraphConverter
+
         converter = GraphConverter(model,
                                    quantized_model,
                                    inputs=self.inputs,
