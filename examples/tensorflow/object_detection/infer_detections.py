@@ -24,7 +24,7 @@ import numpy as np
 import tensorflow as tf
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
-from ilit import tuner as iLiT
+import ilit
 
 from tensorflow.python.data.experimental import parallel_interleave
 from tensorflow.python.data.experimental import map_and_batch
@@ -343,7 +343,7 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     infer = model_infer(args)
     
-    at = iLiT.Tuner(args.config)
+    at = ilit.Tuner(args.config)
 
     output_graph = at.tune(infer.get_graph(),
                            q_dataloader=infer,

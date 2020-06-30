@@ -2,3 +2,7 @@
 .vscode
 */__pycache__
 *.snapshot
+*.pb
+*.ckpt
+*.log
+*.swp

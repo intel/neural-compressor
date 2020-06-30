@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Tensorflow ssd_resnet50_v1 iLiT tuning zoo result.
+This document is used to list steps of reproducing TensorFlow ssd_resnet50_v1 iLiT tuning zoo result.
 
 
 ## Prerequisite
@@ -9,7 +9,7 @@ This document is used to list steps of reproducing Tensorflow ssd_resnet50_v1 iL
 ### 1. Installation
 ```Shell
 # Install iLiT
-pip instal iLiT
+pip instal ilit
 ```
 ### 2. Install Intel Tensorflow 1.15/2.0/2.1
 ```shell
@@ -115,7 +115,7 @@ After prepare step is done, we just need update infer_detections.py like below.
 ```python
 import ilit
 
-at = iLiT.Tuner(args.config)
+at = ilit.Tuner(args.config)
 q_model = at.tune(infer.get_graph(),
                         q_dataloader=infer,
                         eval_func=infer.accuracy_check)

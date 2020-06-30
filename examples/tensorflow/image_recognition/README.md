@@ -50,7 +50,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
           --input_graph=/tmp/inception_v1_inf_graph.pb \
           --input_checkpoint=./inception_v1.ckpt \
           --input_binary=true \
-          --output_graph=./frozen_inception_v1_new.pb \
+          --output_graph=./frozen_inception_v1.pb \
           --output_node_names=InceptionV1/Logits/Predictions/Reshape_1
   ```
 
