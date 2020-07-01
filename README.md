@@ -14,8 +14,6 @@ Currently supported Intel optimized DL frameworks are:
 
 Currently supported tuning strategies are:
 * [Basic](docs/introduction.md#basic-strategy)
-* [Random](docs/introduction.md#random-strategy)
-* [Exhaustive](docs/introduction.md#exhaustive-strategy)
 * [Bayesian](docs/introduction.md#bayesian-strategy)
 * [MSE](docs/introduction.md#mse-strategy)
 
