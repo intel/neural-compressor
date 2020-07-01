@@ -1,7 +1,7 @@
 Introduction
 =========================================
 
-Intel Low Precision Tool (iLiT) is a opensource python library to help users to fast deploy low-precision inference solution on popular DL frameworks including TensorFlow, PyTorch, MxNet etc. It's accuracy-driven objective tuning in tuning space and support different strategies.
+Intel Low Precision Tool (iLiT) is a opensource python library to help users to fast deploy low-precision inference solution on popular DL frameworks including TensorFlow, PyTorch, MxNet etc. It is accuracy-driven objective tuning in tuning space and support different strategies.
 
 # Infrastructure
 
@@ -59,14 +59,6 @@ Intel Low Precision Tool (iLiT) is a opensource python library to help users to 
 ### Basic Strategy
 
 This strategy is iLiT default tuning strategy, which does model-wise tuning by adjusting gloabl tuning parameters, such as calibration related parameters, kl or minmax algo, quantization related parameters, symmetric or asymmetric, per_channel or per_tensor. If the model-wise tuning result does not meet accuracy goal, this strategy will attempt to do op-wise fallback from bottom to top to prioritize which fallback op has biggest impact on final accuracy, and then do incremental fallback till achieving the accuracy goal.
-
-### Random Strategy
-
-This strategy is used to random choose tuning config from tuning space.
-
-### Exhaustive Strategy
-
-This strategy is used to sequentially traverse all the possible tuning configs in tuning space.
 
 ### Bayersian Strategy
 

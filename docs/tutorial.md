@@ -78,11 +78,11 @@ tuning:
 
 ### 3. Integration with iLiT
 
-   a. Check if calibration or evaluation dataloader in user code meets iLiT requirements, that's whether it returns a tuple of (input, label). In classification networks, its dataloader usually yield output like this. As calication dataset doesn't need to have label, user need wrapper the loader to return a tuple of (input, _) for iLiT on this case. In object detection or NLP or recommendation networks, its dataloader usually yield output not like this, user need wrapper the loder to return a tuple of (input, label), in which "input" may be a object, a tuple or a dict.
+   a. Check if calibration or evaluation dataloader in user code meets iLiT requirements, that is whether it returns a tuple of (input, label). In classification networks, its dataloader usually yield output like this. As calication dataset does not need to have label, user need wrapper the loader to return a tuple of (input, _) for iLiT on this case. In object detection or NLP or recommendation networks, its dataloader usually yield output not like this, user need wrapper the loder to return a tuple of (input, label), in which "input" may be a object, a tuple or a dict.
 
    b. Check if model in user code could be directly feed "input" got from #a. If not, user need wrapper the model to take "input" as input.
 
-   c. If user choose the first use case, that's using iLiT build-in metrics. User need ensure metric built in iLiT could take output of model and label of eval_dataloader as input.
+   c. If user choose the first use case, that is using iLiT build-in metrics. User need ensure metric built in iLiT could take output of model and label of eval_dataloader as input.
 
 
 # Detail Examples
