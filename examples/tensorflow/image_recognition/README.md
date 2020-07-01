@@ -210,6 +210,8 @@ framework:
 
 calibration:                                         
   - iterations: 5, 10
+    algorithm:
+        activation: minmax
 
 tuning:
     metric:  
