@@ -297,7 +297,7 @@ def parse_requantization_ranges_kl(log_path):
     min_postfix = "_min_output"
     max_postfix = "_max_output"
     valid_data = [i for i in valid_lines if i.find(kl_appendix) != -1]
-    print(len(valid_data), len(set(valid_data)))
+
     single_keys_prefix = sorted(
         set([i.split(kl_appendix)[0] for i in valid_data]))
     result = {}

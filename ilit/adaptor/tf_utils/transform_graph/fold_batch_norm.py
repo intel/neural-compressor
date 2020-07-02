@@ -38,12 +38,15 @@ class FoldBatchNormNodes(GraphTransformBase):
         ["conv_op", "mean_op", "var_op", "beta_op", "gamma_op"],
         # Order of inputs for FusedBatchNorm.
         "FusedBatchNorm":
+        ["conv_op", "gamma_op", "beta_op", "mean_op", "var_op"],
+        "FusedBatchNormV3":
         ["conv_op", "gamma_op", "beta_op", "mean_op", "var_op"]
     }
     # Name of the attribute epsilon value is stored in.
     EPSILON_ATTR = {
         "BatchNormWithGlobalNormalization": "variance_epsilon",
-        "FusedBatchNorm": "epsilon"
+        "FusedBatchNorm": "epsilon",
+        "FusedBatchNormV3": "epsilon"
     }
 
     def __init__(self, input_graph_def):
@@ -137,7 +140,7 @@ class FoldBatchNormNodes(GraphTransformBase):
         new_ops = []
         for node in self.input_graph.node:
             if node.op not in ("BatchNormWithGlobalNormalization",
-                               "FusedBatchNorm"):
+                               "FusedBatchNorm", "FusedBatchNormV3"):
                 continue
 
             conv_op = self.node_from_map(
