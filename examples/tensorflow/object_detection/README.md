@@ -27,16 +27,16 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 ### 5. Download Frozen PB
 ```shell
 wget http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
-tar -xvzf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
+tar -xvzf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz -C /tmp
 ```
 
 ## Run Command
   ```Shell
   # The cmd of running ssd_resnet50_v1
-  python infer_detections.py --batch-size 1 --input-graph /path/to/fp32_frozen.pb --data-location /path/to/dataset/coco_val.record --accuracy-only --config ssd_resnet50_v1.yaml
+  python infer_detections.py --batch-size 1 --input-graph /tmp/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --data-location /path/to/dataset/coco_val.record --accuracy-only --config ssd_resnet50_v1.yaml
   ```
 
-Details of enabling iLiT on ssd_resnet50_v1 for Tensorflow. 
+Details of enabling iLiT on ssd_resnet50_v1 for Tensorflow.
 =========================
 
 This is a tutorial of how to enable ssd_resnet50_v1 model with iLiT.
@@ -73,7 +73,7 @@ def __iter__(self):
 ### Evaluation Part Adaption
 The Class model_infer has the run_accuracy function which actually could be re-used as the eval_func.
 
-Compare with the original version, we added the additional parameter **input_graph** as the iLiT would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors. 
+Compare with the original version, we added the additional parameter **input_graph** as the iLiT would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors.
 ```python
 if input_graph:
     self.infer_graph = input_graph
@@ -87,25 +87,25 @@ if input_graph:
 ```
 
 ### Write Yaml config file
-In examples directory, there is a ssd_resnet50_v1.yaml. We could remove most of items and only keep mandatory item for tuning. 
+In examples directory, there is a ssd_resnet50_v1.yaml. We could remove most of items and only keep mandatory item for tuning.
 
 ```yaml
 framework:
-  - name: tensorflow                             
+  - name: tensorflow
     inputs: image_tensor
     outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
-calibration:                                         
+calibration:
   - iterations: 1, 5, 10, 20
-    algorithm:                                            
+    algorithm:
       - weight: minmax
         activation: minmax
 
 tuning:
     accuracy_criterion:
-      - relative: 0.01  
-    timeout: 0                                     
-    random_seed: 9527    
+      - relative: 0.01
+    timeout: 0
+    random_seed: 9527
 ```
 Here we set the input tensor and output tensors name into *inputs* and *outputs* field. Meanwhile, we set mAp target as tolerating 0.01 relative mAp of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 
