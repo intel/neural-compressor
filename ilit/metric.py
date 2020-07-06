@@ -2,8 +2,8 @@ from abc import abstractmethod
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
 
-#from pycocotools import coco
-#from pycocotools import cocoeval
+from pycocotools import coco
+from pycocotools import cocoeval
 
 '''The metrics supported by iLiT.
    To support new metric, developer just need implement a new subclass in this file.
@@ -120,7 +120,7 @@ class CocoMAP(Metric):
         mean_ap(dict): The dict of mean AP for configuration.
     """
     def __init__(self, mean_ap):
-        super(MAP, self).__init__('map')
+        super(CocoMAP, self).__init__('cocomap')
         assert isinstance(mean_ap, dict)
         self.acc = 0
         # List with all ground truths (Ex: [class_ids, bbox])
@@ -286,13 +286,13 @@ class F1(Metric):
         # binary label
         if predict.shape[1] == 2:
             predict = predict.argmax(axis=-1)
-            self.acc = f1_score(predict, label, average='binary')
+            self.acc = f1_score(label, predict, average='binary')
         # multi label
         else:
             assert 'average' in self.f1_config.keys()
             assert self.f1_config['average'] in ['micro', 'macro', 'weighted']
             predict = predict.argmax(axis=-1)
-            self.acc = f1_score(predict, label, average=self.f1_config['average'])
+            self.acc = f1_score(label, predict, average=self.f1_config['average'])
         return self.acc
 
     def compare(self, target):
@@ -337,7 +337,7 @@ if __name__ == "__main__":
     print(acc)
 
     print("test mAP")
-    mAP_metric = MAP()
+    mAP_metric = CocoMAP()
     # [image_id(optional), detection_classes, detection_boxes, detection_scores]
     pd_imgid = 1
     pd_classes = np.array([1,0,0])
