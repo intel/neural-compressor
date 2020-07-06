@@ -463,7 +463,7 @@ class MxNetAdaptor(Adaptor):
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         int8_ops_th = self.th_dict
         op_list_convert = []
-        sym, arg_params, aux_params, dataloader = self._check_model(self, model, dataloader)
+        sym, arg_params, aux_params, dataloader = self._check_model(model, dataloader)
         sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         for item in op_list:
             op_name = item[0]
@@ -473,7 +473,7 @@ class MxNetAdaptor(Adaptor):
                 op_name += "_output"
             op_list_convert.append(op_name)
         dataloader.reset()
-        inspected_tensor = self._inspect_tensor(model, dataloader, op_list_convert, iteration_list)
+        inspected_tensor = self._inspect_tensor((sym, arg_params, aux_params), dataloader, op_list_convert, iteration_list)
         inspected_tensor_convert = {}
         for op, tensor in inspected_tensor.items():
             if op.startswith("quantized_"):
