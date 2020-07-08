@@ -9,13 +9,14 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 # Prerequisite
 
 ### 1. Installation
+  Recommend python 3.6 or higher version.
 
   ```Shell
   # Install iLiT
   pip install ilit
 
-  # Install Intel Optimized Tensorflow 1.5.2
-  pip install intel-tensorflow==1.5.2
+  # Install Intel Optimized Tensorflow 1.15.2
+  pip install intel-tensorflow==1.15.2
   
   ```
 
@@ -44,7 +45,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   3. Use [Netron](https://lutzroeder.github.io/netron/) to get the input/output layer name of inference graph pb, for Inception_v1 the output layer name is `InceptionV1/Logits/Predictions/Reshape_1`
 
-  4. Freezing the exported Graph, please use the tool `freeze_graph.py` in [tensorflow](https://github.com/tensorflow/tensorflow/blob/v1.15.2/tensorflow/python/tools/freeze_graph.py) repo 
+  4. Freezing the exported Graph, please use the tool `freeze_graph.py` in [tensorflow v1.15.2](https://github.com/tensorflow/tensorflow/blob/v1.15.2/tensorflow/python/tools/freeze_graph.py) repo 
   ```shell
   python freeze_graph.py \
           --input_graph=/tmp/inception_v1_inf_graph.pb \
