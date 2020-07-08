@@ -33,7 +33,8 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad iL
  python3 finetune_classifier.py \
         --task_name MRPC \
         --only_inference \
-        --model_parameters ./output_dir/model_bert_MRPC_4.params
+        --model_parameters ./output_dir/model_bert_MRPC_4.params \
+        --ilit_tune
 
 ```
 
@@ -43,7 +44,8 @@ python3 finetune_squad.py \
         --model_parameters ./output_dir/net.params \
         --round_to 128 \
         --test_batch_size 128 \
-        --only_predict
+        --only_predict \
+        --ilit_tune
 ```
  
 

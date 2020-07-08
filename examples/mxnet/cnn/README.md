@@ -38,7 +38,8 @@ python -u imagenet_inference.py \
         --batch-size=64 \
         --num-inference-batches=500 \
         --dataset=./data/val_256_q90.rec \
-        --ctx=cpu 
+        --ctx=cpu \
+        --ilit_tune
 ```
 
 #### Squeezenet1.0
@@ -51,7 +52,8 @@ python -u imagenet_inference.py \
         --batch-size=64 \
         --num-inference-batches=500 \
         --dataset=./data/val_256_q90.rec \
-        --ctx=cpu 
+        --ctx=cpu \
+        --ilit_tune
 ```
 
 ### MobileNet1.0
@@ -64,7 +66,8 @@ python -u imagenet_inference.py \
         --batch-size=64 \
         --num-inference-batches=500 \
         --dataset=./data/val_256_q90.rec \
-        --ctx=cpu 
+        --ctx=cpu \
+        --ilit_tune
 ```
 
 ### MobileNetv2_1.0
@@ -78,6 +81,7 @@ python -u imagenet_inference.py \
         --num-inference-batches=500 \
         --dataset=./data/val_256_q90.rec \
         --ctx=cpu \
+        --ilit_tune
 ```
 
 ### Inceptionv3
@@ -91,7 +95,8 @@ python -u imagenet_inference.py \
         --image-shape 3,299,299 \
         --num-inference-batches=500 \
         --dataset=./data/val_256_q90.rec \
-        --ctx=cpu
+        --ctx=cpu \
+        --ilit_tune
 ```
 
 Examples of enabling iLiT auto tuning on MXNet ResNet50

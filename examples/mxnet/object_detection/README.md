@@ -32,12 +32,12 @@ Download [COCO2017](https://cocodataset.org/#download) Raw image to the director
 
 ### SSD-ResNet50_v1
 ```bash
-python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset coco
+python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset coco --ilit_tune
 ```
 
 ### SSD-Mobilenet1.0
 ```bash
-python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset coco
+python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset coco --ilit_tune
 ```
 
 Examples of enabling iLiT auto tuning on MXNet Object detection

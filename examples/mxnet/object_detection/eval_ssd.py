@@ -68,6 +68,8 @@ def parse_args():
                              ' thresholds. This mode is expected to produce the best inference accuracy of all three'
                              ' kinds of quantized models if the calibration dataset is representative enough of the'
                              ' inference dataset.')
+    parser.add_argument('--ilit_tune',action='store_true', default=False,
+                        help='Get bert tuning quantization model with iLiT.')
     args = parser.parse_args()
     return args
 
@@ -221,12 +223,13 @@ if __name__ == '__main__':
         mAP = float(results[-1][-1])
 
         return mAP
-        
-    # Doing iLiT auto-tuning here
-    import ilit
-    ssd_tuner = ilit.Tuner("./ssd.yaml")
-    ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
-    sys.exit()
+
+    if args.ilit_tune:
+        # Doing iLiT auto-tuning here
+        import ilit
+        ssd_tuner = ilit.Tuner("./ssd.yaml")
+        ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
+        sys.exit()
 
     # eval
     names, values = validate(net, val_data, ctx, classes, len(val_dataset), val_metric)

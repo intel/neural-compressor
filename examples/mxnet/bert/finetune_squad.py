@@ -242,6 +242,8 @@ parser.add_argument('--calib_mode', type=str, default='customize',
                     choices=['none', 'naive', 'entropy', 'customize'],
                     help='calibration mode used for generating calibration table '
                          'for the quantized symbol.')
+parser.add_argument('--ilit_tune',action='store_true', default=False,
+                    help='Get bert tuning quantization model with iLiT.')
 
 args = parser.parse_args()
 
@@ -897,11 +899,12 @@ if __name__ == '__main__':
     elif not only_predict:
         train()
         evaluate()
-    elif model_parameters or deploy:
-        # evaluate()
+    elif args.ilit_tune:
         # iLiT auto-tuning
         dev_dataloader = gen_dataset()
         import ilit
         bert_tuner = ilit.Tuner("./bert.yaml")
         bert_tuner.tune(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
+    elif model_parameters or deploy:
+        evaluate()
 

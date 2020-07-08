@@ -215,6 +215,8 @@ if __name__ == '__main__':
     parser.add_argument('--low-precision', type=str, default='',
                         choices=['', 'float16', 'bfloat16'],
                         help='enable low precision')
+    parser.add_argument('--ilit_tune',action='store_true', default=False,
+                        help='Get bert tuning quantization model with iLiT.')
 
     args = parser.parse_args()
 
@@ -285,13 +287,14 @@ if __name__ == '__main__':
             ctx=args.ctx,
             **combine_mean_std)
 
-        # loading model
-        fp32_model = load_model(symbol_file, param_file, logger)
-        from ilit import Tuner
-        calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
-        cnn_tuner = Tuner("./cnn.yaml")
-        cnn_tuner.tune(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
-        sys.exit()
+        if args.ilit_tune:
+            # loading model
+            fp32_model = load_model(symbol_file, param_file, logger)
+            from ilit import Tuner
+            calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
+            cnn_tuner = Tuner("./cnn.yaml")
+            cnn_tuner.tune(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
+            sys.exit()
 
         if args.low_precision:
             sym, arg_params, aux_params = low_precison_convert(symbol_file,
