@@ -5,14 +5,16 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
 
 > **Note**
 >
-> PyTorch quantization implementation in imperative path has limitation on automatically execution.
+> 1. PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
 > iLiT has no capability to solve this framework limitation. iLiT supposes user have done these two steps before invoking iLiT interface.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
+> 2. Please  ensure your PC have >370G memory to run DLRM 
 
 # Prerequisite
 
 ### 1. Installation
+  Recommend python 3.6 or higher version.
 
   ```Shell
   # Install iLiT
@@ -39,8 +41,15 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
 # Run
 
   ```Shell
-  cd examples/pytorch/dlrm
-  ./run_and_time.sh
+  cd ${ILIT_REPO}/examples/pytorch/dlrm
+  python -u dlrm_s_pytorch_tune.py --arch-sparse-feature-size=128 --arch-mlp-bot="13-512-256-128" \
+        --arch-mlp-top="1024-1024-512-256-1" --max-ind-range=40000000 --data-generation=dataset \
+        --data-set=terabyte --raw-data-file=${data_path}/day \ 
+        --processed-data-file=${data_path}/terabyte_processed.npz --loss-function=bce --round-targets=True \
+        --learning-rate=1.0 --mini-batch-size=2048 --print-freq=2048 --print-time --test-freq=102400 \
+        --test-mini-batch-size=16384 --test-num-workers=16 --memory-map --mlperf-logging \
+        --mlperf-auc-threshold=0.8025 --mlperf-bin-loader --mlperf-bin-shuffle \
+        --load-model=${model_path} --do-iLiT-tune
   ```
 
 Examples of enabling iLiT
