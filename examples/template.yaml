@@ -45,5 +45,5 @@ tuning:
            }
          }
 
-snapeshot:                                           # optional. if not specified, snapshot will be saved under working directory.
+snapshot:                                            # optional. if not specified, snapshot will be saved under working directory.
   - path: /tmp/snapshot
