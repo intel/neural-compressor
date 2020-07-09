@@ -1,7 +1,7 @@
-Intel Low Precision Inference Tool (iLiT)
+Intel® Low Precision Inference Toolkit (iLiT)
 =========================================
 
-Intel Low Precision Inference Tool (iLiT) is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
+Intel® Low Precision Inference Toolkit (iLiT) is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
 
 > **WARNING**
 >
@@ -132,7 +132,7 @@ If you use iLiT in your research or wish to refer to the tuning results publishe
 ```
 @misc{iLiT,
   author =       {Feng Tian, Chuanqi Wang, Guoming Zhang, Penghui Cheng, Pengxin Yuan, Haihao Shen, and Jiong Gong},
-  title =        {Intel Low Precision Inference Tool},
+  title =        {Intel® Low Precision Inference Toolkit},
   howpublished = {\url{https://github.com/intel/lp-inference-kit}},
   year =         {2020}
 }

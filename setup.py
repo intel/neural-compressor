@@ -6,7 +6,7 @@ setup(
     version="1.0a0",
     author="Intel MLP/MLPC Team",
     author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com",
-    description="Repository of low precision inference toolkit",
+    description="Repository of intel low precision inference toolkit",
     long_description=open("README.md", "r", encoding='utf-8').read(),
     long_description_content_type="text/markdown",
     keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training, tuning strategy',
