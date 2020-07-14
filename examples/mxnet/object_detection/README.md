@@ -1,12 +1,11 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing MXNet SSD-Mobilenet1.0/SSD-ResNet50_v1 with COCO dataset iLiT tuning zoo result.
+This document describes the step-by-step instructions for reproducing MXNet SSD-ResNet50_v1/SSD-Mobilenet 1.0 tuning results with iLiT.
 
 
 
 # Prerequisite
-
 ### 1. Installation
 
   ```Shell
@@ -15,7 +14,7 @@ This document is used to list steps of reproducing MXNet SSD-Mobilenet1.0/SSD-Re
 
   # Install MXNet
   pip install mxnet-mkl==1.6.0
-  
+
   # Install gluoncv
   pip install gluoncv
 
@@ -26,20 +25,19 @@ This document is used to list steps of reproducing MXNet SSD-Mobilenet1.0/SSD-Re
 
 ### 2. Prepare Dataset
 
-  Download COCO Raw image to work dir, naming as ~/.mxnet/dataset/coco.
+Download [COCO2017](https://cocodataset.org/#download) Raw image to the directory **~/.mxnet/datasets/coco** (Note:this path is unchangeable per original inference script requirement)
 
 
 # Run
 
-### SSD-Mobilenet1.0
-
-```bash
-python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=256 --dataset coco
-```
-
 ### SSD-ResNet50_v1
 ```bash
 python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset coco
+```
+
+### SSD-Mobilenet1.0
+```bash
+python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset coco
 ```
 
 Examples of enabling iLiT auto tuning on MXNet Object detection
@@ -55,11 +53,11 @@ iLiT supports two usages:
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As this example use COCO dataset, use COCOEval as metric which is can find [here](https://cocodataset.org/). So we integrate MXNet SSD-Mobilenet1.0/SSD-ResNet50_v1 with iLiT by the second use case.
+As this example use COCO dataset, use COCOEval as metric which is can find [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with iLiT by the second use case.
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandatory items for tuning.
 
 
 ```
@@ -75,12 +73,12 @@ tuning:
     random_seed: 9527
 ```
 
-Because we use the second use case which need user to provide a custom "eval_func" encapsulates the evaluation dataset and metric, so we can not see a metric at config file tuning filed. We set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
+Because we use the second use case which need user to provide a custom "eval_func" which encapsulates the evaluation dataset and metric, we can not see a metric at config file tuning filed. We set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 
 
 ### code update
 
-First, we need to construct evaluate function for ilit. At eval_func, we get the val_dataset for the origin script, and return mAP metric to ilit.
+First, we need to construct evaluate function for iLiT. At eval_func, we get the val_dataset for the origin script, and return mAP metric to iLiT.
 
 ```python
     # define test_func
@@ -99,14 +97,14 @@ First, we need to construct evaluate function for ilit. At eval_func, we get the
         return mAP
 ```
 
-After prepare step is done, we just need update main.py like below.
+After preparation is done, we just need update main.py like below.
 
 ```python
-   
+
     # Doing iLiT auto-tuning here
     import ilit
     ssd_tuner = ilit.Tuner("./ssd.yaml")
     ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The iLiT tune() function will return a best quantized model under timeout constrain.
