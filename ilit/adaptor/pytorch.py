@@ -223,6 +223,18 @@ class PyTorchAdaptor(Adaptor):
                 child.qconfig = model_qconfig
             self._propagate_qconfig_recursively(child, op_name + '.', op_qcfg, model_qconfig)
 
+    def _find_quantized_op_num(self, model, op_count=0):
+        quantize_op_num = op_count
+        for name_tmp, child_tmp in model.named_children():
+            if type(child_tmp) in self.q_mapping.keys() \
+                and not (isinstance(child_tmp, torch.quantization.QuantStub)
+                         or isinstance(child_tmp, torch.quantization.DeQuantStub)):
+                quantize_op_num += 1
+            else:
+                quantize_op_num = self._find_quantized_op_num(
+                    child_tmp, quantize_op_num)
+        return quantize_op_num
+
     def _fallback_quantizable_ops_recursively(self, model, prefix, fallback_ops):
         class DequantQuantWrapper(torch.nn.Module):
             r"""A wrapper class that wraps the input module, adds DeQuantStub and
@@ -237,7 +249,7 @@ class PyTorchAdaptor(Adaptor):
             for `DeQuantStub`.
             """
 
-            def __init__(self, module, observer = None):
+            def __init__(self, module, observer=None):
                 super(DequantQuantWrapper, self).__init__()
                 if not module.qconfig and observer:
                     weights_observer = observer('minmax', 'asym', 'per_channel', 'int8')
@@ -258,15 +270,12 @@ class PyTorchAdaptor(Adaptor):
             op_name = prefix + name
             if op_name in fallback_ops:
                 child.qconfig = None
-                quantize_op_num = 0
-                for name_tmp, child_tmp in model.named_children():
-                    if type(child_tmp) in self.q_mapping.keys() \
-                        and not (isinstance(child_tmp, torch.quantization.QuantStub) or isinstance(child_tmp, torch.quantization.DeQuantStub)):
-                        quantize_op_num += 1
+                quantize_op_num = self._find_quantized_op_num(model)
                 if quantize_op_num == 1:
                     found = False
                     for name_tmp, child_tmp in model.named_children():
-                        if isinstance(child_tmp, torch.quantization.QuantStub) or isinstance(child_tmp, torch.quantization.DeQuantStub):
+                        if isinstance(child_tmp, torch.quantization.QuantStub) \
+                           or isinstance(child_tmp, torch.quantization.DeQuantStub):
                             model._modules[name_tmp] = torch.nn.Identity()
                             found = True
                     if not found:
