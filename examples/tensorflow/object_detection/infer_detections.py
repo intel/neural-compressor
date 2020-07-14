@@ -38,6 +38,8 @@ from coco_label_map import category_map
 IMAGE_SIZE = 300
 COCO_NUM_VAL_IMAGES = 4952
 
+tf.compat.v1.disable_eager_execution()
+
 def parse_and_preprocess(serialized_example):
     # Dense features in Example proto.
     feature_map = {
