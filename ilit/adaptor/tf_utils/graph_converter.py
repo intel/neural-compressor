@@ -180,7 +180,7 @@ class GraphConverter:
     def load_graph(self, model_file):
 
         graph = tf.Graph()
-        graph_def = tf.GraphDef()
+        graph_def = tf.compat.v1.GraphDef()
 
         if not isinstance(model_file, graph_pb2.GraphDef):
             file_ext = os.path.splitext(model_file)[1]
@@ -212,7 +212,7 @@ class GraphConverter:
         ]
         import tensorflow as tf
 
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.inter_op_parallelism_threads = 2
         config.intra_op_parallelism_threads = int(
             subprocess.check_output(

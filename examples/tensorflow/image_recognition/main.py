@@ -32,6 +32,8 @@ OUTPUTS = "predict"
 
 INCEPTION_V3_IMAGE_SIZE = 224
 
+tf.compat.v1.disable_eager_execution()
+
 def load_graph(model_file):
   """This is a function to load TF graph from pb file
 
