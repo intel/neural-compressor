@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing PyTorch ResNet50/ResNet18/ResNet101 iLiT tuning zoo result.
+This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with iLiT.
 
 > **Note**
 >
@@ -28,7 +28,7 @@ This document is used to list steps of reproducing PyTorch ResNet50/ResNet18/Res
 
 ### 2. Prepare Dataset
 
-  Download ImageNet Raw image to work dir, naming as /path/to/imagenet.
+  Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
 
 
 # Run
