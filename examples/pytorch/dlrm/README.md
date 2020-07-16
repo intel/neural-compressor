@@ -17,14 +17,8 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
   Recommend python 3.6 or higher version.
 
   ```Shell
-  # Install iLiT
-  pip install ilit
-
-  # Install PyTorch
-  pip install torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-
-  # Install sklearn
-  pip install scikit-learn
+  # Install dependency
+  pip install -r requirements.txt
   ```
 
 ### 2. Prepare Dataset
@@ -122,3 +116,6 @@ import ilit
 tuner = ilit.Tuner("./conf.yaml")
 tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
 ```
+
+# Original DLRM README
+Please refer [DLRM README](https://github.com/facebookresearch/dlrm/blob/master/README.md)

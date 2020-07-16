@@ -10,3 +10,7 @@ regex
 sentencepiece
 # For XLM
 sacremoses
+# For iLiT
+ilit
+tensorboard
+scikit-learn
