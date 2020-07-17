@@ -22,7 +22,11 @@ This document is used to list steps of reproducing MXNet ResNet50_v1/Squeezenet1
 
 ### 2. Prepare Dataset
 
-  Download validation dataset [here](http://data.mxnet.io/data/val_256_q90.rec), naming as /path/to/data/val_256_q90.rec.
+  From [here](http://data.mxnet.io/data/val_256_q90.rec) download validation dataset val_256_q90.rec, then put to the directory **./data/**
+
+### 3. Prepare Pre-trained model
+  
+  Download the pre-trained model with [modelzoo.py](https://github.com/apache/incubator-mxnet/blob/v1.6.x/example/image-classification/common/modelzoo.py), then put to the directory **./model/**
 
 
 # Run
@@ -93,6 +97,21 @@ python -u imagenet_inference.py \
         --rgb-std=58.393,57.12,57.375 \
         --batch-size=64 \
         --image-shape 3,299,299 \
+        --num-inference-batches=500 \
+        --dataset=./data/val_256_q90.rec \
+        --ctx=cpu \
+        --ilit_tune
+```
+
+### ResNet18
+```bash
+python -u imagenet_inference.py \
+        --symbol-file=./model/resnet18_v1-symbol.json \
+        --param-file=./model/resnet18_v1-0000.params \
+        --rgb-mean=123.68,116.779,103.939 \
+        --rgb-std=58.393,57.12,57.375 \
+        --num-skipped-batches=50 \
+        --batch-size=64 \
         --num-inference-batches=500 \
         --dataset=./data/val_256_q90.rec \
         --ctx=cpu \

@@ -21,21 +21,38 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad iL
 
   ```
 
-### 2. Prepare Dataset
+### 2. Dataset
 
-  Download GLUE dataset to work dir, naming as ~/.mxnet/datasets/glue_mrpc/.
+  The script `finetune_classifier.py` will download GLUE dataset automaticly to the directory **~/.mxnet/datasets/glue_mrpc/**, for more GLUE dataset informations, see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/src/gluonnlp/data/glue.py#L590).
+
+  The script `finetune_squad.py` will download SQuAD dataset automaticly to the directory **~/.mxnet/datasets/squad/**, for more SQuAD dataset informations, see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/src/gluonnlp/data/question_answering.py#L36).
 
 
+### 3. Finetune model
+  - BERT_base need to do finetune to get a finetuned model for specific task. For MRPC, you need to run below command to get a finetuned model. After this, you can get a finetuned model at directory **./output_dir**, named as **model_bert_MRPC_4.params**.
+
+  ```bash
+  python3 finetune_classifier.py --batch_size 32 --lr 2e-5 --epochs 5 --seed 27 --task_name MRPC --warmup_ratio 0.1
+  ```
+   
+
+  - For SQuAD task, you need to run below command to get a finetuned model. After this, you can get a finetuned model at directory **./output_dir**, named as **net.params**.
+  ```bash
+  python finetune_squad.py --optimizer adam --batch_size 12 --lr 3e-5 --epochs 2
+  ```
+  
+
+  >More informations for BERT finetune, please see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/scripts/bert/index.rst#sentence-classification).
 # Run
 
 ### bert_base MRPC
 ```
  python3 finetune_classifier.py \
         --task_name MRPC \
+        --bert_model bert_12_768_12 \
         --only_inference \
         --model_parameters ./output_dir/model_bert_MRPC_4.params \
         --ilit_tune
-
 ```
 
 ### bert_base Squad
