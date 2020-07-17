@@ -84,6 +84,7 @@ class Conf(object):
             cfg.framework.outputs = None
 
         if 'calibration' in cfg.keys():
+            assert None not in cfg.calibration.values()
             for key in cfg.calibration.keys():
                 assert key in ['iterations', 'algorithm']
                 if key == 'algorithm':
@@ -103,9 +104,11 @@ class Conf(object):
                         'post_training_static_quant'
                     ], "post_training_dynamic_quant and quant_aware_training are not supported yet."
                 if key == 'weight':
+                    assert None not in cfg.quantization.weight.values()
                     for w_key in cfg.quantization.weight.keys():
                         assert w_key in ['granularity', 'scheme', 'dtype']
                 if key == 'activation':
+                    assert None not in cfg.quantization.activation.values()
                     for a_key in cfg.quantization.activation.keys():
                         assert a_key in ['granularity', 'scheme', 'dtype']
         else:
@@ -119,6 +122,8 @@ class Conf(object):
                 key.lower()
                 for key in cfg.tuning.keys()
             }
+            assert None not in cfg.tuning.values()
+            assert None not in cfg.tuning.accuracy_criterion.values()
             for key in cfg.tuning.keys():
                 assert key in [
                     'strategy', 'metric', 'accuracy_criterion', 'objective',
