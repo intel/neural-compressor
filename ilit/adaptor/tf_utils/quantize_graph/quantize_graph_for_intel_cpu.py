@@ -54,9 +54,6 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.register_transformer("Pad", FuseNodeStartWithPad)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
 
-        self.input_graph = QuantizeGraphHelper.split_shared_inputs(
-            self.input_graph, self.transformers.keys())
-
     def can_fused_ops(self, start_node):
         registered_transformer = self.transformers[start_node.op][0]
         worker = registered_transformer(

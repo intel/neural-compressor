@@ -626,7 +626,7 @@ class QuantizeNodeBase(object):
                     else:
                         max_value = min_value / 2.0
 
-                sess = session.Session()
+                sess = tf.compat.v1.Session()
                 with sess.as_default():
                     quantize_op = array_ops.quantize_v2(
                         float_tensor,

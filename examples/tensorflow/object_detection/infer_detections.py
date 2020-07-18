@@ -134,10 +134,8 @@ class model_infer:
                                               'rb') as input_file:
                 input_graph_content = input_file.read()
                 graph_def.ParseFromString(input_graph_content)
-            output_graph = optimize_for_inference(
-                graph_def, [self.input_layer], self.output_layers,
-                dtypes.uint8.as_datatype_enum, False)
-            tf.import_graph_def(output_graph, name='')
+
+            tf.import_graph_def(graph_def, name='')
 
     def get_graph(self):
         return self.infer_graph
@@ -252,7 +250,8 @@ class model_infer:
                                   config=self.config) as sess:
             iter = 0
             while True:
-                print('Run {0} iter'.format(iter))
+                if iter > 0 and iter % 100 == 0:
+                    print('Run {0}/{1} iter'.format(iter, COCO_NUM_VAL_IMAGES))
                 iter += 1
                 input_images, bbox, label, image_id = self.data_sess.run(
                     [self.input_images, self.bbox, self.label, self.image_id])

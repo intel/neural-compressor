@@ -56,15 +56,13 @@ class QuantizeGraphHelper(object):
         return self.out_graph_def
 
     @staticmethod
-    def split_shared_inputs(input_graph_def, ops=[]):
+    def split_shared_inputs(input_graph_def):
         """
-        Split shared inputs(like weights and bias) of ops list.
+        Split shared inputs(like weights and bias) of the graph.
         :param in_graph: input graph file.
-        :param ops: ops list to processing.
         :return: path to ouput graph file.
         """
-        if not ops:
-            return input_graph_def
+
         node_map = {}
         for node in input_graph_def.node:
             if node.name not in node_map.keys():
@@ -76,23 +74,22 @@ class QuantizeGraphHelper(object):
         input_map = {}
         for node_name in node_map.keys():
             node = node_map[node_name]
-            if node.op in ops:
-                for input_idx, input_node_name in enumerate(node.input):
-                    if node_map[QuantizeGraphHelper.node_name_from_input(
-                            input_node_name)].op == 'Const':
-                        # is shared and current node is not the first one
-                        # sharing the input
-                        if input_node_name in input_map.keys():
-                            is_shared_input = True
-                            input_map[input_node_name].append(node.name)
-                            new_input_node = node_def_pb2.NodeDef()
-                            new_input_node.CopyFrom(node_map[input_node_name])
-                            new_input_node.name = input_node_name + '_' + str(
-                                len(input_map[input_node_name]))
-                            node.input[input_idx] = new_input_node.name
-                            output_graph_def.node.extend([new_input_node])
-                        else:
-                            input_map[input_node_name] = [node.name]
+            for input_idx, input_node_name in enumerate(node.input):
+                if node_map[QuantizeGraphHelper.node_name_from_input(
+                        input_node_name)].op == 'Const':
+                    # is shared and current node is not the first one
+                    # sharing the input
+                    if input_node_name in input_map.keys():
+                        is_shared_input = True
+                        input_map[input_node_name].append(node.name)
+                        new_input_node = node_def_pb2.NodeDef()
+                        new_input_node.CopyFrom(node_map[input_node_name])
+                        new_input_node.name = input_node_name + '_' + str(
+                            len(input_map[input_node_name]))
+                        node.input[input_idx] = new_input_node.name
+                        output_graph_def.node.extend([new_input_node])
+                    else:
+                        input_map[input_node_name] = [node.name]
             output_graph_def.node.extend([node])
 
         return output_graph_def if is_shared_input else input_graph_def
