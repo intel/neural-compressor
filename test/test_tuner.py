@@ -4,6 +4,7 @@ import unittest
 import os
 import yaml
 import tensorflow as tf
+import importlib
      
 def build_fake_yaml():
     fake_yaml = '''
@@ -44,24 +45,38 @@ def build_fake_yaml2():
     f.close()
 
 def build_fake_model():
-    graph = tf.Graph()
-    graph_def = tf.GraphDef()
-    with tf.Session() as sess:
-        x = tf.placeholder(tf.float64, shape=(1,3,3,1), name='x')
-        y = tf.constant(np.random.random((2,2,1,1)), name='y')
-        op = tf.nn.conv2d(input=x, filter=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+    try:
+        graph = tf.Graph()
+        graph_def = tf.GraphDef()
+        with tf.Session() as sess:
+            x = tf.placeholder(tf.float64, shape=(1,3,3,1), name='x')
+            y = tf.constant(np.random.random((2,2,1,1)), name='y')
+            op = tf.nn.conv2d(input=x, filter=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
  
-        sess.run(tf.global_variables_initializer())
-        constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
+            sess.run(tf.global_variables_initializer())
+            constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
         
-    graph_def.ParseFromString(constant_graph.SerializeToString())
-    with graph.as_default():
-        tf.import_graph_def(graph_def, name='')
-
+        graph_def.ParseFromString(constant_graph.SerializeToString())
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name='')
+    except:
+        graph = tf.Graph()
+        graph_def = tf.compat.v1.GraphDef()
+        with tf.compat.v1.Session() as sess:
+            x = tf.compat.v1.placeholder(tf.float64, shape=(1,3,3,1), name='x')
+            y = tf.compat.v1.constant(np.random.random((2,2,1,1)), name='y')
+            op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+ 
+            sess.run(tf.compat.v1.global_variables_initializer())
+            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
+        
+        graph_def.ParseFromString(constant_graph.SerializeToString())
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name='')        
     return graph
 
 def build_fake_strategy_1():
-    with open(os.path.join(os.path.dirname(os.__file__), 'site-packages/ilit/strategy/fake.py'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
@@ -84,7 +99,7 @@ def build_fake_strategy_1():
     f.close()
 
 def build_fake_strategy_2():
-    with open(os.path.join(os.path.dirname(os.__file__), 'site-packages/ilit/strategy/test.py'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/test.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
@@ -110,9 +125,9 @@ class TestTuner(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove(os.path.join(os.path.dirname(os.__file__), 'site-packages/ilit/strategy/test.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/test.py'))
         os.remove('fake_yaml.yaml')
-        os.remove(os.path.join(os.path.dirname(os.__file__), 'site-packages/ilit/strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
         os.remove('fake_yaml2.yaml')    
         os.rmdir('saved')
 

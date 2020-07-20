@@ -1,7 +1,6 @@
 """Tests for the metrics module."""
 import numpy as np
 import unittest
-import sys
 import os
 from ilit import metric
 
