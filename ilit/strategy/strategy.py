@@ -18,6 +18,7 @@ from ..utils.utility import Timeout
 """
 STRATEGIES = {}
 
+
 def strategy_registry(cls):
     """The class decorator used to register all TuneStrategy subclasses.
 
@@ -26,12 +27,14 @@ def strategy_registry(cls):
 
     Returns:
         cls: The class of register.
-    """    
-    assert cls.__name__.endswith('TuneStrategy'), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
+    """
+    assert cls.__name__.endswith(
+        'TuneStrategy'), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
     if cls.__name__[:-len('TuneStrategy')].lower() in STRATEGIES:
         raise ValueError('Cannot have two strategies with the same name')
     STRATEGIES[cls.__name__[:-len('TuneStrategy')].lower()] = cls
     return cls
+
 
 class TuneStrategy(object):
     """The base class of tuning strategy.
@@ -66,13 +69,24 @@ class TuneStrategy(object):
                                                     accuracy = metric(output, label)
                                                     return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
-    """        
-    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
+    """
+
+    def __init__(
+            self,
+            model,
+            cfg,
+            q_dataloader,
+            q_func=None,
+            eval_dataloader=None,
+            eval_func=None,
+            dicts=None):
         self.model = model
         self.cfg = cfg
         framework_specific_info = {}
         if cfg.framework.name.lower() == 'tensorflow':
-            framework_specific_info = {"inputs": cfg.framework.inputs, "outputs": cfg.framework.outputs}
+            framework_specific_info = {
+                "inputs": cfg.framework.inputs,
+                "outputs": cfg.framework.outputs}
         if cfg.framework.name.lower() == 'mxnet':
             framework_specific_info = {"q_dataloader": q_dataloader}
 
@@ -100,7 +114,8 @@ class TuneStrategy(object):
         self.modelwise_tune_cfgs = self._tune_cfgs(self.modelwise_tune_space)
         self.opwise_tune_cfgs = OrderedDict()
         for key in self.opwise_tune_space:
-            self.opwise_tune_cfgs[key] = self._tune_cfgs(self.opwise_tune_space[key])
+            self.opwise_tune_cfgs[key] = self._tune_cfgs(
+                self.opwise_tune_space[key])
 
         self.calib_iter = cfg.calibration.iterations if cfg.calibration and cfg.calibration.iterations else None
         if self.calib_iter and isinstance(self.calib_iter, str):
@@ -136,7 +151,7 @@ class TuneStrategy(object):
 
         Yields:
             tune_config (dict): It's a dict containing the tuning configuration to run.
-        """        
+        """
         raise notimplementederror
 
     def traverse(self):
@@ -158,12 +173,14 @@ class TuneStrategy(object):
                 if evaluated:
                     continue
 
-                self.last_qmodel = self.adaptor.quantize(tune_cfg, self.model, self.calib_dataloader)
+                self.last_qmodel = self.adaptor.quantize(
+                    tune_cfg, self.model, self.calib_dataloader)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-                self.evaluated_cfgs.append([saved_tune_cfg, saved_last_tune_result])
+                self.evaluated_cfgs.append(
+                    [saved_tune_cfg, saved_last_tune_result])
 
                 if self.stop(t):
                     break
@@ -176,8 +193,8 @@ class TuneStrategy(object):
             dst_list (list): The dest list intersected to
 
         Returns:
-            list: The list containing the intersection result of two lists 
-        """        
+            list: The list containing the intersection result of two lists
+        """
         if src_list is None:
             return dst_list
 
@@ -202,13 +219,13 @@ class TuneStrategy(object):
 
         Returns:
             dict: The merged dict from src to dst
-        """        
+        """
         for key in src:
             if key in dst:
                 if isinstance(dst[key], dict) and isinstance(src[key], dict):
                     self._merge_dicts(src[key], dst[key])
                 elif dst[key] == src[key]:
-                    pass # same leaf value
+                    pass  # same leaf value
                 else:
                     value = [value for value in src[key] if value in dst[key]]
                     if value != []:
@@ -234,22 +251,28 @@ class TuneStrategy(object):
         src = {'weight': OrderedDict(), 'activation': OrderedDict()}
 
         if self.cfg.calibration and self.cfg.calibration.algorithm and self.cfg.calibration.algorithm.weight:
-            src['weight']['algorithm'] = [self.cfg.calibration.algorithm.weight]
+            src['weight']['algorithm'] = [
+                self.cfg.calibration.algorithm.weight]
         if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.granularity:
-            src['weight']['granularity'] = [self.cfg.quantization.weight.granularity]
+            src['weight']['granularity'] = [
+                self.cfg.quantization.weight.granularity]
         if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.scheme:
             src['weight']['scheme'] = [self.cfg.quantization.weight.scheme]
         if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.dtype:
             src['weight']['dtype'] = [self.cfg.quantization.weight.dtype]
 
         if self.cfg.calibration and self.cfg.calibration.algorithm and self.cfg.calibration.algorithm.activation:
-            src['activation']['algorithm'] = [self.cfg.calibration.algorithm.activation]
+            src['activation']['algorithm'] = [
+                self.cfg.calibration.algorithm.activation]
         if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.granularity:
-            src['activation']['granularity'] = [self.cfg.quantization.activation.granularity]
+            src['activation']['granularity'] = [
+                self.cfg.quantization.activation.granularity]
         if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.scheme:
-            src['activation']['scheme'] = [self.cfg.quantization.activation.scheme]
+            src['activation']['scheme'] = [
+                self.cfg.quantization.activation.scheme]
         if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.dtype:
-            src['activation']['dtype'] = [self.cfg.quantization.activation.dtype]
+            src['activation']['dtype'] = [
+                self.cfg.quantization.activation.dtype]
 
         return self._merge_dicts(src, dst)
 
@@ -284,7 +307,7 @@ class TuneStrategy(object):
 
         Returns:
             dict: The expanded tuning configs
-        """        
+        """
         cfg_lists = self._tune_cfgs_recursively(tune_space)
 
         # remove unreasonable tuning combinations
@@ -301,12 +324,12 @@ class TuneStrategy(object):
                 if dtype not in quant_dtype:
                     cfg['weight'].clear()
                     cfg['weight']['dtype'] = dtype
-                if (cfg['weight']['dtype'] != cfg['activation']['dtype'] and \
+                if (cfg['weight']['dtype'] != cfg['activation']['dtype'] and
                     cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
-                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and \
-                    cfg['weight']['dtype'] in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
-                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and \
-                   cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] in quant_dtype):
+                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and
+                     cfg['weight']['dtype'] in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
+                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and
+                     cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] in quant_dtype):
                     continue
 
             valid_cfgs.append(cfg)
@@ -323,7 +346,7 @@ class TuneStrategy(object):
 
         Returns:
             list: List containing all combinations
-        """        
+        """
         assert isinstance(cfg_dict, dict)
         combinations = OrderedDict()
         for key in cfg_dict:
@@ -351,13 +374,15 @@ class TuneStrategy(object):
         if self.eval_func:
             val = self.objective.evaluate(self.eval_func, model, baseline)
         else:
-            # eval_func being None means user will provide dataloader and metric info in config yaml file
+            # eval_func being None means user will provide dataloader and
+            # metric info in config yaml file
             assert self.eval_dataloader and self.cfg.tuning.metric, \
-                   "tuning dataloader and tuning metric should NOT be empty when eval_func is None"
+                "tuning dataloader and tuning metric should NOT be empty when eval_func is None"
             dataloader = self.eval_dataloader
             metric = self.cfg.tuning.metric
             assert len(metric) == 1, "Only one metric should be specified!"
             metric = METRICS[list(metric.keys())[0]](metric)
+
             def eval_func(model):
                 return self.adaptor.evaluate(model, dataloader, metric)
             val = self.objective.evaluate(eval_func, model, baseline)
@@ -368,7 +393,7 @@ class TuneStrategy(object):
 
         Returns:
             dict: Saved dict for resuming
-        """        
+        """
         save_dict = {
             'baseline': self.baseline,
             'cfg': self.cfg,
@@ -381,7 +406,7 @@ class TuneStrategy(object):
             'modelwise_quant_cfgs': self.modelwise_quant_cfgs,
             'opwise_quant_cfgs': self.opwise_quant_cfgs,
             'evaluated_cfgs': self.evaluated_cfgs
-            }
+        }
         return save_dict
 
     def __setstate__(self, d):
@@ -389,7 +414,7 @@ class TuneStrategy(object):
 
         Args:
             d (dict): The dict to load.
-        """        
+        """
         self.__dict__.update(d)
 
     def stop(self, timeout):
@@ -400,7 +425,7 @@ class TuneStrategy(object):
 
         Returns:
             bool: True if need stop, otherwise False
-        """        
+        """
         need_stop = False
 
         if self.objective.compare(self.best_tune_result):
@@ -411,7 +436,13 @@ class TuneStrategy(object):
         else:
             del self.last_qmodel
 
-        print('Tune result is: ', '[{:.4f}, {:.4f}]'.format(*self.last_tune_result) if self.last_tune_result else None, 'Best tune result is: ', '[{:.4f}, {:.4f}]'.format(*self.best_tune_result) if self.best_tune_result else None)
+        print(
+            'Tune result is: ',
+            '[{:.4f}, {:.4f}]'.format(
+                *self.last_tune_result) if self.last_tune_result else None,
+            'Best tune result is: ',
+            '[{:.4f}, {:.4f}]'.format(
+                *self.best_tune_result) if self.best_tune_result else None)
 
         if timeout.seconds != 0 and timeout.timed_out:
             need_stop = True

@@ -9,7 +9,8 @@ class YamlAttr(dict):
     Args:
         value (dict): The dict object to access.
 
-    """    
+    """
+
     def __init__(self, value=None):
         if value is None:
             pass
@@ -49,7 +50,8 @@ class Conf(object):
     Args:
         cfg_fname (string): The path to the configuration file.
 
-    """    
+    """
+
     def __init__(self, cfg_fname):
         assert cfg_fname is not None
         self.cfg = self._read_cfg(cfg_fname)

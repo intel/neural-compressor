@@ -10,9 +10,10 @@ from pycocotools import cocoeval
 '''
 METRICS = {}
 
+
 def metric_registry(cls):
     """The class decorator used to register all Metric subclasses.
-    
+
     Returns:
         cls (object): The class of register.
     """
@@ -21,6 +22,7 @@ def metric_registry(cls):
     METRICS[cls.__name__.lower()] = cls
     return cls
 
+
 class Metric(object):
     """The base class of metrics supported by iLiT.
 
@@ -28,6 +30,7 @@ class Metric(object):
         name (string): The name of supported metric.
 
     """
+
     def __init__(self, name):
         self.name = name
 
@@ -51,6 +54,7 @@ class Metric(object):
         """
         raise notimplementederror
 
+
 @metric_registry
 class Topk(Metric):
     """The class of calculating topk metric, which usually is used in classification.
@@ -59,6 +63,7 @@ class Topk(Metric):
         topk (dict): The dict of topk for configuration.
 
     """
+
     def __init__(self, topk):
         super(Topk, self).__init__('topk')
         assert isinstance(topk, dict)
@@ -119,6 +124,7 @@ class CocoMAP(Metric):
     Args:
         mean_ap(dict): The dict of mean AP for configuration.
     """
+
     def __init__(self, mean_ap):
         super(CocoMAP, self).__init__('cocomap')
         assert isinstance(mean_ap, dict)
@@ -191,7 +197,9 @@ class CocoMAP(Metric):
         Returns:
             evaluator (object): wrappered coco evaluator.
         """
-        evaluator = cocoeval.COCOeval(cocoDt=self.cocoDtWrapper, cocoGt=self.cocoGtWrapper)
+        evaluator = cocoeval.COCOeval(
+            cocoDt=self.cocoDtWrapper,
+            cocoGt=self.cocoGtWrapper)
         return evaluator
 
     def cocoGtWrapper(self, image_id, groundtruth_classes, groundtruth_boxes):
@@ -213,13 +221,18 @@ class CocoMAP(Metric):
 
         for i in range(num_boxes):
             single_gbox_dict = {
-                'image_id':     image_id,
-                'category_id':  groundtruth_classes[i],
-                'bbox':         list(self._ConvertBoxToCOCOFormat(groundtruth_boxes[i, :])),
+                'image_id': image_id,
+                'category_id': groundtruth_classes[i],
+                'bbox': list(self._ConvertBoxToCOCOFormat(groundtruth_boxes[i, :])),
             }
             self.GroundTruths.append(single_gbox_dict)
 
-    def cocoDtWrapper(self, image_id, detection_classes, detection_boxes, detection_scores):
+    def cocoDtWrapper(
+            self,
+            image_id,
+            detection_classes,
+            detection_boxes,
+            detection_scores):
         """Wrapper inputs as the format of COCODt
 
         Args:
@@ -239,10 +252,10 @@ class CocoMAP(Metric):
 
         for i in range(num_boxes):
             single_dbox_dict = {
-                'image_id':     image_id,
-                'category_id':  detection_classes[i],
-                'bbox':         list(self._ConvertBoxToCOCOFormat(detection_boxes[i, :])),
-                'score':        float(detection_scores[i]),
+                'image_id': image_id,
+                'category_id': detection_classes[i],
+                'bbox': list(self._ConvertBoxToCOCOFormat(detection_boxes[i, :])),
+                'score': float(detection_scores[i]),
             }
             self.Detections.append(single_dbox_dict)
 
@@ -259,6 +272,7 @@ class CocoMAP(Metric):
         return [float(box[1]), float(box[0]), float(box[3] - box[1]),
                 float(box[2] - box[0])]
 
+
 @metric_registry
 class F1(Metric):
     """The class of calculating f1 metric, which usually is used in NLP, such as BERT.
@@ -267,6 +281,7 @@ class F1(Metric):
         f1 (dict): The dict of f1 for configuration.
                     If multi-class, need provide the average config(micro, macro, weighted).
     """
+
     def __init__(self, f1):
         super(F1, self).__init__('f1')
         assert isinstance(f1, dict)
@@ -292,7 +307,8 @@ class F1(Metric):
             assert 'average' in self.f1_config.keys()
             assert self.f1_config['average'] in ['micro', 'macro', 'weighted']
             predict = predict.argmax(axis=-1)
-            self.acc = f1_score(label, predict, average=self.f1_config['average'])
+            self.acc = f1_score(
+                label, predict, average=self.f1_config['average'])
         return self.acc
 
     def compare(self, target):
@@ -310,14 +326,14 @@ class F1(Metric):
 if __name__ == "__main__":
     # tmp test
     print("test acc")
-    acc_metric = Topk({'topk':1})
+    acc_metric = Topk({'topk': 1})
     predict = np.array([[0.22, 0.78], [0.36, 0.64], [0.1, 0.9]])
     label = np.array([1, 0, 1])
     acc = acc_metric.evaluate(predict, label)
     print(acc)
 
     print("test top-2")
-    acc_metric = Topk({'topk':2})
+    acc_metric = Topk({'topk': 2})
     predict = np.array([[0.5, 0.4, 0.1], [0.2, 0.5, 0.3], [0.2, 0.2, 0.6]])
     label = np.ones([1, 2, 1])
     acc = acc_metric.evaluate(predict, label)
@@ -326,12 +342,14 @@ if __name__ == "__main__":
     print("test f1")
     test_f1 = F1(f1={'average': 'weighted'})
     # binary test
-    y_predict = np.array([[0.5, 0.5], [1,0], [0.3,0.7], [0,1], [0.4,0.6], [0.7,0.3]])
+    y_predict = np.array([[0.5, 0.5], [1, 0], [0.3, 0.7],
+                          [0, 1], [0.4, 0.6], [0.7, 0.3]])
     y_true = np.array([0, 0, 1, 0, 0, 1])
     acc = test_f1.evaluate(y_predict, y_true)
     print(acc)
     # multi-label test
-    y_predict = np.array([[0.5, 0.3, 0.2], [1, 0, 0], [0.1, 0.3,0.6], [0.2, 0.3, 0.5], [0.1, 0.6,0.3], [0.7,0.1,0.1]])
+    y_predict = np.array([[0.5, 0.3, 0.2], [1, 0, 0], [0.1, 0.3, 0.6], [
+                         0.2, 0.3, 0.5], [0.1, 0.6, 0.3], [0.7, 0.1, 0.1]])
     y_true = np.array([0, 0, 2, 1, 1, 0])
     acc = test_f1.evaluate(y_predict, y_true)
     print(acc)
@@ -340,15 +358,15 @@ if __name__ == "__main__":
     mAP_metric = CocoMAP()
     # [image_id(optional), detection_classes, detection_boxes, detection_scores]
     pd_imgid = 1
-    pd_classes = np.array([1,0,0])
+    pd_classes = np.array([1, 0, 0])
     pd_boxes = np.array([[5, 67, 31, 48],
-                            [119, 111, 40, 67],
-                            [124, 9, 49, 67]])
+                         [119, 111, 40, 67],
+                         [124, 9, 49, 67]])
     pd_scores = np.array([.88, .70, .80])
     predict_1 = np.array([pd_imgid, pd_classes, pd_boxes, pd_scores])
 
     gd_imgid = 1
-    gd_classes = np.array([1,0])
+    gd_classes = np.array([1, 0])
     gd_boxes = np.array([[25, 16, 38, 56],
                          [129, 123, 41, 62]])
     ground_truth_1 = np.array([gd_imgid, gd_classes, gd_boxes])

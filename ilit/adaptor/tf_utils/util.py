@@ -90,7 +90,8 @@ def split_shared_inputs(in_graph, ops=[]):
         if node.op in ops:
             for input_idx, input_node_name in enumerate(node.input):
                 if node_map[input_node_name].op == 'Const':
-                    # is shared and current node is not the first one sharing the input
+                    # is shared and current node is not the first one sharing
+                    # the input
                     if input_node_name in input_map.keys():
                         input_map[input_node_name].append(node.name)
                         new_input_node = node_def_pb2.NodeDef()

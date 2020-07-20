@@ -2,6 +2,7 @@ from .strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
 import itertools
 
+
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):
     """The tuning strategy using exhaustive search in tuning space.
@@ -37,9 +38,27 @@ class ExhaustiveTuneStrategy(TuneStrategy):
                                                     return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
 
-    """    
-    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
-        super(ExhaustiveTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)
+    """
+
+    def __init__(
+            self,
+            model,
+            cfg,
+            q_dataloader,
+            q_func=None,
+            eval_dataloader=None,
+            eval_func=None,
+            dicts=None):
+        super(
+            ExhaustiveTuneStrategy,
+            self).__init__(
+            model,
+            cfg,
+            q_dataloader,
+            q_func,
+            eval_dataloader,
+            eval_func,
+            dicts)
 
     def next_tune_cfg(self):
         # generate tuning space according to user chosen tuning strategy
@@ -62,4 +81,3 @@ class ExhaustiveTuneStrategy(TuneStrategy):
                 yield op_cfgs
 
         return
-

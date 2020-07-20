@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 
+from io import StringIO
 import io
 from contextlib import redirect_stdout, redirect_stderr
 import tensorflow as tf
@@ -53,7 +54,6 @@ import copy
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
-from io import StringIO
 
 
 class OutputGrabber(object):
@@ -200,7 +200,7 @@ class GraphConverter:
         return graph
 
     def _inference(self, input_graph):
-        """Run the calibration on the input graph 
+        """Run the calibration on the input graph
 
         Args:
             input_graph (tf.compat.v1.GraphDef): input graph
@@ -341,9 +341,8 @@ class GraphConverter:
         for i in target_conv_op:
             if specified_op_list and i not in specified_op_list:
                 continue
-            if node_name_mapping[
-                    i +
-                    "_eightbit_quantized_conv"].op == 'QuantizedConv2DWithBiasSumAndRelu':
+            if node_name_mapping[i +
+                                 "_eightbit_quantized_conv"].op == 'QuantizedConv2DWithBiasSumAndRelu':
                 start_index = sorted_node_names.index(i)
                 for index, value in enumerate(sorted_node_names[start_index:]):
                     if fp32_node_name_mapping[value].op.startswith(
@@ -404,7 +403,7 @@ class GraphConverter:
             op_name = op_info[0]
             op_type = op_info[1]
 
-            if op_type not in ( "conv2d"):
+            if op_type not in ("conv2d"):
                 continue
             op_name_type_dict[op_name] = op_type
 
@@ -415,7 +414,8 @@ class GraphConverter:
                     q_node.input[-2]].attr["value"].tensor.float_val[0]
                 q_out_max = graph_node_name_mapping[
                     q_node.input[-1]].attr["value"].tensor.float_val[0]
-                q_node_scale[op_name + quantized_node_name_postfix] = (q_node.op, q_out_min, q_out_max)
+                q_node_scale[op_name +
+                             quantized_node_name_postfix] = (q_node.op, q_out_min, q_out_max)
             else:
                 fp32_node_name.append(op_name)
                 if graph_node_name_mapping[op_name].op in (
@@ -471,12 +471,12 @@ class GraphConverter:
 
             if key in fp32_node_name_mapping:
                 key = fp32_node_name_mapping[key]
-                result[(key, op_name_type_dict[key])] = np.array(ast.literal_eval(data), dtype=np.float)
+                result[(key, op_name_type_dict[key])] = np.array(
+                    ast.literal_eval(data), dtype=np.float)
             else:
                 result_key = key.split(quantized_node_name_postfix)[0]
                 result[(result_key, op_name_type_dict[result_key])] = self._dequantize(
-                    np.array(ast.literal_eval(data), dtype=np.int),
-                    q_node_scale[key])
+                    np.array(ast.literal_eval(data), dtype=np.int), q_node_scale[key])
 
         return result
 

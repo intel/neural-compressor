@@ -54,7 +54,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         matched_node = self.node_name_mapping[match_node_name[0]]
         _, normal_inputs = self._get_node_input(matched_node.node.name)
         weight_name = normal_inputs[1]
-        # TODO this is workaround as the tf 2.1 doesn't support depthwise s8 feature.
+        # TODO this is workaround as the tf 2.1 doesn't support depthwise s8
+        # feature.
         if self.enable_s8 and matched_node.node.op == "DepthwiseConv2dNative" and not self._find_relu_node(
                 matched_node.node):
             self.output_graph = self.input_graph

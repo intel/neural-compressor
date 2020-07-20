@@ -16,6 +16,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     """
 
     """
+
     def __init__(self, input_graph, output_node_names, op_wise_config):
         """Quantize Graph For Intel Cpu
 

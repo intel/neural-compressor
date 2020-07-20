@@ -18,8 +18,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         namespace_prefix = original_node.name + "_eightbit"
         quantized_concat_name = namespace_prefix + "_quantized_concatv2"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
-            namespace_prefix,
-            helper.node_name_from_input(original_node.input[-1]))
+            namespace_prefix, helper.node_name_from_input(original_node.input[-1]))
         num_input = len(original_node.input)
         shape_input_name = original_node.input[num_input - 1]
         original_inputs = original_node.input[0:num_input - 1]

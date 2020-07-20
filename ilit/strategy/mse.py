@@ -3,6 +3,7 @@ from collections import OrderedDict
 import copy
 import numpy as np
 
+
 @strategy_registry
 class MSETuneStrategy(TuneStrategy):
     """The tuning strategy using MSE policy in tuning space.
@@ -42,9 +43,27 @@ class MSETuneStrategy(TuneStrategy):
                                                     return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
 
-    """    
-    def __init__(self, model, cfg, dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
-        super(MSETuneStrategy, self).__init__(model, cfg, dataloader, q_func, eval_dataloader, eval_func, dicts)
+    """
+
+    def __init__(
+            self,
+            model,
+            cfg,
+            dataloader,
+            q_func=None,
+            eval_dataloader=None,
+            eval_func=None,
+            dicts=None):
+        super(
+            MSETuneStrategy,
+            self).__init__(
+            model,
+            cfg,
+            dataloader,
+            q_func,
+            eval_dataloader,
+            eval_func,
+            dicts)
         self.ordered_ops = None
 
     def __getstate__(self):
@@ -59,15 +78,16 @@ class MSETuneStrategy(TuneStrategy):
             fp32_tensor (tensor): The FP32 tensor.
             dequantize_tensor (tensor): The INT8 dequantize tensor.
         """
-        fp32_max  = np.max(fp32_tensor)
-        fp32_min  = np.min(fp32_tensor)
+        fp32_max = np.max(fp32_tensor)
+        fp32_min = np.min(fp32_tensor)
         dequantize_max = np.max(dequantize_tensor)
         dequantize_min = np.min(dequantize_tensor)
         fp32_tensor = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
-        dequantize_tensor = (dequantize_tensor - dequantize_min) / (dequantize_max - dequantize_min)
+        dequantize_tensor = (dequantize_tensor - dequantize_min) / \
+            (dequantize_max - dequantize_min)
         diff_tensor = fp32_tensor - dequantize_tensor
         euclidean_dist = np.sum(diff_tensor ** 2)
-        return euclidean_dist/fp32_tensor.size
+        return euclidean_dist / fp32_tensor.size
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
@@ -92,7 +112,8 @@ class MSETuneStrategy(TuneStrategy):
                         else:
                             op_cfgs['op'][op] = copy.deepcopy(tune_cfg)
                     else:
-                        op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
+                        op_cfgs['op'][op] = copy.deepcopy(
+                            self.opwise_tune_cfgs[op][0])
 
                 yield op_cfgs
                 acc, _ = self.last_tune_result
@@ -100,21 +121,33 @@ class MSETuneStrategy(TuneStrategy):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
 
-        if best_cfg == None:
+        if best_cfg is None:
             return
 
         # Inspect FP32 and dequantized tensor
-        if self.ordered_ops == None:
+        if self.ordered_ops is None:
             op_lists = self.opwise_quant_cfgs.keys()
-            fp32_tensor_dict = self.adaptor.inspect_tensor(self.model, self.calib_dataloader, op_lists, [1])
-            best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
-            dequantize_tensor_dict = self.adaptor.inspect_tensor(best_qmodel, self.calib_dataloader, op_lists, [1])
+            fp32_tensor_dict = self.adaptor.inspect_tensor(
+                self.model, self.calib_dataloader, op_lists, [1])
+            best_qmodel = self.adaptor.quantize(
+                best_cfg, self.model, self.calib_dataloader)
+            dequantize_tensor_dict = self.adaptor.inspect_tensor(
+                best_qmodel, self.calib_dataloader, op_lists, [1])
 
-            ops_mse = {op:self.mse_metric_gap(fp32_tensor_dict[op], dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
-            self.ordered_ops = sorted(ops_mse.keys(),key=lambda key:ops_mse[key], reverse=True)
+            ops_mse = {
+                op: self.mse_metric_gap(
+                    fp32_tensor_dict[op],
+                    dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
+            self.ordered_ops = sorted(
+                ops_mse.keys(),
+                key=lambda key: ops_mse[key],
+                reverse=True)
 
-        if ops_mse != None:
-            ordered_ops = sorted(ops_mse.keys(), key=lambda key:ops_mse[key], reverse=True)
+        if ops_mse is not None:
+            ordered_ops = sorted(
+                ops_mse.keys(),
+                key=lambda key: ops_mse[key],
+                reverse=True)
             op_cfgs = copy.deepcopy(best_cfg)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
@@ -140,4 +173,3 @@ class MSETuneStrategy(TuneStrategy):
                 yield op_cfgs
 
         return
-

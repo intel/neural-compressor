@@ -7,6 +7,7 @@ from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 
+
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
     """The tuning strategy using bayesian search in tuning space.
@@ -42,9 +43,27 @@ class BayesianTuneStrategy(TuneStrategy):
                                                     return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
 
-    """    
-    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
-        super(BayesianTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts=None)
+    """
+
+    def __init__(
+            self,
+            model,
+            cfg,
+            q_dataloader,
+            q_func=None,
+            eval_dataloader=None,
+            eval_func=None,
+            dicts=None):
+        super(
+            BayesianTuneStrategy,
+            self).__init__(
+            model,
+            cfg,
+            q_dataloader,
+            q_func,
+            eval_dataloader,
+            eval_func,
+            dicts=None)
         self.bayes_opt = None
 
     def __getstate__(self):
@@ -88,8 +107,9 @@ class BayesianTuneStrategy(TuneStrategy):
             pbounds['calib_iteration'] = (0, len(self.calib_iter))
         if len(pbounds) == 0:
             return
-        if self.bayes_opt == None:
-            self.bayes_opt = BayesianOptimization(pbounds=pbounds, random_seed=self.cfg.random_seed)
+        if self.bayes_opt is None:
+            self.bayes_opt = BayesianOptimization(
+                pbounds=pbounds, random_seed=self.cfg.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
             yield self.params_to_tune_configs(params)
@@ -97,6 +117,8 @@ class BayesianTuneStrategy(TuneStrategy):
 
 # Util part
 # Bayesian opt acq function
+
+
 def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     """
     A function to find the maximum of the acquisition function
@@ -116,14 +138,14 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
 
     # Warm up with random points
     x_tries = np.random.uniform(bounds[:, 0], bounds[:, 1],
-                                   size=(n_warmup, bounds.shape[0]))
+                                size=(n_warmup, bounds.shape[0]))
     ys = ac(x_tries, gp=gp, y_max=y_max)
     x_max = x_tries[ys.argmax()]
     max_acq = ys.max()
 
     # Explore the parameter space more throughly
     x_seeds = np.random.uniform(bounds[:, 0], bounds[:, 1],
-                                   size=(n_iter, bounds.shape[0]))
+                                size=(n_iter, bounds.shape[0]))
     for x_try in x_seeds:
         # Find the minimum of minus the acquisition function
         res = minimize(lambda x: -ac(x.reshape(1, -1), gp=gp, y_max=y_max),
@@ -144,16 +166,20 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     # point technicalities this is not always the case.
     return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
+
 def _hashable(x):
     """ ensure that an point is hashable by a python dict """
     return tuple(map(float, x))
 
 # Target space part
+
+
 class TargetSpace(object):
     """
     Holds the param-space coordinates (X) and target values (Y)
     Allows for constant-time appends while ensuring no duplicates are added
     """
+
     def __init__(self, pbounds, random_seed=9527):
         """
         Parameters
@@ -329,6 +355,8 @@ class TargetSpace(object):
         ]
 
 # Tuning part
+
+
 class BayesianOptimization():
     def __init__(self, pbounds, random_seed=9527, verbose=2):
         self._random_seed = random_seed
@@ -390,4 +418,3 @@ class BayesianOptimization():
     def gen_next_params(self):
         next_params = self.suggest()
         return next_params
-

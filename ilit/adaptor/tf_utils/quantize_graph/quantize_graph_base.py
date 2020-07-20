@@ -23,6 +23,7 @@ class QuantizeGraphBase(object):
     """
     This is the base class for quantize graph.
     """
+
     def __init__(self, output_node_names):
         self.output_node_names = output_node_names
         self.transformers = OrderedDict()
@@ -109,9 +110,9 @@ class QuantizeNodeBase(object):
                     continue
 
                 if (v in ("MatMul") or
-                    (v in ("Conv2D", "DepthwiseConv2dNative")
-                     and not self.enable_s8)
-                    ) and not self._find_relu_node(cur_node):
+                            (v in ("Conv2D", "DepthwiseConv2dNative")
+                             and not self.enable_s8)
+                        ) and not self._find_relu_node(cur_node):
                     continue
 
                 for sub_rule in patterns:
@@ -255,8 +256,7 @@ class QuantizeNodeBase(object):
     def _add_eightbit_prologue_nodes(self, original_node):
         namespace_prefix = original_node + "_eightbit"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
-            namespace_prefix,
-            self.node_name_mapping[original_node].node.input[0])
+            namespace_prefix, self.node_name_mapping[original_node].node.input[0])
         input_names = []
         min_max_names = []
         for each_input_name in self.node_name_mapping[
@@ -340,8 +340,8 @@ class QuantizeNodeBase(object):
 
             if node.name in self.node_name_mapping:
                 raise ValueError(
-                    "Duplicate Node Found when _parse_graph, the node name is {}"
-                    .format(node.name))
+                    "Duplicate Node Found when _parse_graph, the node name is {}" .format(
+                        node.name))
 
             self.node_name_mapping[node.name] = each_node
 
@@ -367,7 +367,8 @@ class QuantizeNodeBase(object):
                 raise ValueError("Input node name '" + dequantize_node_name +
                                  "' not found in node '" + node.name + "'")
             dequantize_node = old_nodes_map[dequantize_node_name]
-            # Do we have a Dequantize feeding in, with the same type as the Quantize?
+            # Do we have a Dequantize feeding in, with the same type as the
+            # Quantize?
             if dequantize_node.op != "Dequantize":
                 continue
 
@@ -391,7 +392,8 @@ class QuantizeNodeBase(object):
                 max_node.input[0])
             # There are two different patterns for Min nodes we can recognize, one
             # where the input comes directly from the same one as the Max, and
-            # another where we run it through another Min first, so check for both.
+            # another where we run it through another Min first, so check for
+            # both.
             is_same_input = False
             if min_node_input_name == max_node_input_name:
                 is_same_input = True
@@ -625,7 +627,8 @@ class QuantizeNodeBase(object):
                         mode=quantization_mode,
                         round_mode="HALF_TO_EVEN")
                     qint8_tensor = quantize_op[0].eval()
-                    # Updated min-max values should be passed to the next feeding node.
+                    # Updated min-max values should be passed to the next
+                    # feeding node.
                     min_value = quantize_op[1].eval()
                     max_value = quantize_op[2].eval()
         elif parent == "DepthwiseConv2dNative":

@@ -5,6 +5,7 @@ import pickle
 from .conf.config import Conf
 from .strategy import STRATEGIES
 
+
 class Tuner(object):
     """Tuner class automatically searches for optimal quantization recipes for low precision model inference,
        achieving best tuning objectives like inference performance within accuracy loss constraints.
@@ -20,11 +21,19 @@ class Tuner(object):
         conf_fname (string): The path to the YAML configuration file containing accuracy goal, tuning objective
                              and preferred calibration & quantization tuning space etc.
 
-    """    
-    def __init__(self, conf_fname):
-        self.cfg  = Conf(conf_fname).cfg
+    """
 
-    def tune(self, model, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, resume_file=None):
+    def __init__(self, conf_fname):
+        self.cfg = Conf(conf_fname).cfg
+
+    def tune(
+            self,
+            model,
+            q_dataloader,
+            q_func=None,
+            eval_dataloader=None,
+            eval_func=None,
+            resume_file=None):
         """The main entry point of automatic quantization tuning.
 
            This interface works on all the DL frameworks that iLiT supports and provides two usages:
@@ -82,18 +91,28 @@ class Tuner(object):
         strategy = 'basic'
         if self.cfg.tuning.strategy:
             strategy = self.cfg.tuning.strategy.lower()
-            assert strategy.lower() in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
+            assert strategy.lower(
+            ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
 
         dicts = None
-        # check if interrupted tuning procedure exists. if yes, it will resume the whole auto tune process.
+        # check if interrupted tuning procedure exists. if yes, it will resume
+        # the whole auto tune process.
         if resume_file:
             resume_file = os.path.abspath(resume_file)
-            assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
+            assert os.path.exists(
+                resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
             with open(resume_file, 'rb') as f:
                 resume_strategy = pickle.load(f)
                 dicts = resume_strategy.__dict__
 
-        self.strategy = STRATEGIES[strategy](model, self.cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)
+        self.strategy = STRATEGIES[strategy](
+            model,
+            self.cfg,
+            q_dataloader,
+            q_func,
+            eval_dataloader,
+            eval_func,
+            dicts)
 
         try:
             self.strategy.traverse()
@@ -101,18 +120,20 @@ class Tuner(object):
             self._save()
 
         if self.strategy.best_qmodel:
-            print("Specified timeout is reached! Found a quantized model which meet accuracy goal. Exit...")
+            print(
+                "Specified timeout is reached! Found a quantized model which meet accuracy goal. Exit...")
         else:
-            print("Specified timeout is reached! Not found any quantized model which meet accuracy goal. Exit...")
+            print(
+                "Specified timeout is reached! Not found any quantized model which meet accuracy goal. Exit...")
 
         return self.strategy.best_qmodel
 
     def _save(self):
         """save current tuning state to snapshot for resuming.
-        """        
+        """
         path = Path(self.snapshot_path)
         path.mkdir(exist_ok=True, parents=True)
-        
+
         fname = self.snapshot_path + '/ilit-' + datetime.today().strftime(
             '%Y-%m-%d-%H-%M-%S') + '.snapshot'
         with open(fname, 'wb') as f:

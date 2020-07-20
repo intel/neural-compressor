@@ -13,8 +13,15 @@ import time
 import yaml
 import sys
 
+
 def print_info():
-    print(inspect.stack()[1][1],":",inspect.stack()[1][2],":", inspect.stack()[1][3])
+    print(
+        inspect.stack()[1][1],
+        ":",
+        inspect.stack()[1][2],
+        ":",
+        inspect.stack()[1][3])
+
 
 def cfg_from_file(file_name):
     """Load a config file and merge it into the default options.
@@ -27,6 +34,7 @@ def cfg_from_file(file_name):
 
     return yaml_cfg
 
+
 def caller_obj(obj_name):
     """Get the object of local variable, function or class in caller.
 
@@ -37,12 +45,14 @@ def caller_obj(obj_name):
         if obj_name in f[0].f_locals:
             return f[0].f_locals[obj_name]
 
+
 class LazyImport(object):
     """Lazy import python module till use
 
        Args:
            module_name (string): The name of module imported later
     """
+
     def __init__(self, module_name):
         self.module_name = module_name
         self.module = None
@@ -53,12 +63,14 @@ class LazyImport(object):
 
         return getattr(self.module, name)
 
+
 class AverageMeter(object):
     """Computes the average value
 
        Args:
            skip (optional, integar): the skipped iterations in calculation
     """
+
     def __init__(self, skip=0):
         self.skip = skip
         self.reset()
@@ -76,12 +88,14 @@ class AverageMeter(object):
         self.sum += val
         self.avg = self.sum / (self.cnt - self.skip)
 
+
 class Timeout(object):
     """Timeout class to check if spending time is beyond target.
 
        Args:
            seconds (optional, integar): the timeout value, 0 means early stop.
     """
+
     def __init__(self, seconds=0):
         self.seconds = seconds
 
@@ -95,6 +109,7 @@ class Timeout(object):
     @property
     def timed_out(self):
         return time.time() > self.die_after
+
 
 def get_size(obj, seen=None):
     """Recursively finds size of objects"""

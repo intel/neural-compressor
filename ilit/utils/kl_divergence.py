@@ -1,10 +1,13 @@
 import math
+
+
 class KL_Divergence(object):
     '''The class of supporting KL divergence calibration algorithm.
 
        Args:
            TODO:
     '''
+
     def __init__(self):
         pass
 

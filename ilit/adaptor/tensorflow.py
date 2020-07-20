@@ -7,6 +7,7 @@ from ..utils.utility import LazyImport
 
 tensorflow = LazyImport('tensorflow')
 
+
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {

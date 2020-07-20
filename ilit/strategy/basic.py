@@ -3,10 +3,11 @@ from collections import OrderedDict
 import itertools
 from .strategy import strategy_registry, TuneStrategy
 
+
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
     """The basic tuning strategy which tunes the low precision model with below order.
-    
+
     1. modelwise tuning for all quantizable ops.
     2. fallback tuning from bottom to top to decide the priority of which op has biggest impact on accuracy.
     3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
@@ -43,8 +44,26 @@ class BasicTuneStrategy(TuneStrategy):
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
 
     """
-    def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
-        super(BasicTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)
+
+    def __init__(
+            self,
+            model,
+            cfg,
+            q_dataloader,
+            q_func=None,
+            eval_dataloader=None,
+            eval_func=None,
+            dicts=None):
+        super(
+            BasicTuneStrategy,
+            self).__init__(
+            model,
+            cfg,
+            q_dataloader,
+            q_func,
+            eval_dataloader,
+            eval_func,
+            dicts)
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
@@ -69,7 +88,8 @@ class BasicTuneStrategy(TuneStrategy):
                         else:
                             op_cfgs['op'][op] = copy.deepcopy(tune_cfg)
                     else:
-                        op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
+                        op_cfgs['op'][op] = copy.deepcopy(
+                            self.opwise_tune_cfgs[op][0])
 
                 yield op_cfgs
                 acc, _ = self.last_tune_result
@@ -77,7 +97,7 @@ class BasicTuneStrategy(TuneStrategy):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
 
-        if best_cfg == None:
+        if best_cfg is None:
             return
 
         ops_acc = OrderedDict()
@@ -96,8 +116,11 @@ class BasicTuneStrategy(TuneStrategy):
             ops_acc[op] = acc
 
         op_cfgs = copy.deepcopy(best_cfg)
-        if ops_acc != None:
-            ordered_ops = sorted(ops_acc.keys(), key=lambda key:ops_acc[key], reverse=True)
+        if ops_acc is not None:
+            ordered_ops = sorted(
+                ops_acc.keys(),
+                key=lambda key: ops_acc[key],
+                reverse=True)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
                 op_cfgs['op'][op]['activation'].clear()

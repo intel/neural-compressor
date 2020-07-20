@@ -80,7 +80,8 @@ class QuantizeGraphHelper(object):
                 for input_idx, input_node_name in enumerate(node.input):
                     if node_map[QuantizeGraphHelper.node_name_from_input(
                             input_node_name)].op == 'Const':
-                        # is shared and current node is not the first one sharing the input
+                        # is shared and current node is not the first one
+                        # sharing the input
                         if input_node_name in input_map.keys():
                             is_shared_input = True
                             input_map[input_node_name].append(node.name)

@@ -63,8 +63,12 @@ def get_fuse_index(input_node_map, input_name_list):
     return fuse_op_with_sum_list, fuse_op_with_sum_deq_list
 
 
-def generate_output_graph(input_graph_def, input_node_map, output_node_map, fuse_op_list,
-                          fuse_op_deq_list):
+def generate_output_graph(
+        input_graph_def,
+        input_node_map,
+        output_node_map,
+        fuse_op_list,
+        fuse_op_deq_list):
     output_graph_def = graph_pb2.GraphDef()
     skip_list = []
     skip_node_name = []
@@ -329,8 +333,13 @@ def parse_input_graph(input_graph_def):
 
 
 def fuse_quantized_conv_and_requantize(input_graph):
-    input_node_map, output_node_map, node_name_list = parse_input_graph(input_graph)
+    input_node_map, output_node_map, node_name_list = parse_input_graph(
+        input_graph)
     fuse_op_list, fuse_op_deq_list = get_fuse_index(input_node_map,
                                                     node_name_list)
-    return generate_output_graph(input_graph, input_node_map, output_node_map, fuse_op_list,
-                                 fuse_op_deq_list)
+    return generate_output_graph(
+        input_graph,
+        input_node_map,
+        output_node_map,
+        fuse_op_list,
+        fuse_op_deq_list)

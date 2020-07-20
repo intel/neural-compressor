@@ -73,7 +73,8 @@ class FuseOldBN(GraphTransformBase):
         beta_idx = 2 if is_fused else 3
         gamma_idx = 1 if is_fused else 4
         epsilon_attr = "epsilon" if is_fused else "variance_epsilon"
-        scale_after_normalization = is_fused  # TODO need to check scale_after_normalization
+        # TODO need to check scale_after_normalization
+        scale_after_normalization = is_fused
 
         mean_node = input_node_map[bn_node.input[mean_idx][:]]
         variance_node = input_node_map[bn_node.input[var_idx][:]]

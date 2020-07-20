@@ -10,22 +10,26 @@ from abc import abstractmethod
 '''
 FRAMEWORKS = {}
 
+
 def adaptor_registry(cls):
     '''The class decorator used to register all Adaptor subclasses.
 
        Args:
            cls (class): The class of register.
     '''
-    assert cls.__name__.endswith('Adaptor'), "The name of subclass of Adaptor should end with \'Adaptor\' substring."
+    assert cls.__name__.endswith(
+        'Adaptor'), "The name of subclass of Adaptor should end with \'Adaptor\' substring."
     if cls.__name__[:-len('Adaptor')].lower() in FRAMEWORKS:
         raise ValueError('Cannot have two frameworks with the same name.')
     FRAMEWORKS[cls.__name__[:-len('Adaptor')].lower()] = cls
     return cls
 
+
 class Adaptor(object):
     '''The base class of framework adaptor layer.
 
     '''
+
     def __init__(self, framework_specific_info):
         pass
 
@@ -91,4 +95,3 @@ class Adaptor(object):
                {'src_op1': 'dst_op1'}
         '''
         raise notimplementederror
-

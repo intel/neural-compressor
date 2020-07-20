@@ -16,10 +16,12 @@ from tempfile import TemporaryDirectory
 
 mx = LazyImport("mxnet")
 
-logging.basicConfig(level=logging.INFO,
-                    datefmt='[%H:%M:%S]',
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    datefmt='[%H:%M:%S]',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("iLiT-MXNet")
+
 
 def _check_version(v1, v2):
     """version checkout functioin.
@@ -30,9 +32,9 @@ def _check_version(v1, v2):
 
     Returns:
         boolen: True if v1 > v2, else False.
-    """    
-    d1 = re.split('\.', v1)
-    d2 = re.split('\.', v2)
+    """
+    d1 = re.split(r'\.', v1)
+    d2 = re.split(r'\.', v2)
     d1 = [int(d1[i]) for i in range(len(d1))]
     d2 = [int(d2[i]) for i in range(len(d2))]
 
@@ -40,13 +42,15 @@ def _check_version(v1, v2):
         return True
     return False
 
+
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
     """The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.
 
     Args:
         framework_specific_info (dict): framework specific configuration for quantization.
-    """    
+    """
+
     def __init__(self, framework_specific_info):
         super(MxNetAdaptor, self).__init__(framework_specific_info)
         self.__config_dict = {}
@@ -56,7 +60,9 @@ class MxNetAdaptor(Adaptor):
 
         # MXNet version check
         if not _check_version(mx.__version__, '1.6.0'):
-            raise Exception("Need MXNet version >= 1.6.0, but get version: %s" %(mx.__version__))
+            raise Exception(
+                "Need MXNet version >= 1.6.0, but get version: %s" %
+                (mx.__version__))
 
     def _get_backedn_graph(self, symbol, ctx):
         if ctx == mx.cpu():
@@ -92,7 +98,8 @@ class MxNetAdaptor(Adaptor):
             sym, arg_params, aux_params = model
         else:
             raise ValueError(
-                'Need a symbol model or HybridBlock model, while received %s' % str(type(model)))
+                'Need a symbol model or HybridBlock model, while received %s' % str(
+                    type(model)))
         sym = self._get_backedn_graph(sym, qconfig['ctx'])
 
         # 1. quantize_symbol
@@ -115,12 +122,14 @@ class MxNetAdaptor(Adaptor):
                 quantize_mode=qconfig['quantize_mode'],)
 
         # 2. Do calibration to get th_dict
-        th_dict = self._get_calibration_th(sym, arg_params, aux_params, calib_layer, qconfig)
+        th_dict = self._get_calibration_th(
+            sym, arg_params, aux_params, calib_layer, qconfig)
         self.th_dict = th_dict
         # 3. set th_dict to quantized symbol
         qsym = mx.contrib.quantization._calibrate_quantized_sym(qsym, th_dict)
         # 4. quantize params
-        qarg_params = mx.contrib.quantization._quantize_params(qsym, arg_params, th_dict)
+        qarg_params = mx.contrib.quantization._quantize_params(
+            qsym, arg_params, th_dict)
         qsym = self._get_backedn_graph(qsym, qconfig['ctx'])
 
         if isinstance(model, mx.gluon.HybridBlock):
@@ -150,7 +159,7 @@ class MxNetAdaptor(Adaptor):
         Args:
             model (object): The model to do calibration.
             dataloader (object): The dataset do do QAT.
-        """        
+        """
         raise notimplementederror
 
     def evaluate(self, model, dataloader, metric):
@@ -169,12 +178,12 @@ class MxNetAdaptor(Adaptor):
 
         elif isinstance(model[0], mx.symbol.symbol.Symbol):
             assert isinstance(dataloader, mx.io.DataIter), \
-                    'need mx.io.DataIter. but recived %s' % str(type(dataloader))
+                'need mx.io.DataIter. but recived %s' % str(type(dataloader))
             dataloader.reset()
             acc = self._mxnet_symbol_forward(model, dataloader, metric)
 
         else:
-            raise ValueError("Unknow graph tyep: %s" %(str(type(model))))
+            raise ValueError("Unknow graph tyep: %s" % (str(type(model))))
 
         return acc
 
@@ -191,7 +200,7 @@ class MxNetAdaptor(Adaptor):
         mod.bind(for_training=False,
                  data_shapes=dataIter.provide_data,
                  label_shapes=dataIter.provide_label
-                )
+                 )
         mod.set_params(arg_params, aux_params)
 
         batch_num = 0
@@ -263,14 +272,15 @@ class MxNetAdaptor(Adaptor):
         if len(self.quantizable_ops) != 0:
             return self.quantizable_ops
 
-        sym, arg_params, aux_params, calib_data = self._check_model(model, calib_data)
+        sym, arg_params, aux_params, calib_data = self._check_model(
+            model, calib_data)
         sym = sym.get_backend_symbol('MKLDNN_QUANTIZE')
 
         _, calib_layer = mx.contrib.quantization._quantize_symbol(
-                         sym,
-                         mx.cpu(),
-                         offline_params=list(arg_params.keys()),
-                        )
+            sym,
+            mx.cpu(),
+            offline_params=list(arg_params.keys()),
+        )
 
         # get each op type
         dct = json.loads(sym.tojson())
@@ -286,7 +296,7 @@ class MxNetAdaptor(Adaptor):
         aux_params_list = list(aux_params.keys())
         for name, type in name_type:
             if name not in arg_params_list and item not in aux_params_list:
-                symbol_layers.append({"name": name, "type":type})
+                symbol_layers.append({"name": name, "type": type})
 
         for _, opname_type in enumerate(symbol_layers):
             if opname_type["name"] + "_output" in calib_layer:
@@ -310,33 +320,33 @@ class MxNetAdaptor(Adaptor):
 
         Returns:
             (dict): modelwise and opwise config.
-        """        
+        """
         # model_wise capability
         # TODO: weight granularity
         model_wise = {
-                'activation': {'dtype': ['uint8', 'fp32'], \
-                               'granularity': ['per_channel'], \
-                               'algorithm': ['minmax', 'kl']},
-                'weight': {'dtype': ['uint8', 'fp32'], \
-                           'granularity': ['per_channel'], \
-                           'algorithm': ['minmax', 'kl']}
-                }
+            'activation': {'dtype': ['uint8', 'fp32'],
+                           'granularity': ['per_channel'],
+                           'algorithm': ['minmax', 'kl']},
+            'weight': {'dtype': ['uint8', 'fp32'],
+                       'granularity': ['per_channel'],
+                       'algorithm': ['minmax', 'kl']}
+        }
         # op_wise capability
         quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
         op_wise = OrderedDict()
         for _, opname_type in enumerate(quantizable_ops):
             optype = opname_type["type"]
-            if optype in ['_sg_mkldnn_conv','conv2d']:
+            if optype in ['_sg_mkldnn_conv', 'conv2d']:
                 op_capability = {
                     'activation': {
                         'dtype': ['uint8', 'fp32'],
                         'algorithm': ['minmax', 'kl'],
                         'granularity': ['per_channel']},
                     'weight': {
-                        'dtype':['uint8', 'fp32'],
+                        'dtype': ['uint8', 'fp32'],
                         'granularity': ['per_channel']}
-                    }
-            elif optype in ['_sg_fully_connected','fully_connected']:
+                }
+            elif optype in ['_sg_fully_connected', 'fully_connected']:
                 op_capability = {
                     'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -344,32 +354,38 @@ class MxNetAdaptor(Adaptor):
                         'granularity': ['per_channel']},
 
                     'weight': {
-                        'dtype':['uint8', 'fp32'],
+                        'dtype': ['uint8', 'fp32'],
                         'granularity': ['per_channel']}
-                    }
+                }
             elif optype in ['relu']:
                 op_capability = {
                     'activation': {
                         'dtype': ['uint8', 'fp32'],
                         'algorithm': ['minmax', 'kl'],
                         'granularity': ['per_tensor']}
-                    }
+                }
             else:
                 op_capability = {
                     'activation': {
-                            'dtype': ['uint8', 'fp32'],
-                            'algorithm': ['minmax', 'kl'],
-                            'granularity': ['per_channel']},
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax', 'kl'],
+                        'granularity': ['per_channel']},
                     'weight': {
-                            'dtype':['uint8', 'fp32'],
-                            'granularity': ['per_channel']}
-                    }
+                        'dtype': ['uint8', 'fp32'],
+                        'granularity': ['per_channel']}
+                }
 
-            op_wise.update({(opname_type["name"], opname_type["type"]): op_capability})
+            op_wise.update(
+                {(opname_type["name"], opname_type["type"]): op_capability})
 
         return {'modelwise': model_wise, 'opwise': op_wise}
 
-    def _inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+    def _inspect_tensor(
+            self,
+            model,
+            dataloader,
+            op_list=[],
+            iteration_list=[]):
         """The function is used by tune strategy class for dumping tensor info.
 
         Args:
@@ -377,7 +393,7 @@ class MxNetAdaptor(Adaptor):
             dataloader (object): The data to do forword.
             op_list (list): list of inspect tensors.
             iteration_list (list): list of inspect iterations.
-        
+
         Returns:
             Numpy Array Dict
             if iteration_list is empty:
@@ -390,10 +406,12 @@ class MxNetAdaptor(Adaptor):
         from mxnet.base import _LIB, check_call, py_str
         from mxnet.base import c_array, c_str, mx_uint, c_str_array
         from mxnet.base import NDArrayHandle, SymbolHandle
+
         class _LayerTensorCollector(object):
             """Saves layer output min and max values in a dict with layer names as keys.
             The collected min and max values will be directly used as thresholds for quantization.
             """
+
             def __init__(self, include_layer=None, logger=None):
                 self.tensor_dict = {}
                 self.include_layer = include_layer
@@ -424,10 +442,14 @@ class MxNetAdaptor(Adaptor):
         data_names = [pair[0] for pair in data.provide_data]
         calib_iter = self.__config_dict['iteration']
         sym, arg_params, aux_params = model
-        mod = mx.module.module.Module(symbol=sym, data_names=data_names, context=self.__config_dict['ctx'])
+        mod = mx.module.module.Module(
+            symbol=sym,
+            data_names=data_names,
+            context=self.__config_dict['ctx'])
         mod.bind(for_training=False, data_shapes=data.provide_data)
         mod.set_params(arg_params, aux_params)
-        mod._exec_group.execs[0].set_monitor_callback(collector.collect, monitor_all=True)
+        mod._exec_group.execs[0].set_monitor_callback(
+            collector.collect, monitor_all=True)
         num_batches = 0
 
         if len(iteration_list) == 0:
@@ -437,8 +459,9 @@ class MxNetAdaptor(Adaptor):
                 if calib_iter is not None and num_batches >= calib_iter:
                     break
             if logger is not None:
-                logger.info("Inspect tensors from %d batches with batch_size=%d"
-                            % (num_batches, data.batch_size))
+                logger.info(
+                    "Inspect tensors from %d batches with batch_size=%d" %
+                    (num_batches, data.batch_size))
 
             return collector.tensor_dict
         else:
@@ -456,14 +479,16 @@ class MxNetAdaptor(Adaptor):
                 num_batches += 1
 
             if logger is not None:
-                logger.info("Inspect tensors from %d batches with batch_size=%d"
-                            % (num_batches, data.batch_size))
+                logger.info(
+                    "Inspect tensors from %d batches with batch_size=%d" %
+                    (num_batches, data.batch_size))
             return iter_tensor
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         int8_ops_th = self.th_dict
         op_list_convert = []
-        sym, arg_params, aux_params, dataloader = self._check_model(model, dataloader)
+        sym, arg_params, aux_params, dataloader = self._check_model(
+            model, dataloader)
         sym_all_layers = [layer.name for layer in list(sym.get_internals())]
         for item in op_list:
             op_name = item[0]
@@ -473,7 +498,8 @@ class MxNetAdaptor(Adaptor):
                 op_name += "_output"
             op_list_convert.append(op_name)
         dataloader.reset()
-        inspected_tensor = self._inspect_tensor((sym, arg_params, aux_params), dataloader, op_list_convert, iteration_list)
+        inspected_tensor = self._inspect_tensor(
+            (sym, arg_params, aux_params), dataloader, op_list_convert, iteration_list)
         inspected_tensor_convert = {}
         for op, tensor in inspected_tensor.items():
             if op.startswith("quantized_"):
@@ -481,9 +507,14 @@ class MxNetAdaptor(Adaptor):
                 if op in int8_ops_th:
                     op_min = mx.nd.array(int8_ops_th[op][0])
                     op_max = mx.nd.array(int8_ops_th[op][1])
-                    #TODO: deal hard code dtype
-                    tensor = mx.nd.contrib.dequantize(mx.nd.array(tensor, dtype='uint8'), \
-                        min_range=op_min, max_range=op_max, out_type='float32').asnumpy()
+                    # TODO: deal hard code dtype
+                    tensor = mx.nd.contrib.dequantize(
+                        mx.nd.array(
+                            tensor,
+                            dtype='uint8'),
+                        min_range=op_min,
+                        max_range=op_max,
+                        out_type='float32').asnumpy()
                     assert tensor.dtype == np.float32
             if op.endswith("_output"):
                 op = op[:-7]
@@ -537,11 +568,13 @@ class MxNetAdaptor(Adaptor):
 
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
-            if tune_cfg['op'][(op["name"], op["type"])]['activation']['dtype'] == 'fp32':
+            if tune_cfg['op'][(op["name"], op["type"])
+                              ]['activation']['dtype'] == 'fp32':
                 excluded_sym_names.append(op["name"])
                 continue
             # get calib algorithm per op
-            if tune_cfg['op'][(op["name"], op["type"])]['activation']['algorithm'] == 'minmax':
+            if tune_cfg['op'][(op["name"], op["type"])
+                              ]['activation']['algorithm'] == 'minmax':
                 calib_minmax_layers.append(op["name"] + "_output")
             elif tune_cfg['op'][(op["name"], op["type"])]['activation']['algorithm'] == 'kl':
                 calib_kl_layers.append(op["name"] + "_output")
@@ -561,18 +594,18 @@ class MxNetAdaptor(Adaptor):
         num_calib_examples = batch_size * iteration
 
         self.__config_dict = {
-            "excluded_sym_names" : excluded_sym_names,
-            "excluded_op_names" : excluded_op_names,
-            "LayerOutputCollector" : LayerOutputCollector,
-            "quantized_dtype" : quantized_dtype,
-            "quantize_mode" : quantize_mode,
-            "quantize_granularity" : quantize_granularity,
-            "logger" : logger,
-            "ctx" : ctx,
+            "excluded_sym_names": excluded_sym_names,
+            "excluded_op_names": excluded_op_names,
+            "LayerOutputCollector": LayerOutputCollector,
+            "quantized_dtype": quantized_dtype,
+            "quantize_mode": quantize_mode,
+            "quantize_granularity": quantize_granularity,
+            "logger": logger,
+            "ctx": ctx,
             "calib_data": calib_data,
-            "num_calib_examples":num_calib_examples,
-            "iteration":iteration,
-            "exclude_layers_match":[],
+            "num_calib_examples": num_calib_examples,
+            "iteration": iteration,
+            "exclude_layers_match": [],
             "calib_kl_layers": calib_kl_layers,
             "calib_minmax_layers": calib_minmax_layers,
         }
@@ -586,15 +619,18 @@ class MxNetAdaptor(Adaptor):
 
         Returns:
             tuple: symbol model and DataIter.
-        """        
+        """
         class _DataIterWrapper(mx.io.DataIter):
             """DataIter wrapper for general iterator, e.g., gluon dataloader"""
+
             def __init__(self, calib_data):
                 self._data = calib_data
                 try:
                     calib_iter = iter(calib_data)
                 except TypeError as e:
-                    raise TypeError('calib_data is not a valid iterator. {}'.format(str(e)))
+                    raise TypeError(
+                        'calib_data is not a valid iterator. {}'.format(
+                            str(e)))
                 data_example = next(calib_iter)
                 if isinstance(data_example, (list, tuple)):
                     data_example = list(data_example)
@@ -603,11 +639,14 @@ class MxNetAdaptor(Adaptor):
 
                 num_input = len(data_example)
                 assert num_input > 0
-                self.provide_data = [mx.io.DataDesc(name='data', shape=(data_example[0].shape))]
+                self.provide_data = [
+                    mx.io.DataDesc(
+                        name='data', shape=(
+                            data_example[0].shape))]
                 # data0, data1, ..., label
                 if num_input >= 3:
-                    self.provide_data = [mx.io.DataDesc(name='data{}'.format(i), shape=x.shape)
-                                        for i, x in enumerate(data_example[0:-1])]
+                    self.provide_data = [mx.io.DataDesc(name='data{}'.format(
+                        i), shape=x.shape) for i, x in enumerate(data_example[0:-1])]
                 self.batch_size = data_example[0].shape[0]
                 self.reset()
 
@@ -652,7 +691,12 @@ class MxNetAdaptor(Adaptor):
 
         return symnet, args, auxs, calib_data
 
-    def _get_optimal_thresholds(self, hist_dict, quantized_dtype, num_quantized_bins=255, logger=None):
+    def _get_optimal_thresholds(
+            self,
+            hist_dict,
+            quantized_dtype,
+            num_quantized_bins=255,
+            logger=None):
         """Given a ndarray dict, find the optimal threshold for quantizing each value of the key.
 
         Args:
@@ -666,8 +710,10 @@ class MxNetAdaptor(Adaptor):
         """
         assert isinstance(hist_dict, dict)
         if logger is not None:
-            logger.info('Calculating optimal thresholds for quantization using KL divergence'
-                        ' with num_quantized_bins=%d' % num_quantized_bins)
+            logger.info(
+                'Calculating optimal thresholds for quantization using KL divergence'
+                ' with num_quantized_bins=%d' %
+                num_quantized_bins)
         th_dict = {}
         # copy hist_dict keys since the keys() only returns a view in python3
         layer_names = list(hist_dict.keys())
@@ -676,12 +722,12 @@ class MxNetAdaptor(Adaptor):
             assert name in hist_dict
             (hist, hist_edges, min_val, max_val, _) = hist_dict[name]
             th = ilit_kl.get_threshold(hist,
-                                        hist_edges,
-                                        min_val,
-                                        max_val,
-                                        num_bins = 8001,
-                                        quantized_type=quantized_dtype,
-                                        num_quantized_bins=255)
+                                       hist_edges,
+                                       min_val,
+                                       max_val,
+                                       num_bins=8001,
+                                       quantized_type=quantized_dtype,
+                                       num_quantized_bins=255)
 
             if min_val >= 0 and quantized_dtype in ['auto', 'uint8']:
                 th_dict[name] = (0, th)
@@ -690,10 +736,16 @@ class MxNetAdaptor(Adaptor):
             del hist_dict[name]  # release the memory
             if logger:
                 logger.debug('layer=%s, min_val=%f, max_val=%f, th=%f, '
-                            % (name, min_val, max_val, th))
+                             % (name, min_val, max_val, th))
         return th_dict
 
-    def _get_calibration_th(self, sym, arg_params, aux_params, calib_layer, qconfig):
+    def _get_calibration_th(
+            self,
+            sym,
+            arg_params,
+            aux_params,
+            calib_layer,
+            qconfig):
         """Calculate the calibration value of each layer. the calibration method can be min/max or KL
            on different layers.
 
@@ -706,7 +758,7 @@ class MxNetAdaptor(Adaptor):
 
         Returns:
             th_dict (dict): dict include the calibration value of each layer.
-        """        
+        """
         ctx = qconfig['ctx']
         calib_data = qconfig['calib_data']
         num_calib_examples = qconfig['num_calib_examples']
@@ -717,35 +769,49 @@ class MxNetAdaptor(Adaptor):
         th_dict = {}
 
         if not isinstance(ctx, mx.context.Context):
-            raise ValueError('currently only supports single ctx, while received %s' % str(ctx))
+            raise ValueError(
+                'currently only supports single ctx, while received %s' %
+                str(ctx))
         if calib_data is None:
-            raise ValueError('calib_data must be provided when doing calibration!')
+            raise ValueError(
+                'calib_data must be provided when doing calibration!')
         if not isinstance(calib_data, mx.io.DataIter):
-            raise ValueError('calib_data must be of DataIter type ,'
-                            ' while received type %s' % (str(type(calib_data))))
+            raise ValueError(
+                'calib_data must be of DataIter type ,'
+                ' while received type %s' %
+                (str(
+                    type(calib_data))))
 
         data_names = [pair[0] for pair in calib_data.provide_data]
         # label_names = [pair[0] for pair in calib_data.provide_label]
 
-        mod = mx.module.module.Module(symbol=sym, data_names=data_names, context=ctx)
+        mod = mx.module.module.Module(
+            symbol=sym, data_names=data_names, context=ctx)
         # mod = Module(symbol=sym)
-        if hasattr(calib_data, 'provide_label') and len(calib_data.provide_label) > 0:
+        if hasattr(
+                calib_data,
+                'provide_label') and len(
+                calib_data.provide_label) > 0:
             mod.bind(for_training=False, data_shapes=calib_data.provide_data,
-                    label_shapes=calib_data.provide_label)
+                     label_shapes=calib_data.provide_label)
         else:
             mod.bind(for_training=False, data_shapes=calib_data.provide_data)
         mod.set_params(arg_params, aux_params)
 
         # inspect each quantized layer activate tensor for calibration
-        layer_tensor = self._inspect_tensor((sym, arg_params, aux_params), dataloader=calib_data, op_list=calib_layer)
+        layer_tensor = self._inspect_tensor(
+            (sym, arg_params, aux_params), dataloader=calib_data, op_list=calib_layer)
 
         if len(self.__config_dict["calib_kl_layers"]) != 0:
-            iLiT_histogram = LayerHistogramCollector(layer_tensor=layer_tensor, include_layer=self.__config_dict["calib_kl_layers"])
+            iLiT_histogram = LayerHistogramCollector(
+                layer_tensor=layer_tensor,
+                include_layer=self.__config_dict["calib_kl_layers"])
             iLiT_histogram.collect()
             hist_dict = iLiT_histogram.hist_dict
             if logger:
                 logger.info('Calculating optimal thresholds for quantization')
-            th_dict_kl = self._get_optimal_thresholds(hist_dict, quantized_dtype, logger=logger)
+            th_dict_kl = self._get_optimal_thresholds(
+                hist_dict, quantized_dtype, logger=logger)
             self._merge_dicts(th_dict_kl, th_dict)
             if logger:
                 logger.info('Collected layer output KL values from FP32 model')
@@ -756,8 +822,9 @@ class MxNetAdaptor(Adaptor):
                 logger=logger)
             self._merge_dicts(th_dict_minmax, th_dict)
             if logger:
-                logger.info('Collected layer output min/max values from FP32 model using %d examples'
-                            % num_examples)
+                logger.info(
+                    'Collected layer output min/max values from FP32 model using %d examples' %
+                    num_examples)
 
         return th_dict
 
@@ -770,7 +837,7 @@ class MxNetAdaptor(Adaptor):
 
         Returns:
             dst (dict): merged dict.
-        """        
+        """
         for key in src:
             assert key not in dst, "%s layer can not do KL and minmax calibration together!" % key
             if not isinstance(src[key], dict):

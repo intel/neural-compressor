@@ -31,6 +31,7 @@ class FuseQuantizedMulRequantizeAndDequantize(GraphTransformBase):
     """
     Fuse QuantizedMatMulWithBiasAndRelu with requantize .
     """
+
     def __init__(self, input_pb):
         super(FuseQuantizedMulRequantizeAndDequantize, self).__init__(input_pb)
 

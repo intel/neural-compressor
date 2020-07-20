@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 torch = LazyImport('torch')
 
+
 @adaptor_registry
 class PyTorchAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
@@ -37,35 +38,38 @@ class PyTorchAdaptor(Adaptor):
         self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
 
         self.capability = \
-        {
-          'activation':
             {
-              'granularity': ['per_tensor'],
-              'scheme': ['sym', 'asym'],
-              'dtype':['uint8', 'fp32'],
-              'algorithm': ['minmax', 'kl'],
-            },
-          'weight':
-            {
-              'granularity': ['per_channel'],
-              'scheme': ['sym', 'asym'],
-              'dtype':['int8', 'fp32'],
-              'algorithm': ['minmax'],
+                'activation':
+                {
+                    'granularity': ['per_tensor'],
+                    'scheme': ['sym', 'asym'],
+                    'dtype': ['uint8', 'fp32'],
+                    'algorithm': ['minmax', 'kl'],
+                },
+                'weight':
+                {
+                    'granularity': ['per_channel'],
+                    'scheme': ['sym', 'asym'],
+                    'dtype': ['int8', 'fp32'],
+                    'algorithm': ['minmax'],
+                }
             }
-        }
 
     def quantize(self, tune_cfg, model, dataloader):
-        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+        assert isinstance(
+            model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
 
         q_model = copy.deepcopy(model.eval())
 
         op_cfgs = self._cfg_to_qconfig(tune_cfg)
         self._propagate_qconfig(q_model, op_cfgs)
         # sanity check common API misusage
-        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
-            print("None of the submodule got qconfig applied. Make sure you "
-                      "passed correct configuration through `qconfig_dict` or "
-                      "by assigning the `.qconfig` attribute directly on submodules")
+        if not any(hasattr(m, 'qconfig')
+                   and m.qconfig for m in q_model.modules()):
+            print(
+                "None of the submodule got qconfig applied. Make sure you "
+                "passed correct configuration through `qconfig_dict` or "
+                "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)
 
         iterations = tune_cfg.get('calib_iteration', 1)
@@ -83,12 +87,13 @@ class PyTorchAdaptor(Adaptor):
                 if iterations == 0:
                     break
 
-        q_model = torch.quantization.convert(q_model, inplace = True)
+        q_model = torch.quantization.convert(q_model, inplace=True)
 
         return q_model
 
     def evaluate(self, model, dataloader, metric=None):
-        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+        assert isinstance(
+            model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model.to('cpu')
         model.eval()
         with torch.no_grad():
@@ -140,15 +145,18 @@ class PyTorchAdaptor(Adaptor):
                 granularity = weight['granularity']
                 algorithm = weight['algorithm']
                 dtype = weight['dtype']
-                weights_observer = self._observer(algorithm, scheme, granularity, dtype)
+                weights_observer = self._observer(
+                    algorithm, scheme, granularity, dtype)
 
                 scheme = activation['scheme']
                 granularity = activation['granularity']
                 algorithm = activation['algorithm']
                 dtype = activation['dtype']
-                activation_observer = self._observer(algorithm, scheme, granularity, dtype)
+                activation_observer = self._observer(
+                    algorithm, scheme, granularity, dtype)
 
-                qconfig = torch.quantization.QConfig(activation=activation_observer, weight=weights_observer)
+                qconfig = torch.quantization.QConfig(
+                    activation=activation_observer, weight=weights_observer)
                 op_qcfgs[key] = qconfig
 
         return op_qcfgs
@@ -199,20 +207,24 @@ class PyTorchAdaptor(Adaptor):
         fallback_ops = []
         for k, v in op_qcfgs.items():
             if v is None and k[1] != torch.quantization.QuantStub \
-                and k[1] != torch.quantization.DeQuantStub and k[1] != torch.nn.quantized.FloatFunctional:
+                    and k[1] != torch.quantization.DeQuantStub and k[1] != torch.nn.quantized.FloatFunctional:
                 fallback_ops.append(k[0])
             else:
                 if v is None:
-                    weights_observer = self._observer('minmax', 'asym', 'per_channel', 'int8')
-                    activation_observer = self._observer('minmax', 'sym', 'per_tensor', 'uint8')
-                    v = torch.quantization.QConfig(activation=activation_observer, weight=weights_observer)
+                    weights_observer = self._observer(
+                        'minmax', 'asym', 'per_channel', 'int8')
+                    activation_observer = self._observer(
+                        'minmax', 'sym', 'per_tensor', 'uint8')
+                    v = torch.quantization.QConfig(
+                        activation=activation_observer, weight=weights_observer)
                 op_qcfg = {k[0]: v}
                 self._propagate_qconfig_recursively(model, '', op_qcfg)
 
         if fallback_ops:
             self._fallback_quantizable_ops_recursively(model, '', fallback_ops)
 
-    def _propagate_qconfig_recursively(self, model, prefix, op_qcfg, qconfig_parent=None):
+    def _propagate_qconfig_recursively(
+            self, model, prefix, op_qcfg, qconfig_parent=None):
         for name, child in model.named_children():
             model_qconfig = qconfig_parent
             op_name = prefix + name
@@ -221,21 +233,26 @@ class PyTorchAdaptor(Adaptor):
                 model_qconfig = op_qcfg[op_name]
             elif model_qconfig is not None:
                 child.qconfig = model_qconfig
-            self._propagate_qconfig_recursively(child, op_name + '.', op_qcfg, model_qconfig)
+            self._propagate_qconfig_recursively(
+                child, op_name + '.', op_qcfg, model_qconfig)
 
     def _find_quantized_op_num(self, model, op_count=0):
         quantize_op_num = op_count
         for name_tmp, child_tmp in model.named_children():
-            if type(child_tmp) in self.q_mapping.keys() \
-                and not (isinstance(child_tmp, torch.quantization.QuantStub)
-                         or isinstance(child_tmp, torch.quantization.DeQuantStub)):
+            if type(child_tmp) in self.q_mapping.keys() and not (
+                isinstance(
+                    child_tmp,
+                    torch.quantization.QuantStub) or isinstance(
+                    child_tmp,
+                    torch.quantization.DeQuantStub)):
                 quantize_op_num += 1
             else:
                 quantize_op_num = self._find_quantized_op_num(
                     child_tmp, quantize_op_num)
         return quantize_op_num
 
-    def _fallback_quantizable_ops_recursively(self, model, prefix, fallback_ops):
+    def _fallback_quantizable_ops_recursively(
+            self, model, prefix, fallback_ops):
         class DequantQuantWrapper(torch.nn.Module):
             r"""A wrapper class that wraps the input module, adds DeQuantStub and
             surround the call to module with call to dequant.
@@ -252,10 +269,15 @@ class PyTorchAdaptor(Adaptor):
             def __init__(self, module, observer=None):
                 super(DequantQuantWrapper, self).__init__()
                 if not module.qconfig and observer:
-                    weights_observer = observer('minmax', 'asym', 'per_channel', 'int8')
-                    activation_observer = observer('minmax', 'sym', 'per_tensor', 'uint8')
-                    module.qconfig = torch.quantization.QConfig(activation=activation_observer, weight=weights_observer)
-                self.add_module('quant', torch.quantization.QuantStub(module.qconfig))
+                    weights_observer = observer(
+                        'minmax', 'asym', 'per_channel', 'int8')
+                    activation_observer = observer(
+                        'minmax', 'sym', 'per_tensor', 'uint8')
+                    module.qconfig = torch.quantization.QConfig(
+                        activation=activation_observer, weight=weights_observer)
+                self.add_module(
+                    'quant', torch.quantization.QuantStub(
+                        module.qconfig))
                 self.add_module('dequant', torch.quantization.DeQuantStub())
                 self.add_module('module', module)
                 module.qconfig = None
@@ -274,24 +296,30 @@ class PyTorchAdaptor(Adaptor):
                 if quantize_op_num == 1:
                     found = False
                     for name_tmp, child_tmp in model.named_children():
-                        if isinstance(child_tmp, torch.quantization.QuantStub) \
-                           or isinstance(child_tmp, torch.quantization.DeQuantStub):
+                        if isinstance(
+                                child_tmp, torch.quantization.QuantStub) or isinstance(
+                                child_tmp, torch.quantization.DeQuantStub):
                             model._modules[name_tmp] = torch.nn.Identity()
                             found = True
                     if not found:
-                        model._modules[name] = DequantQuantWrapper(child, observer=self._observer)
+                        model._modules[name] = DequantQuantWrapper(
+                            child, observer=self._observer)
                 else:
-                    model._modules[name] = DequantQuantWrapper(child, observer=self._observer)
+                    model._modules[name] = DequantQuantWrapper(
+                        child, observer=self._observer)
             else:
-                self._fallback_quantizable_ops_recursively(child, op_name + '.', fallback_ops)
+                self._fallback_quantizable_ops_recursively(
+                    child, op_name + '.', fallback_ops)
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         for name, child in model.named_children():
             op_name = prefix + name
-            if type(child) in self.q_mapping.keys() and not isinstance(child, torch.quantization.DeQuantStub):
+            if type(child) in self.q_mapping.keys() and not isinstance(
+                    child, torch.quantization.DeQuantStub):
                 quantizable_ops.append((op_name, type(child)))
             else:
-                self._get_quantizable_ops_recursively(child, op_name + '.', quantizable_ops)
+                self._get_quantizable_ops_recursively(
+                    child, op_name + '.', quantizable_ops)
 
     def query_fused_patterns(self, model):
         pass
@@ -311,4 +339,3 @@ class PyTorchAdaptor(Adaptor):
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
         pass
-
