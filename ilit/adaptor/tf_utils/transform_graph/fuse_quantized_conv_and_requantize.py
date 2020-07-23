@@ -327,7 +327,7 @@ def parse_input_graph(input_graph_def):
         if node.name not in input_node_map:
             input_node_map[node.name] = node
         else:
-            print('Duplicate node name {}'.format(node.name))
+            self.logger.info('Duplicate node name {}'.format(node.name))
 
     return input_node_map, output_node_map, node_name_list
 

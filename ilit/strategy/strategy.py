@@ -6,6 +6,7 @@ from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..metric import METRICS
 from ..utils.utility import Timeout
+from ..utils import logger
 
 """The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
 
@@ -75,6 +76,9 @@ class TuneStrategy(object):
                  eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = cfg
+
+        logger.debug(self.cfg)
+
         framework_specific_info = {}
         if cfg.framework.name.lower() == 'tensorflow':
             framework_specific_info = {
@@ -153,9 +157,9 @@ class TuneStrategy(object):
         with Timeout(self.cfg.tuning.timeout) as t:
             # get fp32 model baseline
             if self.baseline is None:
-                print('Getting FP32 model baseline...')
+                logger.info('Getting FP32 model baseline...')
                 self.baseline = self._evaluate(self.model, True)
-            print('FP32 baseline is: [{:.4f}, {:.4f}]'.format(*self.baseline))
+            logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline) if self.baseline else 'None'))
 
             for tune_cfg in self.next_tune_cfg():
                 evaluated = False
@@ -164,8 +168,10 @@ class TuneStrategy(object):
                         self.last_tune_result = cfg[1]
                         evaluated = True
                 if evaluated:
+                    logger.debug('Tuning config was evaluated, skip!')
                     continue
 
+                logger.debug(tune_cfg)
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
@@ -429,13 +435,13 @@ class TuneStrategy(object):
         else:
             del self.last_qmodel
 
-        print(
+        logger.info(
             'Tune result is: ',
             '[{:.4f}, {:.4f}]'.format(
-                *self.last_tune_result) if self.last_tune_result else None,
+                *self.last_tune_result) if self.last_tune_result else 'None',
             'Best tune result is: ',
             '[{:.4f}, {:.4f}]'.format(
-                *self.best_tune_result) if self.best_tune_result else None)
+                *self.best_tune_result) if self.best_tune_result else 'None')
 
         if timeout.seconds != 0 and timeout.timed_out:
             need_stop = True

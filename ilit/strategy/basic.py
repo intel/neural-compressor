@@ -2,6 +2,7 @@ import copy
 from collections import OrderedDict
 import itertools
 from .strategy import strategy_registry, TuneStrategy
+from ..utils import logger
 
 
 @strategy_registry
@@ -68,6 +69,7 @@ class BasicTuneStrategy(TuneStrategy):
         best_cfg = None
         best_acc = 0
 
+        logger.debug('Start basic strategy by model-wise tuning')
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)
             for tune_cfg in self.modelwise_quant_cfgs:
@@ -93,6 +95,7 @@ class BasicTuneStrategy(TuneStrategy):
         if best_cfg is None:
             return
 
+        logger.debug('Continue basic strategy by sorting opwise fallback priority')
         ops_acc = OrderedDict()
         for op, configs in reversed(self.opwise_tune_cfgs.items()):
             op_cfgs = copy.deepcopy(best_cfg)
@@ -108,6 +111,7 @@ class BasicTuneStrategy(TuneStrategy):
             acc, _ = self.last_tune_result
             ops_acc[op] = acc
 
+        logger.debug('Continue basic strategy by incremental opwise fallback with priority')
         op_cfgs = copy.deepcopy(best_cfg)
         if ops_acc is not None:
             ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key], reverse=True)

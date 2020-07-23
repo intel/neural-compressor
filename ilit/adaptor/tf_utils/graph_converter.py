@@ -165,7 +165,6 @@ class GraphConverter:
         self._calibration_data = []
         self._fp32_print_data = []
         # self.gen_calib_data_cmds = self._inference
-        self.debug = False
         self.data_loader = data_loader
         self._check_tf_version()
         self._check_args()
@@ -176,6 +175,8 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
+        self.logger = logging.getLogger()
+        self.debug = True if self.logger.level == logging.DEBUG else False
 
     def load_graph(self, model_file):
 
@@ -220,8 +221,11 @@ class GraphConverter:
                 shell=True))
 
         quantize_batch = 0
+
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        print("Sampling data...")
+
+        self.logger.info("Sampling data...")
+
         for content in self.data_loader:
             try:
                 np_images = content[0]
@@ -233,7 +237,7 @@ class GraphConverter:
                 if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
                     break
             except tf.errors.OutOfRangeError:
-                print("Running out of images from dataset.")
+                self.logger.error("Running out of images from dataset.")
                 break
 
     def _check_tf_version(self):
@@ -289,7 +293,7 @@ class GraphConverter:
         try:
             self._optimize_frozen_fp32_graph()
         except Exception as e:
-            logging.error('Failed to optimize fp32 graph due to: %s', str(e))
+            self.logger.error('Failed to optimize fp32 graph due to: %s', str(e))
             raise ValueError(e) from e
         else:
             return self.dump_tensor(op_list, op_iteration_list)
@@ -306,7 +310,7 @@ class GraphConverter:
         try:
             self._optimize_frozen_fp32_graph()
         except Exception as e:
-            logging.error('Failed to optimize fp32 graph due to: %s', str(e))
+            self.logger.error('Failed to optimize fp32 graph due to: %s', str(e))
             raise ValueError(e) from e
         else:
             return self.quantize()
@@ -502,7 +506,7 @@ class GraphConverter:
                                                self._print_node_mapping)
             self._fuse_requantize_with_fused_quantized_conv()
         except Exception as e:
-            logging.error('Failed to quantize graph due to: %s', str(e))
+            self.logger.error('Failed to quantize graph due to: %s', str(e))
             raise ValueError(e) from e
         finally:
             if not self.debug:
@@ -628,7 +632,7 @@ class GraphConverter:
         RerangeQuantizedConcat(self._tmp_graph_def).do_transformation()
         if self.debug:
             write_graph(self._tmp_graph_def, self.output_graph)
-            logging.info('Converted graph file is saved to: %s',
+            self.logger.info('Converted graph file is saved to: %s',
                          self.output_graph)
 
     def _get_dtypes(self, in_graph_def):

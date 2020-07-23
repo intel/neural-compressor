@@ -16,12 +16,7 @@ from tempfile import TemporaryDirectory
 
 mx = LazyImport("mxnet")
 
-logging.basicConfig(
-    level=logging.INFO,
-    datefmt='[%H:%M:%S]',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("iLiT-MXNet")
-
+logger = logging.getLogger()
 
 def _check_version(v1, v2):
     """version checkout functioin.

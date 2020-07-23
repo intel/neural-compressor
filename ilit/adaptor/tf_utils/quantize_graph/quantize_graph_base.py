@@ -65,6 +65,8 @@ class QuantizeNodeBase(object):
                  per_channel,
                  start_node_name,
                  enable_s8=True):
+        self.logger = logging.getLogger()
+
         if isinstance(input_graph, graph_pb2.GraphDef):
             self.input_graph = input_graph
         else:
@@ -120,14 +122,14 @@ class QuantizeNodeBase(object):
                         continue
 
                     sub_rule_len = len(sub_rule)
-                    logging.debug("Try to apply rule: {}".format(sub_rule))
+                    self.logger.debug("Try to apply rule: {}".format(sub_rule))
 
                     cur_node_name = list(self.node_name_mapping.keys())[k]
                     matched_node_name.append(cur_node_name)
 
                     while sub_rule_len > 1:
                         if not self.node_name_mapping[cur_node_name].output:
-                            logging.debug(
+                            self.logger.debug(
                                 "Failed to match {}".format(sub_rule))
                             break
 
@@ -146,12 +148,12 @@ class QuantizeNodeBase(object):
                             cur_node_name = next_node_name
                         else:
                             matched_node_name.clear()
-                            logging.debug(
+                            self.logger.debug(
                                 "Failed to match {}".format(sub_rule))
                             break
 
                     if sub_rule_len == 1:
-                        logging.debug("match {} on nodes {} ".format(
+                        self.logger.debug("match {} on nodes {} ".format(
                             sub_rule, matched_node_name))
                         return sub_rule, matched_node_name
 
@@ -331,7 +333,7 @@ class QuantizeNodeBase(object):
         """
         Parse the graph and get the input node and output node name details.
         """
-        logging.debug("start parsing graph")
+        self.logger.debug("start parsing graph")
         self.node_name_mapping = OrderedDict()
 
         graph = self.input_graph if input_graph is None else input_graph
@@ -383,7 +385,7 @@ class QuantizeNodeBase(object):
             is_min_right_type = (min_node.op in ["Min", "Dequantize"])
             is_max_right_type = (max_node.op in ["Max", "Dequantize"])
             if not is_min_right_type or not is_max_right_type:
-                print("Didn't find expected types on inputs : %s, %s." %
+                self.logger.info("Didn't find expected types on inputs : %s, %s." %
                       (min_node.op, max_node.op))
                 continue
             min_node_input_name = helper.node_name_from_input(
@@ -409,7 +411,7 @@ class QuantizeNodeBase(object):
                         is_same_input = (
                             second_min_node_input_name == max_node_input_name)
             if not is_same_input:
-                print("Different min/max inputs: " + min_node_input_name)
+                self.logger.info("Different min/max inputs: " + min_node_input_name)
                 continue
             # We recognize this pattern, so mark the graph edges to be rewired to
             # route around it entirely, since we know it's a no-op.

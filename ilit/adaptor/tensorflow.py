@@ -4,6 +4,7 @@ import subprocess
 from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport
+from ..utils import logger
 
 tensorflow = LazyImport('tensorflow')
 
@@ -39,6 +40,7 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [float]: evaluation result, the larger is better.
         """
+        logger.info("start to evaluate model....")
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
         output_tensor = [
             graph.get_tensor_by_name(x + ":0") for x in self.outputs
@@ -57,7 +59,7 @@ class TensorFlowAdaptor(Adaptor):
         config.intra_op_parallelism_threads = num_intra_threads
 
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        print("Start to evaluate model...")
+        logger.info("Start to evaluate model via tensroflow...")
         # batch = 0
         for content in dataloader:
             try:
@@ -109,8 +111,10 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        logger.info("Start to run model quantization...")
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
+        logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
@@ -161,7 +165,6 @@ class TensorFlowAdaptor(Adaptor):
                     "conv2d") != -1 else non_conv_config
                 self.quantize_config['op_wise_config'][node.name] = (False,
                                                                      "minmax")
-
         return self.quantizable_op_details
 
     def query_fw_capability(self, model):
@@ -193,6 +196,8 @@ class TensorFlowAdaptor(Adaptor):
         }
         self._query_quantizable_ops(model)
         capability['opwise'] = self.quantizable_op_details
+        logger.debug(capability)
+
         return capability
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
@@ -207,6 +212,7 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: the key is op_name while the value is the ndarray tensor.
         """
+        logger.info("Start to run inspect_tensor..")
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         from .tf_utils.graph_converter import GraphConverter
 

@@ -29,7 +29,9 @@ from tensorflow.python.framework import dtypes
 import numpy as np
 import math
 import functools
+import logging
 
+logger = logging.getLogger()
 
 def parse_input_graph(input_graph_def):
     input_node_map = {}
@@ -37,7 +39,7 @@ def parse_input_graph(input_graph_def):
         if node.name not in input_node_map:
             input_node_map[node.name] = node
         else:
-            print('Duplicate node name {}'.format(node.name))
+            logger.info('Duplicate node name {}'.format(node.name))
     return input_node_map
 
 
@@ -52,7 +54,7 @@ def get_valid_log(max_min_log):
         if semi_count == 2:
             output.append(i)
         elif semi_count % 2 != 0:
-            print("Invalid line")
+            logger.warn("Invalid line")
         else:
             loop_times = int(semi_count / 2)
             semi_index = [
@@ -84,20 +86,14 @@ def get_all_fp32_data(data_piece):
 def generic_scale(max_value_data, range_max, range_min):
     number_of_bits = 32
     number_of_steps = 1 << number_of_bits
-    # print(number_of_steps)
     range_adjust = float(number_of_steps / (number_of_steps - 1))
     range_total = float((range_max - range_min) * range_adjust)
     range_scale = float(range_total / number_of_steps)
-    # print(range_adjust, range_total, range_scale)
     lowest_quantized = -1 << 31
-    # print(lowest_quantized)
     offset_input = float(float(max_value_data) - lowest_quantized)
-    # print(offset_input)
     range_min_rounded = float(
         round(range_min / float(range_scale)) * float(range_scale))
-    # print(range_min_rounded)
     result = float(range_min_rounded + (offset_input * range_scale))
-    # print(result)
     return result
 
 
@@ -136,7 +132,7 @@ def safe_entropy(reference_distr_P, P_sum, candidate_distr_Q, Q_sum):
             tmp_sum2 += 0
         else:
             if q_idx == 0:
-                print("Fatal error!, idx = " + str(idx) +
+                logger.fatal("Fatal error!, idx = " + str(idx) +
                       " qindex = 0! p_idx = " + str(p_idx))
             tmp_sum1 += p_idx * (math.log(Q_sum * p_idx))
             tmp_sum2 += p_idx * (math.log(P_sum * q_idx))

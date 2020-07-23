@@ -4,6 +4,7 @@ from datetime import datetime
 import pickle
 from .conf.config import Conf
 from .strategy import STRATEGIES
+from .utils import logger
 
 
 class Tuner(object):
@@ -114,10 +115,10 @@ class Tuner(object):
             self._save()
 
         if self.strategy.best_qmodel:
-            print(
+            logger.info(
                 "Specified timeout is reached! Found a quantized model which meet accuracy goal. Exit...")
         else:
-            print(
+            logger.info(
                 "Specified timeout is reached! Not found any quantized model which meet accuracy goal. Exit...")
 
         return self.strategy.best_qmodel
@@ -132,4 +133,4 @@ class Tuner(object):
             '%Y-%m-%d-%H-%M-%S') + '.snapshot'
         with open(fname, 'wb') as f:
             pickle.dump(self.strategy, f, protocol=pickle.HIGHEST_PROTOCOL)
-            print("\nSave snapshot to {}".format(os.path.abspath(fname)))
+            logger.info("\nSave snapshot to {}".format(os.path.abspath(fname)))

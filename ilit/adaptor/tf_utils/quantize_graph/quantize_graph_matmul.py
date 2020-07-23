@@ -6,8 +6,6 @@ from tensorflow.python.framework import dtypes
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 
-import logging
-
 
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
     patterns = [["MatMul", "BiasAdd"]]
@@ -43,10 +41,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             if node.name in skip_node_name:
                 pass
             elif node.name == match_node_name[0]:
-                logging.debug("matched node {} with input {}".format(
+                self.logger.debug("matched node {} with input {}".format(
                     node.name, node.input))
 
-                logging.debug("apply_conv_biasadd_fusion")
+                self.logger.debug("apply_conv_biasadd_fusion")
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
                 bias_node_name = self.node_name_mapping[
@@ -100,7 +98,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             if fusion_name in self.fusion_mapping:
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
-                print("Unknown match {}".format(fusion_name))
+                self.logger.info("Unknown match {}".format(fusion_name))
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
@@ -109,5 +107,5 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.output_graph)
             return self.output_graph
         else:
-            logging.debug("No more match, exit...")
+            self.logger.debug("No more match, exit...")
             return self.input_graph

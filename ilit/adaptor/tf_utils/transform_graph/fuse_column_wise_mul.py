@@ -61,7 +61,7 @@ class FuseColumnWiseMul(GraphTransformBase):
             if node.name not in input_node_map:
                 input_node_map[node.name] = node
             else:
-                print('Duplicate node name {}'.format(node.name))
+                self.logger.info('Duplicate node name {}'.format(node.name))
 
         return input_node_map, node_type_list, node_name_list
 
@@ -106,7 +106,7 @@ class FuseColumnWiseMul(GraphTransformBase):
                 if len(mul_value_node_tensor.tensor_shape.dim
                        ) != 1 or mul_value_node_tensor.tensor_shape.dim[
                            0].size != weights_col:
-                    print("Invalid Mul OP fusion.")
+                    self.logger.info("Invalid Mul OP fusion.")
 
                 mul_value_node_list = [
                     i for i in tensor_util.MakeNdarray(
@@ -147,6 +147,5 @@ class FuseColumnWiseMul(GraphTransformBase):
         input_node_map, _, node_name_list = self.parse_input_graph(
             self.input_graph)
         fuse_op_name = self.get_fuse_index(input_node_map, node_name_list)
-        # print(fuse_op_name)
         return self.generate_output_graph(self.input_graph, input_node_map,
                                           fuse_op_name)

@@ -70,7 +70,7 @@ class FuseQuantizedMulRequantizeAndDequantize(GraphTransformBase):
             if node.name not in input_node_map:
                 input_node_map[node.name] = node
             else:
-                print('Duplicate node name {}'.format(node.name))
+                self.logger.info('Duplicate node name {}'.format(node.name))
 
         return input_node_map, node_type_list, node_name_list
 

@@ -6,8 +6,6 @@ from tensorflow.python.framework import dtypes
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 
-import logging
-
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
     patterns = [["Conv2D", "BiasAdd", "AddN", "Relu"],
@@ -71,7 +69,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
-                logging.debug("skip node {}".format(node.name))
+                self.logger.debug("skip node {}".format(node.name))
             elif node.name == match_node_name[0]:
                 postfix = "_eightbit_quantized_conv" if node.op == "Conv2D" else "_eightbit_quantized_depthwise_conv"
                 quantized_node_name = node.name + postfix
@@ -135,10 +133,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
-                logging.debug("skip node {}".format(node.name))
+                self.logger.debug("skip node {}".format(node.name))
             elif node.name == match_node_name[0]:
 
-                logging.debug("apply_conv_biasadd_relu_fusion")
+                self.logger.debug("apply_conv_biasadd_relu_fusion")
                 postfix = "_eightbit_quantized_conv" if node.op == "Conv2D" else "_eightbit_quantized_depthwise_conv"
                 quantized_node_name = node.name + postfix
                 bias_node_name = self.node_name_mapping[
@@ -199,10 +197,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             if node.name in skip_node_name:
                 pass
             elif node.name == match_node_name[0]:
-                logging.debug("matched node {} with input {}".format(
+                self.logger.debug("matched node {} with input {}".format(
                     node.name, node.input))
 
-                logging.debug("apply_conv_biasadd_fusion")
+                self.logger.debug("apply_conv_biasadd_fusion")
 
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
                 bias_node_name = self.node_name_mapping[
@@ -258,12 +256,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         skip_node_name.append(weight_name)
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
-                logging.debug("skip node {}".format(node.name))
+                self.logger.debug("skip node {}".format(node.name))
             elif node.name == match_node_name[0]:
-                logging.debug("matched node {} with input {}".format(
+                self.logger.debug("matched node {} with input {}".format(
                     node.name, node.input))
 
-                logging.debug("apply_conv_biasadd_addn_relu_fusion")
+                self.logger.debug("apply_conv_biasadd_addn_relu_fusion")
 
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
                 bias_node_name = self.node_name_mapping[
@@ -332,7 +330,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             if fusion_name in self.fusion_mapping:
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
-                print("Unknown match {}".format(fusion_name))
+                self.logger.info("Unknown match {}".format(fusion_name))
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
@@ -342,5 +340,5 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             # self.remove_dead_nodes(self.output_node_names)
             return self.output_graph
         else:
-            logging.debug("No more match, exit...")
+            self.logger.debug("No more match, exit...")
             return self.input_graph
