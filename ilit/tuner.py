@@ -26,14 +26,8 @@ class Tuner(object):
     def __init__(self, conf_fname):
         self.cfg = Conf(conf_fname).cfg
 
-    def tune(
-            self,
-            model,
-            q_dataloader,
-            q_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            resume_file=None):
+    def tune(self, model, q_dataloader, q_func=None,
+             eval_dataloader=None, eval_func=None, resume_file=None):
         """The main entry point of automatic quantization tuning.
 
            This interface works on all the DL frameworks that iLiT supports and provides two usages:
@@ -95,8 +89,8 @@ class Tuner(object):
             ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
 
         dicts = None
-        # check if interrupted tuning procedure exists. if yes, it will resume
-        # the whole auto tune process.
+        # check if interrupted tuning procedure exists. if yes, it will resume the
+        # whole auto tune process.
         if resume_file:
             resume_file = os.path.abspath(resume_file)
             assert os.path.exists(

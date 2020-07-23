@@ -342,8 +342,7 @@ if __name__ == "__main__":
     print("test f1")
     test_f1 = F1(f1={'average': 'weighted'})
     # binary test
-    y_predict = np.array([[0.5, 0.5], [1, 0], [0.3, 0.7],
-                          [0, 1], [0.4, 0.6], [0.7, 0.3]])
+    y_predict = np.array([[0.5, 0.5], [1, 0], [0.3, 0.7], [0, 1], [0.4, 0.6], [0.7, 0.3]])
     y_true = np.array([0, 0, 1, 0, 0, 1])
     acc = test_f1.evaluate(y_predict, y_true)
     print(acc)

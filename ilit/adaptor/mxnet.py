@@ -60,9 +60,7 @@ class MxNetAdaptor(Adaptor):
 
         # MXNet version check
         if not _check_version(mx.__version__, '1.6.0'):
-            raise Exception(
-                "Need MXNet version >= 1.6.0, but get version: %s" %
-                (mx.__version__))
+            raise Exception("Need MXNet version >= 1.6.0, but get version: %s" % (mx.__version__))
 
     def _get_backedn_graph(self, symbol, ctx):
         if ctx == mx.cpu():
@@ -508,13 +506,8 @@ class MxNetAdaptor(Adaptor):
                     op_min = mx.nd.array(int8_ops_th[op][0])
                     op_max = mx.nd.array(int8_ops_th[op][1])
                     # TODO: deal hard code dtype
-                    tensor = mx.nd.contrib.dequantize(
-                        mx.nd.array(
-                            tensor,
-                            dtype='uint8'),
-                        min_range=op_min,
-                        max_range=op_max,
-                        out_type='float32').asnumpy()
+                    tensor = mx.nd.contrib.dequantize(mx.nd.array(tensor, dtype='uint8'),
+                                                      min_range=op_min, max_range=op_max, out_type='float32').asnumpy()
                     assert tensor.dtype == np.float32
             if op.endswith("_output"):
                 op = op[:-7]
@@ -645,8 +638,8 @@ class MxNetAdaptor(Adaptor):
                             data_example[0].shape))]
                 # data0, data1, ..., label
                 if num_input >= 3:
-                    self.provide_data = [mx.io.DataDesc(name='data{}'.format(
-                        i), shape=x.shape) for i, x in enumerate(data_example[0:-1])]
+                    self.provide_data = [mx.io.DataDesc(name='data{}'.format(i), shape=x.shape)
+                                         for i, x in enumerate(data_example[0:-1])]
                 self.batch_size = data_example[0].shape[0]
                 self.reset()
 
@@ -691,12 +684,8 @@ class MxNetAdaptor(Adaptor):
 
         return symnet, args, auxs, calib_data
 
-    def _get_optimal_thresholds(
-            self,
-            hist_dict,
-            quantized_dtype,
-            num_quantized_bins=255,
-            logger=None):
+    def _get_optimal_thresholds(self, hist_dict, quantized_dtype,
+                                num_quantized_bins=255, logger=None):
         """Given a ndarray dict, find the optimal threshold for quantizing each value of the key.
 
         Args:
@@ -776,11 +765,8 @@ class MxNetAdaptor(Adaptor):
             raise ValueError(
                 'calib_data must be provided when doing calibration!')
         if not isinstance(calib_data, mx.io.DataIter):
-            raise ValueError(
-                'calib_data must be of DataIter type ,'
-                ' while received type %s' %
-                (str(
-                    type(calib_data))))
+            raise ValueError('calib_data must be of DataIter type ,'
+                             ' while received type %s' % (str(type(calib_data))))
 
         data_names = [pair[0] for pair in calib_data.provide_data]
         # label_names = [pair[0] for pair in calib_data.provide_label]
@@ -818,7 +804,8 @@ class MxNetAdaptor(Adaptor):
 
         if len(self.__config_dict["calib_minmax_layers"]) != 0:
             th_dict_minmax, num_examples = mx.contrib.quantization._collect_layer_output_min_max(
-                mod, calib_data, quantized_dtype, include_layer=self.__config_dict["calib_minmax_layers"], max_num_examples=num_calib_examples,
+                mod, calib_data, quantized_dtype, include_layer=self.__config_dict[
+                    "calib_minmax_layers"], max_num_examples=num_calib_examples,
                 logger=logger)
             self._merge_dicts(th_dict_minmax, th_dict)
             if logger:

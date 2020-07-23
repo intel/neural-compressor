@@ -15,12 +15,7 @@ import sys
 
 
 def print_info():
-    print(
-        inspect.stack()[1][1],
-        ":",
-        inspect.stack()[1][2],
-        ":",
-        inspect.stack()[1][3])
+    print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
 
 
 def cfg_from_file(file_name):

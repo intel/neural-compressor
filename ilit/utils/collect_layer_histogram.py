@@ -7,12 +7,7 @@ class LayerHistogramCollector(object):
     quantization using KL divergence.
     """
 
-    def __init__(
-            self,
-            num_bins=8001,
-            layer_tensor=None,
-            include_layer=None,
-            logger=None):
+    def __init__(self, num_bins=8001, layer_tensor=None, include_layer=None, logger=None):
         self.hist_dict = {}
         self.num_bins = num_bins
         self.layer_tensor = layer_tensor
@@ -51,8 +46,7 @@ class LayerHistogramCollector(object):
         """
         (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
         if new_th <= old_th:
-            hist, _ = np.histogram(arr, bins=len(
-                old_hist), range=(-old_th, old_th))
+            hist, _ = np.histogram(arr, bins=len(old_hist), range=(-old_th, old_th))
             return (old_hist + hist, old_hist_edges,
                     min(old_min, new_min), max(old_max, new_max), old_th)
         else:

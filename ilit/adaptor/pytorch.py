@@ -64,12 +64,10 @@ class PyTorchAdaptor(Adaptor):
         op_cfgs = self._cfg_to_qconfig(tune_cfg)
         self._propagate_qconfig(q_model, op_cfgs)
         # sanity check common API misusage
-        if not any(hasattr(m, 'qconfig')
-                   and m.qconfig for m in q_model.modules()):
-            print(
-                "None of the submodule got qconfig applied. Make sure you "
-                "passed correct configuration through `qconfig_dict` or "
-                "by assigning the `.qconfig` attribute directly on submodules")
+        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
+            print("None of the submodule got qconfig applied. Make sure you "
+                  "passed correct configuration through `qconfig_dict` or "
+                  "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)
 
         iterations = tune_cfg.get('calib_iteration', 1)
@@ -211,10 +209,8 @@ class PyTorchAdaptor(Adaptor):
                 fallback_ops.append(k[0])
             else:
                 if v is None:
-                    weights_observer = self._observer(
-                        'minmax', 'asym', 'per_channel', 'int8')
-                    activation_observer = self._observer(
-                        'minmax', 'sym', 'per_tensor', 'uint8')
+                    weights_observer = self._observer('minmax', 'asym', 'per_channel', 'int8')
+                    activation_observer = self._observer('minmax', 'sym', 'per_tensor', 'uint8')
                     v = torch.quantization.QConfig(
                         activation=activation_observer, weight=weights_observer)
                 op_qcfg = {k[0]: v}
@@ -269,15 +265,11 @@ class PyTorchAdaptor(Adaptor):
             def __init__(self, module, observer=None):
                 super(DequantQuantWrapper, self).__init__()
                 if not module.qconfig and observer:
-                    weights_observer = observer(
-                        'minmax', 'asym', 'per_channel', 'int8')
-                    activation_observer = observer(
-                        'minmax', 'sym', 'per_tensor', 'uint8')
+                    weights_observer = observer('minmax', 'asym', 'per_channel', 'int8')
+                    activation_observer = observer('minmax', 'sym', 'per_tensor', 'uint8')
                     module.qconfig = torch.quantization.QConfig(
                         activation=activation_observer, weight=weights_observer)
-                self.add_module(
-                    'quant', torch.quantization.QuantStub(
-                        module.qconfig))
+                self.add_module('quant', torch.quantization.QuantStub(module.qconfig))
                 self.add_module('dequant', torch.quantization.DeQuantStub())
                 self.add_module('module', module)
                 module.qconfig = None

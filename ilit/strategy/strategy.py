@@ -71,15 +71,8 @@ class TuneStrategy(object):
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
     """
 
-    def __init__(
-            self,
-            model,
-            cfg,
-            q_dataloader,
-            q_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            dicts=None):
+    def __init__(self, model, cfg, q_dataloader, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = cfg
         framework_specific_info = {}
@@ -374,8 +367,8 @@ class TuneStrategy(object):
         if self.eval_func:
             val = self.objective.evaluate(self.eval_func, model, baseline)
         else:
-            # eval_func being None means user will provide dataloader and
-            # metric info in config yaml file
+            # eval_func being None means user will provide dataloader and metric info
+            # in config yaml file
             assert self.eval_dataloader and self.cfg.tuning.metric, \
                 "tuning dataloader and tuning metric should NOT be empty when eval_func is None"
             dataloader = self.eval_dataloader

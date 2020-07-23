@@ -39,15 +39,8 @@ class RandomTuneStrategy(TuneStrategy):
 
     """
 
-    def __init__(
-            self,
-            model,
-            cfg,
-            q_dataloader,
-            q_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            dicts=None):
+    def __init__(self, model, cfg, q_dataloader, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
         super(
             RandomTuneStrategy,
             self).__init__(

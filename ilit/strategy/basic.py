@@ -45,15 +45,8 @@ class BasicTuneStrategy(TuneStrategy):
 
     """
 
-    def __init__(
-            self,
-            model,
-            cfg,
-            q_dataloader,
-            q_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            dicts=None):
+    def __init__(self, model, cfg, q_dataloader, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
         super(
             BasicTuneStrategy,
             self).__init__(
@@ -117,10 +110,7 @@ class BasicTuneStrategy(TuneStrategy):
 
         op_cfgs = copy.deepcopy(best_cfg)
         if ops_acc is not None:
-            ordered_ops = sorted(
-                ops_acc.keys(),
-                key=lambda key: ops_acc[key],
-                reverse=True)
+            ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key], reverse=True)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
                 op_cfgs['op'][op]['activation'].clear()

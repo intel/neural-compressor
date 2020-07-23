@@ -110,8 +110,8 @@ class QuantizeNodeBase(object):
                     continue
 
                 if (v in ("MatMul") or
-                            (v in ("Conv2D", "DepthwiseConv2dNative")
-                             and not self.enable_s8)
+                        (v in ("Conv2D", "DepthwiseConv2dNative")
+                         and not self.enable_s8)
                         ) and not self._find_relu_node(cur_node):
                     continue
 

@@ -45,15 +45,8 @@ class MSETuneStrategy(TuneStrategy):
 
     """
 
-    def __init__(
-            self,
-            model,
-            cfg,
-            dataloader,
-            q_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            dicts=None):
+    def __init__(self, model, cfg, dataloader, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
         super(
             MSETuneStrategy,
             self).__init__(
@@ -129,8 +122,7 @@ class MSETuneStrategy(TuneStrategy):
             op_lists = self.opwise_quant_cfgs.keys()
             fp32_tensor_dict = self.adaptor.inspect_tensor(
                 self.model, self.calib_dataloader, op_lists, [1])
-            best_qmodel = self.adaptor.quantize(
-                best_cfg, self.model, self.calib_dataloader)
+            best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
             dequantize_tensor_dict = self.adaptor.inspect_tensor(
                 best_qmodel, self.calib_dataloader, op_lists, [1])
 
@@ -138,16 +130,10 @@ class MSETuneStrategy(TuneStrategy):
                 op: self.mse_metric_gap(
                     fp32_tensor_dict[op],
                     dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
-            self.ordered_ops = sorted(
-                ops_mse.keys(),
-                key=lambda key: ops_mse[key],
-                reverse=True)
+            self.ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
 
         if ops_mse is not None:
-            ordered_ops = sorted(
-                ops_mse.keys(),
-                key=lambda key: ops_mse[key],
-                reverse=True)
+            ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
             op_cfgs = copy.deepcopy(best_cfg)
             for op in ordered_ops:
                 old_cfg = copy.deepcopy(op_cfgs['op'][op])
