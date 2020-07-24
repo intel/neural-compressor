@@ -25,17 +25,28 @@ This document describes the step-by-step instructions for reproducing MXNet SSD-
 
 ### 2. Prepare Dataset
 
-Download [COCO2017](https://cocodataset.org/#download) Raw image to the directory **~/.mxnet/datasets/coco** (Note:this path is unchangeable per original inference script requirement)
+If you want to use VOC2007 dataset, download [VOC2007](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/index.html) Raw image to the directory **~/.mxnet/datasets/voc** (Note:this path is unchangeable per original inference script requirement)
 
+If you want to use COCO2017 dataset, download [COCO2017](https://cocodataset.org/#download) Raw image to the directory **~/.mxnet/datasets/coco** (Note:this path is unchangeable per original inference script requirement)
 
 # Run
 
-### SSD-ResNet50_v1
+### SSD-ResNet50_v1-VOC
+```bash
+python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset voc --ilit_tune
+```
+
+### SSD-Mobilenet1.0-VOC
+```bash
+python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset voc --ilit_tune
+```
+
+### SSD-ResNet50_v1-COCO
 ```bash
 python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset coco --ilit_tune
 ```
 
-### SSD-Mobilenet1.0
+### SSD-Mobilenet1.0-COOC
 ```bash
 python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset coco --ilit_tune
 ```
@@ -53,7 +64,7 @@ iLiT supports two usages:
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As this example use COCO dataset, use COCOEval as metric which is can find [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with iLiT by the second use case.
+As this example use VOC/COCO dataset, use VOCMApMetrics/COCOEval as metric which is can find [here](https://github.com/dmlc/gluon-cv/blob/20a2ed3942720550728ce36c2be53b2d5bbbb6fd/gluoncv/utils/metrics/voc_detection.py#L13) and [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with iLiT by the second use case.
 
 ### Write Yaml config file
 
