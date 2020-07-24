@@ -100,11 +100,11 @@ class Conf(object):
 
         if 'quantization' in cfg.keys():
             for key in cfg.quantization.keys():
-                assert key in ['approach', 'weight', 'activation']
+                assert key in ['approach', 'weight', 'activation', 'quant_aware_training']
                 if key == 'approach':
                     assert cfg.quantization.approach.lower() in [
-                        'post_training_static_quant'
-                    ], "post_training_dynamic_quant and quant_aware_training are not supported yet."
+                        'post_training_static_quant', 'quant_aware_training'
+                    ], "post_training_dynamic_quant is not supported yet."
                 if key == 'weight':
                     assert None not in cfg.quantization.weight.values()
                     for w_key in cfg.quantization.weight.keys():

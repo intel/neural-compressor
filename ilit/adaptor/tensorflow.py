@@ -100,17 +100,19 @@ class TensorFlowAdaptor(Adaptor):
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
                                                                algorithm)
 
-    def quantize(self, tune_cfg, model, data_loader):
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
 
         Args:
             tune_cfg (dict): quantization configuration
             model (tf.compat.v1.GraphDef): fp32 model
             data_loader (generator): generator the data and labels
+            q_func (optional): training function for quantization aware training mode, unimplement yet for tensorflow
 
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        assert q_func is None, "quantization aware training mode is not support on tensorflow"
         logger.info('Start to run model quantization...')
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)

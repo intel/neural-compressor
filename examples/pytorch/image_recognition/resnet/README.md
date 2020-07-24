@@ -36,21 +36,21 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 1. ResNet50
 
   ```Shell
-  cd examples/pytorch/image_recognition
+  cd examples/pytorch/image_recognition/resnet
   python main.py -t -a resnet50 --pretrained /path/to/imagenet
   ```
 
 ### 2. ResNet18
 
   ```Shell
-  cd examples/pytorch/image_recognition
+  cd examples/pytorch/image_recognition/resnet
   python main.py -t -a resnet18 --pretrained /path/to/imagenet
   ```
 
 ### 3. ResNet101
 
   ```Shell
-  cd examples/pytorch/image_recognition
+  cd examples/pytorch/image_recognition/resnet
   python main.py -t -a resnet101 --pretrained /path/to/imagenet
   ```
 

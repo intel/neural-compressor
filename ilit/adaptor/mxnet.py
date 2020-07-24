@@ -63,18 +63,19 @@ class MxNetAdaptor(Adaptor):
         else:
             pass
 
-    def quantize(self, tune_cfg, model, dataloader):
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """The function is used to do MXNet calibration and quanitization in post-training quantization.
-           It is used to do quanization in quantization-aware training.
 
         Args:
             tune_cfg (dict): quantization config.
             model (object): model need to do quantization.
             dataloader (object): calibration dataset.
+            q_func (optional): training function for quantization aware training mode, unimplement yet for MXNet.
 
         Returns:
             (dict): quantized model
         """
+        assert q_func is None, "quantization aware training mode is not support on mxnet"
         self.cfg = tune_cfg
         self._cfg_to_qconfig(tune_cfg)
         self.__config_dict['calib_data'] = dataloader

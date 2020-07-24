@@ -82,8 +82,10 @@ class TuneStrategy(object):
         framework_specific_info = {}
         if cfg.framework.name.lower() == 'tensorflow':
             framework_specific_info = {
-                "inputs": cfg.framework.inputs,
-                "outputs": cfg.framework.outputs}
+                "inputs": cfg.framework.inputs, "outputs": cfg.framework.outputs}
+        if cfg.framework.name.lower() == 'pytorch':
+            framework_specific_info = {
+                "approach": cfg.quantization.approach, "outputs": cfg.framework.outputs}
         if cfg.framework.name.lower() == 'mxnet':
             framework_specific_info = {"q_dataloader": q_dataloader}
 
@@ -114,7 +116,8 @@ class TuneStrategy(object):
             self.opwise_tune_cfgs[key] = self._tune_cfgs(
                 self.opwise_tune_space[key])
 
-        self.calib_iter = cfg.calibration.iterations if cfg.calibration and cfg.calibration.iterations else None
+        self.calib_iter = cfg.calibration.iterations if cfg.calibration and \
+            cfg.calibration.iterations else None
         if self.calib_iter and isinstance(self.calib_iter, str):
             self.calib_iter = self.calib_iter.split(',')
         elif self.calib_iter and isinstance(self.calib_iter, int):
@@ -173,7 +176,7 @@ class TuneStrategy(object):
 
                 logger.debug('Dump current tuning configuration:\n', tune_cfg)
                 self.last_qmodel = self.adaptor.quantize(
-                    tune_cfg, self.model, self.calib_dataloader)
+                    tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)

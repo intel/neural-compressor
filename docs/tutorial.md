@@ -101,7 +101,9 @@ tuning:
 
 * [NLP](../examples/pytorch/language_translation/README.md) Including all 10 BERT task exampls.
 
-* [Image Recognition](../examples/pytorch/image_recognition/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
+* [Image Recognition](../examples/pytorch/image_recognition/resnet/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
+
+* [Image Recognition QAT](../examples/pytorch/image_recognition/resnet_qat/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
 
 ### TensorFlow
 

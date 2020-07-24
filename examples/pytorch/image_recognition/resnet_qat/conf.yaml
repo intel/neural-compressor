@@ -1,0 +1,13 @@
+framework:
+  - name: pytorch                                # possible values are tensorflow, mxnet and pytorch
+
+tuning:
+  - metric:
+      - topk: 1                                  # tuning metrics: accuracy 
+    accuracy_criterion:
+      - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
+    timeout: 0                                   # tuning timeout (seconds)
+    random_seed: 9527                            # random seed
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  approach: quant_aware_training

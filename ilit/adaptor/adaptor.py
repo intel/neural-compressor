@@ -34,13 +34,14 @@ class Adaptor(object):
         pass
 
     @abstractmethod
-    def quantize(self, tune_cfg, model, dataloader):
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
         '''The function is used to do calibration and quanitization in post-training quantization.
 
            Args:
                tune_cfg(dict): The chosen tuning configuration.
                model (object): The model to do calibration.
                dataloader(object): The dataloader used to load calibration dataset.
+               q_func (optional): training function for quantization aware training mode.
         '''
         raise NotImplementedError
 

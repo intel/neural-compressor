@@ -35,7 +35,18 @@ class PyTorchAdaptor(Adaptor):
             nnqat.Conv2d: nnq.Conv2d,
         }
         """
-        self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+
+        if framework_specific_info['approach'] == "post_training_static_quant":
+            self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+        elif framework_specific_info['approach'] == "quant_aware_training":
+            self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+        else:
+            assert False, "Unsupport quantization approach: {}".format(self.approach)
+
+        self.white_list = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST\
+            - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+
+        self.approach = framework_specific_info['approach']
 
         self.capability = \
             {
@@ -55,11 +66,26 @@ class PyTorchAdaptor(Adaptor):
                 }
             }
 
-    def quantize(self, tune_cfg, model, dataloader):
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization config.
+            model (object): model need to do quantization.
+            dataloader (object): calibration dataset.
+            q_func (optional): training function for quantization aware training mode.
+
+        Returns:
+            (dict): quantized model
+        """
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
 
         q_model = copy.deepcopy(model.eval())
+        if self.approach == 'quant_aware_training':
+            q_model.train()
+        elif self.approach == 'post_training_static_quant':
+            q_model.eval()
 
         op_cfgs = self._cfg_to_qconfig(tune_cfg)
         self._propagate_qconfig(q_model, op_cfgs)
@@ -70,20 +96,28 @@ class PyTorchAdaptor(Adaptor):
                   "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)
 
-        iterations = tune_cfg.get('calib_iteration', 1)
-        assert iterations >= 1
-        with torch.no_grad():
-            for _, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict):
-                    output = q_model(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    output = q_model(*input)
-                else:
-                    output = q_model(input)
+        if self.approach == 'post_training_static_quant':
+            iterations = tune_cfg.get('calib_iteration', 1)
+            assert iterations >= 1
+            with torch.no_grad():
+                for _, (input, label) in enumerate(dataloader):
+                    if isinstance(input, dict):
+                        output = q_model(**input)
+                    elif isinstance(input, list) or isinstance(input, tuple):
+                        output = q_model(*input)
+                    else:
+                        output = q_model(input)
 
-                iterations -= 1
-                if iterations == 0:
-                    break
+                    iterations -= 1
+                    if iterations == 0:
+                        break
+        elif self.approach == 'quant_aware_training':
+            torch.quantization.convert(q_model, self.q_mapping, inplace=True)
+            if q_func is None:
+                assert False, "quantization aware training mode requires q_function to train"
+            else:
+                q_func(q_model)
+            q_model.eval()
 
         q_model = torch.quantization.convert(q_model, inplace=True)
 
@@ -143,18 +177,35 @@ class PyTorchAdaptor(Adaptor):
                 granularity = weight['granularity']
                 algorithm = weight['algorithm']
                 dtype = weight['dtype']
-                weights_observer = self._observer(
-                    algorithm, scheme, granularity, dtype)
+                if self.approach == 'post_training_static_quant':
+                    weights_observer = self._observer(algorithm, scheme, granularity, dtype)
+                elif self.approach == 'quant_aware_training':
+                    weights_fake_quantize = self._fake_quantize(
+                        algorithm, scheme, granularity, dtype)
+                else:
+                    assert False, "Unsupport quantization approach: {}".format(self.approach)
 
                 scheme = activation['scheme']
                 granularity = activation['granularity']
                 algorithm = activation['algorithm']
                 dtype = activation['dtype']
-                activation_observer = self._observer(
-                    algorithm, scheme, granularity, dtype)
+                if self.approach == 'post_training_static_quant':
+                    activation_observer = self._observer(algorithm, scheme, granularity, dtype)
+                elif self.approach == 'quant_aware_training':
+                    activation_fake_quantize = self._fake_quantize(
+                        algorithm, scheme, granularity, dtype)
+                else:
+                    assert False, "Unsupport quantization approach: {}".format(self.approach)
 
-                qconfig = torch.quantization.QConfig(
-                    activation=activation_observer, weight=weights_observer)
+                if self.approach == 'post_training_static_quant':
+                    qconfig = torch.quantization.QConfig(
+                        activation=activation_observer, weight=weights_observer)
+                elif self.approach == 'quant_aware_training':
+                    qconfig = torch.quantization.QConfig(
+                        activation=activation_fake_quantize, weight=weights_fake_quantize)
+                else:
+                    assert False, "Unsupport quantization approach: {}".format(self.approach)
+
                 op_qcfgs[key] = qconfig
 
         return op_qcfgs
@@ -201,11 +252,60 @@ class PyTorchAdaptor(Adaptor):
 
         return observer.with_args(qscheme=qscheme, dtype=dtype)
 
+    def _fake_quantize(self, algorithm, scheme, granularity, dtype):
+        fake_quant = torch.quantization.FakeQuantize
+        if algorithm == 'minmax':
+            if granularity == 'per_channel':
+                observer = torch.quantization.MovingAveragePerChannelMinMaxObserver
+                if scheme == 'sym':
+                    qscheme = torch.per_channel_symmetric
+                else:
+                    assert scheme == 'asym'
+                    qscheme = torch.per_channel_affine
+            else:
+                assert granularity == 'per_tensor'
+                observer = torch.quantization.MovingAverageMinMaxObserver
+                if scheme == 'sym':
+                    qscheme = torch.per_tensor_symmetric
+                else:
+                    assert scheme == 'asym'
+                    qscheme = torch.per_tensor_affine
+        else:
+            assert algorithm == 'kl'
+            observer = torch.quantization.HistogramObserver
+            if granularity == 'per_channel':
+                if scheme == 'sym':
+                    qscheme = torch.per_channel_symmetric
+                else:
+                    assert scheme == 'asym'
+                    qscheme = torch.per_channel_affine
+            else:
+                assert granularity == 'per_tensor'
+                if scheme == 'sym':
+                    qscheme = torch.per_tensor_symmetric
+                else:
+                    assert scheme == 'asym'
+                    qscheme = torch.per_tensor_affine
+
+        if dtype == 'int8':
+            qmin = -128
+            qmax = 127
+            dtype = torch.qint8
+        else:
+            assert dtype == 'uint8'
+            qmin = 0
+            qmax = 255
+            dtype = torch.quint8
+
+        return fake_quant.with_args(observer=observer, quant_min=qmin, quant_max=qmax,
+                                    dtype=dtype, qscheme=qscheme)
+
     def _propagate_qconfig(self, model, op_qcfgs):
         fallback_ops = []
         for k, v in op_qcfgs.items():
             if v is None and k[1] != torch.quantization.QuantStub \
-                    and k[1] != torch.quantization.DeQuantStub and k[1] != torch.nn.quantized.FloatFunctional:
+                    and k[1] != torch.quantization.DeQuantStub \
+                    and k[1] != torch.nn.quantized.FloatFunctional:
                 fallback_ops.append(k[0])
             else:
                 if v is None:
@@ -227,7 +327,7 @@ class PyTorchAdaptor(Adaptor):
             if op_name in op_qcfg:
                 child.qconfig = op_qcfg[op_name]
                 model_qconfig = op_qcfg[op_name]
-            elif model_qconfig is not None:
+            elif model_qconfig is not None and type(child) in self.white_list:
                 child.qconfig = model_qconfig
             self._propagate_qconfig_recursively(
                 child, op_name + '.', op_qcfg, model_qconfig)
@@ -235,12 +335,9 @@ class PyTorchAdaptor(Adaptor):
     def _find_quantized_op_num(self, model, op_count=0):
         quantize_op_num = op_count
         for name_tmp, child_tmp in model.named_children():
-            if type(child_tmp) in self.q_mapping.keys() and not (
-                isinstance(
-                    child_tmp,
-                    torch.quantization.QuantStub) or isinstance(
-                    child_tmp,
-                    torch.quantization.DeQuantStub)):
+            if type(child_tmp) in self.white_list \
+                and not (isinstance(child_tmp, torch.quantization.QuantStub)
+                         or isinstance(child_tmp, torch.quantization.DeQuantStub)):
                 quantize_op_num += 1
             else:
                 quantize_op_num = self._find_quantized_op_num(
@@ -306,8 +403,7 @@ class PyTorchAdaptor(Adaptor):
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         for name, child in model.named_children():
             op_name = prefix + name
-            if type(child) in self.q_mapping.keys() and not isinstance(
-                    child, torch.quantization.DeQuantStub):
+            if type(child) in self.white_list:
                 quantizable_ops.append((op_name, type(child)))
             else:
                 self._get_quantizable_ops_recursively(
