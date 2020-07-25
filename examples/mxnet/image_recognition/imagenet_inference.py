@@ -100,6 +100,7 @@ def score(sym, arg_params, aux_params, data, devs, label_name, max_num_examples,
         for m in metrics:
             logger.info(m.get())
 
+    print("Accuracy: %.5f" % metrics[0].get()[1])
 
 def low_precison_convert(model_name, low_precision, sym, arg_params, aux_params, excluded_sym_names=[]):
     if low_precision == 'bfloat16':
@@ -184,6 +185,24 @@ def benchmark_score(symbol_file, ctx, batch_size, num_batches, data_layer_type, 
     # return num images per second
     return num_batches*batch_size/(time.time() - tic)
 
+def save(model, output_path):
+    '''The function is used by tune strategy class for saving model.
+
+        Args:
+            model (object): The model to do calibration.
+    '''
+    if isinstance(model, mx.gluon.HybridBlock):
+        print("Save MXNet HybridBlock quantization model!")
+        model.export(output_path, epoch=0)
+        print('Saving quantized model at %s', output_path)
+    else:
+        symbol, arg_params, aux_params = model
+        symbol.save(output_path+'-symbol.json')
+        save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in arg_params.items()}
+        save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
+        mx.nd.save(output_path+'-0000.params', save_dict)
+        print('Saving symbol into file at %s' % output_path)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Score a model on a dataset')
     parser.add_argument('--ctx', type=str, default='gpu')
@@ -215,8 +234,12 @@ if __name__ == '__main__':
     parser.add_argument('--low-precision', type=str, default='',
                         choices=['', 'float16', 'bfloat16'],
                         help='enable low precision')
-    parser.add_argument('--ilit_tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with iLiT.')
+    parser.add_argument('--tune',action='store_true', default=False,
+                        help='Get tuning quantization model with iLiT.')
+    parser.add_argument('--accuracy-only', action='store_true', help='accuracy only benchmark')
+    parser.add_argument("--output-graph",
+                         help='Specify tune result model save dir',
+                         dest='output_graph')
 
     args = parser.parse_args()
 
@@ -287,13 +310,22 @@ if __name__ == '__main__':
             ctx=args.ctx,
             **combine_mean_std)
 
-        if args.ilit_tune:
+        if args.tune:
             # loading model
             fp32_model = load_model(symbol_file, param_file, logger)
             from ilit import Tuner
             calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
             cnn_tuner = Tuner("./cnn.yaml")
-            cnn_tuner.tune(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
+            ilit_model = cnn_tuner.tune(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
+            save(ilit_model, args.output_graph)
+            sys.exit()
+        
+        if args.accuracy_only:
+            symbol_file = args.symbol_file
+            param_file = args.param_file
+            sym, arg_params, aux_params = load_model(symbol_file, param_file)
+            score(sym, arg_params, aux_params, data, [ctx], label_name,
+                  max_num_examples=None)
             sys.exit()
 
         if args.low_precision:
@@ -315,3 +347,5 @@ if __name__ == '__main__':
         speed = benchmark_score(symbol_file, ctx, batch_size,
                                 args.num_inference_batches, data_layer_type, args.low_precision, logger)
         logger.info('batch size %2d, image/sec: %f', batch_size, speed)
+        print('Latency: %.3f ms' % (1 / speed * 1000))
+        print('Throughput: %.3f images/sec' % (speed))

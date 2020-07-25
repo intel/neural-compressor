@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing MXNet ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 iLiT tuning zoo result.
+This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 iLiT tuning zoo result.
 
 
 # Prerequisite
@@ -9,113 +9,86 @@ This document is used to list steps of reproducing MXNet ResNet50_v1/Squeezenet1
 ### 1. Installation
 
   ```Shell
-  # Install iLiT
-  pip install ilit
-
-  # Install MXNet
-  pip install mxnet-mkl==1.6.0
-  
-  # Install gluoncv
-  pip install gluoncv
+  pip install -r requirements.txt
 
   ```
 
 ### 2. Prepare Dataset
+  You can use `prepare_dataset.sh` to download dataset for this example. like below:
 
-  From [here](http://data.mxnet.io/data/val_256_q90.rec) download validation dataset val_256_q90.rec, then put to the directory **./data/**
+  ```bash
+  bash ./prepare_dataset.sh --dataset_location=./data
+  ```
+  
+  This will download validation dataset val_256_q90.rec, it will put to the directory **./data/**
 
 ### 3. Prepare Pre-trained model
+  You can use `prepare_model.py` to download model for this example. like below:
+  ```python
+  python prepare_model.py --model_name mobilenet1.0 --model_path ./model
+  ```
+
+  This will download the pre-trained model **mobilenet1.0**, and then put to the directory **./model/**. For more details, see below:
+
+  ```python
+  python prepare_model.py -h
+
+  usage: prepare_model.py [-h]
+                          [--model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3}]
+                          [--model_path MODEL_PATH] [--image_shape IMAGE_SHAPE]
+
+  Prepare pre-trained model for MXNet ImageNet Classifier
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    --model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3}
+                          model to download, default is resnet18_v1
+    --model_path MODEL_PATH
+                          directory to put models, default is ./model
+    --image_shape IMAGE_SHAPE
+                          model input shape, default is 3,224,224
+
+  ```
   
-  Download the pre-trained model with [modelzoo.py](https://github.com/apache/incubator-mxnet/blob/v1.6.x/example/image-classification/common/modelzoo.py), then put to the directory **./model/**
 
 
 # Run
+### ResNet18_v1
+```bash
+bash run_tuning.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_resnet18
+```
 
 ### ResNet50_v1
-
 ```bash
-python -u imagenet_inference.py \
-        --symbol-file=./model/resnet50_v1-symbol.json \
-        --param-file=./model/resnet50_v1-0000.params \
-        --rgb-mean=123.68,116.779,103.939 \
-        --rgb-std=58.393,57.12,57.375 \
-        --batch-size=64 \
-        --num-inference-batches=500 \
-        --dataset=./data/val_256_q90.rec \
-        --ctx=cpu \
-        --ilit_tune
+bash run_tuning.sh --topology=resnet50_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_resnet50_v1
 ```
-
-#### Squeezenet1.0
+### SqueezeNet1
 ```bash
-python -u imagenet_inference.py \
-        --symbol-file=./model/squeezenet1.0-symbol.json \
-        --param-file=./model/squeezenet1.0-0000.params \
-        --rgb-mean=123.68,116.779,103.939 \
-        --rgb-std=58.393,57.12,57.375 \
-        --batch-size=64 \
-        --num-inference-batches=500 \
-        --dataset=./data/val_256_q90.rec \
-        --ctx=cpu \
-        --ilit_tune
+bash run_tuning.sh --topology=squeezenet1.0 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_squeezenet
 ```
-
 ### MobileNet1.0
 ```bash
-python -u imagenet_inference.py \
-        --symbol-file=./model/mobilenet1.0-symbol.json \
-        --param-file=./model/mobilenet1.0-0000.params \
-        --rgb-mean=123.68,116.779,103.939 \
-        --rgb-std=58.393,57.12,57.375 \
-        --batch-size=64 \
-        --num-inference-batches=500 \
-        --dataset=./data/val_256_q90.rec \
-        --ctx=cpu \
-        --ilit_tune
+bash run_tuning.sh --topology=mobilenet1.0 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_mobilenet1.0
 ```
-
 ### MobileNetv2_1.0
 ```bash
-python -u imagenet_inference.py \
-        --symbol-file=./model/mobilenetv2_1.0-symbol.json \
-        --param-file=./model/mobilenetv2_1.0-0000.params \
-        --rgb-mean=123.68,116.779,103.939 \
-        --rgb-std=58.393,57.12,57.375 \
-        --batch-size=64 \
-        --num-inference-batches=500 \
-        --dataset=./data/val_256_q90.rec \
-        --ctx=cpu \
-        --ilit_tune
+bash run_tuning.sh --topology=mobilenetv2_1.0 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_mobilenetv2_1.0
+```
+### Inception_v3
+```bash
+bash run_tuning.sh --topology=inceptionv3 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_inception_v3
 ```
 
-### Inceptionv3
-```bash
-python -u imagenet_inference.py \
-        --symbol-file=./model/inceptionv3-symbol.json \
-        --param-file=./model/inceptionv3-0000.params \
-        --rgb-mean=123.68,116.779,103.939 \
-        --rgb-std=58.393,57.12,57.375 \
-        --batch-size=64 \
-        --image-shape 3,299,299 \
-        --num-inference-batches=500 \
-        --dataset=./data/val_256_q90.rec \
-        --ctx=cpu \
-        --ilit_tune
-```
+# Benchmark
 
-### ResNet18
+Use resnet18 as an example:
+
 ```bash
-python -u imagenet_inference.py \
-        --symbol-file=./model/resnet18_v1-symbol.json \
-        --param-file=./model/resnet18_v1-0000.params \
-        --rgb-mean=123.68,116.779,103.939 \
-        --rgb-std=58.393,57.12,57.375 \
-        --num-skipped-batches=50 \
-        --batch-size=64 \
-        --num-inference-batches=500 \
-        --dataset=./data/val_256_q90.rec \
-        --ctx=cpu \
-        --ilit_tune
+# accuracy mode, run the whole test dataset and get accuracy
+bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model/ --batch_size=32 --mode=accuracy
+
+# benchmark mode, specify iteration number and batch_size in option, get throughput and latency
+bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model/ --batch_size=32 --iters=100 --mode=benchmark
 ```
 
 Examples of enabling iLiT auto tuning on MXNet ResNet50
