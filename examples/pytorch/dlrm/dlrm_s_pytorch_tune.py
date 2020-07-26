@@ -482,6 +482,7 @@ if __name__ == "__main__":
     parser.add_argument("--mlperf-bin-loader", action='store_true', default=False)
     parser.add_argument("--mlperf-bin-shuffle", action='store_true', default=False)
     parser.add_argument("--do-iLiT-tune", action='store_true', default=False)
+    parser.add_argument("--output-model", type=str, default="")
     args = parser.parse_args()
 
     if args.mlperf_logging:
@@ -856,7 +857,9 @@ if __name__ == "__main__":
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
-        tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
+        q_model = tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
+        if args.output_model:
+            torch.save(q_model, args.output_model)
 
         # run int8 model without iLiT tuning
         dlrm.qconfig = torch.quantization.QConfig(activation=torch.quantization.observer.MinMaxObserver.with_args(reduce_range=False),
