@@ -857,9 +857,7 @@ if __name__ == "__main__":
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
-        q_model = tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
-        if args.output_model:
-            torch.save(q_model, args.output_model)
+        tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
 
         # run int8 model without iLiT tuning
         dlrm.qconfig = torch.quantization.QConfig(activation=torch.quantization.observer.MinMaxObserver.with_args(reduce_range=False),

@@ -23,9 +23,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-      --output_model=*)
-          output_model=$(echo $var |cut -f2 -d=)
-      ;;
+    #   --output_model=*)
+    #       output_model=$(echo $var |cut -f2 -d=)
+    #   ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -37,7 +37,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    extra_cmd=''
+    extra_cmd=""
 
     python -u dlrm_s_pytorch_tune.py \
             --arch-sparse-feature-size=128 \
@@ -64,7 +64,6 @@ function run_tuning {
             --mlperf-bin-shuffle \
             --load-model=${input_model} \
             --do-iLiT-tune \
-            --output-model=${output_model} \
             ${extra_cmd}
 
 }
