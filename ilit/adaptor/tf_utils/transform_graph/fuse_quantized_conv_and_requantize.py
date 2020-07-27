@@ -20,12 +20,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import logging
+
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
-from tensorflow.core.framework import types_pb2 as types
 from ..quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 
 
@@ -327,7 +328,7 @@ def parse_input_graph(input_graph_def):
         if node.name not in input_node_map:
             input_node_map[node.name] = node
         else:
-            self.logger.info('Duplicate node name {}'.format(node.name))
+            logging.getLogger().info('Duplicate node name {}'.format(node.name))
 
     return input_node_map, output_node_map, node_name_list
 

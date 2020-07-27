@@ -45,12 +45,9 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         helper.set_attr_int(quantized_concat_node, "N", len(original_inputs))
         helper.set_attr_dtype(quantized_concat_node, "T", dtypes.quint8)
         self.add_output_graph_node(quantized_concat_node)
-        if self.intel_cpu_eightbitize:
-            self._intel_cpu_add_dequantize_result_node(quantized_concat_name,
-                                                       original_node.name)
-        else:
-            self._add_dequantize_result_node(quantized_concat_name,
-                                             original_node.name)
+        self._intel_cpu_add_dequantize_result_node(quantized_concat_name,
+                                                    original_node.name)
+
 
     def _quantizable_concat(self, node):
         for input_node_name in node.input[:node.attr['N'].i]:

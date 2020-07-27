@@ -83,7 +83,7 @@ class QuantizeNodeBase(object):
         self.intel_cpu_eightbitize = True
         self.per_channel = per_channel
         self.start_node_name = start_node_name
-        self.enable_s8 = False if tf.__version__ < '2.1.0' else enable_s8
+        self.enable_s8 = False if tf.version.VERSION < '2.1.0' else enable_s8
 
     def apply_the_transform(self):
         """
@@ -431,23 +431,6 @@ class QuantizeNodeBase(object):
                     input_full_name)
                 if input_name in inputs_to_rename:
                     node.input[index] = inputs_to_rename[input_name]
-            self.add_output_graph_node(node)
-        return self.output_graph
-
-    def apply_final_node_renames(self):
-        """Applies node renames in self.final_node_renames to self.output_graph."""
-        old_graph = self.output_graph
-        self.output_graph = graph_pb2.GraphDef()
-        for node in old_graph.node:
-            node.name = self.final_node_renames.get(node.name, node.name)
-            for index, input_name in enumerate(node.input):
-                node_name = helper.node_name_from_input(input_name)
-                input_full_name = helper.ensure_tensor_name_has_port(
-                    input_name)
-                if node_name in self.final_node_renames:
-                    node.input[index] = "%s%s" % (
-                        self.final_node_renames[node_name],
-                        input_full_name[len(node_name):])
             self.add_output_graph_node(node)
         return self.output_graph
 

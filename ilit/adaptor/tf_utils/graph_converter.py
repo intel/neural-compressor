@@ -20,6 +20,7 @@ from io import StringIO
 import io
 from contextlib import redirect_stdout, redirect_stderr
 import tensorflow as tf
+from google.protobuf import text_format
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import importer
 from tensorflow.python.framework import ops
@@ -249,7 +250,7 @@ class GraphConverter:
                 from tensorflow.python.pywrap_tensorflow import IsMklEnabled
             else:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
-            if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.__version__
+            if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION
                                    <= TF_SUPPORTED_MAX_VERSION):
                 is_supported_version = True
         except Exception as e:
@@ -459,15 +460,18 @@ class GraphConverter:
         start_index = target_iteration * len(original_op_list)
         end_index = (target_iteration + 1) * len(original_op_list)
         result = {}
+        quoto_index = 0
         for i in dump_tensor_data[start_index:end_index]:
+            found_flag = False
             key = i.split('__print__')[0][1:]
             data = i.split(':')[1].strip()
             data = data.replace(' ', "', '")
-            quoto_index = None
             for index, value in enumerate(data):
                 if value != '[':
                     quoto_index = index
+                    found_flag = True
                     break
+            assert found_flag == True
             data = data[:quoto_index] + "'" + data[
                 quoto_index:-quoto_index] + "'" + data[-quoto_index:]
             data = data.replace("]][[", "']],[['")
