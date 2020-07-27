@@ -77,7 +77,7 @@ class TuneStrategy(object):
         self.model = model
         self.cfg = cfg
 
-        logger.debug(self.cfg)
+        logger.debug('Dump user yaml configuration:\n', self.cfg)
 
         framework_specific_info = {}
         if cfg.framework.name.lower() == 'tensorflow':
@@ -171,7 +171,7 @@ class TuneStrategy(object):
                     logger.debug('Tuning config was evaluated, skip!')
                     continue
 
-                logger.debug(tune_cfg)
+                logger.debug('Dump current tuning configuration:\n', tune_cfg)
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
@@ -436,10 +436,10 @@ class TuneStrategy(object):
             del self.last_qmodel
 
         logger.info(
-            'Tune result is: ',
+            'Tune result is: ' +
             '[{:.4f}, {:.4f}]'.format(
-                *self.last_tune_result) if self.last_tune_result else 'None',
-            'Best tune result is: ',
+                *self.last_tune_result) if self.last_tune_result else 'None' +
+            'Best tune result is: ' +
             '[{:.4f}, {:.4f}]'.format(
                 *self.best_tune_result) if self.best_tune_result else 'None')
 

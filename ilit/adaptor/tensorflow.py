@@ -111,10 +111,10 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        logger.info("Start to run model quantization...")
+        logger.info('Start to run model quantization...')
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
-        logger.debug(self.quantize_config)
+        logger.debug('Dump quantization configurations:\n', self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
@@ -196,7 +196,7 @@ class TensorFlowAdaptor(Adaptor):
         }
         self._query_quantizable_ops(model)
         capability['opwise'] = self.quantizable_op_details
-        logger.debug(capability)
+        logger.debug('Dump framework quantization capability:\n', capability)
 
         return capability
 
