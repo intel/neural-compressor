@@ -139,7 +139,7 @@ class MxNetAdaptor(Adaptor):
                              for k, v in qarg_params.items()}
                 save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu())
                                   for k, v in aux_params.items()})
-                mx.ndarray.save(param_name, save_dict)
+                mx.ndarray.save(param_name, save_dict)  # pylint: disable=no-member
                 net.collect_params().load(param_name, cast_dtype=True, dtype_source='saved')
                 net.collect_params().reset_ctx(self.__config_dict['ctx'])
                 return net
@@ -153,7 +153,7 @@ class MxNetAdaptor(Adaptor):
             model (object): The model to do calibration.
             dataloader (object): The dataset do do QAT.
         """
-        raise notimplementederror
+        raise NotImplementedError
 
     def evaluate(self, model, dataloader, metric):
         """The function is used to run evaluation on validation dataset.
@@ -303,7 +303,7 @@ class MxNetAdaptor(Adaptor):
         Args:
             model (object): The model to do calibration.
         """
-        raise notimplementederror
+        raise NotImplementedError
 
     def query_fw_capability(self, model):
         """Query MXNet quantization capability on the model/op level with the specific model.
@@ -417,7 +417,7 @@ class MxNetAdaptor(Adaptor):
                     return
 
                 handle = ctypes.cast(arr, NDArrayHandle)
-                arr = mx.ndarray.NDArray(handle, writable=False)
+                arr = mx.ndarray.NDArray(handle, writable=False)  # pylint: disable=no-member
                 if name in self.tensor_dict.keys():
                     self.tensor_dict[name].append(arr.asnumpy())
                 else:
@@ -521,7 +521,7 @@ class MxNetAdaptor(Adaptor):
             Dict
             {'src_op1': 'dst_op1'}
         """
-        raise notimplementederror
+        raise NotImplementedError
 
     def _cfg_to_qconfig(self, tune_cfg):
         """Convert the strategy config to MXNet quantization config.

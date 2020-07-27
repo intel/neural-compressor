@@ -5,6 +5,8 @@ import numpy as np
 from pycocotools import coco
 from pycocotools import cocoeval
 
+from collections import OrderedDict
+
 '''The metrics supported by iLiT.
    To support new metric, developer just need implement a new subclass in this file.
 '''
@@ -41,7 +43,7 @@ class Metric(object):
         Args:
             target (Metric): The object of target metric.
         """
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate(self, predict, ground_truth):
@@ -52,7 +54,7 @@ class Metric(object):
             ground_truth (Tensor): The ground truth tensor.
 
         """
-        raise notimplementederror
+        raise NotImplementedError
 
 
 @metric_registry

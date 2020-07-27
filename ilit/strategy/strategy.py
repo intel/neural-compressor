@@ -149,7 +149,7 @@ class TuneStrategy(object):
         Yields:
             tune_config (dict): It's a dict containing the tuning configuration to run.
         """
-        raise notimplementederror
+        raise NotImplementedError
 
     def traverse(self):
         """The main traverse logic, which could be override by some concrete strategy which needs more hooks.

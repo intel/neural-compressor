@@ -53,7 +53,7 @@ class Objective(object):
             last (tuple): The tuple of last metric.
             accuracy_criterion (float): The allowed accuracy absolute loss.
         """
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate(self, eval_func, model, baseline=False):
@@ -67,7 +67,7 @@ class Objective(object):
                                         quantized model. Defaults to False.
 
         """
-        raise notimplementederror
+        raise NotImplementedError
 
 
 @objective_registry

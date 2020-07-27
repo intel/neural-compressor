@@ -322,7 +322,7 @@ class TargetSpace(object):
         # TODO: support integer, category, and basic scipy.optimize constraints
         data = np.empty((1, self.dim))
         for col, (lower, upper) in enumerate(self._bounds):
-            data.T[col] = np.random.uniform(lower, upper, size=1)
+            data.T[col] = np.random.uniform(lower, upper, size=1)  # pylint: disable=unsupported-assignment-operation
         return data.ravel()
 
     def max(self):

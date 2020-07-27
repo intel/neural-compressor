@@ -42,7 +42,7 @@ class Adaptor(object):
                model (object): The model to do calibration.
                dataloader(object): The dataloader used to load calibration dataset.
         '''
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate(self, model, dataloader, metric):
@@ -51,7 +51,7 @@ class Adaptor(object):
            Args:
                model (object): The model to do calibration.
         '''
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def query_fw_capability(self, model):
@@ -60,7 +60,7 @@ class Adaptor(object):
            Args:
                model (object): The model to query quantization tuning capability.
         '''
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def query_fused_patterns(self, model):
@@ -72,7 +72,7 @@ class Adaptor(object):
            Return:
               [['conv', 'relu'], ['conv', 'relu', 'bn']]
         '''
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
@@ -84,7 +84,7 @@ class Adaptor(object):
                Numpy Array Dict
                {'op1': tensor, 'op2': tensor}
         '''
-        raise notimplementederror
+        raise NotImplementedError
 
     @abstractmethod
     def mapping(self, src_model, dst_model):
@@ -94,4 +94,4 @@ class Adaptor(object):
                Dict
                {'src_op1': 'dst_op1'}
         '''
-        raise notimplementederror
+        raise NotImplementedError

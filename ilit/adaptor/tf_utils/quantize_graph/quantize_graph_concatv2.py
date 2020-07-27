@@ -8,7 +8,7 @@ import re
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
-    def __int__(self, input_graph, output_node_names, perchannel,
+    def __init__(self, input_graph, output_node_names, perchannel,
                 start_node_name):
         super(FuseNodeStartWithConcatV2,
               self).__init__(input_graph, output_node_names, perchannel,
