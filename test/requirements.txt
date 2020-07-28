@@ -1,4 +1,4 @@
-tensorflow
+intel-tensorflow==2.1.0
 importlib
 yaml
 os
