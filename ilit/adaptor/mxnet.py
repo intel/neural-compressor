@@ -181,7 +181,16 @@ class MxNetAdaptor(Adaptor):
         return acc
 
     def _mxnet_symbol_forward(self, symbol_file, dataIter, metric):
+        """MXNet symbol model evaluation process.
 
+        Args:
+            symbol_file (object): the symbole model need to do evaluate.
+            dataIter (object): dataset used for model evaluate.
+            metric (object): evaluate metrics.
+
+        Returns:
+            acc: evaluate result
+        """
         sym, arg_params, aux_params = symbol_file
         sym = sym.get_backend_symbol('MKLDNN_QUANTIZE')
         data_name = (dataIter.provide_data[0].name,)
@@ -211,23 +220,17 @@ class MxNetAdaptor(Adaptor):
         return acc
 
     def _mxnet_gluon_forward(self, gluon_model, dataloader, metrics):
+        """MXNet gluon model evaluation process.
 
-        data_l, label_l = pre_process(dataloader)
-        metric = metrics[0]
-        metric.reset()
-        batch_num = 0
-        for data, label in zip(data_l, label_l):
-            out = gluon_model(*data)
-            metric.update(label, out)
-            batch_num += len(data_l[0][0])
-        res = metric.get()
-        if len(res) == 1:
-            acc = res[1]
+        Args:
+            gluon_model (object): the gluon model need to do evaluate.
+            dataloader (object): dataset used for model evaluate.
+            metrics (object): evaluate metrics.
 
-        else:
-            acc = res[1][0]
-
-        return acc
+        Returns:
+            acc: evaluate result
+        """
+        raise NotImplementedError
 
     def _check_model(self, model, dataloader):
         """The function is used to check model and calib_data,

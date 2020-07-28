@@ -127,7 +127,7 @@ class CocoMAP(Metric):
         mean_ap(dict): The dict of mean AP for configuration.
     """
 
-    def __init__(self, mean_ap):
+    def __init__(self, mean_ap={}):
         super(CocoMAP, self).__init__('cocomap')
         assert isinstance(mean_ap, dict)
         self.acc = 0
