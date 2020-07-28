@@ -1,6 +1,5 @@
 from abc import abstractmethod
 import copy
-import itertools
 from collections import OrderedDict
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
@@ -43,7 +42,7 @@ class TuneStrategy(object):
 
     Args:
         model (object):                        The FP32 model specified for low precision tuning.
-        cfg (YamlAttr):                        The tuning configuration user specified.
+        conf (Conf):                           The Conf class instance initialized from user yaml config file.
         q_dataloader (generator):              Data loader for calibration, mandatory for post-training quantization.
                                                It is iterable and should yield a tuple (input, label) for calibration
                                                dataset containing label, or yield (input, _) for label-free calibration
@@ -72,32 +71,25 @@ class TuneStrategy(object):
                                                     return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
     """        
-    def __init__(self, model, cfg, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
+    def __init__(self, model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
-        self.cfg = cfg
-        self.eval_dataloader = eval_dataloader
-        self.calib_dataloader = q_dataloader
-        self.q_func = q_func
-        self.eval_func = eval_func
+        self.cfg = conf.usr_cfg
 
-        logger.debug('Dump user yaml configuration:\n', self.cfg)
+        logger.debug('Dump user yaml configuration:')
+        logger.debug(self.cfg)
 
         self.eval_dataloader = eval_dataloader
         self.calib_dataloader = q_dataloader
         self.q_func = q_func
         self.eval_func = eval_func
 
-        framework_specific_info = {}
-        if cfg.framework.name.lower() == 'tensorflow':
-            framework_specific_info = {
-                "inputs": cfg.framework.inputs, "outputs": cfg.framework.outputs}
-        if cfg.framework.name.lower() == 'pytorch':
-            framework_specific_info = {
-                "approach": cfg.quantization.approach, "outputs": cfg.framework.outputs}
-        if cfg.framework.name.lower() == 'mxnet':
-            framework_specific_info = {"q_dataloader": q_dataloader}
+        framework_specific_info = {'device': self.cfg.device, 'approach': self.cfg.quantization.approach}
+        if self.cfg.framework.name.lower() == 'tensorflow':
+            framework_specific_info.update({"inputs": self.cfg.framework.inputs, "outputs": self.cfg.framework.outputs})
+        if self.cfg.framework.name.lower() == 'mxnet':
+            framework_specific_info.update({"q_dataloader": q_dataloader})
 
-        framework = cfg.framework.name.lower()
+        framework = self.cfg.framework.name.lower()
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
 
@@ -107,27 +99,18 @@ class TuneStrategy(object):
         self.best_tune_result = None
         self.best_qmodel = None
 
-        objective = 'performance'
-        if cfg.tuning.objective:
-            objective = cfg.tuning.objective.lower()
-        self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion)
+        objective = self.cfg.tuning.objective.lower()
+        self.objective = OBJECTIVES[objective](self.cfg.tuning.accuracy_criterion)
 
-        self.modelwise_tune_space = self._modelwise_tune_space(model)
-        self.opwise_tune_space = self._opwise_tune_space(model)
-        self.modelwise_tune_cfgs = self._tune_cfgs(self.modelwise_tune_space)
+        self.modelwise_tune_space = self._modelwise_tune_space(model, conf)
+        self.opwise_tune_space = self._opwise_tune_space(model, conf)
+        self.modelwise_tune_cfgs = conf.expand_tune_cfgs(self.modelwise_tune_space)
         self.opwise_tune_cfgs = OrderedDict()
         for key in self.opwise_tune_space:
-            self.opwise_tune_cfgs[key] = self._tune_cfgs(
+            self.opwise_tune_cfgs[key] = conf.expand_tune_cfgs(
                 self.opwise_tune_space[key])
 
-        self.calib_iter = cfg.calibration.iterations if cfg.calibration and \
-            cfg.calibration.iterations else None
-        if self.calib_iter and isinstance(self.calib_iter, str):
-            self.calib_iter = self.calib_iter.split(',')
-        elif self.calib_iter and isinstance(self.calib_iter, int):
-            self.calib_iter = [self.calib_iter]
-        else:
-            self.calib_iter = [1]
+        self.calib_iter = self.cfg.calibration.iterations
 
         self.modelwise_quant_cfgs = []
         for cfg in self.modelwise_tune_cfgs:
@@ -178,7 +161,8 @@ class TuneStrategy(object):
                     logger.debug('Tuning config was evaluated, skip!')
                     continue
 
-                logger.debug('Dump current tuning configuration:\n', tune_cfg)
+                logger.debug('Dump current tuning configuration:')
+                logger.debug(tune_cfg)
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
@@ -191,63 +175,12 @@ class TuneStrategy(object):
                 if self.stop(t):
                     break
 
-
-    def _intersect(self, src_list, dst_list):
-        """Get the intersection result from two lists
-
-        Args:
-            src_list (list): The source list intersected from
-            dst_list (list): The dest list intersected to
-
-        Returns:
-            list: The list containing the intersection result of two lists
-        """
-        if src_list is None:
-            return dst_list
-
-        assert isinstance(src_list, list) and isinstance(dst_list, list)
-        intersect = [value for value in src_list if value in dst_list]
-        if intersect != []:
-            dst_list = intersect
-
-        return dst_list
-
-    def _merge_dicts(self, src, dst):
-        """Helper function to merge src dict into dst dict.
-
-           If the key in src doesn't exist in dst, then add this key and value
-           pair to dst.
-           If the key in src is in dst and the value intersects with the one in
-           dst, then override the value in dst with the intersect value.
-
-        Args:
-            src (dict): The source dict merged from
-            dst (dict): The source dict merged to
-
-        Returns:
-            dict: The merged dict from src to dst
-        """
-        for key in src:
-            if key in dst:
-                if isinstance(dst[key], dict) and isinstance(src[key], dict):
-                    self._merge_dicts(src[key], dst[key])
-                elif dst[key] == src[key]:
-                    pass  # same leaf value
-                else:
-                    value = [value for value in src[key] if value in dst[key]]
-                    if value != []:
-                        dst[key] = value
-            else:
-                if not isinstance(src[key], dict):
-                    dst[key] = src[key]
-
-        return dst
-
-    def _modelwise_tune_space(self, model):
+    def _modelwise_tune_space(self, model, conf):
         """Merge user yaml config with framework model wise capability.
 
         Args:
             model (object): The FP32 model to tune.
+            conf (Conf):    The instance of Conf class.
 
         Returns:
             dict: The override model wise tunining space
@@ -255,39 +188,14 @@ class TuneStrategy(object):
         capability = self.adaptor.query_fw_capability(model)
         dst = capability['modelwise']
 
-        src = {'weight': OrderedDict(), 'activation': OrderedDict()}
+        return conf.modelwise_tune_space(dst)
 
-        if self.cfg.calibration and self.cfg.calibration.algorithm and self.cfg.calibration.algorithm.weight:
-            src['weight']['algorithm'] = [
-                self.cfg.calibration.algorithm.weight]
-        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.granularity:
-            src['weight']['granularity'] = [
-                self.cfg.quantization.weight.granularity]
-        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.scheme:
-            src['weight']['scheme'] = [self.cfg.quantization.weight.scheme]
-        if self.cfg.quantization and self.cfg.quantization.weight and self.cfg.quantization.weight.dtype:
-            src['weight']['dtype'] = [self.cfg.quantization.weight.dtype]
-
-        if self.cfg.calibration and self.cfg.calibration.algorithm and self.cfg.calibration.algorithm.activation:
-            src['activation']['algorithm'] = [
-                self.cfg.calibration.algorithm.activation]
-        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.granularity:
-            src['activation']['granularity'] = [
-                self.cfg.quantization.activation.granularity]
-        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.scheme:
-            src['activation']['scheme'] = [
-                self.cfg.quantization.activation.scheme]
-        if self.cfg.quantization and self.cfg.quantization.activation and self.cfg.quantization.activation.dtype:
-            src['activation']['dtype'] = [
-                self.cfg.quantization.activation.dtype]
-
-        return self._merge_dicts(src, dst)
-
-    def _opwise_tune_space(self, model):
+    def _opwise_tune_space(self, model, conf):
         """Generate all tuning spaces for op wise.
 
         Args:
             model (object): The FP32 model to tune.
+            conf (Conf):    The instance of Conf class.
 
         Returns:
             dict: The opwise tunining space
@@ -295,78 +203,7 @@ class TuneStrategy(object):
         capability = self.adaptor.query_fw_capability(model)
         opwise = capability['opwise']
 
-        for k, v in opwise.items():
-            opwise[k] = self._merge_dicts(self.modelwise_tune_space, opwise[k])
-
-        if self.cfg.tuning.ops:
-            for k, v in self.cfg.tuning.ops.items():
-                for k_op, _ in opwise.items():
-                    if k == k_op[0]:
-                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])
-
-        return opwise
-
-    def _tune_cfgs(self, tune_space):
-        """generate all possible tuning combinations for each op or model wise tuning.
-
-        Args:
-            tune_space (dict): The tuning space to be expanded.
-
-        Returns:
-            dict: The expanded tuning configs
-        """
-        cfg_lists = self._tune_cfgs_recursively(tune_space)
-
-        # remove unreasonable tuning combinations
-        valid_cfgs = []
-        quant_dtype = ['int8', 'uint8', 'int4', 'uint4']
-        for cfg in cfg_lists:
-            dtype = cfg['activation']['dtype']
-            if dtype not in quant_dtype:
-                cfg['activation'].clear()
-                cfg['activation']['dtype'] = dtype
-
-            if 'weight' in cfg:
-                dtype = cfg['weight']['dtype']
-                if dtype not in quant_dtype:
-                    cfg['weight'].clear()
-                    cfg['weight']['dtype'] = dtype
-                if (cfg['weight']['dtype'] != cfg['activation']['dtype'] and
-                    cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
-                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and
-                     cfg['weight']['dtype'] in quant_dtype and cfg['activation']['dtype'] not in quant_dtype) or \
-                    (cfg['weight']['dtype'] != cfg['activation']['dtype'] and
-                     cfg['weight']['dtype'] not in quant_dtype and cfg['activation']['dtype'] in quant_dtype):
-                    continue
-
-            valid_cfgs.append(cfg)
-
-        # remove duplicated configurations
-        valid_cfgs = [cfg[0] for cfg in itertools.groupby(valid_cfgs)]
-        return valid_cfgs
-
-    def _tune_cfgs_recursively(self, cfg_dict):
-        """Helper function of recursively generating all combinations.
-
-        Args:
-            cfg_dict (dict): The dict of conf space.
-
-        Returns:
-            list: List containing all combinations
-        """
-        assert isinstance(cfg_dict, dict)
-        combinations = OrderedDict()
-        for key in cfg_dict:
-            if isinstance(cfg_dict[key], dict):
-                lists = self._tune_cfgs_recursively(cfg_dict[key])
-                combinations[key] = lists
-
-        if len(combinations) != 0:
-            return self._tune_cfgs_recursively(combinations)
-
-        keys, values = zip(*cfg_dict.items())
-        lists = [dict(zip(keys, v)) for v in itertools.product(*values)]
-        return lists
+        return conf.opwise_tune_space(opwise)
 
     def _evaluate(self, model, baseline=False):
         """The interface of evaluating model.
@@ -452,11 +289,11 @@ class TuneStrategy(object):
 
         logger.info(
             'Tune result is: ' +
-            '[{:.4f}, {:.4f}]'.format(
-                *self.last_tune_result) if self.last_tune_result else 'None' +
-            'Best tune result is: ' +
-            '[{:.4f}, {:.4f}]'.format(
-                *self.best_tune_result) if self.best_tune_result else 'None')
+            ('[{:.4f}, {:.4f}]'.format(
+                *self.last_tune_result) if self.last_tune_result else 'None') +
+            ' Best tune result is: ' +
+            ('[{:.4f}, {:.4f}]'.format(
+                *self.best_tune_result) if self.best_tune_result else 'None'))
 
         if timeout.seconds != 0 and timeout.timed_out:
             need_stop = True

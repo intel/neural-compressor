@@ -27,8 +27,8 @@ class TensorFlowAdaptor(Adaptor):
 
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
-        self.inputs = self.framework_specific_info['inputs'].split(',')
-        self.outputs = self.framework_specific_info['outputs'].split(',')
+        self.inputs = self.framework_specific_info['inputs']
+        self.outputs = self.framework_specific_info['outputs']
 
     def evaluate(self, graph, dataloader, postprocess=None, metric=None):
         """Evaluate the model for specified metric on validation dataset.
@@ -113,7 +113,8 @@ class TensorFlowAdaptor(Adaptor):
         logger.info('Start to run model quantization...')
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
-        logger.debug('Dump quantization configurations:\n', self.quantize_config)
+        logger.debug('Dump quantization configurations:')
+        logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    quantized_model,
@@ -218,7 +219,8 @@ class TensorFlowAdaptor(Adaptor):
         }
         self._query_quantizable_ops(model)
         capability['opwise'] = self.quantizable_op_details
-        logger.debug('Dump framework quantization capability:\n', capability)
+        logger.debug('Dump framework quantization capability:')
+        logger.debug(capability)
 
         return capability
 

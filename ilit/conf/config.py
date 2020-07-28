@@ -1,9 +1,21 @@
-from ..utils.utility import cfg_from_file
+import yaml
+from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
-from ..utils import logger
+from ..objective import OBJECTIVES
+import re
+import copy
+import itertools
+from collections import OrderedDict
 
-class YamlAttr(dict):
+# Schema library has different loading sequence priorities for different
+# value types.
+# To make sure the fields under dataloader.transform field of yaml file
+# get loaded with written sequence, this workaround is used to convert
+# None to {} in yaml load().
+yaml.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {})
+
+class DotDict(dict):
     """access yaml using attributes instead of using the dictionary notation.
 
     Args:
@@ -25,15 +37,15 @@ class YamlAttr(dict):
         return value
 
     def __setitem__(self, key, value):
-        if isinstance(value, dict) and not isinstance(value, YamlAttr):
-            value = YamlAttr(value)
+        if isinstance(value, dict) and not isinstance(value, DotDict):
+            value = DotDict(value)
         if isinstance(value, list) and len(value) == 1 and isinstance(
                 value[0], dict):
-            value = YamlAttr(value[0])
+            value = DotDict(value[0])
         if isinstance(value, list) and len(value) > 1 and all(isinstance(
                 v, dict) for v in value):
-            value = YamlAttr({k: v for d in value for k, v in d.items()})
-        super(YamlAttr, self).__setitem__(key, value)
+            value = DotDict({k: v for d in value for k, v in d.items()})
+        super(DotDict, self).__setitem__(key, value)
 
     def __getstate__(self):
         return self.__dict__
@@ -43,6 +55,131 @@ class YamlAttr(dict):
 
     __setattr__, __getattr__ = __setitem__, __getitem__
 
+def _valid_framework_field(key, scope, error):
+    if scope['name'] == 'tensorflow':
+        assert 'inputs' in scope and 'outputs' in scope
+
+def _valid_accuracy_field(key, scope, error):
+    assert bool('relative' in scope['accuracy_criterion']) != bool('absolute' in scope['accuracy_criterion'])
+
+def input_to_list(data):
+    if isinstance(data, str):
+        return data.split(',')
+    if isinstance(data, int):
+        return [data]
+    else:
+        assert isinstance(data, list)
+        return data
+
+def percent_to_float(data):
+    if isinstance(data, str) and re.match('-?\d+(\.\d+)?%', data):
+        data = float(data.strip('%'))/100
+    else:
+        assert isinstance(data, float), 'This field should be float or percent string'
+    return data
+
+ops_schema = Schema({
+    Optional('weight', default=None): {
+        Optional('granularity', default=None): And(list, lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+        Optional('scheme', default=None): And(list, lambda s: all(i in ['asym', 'sym'] for i in s)),
+        Optional('dtype', default=None): And(list, lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+        Optional('algorithm', default=None): And(list, lambda s: all(i in ['minmax', 'kl'] for i in s))
+    },
+    Optional('activation', default=None): {
+        Optional('granularity', default=None): And(list, lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+        Optional('scheme', default=None): And(list, lambda s: all(i in ['asym', 'sym'] for i in s)),
+        Optional('dtype', default=None): And(list, lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+        Optional('algorithm', default=None): And(list, lambda s: all(i in ['minmax', 'kl'] for i in s))
+    }
+})
+
+transform_schema = Schema({
+    Optional('RandomResizedCrop'): {
+        'size': And(int, lambda s: s > 0)
+    },
+    Optional('RandomHorizontalFlip'): Or({}, None),
+    Optional('ToTensor'): Or({}, None),
+    Optional('Normalize'): {
+        'mean': And(list, lambda s: all(isinstance(i, float) for i in s)),
+        'std': And(list, lambda s: all(isinstance(i, float) for i in s))
+    },
+    Optional('Resize'): {
+        'size': And(int, lambda s: s > 0)
+    },
+    Optional('CenterCrop'): {
+        'size': And(int, lambda s: s > 0)
+    },
+    Optional('Reshape'): {
+        'shape': And(list, lambda s: all(isinstance(i, int) for i in s)),
+    }
+})
+
+dataloader_schema = Schema({
+    Optional('batch_size', default=1): And(int, lambda s: s > 0),
+    Optional('dataset', default=None): {
+        Optional('type', default=None): str,
+        Optional('root', default=None): str
+    },
+    Optional('transform', default=None): transform_schema
+})
+
+schema = Schema({
+    'framework': {
+        Hook('name', handler=_valid_framework_field): object,
+        'name': And(str, lambda s: s in FRAMEWORKS),
+        Optional('inputs', default=None): And(Or(str, list), Use(input_to_list)),
+        Optional('outputs', default=None): And(Or(str, list), Use(input_to_list))
+    },
+    Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
+    Optional('quantization', default={'approach':'post_training_static_quant'}): {
+        Optional('approach', default='post_training_static_quant'): And(str, 
+                                                                        lambda s: s in ['post_training_static_quant', 'quant_aware_training']),
+        Optional('weight', default=None): {
+            Optional('granularity', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+            Optional('scheme', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['asym', 'sym'] for i in s)),
+            Optional('dtype', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
+        },
+        Optional('activation', default=None): {
+            Optional('granularity', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+            Optional('scheme', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['asym', 'sym'] for i in s)),
+            Optional('dtype', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
+        }
+    },
+    Optional('calibration', default={'iterations': [1]}): {
+        Optional('iterations', default=[1]): And(Or(str, int, list), Use(input_to_list)),
+        Optional('algorithm', default=None): {
+            Optional('weight', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['minmax', 'kl'] for i in s)),
+            Optional('activation', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['minmax', 'kl'] for i in s))
+        },
+        Optional('dataloader', default=None): dataloader_schema
+    },
+    Optional('tuning', default={'strategy':'basic', 'accuracy_criterion': {'relative': 0.01}, 'objective': 'performance', 'timeout': 0, 'random_seed': 1978}): {
+        Optional('strategy', default='basic'): And(str, lambda s: s in STRATEGIES),
+        Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
+        Optional('timeout', default=0): int, 
+        Optional('random_seed', default=1978): int, 
+        Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
+        Optional('accuracy_criterion', default={'relative': 0.01}): {
+            Optional('relative'): And(Or(str, float), Use(percent_to_float)),
+            Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
+        }, 
+        Optional('metric', default=None): {
+            Optional('topk'): And(int, lambda s: s in [1, 5]),
+        }, 
+        Optional('ops', default=None): {
+            str: ops_schema
+        }
+    },
+    Optional('evaluation', default=None): {
+        Optional('dataloader', default=None): dataloader_schema,
+        Optional('postprocess', default=None): {
+            Optional('transform', default=None): transform_schema
+        }
+    },
+    Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
+        Optional('path', default='~/.ilit/snapshot/'): str
+    }
+})
 
 class Conf(object):
     """config parser.
@@ -54,136 +191,173 @@ class Conf(object):
 
     def __init__(self, cfg_fname):
         assert cfg_fname is not None
-        self.cfg = self._read_cfg(cfg_fname)
+        self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+        self._modelwise_tune_space = None
+        self._opwise_tune_space = None
 
     def _read_cfg(self, cfg_fname):
+        """Load a config file following yaml syntax.
+    
+           Args:
+               cfg_fname(string): The name of configuration yaml file
+        """
         try:
-            cfg = YamlAttr(cfg_from_file(cfg_fname))
-            self._sanity_check(cfg)
-            return cfg
+            with open(cfg_fname, 'r') as f:
+                # remove '- ' sign from yaml, it's to avoid the side effect
+                # of the syntax as user may not quite familiar with this and
+                # arbitrarily add it or not.
+                content = f.read().replace('- ', '  ')
+                cfg = yaml.load(content, yaml.Loader)
+                return schema.validate(cfg)
         except Exception as e:
             raise RuntimeError(
                 "The yaml file format is not correct. Please refer to document."
             )
 
-    def _sanity_check(self, cfg):
-        for key in cfg.keys():
-            assert key in [
-                'framework', 'device', 'calibration', 'quantization', 'tuning',
-                'snapshot', 'evaluation'
-            ]
+    def _merge_dicts(self, src, dst):
+        """Helper function to merge src dict into dst dict.
 
-        assert 'framework' in cfg and 'name' in cfg.framework and isinstance(
-            cfg.framework.name, str)
-        assert cfg.framework.name.lower(
-        ) in FRAMEWORKS, "The framework {} specified in yaml file is NOT supported".format(
-            cfg.framework.name)
+           If the key in src doesn't exist in dst, then add this key and value
+           pair to dst.
+           If the key in src is in dst and the value intersects with the one in
+           dst, then override the value in dst with the intersect value.
 
-        if cfg.framework.name.lower() == 'tensorflow':
-            assert cfg.framework.inputs and cfg.framework.outputs, "TensorFlow backend requires user to specify the graph inputs and outputs"
-        else:
-            cfg.framework.inputs = None
-            cfg.framework.outputs = None
+        Args:
+            src (dict): The source dict merged from
+            dst (dict): The source dict merged to
 
-        if 'calibration' in cfg.keys():
-            assert None not in cfg.calibration.values()
-            for key in cfg.calibration.keys():
-                assert key in ['iterations', 'algorithm', 'dataloader']
-                if key == 'algorithm':
-                    for algo_key in cfg.calibration.algorithm.keys():
-                        assert algo_key in ['weight', 'activation']
-                if key == 'dataloader':
-                    for data_key in cfg.calibration.dataloader.keys():
-                        assert data_key in ['batch_size', 'dataset', 'transform']
+        Returns:
+            dict: The merged dict from src to dst
+        """
+        for key in src:
+            if key in dst:
+                if isinstance(dst[key], dict) and isinstance(src[key], dict):
+                    self._merge_dicts(src[key], dst[key])
+                elif dst[key] == src[key]:
+                    pass  # same leaf value
+                else:
+                    value = [value for value in src[key] if value in dst[key]]
+                    if value != []:
+                        dst[key] = value
+            else:
+                if not isinstance(src[key], dict):
+                    dst[key] = src[key]
 
-        if 'evaluation' in cfg.keys():
-            assert None not in cfg.evaluation.values()
-            for key in cfg.evaluation.keys():
-                assert key in ['dataloader', 'postprocess']
-                if key == 'dataloader':
-                    for data_key in cfg.evaluation.dataloader.keys():
-                        assert data_key in ['batch_size', 'dataset', 'transform']
-                if key == 'postprocess':
-                    assert 'transform' in cfg.evaluation.keys()
-                    assert None not in cfg.evaluation.values()
+        return dst 
 
-        if 'device' in cfg.keys():
-            assert cfg.device in ['cpu', 'gpu']
-        else:
-            cfg.device = 'cpu'
+    def modelwise_tune_space(self, modelwise_quant):
+        src = DotDict({'weight': dict(), 'activation': dict()})
 
-        if 'quantization' in cfg.keys():
-            for key in cfg.quantization.keys():
-                assert key in ['approach', 'weight', 'activation', 'quant_aware_training']
-                if key == 'approach':
-                    assert cfg.quantization.approach.lower() in [
-                        'post_training_static_quant', 'quant_aware_training'
-                    ], "post_training_dynamic_quant is not supported yet."
-                if key == 'weight':
-                    assert None not in cfg.quantization.weight.values()
-                    for w_key in cfg.quantization.weight.keys():
-                        assert w_key in ['granularity', 'scheme', 'dtype']
-                if key == 'activation':
-                    assert None not in cfg.quantization.activation.values()
-                    for a_key in cfg.quantization.activation.keys():
-                        assert a_key in ['granularity', 'scheme', 'dtype']
-        else:
-            cfg.quantization = {}
+        cfg = self.usr_cfg
+        if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.weight:
+            src.weight.algorithm = [
+                cfg.calibration.algorithm.weight]
 
-        if not cfg.quantization.approach:
-            cfg.quantization.approach = 'post_training_static_quant'
+        if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.granularity:
+            src.weight.granularity = [
+                cfg.quantization.weight.granularity]
 
-        if 'tuning' in cfg.keys():
-            assert 'accuracy_criterion' in {
-                key.lower()
-                for key in cfg.tuning.keys()
-            }
-            assert None not in cfg.tuning.values()
-            assert None not in cfg.tuning.accuracy_criterion.values()
-            for key in cfg.tuning.keys():
-                assert key in [
-                    'strategy', 'metric', 'accuracy_criterion', 'objective',
-                    'timeout', 'random_seed', 'ops'
-                ]
-                if key == 'strategy':
-                    assert cfg.tuning.strategy.lower(
-                    ) in STRATEGIES, "The strategy {} specified in yaml file is NOT supported".format(
-                        cfg.tuning.strategy)
-                if key == 'ops':
-                    assert isinstance(cfg.tuning.ops, dict)
-                    for op in cfg.tuning.ops.keys():
-                        op_value = cfg.tuning.ops[op]
-                        assert isinstance(op_value, dict)
-                        for attr in op_value.keys():
-                            assert attr in ['activation', 'weight']
-                            assert isinstance(op_value[attr], dict)
-                            for attr_key in op_value[attr].keys():
-                                assert attr_key in [
-                                    'granularity', 'scheme', 'dtype',
-                                    'algorithm'
-                                ]
-        else:
-            cfg.tuning = {}
+        if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.scheme:
+            src.weight.scheme = [cfg.quantization.weight.scheme]
 
-        if not cfg.tuning.strategy:
-            cfg.tuning.strategy = 'basic'
+        if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.dtype:
+            src.weight.dtype = [cfg.quantization.weight.dtype]
 
-        if cfg.tuning.strategy.lower() == 'mse':
-            assert cfg.framework.name.lower(
-            ) != 'pytorch', "The MSE strategy doesn't support PyTorch framework"
+        if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.activation:
+            src.activation.algorithm = [
+                cfg.calibration.algorithm.activation]
 
-        if not cfg.tuning.timeout:
-            cfg.tuning.timeout = 0
+        if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.granularity:
+            src.activation.granularity = [
+                cfg.quantization.activation.granularity]
 
-        if not cfg.tuning.random_seed:
-            cfg.tuning.random_seed = 1978
+        if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.scheme:
+            src.activation.scheme = [
+                cfg.quantization.activation.scheme]
 
-        if not cfg.tuning.objective:
-            cfg.tuning.objective = 'performance'
+        if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.dtype:
+            src.activation.dtype = [
+                cfg.quantization.activation.dtype]
 
-        if not cfg.tuning.accuracy_criterion:
-            cfg.tuning.accuracy_criterion = {'relative': 0.01}
+        self._modelwise_tune_space = self._merge_dicts(src, modelwise_quant)
+        return self._modelwise_tune_space
 
-        if 'snapshot' in cfg.keys():
-            assert 'path' in cfg.snapshot.keys() and isinstance(
-                cfg.snapshot.path, str)
+    def opwise_tune_space(self, opwise_quant):
+        opwise = copy.deepcopy(opwise_quant)
+        for k, v in opwise.items():
+            opwise[k] = self._merge_dicts(self._modelwise_tune_space, opwise[k])
+
+        cfg = self.usr_cfg
+        if cfg.tuning.ops:
+            for k, v in cfg.tuning.ops.items():
+                for k_op, _ in opwise.items():
+                    if k == k_op[0]:
+                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])  
+
+        self._opwise_tune_space = opwise
+        return self._opwise_tune_space
+
+    def expand_tune_cfgs(self, tune_space):
+        """generate all possible tuning combinations for each op or model wise tuning.
+
+        Args:
+            tune_space (dict): The tuning space to be expanded.
+
+        Returns:
+            dict: The expanded tuning configs
+        """
+        cfg_lists = self._expand_tune_cfgs_recursively(tune_space)
+
+        # remove unreasonable tuning combinations
+        valid_cfgs = []
+        quant_dtype = ['int8', 'uint8', 'int4', 'uint4']
+
+        for cfg in cfg_lists:
+            cfg = DotDict(cfg)
+            dtype = cfg.activation.dtype
+
+            if dtype not in quant_dtype:
+                cfg.activation.clear()
+                cfg.activation.dtype = dtype
+
+            if 'weight' in cfg:
+                dtype = cfg.weight.dtype
+                if dtype not in quant_dtype:
+                    cfg.weight.clear()
+                    cfg.weight.dtype = dtype
+                if (cfg.weight.dtype != cfg.activation.dtype and
+                    cfg.weight.dtype not in quant_dtype and cfg.activation.dtype not in quant_dtype) or \
+                    (cfg.weight.dtype != cfg.activation.dtype and
+                     cfg.weight.dtype in quant_dtype and cfg.activation.dtype not in quant_dtype) or \
+                    (cfg.weight.dtype != cfg.activation.dtype and
+                     cfg.weight.dtype not in quant_dtype and cfg.activation.dtype in quant_dtype):
+                    continue
+
+            valid_cfgs.append(cfg)
+
+        # remove duplicated configurations
+        valid_cfgs = [cfg[0] for cfg in itertools.groupby(valid_cfgs)]
+        return valid_cfgs
+
+    def _expand_tune_cfgs_recursively(self, cfg_dict):
+        """Helper function of recursively generating all combinations.
+
+        Args:
+            cfg_dict (dict): The dict of conf space.
+
+        Returns:
+            list: List containing all combinations
+        """
+        assert isinstance(cfg_dict, dict)
+        combinations = OrderedDict()
+        for key in cfg_dict:
+            if isinstance(cfg_dict[key], dict):
+                lists = self._expand_tune_cfgs_recursively(cfg_dict[key])
+                combinations[key] = lists
+
+        if len(combinations) != 0:
+            return self._expand_tune_cfgs_recursively(combinations)
+
+        keys, values = zip(*cfg_dict.items())
+        lists = [dict(zip(keys, v)) for v in itertools.product(*values)]
+        return lists

@@ -2,9 +2,9 @@ from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, AverageMeter
 import copy
 from collections import OrderedDict
+from ..utils import logger
 
 torch = LazyImport('torch')
-
 
 @adaptor_registry
 class PyTorchAdaptor(Adaptor):
@@ -91,7 +91,7 @@ class PyTorchAdaptor(Adaptor):
         self._propagate_qconfig(q_model, op_cfgs)
         # sanity check common API misusage
         if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
-            print("None of the submodule got qconfig applied. Make sure you "
+            logger.warn("None of the submodule got qconfig applied. Make sure you "
                   "passed correct configuration through `qconfig_dict` or "
                   "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)

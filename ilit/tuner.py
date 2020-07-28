@@ -28,7 +28,7 @@ class Tuner(object):
     """
 
     def __init__(self, conf_fname):
-        self.cfg = Conf(conf_fname).cfg
+        self.conf = Conf(conf_fname)
 
     def tune(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume_file=None):
         """The main entry point of automatic quantization tuning.
@@ -83,49 +83,47 @@ class Tuner(object):
             quantized model: best qanitized model found, otherwise return None
 
         """
-        self.snapshot_path = self.cfg.snapshot.path if self.cfg.snapshot else './'
-
-        strategy = 'basic'
+        cfg = self.conf.usr_cfg
+        self.snapshot_path = os.path.abspath(os.path.expanduser(cfg.snapshot.path))
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_dataloader is None and eval_func is None: 
-            assert self.cfg.evaluation is not None, "\'evaluation\' field of yaml file is missing"
-            assert self.cfg.evaluation.dataloader is not None, "\'evaluation.dataloader\' field of yaml file is missing"
+            assert cfg.evaluation is not None, "\'evaluation\' field of yaml file is missing"
+            assert cfg.evaluation.dataloader is not None, "\'evaluation.dataloader\' field of yaml file is missing"
             batch_size = 1
-            if self.cfg.evaluation.dataloader.get('batch_size') is not None:
-                batch_size = int(self.cfg.evaluation.dataloader['batch_size'])
+            if cfg.evaluation.dataloader.get('batch_size') is not None:
+                batch_size = int(cfg.evaluation.dataloader['batch_size'])
 
-            self.eval_dataset = self._create_dataset(self.cfg.evaluation.dataloader.dataset,
-                self.cfg.evaluation.dataloader.transform, self.cfg.framework.name)
+            self.eval_dataset = self._create_dataset(cfg.evaluation.dataloader.dataset,
+                cfg.evaluation.dataloader.transform, cfg.framework.name)
 
             self.eval_dataloader = DataLoader(dataset=self.eval_dataset,
-                                              framework=self.cfg.framework.name,
+                                              framework=cfg.framework.name,
                                               batch_size=batch_size) 
         else: 
             self.eval_dataloader = eval_dataloader
 
         if q_dataloader is None and q_func is None:
-            assert self.cfg.calibration is not None, "\'calibration\' field of yaml file is missing"
-            assert self.cfg.calibration.dataloader is not None, "\'calibration.dataloader\' field of yaml file is missing"
+            assert cfg.calibration is not None, "\'calibration\' field of yaml file is missing"
+            assert cfg.calibration.dataloader is not None, "\'calibration.dataloader\' field of yaml file is missing"
             batch_size = 1
-            if self.cfg.calibration.dataloader.batch_size is not None:
-                batch_size = int(self.cfg.calibration.dataloader['batch_size'])
+            if cfg.calibration.dataloader.batch_size is not None:
+                batch_size = int(cfg.calibration.dataloader['batch_size'])
 
-            self.calib_dataset = self._create_dataset(self.cfg.calibration.dataloader.dataset,
-                self.cfg.calibration.dataloader.transform, self.cfg.framework.name)
+            self.calib_dataset = self._create_dataset(cfg.calibration.dataloader.dataset,
+                cfg.calibration.dataloader.transform, cfg.framework.name)
 
             self.calib_dataloader = DataLoader(dataset=self.calib_dataset,
-                                               framework=self.cfg.framework.name,
+                                               framework=cfg.framework.name,
                                                batch_size=batch_size)
         else:
             self.calib_dataloader = q_dataloader
 
         self.q_func = q_func
         self.eval_func = eval_func
-        if self.cfg.tuning.strategy:
-            strategy = self.cfg.tuning.strategy.lower()
-            assert strategy.lower(
-            ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
+        strategy = cfg.tuning.strategy.lower()
+        assert strategy.lower(
+        ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
 
         dicts = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
@@ -140,7 +138,7 @@ class Tuner(object):
 
         self.strategy = STRATEGIES[strategy](
             model,
-            self.cfg,
+            self.conf,
             self.calib_dataloader,
             self.q_func,
             self.eval_dataloader,
@@ -183,4 +181,4 @@ class Tuner(object):
             '%Y-%m-%d-%H-%M-%S') + '.snapshot'
         with open(fname, 'wb') as f:
             pickle.dump(self.strategy, f, protocol=pickle.HIGHEST_PROTOCOL)
-            logger.info("\nSave snapshot to {}".format(os.path.abspath(fname)))
+            logger.info("\nSave snapshot to {}".format(fname))

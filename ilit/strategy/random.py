@@ -8,7 +8,7 @@ class RandomTuneStrategy(TuneStrategy):
 
     Args:
         model (object):                        The FP32 model specified for low precision tuning.
-        cfg (YamlAttr):                        The tuning configuration user specified.
+        conf (Conf):                           The Conf class instance initialized from user yaml config file.
         q_dataloader (generator):              Data loader for calibration, mandatory for post-training quantization.
                                                It is iterable and should yield a tuple (input, label) for calibration
                                                dataset containing label, or yield (input, _) for label-free calibration
@@ -39,13 +39,13 @@ class RandomTuneStrategy(TuneStrategy):
 
     """
 
-    def __init__(self, model, cfg, q_dataloader, q_func=None,
+    def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
         super(
             RandomTuneStrategy,
             self).__init__(
             model,
-            cfg,
+            conf,
             q_dataloader,
             q_func,
             eval_dataloader,

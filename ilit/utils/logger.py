@@ -54,7 +54,7 @@ def log(level, msg, *args, **kwargs):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().log(level, line, *args, **kwargs)
     else:
-      Logger().get_logger().log(level, msg, *args, **kwargs)
+        Logger().get_logger().log(level, msg, *args, **kwargs)
 
 def debug(msg, *args, **kwargs):
     if isinstance(msg, dict):

@@ -10,24 +10,11 @@ import os
 import os.path as osp
 import inspect
 import time
-import yaml
 import sys
 from collections import OrderedDict
 
 def print_info():
     print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
-
-
-def cfg_from_file(file_name):
-    """Load a config file and merge it into the default options.
-
-       Args:
-           file_name (string): The name of configuration yaml file
-    """
-    with open(file_name, 'r') as f:
-        yaml_cfg = yaml.load(f, yaml.SafeLoader)
-
-    return yaml_cfg
 
 
 def caller_obj(obj_name):

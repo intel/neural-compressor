@@ -194,15 +194,6 @@ class TestConf(unittest.TestCase):
         framework: 
           - name: mxnet
         tuning: 
-          - strategy: basic
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
-        framework: 
-          - name: mxnet
-        tuning: 
           - accuracy_criterion:
               - relative: 0.01
           - strategy: basic, mse
@@ -254,17 +245,6 @@ class TestConf(unittest.TestCase):
 
         test = '''
         framework: 
-          - name: pytorch
-        tuning: 
-          - accuracy_criterion:
-              - relative: 0.01
-            strategy: mse
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
-        framework: 
           - name: mxnet
         tuning: 
           - accuracy_criterion:
@@ -286,7 +266,7 @@ class TestConf(unittest.TestCase):
             }
         '''
         helper(test)
-        conf.Conf('fake_conf.yaml')
+        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
     def test_snapshot(self):
         test = '''

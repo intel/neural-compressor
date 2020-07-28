@@ -154,7 +154,7 @@ class TestTuner(unittest.TestCase):
         from ilit.strategy import strategy
         from ilit import tuner as iLit
         at = iLit.Tuner('fake_yaml2.yaml')
-        snapshot_path = at.cfg.snapshot.path
+        snapshot_path = at.conf.usr_cfg.snapshot.path
         files = os.listdir(snapshot_path)
         record = 0
         for file in files:
