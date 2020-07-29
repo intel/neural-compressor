@@ -1,3 +1,8 @@
+Original DLRM README
+============
+
+Please refer [DLRM README](https://github.com/facebookresearch/dlrm/blob/master/README.md)
+
 Step-by-Step
 ============
 
@@ -25,17 +30,17 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
 
   The code supports interface with the [Criteo Terabyte Dataset](https://labs.criteo.com/2013/12/download-terabyte-click-logs/)
   1. download the raw data files day_0.gz, ...,day_23.gz and unzip them Specify the location of the unzipped text files day_0, ...,day_23, using --raw-data-file=<path/day> (the day number will be appended automatically)
-  2. These are then pre-processed (categorize, concat across days...) to allow using with dlrm  code
+  2. These are then pre-processed (categorize, concat across days...) to allow using with dlrm code
   3. The processed data is stored as .npz file in <root_dir>/input/.npz
-  4. The processed file (.npz) can be used for subsequent runs with --processed-data-file=<path/  . npz>
+  4. The processed file (.npz) can be used for subsequent runs with --processed-data-file=<path/.npz>
    
 ### 3. Prepare pretrained model
-  Corresponding pre-trained model is available under [CC-BY-NC license](https://creativecommons.org/licenses/by-nc/2.0/) and can be downloaded here [dlrm_emb64_subsample0.   875_maxindrange10M_pretrained.pt](https://dlrm.s3-us-west-1.amazonaws.com/models/tb0875_10M.pt)
+  Corresponding pre-trained model is available under [CC-BY-NC license](https://creativecommons.org/licenses/by-nc/2.0/) and can be downloaded here [dlrm_emb64_subsample0.875_maxindrange10M_pretrained.pt](https://dlrm.s3-us-west-1.amazonaws.com/models/tb0875_10M.pt)
 
 # Run
 
   ```Shell
-  cd ${ILIT_REPO}/examples/pytorch/dlrm
+  cd examples/pytorch/recommendation
   python -u dlrm_s_pytorch_tune.py --arch-sparse-feature-size=128 --arch-mlp-bot="13-512-256-128" \
         --arch-mlp-top="1024-1024-512-256-1" --max-ind-range=40000000 --data-generation=dataset \
         --data-set=terabyte --raw-data-file=${data_path}/day \ 
@@ -85,7 +90,7 @@ PyTorch quantization requires two manual steps:
   2. Fuse possible patterns, such as Linear + Relu.
 
 It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to develop a code to automatically do that.
-The related code changes please refer to examples/pytorch/dlrm/dlrm_s_pytorch_tune.py.
+The related code changes please refer to examples/pytorch/recommendation/dlrm_s_pytorch_tune.py.
 
 ### code update
 After prepare step is done, we just need update run_squad_tune.py and run_glue_tune.py like below
@@ -117,5 +122,3 @@ tuner = ilit.Tuner("./conf.yaml")
 tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
 ```
 
-# Original DLRM README
-Please refer [DLRM README](https://github.com/facebookresearch/dlrm/blob/master/README.md)

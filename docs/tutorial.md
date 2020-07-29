@@ -89,22 +89,22 @@ tuning:
 
 ### MxNet
 
--[NLP](../examples/mxnet/bert/README.md), including Bert MRPC and Bert Squad tasks.
+* [NLP](../examples/mxnet/language_translation/README.md), including Bert MRPC and Bert Squad tasks.
 
--[CNN Models](../examples/mxnet/cnn/README.md), including ResNet50 V1, ResNet18, MobileNet V1, ResNet18, SqueezeNet V1 examples.
+* [Image Recognition](../examples/mxnet/image_recognition/README.md), including ResNet50 V1, ResNet18, MobileNet V1, ResNet18, SqueezeNet V1 examples.
 
--[Object Detection](../examples/mxnet/object_detection/README.md), including SSD-ResNet50, SSD-MobileNet V1 examples.
+* [Object Detection](../examples/mxnet/object_detection/README.md), including SSD-ResNet50, SSD-MobileNet V1 examples.
 
 ### PyTorch
 
--[Recommendation](../examples/pytorch/dlrm/DLRM_README.md), including DLRM.
+* [Recommendation](../examples/pytorch/recommendation/README.md), including DLRM.
 
--[NLP](../examples/pytorch/bert/BERT_README.md) Including all 10 BERT task exampls.
+* [NLP](../examples/pytorch/language_translation/README.md) Including all 10 BERT task exampls.
 
--[CNN](../examples/pytorch/resnet/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
+* [Image Recognition](../examples/pytorch/image_recognition/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
 
 ### TensorFlow
 
--[CNN](../examples/tensorflow/image_recognition/README.md), including ResNet50 V1, ResNet50 V1.5, ResNet101, MobileNet V1, MobileNet V2, Inception V1, Inception V2, Inception V3, Inception V4, Inception ResNet V2 examples.
+* [Image Recognition](../examples/tensorflow/image_recognition/README.md), including ResNet50 V1, ResNet50 V1.5, ResNet101, MobileNet V1, MobileNet V2, Inception V1, Inception V2, Inception V3, Inception V4, Inception ResNet V2 examples.
 
--[Object Detection](../examples/tensorflow/object_detection/README.md), including SSD ResNet50 example.
+* [Object Detection](../examples/tensorflow/object_detection/README.md), including SSD ResNet50 example.

@@ -38,13 +38,13 @@ This document is used to list steps of reproducing PyTorch BERT iLiT tuning zoo 
 
   #### Install BERT model
   ```Shell
-  cd ${ILIT_REPO}/examples/pytorch/bert
+  cd examples/pytorch/language_translation
   python setup.py install
   ```
   > **Note**
   >
   > Please don't install public transformers package.
-  ```
+
 
 ### 2. Prepare Dataset
 
@@ -55,31 +55,33 @@ This document is used to list steps of reproducing PyTorch BERT iLiT tuning zoo 
 ### 3. Prepare pretrained model
   Before use iLiT, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
 
-```shell
-pip install -r ${ILIT_REPO}/examples/requirements.txt
-```
+  ```shell
+  cd examples/pytorch/language_translation
+  pip install -r examples/requirements.txt
+  ```
 
    * For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)  
 
-```shell
-export GLUE_DIR=/path/to/glue
-export TASK_NAME=MRPC
-
-python ${ILIT_REPO}/examples/run_glue_tune.py \
-    --model_type bert \
-    --model_name_or_path bert-base-uncased \
-    --task_name $TASK_NAME \
-    --do_train \
-    --do_eval \
-    --do_lower_case \
-    --data_dir $GLUE_DIR/$TASK_NAME \
-    --max_seq_length 128 \
-    --per_gpu_eval_batch_size=8   \
-    --per_gpu_train_batch_size=8   \
-    --learning_rate 2e-5 \
-    --num_train_epochs 3.0 \
-    --output_dir /path/to/checkpoint/dir
-```
+  ```shell
+  export GLUE_DIR=/path/to/glue
+  export TASK_NAME=MRPC
+  
+  cd examples/pytorch/language_translation
+  python examples/run_glue_tune.py \
+      --model_type bert \
+      --model_name_or_path bert-base-uncased \
+      --task_name $TASK_NAME \
+      --do_train \
+      --do_eval \
+      --do_lower_case \
+      --data_dir $GLUE_DIR/$TASK_NAME \
+      --max_seq_length 128 \
+      --per_gpu_eval_batch_size=8   \
+      --per_gpu_train_batch_size=8   \
+      --learning_rate 2e-5 \
+      --num_train_epochs 3.0 \
+      --output_dir /path/to/checkpoint/dir
+  ```
 
 where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
 
@@ -89,64 +91,66 @@ please refer to [BERT base scripts and instructions](README.md#run_gluepy-fine-t
 
    * For BERT large and glue tasks(MRPC, CoLA, RTE, QNLI...)
 
-```bash
-export GLUE_DIR=/path/to/glue
-export TASK_NAME=MRPC
-python -m torch.distributed.launch ${ILIT_REPO}/examples/run_glue_tune.py   \
-    --model_type bert \
-    --model_name_or_path bert-large-uncased-whole-word-masking \
-    --task_name MRPC \
-    --do_train   \
-    --do_eval   \
-    --do_lower_case   \
-    --data_dir $GLUE_DIR/MRPC/   \
-    --max_seq_length 128   \
-    --per_gpu_eval_batch_size=8   \
-    --per_gpu_train_batch_size=8   \
-    --learning_rate 2e-5   \
-    --num_train_epochs 3.0  \
-    --output_dir /path/to/checkpoint/dir \
-    --overwrite_output_dir   \
-    --overwrite_cache \
-```
+  ```bash
+  export GLUE_DIR=/path/to/glue
+  export TASK_NAME=MRPC
+  cd examples/pytorch/language_translation
+  python -m torch.distributed.launch examples/run_glue_tune.py   \
+      --model_type bert \
+      --model_name_or_path bert-large-uncased-whole-word-masking \
+      --task_name MRPC \
+      --do_train   \
+      --do_eval   \
+      --do_lower_case   \
+      --data_dir $GLUE_DIR/MRPC/   \
+      --max_seq_length 128   \
+      --per_gpu_eval_batch_size=8   \
+      --per_gpu_train_batch_size=8   \
+      --learning_rate 2e-5   \
+      --num_train_epochs 3.0  \
+      --output_dir /path/to/checkpoint/dir \
+      --overwrite_output_dir   \
+      --overwrite_cache \
+  ```
 This example code fine-tunes the Bert Whole Word Masking model on the Microsoft Research Paraphrase Corpus (MRPC) corpus using distributed training on 8 V100 GPUs to reach a F1 > 92.
 Training with these hyper-parameters gave us the following results:
 
-```bash
-  acc = 0.8823529411764706
-  acc_and_f1 = 0.901702786377709
-  eval_loss = 0.3418912578906332
-  f1 = 0.9210526315789473
-  global_step = 174
-  loss = 0.07231863956341798
-```
+  ```bash
+    acc = 0.8823529411764706
+    acc_and_f1 = 0.901702786377709
+    eval_loss = 0.3418912578906332
+    f1 = 0.9210526315789473
+    global_step = 174
+    loss = 0.07231863956341798
+  ```
 
 please refer to [BERT large scripts and instructions](README.md#fine-tuning-bert-model-on-the-mrpc-classification-task)
 
    * For BERT large SQuAD task
-```bash
-python -m torch.distributed.launch ${ILIT_REPO}/examples/run_squad.py \
-    --model_type bert \
-    --model_name_or_path bert-large-uncased-whole-word-masking \
-    --do_train \
-    --do_eval \
-    --do_lower_case \
-    --train_file $SQUAD_DIR/train-v1.1.json \
-    --predict_file $SQUAD_DIR/dev-v1.1.json \
-    --learning_rate 3e-5 \
-    --num_train_epochs 2 \
-    --max_seq_length 384 \
-    --doc_stride 128 \
-    --output_dir /path/to/checkpoint/dir \
-    --per_gpu_eval_batch_size=3   \
-    --per_gpu_train_batch_size=3   \
-```
+  ```bash
+  cd examples/pytorch/language_translation
+  python -m torch.distributed.launch examples/run_squad.py \
+      --model_type bert \
+      --model_name_or_path bert-large-uncased-whole-word-masking \
+      --do_train \
+      --do_eval \
+      --do_lower_case \
+      --train_file $SQUAD_DIR/train-v1.1.json \
+      --predict_file $SQUAD_DIR/dev-v1.1.json \
+      --learning_rate 3e-5 \
+      --num_train_epochs 2 \
+      --max_seq_length 384 \
+      --doc_stride 128 \
+      --output_dir /path/to/checkpoint/dir \
+      --per_gpu_eval_batch_size=3   \
+      --per_gpu_train_batch_size=3   \
+  ```
 Training with these hyper-parameters gave us the following results:
 
-```bash
-python $SQUAD_DIR/evaluate-v1.1.py $SQUAD_DIR/dev-v1.1.json ../models/wwm_uncased_finetuned_squad/predictions.json
-{"exact_match": 86.91579943235573, "f1": 93.1532499015869}
-```
+  ```bash
+  python $SQUAD_DIR/evaluate-v1.1.py $SQUAD_DIR/dev-v1.1.json ../models/wwm_uncased_finetuned_squad/predictions.json
+  {"exact_match": 86.91579943235573, "f1": 93.1532499015869}
+  ```
 
 please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tuning-on-squad-for-question-answering)
 
@@ -157,11 +161,11 @@ please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tunin
 ### BERT glue task
 
   ```Shell
-  cd ${ILIT_REPO}/examples/pytorch/bert
   export GLUE_DIR=/path/to/glue
   export TASK_NAME=MRPC
 
-  python ./examples/run_glue_tune.py \
+  cd examples/pytorch/language_translation
+  python examples/run_glue_tune.py \
       --model_type bert \
       --model_name_or_path /path/to/checkpoint/dir \
       --task_name $TASK_NAME \
@@ -181,9 +185,9 @@ please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tunin
 ### BERT SQuAD
 
   ```Shell
-  cd ${ILIT_REPO}/examples/pytorch/bert
+  cd examples/pytorch/language_translation
 
-  python ./examples/run_squad_tune.py \
+  python examples/run_squad_tune.py \
       --model_type bert \
       --model_name_or_path /path/to/checkpoint/dir \
       --task_name "SQuAD" \
