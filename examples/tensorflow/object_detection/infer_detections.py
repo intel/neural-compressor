@@ -18,14 +18,13 @@
 #
 
 from __future__ import division
-import os
 import time
 import numpy as np
 import tensorflow as tf
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))))
 import ilit
+import logging
 
+from ilit.adaptor.tf_utils.util import write_graph
 from tensorflow.python.data.experimental import parallel_interleave
 from tensorflow.python.data.experimental import map_and_batch
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
@@ -341,12 +340,21 @@ if __name__ == "__main__":
                             default=200,
                             type=int)
     arg_parser.add_argument('--config', type=str, default='')
+    arg_parser.add_argument('--output_model', type=str, default='')
+    arg_parser.add_argument('--tune', type=bool, default=True)
 
     args = arg_parser.parse_args()
     infer = model_infer(args)
-    
-    at = ilit.Tuner(args.config)
 
-    output_graph = at.tune(infer.get_graph(),
-                           q_dataloader=infer,
-                           eval_func=infer.accuracy_check)
+    if args.tune:
+        at = ilit.Tuner(args.config)
+
+        output_graph = at.tune(infer.get_graph(),
+                            q_dataloader=infer,
+                            eval_func=infer.accuracy_check)
+        try:
+            write_graph(output_graph.as_graph_def(), args.output_model)
+        except Exception as e:
+            logging.getLogger().info("Failed to save model due to {}".format(str(e)))
+    else:
+        infer.run()
