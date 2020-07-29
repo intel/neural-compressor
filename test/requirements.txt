@@ -1,7 +1,8 @@
-intel-tensorflow==2.1.0
+tensorflow
+torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+pytorch-ignite
+torchvision
 importlib
-yaml
-os
-unittest
+mxnet-mkl
 numpy
 ilit

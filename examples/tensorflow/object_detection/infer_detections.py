@@ -345,12 +345,11 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
     infer = model_infer(args)
-
     if args.tune:
         at = ilit.Tuner(args.config)
-
+        q_dataloader = ilit.DataLoader('tensorflow', infer)
         output_graph = at.tune(infer.get_graph(),
-                            q_dataloader=infer,
+                            q_dataloader=q_dataloader,
                             eval_func=infer.accuracy_check)
         try:
             write_graph(output_graph.as_graph_def(), args.output_model)

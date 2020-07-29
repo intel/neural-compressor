@@ -29,7 +29,7 @@ class TensorFlowAdaptor(Adaptor):
         self.inputs = self.framework_specific_info['inputs'].split(',')
         self.outputs = self.framework_specific_info['outputs'].split(',')
 
-    def evaluate(self, graph, dataloader, metric=None):
+    def evaluate(self, graph, dataloader, postprocess=None, metric=None):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
@@ -60,20 +60,11 @@ class TensorFlowAdaptor(Adaptor):
 
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
         logger.info("Start to evaluate model via tensroflow...")
-        # batch = 0
-        for content in dataloader:
-            try:
-                np_images, np_labels = content[0], content[1]
-
-                predictions = sess_graph.run(output_tensor,
-                                             {input_tensor: np_images})
-                # print("Processed %d batches."% (batch + 1))
-                # batch += 1
-                acc = metric.evaluate(predictions[0], np_labels)
-
-            except tf.errors.OutOfRangeError:
-                print("Running out of images from dataset.")
-                break
+        for images, labels in dataloader:
+            predictions = sess_graph.run(output_tensor, {input_tensor: images})
+            if metric is not None:
+                metric.update(predictions[0], labels)
+        acc = metric.result() if metric is not None else 0
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):

@@ -5,7 +5,8 @@ from collections import OrderedDict
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..metric import METRICS
-from ..utils.utility import Timeout
+from ..data import TRANSFORMS
+from ..utils.utility import Timeout, get_postprocess, get_metrics
 from ..utils import logger
 
 """The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
@@ -70,14 +71,21 @@ class TuneStrategy(object):
                                                     accuracy = metric(output, label)
                                                     return accuracy
         dicts (dict, optional):                The dict containing resume information. Defaults to None.
-    """
-
-    def __init__(self, model, cfg, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+    """        
+    def __init__(self, model, cfg, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = cfg
+        self.eval_dataloader = eval_dataloader
+        self.calib_dataloader = q_dataloader
+        self.q_func = q_func
+        self.eval_func = eval_func
 
         logger.debug('Dump user yaml configuration:\n', self.cfg)
+
+        self.eval_dataloader = eval_dataloader
+        self.calib_dataloader = q_dataloader
+        self.q_func = q_func
+        self.eval_func = eval_func
 
         framework_specific_info = {}
         if cfg.framework.name.lower() == 'tensorflow':
@@ -92,10 +100,6 @@ class TuneStrategy(object):
         framework = cfg.framework.name.lower()
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
-        self.calib_dataloader = q_dataloader
-        self.q_func = q_func
-        self.eval_dataloader = eval_dataloader
-        self.eval_func = eval_func
 
         self.baseline = None
         self.last_tune_result = None
@@ -186,6 +190,7 @@ class TuneStrategy(object):
 
                 if self.stop(t):
                     break
+
 
     def _intersect(self, src_list, dst_list):
         """Get the intersection result from two lists
@@ -381,12 +386,19 @@ class TuneStrategy(object):
             assert self.eval_dataloader and self.cfg.tuning.metric, \
                 "tuning dataloader and tuning metric should NOT be empty when eval_func is None"
             dataloader = self.eval_dataloader
-            metric = self.cfg.tuning.metric
-            assert len(metric) == 1, "Only one metric should be specified!"
-            metric = METRICS[list(metric.keys())[0]](metric)
+            postprocess = None
+            if self.cfg.evaluation is not None: 
+                if self.cfg.evaluation.postprocess is not None:
+                    postprocesses = TRANSFORMS(self.cfg.framework.name, "postprocess")
+                    postprocess = get_postprocess(postprocesses, self.cfg.data.postprocess.transform)
 
+            assert len(self.cfg.tuning.metric) == 1, "Only one metric should be specified!"
+            metrics = METRICS(self.cfg.framework.name)
+            # if not do compose will only return the first metric
+            metric = get_metrics(metrics, self.cfg.tuning.metric, compose=False)
+            
             def eval_func(model):
-                return self.adaptor.evaluate(model, dataloader, metric)
+                return self.adaptor.evaluate(model, dataloader, postprocess, metric)
             val = self.objective.evaluate(eval_func, model, baseline)
         return val
 

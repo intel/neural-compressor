@@ -90,9 +90,13 @@ def get_dataloader(val_dataset, data_shape, batch_size, num_workers):
     """Get dataloader."""
     width, height = data_shape, data_shape
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
-    val_loader = gluon.data.DataLoader(
-        val_dataset.transform(SSDDefaultValTransform(width, height)), batchify_fn=batchify_fn,
-        batch_size=batch_size, shuffle=False, last_batch='rollover', num_workers=num_workers)
+    # val_loader = gluon.data.DataLoader(
+    #     val_dataset.transform(SSDDefaultValTransform(width, height)), batchify_fn=batchify_fn,
+    #     batch_size=batch_size, shuffle=False, last_batch='rollover', num_workers=num_workers)
+    import ilit
+    val_loader = ilit.data.DataLoader('mxnet',
+        val_dataset.transform(SSDDefaultValTransform(width, height)),
+        collate_fn=batchify_fn, batch_size=batch_size, last_batch='rollover', num_workers=num_workers)
     return val_loader
 
 def benchmarking(net, ctx, num_iteration, datashape=300, batch_size=64):

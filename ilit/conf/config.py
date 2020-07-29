@@ -1,7 +1,7 @@
 from ..utils.utility import cfg_from_file
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
-
+from ..utils import logger
 
 class YamlAttr(dict):
     """access yaml using attributes instead of using the dictionary notation.
@@ -70,7 +70,7 @@ class Conf(object):
         for key in cfg.keys():
             assert key in [
                 'framework', 'device', 'calibration', 'quantization', 'tuning',
-                'snapshot'
+                'snapshot', 'evaluation'
             ]
 
         assert 'framework' in cfg and 'name' in cfg.framework and isinstance(
@@ -88,10 +88,24 @@ class Conf(object):
         if 'calibration' in cfg.keys():
             assert None not in cfg.calibration.values()
             for key in cfg.calibration.keys():
-                assert key in ['iterations', 'algorithm']
+                assert key in ['iterations', 'algorithm', 'dataloader']
                 if key == 'algorithm':
                     for algo_key in cfg.calibration.algorithm.keys():
                         assert algo_key in ['weight', 'activation']
+                if key == 'dataloader':
+                    for data_key in cfg.calibration.dataloader.keys():
+                        assert data_key in ['batch_size', 'dataset', 'transform']
+
+        if 'evaluation' in cfg.keys():
+            assert None not in cfg.evaluation.values()
+            for key in cfg.evaluation.keys():
+                assert key in ['dataloader', 'postprocess']
+                if key == 'dataloader':
+                    for data_key in cfg.evaluation.dataloader.keys():
+                        assert data_key in ['batch_size', 'dataset', 'transform']
+                if key == 'postprocess':
+                    assert 'transform' in cfg.evaluation.keys()
+                    assert None not in cfg.evaluation.values()
 
         if 'device' in cfg.keys():
             assert cfg.device in ['cpu', 'gpu']

@@ -10,6 +10,19 @@ calibration:                                         # optional. calibration tun
     algorithm:                                       # optional. if not specified, framework built-in calibration algorithms will be used.
       - weight:  minmax
         activation: minmax
+    dataloader:
+      batch_size: 256
+      dataset:
+        - type: "ImageFolder"
+        - root: "../imagenet/img/train" # NOTICE: config to your imagenet data path
+      transform:
+        RandomResizedCrop:
+          - size: 224
+        RandomHorizontalFlip:
+        ToTensor:
+        Normalize:
+          - mean: [0.485, 0.456, 0.406]
+          - std: [0.229, 0.224, 0.225]
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   - approach: post_training_static_quant             # optional. default value is post_training_static_quant.
@@ -44,6 +57,26 @@ tuning:
              'weight': {'dtype': ['fp32']}
            }
          }
+
+evaluation:
+  dataloader:
+    batch_size: 256
+    dataset:
+      - type: "ImageFolder"
+      - root: "../imagenet/img/val" # NOTICE: config to your imagenet data path
+    transform:
+      Resize:
+        - size: 256
+      CenterCrop:
+        - size: 224
+      ToTensor:
+      Normalize:
+        - mean: [0.485, 0.456, 0.406]
+        - std: [0.229, 0.224, 0.225]
+  postprocess:
+    transform:
+      Reshape:
+        - shape: [-1, 1001]
 
 snapshot:                                           # optional. if not specified, snapshot will be saved under working directory.
   - path: /tmp/snapshot

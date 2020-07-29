@@ -113,6 +113,13 @@ def build_fake_strategy_2():
         f.writelines(seq)
     f.close()
 
+def build_dataloader():
+    from ilit.data import DataLoader
+    from ilit.data import DATASETS
+    dataset = DATASETS('tensorflow')['dummy']
+    dataloader = DataLoader('tensorflow', dataset)
+    return dataloader
+
 class TestTuner(unittest.TestCase):
 
     @classmethod
@@ -122,6 +129,7 @@ class TestTuner(unittest.TestCase):
         build_fake_strategy_2()
         build_fake_yaml()
         build_fake_yaml2()
+        self.dataloader = build_dataloader()
 
     @classmethod
     def tearDownClass(self):
@@ -134,10 +142,12 @@ class TestTuner(unittest.TestCase):
     def test_autosave(self):
         from ilit.strategy import strategy
         from ilit import tuner as iLit
+
         at = iLit.Tuner('fake_yaml.yaml')
         at.tune(
             self.constant_graph,
-            q_dataloader=None
+            q_dataloader=self.dataloader,
+            eval_dataloader=self.dataloader
         )
 
     def test_resume(self):
@@ -153,7 +163,8 @@ class TestTuner(unittest.TestCase):
                 path = os.path.join(snapshot_path, file)
                 at.tune(
                     self.constant_graph,
-                    q_dataloader=None,
+                    q_dataloader=self.dataloader,
+                    eval_dataloader=self.dataloader,
                     resume_file = path
                     )
                 os.remove(os.path.join(snapshot_path, file))

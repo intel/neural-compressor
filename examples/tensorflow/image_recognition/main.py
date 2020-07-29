@@ -59,7 +59,7 @@ def load_graph(model_file):
 
   return graph
 
-class Dataloader(object):
+class Dataset(object):
   """This is a example class that wrapped the model specified parameters,
     such as dataset path, batch size.
     And more importantly, it provides the ability to iterate the dataset.
@@ -98,11 +98,14 @@ class Dataloader(object):
   def __iter__(self):
     images, labels = self.preprocessor.minibatch(self.dataset, subset=self.subset,
                       cache_data=False)
+    # as the batch size if always 1, we will reduce the first dimension
     with tf.compat.v1.Session() as sess:
         for i in range(self.n):
             image, label = sess.run([images, labels])
             if self.label_adjust:
                 label -= 1
+            image = image.reshape(image.shape[1:])
+            label = label.reshape(label.shape[1:])
             yield image, label
 
 class eval_classifier_optimized_graph:
@@ -198,11 +201,13 @@ class eval_classifier_optimized_graph:
     import ilit
     fp32_graph = load_graph(self.args.input_graph)
     tuner = ilit.Tuner(self.args.config)
-    dataloader = Dataloader(self.args.data_location, 'validation',
+
+    dataset = Dataset(self.args.data_location, 'validation',
                             self.args.image_size, self.args.image_size,
-                            self.args.batch_size, self.args.num_cores,
+                            1, self.args.num_cores,
                             self.args.resize_method,  
                             [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
+    dataloader = ilit.data.DataLoader('tensorflow', dataset, batch_size=self.args.batch_size)
     q_model = tuner.tune(
                         fp32_graph,
                         q_dataloader=dataloader,

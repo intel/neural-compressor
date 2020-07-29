@@ -5,6 +5,9 @@ import pickle
 from .conf.config import Conf
 from .strategy import STRATEGIES
 from .utils import logger
+from .utils.utility import get_preprocess
+from .data import DataLoader, DATASETS, TRANSFORMS
+from collections import OrderedDict
 
 
 class Tuner(object):
@@ -27,8 +30,7 @@ class Tuner(object):
     def __init__(self, conf_fname):
         self.cfg = Conf(conf_fname).cfg
 
-    def tune(self, model, q_dataloader, q_func=None,
-             eval_dataloader=None, eval_func=None, resume_file=None):
+    def tune(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume_file=None):
         """The main entry point of automatic quantization tuning.
 
            This interface works on all the DL frameworks that iLiT supports and provides two usages:
@@ -84,6 +86,41 @@ class Tuner(object):
         self.snapshot_path = self.cfg.snapshot.path if self.cfg.snapshot else './'
 
         strategy = 'basic'
+
+        if eval_dataloader is None: 
+            assert self.cfg.evaluation is not None, "config yaml evaluation dataloader"
+            assert self.cfg.evaluation.dataloader is not None, "config yaml evaluation dataloader"
+            batch_size = 1
+            if self.cfg.evaluation.dataloader.get('batch_size') is not None:
+                batch_size = int(self.cfg.evaluation.dataloader['batch_size'])
+
+            self.eval_dataset = self._create_dataset(self.cfg.evaluation.dataloader.dataset,
+                self.cfg.evaluation.dataloader.transform, self.cfg.framework.name)
+
+            self.eval_dataloader = DataLoader(dataset=self.eval_dataset,
+                                              framework=self.cfg.framework.name,
+                                              batch_size=batch_size) 
+        else: 
+            self.eval_dataloader = eval_dataloader
+
+        if q_dataloader is None:
+            assert self.cfg.calibration is not None, "config yaml calibration dataloader"
+            assert self.cfg.calibration.dataloader is not None, "config yaml calibration dataloader"
+            batch_size = 1
+            if self.cfg.calibration.dataloader.batch_size is not None:
+                batch_size = int(self.cfg.calibration.dataloader['batch_size'])
+
+            self.calib_dataset = self._create_dataset(self.cfg.calibration.dataloader.dataset,
+                self.cfg.calibration.dataloader.transform, self.cfg.framework.name)
+
+            self.calib_dataloader = DataLoader(dataset=self.calib_dataset,
+                                               framework=self.cfg.framework.name,
+                                               batch_size=batch_size)
+        else:
+            self.calib_dataloader = q_dataloader
+
+        self.q_func = q_func
+        self.eval_func = eval_func
         if self.cfg.tuning.strategy:
             strategy = self.cfg.tuning.strategy.lower()
             assert strategy.lower(
@@ -103,12 +140,11 @@ class Tuner(object):
         self.strategy = STRATEGIES[strategy](
             model,
             self.cfg,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
+            self.calib_dataloader,
+            self.q_func,
+            self.eval_dataloader,
+            self.eval_func,
             dicts)
-
         try:
             self.strategy.traverse()
         except KeyboardInterrupt:
@@ -122,6 +158,19 @@ class Tuner(object):
                 "Specified timeout is reached! Not found any quantized model which meet accuracy goal. Exit...")
 
         return self.strategy.best_qmodel
+
+    def _create_dataset(self, data_source, cfg_preprocess, framework):
+        transform_list = []
+        # generate framework specific transforms
+        preprocesses = TRANSFORMS(framework, 'preprocess')
+        preprocess = get_preprocess(preprocesses, cfg_preprocess)
+        # even we can unify transform, how can we handle the IO, or we do the transform here
+        datasets = DATASETS(framework)
+        dataset_type = data_source.pop("type")
+        
+        # in this case we should prepare eval_data and calib_data sperately
+        dataset = datasets[dataset_type](**data_source, transform=preprocess)
+        return dataset
 
     def _save(self):
         """save current tuning state to snapshot for resuming.

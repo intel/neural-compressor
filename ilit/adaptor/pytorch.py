@@ -123,7 +123,7 @@ class PyTorchAdaptor(Adaptor):
 
         return q_model
 
-    def evaluate(self, model, dataloader, metric=None):
+    def evaluate(self, model, dataloader, postprocess=None, metric=None):
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model.to('cpu')
@@ -136,7 +136,11 @@ class PyTorchAdaptor(Adaptor):
                     output = model(*input)
                 else:
                     output = model(input)
-                acc = metric.evaluate(output, label)
+                if postprocess is not None:
+                    output = postprocess(output)
+                if metric is not None:
+                    metric.update(output, label)
+        acc = metric.result() if metric is not None else 0
         return acc
 
     def _cfg_to_qconfig(self, tune_cfg):

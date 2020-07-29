@@ -156,7 +156,7 @@ class MxNetAdaptor(Adaptor):
         """
         raise NotImplementedError
 
-    def evaluate(self, model, dataloader, metric):
+    def evaluate(self, model, dataloader, postprocess=None, metric=None):
         """The function is used to run evaluation on validation dataset.
 
         Args:
@@ -168,22 +168,22 @@ class MxNetAdaptor(Adaptor):
             acc: evaluate result.
         """
         if isinstance(model, mx.gluon.HybridBlock):
-            acc = self._mxnet_gluon_forward(model, dataloader, metric)
+            acc = self._mxnet_gluon_forward(model, dataloader, postprocess, metric)
 
         elif isinstance(model[0], mx.symbol.symbol.Symbol):
             assert isinstance(dataloader, mx.io.DataIter), \
                 'need mx.io.DataIter. but recived %s' % str(type(dataloader))
             dataloader.reset()
-            acc = self._mxnet_symbol_forward(model, dataloader, metric)
+            acc = self._mxnet_symbol_forward(model, dataloader, postprocess, metric)
 
         else:
             raise ValueError("Unknow graph tyep: %s" % (str(type(model))))
 
         return acc
 
-    def _mxnet_symbol_forward(self, symbol_file, dataIter, metric):
-        """MXNet symbol model evaluation process.
+    def _mxnet_symbol_forward(self, symbol_file, dataIter, postprocess, metric):
 
+        """MXNet symbol model evaluation process.
         Args:
             symbol_file (object): the symbole model need to do evaluate.
             dataIter (object): dataset used for model evaluate.
@@ -211,16 +211,16 @@ class MxNetAdaptor(Adaptor):
             mod.forward(batch, is_train=False)
             output = mod.get_outputs()
             output = output[0].asnumpy()
+            if postprocess is not None:
+                output = postprocess(output)
             label = batch.label[0].asnumpy()
-            acc = metric.evaluate(output, label)
+            if metric is not None:
+                metric.update(output, label)
             batch_num += dataIter.batch_size
-            # for test, only forward 2 iters
-            # if batch_num >= 1:
-            #    break
-
+        acc = metric.result() if metric is not None else 0
         return acc
 
-    def _mxnet_gluon_forward(self, gluon_model, dataloader, metrics):
+    def _mxnet_gluon_forward(self, gluon_model, dataloader, postprocess, metric):
         """MXNet gluon model evaluation process.
 
         Args:

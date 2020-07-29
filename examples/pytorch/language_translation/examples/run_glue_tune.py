@@ -637,8 +637,9 @@ def main():
                     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                     # Note that DistributedSampler samples randomly
                     eval_sampler = SequentialSampler(eval_dataset)
-                    eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-                    test_dataloader = Bert_DataLoader(eval_dataloader, args.model_type, args.device)
+                    import ilit
+                    eval_dataset = ilit.data.DATASETS('pytorch')['bert'](dataset=eval_dataset, task=eval_task)
+                    test_dataloader = ilit.data.DataLoader('pytorch', eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
                     # multi-gpu eval
                     if args.n_gpu > 1:
                         model = torch.nn.DataParallel(model)
