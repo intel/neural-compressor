@@ -23,7 +23,6 @@ class QuantizeGraphBase(object):
     """
     This is the base class for quantize graph.
     """
-
     def __init__(self, output_node_names):
         self.output_node_names = output_node_names
         self.transformers = OrderedDict()
@@ -138,10 +137,28 @@ class QuantizeNodeBase(object):
 
                         next_node_op = self.node_name_mapping[
                             next_node_name].node.op
+
+                        add_op_quantizable = True
+
+                        if next_node_op in ("Add", "AddN"):
+                            next_node = self.node_name_mapping[
+                                next_node_name].node
+                            next_node_inputs = list(next_node.input)
+                            cur_node_index = next_node_inputs.index(
+                                cur_node_name)
+
+                            for index, input_name in enumerate(
+                                    next_node_inputs):
+                                if input_name != cur_node_name and index < cur_node_index and input_name.find(
+                                        "Quantized") == -1:
+                                    add_op_quantizable = False
+                                    break
+
                         is_shared_output = True if len(
                             self.node_name_mapping[cur_node_name].output
                         ) > 1 else False
-                        if not is_shared_output and next_node_op == sub_rule[
+
+                        if add_op_quantizable and not is_shared_output and next_node_op == sub_rule[
                                 1 - sub_rule_len]:
                             matched_node_name.append(next_node_name)
                             sub_rule_len -= 1
