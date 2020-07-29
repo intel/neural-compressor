@@ -35,7 +35,7 @@ from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histog
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .util import write_graph, is_ckpt_format, parse_ckpt_model
+from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -194,6 +194,8 @@ class GraphConverter:
                 if ckpt_prefix:
                     self.input_graph = parse_ckpt_model(
                         os.path.join(model, ckpt_prefix), self.outputs)
+                elif is_saved_model_format(model):
+                    self.input_graph = parse_savedmodel_model(model)
                 else:
                     raise ValueError('Failed to parse ckpt model.')
             else:

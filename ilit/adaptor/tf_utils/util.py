@@ -25,7 +25,8 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
-
+from tensorflow.python.saved_model import signature_constants
+from tensorflow.python.saved_model import tag_constants
 
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
@@ -120,11 +121,8 @@ def is_ckpt_format(model_path):
         string: return the ckpt prefix if the model_path contains ckpt format data else None.
     """
     file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
-    if file_list.count('.meta') and file_list.count('.index') == 1:
-        return [
-            os.path.splitext(i)[0] for i in os.listdir(model_path)
-            if i.endswith(".meta")
-        ][0]
+    if file_list.count('.meta') == 1 and file_list.count('.index') == 1:
+        return [os.path.splitext(i)[0] for i in os.listdir(model_path) if i.endswith(".meta")][0]
     else:
         return None
 
@@ -147,3 +145,89 @@ def parse_ckpt_model(ckpt_prefix, outputs):
             output_node_names=outputs)
 
     return output_graph_def
+
+def is_saved_model_format(model_path):
+    """check the model_path format is saved_model or not
+
+    Args:
+        model_path (string): the model folder path
+
+    Returns:
+        bool: return True if the model_path contains saved_model format else False.
+    """
+    file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
+    if file_list.count('.pb') == 1 and ('variables') in os.listdir(model_path):
+        return True
+    else:
+        return False
+
+def parse_savedmodel_model(model_path):
+    """Convert SavedModel to graphdef
+
+    Args:
+        model_path (string): the model folder path
+
+    Returns:
+        graphdef: the parsed graphdef object.
+        input_names: input node names
+        output_names: output node name
+    """
+
+    with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+
+            meta_graph = tf.compat.v1.saved_model.loader.load(
+                sess, ["serve"], model_path)
+
+            model_graph_signature = list(
+                meta_graph.signature_def.items())[0][1]
+
+            input_names = [input_item[1].name
+                              for input_item in model_graph_signature.inputs.items()]
+
+            output_names = [output_item[1].name
+                               for output_item in model_graph_signature.outputs.items()]
+
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[output_item[0]
+                                   for output_item in model_graph_signature.outputs.items()])
+
+            return output_graph_def, input_names, output_names
+
+def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names, output_dir):
+    """Convert the graphdef to SavedModel
+
+    Args:
+        graph_def (graphdef): parsed graphdef object.
+        input_tensor_names (list): input tensor names list.
+        output_tensor_names (list): output tensor names list.
+        output_dir (string): Converted SavedModel store path.
+    """
+    builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(output_dir)
+
+    sigs = {}
+    with tf.compat.v1.Session() as sess:
+        tf.import_graph_def(graph_def, name="")
+        g = tf.compat.v1.get_default_graph()
+
+        input_tensors = {}
+        for input_tensor_name in output_tensor_names:
+            input_tensors[input_tensor_name.split(':')[0]] = g.get_tensor_by_name(
+                "{}".format(input_tensor_name))
+
+        output_tensors = {}
+        for output_tensor_name in input_tensor_names:
+            output_tensors[output_tensor_name.split(':')[0]] = g.get_tensor_by_name(
+                "{}".format(output_tensor_name))
+
+        sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
+            tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
+            output_tensors, input_tensors)
+
+        builder.add_meta_graph_and_variables(sess,
+                                            [tag_constants.SERVING],
+                                            signature_def_map=sigs)
+
+    builder.save()
