@@ -1,0 +1,4 @@
+mxnet-mkl==1.6.0
+gluoncv
+ilit
+pycocotools

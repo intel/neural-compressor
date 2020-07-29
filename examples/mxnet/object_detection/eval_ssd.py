@@ -68,17 +68,26 @@ def parse_args():
                              ' thresholds. This mode is expected to produce the best inference accuracy of all three'
                              ' kinds of quantized models if the calibration dataset is representative enough of the'
                              ' inference dataset.')
-    parser.add_argument('--ilit_tune',action='store_true', default=False,
+    parser.add_argument('--dataset-location', type=str, default='~/.mxnet/datasets/voc/', help='eval dataset.')
+    parser.add_argument('--tune',action='store_true', default=False,
                         help='Get bert tuning quantization model with iLiT.')
+    parser.add_argument("--output-graph",
+                         help='Specify tune result model save dir',
+                         dest='output_graph')
+    parser.add_argument("--accuracy-only", action='store_true', help='do accuracy-only benchmark')
+    parser.add_argument("--input-model", type=str, help='path of input model')
+                        
     args = parser.parse_args()
     return args
 
 def get_dataset(dataset, data_shape):
+    args = parse_args()
+    dataset_location = args.dataset_location
     if dataset.lower() == 'voc':
-        val_dataset = gdata.VOCDetection(splits=[(2007, 'test')])
+        val_dataset = gdata.VOCDetection(root=dataset_location, splits=[(2007, 'test')])
         val_metric = VOC07MApMetric(iou_thresh=0.5, class_names=val_dataset.classes)
     elif dataset.lower() == 'coco':
-        val_dataset = gdata.COCODetection(splits='instances_val2017', skip_empty=False)
+        val_dataset = gdata.COCODetection(root=dataset_location, splits='instances_val2017', skip_empty=False)
         val_metric = COCODetectionMetric(
             val_dataset, args.save_prefix + '_eval', cleanup=True,
             data_shape=(data_shape, data_shape))
@@ -111,6 +120,11 @@ def benchmarking(net, ctx, num_iteration, datashape=300, batch_size=64):
         scores.asnumpy()
         bboxes.asnumpy()
     toc = time.time() - tic
+    print('Throughput: %.3f images/sec' % (batch_size * num_iteration / toc))
+    print('Latency: %.3f ms' % (toc / (batch_size * num_iteration)))
+    print('Batch size = %d' % args.batch_size)
+
+
     return toc
 
 def validate(net, val_data, ctx, classes, size, metric):
@@ -146,6 +160,26 @@ def validate(net, val_data, ctx, classes, size, metric):
         print('Throughput is %f img/sec.'% speed)
     return metric.get()
 
+def save(model, output_path):
+    '''The function is used by tune strategy class for saving model.
+
+        Args:
+            model (object): The model to do calibration.
+    '''
+    if isinstance(model, mx.gluon.HybridBlock):
+        print("Save MXNet HybridBlock quantization model!")
+        output_path = output_path + '.params'
+        model.save_parameters(output_path)
+        print('Saving quantized model at %s', output_path)
+    else:
+        symbol, arg_params, aux_params = model
+        symbol.save(output_path+'-symbol.json')
+        save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in arg_params.items()}
+        save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
+        mx.nd.save(output_path+'-0000.params', save_dict)
+        print('Saving symbol into file at %s' % output_path)
+
+
 if __name__ == '__main__':
     args = parse_args()
     logging.basicConfig()
@@ -179,9 +213,11 @@ if __name__ == '__main__':
         net.hybridize(static_alloc=True, static_shape=True)
 
     if args.benchmark:
-        print('-----benchmarking on %s -----'%net_name)
+        # print('-----benchmarking on %s -----'%net_name)
         #input_shape = (args.batch_size, 3) + (args.data_shape, args.data_shape)
         #data = mx.random.uniform(-1.0, 1.0, shape=input_shape, ctx=ctx[0], dtype='float32')
+        net.load_parameters(args.input_model)
+        net.hybridize()
         speed = (args.batch_size*args.num_iterations)/benchmarking(net, ctx=ctx[0], num_iteration=args.num_iterations,
                 datashape=args.data_shape, batch_size=args.batch_size)
         print('Inference speed on %s, with batchsize %d is %.2f img/sec'%(net_name, args.batch_size, speed))
@@ -228,14 +264,23 @@ if __name__ == '__main__':
 
         return mAP
 
-    if args.ilit_tune:
+    if args.tune:
         # Doing iLiT auto-tuning here
         import ilit
         ssd_tuner = ilit.Tuner("./ssd.yaml")
-        ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
+        ilit_model = ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
+        save(ilit_model, args.output_graph)
         sys.exit()
 
-    # eval
-    names, values = validate(net, val_data, ctx, classes, len(val_dataset), val_metric)
-    for k, v in zip(names, values):
-        print(k, v)
+    if args.accuracy_only:
+        # eval
+        net.load_parameters(args.input_model)
+        names, values = validate(net, val_data, ctx, classes, len(val_dataset), val_metric)
+        res_mAP = -1
+        for k, v in zip(names, values):
+            print(k, v)
+            if k == 'mAP':
+                res_mAP = v
+        print("Accuracy: %.5f" % res_mAP)
+        print('Batch size = %d' % args.batch_size)
+        

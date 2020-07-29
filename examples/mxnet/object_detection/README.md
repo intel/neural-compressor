@@ -9,46 +9,82 @@ This document describes the step-by-step instructions for reproducing MXNet SSD-
 ### 1. Installation
 
   ```Shell
-  # Install iLiT
-  pip install ilit
-
-  # Install MXNet
-  pip install mxnet-mkl==1.6.0
-
-  # Install gluoncv
-  pip install gluoncv
-
-  # Install pycocotool
-  pip install pycocotools
-
+  pip install -r requirements.txt
   ```
 
 ### 2. Prepare Dataset
 
-If you want to use VOC2007 dataset, download [VOC2007](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/index.html) Raw image to the directory **~/.mxnet/datasets/voc** (Note:this path is unchangeable per original inference script requirement)
+  If you want to use VOC2007 dataset, download [VOC2007](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/index.html) Raw image to the directory **~/.mxnet/datasets/voc** (Note:this path is unchangeable per original inference script requirement)
 
-If you want to use COCO2017 dataset, download [COCO2017](https://cocodataset.org/#download) Raw image to the directory **~/.mxnet/datasets/coco** (Note:this path is unchangeable per original inference script requirement)
+  If you want to use COCO2017 dataset, download [COCO2017](https://cocodataset.org/#download) Raw image to the directory **~/.mxnet/datasets/coco** (Note:this path is unchangeable per original inference script requirement)
 
+  Or you can use `prepare_dataset.sh` to prepare dataset, like below:
+  ```bash
+  bash prepare_dataset.sh --data_path=./datasets --dataset=voc
+
+  
+  # help info
+  bash prepare_dataset.sh -h
+
+   Desc: Prepare dataset for MXNet Object Detection.
+
+   -h --help              help info
+
+   --dataset              set dataset category, voc or coco, default is voc.
+
+   --data_path            directory of the download dataset, default is: /home/.mxnet/datasets/
+
+  ```
 # Run
 
 ### SSD-ResNet50_v1-VOC
 ```bash
-python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset voc --ilit_tune
+bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_resnet50_voc
 ```
 
 ### SSD-Mobilenet1.0-VOC
 ```bash
-python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset voc --ilit_tune
+bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_mobilenet1.0_voc
 ```
 
 ### SSD-ResNet50_v1-COCO
 ```bash
-python eval_ssd.py --network=resnet50_v1 --data-shape=512 --batch-size=256 --dataset coco --ilit_tune
+bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_resnet50_coco
 ```
 
-### SSD-Mobilenet1.0-COOC
+### SSD-Mobilenet1.0-COCO
 ```bash
-python eval_ssd.py --network=mobilenet1.0 --data-shape=512 --batch-size=32 --dataset coco --ilit_tune
+bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_mobilenet1.0_coco
+```
+
+# benchmark 
+```bash
+# accuracy mode, run the whole test dataset and get accuracy
+bash run_benchmark.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --input_model=/PATH/TO/MODEL --batch_size=32 --mode=accuracy 
+
+# benchmark mode, specify iteration number and batch_size in option, get throughput and latency
+bash run_benchmark.sh --topology=ssd-resnet50_v1 --dataset_name=voc --input_model=/PATH/TO/MODEL --batch_size=32 --iters=100 --mode=benchmark
+
+
+```
+For more detail, see:
+
+```bash
+  bash run_tuning.sh -h
+
+   Desc: Run iLiT MXNet Object Detection example.
+
+   -h --help              help info
+
+   --topology             model used for Object Detection, mobilenet1.0 or resnet50_v1, default is mobilenet1.0.
+
+   --dataset_name         coco or voc, default is voc
+
+   --dataset_location     location of dataset
+
+   --input_model          prefix of fp32 model (eg: ./model/ssd-mobilenet )
+
+   --output_model         Best tuning model by iLiT will saved in this name prefix. default is './ilit_ssd_model'
 ```
 
 Examples of enabling iLiT auto tuning on MXNet Object detection
