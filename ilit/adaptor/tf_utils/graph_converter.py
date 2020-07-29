@@ -16,9 +16,6 @@
 #  limitations under the License.
 #
 
-from io import StringIO
-import io
-from contextlib import redirect_stdout, redirect_stderr
 import tensorflow as tf
 from google.protobuf import text_format
 from tensorflow.core.framework import graph_pb2
@@ -26,9 +23,8 @@ from tensorflow.python.framework import importer
 from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
+from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
-
-# from src.adaptor.tf_utils.quantize_graph import GraphRewriter
 from .transform_graph.strip_unused import StripUnusedNodes
 from .transform_graph.fold_batch_norm import FoldBatchNormNodes
 from .transform_graph.insert_logging import InsertLogging
@@ -39,7 +35,7 @@ from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histog
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .util import write_graph
+from .util import write_graph, is_ckpt_format, parse_ckpt_model
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -51,7 +47,6 @@ import time
 import numpy as np
 import ast
 import subprocess
-import copy
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -151,7 +146,7 @@ class GraphConverter:
         :param per_channel: if set True, enables weight quantization channel-wise.
         """
         # For iLiT, the input_graph is not graph file path but Graph object.
-        self.input_graph = input_graph.as_graph_def()
+        self._get_graph_def(input_graph)
         self.output_graph = output_graph
         self.inputs = inputs
         self.outputs = outputs
@@ -178,6 +173,36 @@ class GraphConverter:
         ]
         self.logger = logging.getLogger()
         self.debug = True if self.logger.level == logging.DEBUG else False
+
+    def _get_graph_def(self, model):
+        """Get the input model graphdef
+
+        Args:
+            model ([Graph or Path String]): Graph object or ckpt
+                                            folder path.
+
+        """
+        if isinstance(model, Graph):
+            self.input_graph = model.as_graph_def()
+        elif isinstance(model, str):
+            self.input_graph = tf.compat.v1.GraphDef()
+            if model.endswith(".pb") and os.path.isfile(model):
+                with open(model, "rb") as f:
+                    self.input_graph.ParseFromString(f.read())
+            elif os.path.isdir(model):
+                ckpt_prefix = is_ckpt_format(model)
+                if ckpt_prefix:
+                    self.input_graph = parse_ckpt_model(
+                        os.path.join(model, ckpt_prefix), self.outputs)
+                else:
+                    raise ValueError('Failed to parse ckpt model.')
+            else:
+                raise ValueError(
+                    'The input model format is neither pb nor ckpt format.')
+
+        else:
+            raise ValueError(
+                'The input parameter is neither Graph nor path to the model.')
 
     def load_graph(self, model_file):
 
@@ -523,17 +548,19 @@ class GraphConverter:
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
+        self._tmp_graph_def = graph_util.remove_training_nodes(
+            self.input_graph, self.outputs)
 
-        self._tmp_graph_def = self.input_graph
+        self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
+            self._tmp_graph_def)
         dtypes = self._get_dtypes(self._tmp_graph_def)
-        # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def, self.inputs, self.outputs, dtypes, False)
+
         self._tmp_graph_def = FuseColumnWiseMul(
             self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs,
                                                dtypes).do_transform()
-        self._tmp_graph_def = graph_util.remove_training_nodes(
-            self._tmp_graph_def, self.outputs)
+
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
         if self.debug:

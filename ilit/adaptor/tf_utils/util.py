@@ -24,6 +24,7 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.platform import gfile
+from tensorflow.python.framework import graph_util
 
 
 def read_graph(in_graph, in_graph_is_binary=True):
@@ -107,3 +108,42 @@ def split_shared_inputs(in_graph, ops=[]):
                                  'frozen_inference_graph_rewrite.pb')
     write_graph(output_graph_def, rewrite_graph)
     return rewrite_graph
+
+
+def is_ckpt_format(model_path):
+    """check the model_path format is ckpt or not.
+
+    Args:
+        model_path (string): the model folder path
+
+    Returns:
+        string: return the ckpt prefix if the model_path contains ckpt format data else None.
+    """
+    file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
+    if file_list.count('.meta') and file_list.count('.index') == 1:
+        return [
+            os.path.splitext(i)[0] for i in os.listdir(model_path)
+            if i.endswith(".meta")
+        ][0]
+    else:
+        return None
+
+
+def parse_ckpt_model(ckpt_prefix, outputs):
+    """Parse the ckpt model
+
+    Args:
+        ckpt_prefix (string): the ckpt prefix for parsing
+    """
+    saver = tf.compat.v1.train.import_meta_graph(ckpt_prefix + '.meta',
+                                                 clear_devices=True)
+    graph = tf.compat.v1.get_default_graph()
+    input_graph_def = graph.as_graph_def()
+    with tf.compat.v1.Session() as sess:
+        saver.restore(sess, ckpt_prefix)
+        output_graph_def = graph_util.convert_variables_to_constants(
+            sess=sess,
+            input_graph_def=input_graph_def,
+            output_node_names=outputs)
+
+    return output_graph_def
