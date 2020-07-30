@@ -1,5 +1,7 @@
 *.pyc
 .vscode
+.idea
+/venv/
 */__pycache__
 *.snapshot
 *.pb
