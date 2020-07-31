@@ -32,23 +32,28 @@ class TestMetrics(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data, {'a':[1], 'b':[2], 'c':[3], 'd':[4]})
 
+        # test iterable consistent
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data, {'a':[1], 'b':[2], 'c':[3], 'd':[4]})
+
         # dynamic batching
         data_loader.batch(batch_size=2, last_batch='rollover')
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data, {'a':[1, 5], 'b':[2, 6], 'c':[3, 7], 'd':[4, 8]})
-  
+
     def test_tensorflow2_dataset(self):
         dataset = ((1, 2, 3, 4), (5, 6, 7, 8))
         dataset = np.array(dataset)
         import tensorflow as tf
         dataset = tf.data.Dataset.from_tensor_slices(dataset)
         data_loader = DataLoader('tensorflow', dataset)
-
+ 
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data[0][1], 2)
-
+ 
     def test_pytorch_dummy(self):
         datasets = DATASETS('pytorch')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
@@ -62,8 +67,8 @@ class TestMetrics(unittest.TestCase):
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
-
-
+ 
+ 
     def test_mxnet_dummy(self):
         datasets = DATASETS('mxnet')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))

@@ -86,6 +86,8 @@ class DefaultDataLoader(BaseDataLoader):
         sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
 
         self.dataset = dataset
+        self.batch_size = batch_size
+        self.last_batch = last_batch
         self.sampler = sampler
         self.batch_sampler = batch_sampler
         self.num_workers = num_workers
@@ -94,26 +96,20 @@ class DefaultDataLoader(BaseDataLoader):
         if self.collate_fn == None:
             self.collate_fn = default_collate
         
-        self._generate_dataloader(self.dataset, batch_size=batch_size,
-            last_batch=last_batch, collate_fn=self.collate_fn, sampler=sampler,
-            batch_sampler=batch_sampler, num_workers=num_workers, pin_memory=pin_memory)
 
     def batch(self, batch_size, last_batch='rollover'):
-        self._generate_dataloader(self.dataset, batch_size,
-            last_batch, self.collate_fn, self.sampler, self.batch_sampler,
-            self.num_workers, self.pin_memory)
+        self.batch_size = batch_size
+        self.last_batch = last_batch
 
     @property
     def dataloader(self):
         return self
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
-        batched_indices = next(self.sampler_iter)
-        data = self.fetcher(batched_indices)
-        return data
+        return self._generate_dataloader(self.dataset, batch_size=self.batch_size,
+            last_batch=self.last_batch, collate_fn=self.collate_fn, sampler=self.sampler,
+            batch_sampler=self.batch_sampler, num_workers=self.num_workers,
+            pin_memory=self.pin_memory)
 
     def _generate_sampler(self, dataset):
         if hasattr(dataset, "__getitem__"):
@@ -131,6 +127,8 @@ class DefaultDataLoader(BaseDataLoader):
         drop_last = False if last_batch == 'rollover' else True
         sampler = self._generate_sampler(dataset)
         self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
-        self.sampler_iter = iter(self.batch_sampler)
         self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, drop_last)
-        
+
+        for batched_indices in self.batch_sampler:
+            data = self.fetcher(batched_indices)
+            yield data
