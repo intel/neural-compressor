@@ -32,7 +32,7 @@ class TensorflowTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {
             "resize" : WrapFunction(tf.image.resize),
-            "resize_with_pad" : WrapFunction(tf.image.resize_with_pad),
+            # "resize_with_pad" : WrapFunction(tf.image.resize_with_pad),
             "resize_with_crop_or_pad" : WrapFunction(tf.image.resize_with_crop_or_pad),
             "grayscale_to_rgb" : WrapFunction(tf.image.grayscale_to_rgb),
             "rgb_to_grayscale" : WrapFunction(tf.image.rgb_to_grayscale),
@@ -235,7 +235,7 @@ class Transform(object):
 
     """
     @abstractmethod
-    def __call__(self, sample):
+    def __call__(self, *args, **kwargs):
         raise NotImplementedError
 
 class WrapTransform(Transform):

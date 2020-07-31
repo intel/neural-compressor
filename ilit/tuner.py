@@ -87,9 +87,10 @@ class Tuner(object):
 
         strategy = 'basic'
 
-        if eval_dataloader is None: 
-            assert self.cfg.evaluation is not None, "config yaml evaluation dataloader"
-            assert self.cfg.evaluation.dataloader is not None, "config yaml evaluation dataloader"
+        # when eval_func is set, will be directly used and eval_dataloader can be None
+        if eval_dataloader is None and eval_func is None: 
+            assert self.cfg.evaluation is not None, "\'evaluation\' field of yaml file is missing"
+            assert self.cfg.evaluation.dataloader is not None, "\'evaluation.dataloader\' field of yaml file is missing"
             batch_size = 1
             if self.cfg.evaluation.dataloader.get('batch_size') is not None:
                 batch_size = int(self.cfg.evaluation.dataloader['batch_size'])
@@ -104,8 +105,8 @@ class Tuner(object):
             self.eval_dataloader = eval_dataloader
 
         if q_dataloader is None:
-            assert self.cfg.calibration is not None, "config yaml calibration dataloader"
-            assert self.cfg.calibration.dataloader is not None, "config yaml calibration dataloader"
+            assert self.cfg.calibration is not None, "\'calibration\' field of yaml file is missing"
+            assert self.cfg.calibration.dataloader is not None, "\'calibration.dataloader\' field of yaml file is missing"
             batch_size = 1
             if self.cfg.calibration.dataloader.batch_size is not None:
                 batch_size = int(self.cfg.calibration.dataloader['batch_size'])
