@@ -21,6 +21,7 @@ from __future__ import division
 import time
 import numpy as np
 import tensorflow as tf
+
 import ilit
 import logging
 
@@ -156,7 +157,7 @@ class model_infer:
                                               config=self.config)
         for i in range(COCO_NUM_VAL_IMAGES):
             input_images = self.data_sess.run([self.input_images])
-            yield input_images
+            yield input_images[0]
 
     def run_benchmark(self):
         if self.args.data_location:
@@ -347,7 +348,7 @@ if __name__ == "__main__":
     infer = model_infer(args)
     if args.tune:
         at = ilit.Tuner(args.config)
-        q_dataloader = ilit.DataLoader('tensorflow', infer)
+        q_dataloader = ilit.data.DataLoader('tensorflow', infer)
         output_graph = at.tune(infer.get_graph(),
                             q_dataloader=q_dataloader,
                             eval_func=infer.accuracy_check)
