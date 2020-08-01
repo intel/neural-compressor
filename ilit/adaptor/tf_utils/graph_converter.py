@@ -27,6 +27,7 @@ from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from .transform_graph.strip_unused import StripUnusedNodes
 from .transform_graph.fold_batch_norm import FoldBatchNormNodes
+from .transform_graph.fold_constant import FoldConstant
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.freeze_max_min import freeze_max
 from .transform_graph.freeze_max_min import freeze_min
@@ -563,7 +564,8 @@ class GraphConverter:
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs,
                                                dtypes).do_transform()
-
+            self._tmp_graph_def, self.outputs)
+        self._tmp_graph_def = FoldConstant(self._tmp_graph_def).do_transformation(self.inputs, self.outputs)
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
 
