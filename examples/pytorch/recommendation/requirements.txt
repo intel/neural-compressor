@@ -2,6 +2,8 @@ future
 numpy
 onnx
 pydot
-torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+torch
 ilit
 scikit-learn
+pytorch-ignite
+torchvision

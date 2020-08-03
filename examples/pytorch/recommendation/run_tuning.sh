@@ -63,7 +63,7 @@ function run_tuning {
             --mlperf-bin-loader \
             --mlperf-bin-shuffle \
             --load-model=${input_model} \
-            --do-iLiT-tune \
+            --tune \
             ${extra_cmd}
 
 }

@@ -29,11 +29,9 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
 ### 2. Prepare Dataset
 
   The code supports interface with the [Criteo Terabyte Dataset](https://labs.criteo.com/2013/12/download-terabyte-click-logs/)
-  1. download the raw data files day_0.gz, ...,day_23.gz and unzip them Specify the location of the unzipped text files day_0, ...,day_23, using --raw-data-file=<path/day> (the day number will be appended automatically)
-  2. These are then pre-processed (categorize, concat across days...) to allow using with dlrm code
-  3. The processed data is stored as .npz file in <root_dir>/input/.npz
-  4. The processed file (.npz) can be used for subsequent runs with --processed-data-file=<path/.npz>
-   
+  1. download the raw data files day_0.gz, ...,day_23.gz and unzip them.
+  2. Specify the location of the unzipped text files day_0, ...,day_23, using --raw-data-file=<path/day> (the day number will be appended automatically), please refer "Run" command.
+
 ### 3. Prepare pretrained model
   Corresponding pre-trained model is available under [CC-BY-NC license](https://creativecommons.org/licenses/by-nc/2.0/) and can be downloaded here [dlrm_emb64_subsample0.875_maxindrange10M_pretrained.pt](https://dlrm.s3-us-west-1.amazonaws.com/models/tb0875_10M.pt)
 
@@ -48,7 +46,7 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
         --learning-rate=1.0 --mini-batch-size=2048 --print-freq=2048 --print-time --test-freq=102400 \
         --test-mini-batch-size=16384 --test-num-workers=16 --memory-map --mlperf-logging \
         --mlperf-auc-threshold=0.8025 --mlperf-bin-loader --mlperf-bin-shuffle \
-        --load-model=${model_path} --do-iLiT-tune
+        --load-model=${model_path} --tune
   ```
 
 Examples of enabling iLiT

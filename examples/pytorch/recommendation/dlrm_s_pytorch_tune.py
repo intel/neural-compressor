@@ -481,7 +481,7 @@ if __name__ == "__main__":
     parser.add_argument("--mlperf-auc-threshold", type=float, default=0.0)
     parser.add_argument("--mlperf-bin-loader", action='store_true', default=False)
     parser.add_argument("--mlperf-bin-shuffle", action='store_true', default=False)
-    parser.add_argument("--do-iLiT-tune", action='store_true', default=False)
+    parser.add_argument("--tune", action='store_true', default=False)
     parser.add_argument("--output-model", type=str, default="")
     args = parser.parse_args()
 
@@ -840,8 +840,8 @@ if __name__ == "__main__":
             )
         )
 
-    if args.do_iLiT_tune:
-        print('do_iLiT_tune')
+    if args.tune:
+        print('tune')
         eval_dataloader = DLRM_DataLoader(test_ld)
         fuse_list = []
         for i in range(0, len(dlrm.bot_l), 2):
