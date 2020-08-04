@@ -133,6 +133,9 @@ class eval_classifier_optimized_graph:
     arg_parser.add_argument('-g', "--input-graph",
                             help='Specify the input graph for the transform tool',
                             dest='input_graph')
+    arg_parser.add_argument("--output-graph",
+                            help='Specify tune result model save dir',
+                            dest='output_graph')
 
     arg_parser.add_argument('-i', "--input",
                             help='Specify the input of the model',
@@ -186,11 +189,39 @@ class eval_classifier_optimized_graph:
         '--env', dest='env', help='specific Tensorflow env',
         default='mkl'
     )
+    arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
+    arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ilit to tune.')
 
     self.args = arg_parser.parse_args()
 
     # validate the arguments specific for InceptionV3
     self.validate_args()
+
+  def run(self):
+      """ This is iLiT function include tuning and benchmark option """
+
+      if self.args.tune:
+          q_model = self.auto_tune()
+          def save(model, path):
+              from tensorflow.python.platform import gfile
+              f = gfile.GFile(path, 'wb')
+              f.write(model.as_graph_def().SerializeToString())
+
+          save(q_model, evaluate_opt_graph.args.output_graph)
+
+      if self.args.benchmark:
+          infer_graph = tf.Graph()
+          with infer_graph.as_default():
+              graph_def = tf.compat.v1.GraphDef()
+              with tf.compat.v1.gfile.FastGFile(self.args.input_graph, 'rb') as input_file:
+                  input_graph_content = input_file.read()
+                  graph_def.ParseFromString(input_graph_content)
+
+              output_graph = optimize_for_inference(graph_def, [self.args.input],
+                                                    [self.args.output], dtypes.float32.as_datatype_enum, False)
+              tf.import_graph_def(output_graph, name='')
+
+          self.eval_inference(infer_graph)
 
   def auto_tune(self):
     """This is iLiT tuning part to generate a quantized pb
@@ -331,6 +362,9 @@ class eval_classifier_optimized_graph:
         print("Processed %d images. (Top1 accuracy, Top5 accuracy) = (%0.4f, %0.4f)" \
               % (num_processed_images, total_accuracy1 / num_processed_images,
                  total_accuracy5 / num_processed_images))
+
+    print("Accuracy: %.5f" % (total_accuracy1 / num_processed_images))
+
   
   def validate_args(self):
     """validate the arguments"""
@@ -343,5 +377,6 @@ class eval_classifier_optimized_graph:
 if __name__ == "__main__":
 
   evaluate_opt_graph = eval_classifier_optimized_graph()
-  q_model = evaluate_opt_graph.auto_tune()
+  evaluate_opt_graph.run()
+
   #evaluate_opt_graph.eval_inference(q_model)

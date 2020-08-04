@@ -12,17 +12,22 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   Recommend python 3.6 or higher version.
 
   ```Shell
-  # Install iLiT
-  pip install ilit
-
-  # Install Intel Optimized Tensorflow 1.15.2
-  pip install intel-tensorflow==1.15.2
+  pip install -r requirements.txt
   
   ```
 
 ### 2. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
+  We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
+
+  ```shell
+  cd examples/tensorflow/image_recognition
+  # convert validation subset
+  bash prepare_dataset.sh --output_dir=./data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  # convert train subset
+  bash prepare_dataset.sh --output_dir=./data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  ```
 
 ### 3. Prepare pre-trained model
   In this version, iLiT just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
@@ -60,7 +65,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 > *Note*: 
 > The model name with `*` means it comes from [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), please follow the step [Prepare pre-trained model](#3-prepare-pre-trained-model) to get the pb files.
 
-### 1. ResNet50 V1
+### 1. ResNet50 V1.0
 
   Download pre-trained PB
   ```shell
@@ -69,9 +74,8 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/resnet50_fp32_pretrained_model.pb \
-          -i input -o predict -r -d /PATH/TO/imagenet/ \
-          --resize_method crop --config ./resnet50_v1.yaml
+  bash run_tuning.sh --topology=resnet50v1.0 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb --output_model=./ilit_resnet50_v1
   ```
 
 ### 2. ResNet50 V1.5
@@ -83,10 +87,8 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/resnet50_v1.pb \
-          -i input_tensor -o softmax_tensor -r -d /PATH/TO/imagenet/ \
-          --resize_method=crop --r_mean 123.68 --g_mean 116.78 --b_mean 103.94 \
-          --config ./resnet50_v1_5.yaml
+  bash run_tuning.sh --topology=resnet50v1.5 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./ilit_resnet50_v15
   ```
 
 ### 3. ResNet101
@@ -98,9 +100,8 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/resnet101_fp32_pretrained_model.pb \
-          -i input -o resnet_v1_101/predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
-          --image_size 224 --resize_method vgg --label_adjust --config ./resnet101.yaml
+  bash run_tuning.sh --topology=resnet101 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/resnet101_fp32_pretrained_model.pb --output_model=./ilit_resnet101
   ```
 
 ### 4. MobileNet V1
@@ -112,36 +113,32 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/mobilenet_v1_1.0_224_frozen.pb \
-          -i input -o MobilenetV1/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
-          --resize_method bilinear --config ./mobilenet_v1.yaml
+  bash run_tuning.sh --topology=mobilenetv1 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb --output_model=./ilit_mobilenetv1
   ```
 
 ### 5. MobileNet V2*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_mobilenet_v2.pb \
-          -i input -o MobilenetV2/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
-          --resize_method bilinear --config ./mobilenet_v2.yaml
+  bash run_tuning.sh --topology=mobilenetv2 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_mobilenet_v2.pb --output_model=./ilit_mobilenetv2
   ```
 
 ### 6. Inception V1*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_inception_v1.pb \
-          -i input -o InceptionV1/Logits/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
-          --image_size 224 --resize_method bilinear --config ./inceptionv1.yaml
+  bash run_tuning.sh --topology=inception_v1 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_inception_v1.pb --output_model=./ilit_inceptionv1
   ```
 
 ### 7. Inception V2*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_inception_v2.pb \
-          -i input -o InceptionV2/Predictions/Reshape_1 -r -d /PATH/TO/imagenet/ \
-          --image_size 224 --resize_method bilinear --config ./inceptionv2.yaml
+  bash run_tuning.sh --topology=inception_v2 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_inception_v2.pb --output_model=./ilit_inceptionv2
   ```
 
 ### 8. Inception V3
@@ -153,9 +150,8 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/inceptionv3_fp32_pretrained_model.pb \
-          -i input -o predict -r -d /PATH/TO/imagenet/  --image_size 299 \
-          --resize_method bilinear --config ./inceptionv3.yaml
+  bash run_tuning.sh --topology=inception_v3 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb --output_model=./ilit_inceptionv3
   ```
 
 ### 9. Inception V4
@@ -167,18 +163,16 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/inceptionv4_fp32_pretrained_model.pb \
-          -i input -o InceptionV4/Logits/Predictions -r -d /PATH/TO/imagenet/  --image_size 299 \
-          --resize_method bilinear --config ./inceptionv4.yaml
+  bash run_tuning.sh --topology=inception_v4 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb --output_model=./ilit_inceptionv4
   ```
 
 ### 10. Inception ResNet V2*
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  python main.py -b 10 -a 28 -e 1 -g /PATH/TO/frozen_inception_resnet_v2.pb \
-          -i input -o InceptionResnetV2/Logits/Predictions -r -d /PATH/TO/imagenet/  \
-          --image_size 299 --resize_method bilinear --config ./irv2.yaml
+  bash run_tuning.sh --topology=inception_resnet_v2 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_inception_resnet_v2.pb --output_model=./ilit_irv2
   ```
 
 Examples of enabling iLiT auto tuning on TensorFlow ResNet50 V1.5
