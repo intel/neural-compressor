@@ -363,7 +363,7 @@ class eval_classifier_optimized_graph:
               % (num_processed_images, total_accuracy1 / num_processed_images,
                  total_accuracy5 / num_processed_images))
 
-    print("Accuracy: %.5f" % (total_accuracy1 / num_processed_images))
+      print("Accuracy: %.5f" % (total_accuracy1 / num_processed_images))
 
   
   def validate_args(self):
