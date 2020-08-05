@@ -48,7 +48,7 @@ function run_tuning {
             --data-location ${dataset_location} \
             --config ${config_file} \
             --output_model ${output_model} \
-            --accuracy-only --tune True
+            --accuracy-only --tune
 }
 
 main "$@"

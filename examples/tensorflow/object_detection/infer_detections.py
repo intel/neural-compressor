@@ -342,7 +342,7 @@ if __name__ == "__main__":
                             type=int)
     arg_parser.add_argument('--config', type=str, default='')
     arg_parser.add_argument('--output_model', type=str, default='')
-    arg_parser.add_argument('--tune', type=bool, default=True)
+    arg_parser.add_argument('--tune', action='store_true', default=False)
 
     args = arg_parser.parse_args()
     infer = model_infer(args)
