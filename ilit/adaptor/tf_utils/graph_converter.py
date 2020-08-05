@@ -33,6 +33,7 @@ from .transform_graph.freeze_max_min import freeze_min
 from .transform_graph.freeze_max_min import freeze_requantization_range
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram, combine_histogram
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
+from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model
@@ -565,6 +566,7 @@ class GraphConverter:
 
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
+
         if self.debug:
             write_graph(self._tmp_graph_def, self._fp32_optimized_graph)
         self._fp32_origin_graph = self._tmp_graph_def
@@ -575,7 +577,6 @@ class GraphConverter:
         g = ops.Graph()
         with g.as_default():
             importer.import_graph_def(self._tmp_graph_def)
-
         intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def,
                                                 self.outputs,
                                                 self.op_wise_config)
@@ -652,6 +653,7 @@ class GraphConverter:
     def _fuse_requantize_with_fused_quantized_conv(self):
         self._tmp_graph_def = fuse_quantized_conv_and_requantize(
             self._tmp_graph_def)
+        self._tmp_graph_def = FuseQuantizedMulAndRequantize(self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
         dtypes = self._get_dtypes(self._tmp_graph_def)
         # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def, self.inputs, self.outputs, dtypes, False)
@@ -660,6 +662,7 @@ class GraphConverter:
                                                dtypes).do_transform()
         self._tmp_graph_def = graph_util.remove_training_nodes(
             self._tmp_graph_def, self.outputs)
+
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
         RerangeQuantizedConcat(self._tmp_graph_def).do_transformation()

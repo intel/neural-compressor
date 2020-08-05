@@ -179,14 +179,14 @@ class QuantizeNodeBase(object):
     def _need_to_check(self, node_type):
         op_list = ("ConcatV2", "Conv2D", "DepthwiseConv2D", "QuantizeV2",
                    "DepthwiseConv2dNative", "MaxPool", "Requantize", "AvgPool",
-                   "Pad", "CropAndResize", "Dequantize", "Mean")
+                   "Pad", "CropAndResize", "Dequantize", "Mean", "MatMul")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
         if node.op in ("Relu", "Relu6") or node.op.find("AndRelu") != -1:
             return True
         elif (node.op.find("QuantizedConv") != -1
-              or node.op.find("QuantizedDepthwiseConv") != -1
+              or node.op.find("QuantizedDepthwiseConv") != -1 or node.op.find("QuantizedMatMul") != -1
               ) and node.op.find("Relu") == -1:
             return False
         elif self._need_to_check(node.op):

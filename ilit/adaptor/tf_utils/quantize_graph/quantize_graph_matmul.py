@@ -8,7 +8,7 @@ from .quantize_graph_base import QuantizeNodeBase
 
 
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
-    patterns = [["MatMul", "BiasAdd"]]
+    patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
     def __init__(self, input_graph, output_node_names, perchannel,
                  start_node_name):
@@ -22,7 +22,66 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         self.fusion_op_type = set(fusion[0] for fusion in self.patterns)
         self.fusion_mapping = {
             'MatMulBiasAdd': self.apply_matmul_biasadd_fusion,
+            'MatMulBiasAddRelu': self.apply_matmul_biasadd_relu_fusion,
         }
+
+    def apply_matmul_biasadd_relu_fusion(self, match_node_name):
+        skip_node_name = match_node_name[1:]
+        matched_node = self.node_name_mapping[match_node_name[0]]
+        control_inputs, normal_inputs = self._get_node_input(
+            matched_node.node.name)
+        weight_name = normal_inputs[1]
+
+        self._intel_cpu_quantize_weight_eightbit(
+            matched_node.node.op, self.node_name_mapping[weight_name].node,
+            self.per_channel)
+
+        skip_node_name.append(weight_name)
+
+        for _, node in enumerate(self.input_graph.node):
+            if node.name in skip_node_name:
+                pass
+            elif node.name == match_node_name[0]:
+                self.logger.debug("matched node {} with input {}".format(
+                    node.name, node.input))
+
+                self.logger.debug("apply_conv_biasadd_relu_fusion")
+
+                quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
+                bias_node_name = self.node_name_mapping[
+                    match_node_name[1]].node.input[1]
+                relu_node_name = match_node_name[2]
+                all_input_names = self._add_eightbit_prologue_nodes(
+                    matched_node.node.name)
+                quantized_node_input_names = all_input_names[:2] + [
+                    bias_node_name
+                ] + all_input_names[2:] + control_inputs
+
+                quantized_matmul_node = helper.create_node(
+                    "QuantizedMatMulWithBiasAndRelu", quantized_node_name,
+                    quantized_node_input_names)
+
+                helper.copy_attr(quantized_matmul_node, "transpose_a",
+                                 node.attr["transpose_a"])
+                helper.copy_attr(quantized_matmul_node, "transpose_b",
+                                 node.attr["transpose_b"])
+                helper.set_attr_dtype(quantized_matmul_node, "T1",
+                                      dtypes.quint8)
+                helper.set_attr_dtype(quantized_matmul_node, "T2",
+                                      dtypes.qint8)
+                helper.set_attr_dtype(quantized_matmul_node, "Toutput",
+                                      dtypes.qint32)
+
+                self.add_output_graph_node(quantized_matmul_node)
+
+                quantize_down_name = self._add_quantize_down_nodes(
+                    node, quantized_node_name,  dtypes.quint8, False)
+                self._intel_cpu_add_dequantize_result_node(
+                    quantize_down_name, relu_node_name)
+            else:
+                new_node = node_def_pb2.NodeDef()
+                new_node.CopyFrom(node)
+                self.add_output_graph_node(new_node)
 
     def apply_matmul_biasadd_fusion(self, match_node_name):
         skip_node_name = match_node_name[1:]
@@ -73,7 +132,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                                       dtypes.float32)
 
                 self.add_output_graph_node(quantized_matmul_node)
-                requantize_type = dtypes.qint8 if self.per_channel else dtypes.quint8
+                requantize_type = dtypes.qint8
 
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, requantize_type, False)
@@ -92,6 +151,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
     def apply_the_transform(self):
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
+
         if matched_node_name:
             self.output_graph = graph_pb2.GraphDef()
             fusion_name = ''.join(matched_rule)
