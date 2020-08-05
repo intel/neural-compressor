@@ -25,8 +25,8 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
-      --model_location=*)
-          model_location=$(echo $var |cut -f2 -d=)
+      --input_model=*)
+          input_model_prefix=$(echo $var |cut -f2 -d=)
       ;;
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
@@ -64,32 +64,22 @@ function run_benchmark {
     dataset=${dataset_location}
     ctx='cpu'
 
+    symbol_file=${input_model_prefix}/${topology}"-symbol.json"
+    param_file=${input_model_prefix}/${topology}"-0000.params"
     if [ "${topology}" = "resnet50_v1" ];then
-        symbol_file=${model_location}'/resnet50_v1-symbol.json'
-        param_file=${model_location}'/resnet50_v1-0000.params'
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     elif [ "${topology}" = "squeezenet1.0" ]; then
-        symbol_file=${model_location}'/squeezenet1.0-symbol.json'
-        param_file=${model_location}'/squeezenet1.0-0000.params'
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     elif [ "${topology}" = "mobileNet1.0" ]; then
-        symbol_file=${model_location}'/mobilenet1.0-symbol.json'
-        param_file=${model_location}'/mobilenet1.0-0000.params'
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
 
     elif [ "${topology}" = "mobileNetv2_1.0" ]; then
-        symbol_file=${model_location}'/mobilenetv2_1.0-symbol.json'
-        param_file=${model_location}'/mobilenetv2_1.0-0000.params'
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
 
     elif [ "${topology}" = "inceptionv3" ]; then
-        symbol_file=${model_location}'/inceptionv3-symbol.json'
-        param_file=${model_location}'/inceptionv3-0000.params'
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --image-shape=3,299,299'
 
     elif [ "${topology}" = "resnet18_v1" ]; then
-        symbol_file=${model_location}'/resnet18_v1-symbol.json'
-        param_file=${model_location}'/resnet18_v1-0000.params'
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     fi
 

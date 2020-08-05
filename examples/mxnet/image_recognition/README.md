@@ -55,28 +55,28 @@ This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1
 # Run
 ### ResNet18_v1
 ```bash
-bash run_tuning.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_resnet18
+bash run_tuning.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet18
 ```
 
 ### ResNet50_v1
 ```bash
-bash run_tuning.sh --topology=resnet50_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_resnet50_v1
+bash run_tuning.sh --topology=resnet50_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet50_v1
 ```
 ### SqueezeNet1
 ```bash
-bash run_tuning.sh --topology=squeezenet1.0 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_squeezenet
+bash run_tuning.sh --topology=squeezenet1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_squeezenet
 ```
 ### MobileNet1.0
 ```bash
-bash run_tuning.sh --topology=mobilenet1.0 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_mobilenet1.0
+bash run_tuning.sh --topology=mobilenet1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_mobilenet1.0
 ```
 ### MobileNetv2_1.0
 ```bash
-bash run_tuning.sh --topology=mobilenetv2_1.0 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_mobilenetv2_1.0
+bash run_tuning.sh --topology=mobilenetv2_1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_mobilenetv2_1.0
 ```
 ### Inception_v3
 ```bash
-bash run_tuning.sh --topology=inceptionv3 --dataset_location=./data/val_256_q90.rec --model_location=./model --output_model=./ilit_inception_v3
+bash run_tuning.sh --topology=inceptionv3 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_inception_v3
 ```
 
 # Benchmark
@@ -85,10 +85,10 @@ Use resnet18 as an example:
 
 ```bash
 # accuracy mode, run the whole test dataset and get accuracy
-bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model/ --batch_size=32 --mode=accuracy
+bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=./model --batch_size=32 --mode=accuracy
 
 # benchmark mode, specify iteration number and batch_size in option, get throughput and latency
-bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --model_location=./model/ --batch_size=32 --iters=100 --mode=benchmark
+bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=./model --batch_size=32 --iters=100 --mode=benchmark
 ```
 
 Examples of enabling iLiT auto tuning on MXNet ResNet50
