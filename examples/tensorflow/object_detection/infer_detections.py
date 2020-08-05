@@ -179,7 +179,8 @@ class model_infer:
                         name='synthetic_images'))
 
             total_iter = self.args.total_iter
-            warmup_iter = self.args.warmup_iter
+            warmup_iter = self.args.warmup_iter if self.args.warmup_iter < total_iter else int(
+                total_iter / 2)
             ttime = 0.0
 
             print('total iteration is {0}'.format(str(total_iter)))
@@ -203,11 +204,13 @@ class model_infer:
                     ttime += duration
 
             total_batches = total_iter - warmup_iter
-            print('Batchsize: {0}'.format(str(self.args.batch_size)))
-            print('Time spent per BATCH: {0:10.4f} ms'.format(
-                ttime / total_batches * 1000))
-            print('Total samples/sec: {0:10.4f} samples/s'.format(
-                total_batches * self.args.batch_size / ttime))
+
+            print('Batch size = %d' % self.args.batch_size)
+            if self.args.batch_size == 1:
+                print('Latency: %.3f ms' % (ttime / total_batches * 1000))
+
+            print('Throughput: %.3f images/sec' %
+                  (total_batches * self.args.batch_size / ttime))
 
     def get_input(self):
         tfrecord_paths = [self.args.data_location]
@@ -275,13 +278,17 @@ class model_infer:
                 evaluator.add_single_detected_image_info(image_id, detection)
                 if iter * self.args.batch_size >= COCO_NUM_VAL_IMAGES:
                     res = evaluator.evaluate()
+                    print("Accuracy: %.5f" %
+                          res['DetectionBoxes_Precision/mAP'])
                     return res['DetectionBoxes_Precision/mAP']
 
     def run(self):
         if self.args.accuracy_only:
             self.accuracy_check()
-        else:
+        elif self.args.benchmark:
             self.run_benchmark()
+        else:
+            raise Exception("Unknown mode.")
 
 
 if __name__ == "__main__":
@@ -336,13 +343,15 @@ if __name__ == "__main__":
 
     arg_parser.add_argument('-w',
                             "--warmup_iter",
-                            help='For accuracy measurement only.',
+                            help='For benchmark measurement only.',
                             dest='warmup_iter',
                             default=200,
                             type=int)
     arg_parser.add_argument('--config', type=str, default='')
     arg_parser.add_argument('--output_model', type=str, default='')
     arg_parser.add_argument('--tune', action='store_true', default=False)
+    arg_parser.add_argument('--benchmark', dest='benchmark',
+                            action='store_true', help='run benchmark')
 
     args = arg_parser.parse_args()
     infer = model_infer(args)
