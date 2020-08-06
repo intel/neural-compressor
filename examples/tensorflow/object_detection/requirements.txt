@@ -6,3 +6,4 @@ jupyter
 matplotlib
 numpy==1.17.4
 pycocotools
+protobuf

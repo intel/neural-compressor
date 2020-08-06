@@ -16,16 +16,16 @@ function init_params {
   do
     case $var in
       --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
+          topology=$(echo "$var" |cut -f2 -d=)
       ;;
       --dataset_location=*)
-          dataset_location=$(echo $var |cut -f2 -d=)
+          dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
       --input_model=*)
-          input_model=$(echo $var |cut -f2 -d=)
+          input_model=$(echo "$var" |cut -f2 -d=)
       ;;
       --output_model=*)
-          output_model=$(echo $var |cut -f2 -d=)
+          output_model=$(echo "$var" |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -41,13 +41,16 @@ function run_tuning {
   if [ "$topology" = "ssd_resnet50_v1" ];then
     config_file='ssd_resnet50_v1.yaml'
     echo $config_file
+  elif [ "$topology" = "ssd_mobilnet_v1" ];then
+    config_file='ssd_mobilnet_v1.yaml'
+    echo $config_file
   fi
     python  infer_detections.py \
             --batch-size 1 \
-            --input-graph ${input_model} \
-            --data-location ${dataset_location} \
+            --input-graph "${input_model}" \
+            --data-location "${dataset_location}" \
             --config ${config_file} \
-            --output_model ${output_model} \
+            --output_model "${output_model}" \
             --accuracy-only --tune
 }
 

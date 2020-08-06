@@ -21,13 +21,60 @@ pip intel-tensorflow==1.15.2 [2.0,2.1]
 cd examples/tensorflow/object_detection && pip install -r requirements.txt
 ```
 
-### 4. Prepare Dataset
+### 4. Install Protocol Buffer Compiler
+
+`Protocol Buffer Compiler` in version higher than 3.0.0 is necessary ingredient for automatic COCO dataset preparation. To install please follow
+[Protobuf installation instructions](https://grpc.io/docs/protoc-installation/#install-using-a-package-manager).
+
+### 5. Prepare Dataset
+
+#### Automatic dataset download
+Run the `prepare_dataset.sh` script located in `examples/tensorflow/object_detection`.
+
+Usage:
+```shell
+cd examples/tensorflow/object_detection
+. prepare_dataset.sh
+```
+
+This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
+tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
+
+#### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
-### 5. Download Frozen PB
+### 6. Download Frozen PB
+
+#### Automated approach
+Run the `prepare_model.py` script located in `LowPrecisionInferenceTool/examples/tensorflow/object_detection`.
+
+```
+usage: prepare_model.py [-h] [--model_name {ssd_resnet50_v1,ssd_mobilenet_v1}]
+                        [--model_path MODEL_PATH]
+
+Prepare pre-trained model for COCO object detection
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --model_name {ssd_resnet50_v1,ssd_mobilenet_v1}
+                        model to download, default is ssd_resnet50_v1
+  --model_path MODEL_PATH
+                        directory to put models, default is ./model
+```
+
+#### Manual approach
+
+##### Ssd_resnet50_v1
 ```shell
 wget http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
 tar -xvzf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz -C /tmp
+```
+
+##### Ssd_mobilenet_V1
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz
+tar -xvzf ssd_mobilenet_v1_coco_2018_01_28.tar.gz
 ```
 
 ## Run Command
