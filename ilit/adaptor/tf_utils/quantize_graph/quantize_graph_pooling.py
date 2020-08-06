@@ -8,7 +8,7 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
     def __init__(self, input_graph, output_node_names, perchannel,
-                 start_node_name):
+                 start_node_name, _):
         super(FuseNodeStartWithPooling,
               self).__init__(input_graph, output_node_names, perchannel,
                              start_node_name)

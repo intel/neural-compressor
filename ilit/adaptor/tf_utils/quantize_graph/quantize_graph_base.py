@@ -63,6 +63,7 @@ class QuantizeNodeBase(object):
                  output_node_names,
                  per_channel,
                  start_node_name,
+                 is_asymmetric=False,
                  enable_s8=True):
         self.logger = logging.getLogger()
 
@@ -82,6 +83,7 @@ class QuantizeNodeBase(object):
         self.intel_cpu_eightbitize = True
         self.per_channel = per_channel
         self.start_node_name = start_node_name
+        self.is_asymmetric = is_asymmetric
         self.enable_s8 = False if tf.version.VERSION < '2.1.0' else enable_s8
 
     def apply_the_transform(self):
@@ -110,8 +112,7 @@ class QuantizeNodeBase(object):
                 if cur_node.name != self.start_node_name:
                     continue
 
-                if (v in ("MatMul") or
-                        (v in ("Conv2D", "DepthwiseConv2dNative")
+                if ((v in ("Conv2D", "DepthwiseConv2dNative")
                          and not self.enable_s8)
                         ) and not self._find_relu_node(cur_node):
                     continue
@@ -256,7 +257,7 @@ class QuantizeNodeBase(object):
             [quantized_output_name, min_max_inputs[0], min_max_inputs[1]])
         helper.set_attr_dtype(dequantize_node, "T", dtype)
         helper.set_attr_string(dequantize_node, "mode",
-                               b"SCALED" if self.per_channel else b"MIN_FIRST")
+                               b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
         self.add_output_graph_node(dequantize_node)
 
     def eightbitize_single_input_tensor_node(self, original_node,
@@ -275,7 +276,7 @@ class QuantizeNodeBase(object):
     def _add_eightbit_prologue_nodes(self, original_node):
         namespace_prefix = original_node + "_eightbit"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
-            namespace_prefix, self.node_name_mapping[original_node].node.input[0])
+            namespace_prefix, helper.node_name_from_input(self.node_name_mapping[original_node].node.input[0]))
         input_names = []
         min_max_names = []
         for each_input_name in self.node_name_mapping[
@@ -294,6 +295,10 @@ class QuantizeNodeBase(object):
                         self.output_node_maps[input_node_name].attr["T"].type)
                 elif self._find_relu_node(
                         self.node_name_mapping[original_node].node):
+                    dtype = dtypes.quint8
+                elif self.node_name_mapping[original_node].node.op == "MatMul":
+                    # mkl ops _MklQuantizedMatMulWithBiasAndRelu|AndRequantize
+                    # requires the T1 data type as quint8
                     dtype = dtypes.quint8
                 else:
                     dtype = dtypes.qint8
@@ -519,9 +524,7 @@ class QuantizeNodeBase(object):
             "Dequantize", dequantize_name,
             [quantized_output_name, min_max_inputs[0], min_max_inputs[1]])
         helper.set_attr_dtype(dequantize_node, "T", dtypes.quint8)
-        helper.set_attr_string(
-            dequantize_node, "mode",
-            b"SCALED" if self.intel_cpu_eightbitize else b"MIN_FIRST")
+        helper.set_attr_string(quantize_input_node, "mode", b"SCALED")
         self.add_output_graph_node(dequantize_node)
 
     def _eightbitize_input_to_node(self,
@@ -564,9 +567,11 @@ class QuantizeNodeBase(object):
 
         helper.set_attr_dtype(quantize_input_node, "T", dtype)
 
-        helper.set_attr_string(quantize_input_node, "mode", b"SCALED")
-        helper.set_attr_string(quantize_input_node, "round_mode",
-                               b"HALF_TO_EVEN")
+        helper.set_attr_string(quantize_input_node, "mode",
+                               b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
+        if not self.is_asymmetric:
+            helper.set_attr_string(quantize_input_node, "round_mode",
+                                   b"HALF_TO_EVEN")
         # if FLAGS.model_name in ["wide_deep_large_ds"]:
         #    set_attr_string(quantize_input_node, "mode", b"MIN_FIRST")
         # else:

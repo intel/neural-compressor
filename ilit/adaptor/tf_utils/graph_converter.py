@@ -236,7 +236,9 @@ class GraphConverter:
             input_graph (tf.compat.v1.GraphDef): input graph
         """
         graph = self.load_graph(input_graph)
-        input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
+        input_tensor = [
+            graph.get_tensor_by_name(x + ":0") for x in self.inputs]
+
         output_tensor = [
             graph.get_tensor_by_name(x + ":0") for x in self.outputs
         ]
@@ -258,9 +260,12 @@ class GraphConverter:
         for content in self.data_loader:
             try:
                 np_images = content[0]
-                predictions = sess_graph.run(output_tensor,
-                                             {input_tensor: np_images})
-
+                if not isinstance(input_tensor, list):
+                    predictions = sess_graph.run(output_tensor,
+                                                 {input_tensor: np_images})
+                else:
+                    predictions = sess_graph.run(output_tensor,
+                                                 dict(zip(input_tensor, np_images[0:len(input_tensor)+1])))
                 # print("Processed %d batches."% (quantize_batch + 1))
                 quantize_batch += 1
                 if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
@@ -536,7 +541,7 @@ class GraphConverter:
                                             self._calibration_data)
             self._freeze_requantization_ranges(self._kl_op_dict,
                                                self._print_node_mapping)
-            self._fuse_requantize_with_fused_quantized_conv()
+            self._fuse_requantize_with_fused_quantized_node()
         except Exception as e:
             self.logger.error('Failed to quantize graph due to: %s', str(e))
             raise ValueError(e) from e
@@ -556,13 +561,12 @@ class GraphConverter:
 
         self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
             self._tmp_graph_def)
-        dtypes = self._get_dtypes(self._tmp_graph_def)
 
         self._tmp_graph_def = FuseColumnWiseMul(
             self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
-                                               self.inputs, self.outputs,
-                                               dtypes).do_transform()
+                                               self.inputs, self.outputs
+                                              ).do_transform()
 
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
@@ -650,16 +654,16 @@ class GraphConverter:
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
-    def _fuse_requantize_with_fused_quantized_conv(self):
+    def _fuse_requantize_with_fused_quantized_node(self):
         self._tmp_graph_def = fuse_quantized_conv_and_requantize(
             self._tmp_graph_def)
-        self._tmp_graph_def = FuseQuantizedMulAndRequantize(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FuseQuantizedMulAndRequantize(
+            self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
-        dtypes = self._get_dtypes(self._tmp_graph_def)
         # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def, self.inputs, self.outputs, dtypes, False)
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
-                                               self.inputs, self.outputs,
-                                               dtypes).do_transform()
+                                               self.inputs, self.outputs
+                                              ).do_transform()
         self._tmp_graph_def = graph_util.remove_training_nodes(
             self._tmp_graph_def, self.outputs)
 

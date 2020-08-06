@@ -1,5 +1,6 @@
 import os
 import subprocess
+import copy
 
 from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor
@@ -88,8 +89,13 @@ class TensorFlowAdaptor(Adaptor):
                     'granularity'] == 'per_channel'
             algorithm = tuning_cfg['op'][each_op_info]['activation'][
                 'algorithm']
+
+            is_asymmetric = False
+            if 'activation' in tuning_cfg['op'][each_op_info]:
+                is_asymmetric = tuning_cfg['op'][each_op_info]['activation'][
+                    'scheme'] == 'asym'
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
-                                                               algorithm)
+                                                               algorithm, is_asymmetric)
 
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -140,7 +146,21 @@ class TensorFlowAdaptor(Adaptor):
                 'granularity': ['per_channel', 'per_tensor']
             }
         }
-        non_conv_config = {
+        matmul_config = {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'scheme': ['asym', 'sym'],
+                'granularity': ['per_tensor']
+            },
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor']
+            }
+        }
+        other_config = {
             'activation': {
                 'dtype': ['uint8', 'fp32'],
                 'algorithm': ['minmax'],
@@ -152,12 +172,21 @@ class TensorFlowAdaptor(Adaptor):
         self.quantizable_op_details = OrderedDict()
         for node in graph_def.node:
             if node.op in tf_quantizable_op_type:
-                self.quantizable_op_details[(
-                    node.name, self.unify_op_type_mapping[node.op]
-                )] = conv_config if self.unify_op_type_mapping[node.op].find(
-                    "conv2d") != -1 else non_conv_config
+                if self.unify_op_type_mapping[node.op].find("conv2d") != -1:
+                    self.quantizable_op_details[(
+                            node.name, self.unify_op_type_mapping[node.op]
+                    )] = copy.deepcopy(conv_config)
+                elif self.unify_op_type_mapping[node.op].find("matmul") != -1:
+                    self.quantizable_op_details[(
+                            node.name, self.unify_op_type_mapping[node.op]
+                    )] = copy.deepcopy(matmul_config)
+                else:
+                    self.quantizable_op_details[(
+                            node.name, self.unify_op_type_mapping[node.op]
+                    )] = copy.deepcopy(other_config)
+
                 self.quantize_config['op_wise_config'][node.name] = (False,
-                                                                     "minmax")
+                                                                     "minmax", False)
         return self.quantizable_op_details
 
     def query_fw_capability(self, model):
@@ -173,7 +202,7 @@ class TensorFlowAdaptor(Adaptor):
             'modelwise': {
                 'activation': {
                     'dtype': ['uint8', 'fp32'],
-                    'scheme': ['sym'],
+                    'scheme': ['asym', 'sym'],
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax', 'kl']
                 },

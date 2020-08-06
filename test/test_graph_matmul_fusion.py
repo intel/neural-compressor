@@ -62,7 +62,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         float_graph_def.node.extend([post_relu_node])
 
         worker = FuseNodeStartWithMatmul(
-            float_graph_def, mat_mul_name, False, mat_mul_name)
+            float_graph_def, mat_mul_name, False, mat_mul_name, False)
         output_graph = worker.apply_the_transform()
         found_quantized_matmul = False
         for i in output_graph.node:

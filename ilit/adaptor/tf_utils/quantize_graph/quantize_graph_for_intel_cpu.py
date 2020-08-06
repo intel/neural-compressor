@@ -65,7 +65,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     for registered_transformer in self.transformers[node.op]:
                         worker = registered_transformer(
                             self.input_graph, self.output_node_names,
-                            self.op_wise_config[node.name][0], node.name)
+                            self.op_wise_config[node.name][0], node.name,
+                            self.op_wise_config[node.name][2])
                         cur_fuse_op_count = worker.get_longest_fuse()
                         if cur_fuse_op_count > last_fuse_ops_count:
                             last_fuse_ops_count = cur_fuse_op_count
@@ -76,7 +77,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     for registered_transformer in self.transformers[node.op]:
                         worker = registered_transformer(
                             self.input_graph, self.output_node_names,
-                            self.op_wise_config[node.name][0], node.name)
+                            self.op_wise_config[node.name][0], node.name,
+                            self.op_wise_config[node.name][2])
                         self.input_graph = worker.apply_the_transform()
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names)

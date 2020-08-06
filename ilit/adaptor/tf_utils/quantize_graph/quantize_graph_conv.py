@@ -18,7 +18,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ["DepthwiseConv2dNative"]]
 
     def __init__(self, input_graph, output_node_names, perchannel,
-                 start_node_name):
+                 start_node_name, _):
         super(FuseNodeStartWithConv2d,
               self).__init__(input_graph, output_node_names, perchannel,
                              start_node_name)

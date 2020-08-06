@@ -31,11 +31,9 @@ import copy
 
 
 class StripUnusedNodes(GraphTransformBase):
-    def __init__(self, input_graph_def, input_node_names, output_node_names,
-                 placeholder_type_enum):
+    def __init__(self, input_graph_def, input_node_names, output_node_names):
         self.input_node_names = input_node_names
         self.output_node_names = output_node_names
-        self.placeholder_type_enum = placeholder_type_enum
         self.input_graph = input_graph_def
 
     def do_transform(self):
@@ -45,8 +43,6 @@ class StripUnusedNodes(GraphTransformBase):
           input_graph_def: A graph with nodes we want to prune.
           input_node_names: A list of the nodes we use as inputs.
           output_node_names: A list of the output nodes.
-          placeholder_type_enum: The AttrValue enum for the placeholder data type, or
-              a list that specifies one value per input node name.
 
         Returns:
           A `GraphDef` with all unnecessary ops removed.
@@ -72,15 +68,8 @@ class StripUnusedNodes(GraphTransformBase):
                 placeholder_node = node_def_pb2.NodeDef()
                 placeholder_node.op = "Placeholder"
                 placeholder_node.name = node.name
-                if isinstance(self.placeholder_type_enum, list):
-                    input_node_index = self.input_node_names.index(node.name)
-                    placeholder_node.attr["dtype"].CopyFrom(
-                        attr_value_pb2.AttrValue(
-                            type=self.placeholder_type_enum[input_node_index]))
-                else:
-                    placeholder_node.attr["dtype"].CopyFrom(
-                        attr_value_pb2.AttrValue(
-                            type=self.placeholder_type_enum))
+                placeholder_node.attr["dtype"].CopyFrom(
+                        attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
                 if "_output_shapes" in node.attr:
                     placeholder_node.attr["_output_shapes"].CopyFrom(
                         node.attr["_output_shapes"])
