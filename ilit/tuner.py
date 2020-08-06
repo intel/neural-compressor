@@ -104,7 +104,7 @@ class Tuner(object):
         else: 
             self.eval_dataloader = eval_dataloader
 
-        if q_dataloader is None:
+        if q_dataloader is None and q_func is None:
             assert self.cfg.calibration is not None, "\'calibration\' field of yaml file is missing"
             assert self.cfg.calibration.dataloader is not None, "\'calibration.dataloader\' field of yaml file is missing"
             batch_size = 1
