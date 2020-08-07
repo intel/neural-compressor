@@ -23,6 +23,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
+      --output_model=*)
+          output_model=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1

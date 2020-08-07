@@ -15,15 +15,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 1. Installation
 
   ```Shell
-  # Install iLiT
-  pip install ilit
-
-  # Install PyTorch 1.5.0
-  pip install torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-  
-  # Install Modified TorchVision
-  cd examples/pytorch/vision
-  python setup.py install
+  pip install -r requirements.txt
   ```
 
 ### 2. Prepare Dataset
@@ -100,9 +92,9 @@ PyTorch quantization requires two manual steps:
 1. Add QuantStub and DeQuantStub for all quantizable ops.
 2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu.
 
-It's intrinsic limitation of PyTorch quantization imperative path. No way to develop a code to automatically do that.
+Torchvision provide quantized_model, so we didn't do these steps above for all torchvision models. Please refer [torchvision](https://github.com/pytorch/vision/tree/master/torchvision/models/quantization)
 
-The related code changes please refer to examples/pytorch/vision/torchvision/models/resnet.py and fuse_resnext_modules() in main.py.
+The related code please refer to examples/pytorch/image_recognition/resnet/main.py.
 
 ### Code Update
 

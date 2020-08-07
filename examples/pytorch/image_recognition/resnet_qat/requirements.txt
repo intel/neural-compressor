@@ -1,3 +1,4 @@
 ilit
+pytorch
 pytorch-ignite
 torchvision

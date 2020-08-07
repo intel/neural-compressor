@@ -9,3 +9,5 @@ tuning:
   timeout: 0                                   # tuning timeout (seconds)
   random_seed: 9527                            # random seed
 
+quantization:
+  approach: quant_aware_training

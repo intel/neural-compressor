@@ -23,6 +23,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
+      --output_model=*)
+          output_model=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -34,6 +37,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
+    sed -i "/root:/s|root:.*|root: $dataset_location/val|g" conf.yaml
     extra_cmd="${dataset_location}"
 
     python main.py \

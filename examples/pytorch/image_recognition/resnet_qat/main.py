@@ -14,8 +14,8 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import torchvision.models as models
-from torchvision.models.resnet import BasicBlock, Bottleneck
+import torchvision.models.quantization as models
+
 use_gpu = False
 if use_gpu:
     import torch.backends.cudnn as cudnn
@@ -85,22 +85,6 @@ parser.add_argument("--config", default=None, help="tuning config")
 best_acc1 = 0
 
 
-def fuse_resnext_modules(model):
-    torch.quantization.fuse_modules(model, [['conv1', 'bn1', 'relu']], inplace=True)
-    for mod in model.modules():
-        if type(mod) == Bottleneck:
-            torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
-            torch.quantization.fuse_modules(mod, [['conv2', 'bn2', 'relu2']], inplace=True)
-            torch.quantization.fuse_modules(mod, [['conv3', 'bn3']], inplace=True)
-            if mod.downsample:
-                torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
-        if type(mod) == BasicBlock:
-            torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
-            torch.quantization.fuse_modules(mod, [['conv2', 'bn2']], inplace=True)
-            if mod.downsample:
-                torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
-
-
 def main():
     args = parser.parse_args()
 
@@ -157,7 +141,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     if args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
+        model = models.__dict__[args.arch](pretrained=True, quantize=False)
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
@@ -279,7 +263,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
 
             return
-        fuse_resnext_modules(model.module)
+        model.module.fuse_model()
         import ilit
         tuner = ilit.Tuner(args.config)
         q_model = tuner.tune(model, q_dataloader=None, q_func=training_func_for_ilit,

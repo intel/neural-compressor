@@ -20,8 +20,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import torchvision.models as models
-from torchvision.models.resnet import BasicBlock, Bottleneck
+import torchvision.models.quantization as models
 
 import subprocess
 
@@ -127,20 +126,6 @@ def main():
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
 
-def fuse_resnext_modules(model):
-    torch.quantization.fuse_modules(model, [['conv1', 'bn1', 'relu']], inplace=True)
-    for mod in model.modules():
-        if type(mod) == Bottleneck:
-            torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
-            torch.quantization.fuse_modules(mod, [['conv2', 'bn2', 'relu2']], inplace=True)
-            torch.quantization.fuse_modules(mod, [['conv3', 'bn3']], inplace=True)
-            if mod.downsample:
-                torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
-        if type(mod) == BasicBlock:
-            torch.quantization.fuse_modules(mod, [['conv1', 'bn1', 'relu1']], inplace=True)
-            torch.quantization.fuse_modules(mod, [['conv2', 'bn2']], inplace=True)
-            if mod.downsample:
-                torch.quantization.fuse_modules(mod.downsample, [['0', '1']], inplace=True)
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
@@ -166,7 +151,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     if args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
+        model = models.__dict__[args.arch](pretrained=True, quantize=False)
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
@@ -266,10 +251,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.tune:
         model.eval()
-        fuse_resnext_modules(model.module)
+        model.module.fuse_model()
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
-        # q_model = tuner.tune(model, train_loader, eval_dataloader=val_loader)
         q_model = tuner.tune(model)
         return
 
