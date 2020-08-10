@@ -175,7 +175,7 @@ please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tunin
       --max_seq_length 128 \
       --per_gpu_eval_batch_size 8 \
       --no_cuda \
-      --do_ilit_tune \
+      --tune \
       --output_dir /path/to/checkpoint/dir
   ```
   where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
@@ -196,7 +196,7 @@ please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tunin
       --max_seq_length 384 \
       --per_gpu_eval_batch_size 16 \
       --no_cuda \
-      --do_ilit_tune \
+      --tune \
       --output_dir /path/to/checkpoint/dir
   ```
   Where output_dir is path of checkpoint which be created by fine tuning.

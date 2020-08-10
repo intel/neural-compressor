@@ -22,17 +22,18 @@ class BertDataset(Dataset):
 
     def __getitem__(self, index):
         sample = self.dataset[index]
-        if self.transform != None:
+        if self.transform is not None:
             sample = self.transform(sample)
         if self.task == 'classifier':
             inputs = {
                 'input_ids':      sample[0],
                 'attention_mask': sample[1],
-                'labels':         sample[3],}
-             
+                'labels':         sample[3]}
+
             if self.model_type != 'distilbert':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
-                inputs['token_type_ids'] = sample[2] if self.model_type in ['bert', 'xlnet'] else None
+                inputs['token_type_ids'] = sample[2] if self.model_type in [
+                    'bert', 'xlnet'] else None
             sample = (inputs, inputs['labels'])
 
         elif self.task == 'squad':
@@ -41,9 +42,10 @@ class BertDataset(Dataset):
                 'attention_mask':  sample[1],}
             if self.model_type != 'distilbert':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
-                outputs['token_type_ids'] = sample[2] if self.model_type in ['bert', 'xlnet'] else None  
+                inputs['token_type_ids'] = sample[2] if self.model_type in [
+                    'bert', 'xlnet'] else None
             if self.model_type in ['xlnet', 'xlm']:
-                outputs.update({'cls_index': sample[4], 'p_mask': sample[5]})
+                inputs.update({'cls_index': sample[4], 'p_mask': sample[5]})
             example_indices = sample[3]
             sample = (inputs, example_indices)
         return sample

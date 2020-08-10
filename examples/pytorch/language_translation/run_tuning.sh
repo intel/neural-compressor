@@ -74,7 +74,7 @@ function run_tuning {
         model_name_or_path='bert-large-uncased-whole-word-masking'
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='CoLA'
-        model_name_or_path='bbert-large-uncased-whole-word-masking'
+        model_name_or_path='bert-large-uncased-whole-word-masking'
     fi
 
     python -u $SCRIPTS \
@@ -88,7 +88,7 @@ function run_tuning {
         --per_gpu_eval_batch_size ${batch_size} \
         --no_cuda \
         --output_dir ${input_model} \
-        --do_ilit_tune \
+        --tune \
         ${extra_cmd}
 
 }

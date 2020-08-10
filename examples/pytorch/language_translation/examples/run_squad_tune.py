@@ -34,11 +34,6 @@ from torch.quantization import quantize, prepare, convert, propagate_qconfig_, a
 from torch.quantization import \
     QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
-try:
-    from torch.utils.tensorboard import SummaryWriter
-except:
-    from tensorboardX import SummaryWriter
-
 from tqdm import tqdm, trange
 
 from transformers import (WEIGHTS_NAME, BertConfig,
@@ -80,6 +75,11 @@ def to_list(tensor):
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
+    try:
+        from torch.utils.tensorboard import SummaryWriter
+    except ImportError:
+        from tensorboardX import SummaryWriter
+
     if args.local_rank in [-1, 0]:
         tb_writer = SummaryWriter()
 
@@ -342,24 +342,6 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
        results = squad_evaluate(examples, predictions)
        return results, perf
 
-class Bert_DataLoader(DataLoader):
-    def __init__(self, loader=None, model_type=None, device='cpu'):
-        self.loader = loader
-        self.model_type = model_type
-        self.device = device
-    def __iter__(self):
-        for batch in self.loader:
-            batch = tuple(t.to(self.device) for t in batch)
-
-            outputs = {'input_ids':      batch[0],
-                      'attention_mask': batch[1]}
-            if self.model_type != 'distilbert':
-                outputs['token_type_ids'] = batch[2] if self.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
-            if self.model_type in ['xlnet', 'xlm']:
-                outputs.update({'cls_index': batch[4], 'p_mask': batch[5]})
-            example_indices = batch[3]
-            yield outputs, example_indices
-
 
 def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=False):
     if args.local_rank not in [-1, 0] and not evaluate:
@@ -424,7 +406,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
 def main():
     parser = argparse.ArgumentParser()
 
-    ## Required parameters
+    # Required parameters
     parser.add_argument("--model_type", default=None, type=str, required=True,
                         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
     parser.add_argument("--model_name_or_path", default=None, type=str, required=True,
@@ -432,7 +414,7 @@ def main():
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model checkpoints and predictions will be written.")
 
-    ## Other parameters
+    # Other parameters
     parser.add_argument("--data_dir", default=None, type=str,
                         help="The input data dir. Should contain the .json files for the task. If not specified, will run with tensorflow_datasets.")
     parser.add_argument("--config_name", default="", type=str,
@@ -525,7 +507,7 @@ def main():
                         help="Whether to run fp32 inference.")
     parser.add_argument("--mkldnn_eval", action='store_true',
                         help="evaluation with MKLDNN")
-    parser.add_argument("--do_ilit_tune", action='store_true',
+    parser.add_argument("--tune", action='store_true',
                         help="run iLiT tool to tune int8 acc.")
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="SQuAD task")
@@ -544,7 +526,7 @@ def main():
         raise ValueError("Output directory ({}) already exists and is not empty. Use --overwrite_output_dir to overcome.".format(args.output_dir))
 
     mix_qkv = False
-    if args.do_calibration or args.do_int8_inference or args.do_ilit_tune:
+    if args.do_calibration or args.do_int8_inference or args.tune:
        mix_qkv = True
 
     # Setup distant debugging if needed
@@ -661,7 +643,7 @@ def main():
                result = dict((k + ('_{}'.format(global_step) if global_step else ''), v) for k, v in result.items())
                results.update(result)
 
-            if args.do_ilit_tune:
+            if args.tune:
                 def eval_func_for_ilit(model):
                     result, _ = evaluate(args, model, tokenizer)
                     for key in sorted(result.keys()):
@@ -678,10 +660,10 @@ def main():
                 model.to(args.device)
                 dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-                eval_sampler = SequentialSampler(dataset)
-                eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-                test_dataloader = Bert_DataLoader(eval_dataloader, args.model_type, args.device)
+                eval_task = "squad"
                 import ilit
+                dataset = ilit.data.DATASETS('pytorch')['bert'](dataset=dataset, task=eval_task)
+                test_dataloader = ilit.data.DataLoader('pytorch', dataset, batch_size=args.eval_batch_size)
                 tuner = ilit.Tuner("./conf.yaml")
                 tuner.tune(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)

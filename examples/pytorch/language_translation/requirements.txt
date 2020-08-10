@@ -14,3 +14,5 @@ sacremoses
 ilit
 tensorboard
 scikit-learn
+pytorch-ignite
+torchvision

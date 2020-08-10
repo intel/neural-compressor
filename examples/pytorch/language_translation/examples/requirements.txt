@@ -3,3 +3,5 @@ tensorboard
 scikit-learn
 seqeval
 ilit
+pytorch-ignite
+torchvision==0.6.1
