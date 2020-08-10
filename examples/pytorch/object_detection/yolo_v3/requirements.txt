@@ -1,0 +1,11 @@
+numpy
+torch>=1.0
+torchvision
+matplotlib
+tensorflow
+tensorboard
+terminaltables
+pillow
+tqdm
+ilit
+pytorch-ignite
