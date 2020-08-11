@@ -41,8 +41,8 @@ function run_tuning {
   if [ "$topology" = "ssd_resnet50_v1" ];then
     config_file='ssd_resnet50_v1.yaml'
     echo $config_file
-  elif [ "$topology" = "ssd_mobilnet_v1" ];then
-    config_file='ssd_mobilnet_v1.yaml'
+  elif [ "$topology" = "ssd_mobilenet_v1" ];then
+    config_file='ssd_mobilenet_v1.yaml'
     echo $config_file
   fi
     python  infer_detections.py \

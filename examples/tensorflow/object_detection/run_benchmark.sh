@@ -46,6 +46,8 @@ function init_params {
 function run_benchmark {
     if [ "$topology" = "ssd_resnet50_v1" ];then
         config_file='ssd_resnet50_v1.yaml'
+    elif [ "$topology" = "ssd_mobilenet_v1" ];then
+        config_file='ssd_mobilenet_v1.yaml'
     fi
 
     if [[ ${mode} == "accuracy" ]]; then

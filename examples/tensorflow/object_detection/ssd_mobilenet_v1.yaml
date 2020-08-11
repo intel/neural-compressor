@@ -12,7 +12,7 @@ calibration:
 tuning:
     accuracy_criterion:
       - relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
-    timeout: 60                                      # tuning timeout (seconds)
+    timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed
 
 evaluation:
@@ -20,7 +20,7 @@ evaluation:
         batch_size: 1
         dataset:
           - type: "TFRecordDataset"
-          - root: "data/tf_val2017/coco_val.record" # Path to your TF Record COCO Dataset
+          - root: "./data/tf_val2017/coco_val.record" # Path to your TF Record COCO Dataset
         transform:
           resize:
             - size: 256
