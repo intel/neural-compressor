@@ -1,7 +1,7 @@
-Intel® Low Precision Inference Toolkit (iLiT)
+Intel® Low Precision Optimization Tool (iLiT)
 =========================================
 
-Intel® Low Precision Inference Toolkit (iLiT) is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
+Intel® Low Precision Optimization Tool (iLiT) is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
 
 > **WARNING**
 >
@@ -27,8 +27,8 @@ comprehensive step-by-step instructions of how to enable iLiT on sample models.
 # Install from source 
 
   ```Shell
-  git clone https://github.com/intel/lp-inference-kit.git
-  cd lp-inference-kit
+  git clone https://github.com/intel/lp-opt-tool.git
+  cd lp-opt-tool
   python setup.py install
   ```
 
@@ -84,7 +84,7 @@ The followings are the examples integrated with iLiT for auto tuning.
 # Support
 
 Please submit your questions, feature requests, and bug reports on the
-[GitHub issues](https://github.com/intel/lp-inference-kit/issues) page. You may also reach out to ilit.maintainers@intel.com.
+[GitHub issues](https://github.com/intel/lp-opt-tool/issues) page. You may also reach out to ilit.maintainers@intel.com.
 
 # Contributing
 
@@ -97,7 +97,7 @@ to improve the library:
  [code contribution guidelines](CONTRIBUTING.md#code_contribution_guidelines)
  and [coding style](CONTRIBUTING.md#coding_style).
 * Ensure that you can run all the examples with your patch.
-* Submit a [pull request](https://github.com/intel/lp-inference-kit/pulls).
+* Submit a [pull request](https://github.com/intel/lp-opt-tool/pulls).
 
 For additional details, see [contribution guidelines](CONTRIBUTING.md).
 
@@ -132,8 +132,8 @@ If you use iLiT in your research or wish to refer to the tuning results publishe
 ```
 @misc{iLiT,
   author =       {Feng Tian, Chuanqi Wang, Guoming Zhang, Penghui Cheng, Pengxin Yuan, Haihao Shen, and Jiong Gong},
-  title =        {Intel® Low Precision Inference Toolkit},
-  howpublished = {\url{https://github.com/intel/lp-inference-kit}},
+  title =        {Intel® Low Precision Optimization Tool},
+  howpublished = {\url{https://github.com/intel/lp-opt-tool}},
   year =         {2020}
 }
 ```
