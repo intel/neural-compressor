@@ -17,11 +17,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ["Conv2D", "BiasAdd", "Relu"], ["Conv2D"],
                 ["DepthwiseConv2dNative"]]
 
-    def __init__(self, input_graph, output_node_names, perchannel,
-                 start_node_name, _):
+    def __init__(self, input_graph, output_node_names, perchannel, start_node_name, device, _):
         super(FuseNodeStartWithConv2d,
               self).__init__(input_graph, output_node_names, perchannel,
-                             start_node_name)
+                             start_node_name, device)
         # self.quantized_node_postfix = "_eightbit_quantized_conv"
 
         self.sorted_patterns = sorted(self.patterns,

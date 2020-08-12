@@ -107,8 +107,9 @@ class QuantizeGraphHelper(object):
         return new_node
 
     @staticmethod
-    def create_constant_node(name, value, dtype, shape=None):
-        node = QuantizeGraphHelper.create_node("Const", name, [])
+    def create_constant_node(name, value, dtype, shape=None, device='cpu'):
+        node = QuantizeGraphHelper.create_node(
+            "Const" if device == 'cpu' else "HostConst", name, [])
         QuantizeGraphHelper.set_attr_dtype(node, "dtype", dtype)
         QuantizeGraphHelper.set_attr_tensor(node, "value", value, dtype, shape)
         return node

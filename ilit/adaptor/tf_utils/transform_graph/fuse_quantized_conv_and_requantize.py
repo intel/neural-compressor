@@ -30,7 +30,7 @@ from tensorflow.python.framework import dtypes
 from ..quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 
 
-def get_fuse_index(input_node_map, input_name_list):
+def get_fuse_index(input_node_map, input_name_list, device):
     conv_op_list = ("QuantizedConv2DWithBiasAndRelu",
                     "QuantizedDepthwiseConv2DWithBiasAndRelu",
                     "QuantizedConv2DWithBias",
@@ -38,14 +38,14 @@ def get_fuse_index(input_node_map, input_name_list):
     fuse_op_list = []
     fuse_op_with_sum_list = []
     fuse_op_with_sum_deq_list = []
-
+    const_node_type = "HostConst" if device == "gpu" else "Const"
     for node_index, node_name in enumerate(input_name_list):
         node = input_node_map[node_name]
         node_op = node.op
 
         if node_op in conv_op_list and \
-                input_node_map[input_name_list[node_index + 1]].op == "Const" and \
-                input_node_map[input_name_list[node_index + 2]].op == "Const" and \
+                input_node_map[input_name_list[node_index + 1]].op == const_node_type and \
+                input_node_map[input_name_list[node_index + 2]].op == const_node_type and \
                 (input_node_map[input_name_list[node_index + 3]].op == "Requantize" or
                  input_node_map[input_name_list[node_index + 3]].op == "RequantizePerChannel"):
             fuse_op_list.append(node_index)
@@ -338,11 +338,11 @@ def parse_input_graph(input_graph_def):
     return input_node_map, output_node_map, node_name_list
 
 
-def fuse_quantized_conv_and_requantize(input_graph):
+def fuse_quantized_conv_and_requantize(input_graph, device):
     input_node_map, output_node_map, node_name_list = parse_input_graph(
         input_graph)
     fuse_op_list, fuse_op_deq_list = get_fuse_index(input_node_map,
-                                                    node_name_list)
+                                                    node_name_list, device)
     return generate_output_graph(
         input_graph,
         input_node_map,

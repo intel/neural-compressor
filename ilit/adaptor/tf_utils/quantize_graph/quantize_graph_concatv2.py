@@ -9,10 +9,10 @@ import re
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
     def __init__(self, input_graph, output_node_names, perchannel,
-                start_node_name, _):
+                start_node_name, device, _):
         super(FuseNodeStartWithConcatV2,
               self).__init__(input_graph, output_node_names, perchannel,
-                             start_node_name)
+                             start_node_name, device)
 
     def _apply_concatv2_transform(self, original_node):
         namespace_prefix = original_node.name + "_eightbit"

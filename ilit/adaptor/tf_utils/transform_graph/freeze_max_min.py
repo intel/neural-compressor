@@ -414,13 +414,13 @@ def parse_max_min_log(max_min_log, fetch_max=True):
     return res
 
 
-def generate_output_graph_ranges(input_node_map, range_info):
+def generate_output_graph_ranges(input_node_map, range_info, device):
     output_graph_def = graph_pb2.GraphDef()
     inputs_to_rename = {}
     for node in input_node_map:
         if node in range_info:
             min_node = node_def_pb2.NodeDef()
-            min_node.op = "Const"
+            min_node.op = "HostConst" if device == "gpu" else "Const"
             min_node.name = node + "/frozen_min"
             inputs_to_rename[node + ":0"] = min_node.name + ":0"
             min_node.attr["dtype"].CopyFrom(
@@ -430,7 +430,7 @@ def generate_output_graph_ranges(input_node_map, range_info):
                     float(range_info[node][0]), dtypes.float32, [])))
 
             max_node = node_def_pb2.NodeDef()
-            max_node.op = "Const"
+            max_node.op = "HostConst" if device == "gpu" else "Const"
             max_node.name = node + "/frozen_max"
             inputs_to_rename[node + ":1"] = max_node.name + ":0"
             max_node.attr["dtype"].CopyFrom(
@@ -509,7 +509,7 @@ def generate_output_graph(input_node_map, max_name_value, is_max=True):
 def freeze_requantization_range(input_graph_def,
                                 max_min_log,
                                 tensor_histogram=None,
-                                print_node_mapping=None):
+                                print_node_mapping=None, device='cpu'):
     """
     Freeze requantization range graph transformation
     :param input_graph_def: input graphdef
@@ -525,7 +525,7 @@ def freeze_requantization_range(input_graph_def,
                 range_info[key][-1] = kl_value
                 range_info[key][0] = 0
 
-    return generate_output_graph_ranges(input_node_map, range_info)
+    return generate_output_graph_ranges(input_node_map, range_info, device)
 
 
 def freeze_max(input_graph_def, max_min_log):

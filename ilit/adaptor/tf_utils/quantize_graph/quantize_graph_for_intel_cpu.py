@@ -17,7 +17,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
     """
 
-    def __init__(self, input_graph, output_node_names, op_wise_config):
+    def __init__(self, input_graph, output_node_names, op_wise_config, device):
         """Quantize Graph For Intel Cpu
 
         Arguments:
@@ -41,6 +41,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
             self.input_graph, protected_nodes=self.output_node_names)
         self.input_graph = QuantizeGraphHelper().get_sorted_graph(
             self.input_graph, output_node_names)
+
+        self.device = device
         # self.excluded_ops = excluded_ops
         # self.excluded_nodes = excluded_nodes
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
@@ -65,7 +67,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     for registered_transformer in self.transformers[node.op]:
                         worker = registered_transformer(
                             self.input_graph, self.output_node_names,
-                            self.op_wise_config[node.name][0], node.name,
+                            self.op_wise_config[node.name][0], node.name, self.device,
                             self.op_wise_config[node.name][2])
                         cur_fuse_op_count = worker.get_longest_fuse()
                         if cur_fuse_op_count > last_fuse_ops_count:
@@ -77,7 +79,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     for registered_transformer in self.transformers[node.op]:
                         worker = registered_transformer(
                             self.input_graph, self.output_node_names,
-                            self.op_wise_config[node.name][0], node.name,
+                            self.op_wise_config[node.name][0], node.name, self.device,
                             self.op_wise_config[node.name][2])
                         self.input_graph = worker.apply_the_transform()
 

@@ -11,10 +11,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
     patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
     def __init__(self, input_graph, output_node_names, perchannel,
-                 start_node_name, is_asymmetric):
+                 start_node_name, device, is_asymmetric):
         super(FuseNodeStartWithMatmul,
               self).__init__(input_graph, output_node_names, perchannel,
-                             start_node_name, is_asymmetric)
+                             start_node_name, device, is_asymmetric)
 
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),

@@ -142,23 +142,19 @@ class GraphConverter:
         :param output_graph: output graph pb file. If set, output directory should be exist.
         :param inputs: input nodes' names.
         :param outputs: output nodes' names.
-        :param excluded_ops: list of operations to be excluded from quantization.
-        :param excluded_nodes: list of nodes to be excluded from quantization.
-        :param per_channel: if set True, enables weight quantization channel-wise.
         """
         # For iLiT, the input_graph is not graph file path but Graph object.
         self._get_graph_def(input_graph)
         self.output_graph = output_graph
         self.inputs = inputs
         self.outputs = outputs
+
         # quantize specific config
-        # self.per_channel = per_channel
-        # self.excluded_ops = excluded_ops
-        # self.excluded_nodes = excluded_nodes
-        self.algo = "Direct"
+
         self.calib_iteration = qt_config['calib_iteration']
         self.op_wise_config = qt_config['op_wise_config']
-        self._low_precision_mode = 'eightbit'
+        self.device = qt_config['device'] if 'device' in qt_config else 'cpu'
+
         self._calibration_data = []
         self._fp32_print_data = []
         # self.gen_calib_data_cmds = self._inference
@@ -586,7 +582,8 @@ class GraphConverter:
             importer.import_graph_def(self._tmp_graph_def)
         intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def,
                                                 self.outputs,
-                                                self.op_wise_config)
+                                                self.op_wise_config,
+                                                self.device)
         self._tmp_graph_def = intel_quantizer.do_transform()
 
         if self.debug:
@@ -653,13 +650,13 @@ class GraphConverter:
                                          self._calibration_data)
         self._tmp_graph_def = freeze_requantization_range(
             self._tmp_graph_def, self._calibration_data, additional_data,
-            _print_node_mapping)
+            _print_node_mapping, self.device)
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
     def _fuse_requantize_with_fused_quantized_node(self):
         self._tmp_graph_def = fuse_quantized_conv_and_requantize(
-            self._tmp_graph_def)
+            self._tmp_graph_def, self.device)
         self._tmp_graph_def = FuseQuantizedMulAndRequantize(
             self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
@@ -672,7 +669,8 @@ class GraphConverter:
 
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
-        RerangeQuantizedConcat(self._tmp_graph_def).do_transformation()
+        RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()
+
         if self.debug:
             write_graph(self._tmp_graph_def, self.output_graph)
             self.logger.info('Converted graph file is saved to: %s',

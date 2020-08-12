@@ -29,6 +29,7 @@ class TensorFlowAdaptor(Adaptor):
         self.framework_specific_info = framework_specific_info
         self.inputs = self.framework_specific_info['inputs']
         self.outputs = self.framework_specific_info['outputs']
+        self.device = self.framework_specific_info['device']
 
     def evaluate(self, graph, dataloader, postprocess=None, metric=None):
         """Evaluate the model for specified metric on validation dataset.
@@ -75,6 +76,8 @@ class TensorFlowAdaptor(Adaptor):
             tuning_cfg (dict): configuration for quantization.
         """
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
+        self.quantize_config['device'] = self.device
+
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
 

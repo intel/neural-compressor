@@ -46,12 +46,13 @@ class RerangeQuantizedConcat(GraphTransformBase):
         "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize": 7
     }
 
-    def __init__(self, input_pb):
+    def __init__(self, input_pb, device):
         super(RerangeQuantizedConcat, self).__init__(input_pb)
 
         self.parse_input_pb()
         self.concat_node_input_mapping = {}
         self.rerange_concat_node = []
+        self.device = device
 
     def _analyze_concat_node_recursively(self, quantized_conv_nodes,
                                          input_node):
@@ -132,7 +133,8 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(
                             float(combined_max), dtypes.float32, [])))
-        self._update_bias()
+        if self.device == 'cpu':
+            self._update_bias()
         return self.input_graph
 
     def _update_bias(self):

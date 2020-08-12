@@ -63,6 +63,7 @@ class QuantizeNodeBase(object):
                  output_node_names,
                  per_channel,
                  start_node_name,
+                 device,
                  is_asymmetric=False,
                  enable_s8=True):
         self.logger = logging.getLogger()
@@ -84,6 +85,7 @@ class QuantizeNodeBase(object):
         self.per_channel = per_channel
         self.start_node_name = start_node_name
         self.is_asymmetric = is_asymmetric
+        self.device = device
         self.enable_s8 = False if tf.version.VERSION < '2.1.0' else enable_s8
 
     def apply_the_transform(self):
@@ -665,10 +667,10 @@ class QuantizeNodeBase(object):
                                                        shape=shape)
 
         min_node = helper.create_constant_node(min_name, min_value,
-                                               dtypes.float32)
+                                               dtypes.float32, device=self.device)
 
         max_node = helper.create_constant_node(max_name, max_value,
-                                               dtypes.float32)
+                                               dtypes.float32, device=self.device)
 
         dequantize_node = helper.create_node(
             "Dequantize", input_node.name,
