@@ -39,11 +39,11 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
   python main.py -t -a resnet18 --pretrained /path/to/imagenet
   ```
 
-### 3. ResNet101
+### 3. ResNext101_32x8d
 
   ```Shell
   cd examples/pytorch/image_recognition/resnet
-  python main.py -t -a resnet101 --pretrained /path/to/imagenet
+  python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
   ```
 
 ### 4. InceptionV3

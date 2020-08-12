@@ -67,7 +67,7 @@ The followings are the examples integrated with iLiT for auto tuning.
 | [ResNet18](examples/mxnet/image_recognition/README.md)              | MXNet      | [BERT-Base STS-B](examples/pytorch/language_translation/README.md) | PyTorch   | [Inception V2](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
 | [Inception V3](examples/mxnet/image_recognition/README.md)          | MXNet      | [BERT-Base CoLA](examples/pytorch/language_translation/README.md)  | PyTorch   | [Inception V3](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
 | [DLRM](examples/pytorch/recommendation/README.md)                   | PyTorch    | [BERT-Base MRPC](examples/pytorch/language_translation/README.md)  | PyTorch   | [Inception V4](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
-| [BERT-Large MRPC](examples/pytorch/language_translation/README.md)  | PyTorch    | [ResNet101](examples/pytorch/image_recognition/resnet/README.md)          | PyTorch   | [Inception ResNet V2](examples/tensorflow/image_recognition/README.md)| TensorFlow |
+| [BERT-Large MRPC](examples/pytorch/language_translation/README.md)  | PyTorch    | [ResNext101_32x8d](examples/pytorch/image_recognition/resnet/README.md)          | PyTorch   | [Inception ResNet V2](examples/tensorflow/image_recognition/README.md)| TensorFlow |
 | [BERT-Large SQUAD](examples/pytorch/language_translation/README.md) | PyTorch    | [ResNet50 V1.5](examples/pytorch/image_recognition/resnet/README.md)      | PyTorch   | [SSD ResNet50 V1](examples/tensorflow/object_detection/README.md)     | TensorFlow |
 | [ResNet50 V1.5 QAT](examples/pytorch/image_recognition/resnet_qat/README.md)    |PyTorch    | [Inception V3](examples/pytorch/image_recognition/resnet/README.md) |
 
