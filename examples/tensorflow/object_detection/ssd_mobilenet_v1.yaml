@@ -22,7 +22,7 @@ evaluation:
           - type: "TFRecordDataset"
           - root: "./data/tf_val2017/coco_val.record" # Path to your TF Record COCO Dataset
         transform:
-          resize:
+          Resize:
             - size: 256
-          central_crop:
+          CenterCrop:
             - size: 224
