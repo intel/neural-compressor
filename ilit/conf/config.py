@@ -64,7 +64,7 @@ def _valid_accuracy_field(key, scope, error):
 
 def input_to_list(data):
     if isinstance(data, str):
-        return data.split(',')
+        return [s.strip() for s in data.split(',')]
     if isinstance(data, int):
         return [data]
     else:
@@ -233,7 +233,7 @@ class Conf(object):
             if key in dst:
                 if isinstance(dst[key], dict) and isinstance(src[key], dict):
                     self._merge_dicts(src[key], dst[key])
-                elif dst[key] == src[key]:
+                elif dst[key] == src[key] or src[key] == None:
                     pass  # same leaf value
                 else:
                     value = [value for value in src[key] if value in dst[key]]
@@ -250,34 +250,28 @@ class Conf(object):
 
         cfg = self.usr_cfg
         if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.weight:
-            src.weight.algorithm = [
-                cfg.calibration.algorithm.weight]
+            src.weight.algorithm = cfg.calibration.algorithm.weight
 
         if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.granularity:
-            src.weight.granularity = [
-                cfg.quantization.weight.granularity]
+            src.weight.granularity = cfg.quantization.weight.granularity
 
         if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.scheme:
-            src.weight.scheme = [cfg.quantization.weight.scheme]
+            src.weight.scheme = cfg.quantization.weight.scheme
 
         if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.dtype:
-            src.weight.dtype = [cfg.quantization.weight.dtype]
+            src.weight.dtype = cfg.quantization.weight.dtype
 
         if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.activation:
-            src.activation.algorithm = [
-                cfg.calibration.algorithm.activation]
+            src.activation.algorithm = cfg.calibration.algorithm.activation
 
         if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.granularity:
-            src.activation.granularity = [
-                cfg.quantization.activation.granularity]
+            src.activation.granularity = cfg.quantization.activation.granularity
 
         if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.scheme:
-            src.activation.scheme = [
-                cfg.quantization.activation.scheme]
+            src.activation.scheme = cfg.quantization.activation.scheme
 
         if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.dtype:
-            src.activation.dtype = [
-                cfg.quantization.activation.dtype]
+            src.activation.dtype = cfg.quantization.activation.dtype
 
         self._modelwise_tune_space = self._merge_dicts(src, modelwise_quant)
         return self._modelwise_tune_space
