@@ -1,0 +1,22 @@
+framework:
+  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    inputs: input
+    outputs: MobilenetV3/Predictions/Softmax
+
+calibration:
+  - iterations: 2,5
+    algorithm:
+        activation: minmax
+
+quantization:
+    weight:
+      - granularity: per_channel
+
+tuning:
+    metric:
+      - topk: 1
+    accuracy_criterion:
+      - relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
+    timeout: 0                                      # tuning timeout (seconds)
+    random_seed: 9527                               # random seed
+

@@ -83,6 +83,10 @@ function run_tuning {
         extra_cmd=' --resize_method bilinear'
         output="MobilenetV2/Predictions/Reshape_1"
         yaml=mobilenet_v2.yaml
+    elif [ "${topology}" = "mobilenetv3" ]; then
+        extra_cmd=' --resize_method bilinear'
+        output="MobilenetV3/Predictions/Softmax"
+        yaml=mobilenet_v3.yaml
     fi
 
     python main.py \
