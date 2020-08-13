@@ -27,8 +27,8 @@ from tensorflow.python.framework import dtypes
 import datasets
 
 # override by args
-INPUTS = "input" 
-OUTPUTS = "predict" 
+INPUTS = "input"
+OUTPUTS = "predict"
 
 INCEPTION_V3_IMAGE_SIZE = 224
 
@@ -76,7 +76,7 @@ class Dataset(object):
         input_height (int): input image size
         input_width (int): input image size
         batch_size (int): dataloader batch size
-        num_cores (int): parallel 
+        num_cores (int): parallel
         resize_method (str, optional): data preprocession methods. Defaults to 'crop'.
         mean_value (list, optional): data mean value. Defaults to [0.0,0.0,0.0].
         label_adjust (bool, optional): adjust the label value. Defaults to False.
@@ -146,7 +146,7 @@ class eval_classifier_optimized_graph:
     arg_parser.add_argument('--image_size', dest='image_size',
                             help='image size',
                             type=int, default=224)
- 
+
     arg_parser.add_argument('-d', "--data-location",
                             help='Specify the location of the data. '
                                  'If this parameter is not specified, '
@@ -207,7 +207,12 @@ class eval_classifier_optimized_graph:
               f = gfile.GFile(path, 'wb')
               f.write(model.as_graph_def().SerializeToString())
 
-          save(q_model, evaluate_opt_graph.args.output_graph)
+          try:
+            save(q_model, evaluate_opt_graph.args.output_graph)
+          except AttributeError as no_model:
+              print("None of the quantized models fits the accuracy criteria: {0}".format(no_model))
+          except Exception as exc:
+              print("Unexpected error while saving the model: {0}".format(exc))
 
       if self.args.benchmark:
           infer_graph = tf.Graph()
@@ -236,7 +241,7 @@ class eval_classifier_optimized_graph:
     dataset = Dataset(self.args.data_location, 'validation',
                             self.args.image_size, self.args.image_size,
                             1, self.args.num_cores,
-                            self.args.resize_method,  
+                            self.args.resize_method,
                             [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
     dataloader = tuner.dataloader(dataset, batch_size=self.args.batch_size)
     q_model = tuner.tune(
@@ -365,7 +370,7 @@ class eval_classifier_optimized_graph:
 
       print("Accuracy: %.5f" % (total_accuracy1 / num_processed_images))
 
-  
+
   def validate_args(self):
     """validate the arguments"""
 
