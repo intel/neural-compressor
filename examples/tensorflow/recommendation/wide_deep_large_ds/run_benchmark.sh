@@ -11,7 +11,7 @@ function main {
 
 # init params
 function init_params {
-  iters=100
+  iters=1000
   for var in "$@"
   do
     case $var in

@@ -142,10 +142,10 @@ class eval_classifier_optimized_graph:
                                 required=False,
                                 default=2,
                                 dest='num_inter_threads')
-        arg_parser.add_argument('--num_omp_threads', type=str,
+        arg_parser.add_argument('--num_omp_threads', type=int,
                                 help='number of threads to use',
                                 required=False,
-                                default=None,
+                                default=20,
                                 dest='num_omp_threads')
         arg_parser.add_argument('--kmp_blocktime', type=str,
                                 help='KMP_BLOCKTIME value',
@@ -166,10 +166,10 @@ class eval_classifier_optimized_graph:
                                 action='store_true',
                                 help='use ilit to tune.')
         arg_parser.add_argument("--warmup-steps",
-                                type=int, default=10,
+                                type=int, default=100,
                                 help="number of warmup steps")
         arg_parser.add_argument("--steps",
-                                type=int, default=100,
+                                type=int, default=2000,
                                 help="number of iterations")
 
         arg_parser.add_argument('--env',
@@ -179,6 +179,8 @@ class eval_classifier_optimized_graph:
 
 
         self.args = arg_parser.parse_args()
+        os.environ["OMP_NUM_THREADS"] = str(self.args.num_omp_threads)
+        print("set OMP_NUM_THREADS=%d" % self.args.num_omp_threads)
 
     def auto_tune(self):
         """This is iLiT tuning part to generate a quantized pb
@@ -201,16 +203,12 @@ class eval_classifier_optimized_graph:
             print("Please provide calibration dataset!")
 
     def eval_inference(self, infer_graph):
-        """run benchmark with optimized graph"""
-
         print("Run inference")
 
         data_config = tf.compat.v1.ConfigProto()
         data_config.intra_op_parallelism_threads = self.args.num_intra_threads
         data_config.inter_op_parallelism_threads = self.args.num_inter_threads
         data_config.use_per_session_threads = 1
-
-
 
         infer_config = tf.compat.v1.ConfigProto()
         if self.args.env == 'mkl':
@@ -249,7 +247,8 @@ class eval_classifier_optimized_graph:
                 total_run = total_batches
 
             with tf.compat.v1.Session(config=infer_config, graph=infer_graph) as infer_sess:
-                while iteration < total_run:
+                i = 0
+                for i in range(int(total_run)):
                     start_time = time.time()
                     logistic = infer_sess.run(output_tensor, dict(zip(input_tensor, features_list[iteration][0:2])))
                     time_consume = time.time() - start_time
@@ -258,7 +257,9 @@ class eval_classifier_optimized_graph:
                         evaluate_duration += time_consume
 
                     iteration += 1
-                test_batches = iteration - warm_up_iteration
+                    if iteration > total_batches:
+                        iteration = 0
+                test_batches = total_run - warm_up_iteration
         else:
             with tf.compat.v1.Session(config=infer_config, graph=infer_graph) as infer_sess:
                 i = 0
@@ -281,15 +282,13 @@ class eval_classifier_optimized_graph:
         throughput = no_of_test_samples / evaluate_duration
 
         print('--------------------------------------------------')
-        print('Total test records           : ', no_of_test_samples)
-        print('Batch size is                : ', self.args.batch_size)
-        print('Number of batches            : ', int(test_batches))
+        print('Total test records: %d' % no_of_test_samples)
+        print('Number of batches: %d' % test_batches)
+        print('Batch size = %d' % self.args.batch_size)
+        print('Latency: %.3f ms' % latency)
+        print('Throughput: %.3f records/sec' % throughput)
         if self.args.accuracy_only:
-            print('Classification accuracy (%)  : ', round((accuracy * 100), 4))
-            print('No of correct predictions    : ', int(correctly_predicted))
-        print('Inference duration (seconds) : ', round(evaluate_duration, 4))
-        print('Average Latency (ms/batch)   : ', round(latency,4))
-        print('Throughput is (records/sec)  : ', round(throughput, 3))
+            print("Accuracy: %.5f" % accuracy)
         print('--------------------------------------------------')
 
         if self.args.accuracy_only:
