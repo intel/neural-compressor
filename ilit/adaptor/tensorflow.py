@@ -153,7 +153,7 @@ class TensorFlowAdaptor(Adaptor):
         matmul_config = {
             'activation': {
                 'dtype': ['uint8', 'fp32'],
-                'algorithm': ['minmax', 'kl'],
+                'algorithm': ['minmax'],
                 'scheme': ['asym', 'sym'],
                 'granularity': ['per_tensor']
             },

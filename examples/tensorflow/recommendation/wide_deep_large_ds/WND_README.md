@@ -36,19 +36,19 @@ Process calib dataset
 ```
 python preprocess_csv_tfrecords.py \
         --inputcsv-datafile train.csv \
-        --calibrationcsv-datafile train.csv \
-        --outputfile-name preprocessed_data
+        --calibrationcsv-datafile eval.csv \
+        --outputfile-name processed_data
 ```
 Process eval dataset
 ```
 python preprocess_csv_tfrecords.py \
         --inputcsv-datafile eval.csv \
         --calibrationcsv-datafile train.csv \
-        --outputfile-name preprocessed_data
+        --outputfile-name processed_data
 ```
 Two .tfrecords files are generated and will be used later on:
-1) train_preprocessed_data.tfrecords
-2) eval_preprocessed_data.tfrecords
+1) train_processed_data.tfrecords
+2) eval_processed_data.tfrecords
 
 ### 6. Download Frozen PB
 ```shell
