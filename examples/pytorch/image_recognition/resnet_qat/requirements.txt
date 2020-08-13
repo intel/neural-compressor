@@ -1,4 +1,4 @@
 ilit
-pytorch
+torch==1.6.0
 pytorch-ignite
-torchvision
+torchvision==0.7.0
