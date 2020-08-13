@@ -152,8 +152,8 @@ class QuantizeNodeBase(object):
 
                             for index, input_name in enumerate(
                                     next_node_inputs):
-                                if input_name != cur_node_name and index < cur_node_index and input_name.find(
-                                        "Quantized") == -1:
+                                node_type = self.node_name_mapping[helper.node_name_from_input(input_name)].node.op
+                                if input_name != cur_node_name and index < cur_node_index and node_type != 'Dequantize':
                                     add_op_quantizable = False
                                     break
 
