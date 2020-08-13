@@ -282,12 +282,16 @@ class GraphConverter:
                 from tensorflow.python.pywrap_tensorflow import IsMklEnabled
             else:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
-            if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION
-                                   <= TF_SUPPORTED_MAX_VERSION):
+            if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
                 is_supported_version = True
         except Exception as e:
             raise ValueError(e)
         finally:
+            if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
+                self.logger.warn(str('Please note the {} version of Intel® Optimizations for'
+                    ' TensorFlow is not fully verified\nSuggest to use the versions'
+                    ' between {} and {} if meet problem').format(tf.version.VERSION,
+                    TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
             if not is_supported_version:
                 raise ValueError(
                     str('Please install Intel® Optimizations for TensorFlow'
@@ -541,16 +545,16 @@ class GraphConverter:
             self._freeze_requantization_ranges(self._kl_op_dict,
                                                self._print_node_mapping)
             self._fuse_requantize_with_fused_quantized_node()
-        except Exception as e:
-            self.logger.error('Failed to quantize graph due to: %s', str(e))
-            raise ValueError(e) from e
-        finally:
-            if not self.debug:
-                self._post_clean()
 
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
+        except Exception as e:
+            graph = None
+            self.logger.error('Failed to quantize graph due to: %s', str(e))
+        finally:
+            if not self.debug:
+                self._post_clean()
             return graph
 
     def _optimize_frozen_fp32_graph(self):

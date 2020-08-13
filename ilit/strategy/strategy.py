@@ -165,6 +165,7 @@ class TuneStrategy(object):
                 logger.debug(tune_cfg)
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
+                assert self.last_qmodel
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
