@@ -130,5 +130,8 @@ class DefaultDataLoader(BaseDataLoader):
         self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, drop_last)
 
         for batched_indices in self.batch_sampler:
-            data = self.fetcher(batched_indices)
-            yield data
+            try:
+                data = self.fetcher(batched_indices)
+                yield data
+            except StopIteration:
+                return
