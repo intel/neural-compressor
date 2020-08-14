@@ -310,9 +310,9 @@ class eval_classifier_optimized_graph:
         infer_sess.run([output_tensor], feed_dict={input_tensor: image_np})
         time_consume = time.time() - start_time
 
-        # only add data loading time for real data, not for dummy data
-        if self.args.data_location:
-          time_consume += data_load_time
+        # # only add data loading time for real data, not for dummy data
+        # if self.args.data_location:
+        #   time_consume += data_load_time
 
         print('Iteration %d: %.6f sec' % (iteration, time_consume))
         if iteration > warm_up_iteration:
