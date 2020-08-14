@@ -635,11 +635,6 @@ def main():
                     eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, evaluate=True)
 
                     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-                    if eval_task != "squad":
-                        eval_task = 'classifier'
-                    import ilit
-                    eval_dataset = ilit.data.DATASETS('pytorch')['bert'](dataset=eval_dataset, task=eval_task)
-                    test_dataloader = ilit.data.DataLoader('pytorch', eval_dataset, batch_size=args.eval_batch_size)
                     # multi-gpu eval
                     if args.n_gpu > 1:
                         model = torch.nn.DataParallel(model)
@@ -650,6 +645,10 @@ def main():
                         print(model)
                     import ilit
                     tuner = ilit.Tuner("./conf.yaml")
+                    if eval_task != "squad":
+                        eval_task = 'classifier'
+                    eval_dataset = tuner.dataset('bert', dataset=eval_dataset, task=eval_task)
+                    test_dataloader = tuner.dataloader(eval_dataset, batch_size=args.eval_batch_size)
                     tuner.tune(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)
 

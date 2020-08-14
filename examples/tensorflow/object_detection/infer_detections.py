@@ -357,7 +357,7 @@ if __name__ == "__main__":
     infer = model_infer(args)
     if args.tune:
         at = ilit.Tuner(args.config)
-        q_dataloader = ilit.data.DataLoader('tensorflow', infer)
+        q_dataloader = at.dataloader(infer, args.batch_size)
         output_graph = at.tune(infer.get_graph(),
                             q_dataloader=q_dataloader,
                             eval_func=infer.accuracy_check)

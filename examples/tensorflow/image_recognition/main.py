@@ -238,7 +238,7 @@ class eval_classifier_optimized_graph:
                             1, self.args.num_cores,
                             self.args.resize_method,  
                             [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
-    dataloader = ilit.data.DataLoader('tensorflow', dataset, batch_size=self.args.batch_size)
+    dataloader = tuner.dataloader(dataset, batch_size=self.args.batch_size)
     q_model = tuner.tune(
                         fp32_graph,
                         q_dataloader=dataloader,

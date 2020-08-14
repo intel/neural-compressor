@@ -6,7 +6,8 @@ from .conf.config import Conf
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import get_preprocess
-from .data import DataLoader, DATASETS, TRANSFORMS
+from .data import DataLoader as DATALOADER
+from .data import DATASETS, TRANSFORMS
 from collections import OrderedDict
 
 
@@ -97,7 +98,7 @@ class Tuner(object):
             self.eval_dataset = self._create_dataset(cfg.evaluation.dataloader.dataset,
                 cfg.evaluation.dataloader.transform, cfg.framework.name)
 
-            self.eval_dataloader = DataLoader(dataset=self.eval_dataset,
+            self.eval_dataloader = DATALOADER(dataset=self.eval_dataset,
                                               framework=cfg.framework.name,
                                               batch_size=batch_size) 
         else: 
@@ -113,7 +114,7 @@ class Tuner(object):
             self.calib_dataset = self._create_dataset(cfg.calibration.dataloader.dataset,
                 cfg.calibration.dataloader.transform, cfg.framework.name)
 
-            self.calib_dataloader = DataLoader(dataset=self.calib_dataset,
+            self.calib_dataloader = DATALOADER(dataset=self.calib_dataset,
                                                framework=cfg.framework.name,
                                                batch_size=batch_size)
         else:
@@ -158,6 +159,16 @@ class Tuner(object):
 
         return self.strategy.best_qmodel
 
+    def dataset(self, dataset_type, *args, **kwargs):
+        return DATASETS(self.conf.usr_cfg.framework.name)[dataset_type](*args, **kwargs)
+
+    def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
+        sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+        return DATALOADER(framework=self.conf.usr_cfg.framework.name, dataset=dataset,
+            batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
+            sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
+            pin_memory=pin_memory)
+
     def _create_dataset(self, data_source, cfg_preprocess, framework):
         transform_list = []
         # generate framework specific transforms
@@ -166,7 +177,7 @@ class Tuner(object):
         # even we can unify transform, how can we handle the IO, or we do the transform here
         datasets = DATASETS(framework)
         dataset_type = data_source.pop("type")
-        
+
         # in this case we should prepare eval_data and calib_data sperately
         dataset = datasets[dataset_type](**data_source, transform=preprocess)
         return dataset
