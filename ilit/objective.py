@@ -46,26 +46,23 @@ class Objective(object):
         self.val = None
 
     @abstractmethod
-    def compare(self, last):
+    def compare(self, last, baseline):
         """The interface of comparing if metric reaches the goal with acceptable accuracy loss.
 
         Args:
             last (tuple): The tuple of last metric.
             accuracy_criterion (float): The allowed accuracy absolute loss.
+            baseline (tuple): The tuple saving FP32 baseline.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, eval_func, model, baseline=False):
+    def evaluate(self, eval_func, model):
         """The interface of calculating the objective.
 
         Args:
             eval_func (function): function to do evaluation.
             model (object): model to do evaluation.
-            baseline (bool, optional): Whether do baseline evaluation. if baseline=True, mean
-                                        evaluation with origin FP32 model, else evaluation with
-                                        quantized model. Defaults to False.
-
         """
         raise NotImplementedError
 
@@ -81,7 +78,7 @@ class Performance(Objective):
     def __init__(self, accuracy_criterion):
         super(Performance, self).__init__(accuracy_criterion)
 
-    def compare(self, last):
+    def compare(self, last, baseline):
         acc, perf = self.val
 
         if last is not None:
@@ -89,8 +86,7 @@ class Performance(Objective):
         else:
             last_perf = 0
 
-        assert self.baseline, "baseline of Objective class should be set before reference."
-        base_acc, _ = self.baseline
+        base_acc, _ = baseline
 
         acc_target = base_acc - float(self.acc_goal) if not self.relative \
             else base_acc * (1 - float(self.acc_goal))
@@ -99,14 +95,11 @@ class Performance(Objective):
         else:
             return False
 
-    def evaluate(self, eval_func, model, baseline):
+    def evaluate(self, eval_func, model):
         start = time.time()
         accuracy = eval_func(model)
         end = time.time()
         total_time = end - start
-
-        if baseline:
-            self.baseline = accuracy, total_time
 
         self.val = accuracy, total_time
         return self.val
@@ -124,7 +117,7 @@ class Footprint(Objective):
     def __init__(self, accuracy_criterion):
         super(Footprint, self).__init__(accuracy_criterion)
 
-    def compare(self, last):
+    def compare(self, last, baseline):
         acc, peak = self.val
 
         if last is not None:
@@ -132,8 +125,7 @@ class Footprint(Objective):
         else:
             last_peak = 0
 
-        assert self.baseline, "baseline variable of Objective class should be set before reference."
-        base_acc, _ = self.baseline
+        base_acc, _ = baseline
 
         acc_target = base_acc - float(self.acc_goal) if not self.relative \
             else base_acc * (1 - float(self.acc_goal))
@@ -142,14 +134,11 @@ class Footprint(Objective):
         else:
             return False
 
-    def evaluate(self, eval_func, model, baseline):
+    def evaluate(self, eval_func, model):
         tracemalloc.start()
         accuracy = eval_func(model)
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-
-        if baseline:
-            self.baseline = accuracy, peak
 
         self.val = accuracy, peak
         return self.val
@@ -167,7 +156,7 @@ class ModelSize(Objective):
     def __init__(self, accuracy_criterion):
         super(ModelSize, self).__init__(accuracy_criterion)
 
-    def compare(self, last):
+    def compare(self, last, baseline):
         acc, size = self.val
 
         if last is not None:
@@ -175,8 +164,7 @@ class ModelSize(Objective):
         else:
             last_size = 0
 
-        assert self.baseline, "baseline variable of Objective class should be set before reference."
-        base_acc, _ = self.baseline
+        base_acc, _ = baseline
 
         acc_target = base_acc - float(self.acc_goal) if not self.relative \
             else base_acc * (1 - float(self.acc_goal))
@@ -185,11 +173,9 @@ class ModelSize(Objective):
         else:
             return False
 
-    def evaluate(self, eval_func, model, baseline):
+    def evaluate(self, eval_func, model):
         accuracy = eval_func(model)
         model_size = get_size(model)
-        if baseline:
-            self.baseline = accuracy, model_size
 
         self.val = accuracy, model_size
         return self.val

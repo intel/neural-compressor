@@ -148,7 +148,7 @@ class TuneStrategy(object):
             # get fp32 model baseline
             if self.baseline is None:
                 logger.info('Getting FP32 model baseline...')
-                self.baseline = self._evaluate(self.model, True)
+                self.baseline = self._evaluate(self.model)
             logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline) if self.baseline else 'None'))
 
             for tune_cfg in self.next_tune_cfg():
@@ -206,18 +206,17 @@ class TuneStrategy(object):
 
         return conf.opwise_tune_space(opwise)
 
-    def _evaluate(self, model, baseline=False):
+    def _evaluate(self, model):
         """The interface of evaluating model.
 
         Args:
             model (object): The model to be evaluated.
-            baseline (bool, optional): TRUE if the evaluated model is FP32 baseline model.
 
         Returns:
             Objective: The objective value evaluated
         """
         if self.eval_func:
-            val = self.objective.evaluate(self.eval_func, model, baseline)
+            val = self.objective.evaluate(self.eval_func, model)
         else:
             # eval_func being None means user will provide dataloader and metric info
             # in config yaml file
@@ -237,7 +236,7 @@ class TuneStrategy(object):
             
             def eval_func(model):
                 return self.adaptor.evaluate(model, dataloader, postprocess, metric)
-            val = self.objective.evaluate(eval_func, model, baseline)
+            val = self.objective.evaluate(eval_func, model)
         return val
 
     def __getstate__(self):
@@ -280,7 +279,7 @@ class TuneStrategy(object):
         """
         need_stop = False
 
-        if self.objective.compare(self.best_tune_result):
+        if self.objective.compare(self.best_tune_result, self.baseline):
             del self.best_tune_result
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
