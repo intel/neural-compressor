@@ -94,48 +94,54 @@ class BasicTuneStrategy(TuneStrategy):
 
         if best_cfg is None:
             return
+        
+        fallback_dtypes = []
+        for data_type in ["bf16", "fp32"]:
+            if data_type in self.modelwise_tune_space["activation"]["dtype"]:
+                fallback_dtypes.append(data_type)
 
-        logger.debug('Continue basic strategy by sorting opwise fallback priority')
-        ops_acc = OrderedDict()
-        for op, configs in reversed(self.opwise_tune_cfgs.items()):
-            op_cfgs = copy.deepcopy(best_cfg)
-            for cfg in configs:
-                if 'fp32' == cfg['activation']['dtype']:
-                    op_cfgs['op'][op]['activation'].clear()
-                    op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                    if 'weight' in cfg:
-                        assert cfg['weight']['dtype'] == 'fp32'
-                        op_cfgs['op'][op]['weight'].clear()
-                        op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
-            yield op_cfgs
-            acc, _ = self.last_tune_result
-            ops_acc[op] = acc
-
-        logger.debug('Continue basic strategy by incremental opwise fallback with priority')
-        op_cfgs = copy.deepcopy(best_cfg)
-        if ops_acc is not None:
-            ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key], reverse=True)
-            for op in ordered_ops:
-                old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                op_cfgs['op'][op]['activation'].clear()
-                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                if 'weight' in op_cfgs['op'][op]:
-                    op_cfgs['op'][op]['weight'].clear()
-                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
+        for fallback_dtype in fallback_dtypes:
+            logger.debug('Continue basic strategy by sorting opwise %s fallback priority' % (fallback_dtype))
+            ops_acc = OrderedDict()
+            for op, configs in reversed(self.opwise_tune_cfgs.items()):
+                op_cfgs = copy.deepcopy(best_cfg)
+                for cfg in configs:
+                    if fallback_dtype == cfg['activation']['dtype']:
+                        op_cfgs['op'][op]['activation'].clear()
+                        op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
+                        if 'weight' in cfg:
+                            assert cfg['weight']['dtype'] == fallback_dtype
+                            op_cfgs['op'][op]['weight'].clear()
+                            op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                 yield op_cfgs
                 acc, _ = self.last_tune_result
-                if acc <= best_acc:
-                    op_cfgs['op'][op] = copy.deepcopy(old_cfg)
-                else:
-                    best_acc = acc
+                ops_acc[op] = acc
 
+            logger.debug('Continue basic strategy by incremental opwise %s fallback with priority' % (fallback_dtype))
             op_cfgs = copy.deepcopy(best_cfg)
-            for op in ordered_ops:
-                op_cfgs['op'][op]['activation'].clear()
-                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                if 'weight' in op_cfgs['op'][op]:
-                    op_cfgs['op'][op]['weight'].clear()
-                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
-                yield op_cfgs
+            if ops_acc is not None:
+                ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key], reverse=True)
+                for op in ordered_ops:
+                    old_cfg = copy.deepcopy(op_cfgs['op'][op])
+                    op_cfgs['op'][op]['activation'].clear()
+                    op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
+                    if 'weight' in op_cfgs['op'][op]:
+                        op_cfgs['op'][op]['weight'].clear()
+                        op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                    yield op_cfgs
+                    acc, _ = self.last_tune_result
+                    if acc <= best_acc:
+                        op_cfgs['op'][op] = copy.deepcopy(old_cfg)
+                    else:
+                        best_acc = acc
+
+                op_cfgs = copy.deepcopy(best_cfg)
+                for op in ordered_ops:
+                    op_cfgs['op'][op]['activation'].clear()
+                    op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
+                    if 'weight' in op_cfgs['op'][op]:
+                        op_cfgs['op'][op]['weight'].clear()
+                        op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                    yield op_cfgs
 
         return

@@ -36,6 +36,7 @@ from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_c
 from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
+from .transform_graph.bf16_convert import BF16Convert
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
@@ -135,6 +136,8 @@ class GraphConverter:
                  inputs=[],
                  outputs=[],
                  qt_config={},
+                 fp32_ops=[],
+                 bf16_ops=[],
                  data_loader=None):
         """Convert graph.
 
@@ -142,6 +145,10 @@ class GraphConverter:
         :param output_graph: output graph pb file. If set, output directory should be exist.
         :param inputs: input nodes' names.
         :param outputs: output nodes' names.
+        :param qt_config: quantization configs, including interation and op-wise quant config
+        :param fp32_ops: fall back to fp32 dtype op list
+        :param bf16_ops: fall back to bf16 dtype op list
+        :param data_loader: for calibration phase used dataloader
         """
         # For iLiT, the input_graph is not graph file path but Graph object.
         self._get_graph_def(input_graph)
@@ -154,6 +161,8 @@ class GraphConverter:
         self.calib_iteration = qt_config['calib_iteration']
         self.op_wise_config = qt_config['op_wise_config']
         self.device = qt_config['device'] if 'device' in qt_config else 'cpu'
+        self.fp32_ops = fp32_ops
+        self.bf16_ops = bf16_ops
 
         self._calibration_data = []
         self._fp32_print_data = []
@@ -320,6 +329,8 @@ class GraphConverter:
                                                'fp32_logged_graph.pb')
         self._int8_frozen_range_graph = os.path.join(
             self._output_path, 'int8_frozen_range_graph.pb')
+        self._bf16_mixed_precision_graph = os.path.join(
+            self._output_path, 'int8_bf16_mixed_precision_graph.pb')
         if not self.output_graph:
             self.output_graph = os.path.join(self._output_path,
                                              'int8_final_fused_graph.pb')
@@ -341,6 +352,7 @@ class GraphConverter:
             2) quantize graph,
             3) calibration,
             4) fuse RequantizeOp with fused quantized conv, and so on.
+            5) bf16 convert if the self.bf16_ops is not empty
 
         :return:
         """
@@ -350,7 +362,15 @@ class GraphConverter:
             self.logger.error('Failed to optimize fp32 graph due to: %s', str(e))
             raise ValueError(e) from e
         else:
-            return self.quantize()
+            if len(self.op_wise_config) > 0:
+                self.quantize()
+            if len(self.bf16_ops) > 0:
+                self.bf16_convert()
+
+            graph = tf.Graph()
+            with graph.as_default():
+                tf.import_graph_def(self._tmp_graph_def, name='')
+            return graph
 
     def _get_fp32_print_node_names(self, specified_op_list):
         offset_map = {
@@ -556,6 +576,18 @@ class GraphConverter:
             if not self.debug:
                 self._post_clean()
             return graph
+
+    def bf16_convert(self):
+        """Convert fp32 nodes in bf16_node to bf16 dtype based on 
+           FP32 + INT8 mixed precision graph.
+        """
+        BF16Convert(self._tmp_graph_def, 
+                    self.device, 
+                    self.outputs, 
+                    self.fp32_ops, 
+                    self.bf16_ops).do_transformation()
+        if self.debug:
+            write_graph(self._tmp_graph_def, self._bf16_mixed_precision_graph)
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""

@@ -114,7 +114,7 @@ class TuneStrategy(object):
 
         self.modelwise_quant_cfgs = []
         for cfg in self.modelwise_tune_cfgs:
-            if cfg['activation']['dtype'] not in ['fp32']:
+            if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
                 self.modelwise_quant_cfgs.append(cfg)
 
         self.opwise_quant_cfgs = OrderedDict()
@@ -122,7 +122,7 @@ class TuneStrategy(object):
             cfg_list = self.opwise_tune_cfgs[key]
             new_list = []
             for cfg in cfg_list:
-                if cfg['activation']['dtype'] not in ['fp32']:
+                if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
                     new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 

@@ -9,7 +9,6 @@ from ..utils import logger
 
 tensorflow = LazyImport('tensorflow')
 
-
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -30,6 +29,8 @@ class TensorFlowAdaptor(Adaptor):
         self.inputs = self.framework_specific_info['inputs']
         self.outputs = self.framework_specific_info['outputs']
         self.device = self.framework_specific_info['device']
+        self.bf16_ops = []
+        self.fp32_ops = []
 
     def evaluate(self, graph, dataloader, postprocess=None, metric=None):
         """Evaluate the model for specified metric on validation dataset.
@@ -77,13 +78,18 @@ class TensorFlowAdaptor(Adaptor):
         """
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         self.quantize_config['device'] = self.device
-
+        fp32_ops = []
+        bf16_ops = []
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
 
-            if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
+            if tuning_cfg['op'][each_op_info]['activation']['dtype'] in ['fp32', 'bf16']:
                 if op_name in self.quantize_config['op_wise_config']:
                     self.quantize_config['op_wise_config'].pop(op_name)
+                if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
+                    fp32_ops.append(op_name)
+                if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'bf16':
+                    bf16_ops.append(op_name)
                 continue
 
             is_perchannel = False
@@ -99,6 +105,8 @@ class TensorFlowAdaptor(Adaptor):
                     'scheme'] == 'asym'
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
                                                                algorithm, is_asymmetric)
+        self.fp32_ops = fp32_ops
+        self.bf16_ops = bf16_ops
 
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -124,10 +132,12 @@ class TensorFlowAdaptor(Adaptor):
                                    inputs=self.inputs,
                                    outputs=self.outputs,
                                    qt_config=self.quantize_config,
+                                   fp32_ops = self.fp32_ops,
+                                   bf16_ops = self.bf16_ops,
                                    data_loader=data_loader)
         return converter.convert()
 
-    def _query_quantizable_ops(self, graph):
+    def _query_quantizable_ops(self, graph, activation_dtype, weight_dtype):
         """Collect the op-wise configuration for quantization.
 
         Returns:
@@ -138,13 +148,13 @@ class TensorFlowAdaptor(Adaptor):
                                   "AvgPool", "ConcatV2", "MatMul", "Pad")
         conv_config = {
             'activation': {
-                'dtype': ['uint8', 'fp32'],
+                'dtype': activation_dtype,
                 'algorithm': ['minmax', 'kl'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor']
             },
             'weight': {
-                'dtype': ['int8', 'fp32'],
+                'dtype': weight_dtype,
                 'algorithm': ['minmax'],
                 'scheme': ['sym'],
                 'granularity': ['per_channel', 'per_tensor']
@@ -152,13 +162,13 @@ class TensorFlowAdaptor(Adaptor):
         }
         matmul_config = {
             'activation': {
-                'dtype': ['uint8', 'fp32'],
+                'dtype': activation_dtype,
                 'algorithm': ['minmax'],
                 'scheme': ['asym', 'sym'],
                 'granularity': ['per_tensor']
             },
             'weight': {
-                'dtype': ['int8', 'fp32'],
+                'dtype': weight_dtype,
                 'algorithm': ['minmax'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor']
@@ -166,7 +176,7 @@ class TensorFlowAdaptor(Adaptor):
         }
         other_config = {
             'activation': {
-                'dtype': ['uint8', 'fp32'],
+                'dtype': activation_dtype,
                 'algorithm': ['minmax'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor']
@@ -193,6 +203,27 @@ class TensorFlowAdaptor(Adaptor):
                                                                      "minmax", False)
         return self.quantizable_op_details
 
+    def _support_bf16(self):
+        """Query Software and Hardware BF16 support cabability
+        
+        """
+        import tensorflow as tf
+        is_supported_version = False
+        from tensorflow import python
+        if (hasattr(python, "pywrap_tensorflow")
+                and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):
+            from tensorflow.python.pywrap_tensorflow import IsMklEnabled
+        else:
+            from tensorflow.python._pywrap_util_port import IsMklEnabled
+        if IsMklEnabled() and (tf.version.VERSION >= "2.3.0"):
+            is_supported_version = True
+        command = "cat /proc/cpuinfo | grep flags | tail -n 1"
+        all_flags = subprocess.check_output(command, shell=True).strip().decode()
+        if ((is_supported_version and " avx512_bf16 " in all_flags) 
+                or os.getenv('FORCE_BF16') == '1'):
+            return True
+        return False
+
     def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
@@ -202,16 +233,21 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: model-wise & op-wise configuration for quantization.
         """
+        activation_dtype = ['uint8', 'fp32']
+        weight_dtype = ['int8', 'fp32']
+        if self._support_bf16():
+            activation_dtype.append('bf16')
+            weight_dtype.append('bf16')
         capability = {
             'modelwise': {
                 'activation': {
-                    'dtype': ['uint8', 'fp32'],
+                    'dtype': activation_dtype,
                     'scheme': ['asym', 'sym'],
                     'granularity': ['per_tensor'],
                     'algorithm': ['minmax', 'kl']
                 },
                 'weight': {
-                    'dtype': ['int8', 'fp32'],
+                    'dtype': weight_dtype,
                     'scheme': [
                         'sym',
                     ],
@@ -220,7 +256,7 @@ class TensorFlowAdaptor(Adaptor):
                 },
             }
         }
-        self._query_quantizable_ops(model)
+        self._query_quantizable_ops(model, activation_dtype, weight_dtype)
         capability['opwise'] = self.quantizable_op_details
         logger.debug('Dump framework quantization capability:')
         logger.debug(capability)
