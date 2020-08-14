@@ -98,6 +98,69 @@ class QuantizeGraphHelper(object):
         return output_graph_def if is_shared_input else input_graph_def
 
     @staticmethod
+    def remove_training_nodes(input_graph, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics']):
+        """Prunes out nodes that aren't needed for inference.
+        Args:
+            input_graph: Model to analyze and prune.
+            types_to_splice: An optional list of types of nodes to be removed
+            unconditionally.
+
+        Returns:
+            A optimized graphdef object.
+        """
+        input_nodes = input_graph.node
+
+        control_input_names = set()
+        node_names_with_control_input = set()
+        for node in input_nodes:
+            for node_input in node.input:
+                if "^" in node_input:
+                    control_input_names.add(node_input.replace("^", ""))
+                    node_names_with_control_input.add(node.name)
+
+        names_to_splice = {}
+        for node in input_nodes:
+            if node.op in types_to_splice:
+                # We don't want to remove nodes that have control edge inputs, because
+                # they might be involved in subtle dependency issues that removing them
+                # will jeopardize.
+                if node.name not in node_names_with_control_input:
+                    names_to_splice[node.name] = node.input[0]
+
+        # We also don't want to remove nodes which are used as control edge inputs.
+        names_to_splice = {
+            name: value
+            for name, value in names_to_splice.items()
+            if name not in control_input_names
+        }
+
+        nodes_after_splicing = []
+
+        for node in input_nodes:
+            if node.name in names_to_splice and node.name not in protected_nodes:
+                continue
+
+            if node.name in protected_nodes:
+                nodes_after_splicing.append(node)
+                continue
+
+            new_node = node_def_pb2.NodeDef()
+            new_node.CopyFrom(node)
+            input_before_removal = node.input
+            del new_node.input[:]
+            for full_input_name in input_before_removal:
+                input_name = re.sub(r"^\^", "", full_input_name)
+                while input_name in names_to_splice:
+                    full_input_name = names_to_splice[input_name]
+                    input_name = re.sub(r"^\^", "", full_input_name)
+                new_node.input.append(full_input_name)
+            nodes_after_splicing.append(new_node)
+
+        output_graph = graph_pb2.GraphDef()
+        output_graph.node.extend(nodes_after_splicing)
+        return output_graph
+
+    @staticmethod
     def create_node(op, name, inputs):
         new_node = node_def_pb2.NodeDef()
         new_node.op = op

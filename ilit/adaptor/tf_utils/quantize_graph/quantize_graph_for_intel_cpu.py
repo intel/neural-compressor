@@ -1,7 +1,6 @@
 #  -*- coding: utf-8 -*-
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
-from tensorflow.python.framework import graph_util
 
 from .quantize_graph_base import QuantizeGraphBase
 from .quantize_graph_common import QuantizeGraphHelper
@@ -37,8 +36,9 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
             self.input_graph = graph_pb2.GraphDef()
             with gfile.Open(input_graph, 'rb') as f:
                 self.input_graph.ParseFromString(f.read())
-        self.input_graph = graph_util.remove_training_nodes(
-            self.input_graph, protected_nodes=self.output_node_names)
+
+        self.input_graph = QuantizeGraphHelper().remove_training_nodes(
+            self.input_graph, protected_nodes=output_node_names)
         self.input_graph = QuantizeGraphHelper().get_sorted_graph(
             self.input_graph, output_node_names)
 
@@ -81,6 +81,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                             self.op_wise_config[node.name][0], node.name, self.device,
                             self.op_wise_config[node.name][2])
                         cur_fuse_op_count = worker.get_longest_fuse()
+
                         if cur_fuse_op_count > last_fuse_ops_count:
                             last_fuse_ops_count = cur_fuse_op_count
                             last_longest_fuse_worker = worker

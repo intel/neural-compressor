@@ -22,7 +22,6 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import importer
 from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
-from tensorflow.python.framework import graph_util
 from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from .transform_graph.strip_unused import StripUnusedNodes
@@ -591,8 +590,9 @@ class GraphConverter:
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
-        self._tmp_graph_def = graph_util.remove_training_nodes(
-            self.input_graph, self.outputs)
+
+        self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
+            self.input_graph, protected_nodes=self.outputs)
 
         self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
             self._tmp_graph_def)
@@ -700,8 +700,9 @@ class GraphConverter:
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs
                                               ).do_transform()
-        self._tmp_graph_def = graph_util.remove_training_nodes(
-            self._tmp_graph_def, self.outputs)
+
+        self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
+            self._tmp_graph_def, protected_nodes=self.output_graph)
 
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
