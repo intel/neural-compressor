@@ -62,7 +62,7 @@ class ExhaustiveTuneStrategy(TuneStrategy):
             op_cfgs['calib_iteration'] = int(iterations)
             op_lists = []
             op_cfg_lists = []
-            for op, configs in self.opwise_tune_cfgs.items():
+            for op, configs in self.opwise_quant_cfgs.items():
                 op_lists.append(op)
                 op_cfg_lists.append(configs)
             for cfgs in itertools.product(*op_cfg_lists):
