@@ -425,7 +425,7 @@ class PyTorchAdaptor(Adaptor):
         q_capability['opwise'] = OrderedDict()
 
         for q_op in quantizable_ops:
-            q_capability['opwise'][q_op] = self.capability
+            q_capability['opwise'][q_op] = copy.deepcopy(self.capability)
 
         return q_capability
 
