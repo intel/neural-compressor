@@ -431,6 +431,7 @@ class GraphConverter:
                       message="__KL:",
                       summarize=-1,
                       dump_fp32=True).do_transformation()
+
         write_graph(self._fp32_origin_graph, self._fp32_logged_graph)
         return self._fp32_origin_graph
 
@@ -608,6 +609,8 @@ class GraphConverter:
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
 
+        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
+
         if self.debug:
             write_graph(self._tmp_graph_def, self._fp32_optimized_graph)
         self._fp32_origin_graph = self._tmp_graph_def
@@ -623,6 +626,8 @@ class GraphConverter:
                                                 self.op_wise_config,
                                                 self.device)
         self._tmp_graph_def = intel_quantizer.do_transform()
+
+        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_dynamic_range_graph)
@@ -689,6 +694,7 @@ class GraphConverter:
         self._tmp_graph_def = freeze_requantization_range(
             self._tmp_graph_def, self._calibration_data, additional_data,
             _print_node_mapping, self.device)
+
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
@@ -708,6 +714,8 @@ class GraphConverter:
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
         RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()
+
+        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         if self.debug:
             write_graph(self._tmp_graph_def, self.output_graph)
