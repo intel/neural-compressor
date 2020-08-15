@@ -308,8 +308,7 @@ class PyTorchAdaptor(Adaptor):
         fallback_ops = []
         for k, v in op_qcfgs.items():
             if v is None and k[1] != torch.quantization.QuantStub \
-                    and k[1] != torch.quantization.DeQuantStub \
-                    and k[1] != torch.nn.quantized.FloatFunctional:
+                    and k[1] != torch.quantization.DeQuantStub:
                 fallback_ops.append(k[0])
             else:
                 if v is None:
@@ -380,6 +379,45 @@ class PyTorchAdaptor(Adaptor):
                 X = self.dequant(X)
                 X = self.module(X)
                 return self.quant(X)
+
+            def add(self, x, y):
+                # type: (Tensor, Tensor) -> Tensor
+                x = self.dequant(x)
+                y = self.dequant(y)
+                r = self.module.add(x, y)
+                return self.quant(r)
+
+            def add_scalar(self, x, y):
+                # type: (Tensor, float) -> Tensor
+                x = self.dequant(x)
+                r = self.module.add_scalar(x, y)
+                return self.quant(r)
+
+            def mul(self, x, y):
+                # type: (Tensor, Tensor) -> Tensor
+                x = self.dequant(x)
+                y = self.dequant(y)
+                r = self.module.mul(x, y)
+                return self.quant(r)
+
+            def mul_scalar(self, x, y):
+                # type: (Tensor, float) -> Tensor
+                x = self.dequant(x)
+                r = self.module.mul_scalar(x, y)
+                return self.quant(r)
+
+            def cat(self, x, dim=0):
+                # type: (List[Tensor], int) -> Tensor
+                X = [self.dequant(x_) for x_ in x]
+                r = self.module.cat(X, dim)
+                return self.quant(r)
+
+            def add_relu(self, x, y):
+                # type: (Tensor, Tensor) -> Tensor
+                x = self.dequant(x)
+                y = self.dequant(y)
+                r = self.module.add_relu(x, y)
+                return self.quant(r)
 
         for name, child in model.named_children():
             op_name = prefix + name
