@@ -149,6 +149,10 @@ class GraphConverter:
         :param bf16_ops: fall back to bf16 dtype op list
         :param data_loader: for calibration phase used dataloader
         """
+        # Logger initial
+        self.logger = logging.getLogger()
+        self.debug = True if self.logger.level == logging.DEBUG else False
+
         # For iLiT, the input_graph is not graph file path but Graph object.
         self._get_graph_def(input_graph)
         self.output_graph = output_graph
@@ -156,7 +160,6 @@ class GraphConverter:
         self.outputs = outputs
 
         # quantize specific config
-
         self.calib_iteration = qt_config['calib_iteration']
         self.op_wise_config = qt_config['op_wise_config']
         self.device = qt_config['device'] if 'device' in qt_config else 'cpu'
@@ -165,7 +168,6 @@ class GraphConverter:
 
         self._calibration_data = []
         self._fp32_print_data = []
-        # self.gen_calib_data_cmds = self._inference
         self.data_loader = data_loader
         self._check_tf_version()
         self._check_args()
@@ -176,8 +178,6 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
-        self.logger = logging.getLogger()
-        self.debug = True if self.logger.level == logging.DEBUG else False
 
     def _get_graph_def(self, model):
         """Get the input model graphdef
