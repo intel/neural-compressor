@@ -81,16 +81,23 @@ class BasicConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, activation=True, **kwargs):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, bias=False, **kwargs)
-        self.norm = nn.BatchNorm2d(out_channels) 
+        self.norm = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
         self.activation = activation
 
     def forward(self, x):
         x = self.conv(x)
         x = self.norm(x)
         if self.activation:
-            return F.relu(x, inplace=True)
+            return self.relu(x)
         else:
             return x
+
+    def fuse_model(self):
+        if self.activation:
+            torch.quantization.fuse_modules(self, ['conv', 'norm', 'relu'], inplace=True)
+        else:
+            torch.quantization.fuse_modules(self, ['conv', 'norm'], inplace=True)
 
 class PeleeNet(nn.Module):
     r"""PeleeNet model class, based on
@@ -165,11 +172,10 @@ class PeleeNet(nn.Module):
         out = self.dequant(out)
         return out
 
-    def fuse(self):
+    def fuse_model(self):
         for m in self.modules():
             if type(m) == BasicConv2d:
-                torch.quantization.fuse_modules(m, ['conv', 'norm'], inplace=True)
-
+                m.fuse_model()
 
     def _initialize_weights(self):
         for m in self.modules():

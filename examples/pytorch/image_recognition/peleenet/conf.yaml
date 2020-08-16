@@ -8,13 +8,81 @@ tuning:
     - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
   timeout: 0                                   # tuning timeout (seconds)
   random_seed: 9527                            # random seed
+  ops: {
+           'module.features.stemblock.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock1.denselayer1.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock1.denselayer2.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock1.denselayer3.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock2.denselayer1.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock2.denselayer2.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock2.denselayer3.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock2.denselayer4.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer1.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer2.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer3.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer4.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer5.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer6.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer7.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock3.denselayer8.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock4.denselayer1.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock4.denselayer2.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock4.denselayer3.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock4.denselayer4.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock4.denselayer5.f_cat': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'module.features.denseblock4.denselayer6.f_cat': {
+             'activation':  {'dtype': ['fp32']}
+           }
+         }
 
 calibration:
     dataloader:
       batch_size: 256
       dataset:
         - type: "ImageFolder"
-        - root: "/path/to/imagenet/img/train" # NOTICE: config to your imagenet data path
+        - root: /Path/to/imagenet/img/val
       transform:
         RandomResizedCrop:
           - size: 224
@@ -29,7 +97,7 @@ evaluation:
     batch_size: 256
     dataset:
       - type: "ImageFolder"
-      - root: "/path/to/imagenet/img/val" # NOTICE: config to your imagenet data path
+      - root: /Path/to/imagenet/img/val
     transform:
       Resize:
         - size: 256

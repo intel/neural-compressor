@@ -151,7 +151,7 @@ def main():
 
     if args.tune:
         model.eval()
-        model.module.fuse()
+        model.module.fuse_model()
         import ilit
         tuner = ilit.Tuner("./conf.yaml")
         q_model = tuner.tune(model)
