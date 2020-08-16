@@ -26,6 +26,7 @@ from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from .transform_graph.strip_unused import StripUnusedNodes
 from .transform_graph.fold_batch_norm import FoldBatchNormNodes
+from .transform_graph.fold_constant import FoldConstant
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.freeze_max_min import freeze_max
 from .transform_graph.freeze_max_min import freeze_min
@@ -272,7 +273,7 @@ class GraphConverter:
                                                  {input_tensor: np_images})
                 else:
                     predictions = sess_graph.run(output_tensor,
-                                                 dict(zip(input_tensor, np_images[0:len(input_tensor)+1])))
+                                                 dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
                 # print("Processed %d batches."% (quantize_batch + 1))
                 quantize_batch += 1
                 if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
@@ -297,9 +298,9 @@ class GraphConverter:
         finally:
             if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
                 self.logger.warn(str('Please note the {} version of Intel® Optimizations for'
-                    ' TensorFlow is not fully verified\nSuggest to use the versions'
-                    ' between {} and {} if meet problem').format(tf.version.VERSION,
-                    TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
+                                     ' TensorFlow is not fully verified\nSuggest to use the versions'
+                                     ' between {} and {} if meet problem').format(tf.version.VERSION,
+                                                                                  TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
             if not is_supported_version:
                 raise ValueError(
                     str('Please install Intel® Optimizations for TensorFlow'
@@ -590,10 +591,11 @@ class GraphConverter:
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
-
+        self._tmp_graph_def = FoldConstant(
+            self.input_graph).do_transformation(
+            self.inputs, self.outputs)
         self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
             self.input_graph, protected_nodes=self.outputs)
-
         self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
             self._tmp_graph_def)
 
@@ -601,7 +603,7 @@ class GraphConverter:
             self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs
-                                              ).do_transform()
+                                               ).do_transform()
 
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
@@ -700,7 +702,6 @@ class GraphConverter:
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs
                                               ).do_transform()
-
         self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
             self._tmp_graph_def, protected_nodes=self.output_graph)
 
@@ -711,7 +712,7 @@ class GraphConverter:
         if self.debug:
             write_graph(self._tmp_graph_def, self.output_graph)
             self.logger.info('Converted graph file is saved to: %s',
-                         self.output_graph)
+                             self.output_graph)
 
     def _get_dtypes(self, in_graph_def):
         # TODO: keep dtypes list order as input list?
