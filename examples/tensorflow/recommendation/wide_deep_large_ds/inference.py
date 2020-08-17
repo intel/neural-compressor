@@ -135,18 +135,13 @@ class eval_classifier_optimized_graph:
         arg_parser.add_argument('--num_intra_threads', type=int,
                                 help='number of threads for an operator',
                                 required=False,
-                                default=28,
+                                default=0,
                                 dest='num_intra_threads')
         arg_parser.add_argument('--num_inter_threads', type=int,
                                 help='number of threads across operators',
                                 required=False,
-                                default=2,
+                                default=0,
                                 dest='num_inter_threads')
-        arg_parser.add_argument('--num_omp_threads', type=int,
-                                help='number of threads to use',
-                                required=False,
-                                default=20,
-                                dest='num_omp_threads')
         arg_parser.add_argument('--kmp_blocktime', type=str,
                                 help='KMP_BLOCKTIME value',
                                 required=False,
@@ -166,7 +161,7 @@ class eval_classifier_optimized_graph:
                                 action='store_true',
                                 help='use ilit to tune.')
         arg_parser.add_argument("--warmup-steps",
-                                type=int, default=100,
+                                type=int, default=50,
                                 help="number of warmup steps")
         arg_parser.add_argument("--steps",
                                 type=int, default=2000,
@@ -179,8 +174,6 @@ class eval_classifier_optimized_graph:
 
 
         self.args = arg_parser.parse_args()
-        os.environ["OMP_NUM_THREADS"] = str(self.args.num_omp_threads)
-        print("set OMP_NUM_THREADS=%d" % self.args.num_omp_threads)
 
     def auto_tune(self):
         """This is iLiT tuning part to generate a quantized pb
