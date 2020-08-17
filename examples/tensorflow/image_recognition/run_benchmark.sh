@@ -105,6 +105,14 @@ function run_benchmark {
         extra_cmd=' --resize_method bilinear'
         output="MobilenetV3/Predictions/Softmax"
         yaml=mobilenet_v3.yaml
+    elif [ "${topology}" = "vgg16" ]; then
+        extra_cmd=' --resize_method vgg --label_adjust'
+        output="vgg_16/fc8/squeezed"
+        yaml=vgg16.yaml
+    elif [ "${topology}" = "vgg19" ]; then
+        extra_cmd=' --resize_method vgg --label_adjust'
+        output="vgg_19/fc8/squeezed"
+        yaml=vgg19.yaml
     fi
 
     python main.py \
