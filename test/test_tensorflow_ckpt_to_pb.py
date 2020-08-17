@@ -4,7 +4,7 @@
 import unittest
 import os
 import tensorflow as tf
-from ilit.adaptor.tf_utils.util import parse_ckpt_model, is_ckpt_format
+from ilit.adaptor.tf_utils.util import parse_ckpt_model, is_ckpt_format, get_graph_def
 
 
 class TestCkptConvert(unittest.TestCase):
@@ -34,6 +34,11 @@ class TestCkptConvert(unittest.TestCase):
                                                output_names)
         self.assertNotEqual(converted_graph_def, None)
 
+        alternative_graph_def = get_graph_def('ckpt', output_names)
+        self.assertNotEqual(alternative_graph_def, None)
+
+        self.assertEqual(len(alternative_graph_def.node),
+                         len(converted_graph_def.node))
 
 if __name__ == "__main__":
     unittest.main()

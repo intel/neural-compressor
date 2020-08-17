@@ -48,7 +48,8 @@ class Tuner(object):
               calibration and tuning flow.
 
         Args:
-            model (object):                        For Tensorflow model, it's a path to frozen pb or loaded graph_def object.
+            model (object):                        For Tensorflow model, it could be a path to frozen pb,loaded graph_def
+                                                   object or a path to ckpt/savedmodel folder.
                                                    For PyTorch model, it's torch.nn.model instance.
                                                    For MXNet model, it's mxnet.symbol.Symbol or gluon.HybirdBlock instance.
             q_dataloader (generator):              Data loader for calibration, mandatory for post-training quantization.

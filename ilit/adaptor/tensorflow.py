@@ -6,7 +6,6 @@ from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport
 from ..utils import logger
-
 tensorflow = LazyImport('tensorflow')
 
 @adaptor_registry
@@ -143,7 +142,10 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             OrderDict: op-wise configuration.
         """
-        graph_def = graph.as_graph_def()
+        from .tf_utils.util import get_graph_def
+
+        graph_def = get_graph_def(graph)
+        assert graph_def
         tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool",
                                   "AvgPool", "ConcatV2", "MatMul", "Pad")
         conv_config = {
@@ -244,7 +246,7 @@ class TensorFlowAdaptor(Adaptor):
                     'dtype': activation_dtype,
                     'scheme': ['asym', 'sym'],
                     'granularity': ['per_tensor'],
-                    'algorithm': ['minmax', 'kl']
+                    'algorithm': ['minmax']
                 },
                 'weight': {
                     'dtype': weight_dtype,

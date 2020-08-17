@@ -4,7 +4,7 @@
 import unittest
 import os
 import tensorflow as tf
-from ilit.adaptor.tf_utils.util import parse_savedmodel_model, is_saved_model_format
+from ilit.adaptor.tf_utils.util import parse_savedmodel_model, is_saved_model_format, get_graph_def
 
 
 class TestSavedModelToPbConvert(unittest.TestCase):
@@ -29,9 +29,14 @@ class TestSavedModelToPbConvert(unittest.TestCase):
 
     def test_convert_savedmodel(self):
         tf.compat.v1.disable_eager_execution()
-        converted_graph_def = parse_savedmodel_model(
+        converted_graph_def, _, _ = parse_savedmodel_model(
             'ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
         self.assertNotEqual(converted_graph_def, None)
+        alternative_graph_def = get_graph_def(
+            'ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
+        self.assertNotEqual(alternative_graph_def, None)
+
+        self.assertEqual(len(alternative_graph_def.node), len(converted_graph_def.node))
 
 
 if __name__ == "__main__":

@@ -36,8 +36,7 @@ from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_c
 from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .transform_graph.bf16_convert import BF16Convert
-from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model
+from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model, get_graph_def
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -155,7 +154,7 @@ class GraphConverter:
         self.debug = True if self.logger.level == logging.DEBUG else False
 
         # For iLiT, the input_graph is not graph file path but Graph object.
-        self._get_graph_def(input_graph)
+        self.input_graph = get_graph_def(input_graph, outputs)
         self.output_graph = output_graph
         self.inputs = inputs
         self.outputs = outputs
@@ -212,35 +211,20 @@ class GraphConverter:
             raise ValueError(
                 'The input parameter is neither Graph nor path to the model.')
 
-    def load_graph(self, model_file):
-
-        graph = tf.Graph()
-        graph_def = tf.compat.v1.GraphDef()
-
-        if not isinstance(model_file, graph_pb2.GraphDef):
-            file_ext = os.path.splitext(model_file)[1]
-
-            with open(model_file, "rb") as f:
-                if file_ext == '.pbtxt':
-                    text_format.Merge(f.read(), graph_def)
-                else:
-                    graph_def.ParseFromString(f.read())
-
-            with graph.as_default():
-                tf.import_graph_def(graph_def, name='')
-        else:
-            with graph.as_default():
-                tf.import_graph_def(model_file, name='')
-
-        return graph
-
     def _inference(self, input_graph):
         """Run the calibration on the input graph
 
         Args:
             input_graph (tf.compat.v1.GraphDef): input graph
         """
-        graph = self.load_graph(input_graph)
+        import tensorflow as tf
+
+        graph = tf.Graph()
+        graph_def = get_graph_def(input_graph)
+        assert graph_def
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name='')
+
         if len(self.inputs) > 1:
             input_tensor = [
                 graph.get_tensor_by_name(x + ":0") for x in self.inputs]
@@ -250,7 +234,6 @@ class GraphConverter:
         output_tensor = [
             graph.get_tensor_by_name(x + ":0") for x in self.outputs
         ]
-        import tensorflow as tf
 
         config = tf.compat.v1.ConfigProto()
         config.inter_op_parallelism_threads = 2
@@ -269,10 +252,10 @@ class GraphConverter:
             try:
                 np_images = content[0]
                 if not isinstance(input_tensor, list):
-                    predictions = sess_graph.run(output_tensor,
+                    _ = sess_graph.run(output_tensor,
                                                  {input_tensor: np_images})
                 else:
-                    predictions = sess_graph.run(output_tensor,
+                    _ = sess_graph.run(output_tensor,
                                                  dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
                 # print("Processed %d batches."% (quantize_batch + 1))
                 quantize_batch += 1
@@ -485,9 +468,10 @@ class GraphConverter:
                     _, matched_nodes = FuseNodeStartWithConv2d(
                         sorted_graph,
                         self.outputs,
-                        # self.op_wise_config[node.name][0],
                         False,
-                        op_name).get_longest_fuse()
+                        op_name,
+                        self.device).get_longest_fuse()
+
                     if matched_nodes:
                         fp32_node_name_mapping[matched_nodes[-1]] = op_name
                 else:
@@ -709,7 +693,7 @@ class GraphConverter:
                                                self.inputs, self.outputs
                                               ).do_transform()
         self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
-            self._tmp_graph_def, protected_nodes=self.output_graph)
+            self._tmp_graph_def, protected_nodes=self.outputs)
 
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()

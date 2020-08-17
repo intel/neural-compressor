@@ -27,6 +27,7 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
 from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
+from tensorflow.python.framework.ops import Graph
 
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
@@ -231,3 +232,41 @@ def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names,
                                             signature_def_map=sigs)
 
     builder.save()
+
+def get_graph_def(model, outputs=[]):
+    """Get the input model graphdef
+
+    Args:
+        model ([Graph or Path String]): The model could be the graph object, the path to a
+                                        frozen pb or ckpt/savedmodel folder path.
+        outputs ([String]): output node names list.
+
+    Returns:
+        graph_def (graphdef): parsed graphdef object.
+    """
+    graph_def = None
+    if isinstance(model, Graph):
+        graph_def = model.as_graph_def()
+    elif isinstance(model, str):
+        graph_def = tf.compat.v1.GraphDef()
+        if model.endswith(".pb") and os.path.isfile(model):
+            with open(model, "rb") as f:
+                graph_def.ParseFromString(f.read())
+        elif os.path.isdir(model):
+            ckpt_prefix = is_ckpt_format(model)
+            if ckpt_prefix:
+                graph_def = parse_ckpt_model(
+                    os.path.join(model, ckpt_prefix), outputs)
+            elif is_saved_model_format(model):
+                graph_def, _, _ = parse_savedmodel_model(model)
+            else:
+                raise ValueError('Failed to parse ckpt model.')
+        else:
+            raise ValueError(
+                'The input model format is neither pb nor ckpt format.')
+
+    else:
+        raise ValueError(
+            'The input parameter is neither Graph nor path to the model.')
+
+    return graph_def

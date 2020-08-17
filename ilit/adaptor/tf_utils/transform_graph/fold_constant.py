@@ -56,7 +56,7 @@ class FoldConstant(GraphTransformBase):
         Raises:
           ValueError: If the graph contains tensors which can't be broadcast.
         """
-        end_node = self.input_node_map[end_node_name]
+        end_node = self.input_node_map[self._get_node_name_from_input(end_node_name)]
 
         def can_broadcast(s1, s2):
             s1a = np.asarray(s1)
@@ -74,7 +74,7 @@ class FoldConstant(GraphTransformBase):
                     else:
                         raise ValueError(
                             "input {} of node {} can't be broadcast".format(
-                                input.name, node.name))
+                                input.name, end_node.name))
                 return fold_value
             elif end_node.op == "Add" or end_node.op == "AddV2":
                 fold_value = np.array([0.])
@@ -110,6 +110,9 @@ class FoldConstant(GraphTransformBase):
         else:
             return self.values_from_const(end_node)
 
+    def _get_node_name_from_input(self, name):
+        return name.split(':')[0]
+
     def _recursive_get_fold_end(self, node):
         """helper function of get all end nodes
         """
@@ -119,9 +122,9 @@ class FoldConstant(GraphTransformBase):
         sub_end_nodes = []
         input_nodes = list(node.input)
         for input_node_name in node.input:
-            input_node = self.input_node_map[input_node_name]
+            input_node = self.input_node_map[self._get_node_name_from_input(input_node_name)]
             if input_node.op == "Identity" :
-                constant_sub_node_flag = (len(input_node.input) == 1 and self.input_node_map[input_node.input[0]].op == "Const")
+                constant_sub_node_flag = (len(input_node.input) == 1 and self.input_node_map[self._get_node_name_from_input(input_node.input[0])].op == "Const")
             elif input_node.op == "Const":
                 constant_sub_node_flag = True
             elif input_node.op in self.unfolded_ops:
@@ -156,7 +159,7 @@ class FoldConstant(GraphTransformBase):
 
         """
         self.contant_node_map = {}
-        output_node = self.input_node_map[output_node_name]
+        output_node = self.input_node_map[self._get_node_name_from_input(output_node_name)]
         self._recursive_get_fold_end(output_node)
 
     def do_transformation(self, input_nodes_name, output_nodes_name):
@@ -176,7 +179,7 @@ class FoldConstant(GraphTransformBase):
             self._get_fold_end(output_node_name)
         for end_node_name in self.end_nodes:
             
-            end_node = self.input_node_map[end_node_name]
+            end_node = self.input_node_map[self._get_node_name_from_input(end_node_name)]
             new_end_node = node_def_pb2.NodeDef()
             new_end_node.op = "Const"
             new_end_node.name = end_node.name

@@ -11,7 +11,7 @@ from ilit.adaptor.tf_utils.graph_converter import GraphConverter
 
 class TestGraphLibraryDetection(unittest.TestCase):
     efficientnet_b0_model_url = 'https://raw.githubusercontent.com/SkyAI/inference_benchmark/435c7ca2577830025ca5f6cbce8480db16f76a61/efficientnet-b0.pb'
-    pb_path = 'efficientnet-b0..pb'
+    pb_path = 'efficientnet-b0.pb'
 
     @classmethod
     def setUpClass(self):
