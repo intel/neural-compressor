@@ -36,6 +36,7 @@ from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_c
 from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
+from .transform_graph.bf16_convert import BF16Convert
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model, get_graph_def
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
@@ -346,13 +347,9 @@ class GraphConverter:
             raise ValueError(e) from e
         else:
             if len(self.op_wise_config) > 0:
-                self.quantize()
+                graph = self.quantize()
             if len(self.bf16_ops) > 0:
-                self.bf16_convert()
-
-            graph = tf.Graph()
-            with graph.as_default():
-                tf.import_graph_def(self._tmp_graph_def, name='')
+                graph = self.bf16_convert()
             return graph
 
     def _get_fp32_print_node_names(self, specified_op_list):
@@ -566,13 +563,22 @@ class GraphConverter:
         """Convert fp32 nodes in bf16_node to bf16 dtype based on 
            FP32 + INT8 mixed precision graph.
         """
-        BF16Convert(self._tmp_graph_def, 
-                    self.device, 
-                    self.outputs, 
-                    self.fp32_ops, 
-                    self.bf16_ops).do_transformation()
-        if self.debug:
-            write_graph(self._tmp_graph_def, self._bf16_mixed_precision_graph)
+        try:
+            BF16Convert(self._tmp_graph_def, 
+                        self.device, 
+                        self.outputs, 
+                        self.fp32_ops, 
+                        self.bf16_ops).do_transformation()
+            graph = tf.Graph()
+            with graph.as_default():
+                tf.import_graph_def(self._tmp_graph_def, name='')
+        except Exception as e:
+            graph = None
+            self.logger.error('Failed to convert graph due to: %s', str(e))
+        finally:
+            if self.debug:
+                write_graph(self._tmp_graph_def, self._bf16_mixed_precision_graph)
+            return graph
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
