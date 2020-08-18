@@ -47,24 +47,47 @@ class PyTorchAdaptor(Adaptor):
             - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
         self.approach = framework_specific_info['approach']
+        self.device = framework_specific_info['device']
+        self.is_baseline = True
 
-        self.capability = \
-            {
-                'activation':
+        if self.device == "cpu":
+            self.capability = \
                 {
-                    'granularity': ['per_tensor'],
-                    'scheme': ['asym', 'sym'],
-                    'dtype': ['uint8', 'fp32'],
-                    'algorithm': ['kl', 'minmax'],
-                },
-                'weight':
-                {
-                    'granularity': ['per_channel'],
-                    'scheme': ['asym', 'sym'],
-                    'dtype': ['int8', 'fp32'],
-                    'algorithm': ['minmax'],
+                    'activation':
+                    {
+                        'granularity': ['per_tensor'],
+                        'scheme': ['asym', 'sym'],
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['kl', 'minmax'],
+                    },
+                    'weight':
+                    {
+                        'granularity': ['per_channel'],
+                        'scheme': ['asym', 'sym'],
+                        'dtype': ['int8', 'fp32'],
+                        'algorithm': ['minmax'],
+                    }
                 }
-            }
+        elif self.device == "gpu":
+            self.capability = \
+                {
+                    'activation':
+                    {
+                        'granularity': ['per_tensor'],
+                        'scheme': ['sym'],
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                    },
+                    'weight':
+                    {
+                        'granularity': ['per_channel'],
+                        'scheme': ['sym'],
+                        'dtype': ['int8', 'fp32'],
+                        'algorithm': ['minmax'],
+                    }
+                }
+        else:
+            assert False, "Unsupport this device {}".format(self.device)
 
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -102,10 +125,17 @@ class PyTorchAdaptor(Adaptor):
             with torch.no_grad():
                 for _, (input, label) in enumerate(dataloader):
                     if isinstance(input, dict):
+                        if self.device == "gpu":
+                            for inp in input.keys():
+                                input[inp] = input[inp].to("dpcpp")
                         output = q_model(**input)
                     elif isinstance(input, list) or isinstance(input, tuple):
+                        if self.device == "gpu":
+                            input = [inp.to("dpcpp") for inp in input]
                         output = q_model(*input)
                     else:
+                        if self.device == "gpu":
+                            input = input.to("dpcpp")
                         output = q_model(input)
 
                     iterations -= 1
@@ -126,16 +156,30 @@ class PyTorchAdaptor(Adaptor):
     def evaluate(self, model, dataloader, postprocess=None, metric=None):
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
-        model.to('cpu')
         model.eval()
+        if self.device == "cpu":
+            model.to("cpu")
+        elif self.device == "gpu":
+            if self.is_baseline:
+                model.to("dpcpp")
+                self.is_baseline = False
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):
                 if isinstance(input, dict):
+                    if self.device == "gpu":
+                        for inp in input.keys():
+                            input[inp] = input[inp].to("dpcpp")
                     output = model(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
+                    if self.device == "gpu":
+                        input = [inp.to("dpcpp") for inp in input]
                     output = model(*input)
                 else:
+                    if self.device == "gpu":
+                        input = input.to("dpcpp")
                     output = model(input)
+                if self.device == "gpu":
+                    output = output.to("cpu")
                 if postprocess is not None:
                     output = postprocess(output)
                 if metric is not None:
