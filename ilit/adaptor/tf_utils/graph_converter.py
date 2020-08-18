@@ -342,6 +342,9 @@ class GraphConverter:
         """
         try:
             self._optimize_frozen_fp32_graph()
+            graph = tf.Graph()
+            with graph.as_default():
+                tf.import_graph_def(self._tmp_graph_def, name='')
         except Exception as e:
             self.logger.error('Failed to optimize fp32 graph due to: %s', str(e))
             raise ValueError(e) from e
