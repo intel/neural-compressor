@@ -61,7 +61,7 @@ class TensorFlowAdaptor(Adaptor):
         config.intra_op_parallelism_threads = num_intra_threads
 
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        logger.info("Start to evaluate model via tensroflow...")
+        logger.info("Start to evaluate model via tensorflow...")
         for images, labels in dataloader:
             predictions = sess_graph.run(output_tensor, {input_tensor: images})
             if metric is not None:
