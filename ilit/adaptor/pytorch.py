@@ -53,14 +53,14 @@ class PyTorchAdaptor(Adaptor):
                 'activation':
                 {
                     'granularity': ['per_tensor'],
-                    'scheme': ['sym', 'asym'],
+                    'scheme': ['asym', 'sym'],
                     'dtype': ['uint8', 'fp32'],
-                    'algorithm': ['minmax', 'kl'],
+                    'algorithm': ['kl', 'minmax'],
                 },
                 'weight':
                 {
                     'granularity': ['per_channel'],
-                    'scheme': ['sym', 'asym'],
+                    'scheme': ['asym', 'sym'],
                     'dtype': ['int8', 'fp32'],
                     'algorithm': ['minmax'],
                 }
