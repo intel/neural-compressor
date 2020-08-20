@@ -60,7 +60,7 @@ function define_mode {
 
 # run_benchmark
 function run_benchmark {
-    extra_cmd=''
+    extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     dataset=${dataset_location}
     ctx='cpu'
 
@@ -70,10 +70,10 @@ function run_benchmark {
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     elif [ "${topology}" = "squeezenet1.0" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "mobileNet1.0" ]; then
+    elif [ "${topology}" = "mobilenet1.0" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
 
-    elif [ "${topology}" = "mobileNetv2_1.0" ]; then
+    elif [ "${topology}" = "mobilenetv2_1.0" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
 
     elif [ "${topology}" = "inceptionv3" ]; then
