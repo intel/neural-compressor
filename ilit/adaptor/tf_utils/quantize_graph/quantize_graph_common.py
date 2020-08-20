@@ -140,7 +140,7 @@ class QuantizeGraphHelper(object):
             if node.name in names_to_splice and node.name not in protected_nodes:
                 continue
 
-            if node.name in protected_nodes:
+            if node.name in protected_nodes and node.name in types_to_splice:
                 nodes_after_splicing.append(node)
                 continue
 
