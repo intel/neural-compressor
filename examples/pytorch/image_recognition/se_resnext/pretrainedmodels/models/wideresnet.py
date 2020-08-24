@@ -77,7 +77,9 @@ def wideresnet50(pooling):
             print(k, v.shape)
             params[k] = Variable(torch.from_numpy(v), requires_grad=True)
     else:
-        os.system('mkdir -p ' + dir_models)
+        from pathlib import Path
+        path = Path(dir_models)
+        path.mkdir(exist_ok=True, parents=True)
         os.system('wget {} -O {}'.format(model_urls['wideresnet50'], path_hkl))
     f = define_model(params)
     model = WideResNet(pooling)

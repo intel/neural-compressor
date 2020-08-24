@@ -109,7 +109,9 @@ if __name__ == '__main__':
     img_name = item[1] # string
     target = item[2] #  torch.Tensor of size=20 (=nb_classes), contains 3 values: -1 (absence of class), 1 (presence of class), 0 (hard example)
 
-    os.system('mkdir -p ' + dir_outputs) # create a directory
+    from pathlib import Path
+    path = Path(dir_outputs)
+    path.mkdir(exist_ok=True, parents=True) # create a directory
     path_img = os.path.join(dir_outputs, img_name+'.png')
     img_data.save(path_img) # save image using PIL
 
@@ -160,8 +162,9 @@ if __name__ == '__main__':
     print('Save normalized input as RGB image')
 
     dir_activations = os.path.join(dir_outputs,'activations')
-    os.system('mkdir -p ' + dir_activations)
-
+    from pathlib import Path
+    path = Path(dir_activations)
+    path.mkdir(exist_ok=True, parents=True)
     path_img_input = os.path.join(dir_activations, 'input.png')
     print('save input activation to ' + path_img_input)
     transforms.ToPILImage()(input_data[0]).save(path_img_input) # save image using PIL
@@ -199,7 +202,9 @@ if __name__ == '__main__':
     #############################################################################
 
     dir_parameters = os.path.join(dir_outputs, 'parameters')
-    os.system('mkdir -p ' + dir_parameters)
+    from pathlib import Path
+    path = Path(dir_parameters)
+    path.mkdir(exist_ok=True, parents=True)
     state_dict = model.state_dict()
 
     print('Save first layer parameters as RGB images')
