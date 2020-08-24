@@ -31,8 +31,8 @@ def convert_from_gluon(model_name, image_shape, model_path, classes=1000):
              data_shapes=[('data', (1,) +
                           tuple([int(i) for i in image_shape.split(',')]))])
     mod.set_params(arg_params=args, aux_params=auxs)
-    dst_dir = os.path.join(dir_path, 'model')
-    prefix = os.path.join(dir_path, 'model', model_name)
+    dst_dir = os.path.join(dir_path, model_path)
+    prefix = os.path.join(dir_path, model_path, model_name)
     if not os.path.isdir(dst_dir):
         os.mkdir(dst_dir)
     mod.save_checkpoint(prefix, 0)
