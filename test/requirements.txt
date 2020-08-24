@@ -1,8 +1,8 @@
-tensorflow
-torch==1.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+intel-tensorflow==2.1.0
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.5.0+cpu
+torchvision==0.6.0+cpu
 pytorch-ignite
-torchvision
-importlib
-mxnet-mkl
+mxnet-mkl==1.6.0
 numpy
 ilit
