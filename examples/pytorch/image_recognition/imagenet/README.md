@@ -28,30 +28,38 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 1. ResNet50
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet
+  cd examples/pytorch/image_recognition/imagenet
   python main.py -t -a resnet50 --pretrained /path/to/imagenet
   ```
 
 ### 2. ResNet18
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet
+  cd examples/pytorch/image_recognition/imagenet
   python main.py -t -a resnet18 --pretrained /path/to/imagenet
   ```
 
 ### 3. ResNext101_32x8d
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet
+  cd examples/pytorch/image_recognition/imagenet
   python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
   ```
 
 ### 4. InceptionV3
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet
+  cd examples/pytorch/image_recognition/imagenet
   python main.py -t -a inception_v3 --pretrained /path/to/imagenet
   ```
+
+### 5. Mobilenet_v2
+
+  ```Shell
+  cd examples/pytorch/image_recognition/imagenet
+  python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
+  ```
+
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
 =======================================================
@@ -86,8 +94,9 @@ tuning:
   random_seed: 9527                            # random seed
 
 calibration:
+    iterations: 10
     dataloader:
-      batch_size: 256
+      batch_size: 30
       dataset:
         - type: "ImageFolder"
         - root: "../imagenet/img/train" # NOTICE: config to your imagenet data path
@@ -102,7 +111,7 @@ calibration:
 
 evaluation:
   dataloader:
-    batch_size: 256
+    batch_size: 30
     dataset:
       - type: "ImageFolder"
       - root: "../imagenet/img/val" # NOTICE: config to your imagenet data path

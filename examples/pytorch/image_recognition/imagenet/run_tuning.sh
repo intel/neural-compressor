@@ -37,14 +37,19 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    sed -i "/root:/s|root:.*|root: $dataset_location/val|g" conf.yaml
+    sed -i "/Path to imagenet train data/s|root:.*|root: $dataset_location/train|g" conf.yaml
+    sed -i "/Path to imagenet val data/s|root:.*|root: $dataset_location/val|g" conf.yaml
+    if [ "mobilenet_v2" = "$topology" ];then
+        sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf.yaml
+    fi
+
     extra_cmd="${dataset_location}"
 
     python main.py \
             --pretrained \
             -t \
             -a $topology \
-            -b 128 \
+            -b 30 \
             ${extra_cmd}
 
 }

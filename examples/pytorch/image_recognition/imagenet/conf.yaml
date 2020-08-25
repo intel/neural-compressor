@@ -10,11 +10,12 @@ tuning:
   random_seed: 9527                            # random seed
 
 calibration:
+    iterations: 10
     dataloader:
-      batch_size: 256
+      batch_size: 30
       dataset:
         - type: "ImageFolder"
-        - root: "../imagenet/img/train" # NOTICE: config to your imagenet data path
+        - root: "Path to imagenet train data" # NOTICE: config to your imagenet data path
       transform:
         RandomResizedCrop:
           - size: 224
@@ -26,10 +27,10 @@ calibration:
 
 evaluation:
   dataloader:
-    batch_size: 256
+    batch_size: 30
     dataset:
       - type: "ImageFolder"
-      - root: "../imagenet/img/val" # NOTICE: config to your imagenet data path
+      - root: "Path to imagenet val data" # NOTICE: config to your imagenet data path
     transform:
       Resize:
         - size: 256
