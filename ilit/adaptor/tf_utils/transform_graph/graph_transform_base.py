@@ -26,7 +26,6 @@ from tensorflow.python.framework import tensor_util
 import logging
 import re
 
-
 class GraphTransformBase(object):
     def __init__(self, input_pb):
         """
@@ -79,8 +78,9 @@ class GraphTransformBase(object):
     def generate_input_map(self):
         self.input_node_map = {}
         for node in self.input_graph.node:
-            if node.name not in self.input_node_map:
-                self.input_node_map[node.name] = node
+            node_name = self.node_name_from_input(node.name)
+            if node_name not in self.input_node_map:
+                self.input_node_map[node_name] = node
             else:
                 raise ValueError("Duplicate node names detected for ",
                                  node.name)

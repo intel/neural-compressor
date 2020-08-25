@@ -39,7 +39,6 @@ class FoldConstant(GraphTransformBase):
         self.supported_node = {}
         self.end_nodes = set()
         self.unused_nodes = []
-        self.generate_input_map()
 
     def _fold_value(self, end_node_name):
         """calculate values of end node of constant node sequence
@@ -60,9 +59,12 @@ class FoldConstant(GraphTransformBase):
         end_node = self.input_node_map[self.node_name_from_input(end_node_name)]
 
         def can_broadcast(s1, s2):
-            s1a = np.asarray(s1)
-            s2a = np.asarray(s2)
-            return ((s1a == 1) | (s2a == 1) | (s2a == s1a)).all()
+            if s1.shape and s2.shape:
+                s1a = np.asarray(s1.shape)
+                s2a = np.asarray(s2.shape)
+                return ((s1a == 1) | (s2a == 1) | (s2a == s1a)).all()
+            else:
+                return True
 
         if end_node.input:
             if end_node.op == "Mul":
@@ -70,7 +72,7 @@ class FoldConstant(GraphTransformBase):
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
-                    if can_broadcast(fold_value.shape, input_value.shape):
+                    if can_broadcast(fold_value, input_value):
                         fold_value = fold_value * input_value
                     else:
                         raise ValueError(
@@ -82,7 +84,7 @@ class FoldConstant(GraphTransformBase):
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
-                    if can_broadcast(fold_value.shape, input_value.shape):
+                    if can_broadcast(fold_value, input_value):
                         fold_value = fold_value + input_value
                     else:
                         raise ValueError(
@@ -98,7 +100,7 @@ class FoldConstant(GraphTransformBase):
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
-                    if can_broadcast(fold_value.shape, input_value.shape):
+                    if can_broadcast(fold_value, input_value):
                         fold_value = fold_value + (-1) ** index * input_value
                     else:
                         raise ValueError(
@@ -130,21 +132,20 @@ class FoldConstant(GraphTransformBase):
             self.supported_node[node_name] = node.op == "Const"
             return node.op == "Const"
 
-    def generate_output_map(self, output_node_name):
+    def generate_output_map(self):
         """generate maps of node_name->output_node_name
         """
-        output_node_name = self.node_name_from_input(output_node_name)
-        if self.input_node_map[output_node_name].input:
-            for node in self.input_node_map[output_node_name].input:
-                node = self.node_name_from_input(node)
-                if node in self.output_node_map:
-                    self.output_node_map[node].add(output_node_name)
-                    continue
-                else:
-                    self.output_node_map[node] = {output_node_name}
-                self.generate_output_map(node)
-        else:
-            return
+        for node in self.input_graph.node:
+            node_name = self.node_name_from_input(node.name)
+            if node_name not in self.output_node_map:
+                self.output_node_map[node_name] = set()
+
+        for node_name in self.output_node_map:
+            # update the upper node's output infomation.
+            node = self.input_node_map[node_name]
+            for input_node_name in node.input:
+                input_node_name = self.node_name_from_input(input_node_name)
+                self.output_node_map[input_node_name].add(node_name)
 
     def generate_input_map(self):
         """generate maps of node_name->node
@@ -169,8 +170,8 @@ class FoldConstant(GraphTransformBase):
         Returns:
           None
         """
-        for output_node_name in output_nodes_name:
-            self.generate_output_map(output_node_name)
+
+        self.generate_output_map()
         input_nodes_name = set(input_nodes_name)
         non_constant_nodes = output_nodes_name = set(output_nodes_name)
         current_nodes = input_nodes_name
@@ -221,6 +222,10 @@ class FoldConstant(GraphTransformBase):
         for node_name in self.supported_node:
             if self.supported_node[node_name]:
                 node = self.input_node_map[node_name]
+                if node.op == "Identity":
+                    continue
+                elif node.op == "Const":
+                    continue
                 support_flag = True
                 for output_node_name in self.output_node_map[node_name]:
                     if output_node_name in self.supported_node:
@@ -229,20 +234,26 @@ class FoldConstant(GraphTransformBase):
                         support_flag = False
                 if not support_flag:
                     self.end_nodes.add(node_name)
-                if node.op == "Identity":
-                    output_node_name = list(self.output_node_map[node_name])[0]
-                    if output_node_name in self.constant_nodes:
-                        self.unused_nodes.append(node)
-                elif node.op == "Const":
-                    continue
+                    self.unused_nodes.append(node)
                 else:
                     self.unused_nodes.append(node)
         for node_name in self.supported_node:
             node = self.input_node_map[node_name]
+            if node.op == "Identity":
+                unused_flag = True
+                for output_node_name in self.output_node_map[node_name]:
+                    output_node = self.input_node_map[output_node_name]
+                    unused_flag &= output_node in self.unused_nodes
+                if unused_flag:
+                    self.unused_nodes.append(node)
+        for node_name in self.supported_node:
+            node = self.input_node_map[node_name]
             if node.op == "Const":
-                output_node_name = list(self.output_node_map[node_name])[0]
-                output_node = self.input_node_map[output_node_name]
-                if output_node in self.unused_nodes:
+                unused_flag = True
+                for output_node_name in self.output_node_map[node_name]:
+                    output_node = self.input_node_map[output_node_name]
+                    unused_flag &= output_node in self.unused_nodes
+                if unused_flag:
                     self.unused_nodes.append(node)
 
     def do_transformation(self, input_nodes_name, output_nodes_name):

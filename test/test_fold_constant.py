@@ -131,7 +131,9 @@ class TestFoldConst(unittest.TestCase):
                 "rsqrt",
                 "relu",
                 "res_add",
-                "end"]
+                "end",
+                "read2",
+                "input2"]
 
 
 if __name__ == "__main__":

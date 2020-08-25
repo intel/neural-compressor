@@ -594,14 +594,14 @@ class GraphConverter:
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
-        self._tmp_graph_def = FoldConstant(
-            self.input_graph).do_transformation(
-            self.inputs, self.outputs)
         self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
-            self._tmp_graph_def, protected_nodes=self.outputs)
+            self.input_graph, protected_nodes=self.outputs)
+
         self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
             self._tmp_graph_def)
-
+        self._tmp_graph_def = FoldConstant(
+            self._tmp_graph_def).do_transformation(
+            self.inputs, self.outputs)
         self._tmp_graph_def = FuseColumnWiseMul(
             self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
