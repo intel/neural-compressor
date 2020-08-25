@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Intel Optimized TensorFlow image recognition models iLiT tuning zoo result.
+This document is used to list steps of reproducing Intel Optimized TensorFlow image recognition models tuning zoo result.
 
 > **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. We use 1.15.2 as an example.
@@ -30,7 +30,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```
 
 ### 3. Prepare pre-trained model
-  In this version, iLiT just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
+  In this version, Intel® Low Precision Optimization Tool just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
 
   1. Download the checkpoint file from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models)
   ```shell
@@ -192,20 +192,20 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
           --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./ilit_vgg19
   ```
 
-Examples of enabling iLiT auto tuning on TensorFlow ResNet50 V1.5
+Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
 =======================================================
 
-This is a tutorial of how to enable a TensorFlow image recognition model with iLiT.
+This is a tutorial of how to enable a TensorFlow image recognition model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports two usages:
+Intel® Low Precision Optimization Tool supports two usages:
 
 1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which is built-in supported by iLiT. So here we integrate Tensorflow [ResNet50 V1.5](https://github.com/IntelAI/models/tree/v1.6.0/models/image_recognition/tensorflow/resnet50v1_5/inference) in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0) with iLiT by the first use case for simplicity. 
+As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate Tensorflow [ResNet50 V1.5](https://github.com/IntelAI/models/tree/v1.6.0/models/image_recognition/tensorflow/resnet50v1_5/inference) in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0) with Intel® Low Precision Optimization Tool by the first use case for simplicity. 
 
 ### Write Yaml config file
 
@@ -252,7 +252,7 @@ cd intelai_models/models/image_recognition/tensorflow/resnet50v1_5/inference
 ```shell
 wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
 ```
-4. Add load graph and dataloader part in `eval_image_classifier_inference.py`, which needed in iLiT
+4. Add load graph and dataloader part in `eval_image_classifier_inference.py`, which needed in Intel® Low Precision Optimization Tool
 ```python
 def load_graph(model_file):
   """This is a function to load TF graph from pb file
@@ -313,7 +313,7 @@ After completed preparation steps, we just need add a tuning part in `eval_class
 
 ```python
   def auto_tune(self):
-    """This is iLiT tuning part to generate a quantized pb
+    """This is Intel® Low Precision Optimization Tool tuning part to generate a quantized pb
 
     Returns:
         graph: it will return a quantized pb
@@ -333,7 +333,7 @@ After completed preparation steps, we just need add a tuning part in `eval_class
     return q_model
 ```
 
-Finally, add one line in `__main__` function of `eval_image_-classifier_inference.py` to use iLiT by yourself as below.
+Finally, add one line in `__main__` function of `eval_image_-classifier_inference.py` to use Intel® Low Precision Optimization Tool by yourself as below.
 ```python
 q_graph = evaluate_opt_graph.auto_tune()
 ```
@@ -342,4 +342,4 @@ We can use below cmd to test it.
 python eval_image_classifier_inference.py -b 10 -a 28 -e 1 -m resnet50_v1_5 \
         -g /PATH/TO/resnet50_v1.pb -d /PATH/TO/imagenet/
 ```
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

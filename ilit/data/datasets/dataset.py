@@ -81,7 +81,7 @@ framework_datasets = {"tensorflow":TensorflowDatasets,
                       "mxnet":MXNetDatasets,
                       "pytorch":PyTorchDatasets,}
 
-"""The datasets supported by iLiT, it's model specific and can be configured by yaml file.
+"""The datasets supported by ilit, it's model specific and can be configured by yaml file.
 
    User could add new datasets by implementing new Dataset subclass under this directory.
    The naming convention of new dataset subclass should be something like ImageClassifier, user

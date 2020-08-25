@@ -22,7 +22,7 @@ export KMP_AFFINITY=granularity=fine,noduplicates,compact,1,0
 
 TASK_NAME="SQuAD"
 # ARGS="--do_int8_inference"
-ARGS="--do_ilit_tune"
+ARGS="--tune"
 BATCH_SIZE=16
 if [[ "$1" == "--single" ]]; then
   echo "### using single batch size"

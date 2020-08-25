@@ -88,7 +88,7 @@ do
     ARGS="--mkldnn_eval --do_fp32_inference"
   else
     # ARGS="--do_calibration --fallback"
-    ARGS="--do_ilit_tune"
+    ARGS="--tune"
   fi 
   DATA_TYPE=$data_type
   

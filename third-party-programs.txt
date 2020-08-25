@@ -1,4 +1,4 @@
-Intel® Low Precision Inference Toolkit Third Party Programs File
+Intel® Low Precision Optimization Tool Third Party Programs File
  
 This file contains the list of third party software ("third party programs")
 contained in the Intel software and their required notices and/or license

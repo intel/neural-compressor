@@ -488,7 +488,7 @@ def main():
     parser.add_argument("--do_bf16", action='store_true',
                         help="run bf16 evaluation / training.")
     parser.add_argument("--tune", action='store_true',
-                        help="run iLiT tool to tune int8 acc.")
+                        help="run ilit to tune int8 acc.")
     parser.add_argument("--warmup", type=int, default=2,
                         help="warmup for performance")
 

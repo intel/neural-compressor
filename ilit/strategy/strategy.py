@@ -8,7 +8,7 @@ from ..data import TRANSFORMS
 from ..utils.utility import Timeout, get_postprocess, get_metrics
 from ..utils import logger
 
-"""The tuning strategies supported by iLiT, including basic, random, bayesian and mse.
+"""The tuning strategies supported by ilit, including basic, random, bayesian and mse.
 
    User could add new strategies by implementing new TuneStrategy subclass under this directory.
    The naming convention of new strategy subclass should be something like ABCTuneStrategy, user

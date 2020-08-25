@@ -6,13 +6,13 @@ Please refer [DLRM README](https://github.com/facebookresearch/dlrm/blob/master/
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo result.
+This document is used to list steps of reproducing PyTorch DLRM tuning zoo result.
 
 > **Note**
 >
 > 1. PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> iLiT has no capability to solve this framework limitation. iLiT supposes user have done these two steps before invoking iLiT interface.
+> Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 > 2. Please  ensure your PC have >370G memory to run DLRM 
 
@@ -49,14 +49,14 @@ This document is used to list steps of reproducing PyTorch DLRM iLiT tuning zoo 
         --load-model=${model_path} --tune
   ```
 
-Examples of enabling iLiT
+Examples of enabling Intel® Low Precision Optimization Tool
 =========================
 
-This is a tutorial of how to enable DLRM model with iLiT.
+This is a tutorial of how to enable DLRM model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports two usages:
+Intel® Low Precision Optimization Tool supports two usages:
 
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics in tuning.metrics field of model-specific yaml config file.
 
@@ -79,7 +79,7 @@ tuning:
     random_seed: 9527
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
-> **Note** : iLiT tool don't support "mse" tuning strategy for pytorch framework
+> **Note** : Intel® Low Precision Optimization Tool does NOT support "mse" tuning strategy for pytorch framework
 
 ### prepare
 PyTorch quantization requires two manual steps:

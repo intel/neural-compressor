@@ -1,13 +1,13 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing PyTorch se_resnext iLiT tuning zoo result.
+This document is used to list steps of reproducing PyTorch se_resnext tuning zoo result.
 
 > **Note**
 >
 > 1. PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> iLiT has no capability to solve this framework limitation. iLiT supposes user have done these two steps before invoking iLiT interface.
+> Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
@@ -48,14 +48,14 @@ This document is used to list steps of reproducing PyTorch se_resnext iLiT tunin
             -t
   ```
 
-Examples of enabling iLiT
+Examples of enabling Intel® Low Precision Optimization Tool
 =========================
 
-This is a tutorial of how to enable SE_ResNext model with iLiT.
+This is a tutorial of how to enable SE_ResNext model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports three usages:
+Intel® Low Precision Optimization Tool supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 
@@ -64,7 +64,7 @@ iLiT supports three usages:
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
 
-As SE_ResNext series are typical classification models, use Top-K as metric which is built-in supported by iLiT. So here we integrate PyTorch ResNet with iLiT by the first use case for simplicity.
+As SE_ResNext series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch ResNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
 
 ### Write Yaml Config File
 In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
@@ -115,7 +115,7 @@ evaluation:
 
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited time for a tuning config meet accuracy target.
-> **Note** : iLiT tool don't support "mse" tuning strategy for pytorch framework
+> **Note** : ilit does NOT support "mse" tuning strategy for pytorch framework
 
 ### Prepare
 PyTorch quantization requires two manual steps:

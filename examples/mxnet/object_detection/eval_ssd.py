@@ -70,7 +70,7 @@ def parse_args():
                              ' inference dataset.')
     parser.add_argument('--dataset-location', type=str, default='~/.mxnet/datasets/voc/', help='eval dataset.')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with iLiT.')
+                        help='Get bert tuning quantization model with ilit.')
     parser.add_argument("--output-graph",
                          help='Specify tune result model save dir',
                          dest='output_graph')
@@ -265,7 +265,7 @@ if __name__ == '__main__':
         return mAP
 
     if args.tune:
-        # Doing iLiT auto-tuning here
+        # Doing auto-tuning here
         import ilit
         ssd_tuner = ilit.Tuner("./ssd.yaml")
         ilit_model = ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
@@ -283,4 +283,4 @@ if __name__ == '__main__':
                 res_mAP = v
         print("Accuracy: %.5f" % res_mAP)
         print('Batch size = %d' % args.batch_size)
-        
+

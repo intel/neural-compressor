@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad iLiT tuning zoo result.
+This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad tuning zoo result.
 
 
 
@@ -10,7 +10,7 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad iL
 ### 1. Installation
 
   ```Shell
-  # Install iLiT
+  # Install Intel® Low Precision Optimization Tool
   pip install ilit
 
   # Install MXNet
@@ -52,7 +52,7 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad iL
         --bert_model bert_12_768_12 \
         --only_inference \
         --model_parameters ./output_dir/model_bert_MRPC_4.params \
-        --ilit_tune
+        --tune
 ```
 
 ### bert_base Squad
@@ -62,24 +62,24 @@ python3 finetune_squad.py \
         --round_to 128 \
         --test_batch_size 128 \
         --only_predict \
-        --ilit_tune
+        --tune
 ```
  
 
-Examples of enabling iLiT auto tuning on MXNet BERT_base
+Examples of enabling Intel® Low Precision Optimization Tool auto tuning on MXNet BERT_base
 =======================================================
 
-This is a tutorial of how to enable a MXNet BERT base model with iLiT.
+This is a tutorial of how to enable a MXNet BERT base model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports two usages:
+Intel® Low Precision Optimization Tool supports two usages:
 
 1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-We integrate MXNet BERT_base MRPC/Squad with iLiT by the second use case.
+We integrate MXNet BERT_base MRPC/Squad with Intel® Low Precision Optimization Tool by the second use case.
 
 ### Write Yaml config file
 
@@ -124,7 +124,7 @@ First, we need to construct evaluate function for ilit. At eval_func, we get the
 After prepare step is done, we just need update main.py like below.
 
 ```python
-    # iLiT auto-tuning
+    # Intel® Low Precision Optimization Tool auto-tuning
     calib_data = dev_data_list[0][1]
     import ilit
     bert_tuner = ilit.Tuner("./bert.yaml")
@@ -132,4 +132,4 @@ After prepare step is done, we just need update main.py like below.
 
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

@@ -198,7 +198,7 @@ class eval_classifier_optimized_graph:
     self.validate_args()
 
   def run(self):
-      """ This is iLiT function include tuning and benchmark option """
+      """ This is ilit function include tuning and benchmark option """
 
       if self.args.tune:
           q_model = self.auto_tune()
@@ -229,7 +229,7 @@ class eval_classifier_optimized_graph:
           self.eval_inference(infer_graph)
 
   def auto_tune(self):
-    """This is iLiT tuning part to generate a quantized pb
+    """This is ilit tuning part to generate a quantized pb
 
     Returns:
         graph: it will return a quantized pb

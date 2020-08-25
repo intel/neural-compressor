@@ -1,13 +1,13 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with iLiT.
+This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool.
 
 > **Note**
 >
 > PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> iLiT has no capability to solve this framework limitation. iLiT supposes user have done these two steps before invoking iLiT interface.
+> Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
@@ -53,20 +53,20 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
   python main.py -t -a inception_v3 --pretrained /path/to/imagenet
   ```
 
-Examples of enabling iLiT auto tuning on PyTorch ResNet
+Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
 =======================================================
 
-This is a tutorial of how to enable a PyTorch classification model with iLiT.
+This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports three usages:
+Intel® Low Precision Optimization Tool supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by iLiT. So here we integrate PyTorch ResNet with iLiT by the first use case for simplicity.
+As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch ResNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -142,4 +142,4 @@ tuner = ilit.Tuner("./conf.yaml")
 q_model = tuner.tune(model)
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

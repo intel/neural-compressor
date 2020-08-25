@@ -1,14 +1,14 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow ssd_resnet50_v1 iLiT tuning zoo result.
+This document is used to list steps of reproducing TensorFlow ssd_resnet50_v1 tuning zoo result.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```Shell
-# Install iLiT
+# Install Intel® Low Precision Optimization Tool
 pip instal ilit
 ```
 ### 2. Install Intel Tensorflow 1.15/2.0/2.1
@@ -83,10 +83,10 @@ tar -xvzf ssd_mobilenet_v1_coco_2018_01_28.tar.gz
   python infer_detections.py --batch-size 1 --input-graph /tmp/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --data-location /path/to/dataset/coco_val.record --accuracy-only --config ssd_resnet50_v1.yaml
   ```
 
-Details of enabling iLiT on ssd_resnet50_v1 for Tensorflow.
+Details of enabling Intel® Low Precision Optimization Tool on ssd_resnet50_v1 for Tensorflow.
 =========================
 
-This is a tutorial of how to enable ssd_resnet50_v1 model with iLiT.
+This is a tutorial of how to enable ssd_resnet50_v1 model with Intel® Low Precision Optimization Tool.
 ## User Code Analysis
 1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
 
@@ -96,7 +96,7 @@ For ssd_resnet50_v1, we applied the latter one because our philosophy is to enab
 
 
 ### q_dataloader Part Adaption
-Specifically, we need to add one generator to iterate the dataset per iLiT requirements. The easiest way is to implement *__iter__* interface. Below function will yield the images to feed the model as input.
+Specifically, we need to add one generator to iterate the dataset per Intel® Low Precision Optimization Tool requirements. The easiest way is to implement *__iter__* interface. Below function will yield the images to feed the model as input.
 
 ```python
 def __iter__(self):
@@ -120,7 +120,7 @@ def __iter__(self):
 ### Evaluation Part Adaption
 The Class model_infer has the run_accuracy function which actually could be re-used as the eval_func.
 
-Compare with the original version, we added the additional parameter **input_graph** as the iLiT would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors.
+Compare with the original version, we added the additional parameter **input_graph** as the Intel® Low Precision Optimization Tool would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors.
 ```python
 if input_graph:
     self.infer_graph = input_graph
@@ -168,4 +168,4 @@ q_model = at.tune(infer.get_graph(),
                         eval_func=infer.accuracy_check)
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

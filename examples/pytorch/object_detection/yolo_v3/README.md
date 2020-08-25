@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with iLiT.
+This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with Intel® Low Precision Optimization Tool.
 
 > **Note**
 >
@@ -41,17 +41,17 @@ This document describes the step-by-step instructions for reproducing PyTorch YO
 Examples Of Enabling ILiT Auto Tuning On PyTorch YOLOV3
 =======================================================
 
-This is a tutorial of how to enable a PyTorch model with iLiT.
+This is a tutorial of how to enable a PyTorch model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports three usage as below:
+Intel® Low Precision Optimization Tool supports three usage as below:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-Here we integrate PyTorch YOLO V3 with iLiT by the third use case for simplicity.
+Here we integrate PyTorch YOLO V3 with Intel® Low Precision Optimization Tool by the third use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -125,4 +125,4 @@ tuner = ilit.Tuner("./conf.yaml")
 q_model = tuner.tune(model, q_dataloader=ilit_dataloader, eval_func=eval_func)
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

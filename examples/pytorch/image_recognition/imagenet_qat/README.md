@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with iLiT.
+This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool.
 
 > **Note**
 >
@@ -49,16 +49,16 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 Examples Of Enabling ILiT Auto Tuning On PyTorch ResNet
 =======================================================
 
-This is a tutorial of how to enable a PyTorch classification model with iLiT.
+This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-For quantization aware training mode, iLiT supports two usage as below:
+For quantization aware training mode, Intel® Low Precision Optimization Tool supports two usage as below:
 
 1. User specifies fp32 "model", training function "q_func", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file, this option does not require customer to implement evaluation function.
 2. User specifies fp32 "model", training function "q_func" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself, this option require customer implement evaluation function by himself.
 
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by iLiT. So here we integrate PyTorch ResNet with iLiT by the first use case for simplicity.
+As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch ResNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -130,4 +130,4 @@ tuner = ilit.Tuner("./conf.yaml")
 q_model = tuner.tune(model, q_dataloader=None, q_func=training_func_for_ilit, eval_dataloader=val_loader)
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

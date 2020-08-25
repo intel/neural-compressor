@@ -5,7 +5,7 @@ help()
 {
    cat <<- EOF
 
-   Desc: Run iLiT MXNet Object Detection example.
+   Desc: Run ilit MXNet Object Detection example.
 
    -h --help              help info
 
@@ -17,7 +17,7 @@ help()
 
    --input_model          prefix of fp32 model (eg: ./model/ssd-mobilenet )
 
-   --output_model         Best tuning model by iLiT will saved in this name prefix. default is './ilit_ssd_model'
+   --output_model         Best tuning model by ilit will saved in this name prefix. default is './ilit_ssd_model'
 
 EOF
    exit 0

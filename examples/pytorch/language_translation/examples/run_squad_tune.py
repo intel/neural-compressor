@@ -508,7 +508,7 @@ def main():
     parser.add_argument("--mkldnn_eval", action='store_true',
                         help="evaluation with MKLDNN")
     parser.add_argument("--tune", action='store_true',
-                        help="run iLiT tool to tune int8 acc.")
+                        help="run ilit to tune int8 acc.")
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="SQuAD task")
     parser.add_argument("--warmup", type=int, default=5,

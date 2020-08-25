@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-'''The framework backends supported by iLiT, including tensorflow, mxnet and pytorch.
+'''The framework backends supported by ilit, including tensorflow, mxnet and pytorch.
 
    User could add new backend support by implementing new Adaptor subclass under this directory.
    The naming convention of new Adaptor subclass should be something like ABCAdaptor, user

@@ -70,7 +70,7 @@ class TensorFlowAdaptor(Adaptor):
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
-        """Parse the iLiT wrapped configuration to Tensorflow.
+        """Parse the ilit wrapped configuration to Tensorflow.
 
         Args:
             tuning_cfg (dict): configuration for quantization.

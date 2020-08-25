@@ -5,7 +5,7 @@ help()
 {
    cat <<- EOF
 
-   Desc: Run iLiT MXNet Object Detection example.
+   Desc: Run ilit MXNet Object Detection example.
 
    -h --help              help info
 

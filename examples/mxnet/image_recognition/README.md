@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 iLiT tuning zoo result.
+This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 tuning zoo result.
 
 
 # Prerequisite
@@ -91,20 +91,20 @@ bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q
 bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=./model --batch_size=32 --iters=100 --mode=benchmark
 ```
 
-Examples of enabling iLiT auto tuning on MXNet ResNet50
+Examples of enabling Intel® Low Precision Optimization Tool auto tuning on MXNet ResNet50
 =======================================================
 
-This is a tutorial of how to enable a MXNet classification model with iLiT.
+This is a tutorial of how to enable a MXNet classification model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports two usages:
+Intel® Low Precision Optimization Tool supports two usages:
 
 1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
->As ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 series are typical classification models, use Top-K as metric which is built-in supported by iLiT. So here we integrate MXNet ResNet with iLiT by the first use case for simplicity.
+>As ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate MXNet ResNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
 
 ### Write Yaml config file
 
@@ -141,4 +141,4 @@ After prepare step is done, we just need update imagenet_inference.py like below
 
 ```
 
-The iLiT tune() function will return a best quantized model during timeout constrain.
+The tune() function will return a best quantized model during timeout constrain.

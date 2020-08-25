@@ -1,14 +1,14 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow Wide & Deep iLiT tuning zoo result.
+This document is used to list steps of reproducing TensorFlow Wide & Deep tuning zoo result.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```Shell
-# Install iLiT
+# Install Intel® Low Precision Optimization Tool
 pip instal ilit
 ```
 ### 2. Install Intel Tensorflow 1.15/2.0/2.1

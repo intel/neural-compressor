@@ -1,7 +1,8 @@
+<<<<<<< HEAD
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing MXNet SSD-ResNet50_v1/SSD-Mobilenet 1.0 tuning results with iLiT.
+This document describes the step-by-step instructions for reproducing MXNet SSD-ResNet50_v1/SSD-Mobilenet 1.0 tuning results.
 
 
 
@@ -72,7 +73,7 @@ For more detail, see:
 ```bash
   bash run_tuning.sh -h
 
-   Desc: Run iLiT MXNet Object Detection example.
+   Desc: Run ilit MXNet Object Detection example.
 
    -h --help              help info
 
@@ -84,23 +85,23 @@ For more detail, see:
 
    --input_model          prefix of fp32 model (eg: ./model/ssd-mobilenet )
 
-   --output_model         Best tuning model by iLiT will saved in this name prefix. default is './ilit_ssd_model'
+   --output_model         Best tuning model by ilit will saved in this name prefix. default is './ilit_ssd_model'
 ```
 
-Examples of enabling iLiT auto tuning on MXNet Object detection
+Examples of enabling Intel® Low Precision Optimization Tool auto tuning on MXNet Object detection
 =======================================================
 
-This is a tutorial of how to enable a MXNet Object detection model with iLiT.
+This is a tutorial of how to enable a MXNet Object detection model with Intel® Low Precision Optimization Tool.
 
 # User Code Analysis
 
-iLiT supports two usages:
+Intel® Low Precision Optimization Tool supports two usages:
 
 1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As this example use VOC/COCO dataset, use VOCMApMetrics/COCOEval as metric which is can find [here](https://github.com/dmlc/gluon-cv/blob/20a2ed3942720550728ce36c2be53b2d5bbbb6fd/gluoncv/utils/metrics/voc_detection.py#L13) and [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with iLiT by the second use case.
+As this example use VOC/COCO dataset, use VOCMApMetrics/COCOEval as metric which is can find [here](https://github.com/dmlc/gluon-cv/blob/20a2ed3942720550728ce36c2be53b2d5bbbb6fd/gluoncv/utils/metrics/voc_detection.py#L13) and [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with Intel® Low Precision Optimization Tool by the second use case.
 
 ### Write Yaml config file
 
@@ -125,7 +126,7 @@ Because we use the second use case which need user to provide a custom "eval_fun
 
 ### code update
 
-First, we need to construct evaluate function for iLiT. At eval_func, we get the val_dataset for the origin script, and return mAP metric to iLiT.
+First, we need to construct evaluate function for Intel® Low Precision Optimization Tool. At eval_func, we get the val_dataset for the origin script, and return mAP metric to Intel® Low Precision Optimization Tool.
 
 ```python
     # define test_func
@@ -148,10 +149,10 @@ After preparation is done, we just need update main.py like below.
 
 ```python
 
-    # Doing iLiT auto-tuning here
+    # Doing auto-tuning here
     import ilit
     ssd_tuner = ilit.Tuner("./ssd.yaml")
     ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
 ```
 
-The iLiT tune() function will return a best quantized model under timeout constrain.
+The tune() function will return a best quantized model under timeout constrain.

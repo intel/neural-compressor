@@ -153,7 +153,7 @@ class GraphConverter:
         self.logger = logging.getLogger()
         self.debug = True if self.logger.level == logging.DEBUG else False
 
-        # For iLiT, the input_graph is not graph file path but Graph object.
+        # For ilit, the input_graph is not graph file path but Graph object.
         self.input_graph = get_graph_def(input_graph, outputs)
         self.output_graph = output_graph
         self.inputs = inputs

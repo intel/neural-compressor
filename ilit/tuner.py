@@ -34,7 +34,7 @@ class Tuner(object):
     def tune(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume_file=None):
         """The main entry point of automatic quantization tuning.
 
-           This interface works on all the DL frameworks that iLiT supports and provides two usages:
+           This interface works on all the DL frameworks that ilit supports and provides two usages:
            a) Calibration and tuning with pre-defined evaluation metrics: User specifies fp32 "model",
               calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader". The calibrated
               and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified

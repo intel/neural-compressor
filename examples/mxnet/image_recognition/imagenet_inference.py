@@ -235,7 +235,7 @@ if __name__ == '__main__':
                         choices=['', 'float16', 'bfloat16'],
                         help='enable low precision')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get tuning quantization model with iLiT.')
+                        help='Get tuning quantization model with ilit.')
     parser.add_argument('--accuracy-only', action='store_true', help='accuracy only benchmark')
     parser.add_argument("--output-graph",
                          help='Specify tune result model save dir',

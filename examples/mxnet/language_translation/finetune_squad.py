@@ -242,8 +242,8 @@ parser.add_argument('--calib_mode', type=str, default='customize',
                     choices=['none', 'naive', 'entropy', 'customize'],
                     help='calibration mode used for generating calibration table '
                          'for the quantized symbol.')
-parser.add_argument('--ilit_tune',action='store_true', default=False,
-                    help='Get bert tuning quantization model with iLiT.')
+parser.add_argument('--tune',action='store_true', default=False,
+                    help='Get bert tuning quantization model with ilit.')
 
 args = parser.parse_args()
 
@@ -848,7 +848,7 @@ def preprocess_dataset(tokenizer,
 
 
 def gen_dataset():
-    """generate dataset for iLiT."""
+    """generate dataset for ilit."""
     log.info('Loading dev data...')
     if version_2:
         dev_data = SQuAD('dev', version='2.0')
@@ -882,7 +882,7 @@ def gen_dataset():
     return dev_dataloader
 
 def eval_func(model):
-    """evaluation function for iLiT."""
+    """evaluation function for ilit."""
     EM_acc = evaluate(model)
     return EM_acc
 
@@ -899,8 +899,8 @@ if __name__ == '__main__':
     elif not only_predict:
         train()
         evaluate()
-    elif args.ilit_tune:
-        # iLiT auto-tuning
+    elif args.tune:
+        # ilit auto-tuning
         dev_dataloader = gen_dataset()
         import ilit
         bert_tuner = ilit.Tuner("./bert.yaml")
