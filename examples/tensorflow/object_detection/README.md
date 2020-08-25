@@ -77,6 +77,27 @@ wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coc
 tar -xvzf ssd_mobilenet_v1_coco_2018_01_28.tar.gz
 ```
 
+##### faster_rcnn_inception_resnet_v2
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+tar -xvzf faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+```
+
+##### faster_rcnn_resnet101
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz
+tar -xvzf faster_rcnn_resnet101_coco_2018_01_28.tar.gz
+```
+
+##### mask_rcnn_inception_resnet_v2
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
+tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
+```
+
 ## Run Command
   ```Shell
   # The cmd of running ssd_resnet50_v1

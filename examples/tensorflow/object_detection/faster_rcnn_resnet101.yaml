@@ -4,7 +4,7 @@ framework:
     outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
 calibration:
-  - iterations: 100
+  - iterations: 1,5,10,20
     algorithm:
       - weight: minmax
         activation: minmax
@@ -19,11 +19,3 @@ tuning:
       - relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed
-    ops: {
-          'FeatureExtractor/resnet_v1_50/fpn/bottom_up_block5/Conv2D': {
-            'activation':  {'dtype': ['fp32']},
-          },
-          'WeightSharedConvolutionalBoxPredictor_2/ClassPredictionTower/conv2d_0/Conv2D': {
-            'activation':  {'dtype': ['fp32']},
-          }
-        }

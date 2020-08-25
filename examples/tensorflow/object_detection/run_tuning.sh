@@ -40,18 +40,25 @@ function init_params {
 function run_tuning {
   if [ "$topology" = "ssd_resnet50_v1" ];then
     config_file='ssd_resnet50_v1.yaml'
-    echo $config_file
   elif [ "$topology" = "ssd_mobilenet_v1" ];then
     config_file='ssd_mobilenet_v1.yaml'
-    echo $config_file
+  elif [ "$topology" = "mask_rcnn_inception_resnet_v2" ];then
+    config_file='mask_rcnn_inception_resnet_v2.yaml'
+  elif [ "$topology" = "faster_rcnn_resnet101" ];then
+    config_file='faster_rcnn_resnet101.yaml'
+  elif [ "$topology" = "faster_rcnn_inception_resnet_v2" ];then
+    config_file='faster_rcnn_inception_resnet_v2.yaml'
   fi
-    python  infer_detections.py \
-            --batch-size 1 \
-            --input-graph "${input_model}" \
-            --data-location "${dataset_location}" \
-            --config ${config_file} \
-            --output_model "${output_model}" \
-            --accuracy-only --tune
+  
+  echo $config_file
+
+  python  infer_detections.py \
+          --batch-size 1 \
+          --input-graph "${input_model}" \
+          --data-location "${dataset_location}" \
+          --config ${config_file} \
+          --output_model "${output_model}" \
+          --accuracy-only --tune
 }
 
 main "$@"

@@ -48,6 +48,12 @@ function run_benchmark {
         config_file='ssd_resnet50_v1.yaml'
     elif [ "$topology" = "ssd_mobilenet_v1" ];then
         config_file='ssd_mobilenet_v1.yaml'
+    elif [ "$topology" = "mask_rcnn_inception_resnet_v2" ];then
+        config_file='mask_rcnn_inception_resnet_v2.yaml'
+    elif [ "$topology" = "faster_rcnn_resnet101" ];then
+        config_file='faster_rcnn_resnet101.yaml'
+    elif [ "$topology" = "faster_rcnn_inception_resnet_v2" ];then
+        config_file='faster_rcnn_inception_resnet_v2.yaml'
     fi
 
     if [[ ${mode} == "accuracy" ]]; then
