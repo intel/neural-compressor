@@ -1,7 +1,8 @@
-torch
-torchvision
 munch
 tqdm
 scipy
 ilit
 pytorch-ignite
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.5.0+cpu
+torchvision==0.6.0+cpu

@@ -28,22 +28,22 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 1. ResNet50
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet_qat
+  cd examples/pytorch/image_recognition/imagenet_qat
   python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
   ```
 
 ### 2. ResNet18
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet_qat
+  cd examples/pytorch/image_recognition/imagenet_qat
   python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
   ```
 
-### 3. ResNet101
+### 3. ResNext101_32x8d
 
   ```Shell
-  cd examples/pytorch/image_recognition/resnet_qat
-  python main.py -t -a resnet101 --pretrained --config /path/to/config_file /path/to/imagenet
+  cd examples/pytorch/image_recognition/imagenet_qat
+  python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
   ```
 
 Examples Of Enabling ILiT Auto Tuning On PyTorch ResNet
