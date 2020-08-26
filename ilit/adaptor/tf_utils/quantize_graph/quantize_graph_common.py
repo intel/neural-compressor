@@ -38,9 +38,9 @@ class QuantizeGraphHelper(object):
         for output_name in output_node_names:
             self._recursive_graph_sorting(output_name)
 
-    def get_sorted_graph(self, input_graph, output_node_names):
+    def get_sorted_graph(self, input_graph, input_node_names, output_node_names):
         self.node_name_mapping = {}
-        self.op_list = []
+        self.op_list = [input_node_name for input_node_name in input_node_names]
         for node in input_graph.node:
             self.node_name_mapping[node.name] = node
         self._get_op_list(output_node_names)

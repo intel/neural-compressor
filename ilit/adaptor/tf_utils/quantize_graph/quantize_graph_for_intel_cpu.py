@@ -39,8 +39,6 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
         self.input_graph = QuantizeGraphHelper().remove_training_nodes(
             self.input_graph, protected_nodes=output_node_names)
-        self.input_graph = QuantizeGraphHelper().get_sorted_graph(
-            self.input_graph, output_node_names)
 
         self.device = device
         # self.excluded_ops = excluded_ops

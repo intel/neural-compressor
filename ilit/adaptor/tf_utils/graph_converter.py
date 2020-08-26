@@ -282,7 +282,7 @@ class GraphConverter:
         finally:
             if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
                 self.logger.warn(str('Please note the {} version of Intel® Optimizations for'
-                                     ' TensorFlow is not fully verified\nSuggest to use the versions'
+                                     ' TensorFlow is not fully verified! Suggest to use the versions'
                                      ' between {} and {} if meet problem').format(tf.version.VERSION,
                                                                                   TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
             if not is_supported_version:
@@ -363,7 +363,7 @@ class GraphConverter:
         }
         target_conv_op = []
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(
-            self._fp32_origin_graph, self.outputs)
+            self._fp32_origin_graph, self.inputs, self.outputs)
 
         node_name_mapping = {
             node.name: node
@@ -433,7 +433,7 @@ class GraphConverter:
         fp32_node_name_mapping = {}
         q_node_scale = {}
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(
-            self._fp32_origin_graph, self.outputs)
+            self._fp32_origin_graph, self.inputs, self.outputs)
         graph_q_node_name = []
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
@@ -557,6 +557,8 @@ class GraphConverter:
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             graph = None
             self.logger.error('Failed to quantize graph due to: %s', str(e))
         finally:
@@ -616,6 +618,8 @@ class GraphConverter:
         g = ops.Graph()
         with g.as_default():
             importer.import_graph_def(self._tmp_graph_def)
+        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
+            self._tmp_graph_def, self.inputs, self.outputs)
         intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def,
                                                 self.outputs,
                                                 self.op_wise_config,

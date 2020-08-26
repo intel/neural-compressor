@@ -72,5 +72,36 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
         self.assertEqual(found_quantized_matmul, True)
 
+    def test_first_matmul_biasadd_relu_fusion(self):
+        import numpy as np
+        import tensorflow.compat.v1 as tf
+        tf.disable_v2_behavior()
+
+        x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+        y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+        x = tf.placeholder(tf.float32, shape=[2, 2])
+        y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+        z = tf.matmul(x, y)
+        z = tf.nn.bias_add(z, [1, 2])
+        z = tf.nn.relu(z)
+
+        with tf.Session() as sess:
+            sess.run(z, feed_dict={x: x_data, y: y_data})
+            float_graph_def = sess.graph.as_graph_def()
+
+            float_graph_def = QuantizeGraphHelper().get_sorted_graph(float_graph_def, ['Placeholder'], ['Relu'])
+
+            worker = FuseNodeStartWithMatmul(
+                float_graph_def, 'MatMul', False, 'MatMul', 'cpu', True)
+            output_graph = worker.apply_the_transform()
+
+            found_quantized_matmul = True
+            for i in output_graph.node:
+                if i.op == 'QuantizeV2' and i.name == 'MatMul_eightbit_quantize_Placeholder' and i.attr["T"].type == dtypes.quint8:
+                    found_quantized_matmul = True
+                    break
+
+            self.assertEqual(found_quantized_matmul, True)
+
 if __name__ == '__main__':
     unittest.main()

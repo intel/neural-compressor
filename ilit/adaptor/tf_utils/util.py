@@ -237,8 +237,8 @@ def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
 
     Args:
-        model ([Graph or Path String]): The model could be the graph object, the path to a
-                                        frozen pb or ckpt/savedmodel folder path.
+        model ([Graph, GraphDef or Path String]): The model could be the graph, graph_def object, the path to a
+                                                  frozen pb or ckpt/savedmodel folder path.
         outputs ([String]): output node names list.
 
     Returns:
@@ -247,6 +247,8 @@ def get_graph_def(model, outputs=[]):
     graph_def = None
     if isinstance(model, Graph):
         graph_def = model.as_graph_def()
+    elif isinstance(model, tf.compat.v1.GraphDef):
+        graph_def = model
     elif isinstance(model, str):
         graph_def = tf.compat.v1.GraphDef()
         if model.endswith(".pb") and os.path.isfile(model):
