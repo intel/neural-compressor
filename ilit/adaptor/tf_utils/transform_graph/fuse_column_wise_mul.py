@@ -26,7 +26,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 from .graph_transform_base import GraphTransformBase
-
+from ..quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 
 class FuseColumnWiseMul(GraphTransformBase):
     def __init__(self, input_pb):
@@ -36,13 +36,18 @@ class FuseColumnWiseMul(GraphTransformBase):
         fuseable_op_list = ['Conv2D', 'DepthwiseConv2dNative', 'MatMul']
 
         fuse_op_name = {}
-        for node_index, node_name in enumerate(input_name_list):
-            node_op = input_node_map[node_name].op
-            if node_op == "Mul" and input_node_map[
-                    input_node_map[node_name].
-                    input[0]].op in fuseable_op_list and input_node_map[
-                        input_node_map[node_name].input[1]].op == "Const":
-                fuse_op_name[input_node_map[node_name].input[0]] = node_name
+        for input_node in input_name_list:
+            node_op = input_node_map[input_node].op
+            input_node = helper.node_name_from_input(input_node)
+
+            if node_op == "Mul":
+                inputs = [helper.node_name_from_input(input) for \
+                    input in input_node_map[input_node].input]
+                if input_node_map[inputs[0]].op in fuseable_op_list and \
+                   input_node_map[inputs[1]].op == "Const":
+
+                    fuse_op_name[input_node_map[input_node].input[0]] = input_node
+
         return fuse_op_name
 
     def parse_input_graph(self, input_graph_def):
