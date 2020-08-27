@@ -24,6 +24,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import tensor_util
 import logging
+import re
 
 
 class GraphTransformBase(object):
@@ -75,18 +76,6 @@ class GraphTransformBase(object):
                         "graph input should only be Placeholder or Const, found {} in {}".format(
                             node, node.op))
 
-    def generate_output_map(self, output_node_name):
-        if self.input_node_map[output_node_name].input:
-            for node in self.input_node_map[output_node_name].input:
-                if node in self.output_node_map:
-                    self.output_node_map[node].add(output_node_name)
-                    continue
-                else:
-                    self.output_node_map[node] = {output_node_name}
-                self.generate_output_map(node)
-        else:
-            return
-
     def generate_input_map(self):
         self.input_node_map = {}
         for node in self.input_graph.node:
@@ -97,7 +86,12 @@ class GraphTransformBase(object):
                                  node.name)
 
     def node_name_from_input(self, node_name):
-        """Strips off ports and other decorations to get the underlying node name."""
+        """Get the original node name from input string.
+        Parameters:
+            node_name: input node's name in string
+        Returns:
+            node's name
+        """
         if node_name.startswith("^"):
             node_name = node_name[1:]
         m = re.search(r"(.*):\d+$", node_name)
@@ -142,17 +136,6 @@ class GraphTransformBase(object):
         input_tensor = node_def.attr["value"].tensor
         tensor_value = tensor_util.MakeNdarray(input_tensor)
         return tensor_value
-
-    def check_constant(self, node):
-        constant_node_flag = True
-        for input_node_name in node.input:
-            input_node = self.input_node_map[input_node_name]
-            if input_node.input == []:
-                constant_node_flag &= (input_node.op == "Const")
-                return constant_node_flag
-            else:
-                constant_node_flag &= self.check_constant(input_node)
-                return constant_node_flag
 
     def get_node_name_from_input(self, node_name):
         """

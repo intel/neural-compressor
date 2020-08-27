@@ -27,6 +27,7 @@ from tensorflow.python.framework.ops import Graph
 from .transform_graph.strip_unused import StripUnusedNodes
 from .transform_graph.fold_batch_norm import FoldBatchNormNodes
 from .transform_graph.insert_logging import InsertLogging
+from .transform_graph.fold_constant import FoldConstant
 from .transform_graph.freeze_max_min import freeze_max
 from .transform_graph.freeze_max_min import freeze_min
 from .transform_graph.freeze_max_min import freeze_requantization_range
@@ -253,10 +254,10 @@ class GraphConverter:
                 np_images = content[0]
                 if not isinstance(input_tensor, list):
                     _ = sess_graph.run(output_tensor,
-                                                 {input_tensor: np_images})
+                                       {input_tensor: np_images})
                 else:
                     _ = sess_graph.run(output_tensor,
-                                                 dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
+                                       dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
                 # print("Processed %d batches."% (quantize_batch + 1))
                 quantize_batch += 1
                 if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
@@ -564,14 +565,14 @@ class GraphConverter:
             return graph
 
     def bf16_convert(self):
-        """Convert fp32 nodes in bf16_node to bf16 dtype based on 
+        """Convert fp32 nodes in bf16_node to bf16 dtype based on
            FP32 + INT8 mixed precision graph.
         """
         try:
-            BF16Convert(self._tmp_graph_def, 
-                        self.device, 
-                        self.outputs, 
-                        self.fp32_ops, 
+            BF16Convert(self._tmp_graph_def,
+                        self.device,
+                        self.outputs,
+                        self.fp32_ops,
                         self.bf16_ops).do_transformation()
             graph = tf.Graph()
             with graph.as_default():
@@ -586,8 +587,11 @@ class GraphConverter:
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
+        self._tmp_graph_def = FoldConstant(
+            self.input_graph).do_transformation(
+            self.inputs, self.outputs)
         self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
-            self.input_graph, protected_nodes=self.outputs)
+            self._tmp_graph_def, protected_nodes=self.outputs)
         self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
             self._tmp_graph_def)
 
@@ -701,7 +705,7 @@ class GraphConverter:
         # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def, self.inputs, self.outputs, dtypes, False)
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs
-                                              ).do_transform()
+                                               ).do_transform()
         self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
             self._tmp_graph_def, protected_nodes=self.outputs)
 

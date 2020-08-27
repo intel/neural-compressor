@@ -24,7 +24,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
 
     def _apply_pool_quantization(self):
         for _, v in self.node_name_mapping.items():
-            if v.node.op in ("AvgPool", "MaxPool") and self._find_relu_node(
+            if v.node.name == self.start_node_name and self._find_relu_node(
                     v.node):
                 self.eightbitize_single_input_tensor_node(
                     v.node, self._add_pool_function)
