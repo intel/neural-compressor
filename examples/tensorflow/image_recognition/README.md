@@ -76,7 +76,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=resnet50v1.0 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb --output_model=./ilit_resnet50_v1
+          --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb --output_model=./ilit_resnet50_v1.pb
   ```
 
 ### 2. ResNet50 V1.5
@@ -89,7 +89,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=resnet50v1.5 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./ilit_resnet50_v15
+          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./ilit_resnet50_v15.pb
   ```
 
 ### 3. ResNet101
@@ -102,7 +102,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=resnet101 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/resnet101_fp32_pretrained_model.pb --output_model=./ilit_resnet101
+          --input_model=/PATH/TO/resnet101_fp32_pretrained_model.pb --output_model=./ilit_resnet101.pb
   ```
 
 ### 4. MobileNet V1
@@ -115,7 +115,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=mobilenetv1 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb --output_model=./ilit_mobilenetv1
+          --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb --output_model=./ilit_mobilenetv1.pb
   ```
 
 ### 5. MobileNet V2*
@@ -123,7 +123,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=mobilenetv2 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/frozen_mobilenet_v2.pb --output_model=./ilit_mobilenetv2
+          --input_model=/PATH/TO/frozen_mobilenet_v2.pb --output_model=./ilit_mobilenetv2.pb
   ```
 
 ### 6. Inception V1*
@@ -131,7 +131,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=inception_v1 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/frozen_inception_v1.pb --output_model=./ilit_inceptionv1
+          --input_model=/PATH/TO/frozen_inception_v1.pb --output_model=./ilit_inceptionv1.pb
   ```
 
 ### 7. Inception V2*
@@ -139,7 +139,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=inception_v2 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/frozen_inception_v2.pb --output_model=./ilit_inceptionv2
+          --input_model=/PATH/TO/frozen_inception_v2.pb --output_model=./ilit_inceptionv2.pb
   ```
 
 ### 8. Inception V3
@@ -152,7 +152,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=inception_v3 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb --output_model=./ilit_inceptionv3
+          --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb --output_model=./ilit_inceptionv3.pb
   ```
 
 ### 9. Inception V4
@@ -165,7 +165,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=inception_v4 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb --output_model=./ilit_inceptionv4
+          --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb --output_model=./ilit_inceptionv4.pb
   ```
 
 ### 10. Inception ResNet V2*
@@ -173,7 +173,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=inception_resnet_v2 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/frozen_inception_resnet_v2.pb --output_model=./ilit_irv2
+          --input_model=/PATH/TO/frozen_inception_resnet_v2.pb --output_model=./ilit_irv2.pb
   ```
 
 ### 11. VGG 16*
@@ -181,7 +181,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=vgg16 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./ilit_vgg16
+          --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./ilit_vgg16.pb
   ```
 
 ### 12. VGG 19*
@@ -189,7 +189,31 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=vgg19 --dataset_location=/PATH/TO/imagenet/ \
-          --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./ilit_vgg19
+          --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./ilit_vgg19.pb
+  ```
+
+### 13. ResNet v2 50
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --topology=resnetv2_50 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./ilit_resnetv2_50.pb
+  ```
+
+### 14. ResNet v2 101
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --topology=resnetv2_101 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./ilit_resnetv2_101.pb
+  ```
+
+### 15. ResNet v2 152
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --topology=resnetv2_152 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/frozen_resnetv2_152.pb --output_model=./ilit_resnetv2_152.pb
   ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
@@ -241,7 +265,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 There are three preparation steps in here:
 1. Prepare environment
 ```shell
-pip install intel-tensorflow==1.5.2 ilit
+pip install intel-tensorflow==1.15.2 ilit
 ```
 2. Get the model source code
 ```shell
