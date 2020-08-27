@@ -635,11 +635,11 @@ class QuantizeNodeBase(object):
                         dtypes.qint8,
                         mode=quantization_mode,
                         round_mode="HALF_TO_EVEN")
-                    qint8_tensor = quantize_op[0].eval()
+                    qint8_tensor = quantize_op[0].numpy() if tf.executing_eagerly() else quantize_op[0].eval()
                     # Updated min-max values should be passed to the next
                     # feeding node.
-                    min_value = quantize_op[1].eval()
-                    max_value = quantize_op[2].eval()
+                    min_value = quantize_op[1].numpy() if tf.executing_eagerly() else quantize_op[1].eval()
+                    max_value = quantize_op[2].numpy() if tf.executing_eagerly() else quantize_op[2].eval()
         elif parent == "DepthwiseConv2dNative":
             # get the max values based on dim 0 and 1 for depthwise conv
             # since, the output channel will be dim 2 * dim 3
