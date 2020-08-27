@@ -547,9 +547,10 @@ class GraphConverter:
 
             self._generate_calibration_data(self._int8_logged_graph,
                                             self._calibration_data)
-            self._freeze_requantization_ranges(self._kl_op_dict,
-                                               self._print_node_mapping)
-            self._fuse_requantize_with_fused_quantized_node()
+            if len(self._calibration_data) > 0:
+                self._freeze_requantization_ranges(self._kl_op_dict,
+                                                   self._print_node_mapping)
+                self._fuse_requantize_with_fused_quantized_node()
 
             graph = tf.Graph()
             with graph.as_default():
@@ -641,17 +642,20 @@ class GraphConverter:
 
     def _parse_output(self, input_data, output_data):
         assert input_data.count(';') % 2 == 0
-        semicolon_index = [
-            index for index, value in enumerate(input_data) if value == ';'
-        ][::2]
+        if input_data.count(';') > 0:
+            semicolon_index = [
+                index for index, value in enumerate(input_data) if value == ';'
+            ][::2]
 
-        for index, value in enumerate(semicolon_index[:-1]):
-            output_data.append(
-                ''.join(input_data[value:semicolon_index[index + 1]]).strip() +
-                '\n')
+            for index, value in enumerate(semicolon_index[:-1]):
+                output_data.append(
+                    ''.join(input_data[value:semicolon_index[index + 1]]).strip() +
+                    '\n')
 
-        output_data.append(''.join(input_data[semicolon_index[-1]:]).strip() +
-                           '\n')
+            output_data.append(''.join(input_data[semicolon_index[-1]:]).strip() +
+                               '\n')
+        else:
+            self.logger.warn("No quantizable op, will return FP32 graph!")
 
     def _generate_calibration_data(self,
                                    graph,
