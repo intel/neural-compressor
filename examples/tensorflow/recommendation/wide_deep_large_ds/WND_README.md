@@ -9,11 +9,11 @@ This document is used to list steps of reproducing TensorFlow Wide & Deep tuning
 ### 1. Installation
 ```Shell
 # Install Intel® Low Precision Optimization Tool
-pip instal ilit
+pip install ilit
 ```
 ### 2. Install Intel Tensorflow 1.15/2.0/2.1
 ```shell
-pip intel-tensorflow==1.15.2 [2.0,2.1]
+pip install intel-tensorflow==1.15.2 [2.0,2.1]
 ```
 
 ### 3. Install Additional Dependency packages
