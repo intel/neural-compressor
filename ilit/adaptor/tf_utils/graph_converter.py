@@ -469,7 +469,8 @@ class GraphConverter:
                         self.outputs,
                         False,
                         op_name,
-                        self.device).get_longest_fuse()
+                        self.device,
+                        False).get_longest_fuse()
 
                     if matched_nodes:
                         fp32_node_name_mapping[matched_nodes[-1]] = op_name
