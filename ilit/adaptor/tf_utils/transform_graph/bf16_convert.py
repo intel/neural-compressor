@@ -85,7 +85,6 @@ class BF16Convert(GraphTransformBase):
                   "Expm1",
                   "L2Loss",
                   "Mean",
-                  "Pad",
                   "Pow",
                   "SaveV2",
                   "Softmax",
@@ -117,7 +116,7 @@ class BF16Convert(GraphTransformBase):
                   "Relu6",
                   "Relu6Grad",
                   "ReluGrad",
-                  #"Reshape",
+                  "Reshape",
                   #"Select",
                   #"SelectV2",
                   #"Shape",
@@ -197,11 +196,12 @@ class BF16Convert(GraphTransformBase):
             each_input_node = each_input_detail.node
             # Const + Cast => Const optimization
             if each_input_node.op == "Const":
-                fp32_value = tensor_util.MakeNdarray(each_input_node.attr.get('value').tensor)
-                helper.set_attr_dtype(each_input_node, "dtype", dtypes.bfloat16)
-                each_input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(
-                    fp32_value, dtypes.bfloat16, fp32_value.shape)))
+                if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum):
+                    fp32_value = tensor_util.MakeNdarray(each_input_node.attr.get('value').tensor)
+                    helper.set_attr_dtype(each_input_node, "dtype", dtypes.bfloat16)
+                    each_input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
+                        tensor=tensor_util.make_tensor_proto(
+                        fp32_value, dtypes.bfloat16, fp32_value.shape)))
                 self.converted_ops.append(each_input)
             # Cast + Cast => O optimization
             elif (each_input_node.op == "Cast" and 
