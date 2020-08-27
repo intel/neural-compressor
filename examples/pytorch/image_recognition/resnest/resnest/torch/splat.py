@@ -47,7 +47,8 @@ class SplAtConv2d(Module):
             self.dropblock = DropBlock2D(dropblock_prob, 3)
         self.rsoftmax = rSoftMax(radix, groups)
         self.skip_mul = nn.quantized.FloatFunctional()
-        self.quant = torch.quantization.QuantStub()
+        self.quant1 = torch.quantization.QuantStub()
+        self.quant2 = torch.quantization.QuantStub()
         self.dequant = torch.quantization.DeQuantStub()
 
     def forward(self, x):
@@ -84,7 +85,7 @@ class SplAtConv2d(Module):
             atten = self.dequant(atten)
         atten = self.rsoftmax(atten).view(batch, -1, 1, 1)
         if self.radix <= 2:
-            atten = self.quant(atten)
+            atten = self.quant1(atten)
 
         if self.radix > 1:
             if torch.__version__ < '1.5':
@@ -99,7 +100,7 @@ class SplAtConv2d(Module):
         else:
             out = atten * x
         if self.radix > 2:
-            out = self.quant(out)
+            out = self.quant2(out)
         return out.contiguous()
 
     def fuse_model(self):

@@ -37,10 +37,11 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    sed -i "/root:/s|root:.*|root: $dataset_location/val|g" conf.yaml
+    sed -i "s|/Path/to/imagenet/img/train|$dataset_location/train|g" conf.yaml
+    sed -i "s|/Path/to/imagenet/img/val|$dataset_location/val|g" conf.yaml
     python setup.py install
     extra_cmd="${dataset_location}"
-    batch_size=128
+    batch_size=30
 
     python -u scripts/torch/verify.py \
         --model ${topology} \

@@ -45,7 +45,8 @@ class Bottleneck(nn.Module):
         self.radix = radix
         self.avd = avd and (stride > 1 or is_first)
         self.avd_first = avd_first
-        self.quant = torch.quantization.QuantStub()
+        self.quant1 = torch.quantization.QuantStub()
+        self.quant2 = torch.quantization.QuantStub()
         self.dequant = torch.quantization.DeQuantStub()
 
         if self.avd:
@@ -108,7 +109,7 @@ class Bottleneck(nn.Module):
         if self.avd and self.avd_first:
             out = self.dequant(out)
             out = self.avd_layer(out)
-            out = self.quant(out)
+            out = self.quant1(out)
 
         out = self.conv2(out)
         if self.radix == 0:
@@ -120,7 +121,7 @@ class Bottleneck(nn.Module):
         if self.avd and not self.avd_first:
             out = self.dequant(out)
             out = self.avd_layer(out)
-            out = self.quant(out)
+            out = self.quant2(out)
 
         out = self.conv3(out)
         out = self.bn3(out)
@@ -137,13 +138,22 @@ class Bottleneck(nn.Module):
         return out
 
     def fuse_model(self):
-        if self.radix == 0 and self.dropblock_prob <= 0.0:
-            fuse_modules(self, [['conv1', 'bn1', 'relu1'],
-                                ['conv2', 'bn2', 'relu2'],
-                                ['conv3', 'bn3']], inplace=True)
+        if self.dropblock_prob <= 0.0:
+            if self.radix == 0:
+                fuse_modules(self, [['conv1', 'bn1', 'relu1'],
+                                    ['conv2', 'bn2', 'relu2'],
+                                    ['conv3', 'bn3']], inplace=True)
+            else:
+                fuse_modules(self, [['conv1', 'bn1', 'relu1'],
+                                    ['conv3', 'bn3']], inplace=True)
         else:
-            fuse_modules(self, [['conv1', 'bn1', 'relu1'],
-                                ['conv3', 'bn3']], inplace=True)
+            if self.radix == 0:
+                fuse_modules(self, [['conv1', 'bn1'],
+                                    ['conv2', 'bn2'],
+                                    ['conv3', 'bn3']], inplace=True)
+            else:
+                fuse_modules(self, [['conv1', 'bn1'],
+                                    ['conv3', 'bn3']], inplace=True)
         for m in self.modules():
             if type(m) == SplAtConv2d:
                 m.fuse_model()
@@ -198,7 +208,8 @@ class ResNet(nn.Module):
         self.deep_stem = deep_stem
 
         super(ResNet, self).__init__()
-        self.quant = torch.quantization.QuantStub()
+        self.quant1 = torch.quantization.QuantStub()
+        self.quant2 = torch.quantization.QuantStub()
         self.dequant = torch.quantization.DeQuantStub()
         self.rectified_conv = rectified_conv
         self.rectify_avg = rectify_avg
@@ -318,7 +329,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.quant(x)
+        x = self.quant1(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -331,7 +342,7 @@ class ResNet(nn.Module):
 
         x = self.dequant(x)
         x = self.avgpool(x)
-        x = self.quant(x)
+        x = self.quant2(x)
         # x = x.view(x.size(0), -1)
         x = torch.flatten(x, 1)
         if self.drop:
