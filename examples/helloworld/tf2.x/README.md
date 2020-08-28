@@ -26,36 +26,35 @@ This exmaple can demonstrate the steps to do quantization on Keras generated sav
 ### 1.Add inputs and outputs information into conf.yaml
    framework:
   - name: tensorflow                         # possible values are tensorflow, mxnet and pytorch
-  - inputs: 'x'                               
+  - inputs: 'args_0'                                                       
   - outputs: 'Identity'
 
-### 2. Get ConcreteFunction from saved model 
+
+### 2. Gererate the quantized model. 
 ```PyThon
-    # Convert Keras model to ConcreteFunction with x as input
-    full_model = tf.function(lambda x: model(x)) 
-    concrete_function = full_model.get_concrete_function(
-        x=tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype))
 
-    # Get frozen ConcreteFunction
-    frozen_model = convert_variables_to_constants_v2(concrete_function)
+    # Load saved model
+    model = tf.keras.models.load_model("../models/simple_model")
 
-```
-
-### 3. Gererate the quantized model. 
-```PyThon
+    # Run ilit to get the quantized graph 
     tuner = ilit.Tuner('./conf.yaml')
     dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-    quantized_model = tuner.tune(frozen_model.graph, q_dataloader=dataloader, eval_func=eval_func)
+    quantized_model = tuner.tune(model, q_dataloader=dataloader, eval_func=eval_func)
+
 ```
 ### 3. Run quantized model.
 ```PyThon
 
+    # Get the concrete_function from quantized model
     concrete_function = get_concrete_function(graph_def=quantized_model.as_graph_def(),
-                                     inputs=["x:0"],
+                                     inputs=["args_0:0"],
                                      outputs=["Identity:0"],
                                      print_graph=True)
 
-    # Run inference with quantized model
-    frozen_graph_predictions = concrete_function(x=tf.constant(test_images))[0]
+    # Run inference with quantized model 
+    frozen_graph_predictions = concrete_function(args_0=tf.constant(test_images))[0]
+   
+    
+ 
 ```
  

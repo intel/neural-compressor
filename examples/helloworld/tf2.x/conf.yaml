@@ -1,6 +1,6 @@
 framework:
   - name: tensorflow                         # possible values are tensorflow, mxnet and pytorch
-  - inputs: 'x'
+  - inputs: 'args_0'
   - outputs: 'Identity'
 
 tuning:
