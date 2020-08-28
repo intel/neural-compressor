@@ -101,7 +101,7 @@ tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 ## Run Command
   ```Shell
   # The cmd of running ssd_resnet50_v1
-  python infer_detections.py --batch-size 1 --input-graph /tmp/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --data-location /path/to/dataset/coco_val.record --accuracy-only --config ssd_resnet50_v1.yaml
+  bash run_tuning.sh --topology=ssd_resnet50_v1 --dataset_location=/path/to/dataset/coco_val.record --input_model=/tmp/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet50_v1-tune.pb
   ```
 
 Details of enabling Intel® Low Precision Optimization Tool on ssd_resnet50_v1 for Tensorflow.
