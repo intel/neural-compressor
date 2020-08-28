@@ -22,7 +22,7 @@ Intel® Low Precision Optimization Tool is an open source python library to help
 
    The tuning config and model-specific information are controlled by user config yaml file. As for the format of yaml file, please refer to [template.yaml](../examples/template.yaml)
 
-   Intel® Low Precision Optimization Tool v1.0a release supports two usages:
+   Intel® Low Precision Optimization Tool supports two usages:
 
    a) User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and accuracy metrics in tuning.metric field of the yaml config file.
 

@@ -3,9 +3,9 @@ from setuptools import find_packages, setup
 
 setup(
     name="ilit",
-    version="1.0a0",
+    version="1.0b0",
     author="Intel MLP/MLPC Team",
-    author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com",
+    author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com, xi2.chen@intel.com",
     description="Repository of Intel® Low Precision Optimization Tool",
     long_description=open("README.md", "r", encoding='utf-8').read(),
     long_description_content_type="text/markdown",
