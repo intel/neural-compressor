@@ -2,6 +2,7 @@ from abc import abstractmethod
 from ilit.utils.utility import LazyImport
 from ..utils import logger
 from sklearn.metrics import accuracy_score, f1_score
+import numpy as np
 
 torch_ignite = LazyImport('ignite')
 torch = LazyImport('torch')
@@ -233,6 +234,7 @@ class TopK(Metric):
     def update(self, preds, labels, sample_weight=None):
 
         preds = preds.argsort()[..., -self.k:]
+        preds = np.squeeze(preds)
         if self.k == 1:
             correct = accuracy_score(preds, labels, normalize=False)
             self.num_correct += correct

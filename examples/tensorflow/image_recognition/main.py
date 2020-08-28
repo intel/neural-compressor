@@ -67,7 +67,7 @@ class Dataset(object):
       tuple: yield data and label 2 numpy array
   """
   def __init__(self, data_location, subset, input_height, input_width,
-                batch_size, num_cores, resize_method='crop', mean_value=[0.0,0.0,0.0], label_adjust=False):
+                batch_size, num_cores, resize_method='crop', mean_value=[0.0,0.0,0.0], label_adjust=False, scale=1.0):
     """dataloader generator
 
     Args:
@@ -91,7 +91,8 @@ class Dataset(object):
         batch_size,
         num_cores,
         resize_method,
-        mean_value)
+        mean_value,
+        scale)
     self.label_adjust = label_adjust
     self.n = int(self.total_image / self.batch_size)
 
@@ -167,6 +168,8 @@ class eval_classifier_optimized_graph:
                             type=float, dest='b_mean', default=0.0)
     arg_parser.add_argument("--label_adjust", help='Such as RN101 need adjust label',
                             dest='label_adjust', action='store_true')
+    arg_parser.add_argument("--scale", help='Such as densenet need scale=0.017',
+                            type=float, dest='scale', default=1.0)
     arg_parser.add_argument("--warmup-steps", type=int, default=10,
                             help="number of warmup steps")
     arg_parser.add_argument("--steps", type=int, default=50,
@@ -193,7 +196,6 @@ class eval_classifier_optimized_graph:
     arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ilit to tune.')
 
     self.args = arg_parser.parse_args()
-
     # validate the arguments specific for InceptionV3
     self.validate_args()
 
@@ -242,7 +244,7 @@ class eval_classifier_optimized_graph:
                             self.args.image_size, self.args.image_size,
                             1, self.args.num_cores,
                             self.args.resize_method,
-                            [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust)
+                            [self.args.r_mean,self.args.g_mean,self.args.b_mean], self.args.label_adjust, self.args.scale)
     dataloader = tuner.dataloader(dataset, batch_size=self.args.batch_size)
     q_model = tuner.tune(
                         fp32_graph,
@@ -278,7 +280,8 @@ class eval_classifier_optimized_graph:
           self.args.image_size, self.args.image_size, self.args.batch_size,
           num_cores=self.args.num_cores,
           resize_method=self.args.resize_method,
-          mean_value=[self.args.r_mean,self.args.g_mean,self.args.b_mean])
+          mean_value=[self.args.r_mean,self.args.g_mean,self.args.b_mean],
+          scale=self.args.scale)
         images, labels = preprocessor.minibatch(dataset, subset='validation')
       else:
         print("Inference with dummy data.")

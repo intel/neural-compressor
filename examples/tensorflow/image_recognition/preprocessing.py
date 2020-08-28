@@ -68,8 +68,7 @@ def parse_example_proto(example_serialized):
 
 
 def eval_image(image, height, width, resize_method, mean_value,
-               central_fraction=0.875, scope=None):
-
+               central_fraction=0.875, scope=None, scale=1.0):
   with tf.compat.v1.name_scope('eval_image'):
     if resize_method == 'crop':
       shape = tf.shape(input=image)
@@ -87,7 +86,7 @@ def eval_image(image, height, width, resize_method, mean_value,
       distorted_image.set_shape([height, width, 3])
       #means = tf.broadcast_to([123.68, 116.78, 103.94], tf.shape(input=distorted_image))
       means = tf.broadcast_to(mean_value, tf.shape(input=distorted_image))
-      return distorted_image - means
+      return (distorted_image - means) * scale
     elif resize_method == 'bilinear':  # bilinear
       if image.dtype != tf.float32:
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
@@ -105,10 +104,10 @@ def eval_image(image, height, width, resize_method, mean_value,
       image = tf.subtract(image, 0.5)
       image = tf.multiply(image, 2.0)
       means = tf.broadcast_to(mean_value, tf.shape(input=image))
-      return image - means
+      return (image - means) * scale
     elif resize_method == 'vgg':
       image = vgg_preprocessing.preprocess_image(image,height,width,False)
-      return image
+      return image * scale
     else:
       raise ValueError('Just support crop, bilinear, vgg for now')
 
@@ -121,7 +120,8 @@ class RecordInputImagePreprocessor(object):
                batch_size,
                num_cores,
                resize_method="bilinear",
-               mean_value=[0.0,0.0,0.0]):
+               mean_value=[0.0,0.0,0.0],
+               scale=1.0):
 
     self.height = height
     self.width = width
@@ -129,6 +129,7 @@ class RecordInputImagePreprocessor(object):
     self.num_cores = num_cores
     self.resize_method = resize_method
     self.mean_value = mean_value
+    self.scale = scale
 
   def parse_and_preprocess(self, value):
     # parse
@@ -136,7 +137,7 @@ class RecordInputImagePreprocessor(object):
     # preprocess
     image = tf.image.decode_jpeg(
       image_buffer, channels=3, fancy_upscaling=False, dct_method='INTEGER_FAST')
-    image = eval_image(image, self.height, self.width, self.resize_method, self.mean_value)
+    image = eval_image(image, self.height, self.width, self.resize_method, self.mean_value, scale=self.scale)
 
     return (image, label_index)
 

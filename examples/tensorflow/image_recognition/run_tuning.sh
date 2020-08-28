@@ -107,6 +107,11 @@ function run_tuning {
         extra_cmd=' --resize_method vgg --label_adjust'
         output="vgg_19/fc8/squeezed"
         yaml=vgg19.yaml
+    elif [ "${topology}" = "densenet121" ]; then
+        extra_cmd='  --resize_method vgg --scale 0.017 --label_adjust'
+        input="Placeholder"
+        output="densenet121/predictions/Reshape_1"
+        yaml=densenet121.yaml
     fi
 
     python main.py \
@@ -121,6 +126,7 @@ function run_tuning {
             --batch-size 10 \
             ${extra_cmd} \
             --tune
+            
 
 }
 

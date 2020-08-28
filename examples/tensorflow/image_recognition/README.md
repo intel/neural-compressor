@@ -216,6 +216,14 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
           --input_model=/PATH/TO/frozen_resnetv2_152.pb --output_model=./ilit_resnetv2_152.pb
   ```
 
+### 12. Densenet-121
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --topology=densenet121 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/densenet121.pb --output_model=./ilit_densenet121
+  ```
+
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
 =======================================================
 
