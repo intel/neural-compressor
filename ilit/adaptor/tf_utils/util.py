@@ -28,6 +28,7 @@ from tensorflow.python.framework import graph_util
 from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.framework.ops import Graph
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
@@ -127,25 +128,67 @@ def is_ckpt_format(model_path):
     else:
         return None
 
-
 def parse_ckpt_model(ckpt_prefix, outputs):
     """Parse the ckpt model
 
     Args:
         ckpt_prefix (string): the ckpt prefix for parsing
     """
-    saver = tf.compat.v1.train.import_meta_graph(ckpt_prefix + '.meta',
-                                                 clear_devices=True)
-    graph = tf.compat.v1.get_default_graph()
-    input_graph_def = graph.as_graph_def()
     with tf.compat.v1.Session() as sess:
+        saver = tf.compat.v1.train.import_meta_graph(ckpt_prefix + '.meta',
+                                                     clear_devices=True)
+        sess.run(tf.compat.v1.global_variables_initializer())
         saver.restore(sess, ckpt_prefix)
+        graph_def = sess.graph.as_graph_def()
+        _parse_ckpt_bn_input(graph_def)
+
         output_graph_def = graph_util.convert_variables_to_constants(
             sess=sess,
-            input_graph_def=input_graph_def,
+            input_graph_def=graph_def,
             output_node_names=outputs)
 
-    return output_graph_def
+        return output_graph_def
+
+def _parse_ckpt_bn_input(graph_def):
+    """parse ckpt batch norm inputs to match correct moving mean and variance
+    Args:
+        graph_def (graph_def): original graph_def
+    Returns:
+        graph_def: well linked graph_def 
+    """
+    for node in graph_def.node:
+        if node.op == 'FusedBatchNorm':
+            moving_mean_op_name = node.input[3]
+            moving_var_op_name = node.input[4]
+            moving_mean_op = _get_nodes_from_name(moving_mean_op_name, graph_def)[0]
+            moving_var_op = _get_nodes_from_name(moving_var_op_name, graph_def)[0]
+
+            if moving_mean_op.op == 'Const':
+                name_part = moving_mean_op_name.rsplit('/', 1)[0]
+                real_moving_mean_op_name = name_part + '/moving_mean'
+                if len(_get_nodes_from_name(real_moving_mean_op_name, graph_def)) > 0:
+                    # replace the real moving mean op name
+                    node.input[3] = real_moving_mean_op_name
+
+            if moving_var_op.op == 'Const':
+                name_part = moving_var_op_name.rsplit('/', 1)[0]
+                real_moving_var_op_name = name_part + '/moving_variance'
+                if len(_get_nodes_from_name(real_moving_var_op_name, graph_def)) > 0:
+                    # replace the real moving mean op name
+                    node.input[4] = real_moving_var_op_name
+
+    return graph_def
+
+def _get_nodes_from_name(node_name, graph_def):
+    """get nodes from graph_def using node name
+    Args:
+        graph_def (graph_def): graph_def
+        node_name (str): node name
+        
+    Returns:
+        node (NodeDef): graph node
+    """
+    return [node for node in graph_def.node if node.name==node_name]
 
 def is_saved_model_format(model_path):
     """check the model_path format is saved_model or not
@@ -161,6 +204,25 @@ def is_saved_model_format(model_path):
         return True
     else:
         return False
+
+def parse_kerasmodel_model(model):
+    """Convert Keras Model to graphdef
+
+    Args:
+        model (keras.Model): Keras model object
+
+    Returns:
+        graph_def: the parsed graph_def object.
+        input_names: input node names
+        output_names: output node name
+    """
+    full_model = tf.function(lambda *args: model(*args))
+    concrete_function = full_model.get_concrete_function(model.inputs)
+    frozen_model = convert_variables_to_constants_v2(concrete_function)
+    graph_def = frozen_model.graph.as_graph_def()
+    input_names = [node.name for node in graph_def.node if node.op=='Placeholder']
+    output_names = [output.name.split(':')[0] for output in model.outputs]
+    return frozen_model.graph.as_graph_def(), input_names, output_names
 
 def parse_savedmodel_model(model_path):
     """Convert SavedModel to graphdef
@@ -237,7 +299,7 @@ def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
 
     Args:
-        model ([Graph, GraphDef or Path String]): The model could be the graph, graph_def object, the path to a
+        model ([Graph, GraphDef or Path String]): The model could be the graph, graph_def object, the
                                                   frozen pb or ckpt/savedmodel folder path.
         outputs ([String]): output node names list.
 
@@ -249,6 +311,8 @@ def get_graph_def(model, outputs=[]):
         graph_def = model.as_graph_def()
     elif isinstance(model, tf.compat.v1.GraphDef):
         graph_def = model
+    elif isinstance(model, tf.keras.Model):
+        graph_def, _, _ = parse_kerasmodel_model(model)
     elif isinstance(model, str):
         graph_def = tf.compat.v1.GraphDef()
         if model.endswith(".pb") and os.path.isfile(model):
