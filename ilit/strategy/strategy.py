@@ -83,7 +83,9 @@ class TuneStrategy(object):
         self.q_func = q_func
         self.eval_func = eval_func
 
-        framework_specific_info = {'device': self.cfg.device, 'approach': self.cfg.quantization.approach}
+        framework_specific_info = {'device': self.cfg.device, \
+                                   'approach': self.cfg.quantization.approach, \
+                                   'random_seed': self.cfg.tuning.random_seed}
         if self.cfg.framework.name.lower() == 'tensorflow':
             framework_specific_info.update({"inputs": self.cfg.framework.inputs, "outputs": self.cfg.framework.outputs})
         if self.cfg.framework.name.lower() == 'mxnet':

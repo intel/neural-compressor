@@ -1,16 +1,18 @@
 from abc import abstractmethod
-from ilit.utils.utility import LazyImport
+from ilit.utils.utility import LazyImport, singleton
 
 torchvision = LazyImport('torchvision')
+torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
+
 
 class BaseTransforms(object):
     def __init__(self, process, concat_general=True):
         transform_map = {"preprocess": self._get_preprocess,
                          "postprocess": self._get_postprocess,
                          "general": self._get_general,}
-        self.transforms = transform_map[process]() 
+        self.transforms = transform_map[process]()
         # if set True users can use general transform in both preprocess or postprocess
         if concat_general:
             self.transforms.update(transform_map['general']())
@@ -27,6 +29,7 @@ class BaseTransforms(object):
     def _get_general(self):
         raise NotImplementedError
 
+@singleton
 class TensorflowTransforms(BaseTransforms):
 
     def _get_preprocess(self):
@@ -99,6 +102,7 @@ class TensorflowTransforms(BaseTransforms):
         general.update(TENSORFLOWTRANSFORMS["general"])
         return general
  
+@singleton
 class MXNetTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {
@@ -140,6 +144,7 @@ class MXNetTransforms(BaseTransforms):
         general.update(MXNETTRANSFORMS["general"])
         return general
 
+@singleton
 class PyTorchTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {
@@ -184,7 +189,7 @@ class PyTorchTransforms(BaseTransforms):
         general.update(PYTORCHTRANSFORMS["general"])
         return general
 
-framework_transforms = {"tensorflow":TensorflowTransforms, 
+framework_transforms = {"tensorflow":TensorflowTransforms,
                         "mxnet":MXNetTransforms,
                         "pytorch":PyTorchTransforms,}
 
@@ -193,7 +198,7 @@ class TRANSFORMS(object):
     def __init__(self, framework, process):
         assert framework in ("tensorflow", "pytorch", "mxnet"), "framework support tensorflow pytorch mxnet"
         assert process in ("preprocess", "postprocess", "general"), "process support preprocess postprocess, general"
-        self.transforms = framework_transforms[framework](process).transforms 
+        self.transforms = framework_transforms[framework](process).transforms
 
     def __getitem__(self, transform_type):
         assert transform_type in self.transforms.keys(), "transform support {}".format(self.transforms.keys())

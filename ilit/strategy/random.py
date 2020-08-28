@@ -59,7 +59,7 @@ class RandomTuneStrategy(TuneStrategy):
         """
         # generate tuning space according to user chosen tuning strategy
 
-        np.random.seed(self.cfg.random_seed)
+        np.random.seed(self.cfg.tuning.random_seed)
         while True:
             op_cfgs = {}
             op_cfgs['calib_iteration'] = int(np.random.choice(self.calib_iter))

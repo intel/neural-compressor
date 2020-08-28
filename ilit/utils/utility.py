@@ -27,6 +27,14 @@ def caller_obj(obj_name):
         if obj_name in f[0].f_locals:
             return f[0].f_locals[obj_name]
 
+def singleton(cls):
+    instances = {}
+    def _singleton(*args, **kw):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kw)
+        return instances[cls]
+    return _singleton
+
 def get_func_from_config(func_dict, cfg, compose=True):
     func_list = []
     for func_name, func_value in OrderedDict(cfg).items():

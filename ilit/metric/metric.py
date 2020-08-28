@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from ilit.utils.utility import LazyImport
+from ilit.utils.utility import LazyImport, singleton
 from ..utils import logger
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
@@ -9,6 +9,7 @@ torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 
+@singleton
 class TensorflowMetrics(object):
     def __init__(self):
         self.metrics = {
@@ -49,6 +50,7 @@ class TensorflowMetrics(object):
         }
         self.metrics.update(TENSORFLOWMETRICS)
 
+@singleton
 class PyTorchMetrics(object):
     def __init__(self):
         self.metrics = {
@@ -79,6 +81,7 @@ class PyTorchMetrics(object):
         }
         self.metrics.update(PYTORCHMETRICS)
 
+@singleton
 class MXNetMetrics(object):
     def __init__(self):
         self.metrics = {

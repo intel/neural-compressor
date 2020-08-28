@@ -3,6 +3,7 @@ from ..utils.utility import LazyImport, AverageMeter
 import copy
 from collections import OrderedDict
 from ..utils import logger
+import random
 
 torch = LazyImport('torch')
 
@@ -35,6 +36,11 @@ class PyTorchAdaptor(Adaptor):
             nnqat.Conv2d: nnq.Conv2d,
         }
         """
+
+        # set torch random seed
+        random_seed = framework_specific_info['random_seed']
+        random.seed(random_seed)
+        torch.manual_seed(random_seed)
 
         if framework_specific_info['approach'] == "post_training_static_quant":
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING

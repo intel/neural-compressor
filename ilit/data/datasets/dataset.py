@@ -1,11 +1,12 @@
 from abc import abstractmethod
 import functools
 
-from ilit.utils.utility import LazyImport
+from ilit.utils.utility import LazyImport, singleton
 torchvision = LazyImport('torchvision')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 
+@singleton
 class TensorflowDatasets(object):
     def __init__(self):
         self.datasets = {
@@ -22,6 +23,7 @@ class TensorflowDatasets(object):
         }
         self.datasets.update(TENSORFLOWDATASETS)
 
+@singleton
 class PyTorchDatasets(object):
     def __init__(self):
         self.datasets = {
@@ -63,6 +65,7 @@ class PyTorchDatasets(object):
         }
         self.datasets.update(PYTORCHDATASETS)
 
+@singleton
 class MXNetDatasets(object):
     def __init__(self):
         self.datasets = {
