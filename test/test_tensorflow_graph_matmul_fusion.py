@@ -95,7 +95,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 float_graph_def, 'MatMul', False, 'MatMul', 'cpu', True)
             output_graph = worker.apply_the_transform()
 
-            found_quantized_matmul = True
+            found_quantized_matmul = False
             for i in output_graph.node:
                 if i.op == 'QuantizeV2' and i.name == 'MatMul_eightbit_quantize_Placeholder' and i.attr["T"].type == dtypes.quint8:
                     found_quantized_matmul = True
