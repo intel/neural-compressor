@@ -1,0 +1,19 @@
+framework:
+  - name: tensorflow                         # possible values are tensorflow, mxnet and pytorch
+  - inputs: 'import/style_input,import/content_input'
+  - outputs: 'import/transformer/expand/conv3/conv/Sigmoid'
+
+tuning:
+  accuracy_criterion:
+    - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
+  timeout: 0                                   # tuning timeout (seconds)
+  random_seed: 9527                            # random seed
+
+calibration:
+  dataloader:
+    batch_size: 2
+    dataset:
+      - type: "style_transfer"
+      - content_folder: "./content_images/" # NOTICE: config to your content images path
+      - style_folder: "./style_images/" # NOTICE: config to your style images path
+    transform:

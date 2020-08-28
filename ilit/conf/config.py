@@ -3,6 +3,7 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
+from ..utils import logger
 import re
 import copy
 import itertools
@@ -58,6 +59,10 @@ class DotDict(dict):
 def _valid_framework_field(key, scope, error):
     if scope['name'] == 'tensorflow':
         assert 'inputs' in scope and 'outputs' in scope
+
+def _valid_type_field(key, scope, error):
+    if scope['type'] == 'style_transfer':
+        assert 'content_folder' in scope and 'style_folder' in scope
 
 def _valid_accuracy_field(key, scope, error):
     assert bool('relative' in scope['accuracy_criterion']) != bool('absolute' in scope['accuracy_criterion'])
@@ -117,8 +122,11 @@ transform_schema = Schema({
 dataloader_schema = Schema({
     Optional('batch_size', default=1): And(int, lambda s: s > 0),
     Optional('dataset', default=None): {
-        Optional('type', default=None): str,
-        Optional('root', default=None): str
+        Hook('type', handler=_valid_type_field): object,
+        Optional('type'): str,
+        Optional('root'): str,
+        Optional('content_folder'): str,
+        Optional('style_folder'): str,
     },
     Optional('transform', default=None): transform_schema
 })
@@ -210,6 +218,7 @@ class Conf(object):
                 cfg = yaml.load(content, yaml.Loader)
                 return schema.validate(cfg)
         except Exception as e:
+            logger.error("{}".format(e)) 
             raise RuntimeError(
                 "The yaml file format is not correct. Please refer to document."
             )
