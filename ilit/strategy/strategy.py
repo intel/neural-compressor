@@ -126,8 +126,7 @@ class TuneStrategy(object):
             for cfg in cfg_list:
                 if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
                     new_list.append(cfg)
-            if len(new_list) > 0:
-                self.opwise_quant_cfgs[key] = new_list
+            self.opwise_quant_cfgs[key] = new_list
 
         self.evaluated_cfgs = []
 

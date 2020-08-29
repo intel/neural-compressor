@@ -1,6 +1,7 @@
 from .strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
 import itertools
+import copy
 
 
 @strategy_registry
@@ -63,6 +64,9 @@ class ExhaustiveTuneStrategy(TuneStrategy):
             op_lists = []
             op_cfg_lists = []
             for op, configs in self.opwise_quant_cfgs.items():
+                if len(configs) == 0:
+                    configs = copy.deepcopy(
+                                self.opwise_tune_cfgs[op])
                 op_lists.append(op)
                 op_cfg_lists.append(configs)
             for cfgs in itertools.product(*op_cfg_lists):
