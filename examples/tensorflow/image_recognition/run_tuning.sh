@@ -112,6 +112,16 @@ function run_tuning {
         input="Placeholder"
         output="densenet121/predictions/Reshape_1"
         yaml=densenet121.yaml
+    elif [ "${topology}" = "densenet161" ]; then
+        extra_cmd='  --resize_method vgg --scale 0.017 --label_adjust'
+        input="Placeholder"
+        output="densenet161/predictions/Reshape_1"
+        yaml=densenet161.yaml
+    elif [ "${topology}" = "densenet169" ]; then
+        extra_cmd='  --resize_method vgg --scale 0.017 --label_adjust'
+        input="Placeholder"
+        output="densenet169/predictions/Reshape_1"
+        yaml=densenet169.yaml
     fi
 
     python main.py \

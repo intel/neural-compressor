@@ -1,0 +1,36 @@
+framework:
+  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    inputs: Placeholder
+    outputs: densenet161/predictions/Reshape_1
+
+calibration:                                         
+  - iterations: 5, 10
+    algorithm:
+        activation: minmax
+quantization:
+    weight:
+      - granularity: per_channel
+
+tuning:
+    metric:  
+      - topk: 1
+    accuracy_criterion:
+      - relative: 0.01                             # the tuning target of accuracy loss percentage: 1%
+    timeout: 0                                      # tuning timeout (seconds)
+    random_seed: 9527                               # random seed          
+    ops: {
+           'densenet161/MaxPool2D/MaxPool': {
+             'activation':  {'dtype': ['fp32']}
+           },
+           'densenet161/transition_block1/AvgPool2D/AvgPool': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'densenet161/transition_block2/AvgPool2D/AvgPool': {
+             'activation':  {'dtype': ['fp32']},
+           },
+           'densenet161/transition_block3/AvgPool2D/AvgPool': {
+             'activation':  {'dtype': ['fp32']},
+           }
+         }
+             
+

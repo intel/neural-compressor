@@ -65,6 +65,13 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
 > *Note*: 
 > The model name with `*` means it comes from [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), please follow the step [Prepare pre-trained model](#3-prepare-pre-trained-model) to get the pb files.
+> The densenet-series comes from [tensorflow-densenet](https://github.com/pudae/tensorflow-densenet), please also follow the step [Prepare pre-trained model](#3-prepare-pre-trained-model) to get the pb files or use openvino download tools.
+   ```shell
+   git clone https://github.com/openvinotoolkit/open_model_zoo.git
+   cd open_model_zoo/tools/downloader
+   pip install -r requirements.in
+   python downloader.py --name densenet-{121|161|169}-tf -o /PATH/TO/MODEL
+   ```
 
 ### 1. ResNet50 V1.0
 
@@ -216,12 +223,28 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
           --input_model=/PATH/TO/frozen_resnetv2_152.pb --output_model=./ilit_resnetv2_152.pb
   ```
 
-### 12. Densenet-121
+### 16. Densenet-121
 
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --topology=densenet121 --dataset_location=/PATH/TO/imagenet/ \
           --input_model=/PATH/TO/densenet121.pb --output_model=./ilit_densenet121
+  ```
+
+### 17. Densenet-161
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --topology=densenet161 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/densenet161.pb --output_model=./ilit_densenet161
+  ```
+
+### 18. Densenet-169
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --topology=densenet169 --dataset_location=/PATH/TO/imagenet/ \
+          --input_model=/PATH/TO/densenet169.pb --output_model=./ilit_densenet169
   ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
