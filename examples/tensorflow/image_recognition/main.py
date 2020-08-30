@@ -351,6 +351,9 @@ class eval_classifier_optimized_graph:
         predictions = infer_sess.run(output_tensor,
                                      {input_tensor: np_images})
         elapsed_time = time.time() - start_time
+        
+        if len(predictions.shape) > 2:
+            predictions = predictions.reshape(predictions.shape[0], -1)
 
         with tf.Graph().as_default() as accu_graph:
           accuracy1 = tf.reduce_sum(
