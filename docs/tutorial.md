@@ -3,19 +3,40 @@ Tutorial
 
 This tutorial will introduce step by step instructions on how to integrate models with Intel® Low Precision Optimization Tool.
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Low Precision Optimization Tool supports three usages:
 
-1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
+1. Fully yaml configuration: User specifies all the info through yaml, including dataloaders used in calibration and evaluation
+   phases and quantization tuning settings.
 
-2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
+   For this usage, only model parameter is mandotory.
+
+2. Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code.
+   The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
+   __getitem__ methods and invoke dataloader() with dataset as input parameter before calling tune().
+
+   After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader".
+   The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
+   in the configuration file. The evaluation tells the tuner whether the quantized model meets
+   the accuracy criteria. If not, the tuner starts a new calibration and tuning flow.
+
+   For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
+
+3. Partial yaml configuration: User specifies dataloaders used in calibration phase by code.
+   This usage is quite similar with b), just user specifies a custom "eval_func" which encapsulates
+   the evaluation dataset by itself.
+   The calibrated and quantized model is evaluated with "eval_func". The "eval_func" tells the
+   tuner whether the quantized model meets the accuracy criteria. If not, the Tuner starts a new
+   calibration and tuning flow.
+
+   For this usage, model, q_dataloader and eval_func parameters are mandotory
 
 # General Steps
 
 ### 1. Usage Choose
 
-If metric used by user model is supported by Intel® Low Precision Optimization Tool, user could choose the first usage.
-
-If metric used by user model is NOT supported by Intel® Low Precision Optimization Tool, user need choose the second usage.
+User need choose corresponding usage according to code. For example, if user wants to minmal code changes, then the first usage
+is recommended. If user wants to leverage existing evaluation function, then the third usage is recommended. If user has no existing
+evaluation function and the metric used is supported by ilit, then the second usage is recommended.
 
 ### 2. Write yaml config file
 
@@ -85,28 +106,29 @@ tuning:
    c. If user choose the first use case, that is using Intel® Low Precision Optimization Tool build-in metrics. User need ensure metric built in Intel® Low Precision Optimization Tool could take output of model and label of eval_dataloader as input.
 
 
-# Detail Examples
+# Features
+| Features | Link |
+| ------ | ------ |
+| Unified dataloader and metric |  [dataloader_metric.md](./dataloader_metric.md)|
+| QAT for PyTorch (Experimental) | [qat_calibration_mode.md](./qat_calibration_mode.md)| 
+| BF16 of TensorFlow | [bf16_convert.md](./bf16_convert.md)| 
 
-### MxNet
+ # Examples
+| Examples Tutorials |
+| ------ | 
+|[Hello World examples for quick start](../examples/helloworld/README.md)| 
+|[PyTorch imagenet recognition/imagenet](../examples/pytorch/image_recognition/imagenet/README.md)| 
+|[PyTorch imagenet recognition/peleenet](../examples/pytorch/image_recognition/peleenet/README.md)|
+|[PyTorch imagenet recognition/resnest50](../examples/pytorch/image_recognition/resnest/README.md)|
+|[PyTorch imagenet recognition/se_resnext50](../examples/pytorch/image_recognition/se_resnext/README.md)|
+|[PyTorch language translation](../examples/pytorch/language_translation/README.md)| 
+|[PyTorch object detection](../examples/pytorch/object_detection/yolo_v3/README.md)|
+|[PyTorch recommendation](../examples/pytorch/recommendation/README.md)| 
+|[TensorFlow Image Recognition](../examples/tensorflow/image_recognition/README.md)|
+|[TensorFlow object detection](../examples/tensorflow/object_detection/README.md)|
+|[TensorFlow recommendation](../examples/tensorflow/recommendation/wide_deep_large_ds/WND_README.md)|
+|[TensorFlow style_transfer](../examples/tensorflow/style_transfer/README.md)|
+|[MxNet Image Recognition](../examples/mxnet/image_recognition/README.md)|
+|[Mxnet language translation](../examples/mxnet/language_translation/README.md)|
+|[MxNet object detection](../examples/mxnet/object_detection/README.md)|
 
-* [NLP](../examples/mxnet/language_translation/README.md), including Bert MRPC and Bert Squad tasks.
-
-* [Image Recognition](../examples/mxnet/image_recognition/README.md), including ResNet50 V1, ResNet18, MobileNet V1, ResNet18, SqueezeNet V1 examples.
-
-* [Object Detection](../examples/mxnet/object_detection/README.md), including SSD-ResNet50, SSD-MobileNet V1 examples.
-
-### PyTorch
-
-* [Recommendation](../examples/pytorch/recommendation/README.md), including DLRM.
-
-* [NLP](../examples/pytorch/language_translation/README.md) Including all 10 BERT task exampls.
-
-* [Image Recognition](../examples/pytorch/image_recognition/resnet/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
-
-* [Image Recognition QAT](../examples/pytorch/image_recognition/resnet_qat/README.md) Including ResNet18, ResNet50 and ResNet101 examples.
-
-### TensorFlow
-
-* [Image Recognition](../examples/tensorflow/image_recognition/README.md), including ResNet50 V1, ResNet50 V1.5, ResNet101, MobileNet V1, MobileNet V2, Inception V1, Inception V2, Inception V3, Inception V4, Inception ResNet V2 examples.
-
-* [Object Detection](../examples/tensorflow/object_detection/README.md), including SSD ResNet50 example.

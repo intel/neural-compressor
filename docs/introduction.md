@@ -22,15 +22,38 @@ Intel® Low Precision Optimization Tool is an open source python library to help
 
    The tuning config and model-specific information are controlled by user config yaml file. As for the format of yaml file, please refer to [template.yaml](../examples/template.yaml)
 
-   Intel® Low Precision Optimization Tool supports two usages:
+   Intel® Low Precision Optimization Tool supports three usages:
 
-   a) User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and accuracy metrics in tuning.metric field of the yaml config file.
+   a) Fully yaml configuration: User specifies all the info through yaml, including dataloaders used in calibration and evaluation
+      phases and quantization tuning settings.
+   
+      For this usage, only model parameter is mandotory.
+   
+   b) Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code.
+      The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
+      __getitem__ methods and invoke dataloader() with dataset as input parameter before calling tune().
+   
+      After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader".
+      The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
+      in the configuration file. The evaluation tells the tuner whether the quantized model meets
+      the accuracy criteria. If not, the tuner starts a new calibration and tuning flow.
+   
+      For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
+   
+   c) Partial yaml configuration: User specifies dataloaders used in calibration phase by code.
+      This usage is quite similar with b), just user specifies a custom "eval_func" which encapsulates
+      the evaluation dataset by itself.
+      The calibrated and quantized model is evaluated with "eval_func". The "eval_func" tells the
+      tuner whether the quantized model meets the accuracy criteria. If not, the Tuner starts a new
+      calibration and tuning flow.
+   
+      For this usage, model, q_dataloader and eval_func parameters are mandotory
 
-   b) User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and accuracy metrics by itself.
+   The first usage is designed for minimal code changes when integrating with Intel® Low Precision Optimization Tool. All calibration and evaluation process is constructed by ilit upon yaml configuration.
 
-   The first usage is designed for seamless enablement of DL model tuning with Intel® Low Precision Optimization Tool, leveraging the pre-defined accuracy metrics supported by this tool. We expect this is the most common usage. Now it works well for most image classification models and we are improving the tool to support more.
+   The second usage is designed for concise yaml configuration and constructing calibration and evaluation dataloaders by code. ilit provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or __getitem__ methods to tuner.dataloader() function.
 
-   The second usage is designed for ease of tuning enablement for models with custom metric evaluation or metrics not supported by Intel® Low Precision Optimization Tool yet. Currently this usage model works for object detection and NLP networks.
+   The third usage is designed for ease of tuning enablement for models with custom metric evaluation or metrics not supported by Intel® Low Precision Optimization Tool yet. Currently this usage model works for object detection and NLP networks.
 
 2. Framework Adaptation API
 
@@ -59,6 +82,14 @@ Bayesian optimization is a sequential design strategy for global optimization of
 ### MSE Strategy
 
 This strategy is very similar to the basic strategy. It needs to get the tensors for each Operator of raw FP32 models and the quantized model based on best model-wise tuning configuration. And then calculate the MSE (Mean Squared Error) for each operator, sort those operators according to the MSE value, finally do the op-wise fallback in this order.
+
+### Random Strategy
+
+This strategy is used to randomly choose tuning configuration from the tuning space.
+
+### Exhaustive Strategy
+
+This strategy is used to sequentially traverse all the possible tuning configurations in tuning space.
 
 # Objectives
 

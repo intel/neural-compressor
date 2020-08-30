@@ -3,6 +3,7 @@ Intel® Low Precision Optimization Tool
 
 Intel® Low Precision Optimization Tool is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
 
+
 > **WARNING**
 >
 > GPU support is under development.
@@ -16,13 +17,19 @@ Currently supported tuning strategies are:
 * [Basic](docs/introduction.md#basic-strategy)
 * [Bayesian](docs/introduction.md#bayesian-strategy)
 * [MSE](docs/introduction.md#mse-strategy)
+* [Exhaustive](docs/introduction.md#exhaustive-strategy)
+* [Random](docs/introduction.md#random-strategy)
 
 
-# Documentation
+# Introduction 
 
-* [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool infrastructure, design philosophy, supported functionality, details of tuning strategy implementations and tuning result on popular models.
-* [Tutorial](docs/tutorial.md) provides
-comprehensive step-by-step instructions of how to enable Intel® Low Precision Optimization Tool on sample models.
+  [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool infrastructure, design philosophy, supported functionality, details of tuning strategy implementations and tuning result on popular models.
+
+# Tutorials
+* [Hello World](examples/helloworld/README.md) demonstrates the simple steps to utilize Intel® Low Precision Optimization Tool for quanitzation, which can help you quick start with the tool.
+* [Tutorials](docs/README.md) provides
+comprehensive instructions of how to utilize diffrennt features of Intel® Low Precision Optimization Tool.
+* [Examples](examples) is a tuning zoo to demonstrate the usage of Intel® Low Precision Optimization Tool in TensorFlow, PyTorch and MxNet for industry models of diffrent categories.  
 
 # Install from source 
 
@@ -57,21 +64,59 @@ Intel® Low Precision Optimization Tool requires to install Intel optimized fram
 
 The followings are the examples integrated with Intel® Low Precision Optimization Tool for auto tuning.
 
-| Model                                                               | Framework  | Model                                                              | Framework | Model                                                                 | Framework  |
-|---------------------------------------------------------------------|------------|--------------------------------------------------------------------|-----------|----------------------------------------------------------------------|------------|
-| [ResNet50 V1](examples/mxnet/image_recognition/README.md)           | MXNet      | [BERT-Large RTE](examples/pytorch/language_translation/README.md)  | PyTorch   | [ResNet18](examples/pytorch/image_recognition/imagenet/README.md)              | PyTorch    |
-| [MobileNet V1](examples/mxnet/image_recognition/README.md)          | MXNet      | [BERT-Large QNLI](examples/pytorch/language_translation/README.md) | PyTorch   | [ResNet50 V1](examples/tensorflow/image_recognition/README.md)        | TensorFlow |
-| [MobileNet V2](examples/mxnet/image_recognition/README.md)          | MXNet      | [BERT-Large CoLA](examples/pytorch/language_translation/README.md) | PyTorch   | [ResNet50 V1.5](examples/tensorflow/image_recognition/README.md)      | TensorFlow |
-| [SSD-ResNet50](examples/mxnet/object_detection/README.md)           | MXNet      | [BERT-Base SST-2](examples/pytorch/language_translation/README.md) | PyTorch   | [ResNet101](examples/tensorflow/image_recognition/README.md)          | TensorFlow |
-| [SqueezeNet V1](examples/mxnet/image_recognition/README.md)         | MXNet      | [BERT-Base RTE](examples/pytorch/language_translation/README.md)   | PyTorch   | [Inception V1](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
-| [ResNet18](examples/mxnet/image_recognition/README.md)              | MXNet      | [BERT-Base STS-B](examples/pytorch/language_translation/README.md) | PyTorch   | [Inception V2](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
-| [Inception V3](examples/mxnet/image_recognition/README.md)          | MXNet      | [BERT-Base CoLA](examples/pytorch/language_translation/README.md)  | PyTorch   | [Inception V3](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
-| [DLRM](examples/pytorch/recommendation/README.md)                   | PyTorch    | [BERT-Base MRPC](examples/pytorch/language_translation/README.md)  | PyTorch   | [Inception V4](examples/tensorflow/image_recognition/README.md)       | TensorFlow |
-| [BERT-Large MRPC](examples/pytorch/language_translation/README.md)  | PyTorch    | [ResNext101_32x8d](examples/pytorch/image_recognition/imagenet/README.md)          | PyTorch   | [Inception ResNet V2](examples/tensorflow/image_recognition/README.md)| TensorFlow |
-| [BERT-Large SQUAD](examples/pytorch/language_translation/README.md) | PyTorch    | [ResNet50 V1.5](examples/pytorch/image_recognition/imagenet/README.md)      | PyTorch   | [SSD ResNet50 V1](examples/tensorflow/object_detection/README.md)     | TensorFlow |
-| [ResNet50 V1.5 QAT](examples/pytorch/image_recognition/imagenet_qat/README.md)    |PyTorch    | [Inception V3](examples/pytorch/image_recognition/imagenet/README.md) | PyTorch | [Efficientnet_b0](examples/pytorch/image_recognition/efficientnet/README.md)  | PyTorch   |
-[Mobilenet_v3](examples/pytorch/image_recognition/efficientnet/README.md) | PyTorch | [Mobilenet_v2](examples/pytorch/image_recognition/imagenet/README.md) | PyTorch | [Peleenet](examples/pytorch/image_recognition/peleenet/README.md) | PyTorch |
-[ResNest50](examples/pytorch/image_recognition/resnest/README.md) | PyTorch | [SE_ResNext50_32x4d](examples/pytorch/image_recognition/se_resnext/README.md) | PyTorch |
+| TensorFlow Model                                                    | Category  |
+|---------------------------------------------------------------------|------------|
+|[ResNet50 V1](examples/tensorflow/image_recognition/README.md)        | Image Recognition |
+|[ResNet50 V1.5](examples/tensorflow/image_recognition/README.md)      | Image Recognition |
+|[ResNet101](examples/tensorflow/image_recognition/README.md)          | Image Recognition |
+|[Inception V1](examples/tensorflow/image_recognition/README.md)       | Image Recognition |
+|[Inception V2](examples/tensorflow/image_recognition/README.md)       | Image Recognition |
+|[Inception V3](examples/tensorflow/image_recognition/README.md)       | Image Recognition |
+|[Inception V4](examples/tensorflow/image_recognition/README.md)       | Image Recognition |
+|[ResNetV2_50](examples/tensorflow/image_recognition/README.md)        | Image Recognition |
+|[ResNetV2_101](examples/tensorflow/image_recognition/README.md)       | Image Recognition |
+|[ResNetV2_152](examples/tensorflow/image_recognition/README.md)       | Image Recognition |
+|[Inception ResNet V2](examples/tensorflow/image_recognition/README.md)| Image Recognition |
+|[SSD ResNet50 V1](examples/tensorflow/object_detection/README.md)     | Object Detection  |
+|[Wide & Deep](examples/tensorflow/recommendation/wide_deep_large_ds/WND_README.md) | Recommendation |
+|[VGG16](examples/tensorflow/image_recognition/README.md)              | Image Recognition |
+|[VGG19](examples/tensorflow/image_recognition/README.md)              | Image Recognition |
+|[Style_transfer](examples/tensorflow/style_transfer/README.md)        | Style Transfer    |
+
+
+| PyTorch Model                                                               | Category  |
+|---------------------------------------------------------------------|------------|
+|[BERT-Large RTE](examples/pytorch/language_translation/README.md)  | Language Translation   |
+|[BERT-Large QNLI](examples/pytorch/language_translation/README.md) | Language Translation   |
+|[BERT-Large CoLA](examples/pytorch/language_translation/README.md) | Language Translation   |
+|[BERT-Base SST-2](examples/pytorch/language_translation/README.md) | Language Translation   |
+|[BERT-Base RTE](examples/pytorch/language_translation/README.md)   | Language Translation   |
+|[BERT-Base STS-B](examples/pytorch/language_translation/README.md) | Language Translation   |
+|[BERT-Base CoLA](examples/pytorch/language_translation/README.md)  | Language Translation   | 
+|[BERT-Base MRPC](examples/pytorch/language_translation/README.md)  | Language Translation   |
+|[DLRM](examples/pytorch/recommendation/README.md)                  | Recommendation   | 
+|[BERT-Large MRPC](examples/pytorch/language_translation/README.md) | Language Translation   |
+|[ResNext101_32x8d](examples/pytorch/image_recognition/imagenet/README.md)          | Image Recognition   |
+|[BERT-Large SQUAD](examples/pytorch/language_translation/README.md)                | Language Translation   | 
+|[ResNet50 V1.5](examples/pytorch/image_recognition/imagenet/README.md)             | Image Recognition   |
+|[ResNet18](examples/pytorch/image_recognition/imagenet/README.md)             | Image Recognition   |
+|[Inception V3](examples/pytorch/image_recognition/imagenet/README.md)              | Image Recognition   |
+|[YOLO V3](examples/pytorch/object_detection/yolo_v3/README.md)                     | Object Detection   |
+|[Peleenet](examples/pytorch/image_recognition/peleenet/README.md)                  | Image Recognition   |
+|[ResNest50](examples/pytorch/image_recognition/resnest/README.md)                  | Image Recognition   | 
+|[SE_ResNext50_32x4d](examples/pytorch/image_recognition/se_resnext/README.md)      | Image Recognition   |
+|[ResNet50 V1.5 QAT](examples/pytorch/image_recognition/imagenet_qat/README.md)     | Image Recognition   | 
+|[ResNet18 QAT](examples/pytorch/image_recognition/imagenet_qat/README.md)          | Image Recognition   |
+
+| MxNet Model                                                               | Category  |
+|---------------------------------------------------------------------|------------|
+|[ResNet50 V1](examples/mxnet/image_recognition/README.md)           | Image Recognition      |
+|[MobileNet V1](examples/mxnet/image_recognition/README.md)          | Image Recognition      |
+|[MobileNet V2](examples/mxnet/image_recognition/README.md)          | Image Recognition      |
+|[SSD-ResNet50](examples/mxnet/object_detection/README.md)           | Object Detection       |
+|[SqueezeNet V1](examples/mxnet/image_recognition/README.md)         | Image Recognition      |
+|[ResNet18](examples/mxnet/image_recognition/README.md)              | Image Recognition      |
+|[Inception V3](examples/mxnet/image_recognition/README.md)          | Image Recognition      |
 
 
 # Known Issues
