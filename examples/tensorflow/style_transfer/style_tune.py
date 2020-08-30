@@ -25,7 +25,6 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
-import tf_slim as slim
 
 flags = tf.flags
 flags.DEFINE_string('style_images_paths', None, 'Paths to the style images'
