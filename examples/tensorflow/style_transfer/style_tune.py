@@ -204,7 +204,9 @@ def style_transfer(sess, dataloader, precision='fp32'):
                                                       '{}_{}.jpg'.format(precision, len(time_list))))
       warm_up = 2
       throughput = (len(time_list) - warm_up)/ np.array(time_list[warm_up:]).sum()
-      print("{} realtime throughput is {}".format(precision, throughput))
+      print('Batch size = {}'.format(1)) 
+      print('Latency: {:.3f} ms'.format(np.array(time_list[warm_up:]).mean() * 1000)) 
+      print('Throughput: {:.3f} images/sec'.format(throughput)) 
 
 def eval_func(model):
     return 1.
