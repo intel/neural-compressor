@@ -5,10 +5,7 @@ Deep Learning has been encountering larger and larger datasets which are so memo
 
 As to evaluate the performence of a specific model, we should have a general metric to measure the perfomance of different model.
 
-Intel® Low Precision Optimization Tool has implemented an internal DataLoader and Metric, it have several advantages:
-  a. an iterator for iLit tuning dynamic iterations across frameworks;
-  b. dynamic batch size tuning
-  c. help iLit to have an end to end tuning capability by easy configuration
+With the importance of DataLoader and Metric, different framework have their own DataLoader and metric module, as for Intel® Low Precision Optimization Tool, it need to calibrate the inputs/outputs of each layer of the model and get the performance and accuracy, framework specific DataLoader and Metric has different features and API that will make it hard to use them same way in the tool. Another request is, the tool aslo treat batch size as a tuning parameter, that means the tool can dynamically change the batch size to get accuracy target. The third reason is for user easy usage, an unified DataLoader and Metric API can make it easy to config a dataloader in yaml file without any code modification.Considering about all these advantages the tool has implemented an internal DataLoader and Metric.
 
 # DataLoader & Metric internal design logic
 
