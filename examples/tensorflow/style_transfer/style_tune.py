@@ -25,6 +25,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
+import ilit
 
 flags = tf.flags
 flags.DEFINE_string('style_images_paths', None, 'Paths to the style images'
@@ -146,15 +147,15 @@ def main(args=None):
           print("not supported model format")
           exit(-1)
 
-      with tf.Graph().as_default() as graph:
-          tf.import_graph_def(frozen_graph)
-          import ilit
-          tuner = ilit.Tuner(FLAGS.config)
-          quantized_model = tuner.tune(graph, eval_func=eval_func)
+      if FLAGS.precision == 'fp32':
+          with tf.Graph().as_default() as graph:
+              tf.import_graph_def(frozen_graph)
+              tuner = ilit.Tuner(FLAGS.config)
+              quantized_model = tuner.tune(graph, eval_func=eval_func)
 
-          # save the frozen model for deployment
-          with tf.io.gfile.GFile(FLAGS.output_model, "wb") as f:
-              f.write(quantized_model.as_graph_def().SerializeToString())
+              # save the frozen model for deployment
+              with tf.io.gfile.GFile(FLAGS.output_model, "wb") as f:
+                  f.write(quantized_model.as_graph_def().SerializeToString())
 
   # validate the quantized model here
   with tf.Graph().as_default(), tf.Session() as sess:
@@ -164,11 +165,7 @@ def main(args=None):
                                                                    crop_ratio=0.2,
                                                                    resize_shape=(256, 256))
       dataloader = ilit.data.DataLoader('tensorflow', dataset=dataset)
-      # # test your fp32 graph and compare with quantized one
-      # tf.import_graph_def(frozen_graph)
-      # style_transfer(sess, dataloader, 'fp32')
-
-      tf.import_graph_def(quantized_model.as_graph_def())
+      tf.import_graph_def(frozen_graph)
       style_transfer(sess, dataloader, 'quantized')
 
 def add_import_to_name(sess, name, try_cnt=2):
