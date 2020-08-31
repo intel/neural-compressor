@@ -53,7 +53,7 @@ function run_benchmark {
             --style_images_paths "${style_images}" \
             --content_images_paths "${content_images}" \
             --config "./conf.yaml" \
-            --precision "int8" \
+            --tune=False \
             --output_model "${output_model}"
 
 }

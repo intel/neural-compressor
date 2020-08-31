@@ -1,3 +1,2 @@
-intel_tensorflow==2.2.0
 scikit-image
 Pillow

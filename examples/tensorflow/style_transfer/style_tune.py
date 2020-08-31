@@ -40,6 +40,8 @@ flags.DEFINE_string('input_model', None, 'Output directory.')
 
 flags.DEFINE_string('precision', 'fp32', 'precision')
 
+flags.DEFINE_bool('tune', False, 'if use tune')
+
 flags.DEFINE_string('config', None, 'yaml configuration for tuning')
 
 FLAGS = flags.FLAGS
@@ -124,7 +126,6 @@ def main(args=None):
           sess.run(tf.global_variables_initializer())
           saver.restore(sess, FLAGS.input_model)
           graph_def = sess.graph.as_graph_def()
-          _parse_ckpt_bn_input(graph_def)
 
           replace_style = 'style_image_processing/ResizeBilinear_2'
           replace_content = 'batch_processing/batch'
@@ -136,6 +137,8 @@ def main(args=None):
                   if replace_style == input_name:
                       node.input[idx] = 'style_input'
 
+          if FLAGS.tune:
+              _parse_ckpt_bn_input(graph_def)
           output_name = 'transformer/expand/conv3/conv/Sigmoid'
           frozen_graph = tf.graph_util.convert_variables_to_constants(sess, graph_def, [output_name])
       # use frozen pb instead 
@@ -147,7 +150,7 @@ def main(args=None):
           print("not supported model format")
           exit(-1)
 
-      if FLAGS.precision == 'fp32':
+      if FLAGS.tune:
           with tf.Graph().as_default() as graph:
               tf.import_graph_def(frozen_graph)
               tuner = ilit.Tuner(FLAGS.config)
@@ -156,6 +159,8 @@ def main(args=None):
               # save the frozen model for deployment
               with tf.io.gfile.GFile(FLAGS.output_model, "wb") as f:
                   f.write(quantized_model.as_graph_def().SerializeToString())
+
+              frozen_graph= quantized_model.as_graph_def()
 
   # validate the quantized model here
   with tf.Graph().as_default(), tf.Session() as sess:
@@ -166,7 +171,7 @@ def main(args=None):
                                                                    resize_shape=(256, 256))
       dataloader = ilit.data.DataLoader('tensorflow', dataset=dataset)
       tf.import_graph_def(frozen_graph)
-      style_transfer(sess, dataloader, 'quantized')
+      style_transfer(sess, dataloader, FLAGS.precision)
 
 def add_import_to_name(sess, name, try_cnt=2):
     for i in range(0, try_cnt):
