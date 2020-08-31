@@ -352,6 +352,7 @@ class eval_classifier_optimized_graph:
                                      {input_tensor: np_images})
         elapsed_time = time.time() - start_time
         
+        # DenseNet output dim reshape (4 -> 2) for accuracy test
         if len(predictions.shape) > 2:
             predictions = predictions.reshape(predictions.shape[0], -1)
 
