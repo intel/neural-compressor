@@ -26,6 +26,7 @@ import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
 import ilit
+from ilit.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
 flags.DEFINE_string('style_images_paths', None, 'Paths to the style images'
@@ -77,39 +78,6 @@ def image_style_transfer(sess, content_img_path, style_img_path):
     # saves stylized image.
     save_image(stylized_image_res, os.path.join(FLAGS.output_dir, 'stylized_image.jpg'))
 
-def _parse_ckpt_bn_input(graph_def):
-    """parse ckpt batch norm inputs to match correct moving mean and variance
-    Args:
-        graph_def (graph_def): original graph_def
-    Returns:
-        graph_def: well linked graph_def 
-    """
-    for node in graph_def.node:
-        if node.op == 'FusedBatchNorm':
-            moving_mean_op_name = node.input[3]
-            moving_var_op_name = node.input[4]
-            moving_mean_op = _get_nodes_from_name(moving_mean_op_name, graph_def)[0]
-            moving_var_op = _get_nodes_from_name(moving_var_op_name, graph_def)[0]
-
-            if moving_mean_op.op == 'Const':
-                name_part = moving_mean_op_name.rsplit('/', 1)[0]
-                real_moving_mean_op_name = name_part + '/moving_mean'
-                if len(_get_nodes_from_name(real_moving_mean_op_name, graph_def)) > 0:
-                    # replace the real moving mean op name
-                    node.input[3] = real_moving_mean_op_name
-
-            if moving_var_op.op == 'Const':
-                name_part = moving_var_op_name.rsplit('/', 1)[0]
-                real_moving_var_op_name = name_part + '/moving_variance'
-                if len(_get_nodes_from_name(real_moving_var_op_name, graph_def)) > 0:
-                    # replace the real moving mean op name
-                    node.input[4] = real_moving_var_op_name
-
-    return graph_def
-
-def _get_nodes_from_name(node_name, graph_def):
-    return [node for node in graph_def.node if node.name==node_name]
- 
 def main(args=None):
   tf.logging.set_verbosity(tf.logging.INFO)
   if not tf.gfile.Exists(FLAGS.output_dir):
