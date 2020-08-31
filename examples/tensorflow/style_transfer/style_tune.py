@@ -153,7 +153,7 @@ def main(args=None):
           quantized_model = tuner.tune(graph, eval_func=eval_func)
 
           # save the frozen model for deployment
-          with tf.io.gfile.GFile(os.path.join(FLAGS.output_model, "int8.pb"), "wb") as f:
+          with tf.io.gfile.GFile(FLAGS.output_model, "wb") as f:
               f.write(quantized_model.as_graph_def().SerializeToString())
 
   # validate the quantized model here
