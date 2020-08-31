@@ -34,18 +34,31 @@ class Tuner(object):
     def tune(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume_file=None):
         """The main entry point of automatic quantization tuning.
 
-           This interface works on all the DL frameworks that ilit supports and provides two usages:
-           a) Calibration and tuning with pre-defined evaluation metrics: User specifies fp32 "model",
-              calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader". The calibrated
-              and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
+           This interface works on all the DL frameworks that ilit supports and provides three usages:
+           a) Fully yaml configuration: User specifies all the info through yaml, including dataloaders used in calibration and evaluation
+              phases and quantization tuning settings.
+
+              For this usage, only model parameter is mandotory.
+
+           b) Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code. 
+              The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
+              __getitem__ methods and invoke dataloader() with dataset as input parameter before calling tune().
+
+              After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader". 
+              The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
               in the configuration file. The evaluation tells the tuner whether the quantized model meets
               the accuracy criteria. If not, the tuner starts a new calibration and tuning flow.
 
-           b) Calibration and tuning with custom evaluation: User specifies fp32 "model", calibration dataset
-              "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset by itself.
+              For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
+
+           c) Partial yaml configuration: User specifies dataloaders used in calibration phase by code. 
+              This usage is quite similar with b), just user specifies a custom "eval_func" which encapsulates
+              the evaluation dataset by itself.
               The calibrated and quantized model is evaluated with "eval_func". The "eval_func" tells the
               tuner whether the quantized model meets the accuracy criteria. If not, the Tuner starts a new
               calibration and tuning flow.
+
+              For this usage, model, q_dataloader and eval_func parameters are mandotory.
 
         Args:
             model (object):                        For Tensorflow model, it could be a path to frozen pb,loaded graph_def
@@ -57,7 +70,12 @@ class Tuner(object):
                                                    dataset containing label, or yield (input, _) for label-free calibration
                                                    dataset. The input could be a object, list, tuple or dict, depending on
                                                    user implementation, as well as it can be taken as model input.
-            q_func (function, optional):           Reserved for future use.
+            q_func (function, optional):           Training function for Quantization-Aware Training. It is optional and only
+                                                   takes effect when user choose "quantization_aware_training" approach in yaml.
+                                                   This function takes "model" as input parameter and executes entire training
+                                                   process with self contained training hyper-parameters. If this parameter
+                                                   specified, eval_dataloader parameter plus metric defined in yaml, or eval_func
+                                                   parameter should also be specified at same time.
             eval_dataloader (generator, optional): Data loader for evaluation. It is iterable and should yield a tuple
                                                    of (input, label). The input could be a object, list, tuple or dict,
                                                    depending on user implementation, as well as it can be taken as model
