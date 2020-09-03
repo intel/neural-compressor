@@ -512,23 +512,6 @@ class QuantizeNodeBase(object):
         self.add_output_graph_node(requantize_node)
         return requantize_node.name
 
-    def add_dequantize_result_node(self,
-                                   quantized_output_name,
-                                   original_node_name,
-                                   min_tensor_index=1):
-        min_max_inputs = [
-            "%s:%s" % (quantized_output_name, min_tensor_index),
-            "%s:%s" % (quantized_output_name, (min_tensor_index + 1))
-        ]
-        dequantize_name = original_node_name
-
-        dequantize_node = helper.create_node(
-            "Dequantize", dequantize_name,
-            [quantized_output_name, min_max_inputs[0], min_max_inputs[1]])
-        helper.set_attr_dtype(dequantize_node, "T", dtypes.quint8)
-        helper.set_attr_string(quantize_input_node, "mode", b"SCALED")
-        self.add_output_graph_node(dequantize_node)
-
     def _eightbitize_input_to_node(self,
                                    namespace_prefix,
                                    original_input_name,
