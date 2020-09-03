@@ -220,7 +220,7 @@ class TensorFlowAdaptor(Adaptor):
         if IsMklEnabled() and (tf.version.VERSION >= "2.3.0"):
             is_supported_version = True
         command = "cat /proc/cpuinfo | grep flags | tail -n 1"
-        all_flags = subprocess.check_output(command, shell=True).strip().decode()
+        all_flags = subprocess.check_output(command, shell=True).strip().decode()  # nosec
         if ((is_supported_version and " avx512_bf16 " in all_flags) 
                 or os.getenv('FORCE_BF16') == '1'):
             return True
