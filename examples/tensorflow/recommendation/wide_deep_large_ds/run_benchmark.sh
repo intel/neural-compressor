@@ -55,11 +55,12 @@ function define_mode {
 
 # run_tuning
 function run_benchmark {
-    numactl -N 0 -m 0 \
+    #numactl -N 0 -m 0 \
     python inference.py \
             --input_graph ${input_model} \
             --evaluation_data_location ${dataset_location}/eval_processed_data.tfrecords \
             --batch_size ${batch_size} \
+            --num_inter_threads 4 \
             ${mode_cmd}
 }
 

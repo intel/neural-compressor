@@ -205,7 +205,9 @@ class eval_classifier_optimized_graph:
 
         infer_config = tf.compat.v1.ConfigProto()
         if self.args.env == 'mkl':
-            print("Set inter and intra for mkl")
+            print("Set inter and intra for mkl: ")
+            print("intra_op_parallelism_threads = ", self.args.num_intra_threads)
+            print("inter_op_parallelism_threads = ", self.args.num_inter_threads)
             infer_config.intra_op_parallelism_threads = self.args.num_intra_threads
             infer_config.inter_op_parallelism_threads = self.args.num_inter_threads
         infer_config.use_per_session_threads = 1
