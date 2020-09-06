@@ -61,15 +61,15 @@ class TestGraph_util(unittest.TestCase):
     sqrt_node.op = "Rsqrt"
     sqrt_node.input.extend([mul_node.name])
 
-    relu_node = node_def_pb2.NodeDef()
-    relu_node.op = "Relu"
-    relu_node.name = "relu"
-    relu_node.input.extend([sqrt_node.name])
+    sqrt1_node = node_def_pb2.NodeDef()
+    sqrt1_node.op = "Relu"
+    sqrt1_node.name = "sqrt1"
+    sqrt1_node.input.extend([sqrt_node.name])
 
     block_node = node_def_pb2.NodeDef()
     block_node.name = "block_output"
     block_node.op = "Add"
-    block_node.input.extend([x_node.name, relu_node.name])
+    block_node.input.extend([x_node.name, sqrt1_node.name])
 
     res_node = node_def_pb2.NodeDef()
     res_node.name = "res_add"
@@ -84,7 +84,7 @@ class TestGraph_util(unittest.TestCase):
     graph_def = graph_pb2.GraphDef()
     graph_def.node.extend([
         x_node, input0_node, input1_node, input2_node, input3_node, add_node, mul_node, sqrt_node,
-        relu_node, block_node, res_node, end_node
+        sqrt1_node, block_node, res_node, end_node
     ])
 
     def test_replace_constant_graph_with_constant_node(self):

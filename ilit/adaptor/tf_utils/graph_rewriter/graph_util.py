@@ -319,9 +319,8 @@ class TFGraphAnalyzer(object):
                 if self.node_name_details[input_name].node.op != "Const":
                     self.logger.debug("the subgraph replaces must be constant")
                     return False
-                else:
-                    if input_name in self.node_name_details:
-                        self.node_name_details.pop(input_name)
+                elif len(self.node_name_details[input_name].outputs) == 1:
+                    self.node_name_details.pop(input_name)
             output_node_name = self.node_name_details[old_end_node_name].outputs
             self.replace_node(new_node, old_end_node_name, output_node_name)
             self.node_name_details[new_node_name].node.ClearField('input')
