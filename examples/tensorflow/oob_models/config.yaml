@@ -1,0 +1,20 @@
+calibration:
+  algorithm:
+    activation: minmax
+    weight: minmax
+  iterations: 1
+device: cpu
+framework:
+  inputs:
+  - input
+  name: tensorflow
+  outputs:
+  - output
+snapshot:
+  path: /tmp/snapshot
+tuning:
+  accuracy_criterion:
+    relative: 0.01
+  random_seed: 9527
+  strategy: basic
+  timeout: 0
