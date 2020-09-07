@@ -69,7 +69,7 @@ class StripUnusedNodes(GraphTransformBase):
                 placeholder_node.op = "Placeholder"
                 placeholder_node.name = node.name
                 placeholder_node.attr["dtype"].CopyFrom(
-                        attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
+                    attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
                 if "_output_shapes" in node.attr:
                     placeholder_node.attr["_output_shapes"].CopyFrom(
                         node.attr["_output_shapes"])

@@ -197,7 +197,8 @@ class FuseOldBN(GraphTransformBase):
 
     def do_transformation(self):
         """
-        Execute the Conv2D/DepthwiseConv2dNative + FusedBatchNorm/BatchNormWithGlobalNormalization fusion.
+        Execute the Conv2D/DepthwiseConv2dNative + FusedBatchNorm/BatchNormWithGlobalNormalization
+        fusion.
         :return: Transformed graph
         """
         input_node_map, _, node_name_list = self.parse_input_graph(

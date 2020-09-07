@@ -95,7 +95,8 @@ class QuantizeGraphHelper(object):
         return output_graph_def if is_shared_input else input_graph_def
 
     @staticmethod
-    def remove_training_nodes(input_graph, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics']):
+    def remove_training_nodes(input_graph, protected_nodes=[],
+                              types_to_splice=['Identity', 'CheckNumerics']):
         """Prunes out nodes that aren't needed for inference.
         Args:
             input_graph: Model to analyze and prune.

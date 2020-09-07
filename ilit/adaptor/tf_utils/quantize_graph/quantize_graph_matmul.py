@@ -75,7 +75,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.add_output_graph_node(quantized_matmul_node)
 
                 quantize_down_name = self._add_quantize_down_nodes(
-                    node, quantized_node_name,  dtypes.quint8, False)
+                    node, quantized_node_name, dtypes.quint8, False)
                 self._intel_cpu_add_dequantize_result_node(
                     quantize_down_name, relu_node_name)
             else:

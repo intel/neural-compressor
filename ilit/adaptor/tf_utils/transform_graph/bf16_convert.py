@@ -32,6 +32,7 @@ from .graph_transform_base import GraphTransformBase
 from ..quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 from ..quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 
+
 class BF16Convert(GraphTransformBase):
     """
     BF16 node convert transformation.
@@ -54,7 +55,7 @@ class BF16Convert(GraphTransformBase):
                   "MatMul",
                   "BatchMatMul",
                   "BatchMatMulV2",
-                 ]
+                  ]
     # the set of ops that can run in bf16 and are considered numerically-
     # safe (for execution in bf16), but which may be made unsafe by an upstream
     # blacklist op.
@@ -76,7 +77,7 @@ class BF16Convert(GraphTransformBase):
                  "LeakyReluGrad",
                  "Mul",
                  "Sub",
-                ]
+                 ]
     # the set of ops that are considered numerically-dangerous (i.e.,
     # unsafe for execution in bf16) and whose effects may also be observed in
     # downstream nodes (e.g. for f16, in Exp -> Add, the Add is unsafe due to
@@ -91,7 +92,7 @@ class BF16Convert(GraphTransformBase):
                   "SoftmaxCrossEntropyWithLogits",
                   "SparseSoftmaxCrossEntropyWithLogits",
                   "Sum",
-                 ]
+                  ]
     # the set of ops that do not have numerically-significant effects
     # (i.e., they are always considered safe for execution in bf16 precision), and
     # can run in bf16.
@@ -117,19 +118,19 @@ class BF16Convert(GraphTransformBase):
                   "Relu6Grad",
                   "ReluGrad",
                   "Reshape",
-                  #"Select",
-                  #"SelectV2",
-                  #"Shape",
-                  #"ShapeN",
-                  #"Slice",
-                  #"Split",
-                  #"SplitV",
-                  #"Squeeze",
-                  #"StopGradient",
-                  #"Switch",
-                  #"Transpose",
-                  #"ZerosLike",
-                 ]
+                  # "Select",
+                  # "SelectV2",
+                  # "Shape",
+                  # "ShapeN",
+                  # "Slice",
+                  # "Split",
+                  # "SplitV",
+                  # "Squeeze",
+                  # "StopGradient",
+                  # "Switch",
+                  # "Transpose",
+                  # "ZerosLike",
+                  ]
 
     def __init__(self,
                  input_pb,
@@ -196,16 +197,18 @@ class BF16Convert(GraphTransformBase):
             each_input_node = each_input_detail.node
             # Const + Cast => Const optimization
             if each_input_node.op == "Const":
-                if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum):
+                if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(
+                        type=dtypes.float32.as_datatype_enum):
                     fp32_value = tensor_util.MakeNdarray(each_input_node.attr.get('value').tensor)
                     helper.set_attr_dtype(each_input_node, "dtype", dtypes.bfloat16)
                     each_input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(
-                        fp32_value, dtypes.bfloat16, fp32_value.shape)))
+                            fp32_value, dtypes.bfloat16, fp32_value.shape)))
                 self.converted_ops.append(each_input)
             # Cast + Cast => O optimization
-            elif (each_input_node.op == "Cast" and 
-                    each_input_node.attr["SrcT"] == attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)):
+            elif (each_input_node.op == "Cast" and
+                    each_input_node.attr["SrcT"] == attr_value_pb2.AttrValue(
+                        type=dtypes.bfloat16.as_datatype_enum)):
                 cast_input_name = each_input_node.input[0]
                 for index, input_name in enumerate(bf16_node.input):
                     if input_name == each_input_node.name:
@@ -213,8 +216,10 @@ class BF16Convert(GraphTransformBase):
                 if len(each_input_detail.output) == 1:
                     self.input_graph.node.remove(each_input_node)
                     del each_input_node
-            elif (each_input not in self.expand_fp32_ops + self.converted_ops and 
-                    each_input_node.op in BF16Convert.WHITE_LIST + BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
+            elif (each_input not in self.expand_fp32_ops + self.converted_ops and
+                    each_input_node.op in BF16Convert.WHITE_LIST +
+                    BF16Convert.GRAY_LIST +
+                    BF16Convert.CLEAR_LIST):
                 if len(each_input_detail.output) == 1:
                     self._bf16_convert(each_input)
                 # TODO: Consider multi-output case
@@ -222,7 +227,8 @@ class BF16Convert(GraphTransformBase):
                 pass
             else:
                 if each_input + "_FP32toBF16" not in list(self.node_name_mapping.keys()):
-                    input_cast_node = helper.create_node("Cast", each_input + "_FP32toBF16", [each_input])
+                    input_cast_node = helper.create_node(
+                        "Cast", each_input + "_FP32toBF16", [each_input])
                     helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
                     helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
                     helper.set_attr_bool(input_cast_node, "Truncate", False)
@@ -241,9 +247,10 @@ class BF16Convert(GraphTransformBase):
             each_output_detail = self.node_name_mapping[each_output]
             each_output_node = each_output_detail.node
             # Need consider output node op type
-            
-            if (each_output_node.op == "Cast" and 
-                    each_output_node.attr["DstT"] == attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)):
+
+            if (each_output_node.op == "Cast" and
+                    each_output_node.attr["DstT"] == attr_value_pb2.AttrValue(
+                        type=dtypes.bfloat16.as_datatype_enum)):
                 for cast_output in each_output_detail.output:
                     cast_output_node = self.node_name_mapping[cast_output].node
                     for index, input_name in enumerate(cast_output_node.input):
@@ -251,14 +258,18 @@ class BF16Convert(GraphTransformBase):
                             cast_output_node.input[index] = bf16_node.name
                 del each_output_node
             elif (each_output not in self.expand_fp32_ops + self.converted_ops and
-                    each_output_node.op in BF16Convert.WHITE_LIST + BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
-                # TODO: Consider multi node inputs case, check others inputs whether converted to BF16
+                    each_output_node.op in BF16Convert.WHITE_LIST +
+                    BF16Convert.GRAY_LIST +
+                    BF16Convert.CLEAR_LIST):
+                # TODO: Consider multi node inputs case, check others inputs whether
+                # converted to BF16
                 self._bf16_convert(each_output)
             elif each_output in self.converted_ops:
                 pass
             else:
                 if bf16_node_name + "_BF16toFP32" not in list(self.node_name_mapping.keys()):
-                    output_cast_node = helper.create_node("Cast", bf16_node_name + "_BF16toFP32", [bf16_node_name])
+                    output_cast_node = helper.create_node(
+                        "Cast", bf16_node_name + "_BF16toFP32", [bf16_node_name])
                     helper.set_attr_dtype(output_cast_node, "DstT", dtypes.float32)
                     helper.set_attr_dtype(output_cast_node, "SrcT", dtypes.bfloat16)
                     helper.set_attr_bool(output_cast_node, "Truncate", False)
@@ -270,7 +281,7 @@ class BF16Convert(GraphTransformBase):
                         each_output_node.input[index] = output_cast_node.name
                 self.input_graph.node.extend([output_cast_node])
         return
-    
+
     def _model_bf16_convert(self):
         logging.debug("start convert bf16 graph")
         for bf16_node_name in set(self.expand_bf16_ops):

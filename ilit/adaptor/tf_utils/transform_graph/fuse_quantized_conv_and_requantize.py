@@ -190,7 +190,7 @@ def generate_output_graph(
                 new_node.attr["T"].CopyFrom(
                     attr_value_pb2.AttrValue(type=uint8_type))
             elif input_node_map[pp_node].op.find("QuantizedMatMulWithBias"
-                    ) != -1 and p_node.op.find("Requantize") != -1:
+                                                 ) != -1 and p_node.op.find("Requantize") != -1:
                 new_node.attr["mode"].s = node.attr["mode"].s
                 new_node.attr["T"].CopyFrom(
                     attr_value_pb2.AttrValue(type=node.attr["T"].type))

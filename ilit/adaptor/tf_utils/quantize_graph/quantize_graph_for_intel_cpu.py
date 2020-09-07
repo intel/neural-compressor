@@ -55,8 +55,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     def can_fused_ops(self, start_node):
         registered_transformer = self.transformers[start_node.op][0]
         worker = registered_transformer(
-                self.input_graph, self.output_node_names,
-                False, start_node.name, self.device, False)
+            self.input_graph, self.output_node_names,
+            False, start_node.name, self.device, False)
         can_fused_nodes = worker.get_longest_fuse()
         if isinstance(can_fused_nodes, tuple):
             return can_fused_nodes[1]

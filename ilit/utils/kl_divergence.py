@@ -64,7 +64,8 @@ class KL_Divergence(object):
         '''The interface of getting threshold per KL divergency algorithm.
 
            Args:
-               historgram (tensor list): The tensor numpy array list including all ops in each iteration.
+               historgram (tensor list): The tensor numpy array list including all ops
+                                         in each iteration.
                quantized_type (string): string being "int8" or "uint8".
                number_bins (integer): number of bins used in KL.
 

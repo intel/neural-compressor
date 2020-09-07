@@ -69,7 +69,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             if node.name in skip_node_name:
                 self.logger.debug("skip node {}".format(node.name))
             elif node.name == match_node_name[0]:
-                postfix = "_eightbit_quantized_conv" if node.op == "Conv2D" else "_eightbit_quantized_depthwise_conv"
+                postfix = "_eightbit_quantized_depthwise_conv"
+                if node.op == "Conv2D":
+                    postfix = "_eightbit_quantized_conv"
                 quantized_node_name = node.name + postfix
                 if node.op == "Conv2D":
                     quantized_conv_node = helper.create_node(
@@ -135,7 +137,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             elif node.name == match_node_name[0]:
 
                 self.logger.debug("apply_conv_biasadd_relu_fusion")
-                postfix = "_eightbit_quantized_conv" if node.op == "Conv2D" else "_eightbit_quantized_depthwise_conv"
+                postfix = "_eightbit_quantized_depthwise_conv"
+                if node.op == "Conv2D":
+                    postfix = "_eightbit_quantized_conv"
                 quantized_node_name = node.name + postfix
                 bias_node_name = self.node_name_mapping[
                     match_node_name[1]].node.input[1]

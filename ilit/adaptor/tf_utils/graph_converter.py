@@ -31,13 +31,15 @@ from .transform_graph.fold_constant import FoldConstant
 from .transform_graph.freeze_max_min import freeze_max
 from .transform_graph.freeze_max_min import freeze_min
 from .transform_graph.freeze_max_min import freeze_requantization_range
-from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram, combine_histogram
+from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
+from .transform_graph.freeze_max_min import combine_histogram
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bf16_convert import BF16Convert
-from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format, parse_savedmodel_model, get_graph_def
+from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format
+from .util import parse_savedmodel_model, get_graph_def
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -282,9 +284,12 @@ class GraphConverter:
         finally:
             if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
                 self.logger.warn(str('Please note the {} version of Intel® Optimizations for'
-                                     ' TensorFlow is not fully verified! Suggest to use the versions'
-                                     ' between {} and {} if meet problem').format(tf.version.VERSION,
-                                                                                  TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
+                                     ' TensorFlow is not fully verified!'
+                                     ' Suggest to use the versions'
+                                     ' between {} and {} if meet problem').
+                                    format(tf.version.VERSION,
+                                    TF_SUPPORTED_MIN_VERSION,
+                                    TF_SUPPORTED_MAX_VERSION))
             if not is_supported_version:
                 raise ValueError(
                     str('Please install Intel® Optimizations for TensorFlow'
@@ -385,8 +390,8 @@ class GraphConverter:
         for i in target_conv_op:
             if specified_op_list and i not in specified_op_list:
                 continue
-            if node_name_mapping[i +
-                                 "_eightbit_quantized_conv"].op == 'QuantizedConv2DWithBiasSumAndRelu':
+            if node_name_mapping[i + "_eightbit_quantized_conv"].op == \
+                    'QuantizedConv2DWithBiasSumAndRelu':
                 start_index = sorted_node_names.index(i)
                 for index, value in enumerate(sorted_node_names[start_index:]):
                     if fp32_node_name_mapping[value].op.startswith(
@@ -706,7 +711,11 @@ class GraphConverter:
         self._tmp_graph_def = FuseQuantizedMulAndRequantize(
             self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
-        # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def, self.inputs, self.outputs, dtypes, False)
+        # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def,
+        #                                              self.inputs,
+        #                                              self.outputs,
+        #                                              dtypes,
+        #                                              False)
         self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
                                                self.inputs, self.outputs
                                                ).do_transform()

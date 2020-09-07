@@ -28,6 +28,7 @@ from tensorflow.python.framework import dtypes
 from .graph_transform_base import GraphTransformBase
 from ..quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 
+
 class FuseColumnWiseMul(GraphTransformBase):
     def __init__(self, input_pb):
         super(FuseColumnWiseMul, self).__init__(input_pb)
@@ -41,8 +42,8 @@ class FuseColumnWiseMul(GraphTransformBase):
             input_node = helper.node_name_from_input(input_node)
 
             if node_op == "Mul":
-                inputs = [helper.node_name_from_input(input) for \
-                    input in input_node_map[input_node].input]
+                inputs = [helper.node_name_from_input(input) for
+                          input in input_node_map[input_node].input]
                 if input_node_map[inputs[0]].op in fuseable_op_list and \
                    input_node_map[inputs[1]].op == "Const":
 

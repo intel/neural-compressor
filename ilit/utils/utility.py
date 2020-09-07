@@ -13,6 +13,7 @@ import time
 import sys
 from collections import OrderedDict
 
+
 def print_info():
     print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
 
@@ -27,13 +28,16 @@ def caller_obj(obj_name):
         if obj_name in f[0].f_locals:
             return f[0].f_locals[obj_name]
 
+
 def singleton(cls):
     instances = {}
+
     def _singleton(*args, **kw):
         if cls not in instances:
             instances[cls] = cls(*args, **kw)
         return instances[cls]
     return _singleton
+
 
 def get_func_from_config(func_dict, cfg, compose=True):
     func_list = []
@@ -50,14 +54,18 @@ def get_func_from_config(func_dict, cfg, compose=True):
         (func_list[0] if len(func_list) > 0 else None)
     return func
 
+
 def get_preprocess(preprocesses, cfg, compose=True):
-    return get_func_from_config(preprocesses, cfg, compose) 
+    return get_func_from_config(preprocesses, cfg, compose)
+
 
 def get_metrics(metrics, cfg, compose=True):
-    return get_func_from_config(metrics, cfg, compose) 
+    return get_func_from_config(metrics, cfg, compose)
+
 
 def get_postprocess(postprocesses, cfg, compose=True):
-    return get_func_from_config(postprocesses, cfg, compose) 
+    return get_func_from_config(postprocesses, cfg, compose)
+
 
 class LazyImport(object):
     """Lazy import python module till use

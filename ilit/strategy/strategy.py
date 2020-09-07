@@ -30,7 +30,8 @@ def strategy_registry(cls):
         cls: The class of register.
     """
     assert cls.__name__.endswith(
-        'TuneStrategy'), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
+        'TuneStrategy'
+    ), "The name of subclass of TuneStrategy should end with \'TuneStrategy\' substring."
     if cls.__name__[:-len('TuneStrategy')].lower() in STRATEGIES:
         raise ValueError('Cannot have two strategies with the same name')
     STRATEGIES[cls.__name__[:-len('TuneStrategy')].lower()] = cls
@@ -42,25 +43,33 @@ class TuneStrategy(object):
 
     Args:
         model (object):                        The FP32 model specified for low precision tuning.
-        conf (Conf):                           The Conf class instance initialized from user yaml config file.
-        q_dataloader (generator):              Data loader for calibration, mandatory for post-training quantization.
-                                               It is iterable and should yield a tuple (input, label) for calibration
-                                               dataset containing label, or yield (input, _) for label-free calibration
-                                               dataset. The input could be a object, list, tuple or dict, depending on
-                                               user implementation, as well as it can be taken as model input.
+        conf (Conf):                           The Conf class instance initialized from user yaml
+                                               config file.
+        q_dataloader (generator):              Data loader for calibration, mandatory for
+                                               post-training quantization.
+                                               It is iterable and should yield a tuple (input,
+                                               label) for calibration dataset containing label,
+                                               or yield (input, _) for label-free calibration
+                                               dataset. The input could be a object, list, tuple or
+                                               dict, depending on user implementation, as well as
+                                               it can be taken as model input.
         q_func (function, optional):           Reserved for future use.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable and should yield a tuple
-                                               of (input, label). The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can be taken as model
-                                               input. The label should be able to take as input of supported
-                                               metrics. If this parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration file and should
-                                               set "eval_func" paramter as None. Tuner will combine model,
-                                               eval_dataloader and pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user. This function takes model
-                                               as parameter, and evaluation dataset and metrics should be encapsulated
-                                               in this function implementation and outputs a higher-is-better accuracy
-                                               scalar value.
+        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
+                                               and should yield a tuple of (input, label).
+                                               The input could be a object, list, tuple or dict,
+                                               depending on user implementation, as well as it can
+                                               be taken as model input. The label should be able
+                                               to take as input of supported metrics. If this
+                                               parameter is not None, user needs to specify
+                                               pre-defined evaluation metrics through configuration
+                                               file and should set "eval_func" paramter as None.
+                                               Tuner will combine model, eval_dataloader and
+                                               pre-defined metrics to run evaluation process.
+        eval_func (function, optional):        The evaluation function provided by user.
+                                               This function takes model as parameter, and
+                                               evaluation dataset and metrics should be
+                                               encapsulated in this function implementation and
+                                               outputs a higher-is-better accuracy scalar value.
 
                                                The pseudo code should be something like:
 
@@ -69,9 +78,12 @@ class TuneStrategy(object):
                                                     output = model(input)
                                                     accuracy = metric(output, label)
                                                     return accuracy
-        dicts (dict, optional):                The dict containing resume information. Defaults to None.
-    """        
-    def __init__(self, model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):
+        dicts (dict, optional):                The dict containing resume information.
+                                               Defaults to None.
+    """
+
+    def __init__(self, model, conf, q_dataloader=None, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = conf.usr_cfg
 
@@ -83,17 +95,17 @@ class TuneStrategy(object):
         self.q_func = q_func
         self.eval_func = eval_func
 
-        framework_specific_info = {'device': self.cfg.device, \
-                                   'approach': self.cfg.quantization.approach, \
+        framework_specific_info = {'device': self.cfg.device,
+                                   'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
         if self.cfg.framework.name.lower() == 'tensorflow':
-            framework_specific_info.update({"inputs": self.cfg.framework.inputs, "outputs": self.cfg.framework.outputs})
+            framework_specific_info.update(
+                {"inputs": self.cfg.framework.inputs, "outputs": self.cfg.framework.outputs})
         if self.cfg.framework.name.lower() == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
 
         framework = self.cfg.framework.name.lower()
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
-
 
         self.baseline = None
         self.last_tune_result = None
@@ -144,14 +156,16 @@ class TuneStrategy(object):
         raise NotImplementedError
 
     def traverse(self):
-        """The main traverse logic, which could be override by some concrete strategy which needs more hooks.
+        """The main traverse logic, which could be override by some concrete strategy which needs
+           more hooks.
         """
         with Timeout(self.cfg.tuning.timeout) as t:
             # get fp32 model baseline
             if self.baseline is None:
                 logger.info('Getting FP32 model baseline...')
                 self.baseline = self._evaluate(self.model)
-            logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline) if self.baseline else 'None'))
+            logger.info('FP32 baseline is: ' +
+                        ('[{:.4f}, {:.4f}]'.format(*self.baseline) if self.baseline else 'None'))
 
             for tune_cfg in self.next_tune_cfg():
                 evaluated = False
@@ -226,16 +240,17 @@ class TuneStrategy(object):
                 "tuning dataloader and tuning metric should NOT be empty when eval_func is None"
             dataloader = self.eval_dataloader
             postprocess = None
-            if self.cfg.evaluation is not None: 
+            if self.cfg.evaluation is not None:
                 if self.cfg.evaluation.postprocess is not None:
                     postprocesses = TRANSFORMS(self.cfg.framework.name, "postprocess")
-                    postprocess = get_postprocess(postprocesses, self.cfg.data.postprocess.transform)
+                    postprocess = get_postprocess(
+                        postprocesses, self.cfg.data.postprocess.transform)
 
             assert len(self.cfg.tuning.metric) == 1, "Only one metric should be specified!"
             metrics = METRICS(self.cfg.framework.name)
             # if not do compose will only return the first metric
             metric = get_metrics(metrics, self.cfg.tuning.metric, compose=False)
-            
+
             def eval_func(model):
                 return self.adaptor.evaluate(model, dataloader, postprocess, metric)
             val = self.objective.evaluate(eval_func, model)
@@ -271,7 +286,8 @@ class TuneStrategy(object):
         self.__dict__.update(d)
 
     def stop(self, timeout):
-        """Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
+        """Check if need to stop traversing the tuning space, either accuracy goal is met
+           or timeout is reach.
 
         Args:
             timeout (Timeout): The timeout object instantiated in utils.py

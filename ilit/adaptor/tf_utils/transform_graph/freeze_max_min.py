@@ -33,6 +33,7 @@ import logging
 
 logger = logging.getLogger()
 
+
 def parse_input_graph(input_graph_def):
     input_node_map = {}
     for node in input_graph_def.node:
@@ -133,7 +134,7 @@ def safe_entropy(reference_distr_P, P_sum, candidate_distr_Q, Q_sum):
         else:
             if q_idx == 0:
                 logger.fatal("Fatal error!, idx = " + str(idx) +
-                      " qindex = 0! p_idx = " + str(p_idx))
+                             " qindex = 0! p_idx = " + str(p_idx))
             tmp_sum1 += p_idx * (math.log(Q_sum * p_idx))
             tmp_sum2 += p_idx * (math.log(P_sum * q_idx))
     return (tmp_sum1 - tmp_sum2) / P_sum

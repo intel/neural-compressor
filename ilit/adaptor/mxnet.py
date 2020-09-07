@@ -18,6 +18,7 @@ mx = LazyImport("mxnet")
 
 logger = logging.getLogger()
 
+
 def _check_version(v1, v2):
     """version checkout functioin.
 
@@ -64,13 +65,15 @@ class MxNetAdaptor(Adaptor):
             pass
 
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
-        """The function is used to do MXNet calibration and quanitization in post-training quantization.
+        """The function is used to do MXNet calibration and quanitization in post-training
+           quantization.
 
         Args:
-            tune_cfg (dict): quantization config.
-            model (object): model need to do quantization.
+            tune_cfg (dict):     quantization config.
+            model (object):      model need to do quantization.
             dataloader (object): calibration dataset.
-            q_func (optional): training function for quantization aware training mode, unimplement yet for MXNet.
+            q_func (optional):   training function for quantization aware training mode,
+                                 unimplement yet for MXNet.
 
         Returns:
             (dict): quantized model
@@ -182,7 +185,6 @@ class MxNetAdaptor(Adaptor):
         return acc
 
     def _mxnet_symbol_forward(self, symbol_file, dataIter, postprocess, metric):
-
         """MXNet symbol model evaluation process.
         Args:
             symbol_file (object): the symbole model need to do evaluate.
@@ -506,7 +508,9 @@ class MxNetAdaptor(Adaptor):
                     op_max = mx.nd.array(int8_ops_th[op][1])
                     # TODO: deal hard code dtype
                     tensor = mx.nd.contrib.dequantize(mx.nd.array(tensor, dtype='uint8'),
-                                                      min_range=op_min, max_range=op_max, out_type='float32').asnumpy()
+                                                      min_range=op_min,
+                                                      max_range=op_max,
+                                                      out_type='float32').asnumpy()
                     assert tensor.dtype == np.float32
             if op.endswith("_output"):
                 op = op[:-7]
@@ -519,7 +523,8 @@ class MxNetAdaptor(Adaptor):
         return inspected_tensor_convert
 
     def mapping(self, src_model, dst_model):
-        """The function is used to create a dict to map tensor name of src model to tensor name of dst model.
+        """The function is used to create a dict to map tensor name of src model to tensor name of
+           dst model.
 
         Returns:
             Dict
@@ -534,15 +539,24 @@ class MxNetAdaptor(Adaptor):
             tune_cfg (dict): tune config from ilit strategy.
                             cfg should be a format like below:
                             {
-                                'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']], 'fp32': [['CONV2D', 'RELU', 'BN']]},
-                                'calib_iteration': 10,
+                                'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
+                                'fp32': [['CONV2D', 'RELU', 'BN']]}, 'calib_iteration': 10,
                                 'op': {
                                 ['op1', 'CONV2D']: {
-                                    'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
-                                    'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
+                                    'activation':  {'dtype': 'uint8',
+                                                    'algorithm': 'minmax',
+                                                    'scheme':'sym',
+                                                    'granularity': 'per_tensor'},
+                                    'weight': {'dtype': 'int8',
+                                               'algorithm': 'kl',
+                                               'scheme':'asym',
+                                               'granularity': 'per_channel'}
                                 },
                                 ['op2', 'RELU]: {
-                                    'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
+                                    'activation': {'dtype': 'int8',
+                                                   'scheme': 'asym',
+                                                   'granularity': 'per_tensor',
+                                                   'algorithm': 'minmax'}
                                 },
                                 ['op3', 'CONV2D']: {
                                     'activation':  {'dtype': 'fp32'},
@@ -734,8 +748,8 @@ class MxNetAdaptor(Adaptor):
             aux_params,
             calib_layer,
             qconfig):
-        """Calculate the calibration value of each layer. the calibration method can be min/max or KL
-           on different layers.
+        """Calculate the calibration value of each layer. the calibration method can be min/max
+           or KL on different layers.
 
         Args:
             sym (object): model symbol file.

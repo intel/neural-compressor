@@ -8,6 +8,7 @@ from ..utils.utility import LazyImport
 from ..utils import logger
 tensorflow = LazyImport('tensorflow')
 
+
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -114,7 +115,8 @@ class TensorFlowAdaptor(Adaptor):
             tune_cfg (dict): quantization configuration
             model (tf.compat.v1.GraphDef): fp32 model
             data_loader (generator): generator the data and labels
-            q_func (optional): training function for quantization aware training mode, unimplement yet for tensorflow
+            q_func (optional): training function for quantization aware training mode,
+                               unimplement yet for tensorflow
 
         Returns:
             tf.compat.v1.GraphDef: the quantized model
@@ -131,8 +133,8 @@ class TensorFlowAdaptor(Adaptor):
                                    inputs=self.inputs,
                                    outputs=self.outputs,
                                    qt_config=self.quantize_config,
-                                   fp32_ops = self.fp32_ops,
-                                   bf16_ops = self.bf16_ops,
+                                   fp32_ops=self.fp32_ops,
+                                   bf16_ops=self.bf16_ops,
                                    data_loader=data_loader)
         return converter.convert()
 
@@ -190,15 +192,15 @@ class TensorFlowAdaptor(Adaptor):
             if node.op in tf_quantizable_op_type:
                 if self.unify_op_type_mapping[node.op].find("conv2d") != -1:
                     self.quantizable_op_details[(
-                            node.name, self.unify_op_type_mapping[node.op]
+                        node.name, self.unify_op_type_mapping[node.op]
                     )] = copy.deepcopy(conv_config)
                 elif self.unify_op_type_mapping[node.op].find("matmul") != -1:
                     self.quantizable_op_details[(
-                            node.name, self.unify_op_type_mapping[node.op]
+                        node.name, self.unify_op_type_mapping[node.op]
                     )] = copy.deepcopy(matmul_config)
                 else:
                     self.quantizable_op_details[(
-                            node.name, self.unify_op_type_mapping[node.op]
+                        node.name, self.unify_op_type_mapping[node.op]
                     )] = copy.deepcopy(other_config)
 
                 self.quantize_config['op_wise_config'][node.name] = (False,
@@ -207,7 +209,7 @@ class TensorFlowAdaptor(Adaptor):
 
     def _support_bf16(self):
         """Query Software and Hardware BF16 support cabability
-        
+
         """
         import tensorflow as tf
         is_supported_version = False

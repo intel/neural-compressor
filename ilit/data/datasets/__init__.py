@@ -1,3 +1,4 @@
+from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -8,6 +9,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
-
-__all__ = [DATASETS, Dataset, IterableDataset, dataset_registry]
+__all__ = ["DATASETS", "Dataset", "IterableDataset", "dataset_registry"]

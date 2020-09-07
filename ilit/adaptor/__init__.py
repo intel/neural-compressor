@@ -8,4 +8,4 @@ for f in modules:
     if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
-__all__ = [FRAMEWORKS]
+__all__ = ["FRAMEWORKS"]

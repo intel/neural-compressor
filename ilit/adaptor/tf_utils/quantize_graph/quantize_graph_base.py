@@ -11,7 +11,8 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.client import session
 from tensorflow.python.ops import array_ops
 
-# from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
+# from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import \
+#     QuantizeGraphHelper as helper
 from .quantize_graph_common import QuantizeGraphHelper as helper
 import logging
 import tensorflow as tf
@@ -23,6 +24,7 @@ class QuantizeGraphBase(object):
     """
     This is the base class for quantize graph.
     """
+
     def __init__(self, output_node_names):
         self.output_node_names = output_node_names
         self.transformers = OrderedDict()
@@ -115,8 +117,8 @@ class QuantizeNodeBase(object):
                     continue
 
                 if ((v in ("Conv2D", "DepthwiseConv2dNative")
-                         and not self.enable_s8)
-                        ) and not self._find_relu_node(cur_node):
+                     and not self.enable_s8)
+                    ) and not self._find_relu_node(cur_node):
                     continue
 
                 for sub_rule in patterns:
@@ -152,8 +154,10 @@ class QuantizeNodeBase(object):
 
                             for index, input_name in enumerate(
                                     next_node_inputs):
-                                node_type = self.node_name_mapping[helper.node_name_from_input(input_name)].node.op
-                                if input_name != cur_node_name and index < cur_node_index and node_type != 'Dequantize':
+                                node_type = self.node_name_mapping[helper.node_name_from_input(
+                                    input_name)].node.op
+                                if input_name != cur_node_name and index < cur_node_index and \
+                                        node_type != 'Dequantize':
                                     add_op_quantizable = False
                                     break
 
@@ -161,8 +165,8 @@ class QuantizeNodeBase(object):
                             self.node_name_mapping[cur_node_name].output
                         ) > 1 else False
 
-                        if add_op_quantizable and not is_shared_output and next_node_op == sub_rule[
-                                1 - sub_rule_len]:
+                        if add_op_quantizable and not is_shared_output and \
+                                next_node_op == sub_rule[1 - sub_rule_len]:
                             matched_node_name.append(next_node_name)
                             sub_rule_len -= 1
                             cur_node_name = next_node_name
@@ -189,7 +193,8 @@ class QuantizeNodeBase(object):
         if node.op in ("Relu", "Relu6") or node.op.find("AndRelu") != -1:
             return True
         elif (node.op.find("QuantizedConv") != -1
-              or node.op.find("QuantizedDepthwiseConv") != -1 or node.op.find("QuantizedMatMul") != -1
+              or node.op.find("QuantizedDepthwiseConv") != -1 or
+              node.op.find("QuantizedMatMul") != -1
               ) and node.op.find("Relu") == -1:
             return False
         elif self._need_to_check(node.op):
@@ -278,7 +283,8 @@ class QuantizeNodeBase(object):
     def _add_eightbit_prologue_nodes(self, original_node):
         namespace_prefix = original_node + "_eightbit"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
-            namespace_prefix, helper.node_name_from_input(self.node_name_mapping[original_node].node.input[0]))
+            namespace_prefix, helper.node_name_from_input(
+                self.node_name_mapping[original_node].node.input[0]))
         input_names = []
         min_max_names = []
         for each_input_name in self.node_name_mapping[
@@ -410,7 +416,7 @@ class QuantizeNodeBase(object):
             is_max_right_type = (max_node.op in ["Max", "Dequantize"])
             if not is_min_right_type or not is_max_right_type:
                 self.logger.info("Didn't find expected types on inputs : %s, %s." %
-                      (min_node.op, max_node.op))
+                                 (min_node.op, max_node.op))
                 continue
             min_node_input_name = helper.node_name_from_input(
                 min_node.input[0])
@@ -618,11 +624,14 @@ class QuantizeNodeBase(object):
                         dtypes.qint8,
                         mode=quantization_mode,
                         round_mode="HALF_TO_EVEN")
-                    qint8_tensor = quantize_op[0].numpy() if tf.executing_eagerly() else quantize_op[0].eval()
+                    qint8_tensor = quantize_op[0].numpy(
+                    ) if tf.executing_eagerly() else quantize_op[0].eval()
                     # Updated min-max values should be passed to the next
                     # feeding node.
-                    min_value = quantize_op[1].numpy() if tf.executing_eagerly() else quantize_op[1].eval()
-                    max_value = quantize_op[2].numpy() if tf.executing_eagerly() else quantize_op[2].eval()
+                    min_value = quantize_op[1].numpy(
+                    ) if tf.executing_eagerly() else quantize_op[1].eval()
+                    max_value = quantize_op[2].numpy(
+                    ) if tf.executing_eagerly() else quantize_op[2].eval()
         elif parent == "DepthwiseConv2dNative":
             # get the max values based on dim 0 and 1 for depthwise conv
             # since, the output channel will be dim 2 * dim 3

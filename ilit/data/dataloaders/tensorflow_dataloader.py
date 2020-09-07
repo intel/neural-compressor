@@ -7,6 +7,7 @@ from .base_dataloader import BaseDataLoader
 
 tf = LazyImport('tensorflow')
 
+
 class TensorflowDataLoader(BaseDataLoader):
     """DataLoader for frameework Tensorflow, if it's a tf.data.Dataset we will directly use
        the dataloader in the other case will use DefaultDataLoader instead.
@@ -14,7 +15,7 @@ class TensorflowDataLoader(BaseDataLoader):
     """
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-        sampler, batch_sampler, num_workers, pin_memory):
+                             sampler, batch_sampler, num_workers, pin_memory):
 
         drop_last = False if last_batch == 'rollover' else True
 
@@ -22,7 +23,8 @@ class TensorflowDataLoader(BaseDataLoader):
             return dataset.batch(batch_size, drop_remainder=drop_last)
         else:
             return DefaultDataLoader(dataset, batch_size, collate_fn,
-                sampler, batch_sampler, drop_last, num_workers, pin_memory)
+                                     sampler, batch_sampler, drop_last, num_workers, pin_memory)
+
 
 def default_collate(batch):
     """Puts each data field into a pd frame with outer dimension batch size"""
@@ -36,6 +38,7 @@ def default_collate(batch):
         return np.stack(batch)
     else:
         return batch
+
 
 class Fetcher(object):
     def __init__(self, dataset, collate_fn, drop_last):
@@ -64,6 +67,7 @@ class IterableFetcher(Fetcher):
             raise StopIteration
         return self.collate_fn(data)
 
+
 class IndexFetcher(Fetcher):
     def __init__(self, dataset, collate_fn, drop_last):
         super(IndexFetcher, self).__init__(dataset, collate_fn, drop_last)
@@ -73,7 +77,9 @@ class IndexFetcher(Fetcher):
 
         return self.collate_fn(data)
 
-FETCHERS = {"index":IndexFetcher, "iter":IterableFetcher, }
+
+FETCHERS = {"index": IndexFetcher, "iter": IterableFetcher, }
+
 
 class DefaultDataLoader(BaseDataLoader):
     """In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
@@ -83,7 +89,7 @@ class DefaultDataLoader(BaseDataLoader):
     """
 
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
-        sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+                 sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
 
         self.dataset = dataset
         self.batch_size = batch_size
@@ -93,9 +99,8 @@ class DefaultDataLoader(BaseDataLoader):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.collate_fn = collate_fn
-        if self.collate_fn == None:
+        if self.collate_fn is None:
             self.collate_fn = default_collate
-        
 
     def batch(self, batch_size, last_batch='rollover'):
         self.batch_size = batch_size
@@ -106,9 +111,14 @@ class DefaultDataLoader(BaseDataLoader):
         return self
 
     def __iter__(self):
-        return self._generate_dataloader(self.dataset, batch_size=self.batch_size,
-            last_batch=self.last_batch, collate_fn=self.collate_fn, sampler=self.sampler,
-            batch_sampler=self.batch_sampler, num_workers=self.num_workers,
+        return self._generate_dataloader(
+            self.dataset,
+            batch_size=self.batch_size,
+            last_batch=self.last_batch,
+            collate_fn=self.collate_fn,
+            sampler=self.sampler,
+            batch_sampler=self.batch_sampler,
+            num_workers=self.num_workers,
             pin_memory=self.pin_memory)
 
     def _generate_sampler(self, dataset):
@@ -122,7 +132,7 @@ class DefaultDataLoader(BaseDataLoader):
             raise ValueError("dataset type only support (index, iter)")
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-        sampler, batch_sampler, num_workers, pin_memory):
+                             sampler, batch_sampler, num_workers, pin_memory):
 
         drop_last = False if last_batch == 'rollover' else True
         sampler = self._generate_sampler(dataset)

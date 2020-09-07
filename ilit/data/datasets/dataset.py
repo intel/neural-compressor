@@ -6,22 +6,24 @@ torchvision = LazyImport('torchvision')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 
+
 @singleton
 class TensorflowDatasets(object):
     def __init__(self):
         self.datasets = {
-            "cifar10" : tf.keras.datasets.cifar10,
-            "cifar100" : tf.keras.datasets.cifar100,
-            "fashion_mnist" : tf.keras.datasets.fashion_mnist,
-            "imdb" : tf.keras.datasets.imdb,
-            "mnist" : tf.keras.datasets.mnist,
-            "reuters" : tf.keras.datasets.reuters,
-            "list_files" : tf.data.Dataset.list_files,
+            "cifar10": tf.keras.datasets.cifar10,
+            "cifar100": tf.keras.datasets.cifar100,
+            "fashion_mnist": tf.keras.datasets.fashion_mnist,
+            "imdb": tf.keras.datasets.imdb,
+            "mnist": tf.keras.datasets.mnist,
+            "reuters": tf.keras.datasets.reuters,
+            "list_files": tf.data.Dataset.list_files,
             "TFRecordDataset": tf.data.TFRecordDataset,
             "FixedLengthRecordDataset": tf.data.FixedLengthRecordDataset,
             "TextLineDataset": tf.data.TextLineDataset,
         }
         self.datasets.update(TENSORFLOWDATASETS)
+
 
 @singleton
 class PyTorchDatasets(object):
@@ -41,29 +43,30 @@ class PyTorchDatasets(object):
             'QMNIST': torchvision.datasets.QMNIST,
             'MNIST': torchvision.datasets.MNIST,
             'KMNIST': torchvision.datasets.KMNIST,
-            'STL10': torchvision.datasets.STL10, 
+            'STL10': torchvision.datasets.STL10,
             'SVHN': torchvision.datasets.SVHN,
-            'PhotoTour': torchvision.datasets.PhotoTour, 
+            'PhotoTour': torchvision.datasets.PhotoTour,
             'SEMEION': torchvision.datasets.SEMEION,
             'Omniglot': torchvision.datasets.Omniglot,
             'SBU': torchvision.datasets.SBU,
-            'Flickr8k': torchvision.datasets.Flickr8k, 
+            'Flickr8k': torchvision.datasets.Flickr8k,
             'Flickr30k': torchvision.datasets.Flickr30k,
-            'VOCSegmentation': torchvision.datasets.VOCSegmentation, 
-            'VOCDetection': torchvision.datasets.VOCDetection, 
-            'Cityscapes': torchvision.datasets.Cityscapes, 
+            'VOCSegmentation': torchvision.datasets.VOCSegmentation,
+            'VOCDetection': torchvision.datasets.VOCDetection,
+            'Cityscapes': torchvision.datasets.Cityscapes,
             'ImageNet': torchvision.datasets.ImageNet,
-            'Caltech101': torchvision.datasets.Caltech101, 
-            'Caltech256': torchvision.datasets.Caltech256, 
-            'CelebA': torchvision.datasets.CelebA, 
-            'SBDataset': torchvision.datasets.SBDataset, 
+            'Caltech101': torchvision.datasets.Caltech101,
+            'Caltech256': torchvision.datasets.Caltech256,
+            'CelebA': torchvision.datasets.CelebA,
+            'SBDataset': torchvision.datasets.SBDataset,
             'VisionDataset': torchvision.datasets.VisionDataset,
-            'USPS': torchvision.datasets.USPS, 
-            'Kinetics400': torchvision.datasets.Kinetics400, 
-            'HMDB51': torchvision.datasets.HMDB51, 
+            'USPS': torchvision.datasets.USPS,
+            'Kinetics400': torchvision.datasets.Kinetics400,
+            'HMDB51': torchvision.datasets.HMDB51,
             'UCF101': torchvision.datasets.UCF101
         }
         self.datasets.update(PYTORCHDATASETS)
+
 
 @singleton
 class MXNetDatasets(object):
@@ -80,9 +83,9 @@ class MXNetDatasets(object):
         self.datasets.update(MXNETDATASETS)
 
 
-framework_datasets = {"tensorflow":TensorflowDatasets,
-                      "mxnet":MXNetDatasets,
-                      "pytorch":PyTorchDatasets,}
+framework_datasets = {"tensorflow": TensorflowDatasets,
+                      "mxnet": MXNetDatasets,
+                      "pytorch": PyTorchDatasets, }
 
 """The datasets supported by ilit, it's model specific and can be configured by yaml file.
 
@@ -93,27 +96,33 @@ framework_datasets = {"tensorflow":TensorflowDatasets,
    DATASETS variable is used to store all implelmented Dataset subclasses to support
    model specific dataset.
 """
+
+
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "mxnet", "pytorch"], "framework support tensorflow pytorch mxnet"
-        self.datasets = framework_datasets[framework]().datasets 
+        assert framework in ["tensorflow", "mxnet",
+                             "pytorch"], "framework support tensorflow pytorch mxnet"
+        self.datasets = framework_datasets[framework]().datasets
 
     def __getitem__(self, dataset_type):
-        assert dataset_type in self.datasets.keys(), "dataset type only support {}".format(self.datasets.keys())
-        return self.datasets[dataset_type] 
+        assert dataset_type in self.datasets.keys(), "dataset type only support {}".\
+            format(self.datasets.keys())
+        return self.datasets[dataset_type]
+
 
 # user/model specific datasets will be registered here
 TENSORFLOWDATASETS = {}
 MXNETDATASETS = {}
 PYTORCHDATASETS = {}
 
-registry_datasets = {"tensorflow":TENSORFLOWDATASETS,
-                     "mxnet":MXNETDATASETS,
-                     "pytorch":PYTORCHDATASETS,}
+registry_datasets = {"tensorflow": TENSORFLOWDATASETS,
+                     "mxnet": MXNETDATASETS,
+                     "pytorch": PYTORCHDATASETS, }
+
 
 def dataset_registry(dataset_type, framework, dataset_format=''):
     """The class decorator used to register all Dataset subclasses.
-       
+
 
     Args:
         cls (class): The class of register.
@@ -123,16 +132,21 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
 
     Returns:
         cls: The class of register.
-    """    
+    """
     def decorator_dataset(cls):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
-            assert single_framework in ["tensorflow", "mxnet", "pytorch"], "The framework support tensorflow mxnet pytorch"
+            assert single_framework in [
+                "tensorflow",
+                "mxnet",
+                "pytorch"
+            ], "The framework support tensorflow mxnet pytorch"
             dataset_name = dataset_type + dataset_format
             if dataset_name in registry_datasets[single_framework].keys():
                 raise ValueError('Cannot have two datasets with the same name')
             registry_datasets[single_framework][dataset_name] = cls
         return cls
     return decorator_dataset
+
 
 class Dataset(object):
     """ The base class of dataset. Subclass datasets should overwrite two methods:
@@ -149,6 +163,7 @@ class Dataset(object):
     # def __len__(self):
     #     raise NotImplementedError
 
+
 class IterableDataset(object):
     """An iterable Dataset. Subclass iterable dataset should aslo implement a method:
     `__iter__` for interating over the samples of the dataset.
@@ -158,4 +173,3 @@ class IterableDataset(object):
     @abstractmethod
     def __iter__(self):
         raise NotImplementedError
-

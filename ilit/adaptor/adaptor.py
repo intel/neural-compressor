@@ -89,7 +89,8 @@ class Adaptor(object):
 
     @abstractmethod
     def mapping(self, src_model, dst_model):
-        '''The function is used to create a dict to map tensor name of src model to tensor name of dst model.
+        '''The function is used to create a dict to map tensor name of src model to tensor name of
+           dst model.
 
            Return:
                Dict

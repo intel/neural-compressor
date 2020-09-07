@@ -1,5 +1,6 @@
 from .dataset import dataset_registry, Dataset
 
+
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
 class BertDataset(Dataset):
     """Dataset used for model Bert.
@@ -10,6 +11,7 @@ class BertDataset(Dataset):
        load examples and process method.
 
     """
+
     def __init__(self, dataset, task, model_type='bert', transform=None):
         self.dataset = dataset
         assert task in ("classifier", "squad"), "Bert task support only classifier squad"
@@ -26,9 +28,9 @@ class BertDataset(Dataset):
             sample = self.transform(sample)
         if self.task == 'classifier':
             inputs = {
-                'input_ids':      sample[0],
+                'input_ids': sample[0],
                 'attention_mask': sample[1],
-                'labels':         sample[3]}
+                'labels': sample[3]}
 
             if self.model_type != 'distilbert':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
@@ -38,8 +40,8 @@ class BertDataset(Dataset):
 
         elif self.task == 'squad':
             inputs = {
-                'input_ids':       sample[0],
-                'attention_mask':  sample[1],}
+                'input_ids': sample[0],
+                'attention_mask': sample[1], }
             if self.model_type != 'distilbert':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
                 inputs['token_type_ids'] = sample[2] if self.model_type in [

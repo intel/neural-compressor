@@ -1,5 +1,6 @@
 from .dataset import dataset_registry, Dataset
 
+
 @dataset_registry(dataset_type="dummy", framework="tensorflow, pytorch, mxnet", dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.
@@ -7,6 +8,7 @@ class DummyDataset(Dataset):
        (TODO) construct dummy data from real dataset or iteration of data.
 
     """
+
     def __init__(self, shape, transform=None):
         self.transform = transform
         shape = tuple(shape)
@@ -18,7 +20,6 @@ class DummyDataset(Dataset):
 
     def __getitem__(self, index):
         sample = self.dataset[index]
-        if self.transform != None:
+        if self.transform is not None:
             sample = self.transform(sample)
         return sample
-

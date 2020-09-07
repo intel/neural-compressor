@@ -30,6 +30,7 @@ from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.framework.ops import Graph
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
+
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
 
@@ -128,6 +129,7 @@ def is_ckpt_format(model_path):
     else:
         return None
 
+
 def parse_ckpt_model(ckpt_prefix, outputs):
     """Parse the ckpt model
 
@@ -149,12 +151,13 @@ def parse_ckpt_model(ckpt_prefix, outputs):
 
         return output_graph_def
 
+
 def _parse_ckpt_bn_input(graph_def):
     """parse ckpt batch norm inputs to match correct moving mean and variance
     Args:
         graph_def (graph_def): original graph_def
     Returns:
-        graph_def: well linked graph_def 
+        graph_def: well linked graph_def
     """
     for node in graph_def.node:
         if node.op == 'FusedBatchNorm':
@@ -179,16 +182,18 @@ def _parse_ckpt_bn_input(graph_def):
 
     return graph_def
 
+
 def _get_nodes_from_name(node_name, graph_def):
     """get nodes from graph_def using node name
     Args:
         graph_def (graph_def): graph_def
         node_name (str): node name
-        
+
     Returns:
         node (NodeDef): graph node
     """
-    return [node for node in graph_def.node if node.name==node_name]
+    return [node for node in graph_def.node if node.name == node_name]
+
 
 def is_saved_model_format(model_path):
     """check the model_path format is saved_model or not
@@ -205,6 +210,7 @@ def is_saved_model_format(model_path):
     else:
         return False
 
+
 def parse_kerasmodel_model(model):
     """Convert Keras Model to graphdef
 
@@ -220,9 +226,10 @@ def parse_kerasmodel_model(model):
     concrete_function = full_model.get_concrete_function(model.inputs)
     frozen_model = convert_variables_to_constants_v2(concrete_function)
     graph_def = frozen_model.graph.as_graph_def()
-    input_names = [node.name for node in graph_def.node if node.op=='Placeholder']
+    input_names = [node.name for node in graph_def.node if node.op == 'Placeholder']
     output_names = [output.name.split(':')[0] for output in model.outputs]
     return frozen_model.graph.as_graph_def(), input_names, output_names
+
 
 def parse_savedmodel_model(model_path):
     """Convert SavedModel to graphdef
@@ -237,27 +244,28 @@ def parse_savedmodel_model(model_path):
     """
 
     with tf.compat.v1.Session() as sess:
-            sess.run(tf.compat.v1.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
 
-            meta_graph = tf.compat.v1.saved_model.loader.load(
-                sess, ["serve"], model_path)
+        meta_graph = tf.compat.v1.saved_model.loader.load(
+            sess, ["serve"], model_path)
 
-            model_graph_signature = list(
-                meta_graph.signature_def.items())[0][1]
+        model_graph_signature = list(
+            meta_graph.signature_def.items())[0][1]
 
-            input_names = [input_item[1].name
-                              for input_item in model_graph_signature.inputs.items()]
+        input_names = [input_item[1].name
+                       for input_item in model_graph_signature.inputs.items()]
 
-            output_names = [output_item[1].name
-                               for output_item in model_graph_signature.outputs.items()]
+        output_names = [output_item[1].name
+                        for output_item in model_graph_signature.outputs.items()]
 
-            output_graph_def = graph_util.convert_variables_to_constants(
-                sess=sess,
-                input_graph_def=sess.graph_def,
-                output_node_names=[output_item[0]
-                                   for output_item in model_graph_signature.outputs.items()])
+        output_graph_def = graph_util.convert_variables_to_constants(
+            sess=sess,
+            input_graph_def=sess.graph_def,
+            output_node_names=[output_item[0]
+                               for output_item in model_graph_signature.outputs.items()])
 
-            return output_graph_def, input_names, output_names
+        return output_graph_def, input_names, output_names
+
 
 def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names, output_dir):
     """Convert the graphdef to SavedModel
@@ -290,17 +298,18 @@ def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names,
             output_tensors, input_tensors)
 
         builder.add_meta_graph_and_variables(sess,
-                                            [tag_constants.SERVING],
-                                            signature_def_map=sigs)
+                                             [tag_constants.SERVING],
+                                             signature_def_map=sigs)
 
     builder.save()
+
 
 def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
 
     Args:
-        model ([Graph, GraphDef or Path String]): The model could be the graph, graph_def object, the
-                                                  frozen pb or ckpt/savedmodel folder path.
+        model ([Graph, GraphDef or Path String]): The model could be the graph, graph_def object,
+                                                  the frozen pb or ckpt/savedmodel folder path.
         outputs ([String]): output node names list.
 
     Returns:

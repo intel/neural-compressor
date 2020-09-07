@@ -1,11 +1,12 @@
 from abc import abstractmethod
 
+
 class Sampler(object):
     """Base class for all Samplers. __iter__ is needed no matter whether you use IterableSampler
        or Squential sampler, if you want implement your own sampler, make clear what the type is
        your Dataset, if IterableDataset(method __iter__ implemented), try to use IterableSampler,
        else if you have an IndexDataset(method __getitem__ implemented), your dataset should have
-       method __len__ implemented. 
+       method __len__ implemented.
 
     """
 
@@ -15,6 +16,7 @@ class Sampler(object):
     @abstractmethod
     def __iter__(self):
         raise NotImplementedError
+
 
 class IterableSampler(Sampler):
     """Interally samples elements, used for datasets retrieved element by interator.
@@ -30,8 +32,10 @@ class IterableSampler(Sampler):
     def __iter__(self):
         while True:
             yield None
+
     def __len__(self):
         return 0
+
 
 class SequentialSampler(Sampler):
     """Sequentially samples elements, used for datasets retrieved element by index.

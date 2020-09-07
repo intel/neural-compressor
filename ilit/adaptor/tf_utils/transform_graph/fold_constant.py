@@ -107,7 +107,8 @@ class FoldConstant(GraphTransformBase):
                 return fold_value
             else:
                 tf_logging.info(
-                    "Currently fold-constant only support limited ops {} but face {}".format(self.supported_ops, end_node.op))
+                    "Currently fold-constant only support limited ops {} but face {}".
+                    format(self.supported_ops, end_node.op))
         else:
             return self.values_from_const(end_node)
 
@@ -158,7 +159,8 @@ class FoldConstant(GraphTransformBase):
                                  node.name)
 
     def _get_constant_node_map(self, input_nodes_name, output_nodes_name):
-        """input_nodes like image_tensor are non-constant, so their outpus are non-constant. this function helps to find all constant nodes.
+        """input_nodes like image_tensor are non-constant, so their outpus are non-constant.
+           This function helps to find all constant nodes.
 
         Args:
           input_nodes_name: list of names of input_nodes of the whole graph
@@ -191,7 +193,8 @@ class FoldConstant(GraphTransformBase):
                 node.name) not in non_constant_nodes and node.input]
 
     def _check_end(self, node_name):
-        """if the node is constant and one of its output is non-constant, the node can possiblely be end of sequence.
+        """if the node is constant and one of its output is non-constant,
+           the node can possiblely be end of sequence.
 
         Args:
           node_name: name of a node
@@ -259,7 +262,8 @@ class FoldConstant(GraphTransformBase):
         self._get_fold_end()
 
         for end_node_name in self.end_nodes:
-            if self.input_node_map[end_node_name].op == "Const" or self.input_node_map[end_node_name].op == "Identity":
+            if self.input_node_map[end_node_name].op == "Const" or \
+                    self.input_node_map[end_node_name].op == "Identity":
                 continue
 
             end_node = self.input_node_map[self.node_name_from_input(end_node_name)]
@@ -269,8 +273,11 @@ class FoldConstant(GraphTransformBase):
             new_end_value = np.float32(self._fold_value(end_node.name))
             new_end_value_type = tf.as_dtype(new_end_value.dtype)
             new_end_node.attr["dtype"].CopyFrom(end_node.attr["T"])
-            new_end_node.attr["value"].CopyFrom(attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                new_end_value, new_end_value_type, new_end_value.shape)))
+            new_end_node.attr["value"].CopyFrom(attr_value_pb2.AttrValue(
+                tensor=tensor_util.make_tensor_proto(
+                    new_end_value,
+                    new_end_value_type,
+                    new_end_value.shape)))
             new_end_nodes.append(new_end_node)
 
         for node in self.input_graph.node:

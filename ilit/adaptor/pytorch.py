@@ -7,6 +7,7 @@ import random
 
 torch = LazyImport('torch')
 
+
 @adaptor_registry
 class PyTorchAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
@@ -42,6 +43,10 @@ class PyTorchAdaptor(Adaptor):
         random.seed(random_seed)
         torch.manual_seed(random_seed)
 
+        self.approach = framework_specific_info['approach']
+        self.device = framework_specific_info['device']
+        self.is_baseline = True
+
         if framework_specific_info['approach'] == "post_training_static_quant":
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
         elif framework_specific_info['approach'] == "quant_aware_training":
@@ -52,9 +57,6 @@ class PyTorchAdaptor(Adaptor):
         self.white_list = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST\
             - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
-        self.approach = framework_specific_info['approach']
-        self.device = framework_specific_info['device']
-        self.is_baseline = True
 
         if self.device == "cpu":
             self.capability = \
@@ -121,8 +123,8 @@ class PyTorchAdaptor(Adaptor):
         # sanity check common API misusage
         if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
             logger.warn("None of the submodule got qconfig applied. Make sure you "
-                  "passed correct configuration through `qconfig_dict` or "
-                  "by assigning the `.qconfig` attribute directly on submodules")
+                        "passed correct configuration through `qconfig_dict` or "
+                        "by assigning the `.qconfig` attribute directly on submodules")
         torch.quantization.add_observer_(q_model)
 
         if self.approach == 'post_training_static_quant':
@@ -196,15 +198,25 @@ class PyTorchAdaptor(Adaptor):
     def _cfg_to_qconfig(self, tune_cfg):
         '''tune_cfg should be a format like below:
           {
-            'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']], 'fp32': [['CONV2D', 'RELU', 'BN']]},
+            'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
+                     'fp32': [['CONV2D', 'RELU', 'BN']]},
             'calib_iteration': 10,
             'op': {
                ('op1', 'CONV2D'): {
-                 'activation':  {'dtype': 'uint8', 'algorithm': 'minmax', 'scheme':'sym', 'granularity': 'per_tensor'},
-                 'weight': {'dtype': 'int8', 'algorithm': 'kl', 'scheme':'asym', 'granularity': 'per_channel'}
+                 'activation':  {'dtype': 'uint8',
+                                 'algorithm': 'minmax',
+                                 'scheme':'sym',
+                                 'granularity': 'per_tensor'},
+                 'weight': {'dtype': 'int8',
+                            'algorithm': 'kl',
+                            'scheme':'asym',
+                            'granularity': 'per_channel'}
                },
                ('op2', 'RELU): {
-                 'activation': {'dtype': 'int8', 'scheme': 'asym', 'granularity': 'per_tensor', 'algorithm': 'minmax'}
+                 'activation': {'dtype': 'int8',
+                 'scheme': 'asym',
+                 'granularity': 'per_tensor',
+                 'algorithm': 'minmax'}
                },
                ('op3', 'CONV2D'): {
                  'activation':  {'dtype': 'fp32'},

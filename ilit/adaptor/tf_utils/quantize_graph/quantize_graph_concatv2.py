@@ -9,7 +9,7 @@ import re
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
     def __init__(self, input_graph, output_node_names, perchannel,
-                start_node_name, device, _):
+                 start_node_name, device, _):
         super(FuseNodeStartWithConcatV2,
               self).__init__(input_graph, output_node_names, perchannel,
                              start_node_name, device)
@@ -46,8 +46,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         helper.set_attr_dtype(quantized_concat_node, "T", dtypes.quint8)
         self.add_output_graph_node(quantized_concat_node)
         self._intel_cpu_add_dequantize_result_node(quantized_concat_name,
-                                                    original_node.name)
-
+                                                   original_node.name)
 
     def _quantizable_concat(self, node):
         for input_node_name in node.input[:node.attr['N'].i]:

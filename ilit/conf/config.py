@@ -16,6 +16,7 @@ from collections import OrderedDict
 # None to {} in yaml load().
 yaml.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {})
 
+
 class DotDict(dict):
     """access yaml using attributes instead of using the dictionary notation.
 
@@ -56,16 +57,22 @@ class DotDict(dict):
 
     __setattr__, __getattr__ = __setitem__, __getitem__
 
+
 def _valid_framework_field(key, scope, error):
     if scope['name'] == 'tensorflow':
         assert 'inputs' in scope and 'outputs' in scope
+
 
 def _valid_type_field(key, scope, error):
     if scope['type'] == 'style_transfer':
         assert 'content_folder' in scope and 'style_folder' in scope
 
+
 def _valid_accuracy_field(key, scope, error):
-    assert bool('relative' in scope['accuracy_criterion']) != bool('absolute' in scope['accuracy_criterion'])
+    assert bool(
+        'relative' in scope['accuracy_criterion']) != bool(
+        'absolute' in scope['accuracy_criterion'])
+
 
 def input_to_list(data):
     if isinstance(data, str):
@@ -76,25 +83,43 @@ def input_to_list(data):
         assert isinstance(data, list)
         return data
 
+
 def percent_to_float(data):
-    if isinstance(data, str) and re.match('-?\d+(\.\d+)?%', data):
-        data = float(data.strip('%'))/100
+    if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
+        data = float(data.strip('%')) / 100
     else:
         assert isinstance(data, float), 'This field should be float or percent string'
     return data
 
+
 ops_schema = Schema({
     Optional('weight', default=None): {
-        Optional('granularity', default=None): And(list, lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-        Optional('scheme', default=None): And(list, lambda s: all(i in ['asym', 'sym'] for i in s)),
-        Optional('dtype', default=None): And(list, lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
-        Optional('algorithm', default=None): And(list, lambda s: all(i in ['minmax', 'kl'] for i in s))
+        Optional('granularity', default=None): And(
+            list,
+            lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+        Optional('scheme', default=None): And(
+            list,
+            lambda s: all(i in ['asym', 'sym'] for i in s)),
+        Optional('dtype', default=None): And(
+            list,
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+        Optional('algorithm', default=None): And(
+            list,
+            lambda s: all(i in ['minmax', 'kl'] for i in s))
     },
     Optional('activation', default=None): {
-        Optional('granularity', default=None): And(list, lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-        Optional('scheme', default=None): And(list, lambda s: all(i in ['asym', 'sym'] for i in s)),
-        Optional('dtype', default=None): And(list, lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
-        Optional('algorithm', default=None): And(list, lambda s: all(i in ['minmax', 'kl'] for i in s))
+        Optional('granularity', default=None): And(
+            list,
+            lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+        Optional('scheme', default=None): And(
+            list,
+            lambda s: all(i in ['asym', 'sym'] for i in s)),
+        Optional('dtype', default=None): And(
+            list,
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+        Optional('algorithm', default=None): And(
+            list,
+            lambda s: all(i in ['minmax', 'kl'] for i in s))
     }
 })
 
@@ -139,41 +164,71 @@ schema = Schema({
         Optional('outputs', default=None): And(Or(str, list), Use(input_to_list))
     },
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
-    Optional('quantization', default={'approach':'post_training_static_quant'}): {
-        Optional('approach', default='post_training_static_quant'): And(str, 
-                                                                        lambda s: s in ['post_training_static_quant', 'quant_aware_training']),
+    Optional('quantization', default={'approach': 'post_training_static_quant'}): {
+        Optional('approach', default='post_training_static_quant'): And(
+            str,
+            lambda s: s in ['post_training_static_quant', 'quant_aware_training']),
         Optional('weight', default=None): {
-            Optional('granularity', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-            Optional('scheme', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['asym', 'sym'] for i in s)),
-            Optional('dtype', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
+            Optional('granularity', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+            Optional('scheme', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['asym', 'sym'] for i in s)),
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
         },
         Optional('activation', default=None): {
-            Optional('granularity', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-            Optional('scheme', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['asym', 'sym'] for i in s)),
-            Optional('dtype', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
+            Optional('granularity', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+            Optional('scheme', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['asym', 'sym'] for i in s)),
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
         }
     },
     Optional('calibration', default={'iterations': [1]}): {
         Optional('iterations', default=[1]): And(Or(str, int, list), Use(input_to_list)),
         Optional('algorithm', default=None): {
-            Optional('weight', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['minmax', 'kl'] for i in s)),
-            Optional('activation', default=None): And(Or(str, list), Use(input_to_list), lambda s: all(i in ['minmax', 'kl'] for i in s))
+            Optional('weight', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['minmax', 'kl'] for i in s)),
+            Optional('activation', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['minmax', 'kl'] for i in s))
         },
         Optional('dataloader', default=None): dataloader_schema
     },
-    Optional('tuning', default={'strategy':'basic', 'accuracy_criterion': {'relative': 0.01}, 'objective': 'performance', 'timeout': 0, 'random_seed': 1978}): {
+    Optional('tuning', default={
+        'strategy': 'basic',
+        'accuracy_criterion': {'relative': 0.01},
+        'objective': 'performance',
+        'timeout': 0,
+        'random_seed': 1978}): {
         Optional('strategy', default='basic'): And(str, lambda s: s in STRATEGIES),
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
-        Optional('timeout', default=0): int, 
-        Optional('random_seed', default=1978): int, 
+        Optional('timeout', default=0): int,
+        Optional('random_seed', default=1978): int,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
             Optional('relative'): And(Or(str, float), Use(percent_to_float)),
             Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
-        }, 
+        },
         Optional('metric', default=None): {
             Optional('topk'): And(int, lambda s: s in [1, 5]),
-        }, 
+        },
         Optional('ops', default=None): {
             str: ops_schema
         }
@@ -188,6 +243,7 @@ schema = Schema({
         Optional('path', default='~/.ilit/snapshot/'): str
     }
 })
+
 
 class Conf(object):
     """config parser.
@@ -205,7 +261,7 @@ class Conf(object):
 
     def _read_cfg(self, cfg_fname):
         """Load a config file following yaml syntax.
-    
+
            Args:
                cfg_fname(string): The name of configuration yaml file
         """
@@ -218,7 +274,7 @@ class Conf(object):
                 cfg = yaml.load(content, yaml.Loader)
                 return schema.validate(cfg)
         except Exception as e:
-            logger.error("{}".format(e)) 
+            logger.error("{}".format(e))
             raise RuntimeError(
                 "The yaml file format is not correct. Please refer to document."
             )
@@ -242,7 +298,7 @@ class Conf(object):
             if key in dst:
                 if isinstance(dst[key], dict) and isinstance(src[key], dict):
                     self._merge_dicts(src[key], dst[key])
-                elif dst[key] == src[key] or src[key] == None:
+                elif dst[key] == src[key] or src[key] is None:
                     pass  # same leaf value
                 else:
                     value = [value for value in src[key] if value in dst[key]]
@@ -252,7 +308,7 @@ class Conf(object):
                 if not isinstance(src[key], dict):
                     dst[key] = src[key]
 
-        return dst 
+        return dst
 
     def modelwise_tune_space(self, modelwise_quant):
         src = DotDict({'weight': dict(), 'activation': dict()})
@@ -273,7 +329,8 @@ class Conf(object):
         if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.activation:
             src.activation.algorithm = cfg.calibration.algorithm.activation
 
-        if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.granularity:
+        if cfg.quantization and cfg.quantization.activation and \
+                cfg.quantization.activation.granularity:
             src.activation.granularity = cfg.quantization.activation.granularity
 
         if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.scheme:
@@ -295,7 +352,7 @@ class Conf(object):
             for k, v in cfg.tuning.ops.items():
                 for k_op, _ in opwise.items():
                     if k == k_op[0]:
-                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])  
+                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])
 
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
@@ -329,9 +386,11 @@ class Conf(object):
                     cfg.weight.clear()
                     cfg.weight.dtype = dtype
                 if (cfg.weight.dtype != cfg.activation.dtype and
-                    cfg.weight.dtype not in quant_dtype and cfg.activation.dtype not in quant_dtype) or \
+                    cfg.weight.dtype not in quant_dtype and
+                    cfg.activation.dtype not in quant_dtype) or \
                     (cfg.weight.dtype != cfg.activation.dtype and
-                     cfg.weight.dtype in quant_dtype and cfg.activation.dtype not in quant_dtype) or \
+                     cfg.weight.dtype in quant_dtype and
+                     cfg.activation.dtype not in quant_dtype) or \
                     (cfg.weight.dtype != cfg.activation.dtype and
                      cfg.weight.dtype not in quant_dtype and cfg.activation.dtype in quant_dtype):
                     continue
