@@ -79,7 +79,7 @@ Hierarchical
 # run_tuning
 function run_benchmark {
     extra_cmd='--num_warmup 10'
-    if [[ "${topology[@]}"  =~ "${topology}" ]]; then
+    if [[ "${models_need_name[@]}"  =~ "${topology}" ]]; then
       echo "$topology need model name!"
       extra_cmd='--num_warmup 10 --model_name '${topology}
     fi
