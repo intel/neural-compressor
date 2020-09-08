@@ -49,6 +49,33 @@ class TestFoldConstant(unittest.TestCase):
         attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
             input3_value, input3_value.dtype.type, input3_value.shape)))
 
+    switch_node = node_def_pb2.NodeDef()
+    switch_node.name = "switch"
+    switch_node.op = "Switch"
+
+    input4_node = node_def_pb2.NodeDef()
+    input4_node.name = "input4"
+    input4_node.op = "Const"
+    input4_value = np.float32(np.abs(np.random.randn(1)))
+    input4_node.attr["value"].CopyFrom(
+        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+            input4_value, input4_value.dtype.type, input4_value.shape)))
+    input4_node.input.extend([switch_node.name])
+
+    input5_node = node_def_pb2.NodeDef()
+    input5_node.name = "input5"
+    input5_node.op = "Const"
+    input5_value = np.float32(np.abs(np.random.randn(1)))
+    input5_node.attr["value"].CopyFrom(
+        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+            input5_value, input5_value.dtype.type, input5_value.shape)))
+    input5_node.input.extend([switch_node.name])
+
+    cond_end = node_def_pb2.NodeDef()
+    cond_end.name = "cond"
+    cond_end.op = "Add"
+    cond_end.input.extend([input4_node.name, input5_node.name])
+
     mul_node = node_def_pb2.NodeDef()
     mul_node.op = "Mul"
     mul_node.name = "mul"
@@ -95,6 +122,15 @@ class TestFoldConstant(unittest.TestCase):
             assert node.name in [
                 "placeholder", "block_output", "rsqrt_const", "relu", "res_add_const", "end"
             ]
+
+    def test_condition_fold_constant(self):
+        graph_def = graph_pb2.GraphDef()
+        graph_def.node.extend([self.cond_end, self.input4_node,
+                               self.input5_node, self.switch_node])
+        rewriter = GraphFoldConstantOptimizer(graph_def)
+        new_graph = rewriter.do_transformation()
+        for node in new_graph.node:
+            assert node.name in ["switch", "cond", "input4", "input5"]
 
 
 if __name__ == "__main__":
