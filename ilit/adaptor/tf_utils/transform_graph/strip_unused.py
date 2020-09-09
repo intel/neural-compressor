@@ -60,6 +60,7 @@ class StripUnusedNodes(GraphTransformBase):
         # Here we replace the nodes we're going to override as inputs with
         # placeholders so that any unused nodes that are inputs to them are
         # automatically stripped out by extract_sub_graph().
+        type_attr={"Sub":"T"}
         not_found = {name for name in self.input_node_names}
         inputs_replaced_graph_def = graph_pb2.GraphDef()
         for node in self.input_graph.node:
@@ -68,8 +69,15 @@ class StripUnusedNodes(GraphTransformBase):
                 placeholder_node = node_def_pb2.NodeDef()
                 placeholder_node.op = "Placeholder"
                 placeholder_node.name = node.name
-                placeholder_node.attr["dtype"].CopyFrom(
-                    attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
+                if "dtype" in node.attr:
+                    placeholder_node.attr["dtype"].CopyFrom(
+                        attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
+                elif node.op in type_attr.keys():
+                    placeholder_node.attr["dtype"].CopyFrom(
+                        attr_value_pb2.AttrValue(type=node.attr[type_attr[node.op]].type))
+                else:
+                    raise KeyError("%s op's type attribute is not found,"
+                                   "you should add it to type_attr dict"%node.op)
                 if "_output_shapes" in node.attr:
                     placeholder_node.attr["_output_shapes"].CopyFrom(
                         node.attr["_output_shapes"])
