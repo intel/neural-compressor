@@ -62,11 +62,11 @@ function run_tuning {
     input="input"
     output="predict"
     yaml='./config.yaml'
-    extra_cmd='--num_warmup 10 -n 500'
+    extra_cmd='--num_warmup 10 -n 500 --disable_optimize'
 
     if [[ "${models_need_name[@]}"  =~ "${topology}" ]]; then
       echo "$topology need model name!"
-      extra_cmd='--num_warmup 10 -n 500 --model_name '${topology}
+      extra_cmd='--num_warmup 10 -n 500 --disable_optimize --model_name '${topology}
     fi
 
     python tf_benchmark.py \

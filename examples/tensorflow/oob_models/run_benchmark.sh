@@ -76,6 +76,14 @@ text-recognition-0012
 Hierarchical
 )
 
+models_need_disable_optimize=(
+efficientnet-b0
+efficientnet-b0_auto_aug
+efficientnet-b5
+efficientnet-b7_auto_aug
+vggvox
+)
+
 # run_tuning
 function run_benchmark {
     extra_cmd='--num_warmup 10'
@@ -83,6 +91,12 @@ function run_benchmark {
       echo "$topology need model name!"
       extra_cmd='--num_warmup 10 --model_name '${topology}
     fi
+
+    if [[ "${models_need_disable_optimize[@]}"  =~ "${topology}" ]]; then
+      echo "$topology need model name!"
+      extra_cmd='--num_warmup 10 --disable_optimize --model_name '${topology}
+    fi
+
     python tf_benchmark.py \
             --model_path ${input_model} \
             --num_iter ${iters} \

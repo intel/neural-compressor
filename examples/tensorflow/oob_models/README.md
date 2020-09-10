@@ -27,11 +27,11 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow OO
 ### run tuning
 
 ```bash
-./run_tune.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --output_model=${output_model_path}
+./run_tuning.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --output_model=${output_model_path}
 ```
 
 ### run benchmarking
 
 ```bash
-./run_benchmarking.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --mode=benchmark --batch_size=1 --iters=200
+./run_benchmark.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --mode=benchmark --batch_size=1 --iters=200
 ```
