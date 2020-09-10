@@ -32,11 +32,12 @@ class TensorFlowAdaptor(Adaptor):
         self.bf16_ops = []
         self.fp32_ops = []
 
-    def evaluate(self, graph, dataloader, postprocess=None, metric=None):
+    def evaluate(self, input_graph, dataloader, postprocess=None, metric=None):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
-            graph (tf.compat.v1.GraphDef): the model for evaluate/
+            input_graph ([Graph, GraphDef or Path String]): The model could be the graph,
+                          graph_def object, the frozen pb or ckpt/savedmodel folder path.
             dataloader (generator): generate the data and labels.
             metric (object, optional): Depends on model category. Defaults to None.
 
@@ -44,12 +45,18 @@ class TensorFlowAdaptor(Adaptor):
             [float]: evaluation result, the larger is better.
         """
         logger.info("start to evaluate model....")
+        from .tf_utils.util import get_graph_def
+        import tensorflow as tf
+        graph = tf.Graph()
+        graph_def = get_graph_def(input_graph)
+        assert graph_def
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name='') 
+
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
         output_tensor = [
             graph.get_tensor_by_name(x + ":0") for x in self.outputs
         ]
-
-        import tensorflow as tf
 
         num_inter_threads = 2
         num_intra_threads = int(
