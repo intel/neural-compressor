@@ -312,7 +312,7 @@ class TopK(Metric):
     def update(self, preds, labels, sample_weight=None):
 
         preds = preds.argsort()[..., -self.k:]
-        preds = np.squeeze(preds)
+        preds = preds.reshape(labels.shape)
         if self.k == 1:
             correct = accuracy_score(preds, labels, normalize=False)
             self.num_correct += correct
