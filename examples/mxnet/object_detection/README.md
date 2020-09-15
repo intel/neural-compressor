@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Step-by-Step
 ============
 
@@ -61,10 +60,10 @@ bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=coco --dataset_loc
 # benchmark 
 ```bash
 # accuracy mode, run the whole test dataset and get accuracy
-bash run_benchmark.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --input_model=/PATH/TO/MODEL --batch_size=32 --mode=accuracy 
+bash run_benchmark.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --input_model=/PATH/TO/MODEL_PREFIX --batch_size=32 --mode=accuracy 
 
 # benchmark mode, specify iteration number and batch_size in option, get throughput and latency
-bash run_benchmark.sh --topology=ssd-resnet50_v1 --dataset_name=voc --input_model=/PATH/TO/MODEL --batch_size=32 --iters=100 --mode=benchmark
+bash run_benchmark.sh --topology=ssd-resnet50_v1 --dataset_name=voc --input_model=/PATH/TO/MODEL_PREFIX --batch_size=32 --iters=100 --mode=benchmark
 
 
 ```

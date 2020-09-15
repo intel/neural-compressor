@@ -168,9 +168,9 @@ def save(model, output_path):
     '''
     if isinstance(model, mx.gluon.HybridBlock):
         print("Save MXNet HybridBlock quantization model!")
-        output_path = output_path + '.params'
-        model.save_parameters(output_path)
-        print('Saving quantized model at %s', output_path)
+        output_path = output_path
+        model.export(output_path)
+        print('Saving quantized model at %s' % output_path)
     else:
         symbol, arg_params, aux_params = model
         symbol.save(output_path+'-symbol.json')
@@ -216,8 +216,12 @@ if __name__ == '__main__':
         # print('-----benchmarking on %s -----'%net_name)
         #input_shape = (args.batch_size, 3) + (args.data_shape, args.data_shape)
         #data = mx.random.uniform(-1.0, 1.0, shape=input_shape, ctx=ctx[0], dtype='float32')
-        net.load_parameters(args.input_model)
-        net.hybridize()
+        if os.path.isfile(args.input_model + "-symbol.json"):
+            net = mx.gluon.SymbolBlock.imports('{}-symbol.json'.format(args.input_model), ['data'], '{}-0000.params'.format(args.input_model))
+            net.hybridize(static_alloc=True, static_shape=True)
+        else:
+            net.load_parameters(args.input_model + ".params")
+            net.hybridize()
         speed = (args.batch_size*args.num_iterations)/benchmarking(net, ctx=ctx[0], num_iteration=args.num_iterations,
                 datashape=args.data_shape, batch_size=args.batch_size)
         print('Inference speed on %s, with batchsize %d is %.2f img/sec'%(net_name, args.batch_size, speed))
@@ -274,7 +278,12 @@ if __name__ == '__main__':
 
     if args.accuracy_only:
         # eval
-        net.load_parameters(args.input_model)
+        if os.path.isfile(args.input_model + "-symbol.json"):
+            net = mx.gluon.SymbolBlock.imports('{}-symbol.json'.format(args.input_model), ['data'], '{}-0000.params'.format(args.input_model))
+            net.hybridize(static_alloc=True, static_shape=True)
+        else:
+            net.load_parameters(args.input_model + ".params")
+            net.hybridize()
         names, values = validate(net, val_data, ctx, classes, len(val_dataset), val_metric)
         res_mAP = -1
         for k, v in zip(names, values):
