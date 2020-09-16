@@ -142,10 +142,26 @@ class FoldBatchNormNodes(GraphTransformBase):
             if node.op not in ("BatchNormWithGlobalNormalization",
                                "FusedBatchNorm", "FusedBatchNormV3"):
                 continue
-
+            bias = None
             conv_op = self.node_from_map(
                 input_node_map,
                 node.input[self.INPUT_ORDER[node.op].index("conv_op")])
+            # There might be an Add/BiasAdd op between the conv and the batchnorm,
+            # which we can fold into the mean param of the batchnorm.
+            if conv_op.op in ["BiasAdd", "Add", "AddV2"]:
+                add_op = conv_op
+                # Follow the first input of the add to get to the conv.
+                conv_op = self.node_from_map(input_node_map, add_op.input[0])
+                bias = self.node_from_map(input_node_map, add_op.input[1])
+                if conv_op.op not in ["Conv2D", "DepthwiseConv2dNative"]:
+                    # Follow the second input of the add to get to the conv.
+                    conv_op = self.node_from_map(input_node_map, add_op.input[1])
+                    bias = self.node_from_map(input_node_map, add_op.input[0])
+            if bias and bias.op != "Const":
+                tf_logging.warning("The bias %s after the conv %s was not a constant. "
+                                   "Maybe because freeze_graph wasn't "
+                                   "run first?" % (bias.name, conv_op.name))
+                continue
             if conv_op.op != "Conv2D" and conv_op.op != "DepthwiseConv2dNative":
                 tf_logging.warning(
                     "Didn't find expected Conv2D or DepthwiseConv2dNative"
@@ -175,6 +191,10 @@ class FoldBatchNormNodes(GraphTransformBase):
                     " run first?" % (node.name, mean_op))
                 continue
             mean_value = self.values_from_const(mean_op)
+            if bias is not None:
+                # Adjust the mean of the batchnorm based on the add op in-between the conv
+                # and the batchnorm.
+                mean_value = mean_value - self.values_from_const(bias)
             if mean_value.shape != (channel_count, ):
                 tf_logging.warning(
                     "Incorrect shape for mean, found %s, expected %s,"
@@ -242,7 +262,8 @@ class FoldBatchNormNodes(GraphTransformBase):
             nodes_to_skip[beta_op.name] = True
             nodes_to_skip[gamma_op.name] = True
             nodes_to_skip[conv_op.name] = True
-
+            if bias is not None:
+                nodes_to_skip[add_op.name] = True
             if self.scale_after_normalization(node):
                 scale_value = ((1.0 / np.vectorize(math.sqrt)
                                 (var_value + variance_epsilon_value)) *
