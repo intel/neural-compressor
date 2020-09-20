@@ -117,7 +117,7 @@ tuning:
 | Examples Tutorials |
 | ------ | 
 |[Hello World examples for quick start](../examples/helloworld/README.md)| 
-|[PyTorch imagenet recognition/imagenet](../examples/pytorch/image_recognition/imagenet/README.md)| 
+|[PyTorch imagenet recognition/imagenet](../examples/pytorch/image_recognition/imagenet/cpu/PTQ/README.md)| 
 |[PyTorch imagenet recognition/peleenet](../examples/pytorch/image_recognition/peleenet/README.md)|
 |[PyTorch imagenet recognition/resnest50](../examples/pytorch/image_recognition/resnest/README.md)|
 |[PyTorch imagenet recognition/se_resnext50](../examples/pytorch/image_recognition/se_resnext/README.md)|

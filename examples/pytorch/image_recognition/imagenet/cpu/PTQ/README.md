@@ -28,35 +28,35 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 1. ResNet50
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
   python main.py -t -a resnet50 --pretrained /path/to/imagenet
   ```
 
 ### 2. ResNet18
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
   python main.py -t -a resnet18 --pretrained /path/to/imagenet
   ```
 
 ### 3. ResNext101_32x8d
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
   python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
   ```
 
 ### 4. InceptionV3
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
   python main.py -t -a inception_v3 --pretrained /path/to/imagenet
   ```
 
 ### 5. Mobilenet_v2
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
   python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
   ```
 
@@ -137,7 +137,7 @@ PyTorch quantization requires two manual steps:
 
 Torchvision provide quantized_model, so we didn't do these steps above for all torchvision models. Please refer [torchvision](https://github.com/pytorch/vision/tree/master/torchvision/models/quantization)
 
-The related code please refer to examples/pytorch/image_recognition/resnet/main.py.
+The related code please refer to examples/pytorch/image_recognition/imagenet/cpu/PTQ/main.py.
 
 ### Code Update
 

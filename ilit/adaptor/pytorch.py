@@ -77,13 +77,14 @@ class PyTorchAdaptor(Adaptor):
                     }
                 }
         elif self.device == "gpu":
+            import torch_ipex
             self.capability = \
                 {
                     'activation':
                     {
                         'granularity': ['per_tensor'],
                         'scheme': ['sym'],
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8', 'fp32', 'int8'],
                         'algorithm': ['minmax'],
                     },
                     'weight':

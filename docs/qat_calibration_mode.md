@@ -82,6 +82,6 @@ More on quantization-aware training:
     2. We can also simulate the accuracy of a quantized model in floating point since we are using fake-quantization to model the numerics of actual quantized arithmetic.
     3. We can mimic post training quantization easily too.
 
-Intel® Low Precision Optimization Tool can support QAT calibration for PyTorch models now. Please refer [QAT model](../examples/pytorch/image_recognition/imagenet_qat/README.md) for step by step tuning.
+Intel® Low Precision Optimization Tool can support QAT calibration for PyTorch models now. Please refer [QAT model](../examples/pytorch/image_recognition/imagenet/cpu/QAT/README.md) for step by step tuning.
 
 

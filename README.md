@@ -92,21 +92,21 @@ The followings are the examples integrated with Intel® Low Precision Optimizati
 |[BERT-Base SST-2](examples/pytorch/language_translation/README.md) | Language Translation   |
 |[BERT-Base RTE](examples/pytorch/language_translation/README.md)   | Language Translation   |
 |[BERT-Base STS-B](examples/pytorch/language_translation/README.md) | Language Translation   |
-|[BERT-Base CoLA](examples/pytorch/language_translation/README.md)  | Language Translation   | 
+|[BERT-Base CoLA](examples/pytorch/language_translation/README.md)  | Language Translation   |
 |[BERT-Base MRPC](examples/pytorch/language_translation/README.md)  | Language Translation   |
-|[DLRM](examples/pytorch/recommendation/README.md)                  | Recommendation   | 
+|[DLRM](examples/pytorch/recommendation/README.md)                  | Recommendation   |
 |[BERT-Large MRPC](examples/pytorch/language_translation/README.md) | Language Translation   |
-|[ResNext101_32x8d](examples/pytorch/image_recognition/imagenet/README.md)          | Image Recognition   |
-|[BERT-Large SQUAD](examples/pytorch/language_translation/README.md)                | Language Translation   | 
-|[ResNet50 V1.5](examples/pytorch/image_recognition/imagenet/README.md)             | Image Recognition   |
-|[ResNet18](examples/pytorch/image_recognition/imagenet/README.md)             | Image Recognition   |
-|[Inception V3](examples/pytorch/image_recognition/imagenet/README.md)              | Image Recognition   |
+|[ResNext101_32x8d](examples/pytorch/image_recognition/imagenet/cpu/PTQ/README.md)          | Image Recognition   |
+|[BERT-Large SQUAD](examples/pytorch/language_translation/README.md)                | Language Translation   |
+|[ResNet50 V1.5](examples/pytorch/image_recognition/imagenet/cpu/PTQ/README.md)             | Image Recognition   |
+|[ResNet18](examples/pytorch/image_recognition/imagenet/cpu/PTQ/README.md)                  | Image Recognition   |
+|[Inception V3](examples/pytorch/image_recognition/imagenet/cpu/PTQ/README.md)              | Image Recognition   |
 |[YOLO V3](examples/pytorch/object_detection/yolo_v3/README.md)                     | Object Detection   |
 |[Peleenet](examples/pytorch/image_recognition/peleenet/README.md)                  | Image Recognition   |
-|[ResNest50](examples/pytorch/image_recognition/resnest/README.md)                  | Image Recognition   | 
+|[ResNest50](examples/pytorch/image_recognition/resnest/README.md)                  | Image Recognition   |
 |[SE_ResNext50_32x4d](examples/pytorch/image_recognition/se_resnext/README.md)      | Image Recognition   |
-|[ResNet50 V1.5 QAT](examples/pytorch/image_recognition/imagenet_qat/README.md)     | Image Recognition   | 
-|[ResNet18 QAT](examples/pytorch/image_recognition/imagenet_qat/README.md)          | Image Recognition   |
+|[ResNet50 V1.5 QAT](examples/pytorch/image_recognition/imagenet/cpu/QAT/README.md)     | Image Recognition   |
+|[ResNet18 QAT](examples/pytorch/image_recognition/imagenet/cpu/QAT/README.md)          | Image Recognition   |
 
 | MxNet Model                                                               | Category  |
 |---------------------------------------------------------------------|------------|
