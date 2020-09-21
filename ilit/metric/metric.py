@@ -310,13 +310,42 @@ class TopK(Metric):
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
+        # preds shape can be Nxclass_num or class_num(N=1 by default)
+        # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
+        preds = np.array(preds)
 
+        # consider labels just int value 1x1
+        if isinstance(labels, int):
+            labels = [labels]
+        # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
+        # only support 2 demension one-shot labels
+        # or 1 demension one-hot class_num will confuse with N
+        labels = np.array(labels)
+
+        if len(preds.shape) == 1:
+            N = 1
+            class_num = preds.shape[0]
+            preds = preds.reshape([-1, class_num])
+        elif len(preds.shape) == 2:
+            N = preds.shape[0]
+            class_num = preds.shape[1]
+        else:
+            logger.error('preds shape at most 2 demensions')
+        
+        label_N = labels.shape[0]
+        assert label_N == N, 'labels batch size should same with preds'
+        if len(labels.shape) == 1:
+            labels = labels.reshape([-1, 1])
+        elif len(labels.shape) == 2:
+            labels = labels.argsort()[..., -1:]
+        else:
+            logger.error('labels shape at most 2 demensions')
+ 
         preds = preds.argsort()[..., -self.k:]
-        preds = preds.reshape(labels.shape)
+
         if self.k == 1:
             correct = accuracy_score(preds, labels, normalize=False)
             self.num_correct += correct
-            self.num_sample += labels.shape[0]
 
         else:
             for p, l in zip(preds, labels):
@@ -325,7 +354,7 @@ class TopK(Metric):
                 l = l.astype('int32')
                 if l in p:
                     self.num_correct += 1
-            self.num_sample += labels.shape[0]
+        self.num_sample += len(labels) 
 
     def reset(self):
         self.num_correct = 0
