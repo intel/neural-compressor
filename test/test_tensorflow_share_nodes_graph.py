@@ -3,9 +3,9 @@
 #
 import unittest
 import os
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from ilit.adaptor.tf_utils.util import read_graph
-
+from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from ilit.adaptor.tf_utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
     ssd_resnet50_model = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
     dst_path = '/tmp/ssd_resnet50_v1.tgz'
@@ -24,8 +24,10 @@ class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
 
     def test_parse_pb_contains_share_nodes(self):
         original_graphdef = read_graph(os.path.join(self.unzipped_folder_name, "frozen_inference_graph.pb"))
-        parsed_graphdef = QuantizeGraphHelper().split_shared_inputs(original_graphdef)
+        parsed_graphdef = SplitSharedInputOptimizer(original_graphdef).do_transformation()
+        legacy_graphdef = QuantizeGraphHelper.split_shared_inputs(original_graphdef)
         self.assertGreater(len(parsed_graphdef.node), len(original_graphdef.node))
+        self.assertEqual(len(legacy_graphdef.node), len(parsed_graphdef.node))
 
 if __name__ == '__main__':
     unittest.main()
