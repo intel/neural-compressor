@@ -30,7 +30,7 @@ class TestMetrics(unittest.TestCase):
         sparse_labels = [2, 2]
         single_label = 2
 
-        # test funtionality of one-hot label
+        # test functionality of one-hot label
         top1.update(predicts, labels)
         top2.update(predicts, labels)
         top3.update(predicts, labels)
@@ -38,7 +38,7 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(top2.result(), 0.5)
         self.assertEqual(top3.result(), 1)
 
-        # test funtionality of sparse label
+        # test functionality of sparse label
         top1.update(predicts, sparse_labels)
         top2.update(predicts, sparse_labels)
         top3.update(predicts, sparse_labels)
@@ -46,7 +46,7 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(top2.result(), 0.75)
         self.assertEqual(top3.result(), 1)
 
-        # test funtionality of single label
+        # test functionality of single label
         top1.update(single_predict, single_label)
         top2.update(single_predict, single_label)
         top3.update(single_predict, single_label)
