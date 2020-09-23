@@ -43,6 +43,12 @@ from .util import parse_savedmodel_model, get_graph_def
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
+
+from .graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
+from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
+from .graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
+from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
+from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 import os
 import sys
 import logging
@@ -594,20 +600,18 @@ class GraphConverter:
 
     def _optimize_frozen_fp32_graph(self):
         """Optimize fp32 frozen graph."""
-        self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
-            self.input_graph, protected_nodes=self.outputs)
-
-        self._tmp_graph_def = QuantizeGraphHelper.split_shared_inputs(
-            self._tmp_graph_def)
+        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
+            self.input_graph, protected_nodes=self.outputs).do_transformation()
+        self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = FoldConstant(
             self._tmp_graph_def).do_transformation(
             self.inputs, self.outputs)
-        self._tmp_graph_def = FuseColumnWiseMul(
-            self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
-                                               self.inputs, self.outputs
-                                               ).do_transform()
 
+        self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(
+            self._tmp_graph_def, self.inputs, self.outputs).do_transformation()
+        self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
+        
         self._tmp_graph_def = FoldBatchNormNodes(
             self._tmp_graph_def).do_transform()
 
