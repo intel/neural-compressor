@@ -318,28 +318,28 @@ class TopK(Metric):
         if isinstance(labels, int):
             labels = [labels]
         # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
-        # only support 2 demension one-shot labels
-        # or 1 demension one-hot class_num will confuse with N
+        # only support 2 dimension one-shot labels
+        # or 1 dimension one-hot class_num will confuse with N
         labels = np.array(labels)
 
         if len(preds.shape) == 1:
             N = 1
             class_num = preds.shape[0]
             preds = preds.reshape([-1, class_num])
-        elif len(preds.shape) == 2:
+        elif len(preds.shape) >= 2:
             N = preds.shape[0]
+            preds = preds.reshape([N, -1])
             class_num = preds.shape[1]
-        else:
-            logger.error('preds shape at most 2 demensions')
         
         label_N = labels.shape[0]
         assert label_N == N, 'labels batch size should same with preds'
         if len(labels.shape) == 1:
             labels = labels.reshape([-1, 1])
-        elif len(labels.shape) == 2:
-            labels = labels.argsort()[..., -1:]
-        else:
-            logger.error('labels shape at most 2 demensions')
+        elif len(labels.shape) >= 2:
+            labels = labels.reshape([N, -1])
+            # if second dimension not equal 1, argsort to get the label index
+            if labels.shape[1] != 1:
+                labels = labels.argsort()[..., -1:]
  
         preds = preds.argsort()[..., -self.k:]
 
