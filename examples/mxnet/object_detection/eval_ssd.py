@@ -121,7 +121,7 @@ def benchmarking(net, ctx, num_iteration, datashape=300, batch_size=64):
         bboxes.asnumpy()
     toc = time.time() - tic
     print('Throughput: %.3f images/sec' % (batch_size * num_iteration / toc))
-    print('Latency: %.3f ms' % (toc / (batch_size * num_iteration)))
+    print('Latency: %.3f ms' % (toc / (batch_size * num_iteration) * 1000))
     print('Batch size = %d' % args.batch_size)
 
 

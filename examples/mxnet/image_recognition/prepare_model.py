@@ -42,7 +42,8 @@ def convert_from_gluon(model_name, image_shape, model_path, classes=1000):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Prepare pre-trained model for MXNet ImageNet Classifier')
     parser.add_argument('--model_name', type=str, default='resnet18_v1', help='model to download, default is resnet18_v1',
-                        choices=["resnet18_v1", "resnet50_v1", "squeezenet1.0", "mobilenet1.0", "mobilenetv2_1.0", "inceptionv3"])
+                        choices=["resnet18_v1", "resnet50_v1", "squeezenet1.0", "mobilenet1.0", "mobilenetv2_1.0", "inceptionv3", 
+                                 "resnet152_v1"])
     parser.add_argument('--model_path', type=str, default='./model', help='directory to put models, default is ./model')
 
     args = parser.parse_args()

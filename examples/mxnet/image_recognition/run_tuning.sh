@@ -39,7 +39,7 @@ function init_params {
 function run_tuning {
     extra_cmd=''
     batch_size=64
-    num_inference_batches=500
+    num_inference_batches=100
     dataset=${dataset_location}
     ctx='cpu'
     symbol_file=${input_model_prefix}/${topology}"-symbol.json"
@@ -51,14 +51,13 @@ function run_tuning {
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     elif [ "${topology}" = "mobilenet1.0" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-
     elif [ "${topology}" = "mobilenetv2_1.0" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-
     elif [ "${topology}" = "inceptionv3" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --image-shape=3,299,299'
-
     elif [ "${topology}" = "resnet18_v1" ]; then
+        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
+    elif [ "${topology}" = "resnet152_v1" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     fi
 

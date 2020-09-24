@@ -34,21 +34,18 @@ This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1
   python prepare_model.py -h
 
   usage: prepare_model.py [-h]
-                          [--model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3}]
-                          [--model_path MODEL_PATH] [--image_shape IMAGE_SHAPE]
+                          [--model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3,resnet152_v1}]
+                          [--model_path MODEL_PATH]
 
   Prepare pre-trained model for MXNet ImageNet Classifier
 
   optional arguments:
     -h, --help            show this help message and exit
-    --model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3}
+    --model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3,resnet152_v1}
                           model to download, default is resnet18_v1
     --model_path MODEL_PATH
                           directory to put models, default is ./model
-    --image_shape IMAGE_SHAPE
-                          model input shape, default is 3,224,224
-
-  ```
+``
   
 
 
@@ -61,6 +58,10 @@ bash run_tuning.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.
 ### ResNet50_v1
 ```bash
 bash run_tuning.sh --topology=resnet50_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet50_v1
+```
+### ResNet152_v1
+```bash
+bash run_tuning.sh --topology=resnet152_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet152_v1
 ```
 ### SqueezeNet1
 ```bash

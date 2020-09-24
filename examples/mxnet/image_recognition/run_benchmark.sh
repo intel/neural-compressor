@@ -81,6 +81,8 @@ function run_benchmark {
 
     elif [ "${topology}" = "resnet18_v1" ]; then
         extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
+    elif [ "${topology}" = "resnet152_v1" ]; then
+        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     fi
 
     python -u imagenet_inference.py \
