@@ -17,6 +17,7 @@ class BaseDataLoader(object):
         self.batch_sampler = batch_sampler
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self._batch_size = batch_size
 
         self.dataloader = self._generate_dataloader(
             self.dataset,
@@ -29,6 +30,7 @@ class BaseDataLoader(object):
             pin_memory=pin_memory)
 
     def batch(self, batch_size, last_batch='rollover'):
+        self._batch_size = batch_size
         self.dataloader = self._generate_dataloader(
             self.dataset,
             batch_size,
@@ -38,6 +40,10 @@ class BaseDataLoader(object):
             self.batch_sampler,
             self.num_workers,
             self.pin_memory)
+
+    @property
+    def batch_size(self):
+        return self._batch_size
 
     def __iter__(self):
         return iter(self.dataloader)

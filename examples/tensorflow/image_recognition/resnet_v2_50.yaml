@@ -3,10 +3,25 @@ framework:
     inputs: input
     outputs: resnet_v2_50/predictions/Reshape_1
 
+dataloader:
+  batch_size: 10
+  dataset:
+      type: "Imagenet"
+      root: "./small_dataset" # NOTICE: config to your content images path
+  transform:
+      ParseDecodeImagenet:
+      BilinearImagenet: 
+          height: 224
+          width: 224
+
 calibration:                                         
   - iterations: 5, 10
     algorithm:
         activation: minmax
+
+benchmark:                            
+  dataloader:
+    batch_size: 1
 
 tuning:
     metric:  

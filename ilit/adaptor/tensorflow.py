@@ -1,7 +1,8 @@
 import os
 import subprocess
 import copy
-
+import time
+import numpy as np
 from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport
@@ -32,7 +33,26 @@ class TensorFlowAdaptor(Adaptor):
         self.bf16_ops = []
         self.fp32_ops = []
 
-    def evaluate(self, input_graph, dataloader, postprocess=None, metric=None):
+    def get_tensor_by_name_with_import(self, graph, name, try_cnt=3):
+        """Get the tensor by name considering the 'import' scope when model
+           may be imported more then once
+
+        Args:
+            graph (tf.compat.v1.GraphDef): the model to get name from 
+            name (string): tensor name do not have 'import'
+
+        Returns:
+            tensor: evaluation result, the larger is better.
+        """
+        for i in range(0, try_cnt):
+            try:
+                return graph.get_tensor_by_name(name)
+            except:
+                name = 'import/' + name
+        raise ValueError('can not find tensor by name')
+
+    def evaluate(self, input_graph, dataloader, \
+                 postprocess=None, metric=None, measurer=None):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
@@ -40,6 +60,7 @@ class TensorFlowAdaptor(Adaptor):
                           graph_def object, the frozen pb or ckpt/savedmodel folder path.
             dataloader (generator): generate the data and labels.
             metric (object, optional): Depends on model category. Defaults to None.
+            measurer (object, optional): for precise benchmark measurement.
 
         Returns:
             [float]: evaluation result, the larger is better.
@@ -49,32 +70,38 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
         graph = tf.Graph()
         graph_def = get_graph_def(input_graph)
+        from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference 
+        from tensorflow.python.framework import dtypes
+        graph_def = optimize_for_inference(graph_def, [self.inputs[0]], self.outputs, \
+                                           dtypes.float32.as_datatype_enum, False) 
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
 
-        input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
+        input_tensor = self.get_tensor_by_name_with_import(graph, self.inputs[0] + ":0")
         output_tensor = [
-            graph.get_tensor_by_name(x + ":0") for x in self.outputs
+            self.get_tensor_by_name_with_import(graph, x + ":0") for x in self.outputs
         ]
 
-        num_inter_threads = 2
-        num_intra_threads = int(
-            subprocess.check_output(
-                'cat /proc/cpuinfo | grep "cpu cores"|uniq|cut -d ":" -f 2',
-                shell=True))
+        config = tf.compat.v1.ConfigProto() 
+        config.use_per_session_threads = 1
 
-        config = tf.compat.v1.ConfigProto()
-        config.inter_op_parallelism_threads = num_inter_threads
-        config.intra_op_parallelism_threads = num_intra_threads
+        logger.info("Start to evaluate model via tensorflow...")
 
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        logger.info("Start to evaluate model via tensorflow...")
         for images, labels in dataloader:
-            predictions = sess_graph.run(output_tensor, {input_tensor: images})
+            if measurer is not None:
+                measurer.start()
+                predictions = sess_graph.run(output_tensor, {input_tensor: images})
+                measurer.end()
+            else:
+                predictions = sess_graph.run(output_tensor, {input_tensor: images})
+            if postprocess is not None:
+                predictions, labels = postprocess((predictions, labels))
             if metric is not None:
                 metric.update(predictions[0], labels)
         acc = metric.result() if metric is not None else 0
+        sess_graph.close()
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):

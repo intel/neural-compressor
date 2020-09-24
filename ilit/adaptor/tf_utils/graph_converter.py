@@ -243,33 +243,26 @@ class GraphConverter:
 
         output_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.outputs]
 
-        config = tf.compat.v1.ConfigProto()
-        config.inter_op_parallelism_threads = 2
-        config.intra_op_parallelism_threads = int(
-            subprocess.check_output('cat /proc/cpuinfo | grep "cpu cores"|uniq|cut -d ":" -f 2',
-                                    shell=True))
+        tf.config.threading.set_inter_op_parallelism_threads(1)
 
+        sess_graph = tf.compat.v1.Session(graph=graph)
         quantize_batch = 0
 
-        sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-
         self.logger.info("Sampling data...")
-
         for content in self.data_loader:
-            try:
-                np_images = content[0]
-                if not isinstance(input_tensor, list):
-                    _ = sess_graph.run(output_tensor, {input_tensor: np_images})
-                else:
-                    _ = sess_graph.run(output_tensor,
-                                       dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
-                # print("Processed %d batches."% (quantize_batch + 1))
-                quantize_batch += 1
-                if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
-                    break
-            except tf.errors.OutOfRangeError:
-                self.logger.error("Running out of images from dataset.")
+            np_images = content[0]
+            if not isinstance(input_tensor, list):
+                _ = sess_graph.run(output_tensor,
+                                   {input_tensor: np_images})
+            else:
+                _ = sess_graph.run(output_tensor,
+                                   dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
+            # print("Processed %d batches."% (quantize_batch + 1))
+            quantize_batch += 1
+            if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
                 break
+
+        sess_graph.close()
 
     def _check_tf_version(self):
         is_supported_version = False

@@ -65,8 +65,12 @@ def _valid_framework_field(key, scope, error):
 
 def _valid_type_field(key, scope, error):
     if scope['type'] == 'style_transfer':
-        assert 'content_folder' in scope and 'style_folder' in scope
-
+        params = ('type', 'style_folder', 'content_folder')
+        assert all([key in scope.keys() for key in params])
+    if scope['type'] == 'Imagenet':
+        params = ('type', 'root', 'subset', 'num_cores')
+        assert 'root' in scope.keys()
+        assert all([key in params for key in scope.keys()])
 
 def _valid_accuracy_field(key, scope, error):
     assert bool(
@@ -141,19 +145,46 @@ transform_schema = Schema({
     },
     Optional('Reshape'): {
         'shape': And(list, lambda s: all(isinstance(i, int) for i in s)),
-    }
+    },
+    Optional('BilinearImagenet'): {
+        'height': And(int, lambda s: s > 0),
+        'width': And(int, lambda s: s > 0),
+        Optional('central_fraction'): bool,
+        Optional('mean_value'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('scale'): float,
+    },
+    Optional('ResizeCropImagenet'): {
+        'height': And(int, lambda s: s > 0),
+        'width': And(int, lambda s: s > 0),
+        Optional('random_crop'): bool,
+        Optional('slice_crop'): bool,
+        Optional('resize_side'): And(int, lambda s: s > 0),
+        Optional('random_flip_left_right'): bool,
+        Optional('mean_value'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('scale'): float
+    },
+    Optional('ParseDecodeImagenet'): Or({}, None),
+    Optional('FP32ToInt8'): {
+        'dtype': str,
+        'scale': And(float, lambda s: s > 0),
+    },
 })
 
-dataloader_schema = Schema({
-    Optional('batch_size', default=1): And(int, lambda s: s > 0),
-    Optional('dataset', default=None): {
+postprocess_schema = Schema({
+    Optional('LabelShift'):  And(int, lambda s: s > 0),
+})
+
+dataset_schema = Schema({
         Hook('type', handler=_valid_type_field): object,
         Optional('type'): str,
         Optional('root'): str,
-        Optional('content_folder'): str,
-        Optional('style_folder'): str,
-    },
-    Optional('transform', default=None): transform_schema
+        Optional(object): object,
+})
+
+dataloader_schema = Schema({
+    Optional('batch_size'): And(int, lambda s: s > 0),
+    Optional('dataset'): dataset_schema,
+    Optional('transform'): transform_schema,
 })
 
 schema = Schema({
@@ -233,12 +264,22 @@ schema = Schema({
             str: ops_schema
         }
     },
+    Optional('postprocess'): {
+        Optional('transform'): postprocess_schema
+    },
     Optional('evaluation', default=None): {
-        Optional('dataloader', default=None): dataloader_schema,
-        Optional('postprocess', default=None): {
-            Optional('transform', default=None): transform_schema
+        Optional('dataloader'): dataloader_schema,
+        Optional('postprocess'): {
+            Optional('transform'): postprocess_schema
         }
     },
+    Optional('benchmark'): {
+        Optional('dataloader'): dataloader_schema,
+        Optional('postprocess'): {
+            Optional('transform'): postprocess_schema
+        }
+    },
+    Optional('dataloader', default=None): dataloader_schema,
     Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
         Optional('path', default='~/.ilit/snapshot/'): str
     }

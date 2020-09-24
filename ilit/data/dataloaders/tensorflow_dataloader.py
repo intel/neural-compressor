@@ -17,15 +17,58 @@ class TensorflowDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory):
 
-        drop_last = False if last_batch == 'rollover' else True
-
         if isinstance(dataset, tf.data.Dataset):
-            return dataset.batch(batch_size, drop_remainder=drop_last)
+            return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
         else:
             return DefaultDataLoader(dataset, batch_size, collate_fn,
-                                     sampler, batch_sampler, drop_last, num_workers, pin_memory)
+                                     sampler, batch_sampler, last_batch, num_workers, pin_memory)
 
+class TFDataDataLoader(BaseDataLoader):
+    """In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
+       method to do session run, this dataloader is designed to satisfy the usage of feed dict
+       in tf1.x. Although it's a general dataloader and can be used in MXNet and PyTorch.
 
+    """
+
+    def __init__(self, dataset, batch_size=1, last_batch='rollover'):
+
+        self.dataset = dataset
+        self.last_batch = last_batch
+        self._batch_size = batch_size
+        dataset = dataset.batch(batch_size)
+        
+    def batch(self, batch_size, last_batch='rollover'):
+        drop_last = False if last_batch == 'rollover' else True
+        self._batch_size = batch_size
+        self.dataset.batch(batch_size, drop_last)
+
+    def __iter__(self):
+        return self._generate_dataloader(
+            self.dataset,
+            batch_size=self.batch_size,
+            last_batch=self.last_batch,)
+
+    def _generate_dataloader(self, dataset, batch_size=1, last_batch='rollover', \
+                             collate_fn=None, sampler=None, batch_sampler=None, \
+                             num_workers=None, pin_memory=None):
+
+        drop_last = False if last_batch == 'rollover' else True
+        ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
+        iter_tensors = ds_iterator.get_next()
+        data_config = tf.compat.v1.ConfigProto() 
+        data_config.use_per_session_threads = 1
+        data_config.intra_op_parallelism_threads = 1
+        data_config.inter_op_parallelism_threads = 16
+        data_sess = tf.compat.v1.Session(config=data_config)
+        from tensorflow.python.framework.errors_impl import OutOfRangeError
+        while True:
+            try:
+                outputs = data_sess.run(iter_tensors)
+                yield outputs
+            except OutOfRangeError:
+                data_sess.close()
+                return
+        
 def default_collate(batch):
     """Puts each data field into a pd frame with outer dimension batch size"""
     elem = batch[0]
@@ -92,18 +135,18 @@ class DefaultDataLoader(BaseDataLoader):
                  sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
 
         self.dataset = dataset
-        self.batch_size = batch_size
         self.last_batch = last_batch
         self.sampler = sampler
         self.batch_sampler = batch_sampler
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.collate_fn = collate_fn
-        if self.collate_fn is None:
+        self._batch_size = batch_size
+        if self.collate_fn == None:
             self.collate_fn = default_collate
-
+        
     def batch(self, batch_size, last_batch='rollover'):
-        self.batch_size = batch_size
+        self._batch_size = batch_size
         self.last_batch = last_batch
 
     @property

@@ -29,7 +29,11 @@ from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.framework.ops import Graph
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
+from tensorflow.python.framework import dtypes
+from .quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 
+from tensorflow.python.framework import dtypes
+from .quantize_graph.quantize_graph_common import QuantizeGraphHelper as helper
 
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
@@ -151,7 +155,36 @@ def parse_ckpt_model(ckpt_prefix, outputs):
 
         return output_graph_def
 
+def remove_quantize_op(model):
+    graph_def = model.as_graph_def()
+    for node in graph_def.node:
+        if node.op == 'Placeholder':
+            # check which nodes use Placeholder as input
+            child_nodes = [child_node for child_node in graph_def.node \
+                           if node.name in child_node.input]
+            # check whether the nodes take placeholder as input will do quantize
+            # placeholder only have one dtype, need fetch node of placeholder is QuantizeV2 
+            if len(child_nodes) == 1 and child_nodes[0].op == 'QuantizeV2':
+                    helper.set_attr_dtype(node, "dtype", dtypes.qint8)
+                    # find which node use this Quantize node as input
+                    child_fetch_nodes = [fetch_node for fetch_node in graph_def.node \
+                                         if child_nodes[0].name in fetch_node.input]
+                    for fetch_node in child_fetch_nodes:
+                        for index, input_node_name in enumerate(fetch_node.input): 
+                            if input_node_name == child_nodes[0].name:
+                                fetch_node.input[index] = node.name
+                            elif input_node_name == child_nodes[0].name + ":1":
+                                fetch_node.input[index] = child_nodes[0].input[1]
+                            elif input_node_name == child_nodes[0].name + ":2":
+                                fetch_node.input[index] = child_nodes[0].input[2]
+                    # remove QuantizeV2 node
+                    graph_def.node.remove(child_nodes[0])
 
+    graph = tf.Graph()
+    with graph.as_default():
+        tf.import_graph_def(graph_def)
+    return graph
+    
 def _parse_ckpt_bn_input(graph_def):
     """parse ckpt batch norm inputs to match correct moving mean and variance
     Args:

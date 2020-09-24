@@ -5,8 +5,10 @@ from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..metric import METRICS
 from ..data import TRANSFORMS
-from ..utils.utility import Timeout, get_postprocess, get_metrics
+from ..utils.utility import Timeout
+from ..utils.create_obj_from_config import create_eval_func
 from ..utils import logger
+from ..utils.create_obj_from_config import update_config
 
 """The tuning strategies supported by ilit, including basic, random, bayesian and mse.
 
@@ -233,26 +235,21 @@ class TuneStrategy(object):
         """
         if self.eval_func:
             val = self.objective.evaluate(self.eval_func, model)
+
         else:
-            # eval_func being None means user will provide dataloader and metric info
-            # in config yaml file
-            assert self.eval_dataloader and self.cfg.tuning.metric, \
-                "tuning dataloader and tuning metric should NOT be empty when eval_func is None"
-            dataloader = self.eval_dataloader
-            postprocess = None
-            if self.cfg.evaluation is not None:
-                if self.cfg.evaluation.postprocess is not None:
-                    postprocesses = TRANSFORMS(self.cfg.framework.name, "postprocess")
-                    postprocess = get_postprocess(
-                        postprocesses, self.cfg.data.postprocess.transform)
+            assert self.cfg.tuning.metric is not None, \
+                'metric field of tuning should not be empty'
 
-            assert len(self.cfg.tuning.metric) == 1, "Only one metric should be specified!"
-            metrics = METRICS(self.cfg.framework.name)
-            # if not do compose will only return the first metric
-            metric = get_metrics(metrics, self.cfg.tuning.metric, compose=False)
+            postprocess_cfg = self.cfg.postprocess if self.cfg.evaluation is None \
+                else update_config(self.cfg.evaluation.postprocess, \
+                                   self.cfg.postprocess)
 
-            def eval_func(model):
-                return self.adaptor.evaluate(model, dataloader, postprocess, metric)
+            eval_func = create_eval_func(self.cfg.framework.name, \
+                                         self.eval_dataloader, \
+                                         self.adaptor, \
+                                         self.cfg.tuning.metric, \
+                                         postprocess_cfg)
+
             val = self.objective.evaluate(eval_func, model)
         return val
 

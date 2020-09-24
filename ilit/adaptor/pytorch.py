@@ -4,6 +4,8 @@ import copy
 from collections import OrderedDict
 from ..utils import logger
 import random
+import time
+import numpy as np
 
 torch = LazyImport('torch')
 cpuinfo = LazyImport('cpuinfo')
@@ -167,7 +169,8 @@ class PyTorchAdaptor(Adaptor):
 
         return q_model
 
-    def evaluate(self, model, dataloader, postprocess=None, metric=None):
+    def evaluate(self, model, dataloader, \
+                 postprocess=None, metric=None, measurer=None):
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model.eval()
@@ -179,6 +182,9 @@ class PyTorchAdaptor(Adaptor):
                 self.is_baseline = False
         with torch.no_grad():
             for _, (input, label) in enumerate(dataloader):
+                if measurer is not None:
+                    measurer.start()
+
                 if isinstance(input, dict):
                     if self.device == "gpu":
                         for inp in input.keys():
@@ -194,8 +200,10 @@ class PyTorchAdaptor(Adaptor):
                     output = model(input)
                 if self.device == "gpu":
                     output = output.to("cpu")
+                if measurer is not None:
+                    measurer.end()
                 if postprocess is not None:
-                    output = postprocess(output)
+                    output, label = postprocess((output, label))
                 if metric is not None:
                     metric.update(output, label)
         acc = metric.result() if metric is not None else 0

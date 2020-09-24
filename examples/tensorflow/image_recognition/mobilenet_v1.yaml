@@ -3,10 +3,21 @@ framework:
     inputs: input
     outputs: MobilenetV1/Predictions/Reshape_1
 
+dataloader:
+  batch_size: 10
+  dataset:
+      type: "Imagenet"
+      root: "./small_dataset" # NOTICE: config to your content images path
+  transform:
+      ParseDecodeImagenet:
+      BilinearImagenet: 
+          height: 224
+          width: 224
+
 calibration:                                         
-  - iterations: 2,5
-    algorithm:  
-        activation: minmax
+  iterations: 2,5
+  algorithm:  
+    activation: minmax
 
 quantization: 
     weight:
