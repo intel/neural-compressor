@@ -136,23 +136,27 @@ class Tuner(object):
         self.snapshot_path = os.path.abspath(os.path.expanduser(cfg.snapshot.path))
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
-        if eval_dataloader is None and eval_func is None:
-            assert cfg.evaluation is not None, "\'evaluation\' field of yaml file is missing"
-            assert cfg.evaluation.dataloader is not None, "\'evaluation.dataloader\' field of yaml\
-                 file is missing"
-            batch_size = 1
-            if cfg.evaluation.dataloader.get('batch_size') is not None:
-                batch_size = int(cfg.evaluation.dataloader['batch_size'])
+        if eval_dataloader is None and eval_func is None: 
+            if cfg.evaluation is None:
+                self.eval_func = self._fake_eval_func
+                self.eval_dataloader = None
+            else:
+                assert cfg.evaluation.dataloader is not None, \
+                    "\'evaluation.dataloader\' field of yaml file is missing"
+                batch_size = 1
+                if cfg.evaluation.dataloader.get('batch_size') is not None:
+                    batch_size = int(cfg.evaluation.dataloader['batch_size'])
 
-            self.eval_dataset = self._create_dataset(cfg.evaluation.dataloader.dataset,
-                                                     cfg.evaluation.dataloader.transform,
-                                                     cfg.framework.name)
+                self.eval_dataset = self._create_dataset(cfg.evaluation.dataloader.dataset,
+                    cfg.evaluation.dataloader.transform, cfg.framework.name)
 
-            self.eval_dataloader = DATALOADER(dataset=self.eval_dataset,
-                                              framework=cfg.framework.name,
-                                              batch_size=batch_size)
-        else:
+                self.eval_dataloader = DATALOADER(dataset=self.eval_dataset,
+                                                  framework=cfg.framework.name,
+                                                  batch_size=batch_size) 
+                self.eval_func = eval_func
+        else: 
             self.eval_dataloader = eval_dataloader
+            self.eval_func = eval_func
 
         if q_dataloader is None and q_func is None:
             assert cfg.calibration is not None, "\'calibration\' field of yaml file is missing"
@@ -173,7 +177,6 @@ class Tuner(object):
             self.calib_dataloader = q_dataloader
 
         self.q_func = q_func
-        self.eval_func = eval_func
         strategy = cfg.tuning.strategy.lower()
         assert strategy.lower(
         ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
@@ -222,6 +225,11 @@ class Tuner(object):
                           batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
                           sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
                           pin_memory=pin_memory)
+
+    # if user don't config evaluation dataloader give eval_func, create fake eval func
+    # only do quantizetion without tuning
+    def _fake_eval_func(self, model):
+        return 1.
 
     def _create_dataset(self, data_source, cfg_preprocess, framework):
         transform_list = []
