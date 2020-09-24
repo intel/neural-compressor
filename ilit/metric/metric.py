@@ -318,13 +318,8 @@ class TopK(Metric):
         if isinstance(labels, int):
             labels = [labels]
         # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
-<<<<<<< HEAD
         # only support 2 dimension one-shot labels
         # or 1 dimension one-hot class_num will confuse with N
-=======
-        # only support 2 demension one-shot labels
-        # or 1 demension one-hot class_num will confuse with N
->>>>>>> 0c40bcd... [green] generalize metric topk to support more label and preds shape
         labels = np.array(labels)
 
         if len(preds.shape) == 1:
