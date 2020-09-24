@@ -27,6 +27,9 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
                 self.logger.debug("Name {} appears to refer to a Tensor, "
                                   "not a Operation.".format(name))
                 return False
+
+        type_attr={"Sub":"T"}
+
         not_found = {name for name in self.input_node_names}
         for node_name, _ in graph_info.items():
             if node_name in not_found:
@@ -36,14 +39,24 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
                 placeholder_node = node_def_pb2.NodeDef()
                 placeholder_node.op = "Placeholder"
                 placeholder_node.name = node.name
-                placeholder_node.attr["dtype"].CopyFrom(
-                    attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
+
+                if "dtype" in node.attr:
+                    placeholder_node.attr["dtype"].CopyFrom(
+                        attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
+                elif node.op in type_attr.keys():
+                    placeholder_node.attr["dtype"].CopyFrom(
+                        attr_value_pb2.AttrValue(type=node.attr[type_attr[node.op]].type))
+                else:
+                    raise KeyError("%s op's type attribute is not found,"
+                        "you should add it to type_attr dict"%node.op)
                 if "_output_shapes" in node.attr:
                     placeholder_node.attr["_output_shapes"].CopyFrom(node.attr["_output_shapes"])
                 if "shape" in node.attr:
                     placeholder_node.attr["shape"].CopyFrom(node.attr["shape"])
+
                 cur_graph.remove_node(node_name)
-                cur_graph.add_node(placeholder_node, None, original_output)
+
+                cur_graph.replace_const_node(placeholder_node, [node_name], original_output)
 
         import tensorflow as tf
         return tf.compat.v1.graph_util.extract_sub_graph(cur_graph.dump_graph(),

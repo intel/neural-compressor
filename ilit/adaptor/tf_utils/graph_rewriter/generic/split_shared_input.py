@@ -35,7 +35,7 @@ class SplitSharedInputOptimizer(GraphRewriterBase):
                         new_input_node.CopyFrom(graph_info[input_node_name].node)
                         new_input_node.name = input_node_name + '_ilit_share_' + str(
                             len(input_map[input_node_name]))
-                        cur_graph.add_node(new_input_node, None, [node.name])
+                        cur_graph.replace_const_node(new_input_node, [node.name], input_node_name)
                     else:
                         input_map[input_node_name] = [node.name]
 

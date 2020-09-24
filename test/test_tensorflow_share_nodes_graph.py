@@ -3,6 +3,7 @@
 #
 import unittest
 import os
+import copy
 from ilit.adaptor.tf_utils.util import read_graph
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from ilit.adaptor.tf_utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
@@ -24,8 +25,9 @@ class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
 
     def test_parse_pb_contains_share_nodes(self):
         original_graphdef = read_graph(os.path.join(self.unzipped_folder_name, "frozen_inference_graph.pb"))
+        copied_graphdef = copy.deepcopy(original_graphdef)
         parsed_graphdef = SplitSharedInputOptimizer(original_graphdef).do_transformation()
-        legacy_graphdef = QuantizeGraphHelper.split_shared_inputs(original_graphdef)
+        legacy_graphdef = QuantizeGraphHelper.split_shared_inputs(copied_graphdef)
         self.assertGreater(len(parsed_graphdef.node), len(original_graphdef.node))
         self.assertEqual(len(legacy_graphdef.node), len(parsed_graphdef.node))
 

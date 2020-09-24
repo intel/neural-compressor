@@ -14,39 +14,39 @@ class GraphCseOptimizer(GraphRewriterBase):
         Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs 
                 (B1/C1C2/D1).
                 Node A
-            /    |     \ 
-            /     |     \
+              /    |    \ 
+             /     |     \
         NODE B   NODE C  NODE D
-        |      |   |       |
+        |        |   |     |
         B1       C1  C2    D1
         If Node B/C/D have the identical memory-bound op, like relu/relu6. The graph will be
         converted as below.
         We removed the Node C & Node D, updated the B as the input of C1/C2/D1.
-                Node A
+               Node A
                 |
-                Node B
-            /   |  \  \
-            /   |   \  \ 
+               Node B
+              / |  \  \
+             /  |   \  \ 
             /   |    \  \
             B1  C1   C2  D1
         Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs
                 (B1/C1C2/D1).
                 Node A
-            /    |     \ 
-            /    |      \
-        NODE B   NODE C   NODE D
-        |        |   |       |
-        B1       C1  C2      D1
+              /   |    \ 
+             /    |     \
+        NODE B   NODE C  NODE D
+          |      |   |     |
+          B1     C1  C2    D1
         If Node B and C have the identical memory-bound op, like relu/relu6. The graph will be
         converted as below.
         We removed the Node C, updated the B as the input of C1/C2.
-                Node A
-                |     \
+                   Node A
+                   |     \
                 Node B  Node D
-            /   |  \    \
-            /    |   \    \ 
-            /     |    \    \
-            B1     C1    C2   D1
+                /   |  \    \
+                /   |   \    \ 
+                /   |    \    \
+               B1   C1    C2   D1
 
     Returns:
         [graphdef]: A optimized graphdef object.
@@ -71,6 +71,7 @@ class GraphCseOptimizer(GraphRewriterBase):
         graph_info = TFGraphAnalyzer().parse_graph()
 
         need_to_update_node = []
+        #TODO Enhance below code snippet by using recursive method.
         for _, i in graph_info.items():
             candidate_node = [
                 graph_info[child_name].node for child_name in i.outputs
@@ -91,7 +92,8 @@ class GraphCseOptimizer(GraphRewriterBase):
                     node_type_name_mapping[node_type].append(node_name)
 
             for _, node_names in node_type_name_mapping.items():
-                if len(node_names) == 1:  # ignore unique op type.
+                # ignore unique op type and node with multi-outputs
+                if len(node_names) == 1 or len(graph_info[node_names[0]].outputs) > 1:
                     continue
                 #TODO Need to enhance below algorithm before golden.
                 filter_node = [node_names[0]]
@@ -109,11 +111,13 @@ class GraphCseOptimizer(GraphRewriterBase):
                 for removeable_node_name in lower_node_name[1:]:
                     graph_info[upper_node_name].outputs.remove(removeable_node_name)
                     for grand_child_node_name in graph_info[removeable_node_name].outputs:
-                        replace_index = graph_info[grand_child_node_name].inputs.index(
-                            removeable_node_name)
+
+                        filter_input_name = [Helper.node_name_from_input(
+                            i) for i in graph_info[grand_child_node_name].node.input]
+                        replace_index = filter_input_name.index(removeable_node_name)
                         graph_info[grand_child_node_name].node.input[
                             replace_index] = keep_sub_node_name
-                        graph_info[grand_child_node_name].inputs[
+                        graph_info[grand_child_node_name].node.input[
                             replace_index] = keep_sub_node_name
                     graph_info.pop(removeable_node_name)
 

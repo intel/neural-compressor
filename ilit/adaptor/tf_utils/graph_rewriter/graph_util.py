@@ -32,7 +32,7 @@ class TFGraphAnalyzer(object):
     * Analyze the input/output node names of the specified graph
     """
     # TODO add the positive input flag
-    node_details = namedtuple('node_details', ['node', 'inputs', 'outputs'])
+    node_details = namedtuple('node_details', ['node', 'outputs'])
 
     def __init__(self):
         self.logger = logging.getLogger()
@@ -46,7 +46,7 @@ class TFGraphAnalyzer(object):
     def graph(self, new_graph):
         self._graph = new_graph
 
-    def _has_posiive_input(self, start_node):
+    def _has_positive_input(self, start_node):
         op_type = start_node.op
         if op_type in ("Relu", "Relu6") or op_type.find("AndRelu") != -1:
             return True
@@ -54,14 +54,16 @@ class TFGraphAnalyzer(object):
             return False
         elif op_type in ("Concat", "Add", "AddV2", "AddN"):
             for each_input in start_node.input:
-                has_relu = self._has_posiive_input(self.node_name_details[each_input].node)
+                has_relu = self._has_positive_input(self.node_name_details[each_input].node)
                 if not has_relu:
                     return False
             return True
         elif op_type in ("Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                          "MaxPool", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
                          "Mean", "MatMul"):
-            return self._has_posiive_input(self.node_name_details[start_node.input[0]])
+            return self._has_positive_input(
+                self.node_name_details[TFGraphRewriterHelper.node_name_from_input(
+                    start_node.input[0])])
         else:
             return False
 
@@ -71,9 +73,9 @@ class TFGraphAnalyzer(object):
         for _, i in self.node_name_details.items():
             if i.node.op == 'Const':
                 continue
-            if not i.inputs and not i.outputs:
+            if not i.node.input and not i.outputs:
                 self.logger.debug("skip isolated node .. {}".format(i.node.name))
-            elif not i.inputs:
+            elif not i.node.input:
                 input_node_names.append(i.node.name)
             elif not i.outputs:
                 output_node_names.append(i.node.name)
@@ -149,10 +151,11 @@ class TFGraphAnalyzer(object):
             single_set_res.append(cur_node.name)
             matched_op_type.append(cur_node.op)
             while continue_search_flag and pattern_index >= 0:
-                if validate_input(self.node_name_details[cur_node.input[0]].node.op,
+                cur_node_name = TFGraphRewriterHelper.node_name_from_input(cur_node.input[0])
+                if validate_input(self.node_name_details[cur_node_name].node.op,
                                   input_pattern[pattern_index]):
                     pattern_index -= 1
-                    cur_node = self.node_name_details[cur_node.input[0]].node
+                    cur_node = self.node_name_details[cur_node_name].node
                     single_set_res.append(cur_node.name)
                     matched_op_type.append(cur_node.op)
                 elif isinstance(input_pattern[pattern_index], tuple):
@@ -199,16 +202,19 @@ class TFGraphAnalyzer(object):
             return False
 
         non_const_node_count = len([
-            i for i in self.node_name_details[node_name].inputs
-            if self.node_name_details[i].node.op != "Const"
+            TFGraphRewriterHelper.node_name_from_input(i)
+            for i in self.node_name_details[node_name].node.input if self.node_name_details[
+                TFGraphRewriterHelper.node_name_from_input(i)].node.op != "Const"
         ])
+
         if non_const_node_count > 1:
             self.logger.debug("The target node {} has more than one input.".format(node_name))
             return False
 
         try:
 
-            top_node_name = self.node_name_details[node_name].inputs[0]
+            top_node_name = TFGraphRewriterHelper.node_name_from_input(
+                self.node_name_details[node_name].node.input[0])
 
             for bottom_node_name in self.node_name_details[node_name].outputs:
                 update_output_name = [
@@ -218,15 +224,14 @@ class TFGraphAnalyzer(object):
                 self.node_name_details[top_node_name]._replace(outputs=update_output_name)
 
                 update_input_name = [
-                    top_node_name if i == node_name else i
-                    for i in self.node_name_details[bottom_node_name].inputs
+                    self.node_name_details[node_name].node.input[0] if i == node_name else i
+                    for i in self.node_name_details[bottom_node_name].node.input
                 ]
 
-                self.node_name_details[bottom_node_name].node.ClearField('input')
-                self.node_name_details[bottom_node_name].node.input.extend(update_input_name)
-                self.node_name_details[bottom_node_name].inputs.clear()
-                self.node_name_details[bottom_node_name] = self.node_name_details[
-                    bottom_node_name]._replace(inputs=update_input_name)
+                if self.node_name_details[bottom_node_name].node.input:
+                    self.node_name_details[bottom_node_name].node.ClearField('input')
+                    self.node_name_details[bottom_node_name].node.input.extend(update_input_name)
+
         except Exception as e:
             self.logger.debug("Failed to remove node {} due to {}".format(node_name, str(e)))
             return False
@@ -256,6 +261,30 @@ class TFGraphAnalyzer(object):
             self.logger.debug("{} has been removed.".format(node_name))
             return True
 
+    def replace_const_node(self, new_const_node, target_node, old_constant_node_name):
+        """Replace the specified const node with another one.
+
+        Args:
+            new_const_node (NodeDef): node name string.
+            target_node (list): the string list that contains name of node that
+                                need to be replaced const node.
+            old_constant_node_name (string): the outdated const node name.
+
+        """
+        new_const_node_name = new_const_node.name
+
+        self.node_name_details[new_const_node_name] = self.node_details(node=new_const_node,
+                                                                        outputs=target_node)
+
+        for sub_node in target_node:
+            for index, each_node_name in enumerate(self.node_name_details[sub_node].node.input):
+                if each_node_name == old_constant_node_name:
+                    new_input_name = self.node_name_details[sub_node].node.input[:index] + [
+                        new_const_node_name
+                    ] + self.node_name_details[sub_node].node.input[index + 1:]
+                    self.node_name_details[sub_node].node.ClearField('input')
+                    self.node_name_details[sub_node].node.input.extend(new_input_name)
+
     def add_node(self, input_node, start_node_name, end_node_names):
         """Add the node into the internal data structure node_name_details
 
@@ -271,12 +300,7 @@ class TFGraphAnalyzer(object):
                 (node_name)))
             self.node_name_details.pop(node_name)
 
-        node_inputs_name = [
-            TFGraphRewriterHelper.node_name_from_input(i) for i in input_node.input
-        ]
-
         self.node_name_details[node_name] = self.node_details(node=input_node,
-                                                              inputs=node_inputs_name,
                                                               outputs=end_node_names)
 
         for node_name in end_node_names:
@@ -286,15 +310,14 @@ class TFGraphAnalyzer(object):
 
             # reset output node's input
             for index, each_node_name in enumerate(self.node_name_details[node_name].node.input):
-                if TFGraphRewriterHelper.node_name_from_input(each_node_name) == start_node_name:
+                if self.node_name_details[
+                        node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
+                            each_node_name) == start_node_name:
                     new_input_name = self.node_name_details[node_name].node.input[:index] + [
                         node_name
                     ] + self.node_name_details[node_name].node.input[index + 1:]
                     self.node_name_details[node_name].node.ClearField('input')
                     self.node_name_details[node_name].node.input.extend(new_input_name)
-                    self.node_name_details[node_name].inputs.clear()
-                    self.node_name_details[node_name] = self.node_name_details[node_name]._replace(
-                        inputs=new_input_name)
 
         # add the inserted node into the start node's output.
         if start_node_name:
@@ -330,18 +353,17 @@ class TFGraphAnalyzer(object):
 
         for node in input_graph_def.node:
             node_name = TFGraphRewriterHelper.node_name_from_input(node.name)
-            each_node = self.node_details(
-                node=node,
-                inputs=[TFGraphRewriterHelper.node_name_from_input(i) for i in node.input],
-                outputs=[])
+
+            each_node = self.node_details(node=node, outputs=[])
 
             if node_name not in self.node_name_details:
                 self.node_name_details[node_name] = each_node
 
         for node_name, node_details in self.node_name_details.items():
             # update the upper node's output infomation.
-            for each_input in node_details.inputs:
-                self.node_name_details[each_input].outputs.append(node_name)
+            for each_input in node_details.node.input:
+                self.node_name_details[TFGraphRewriterHelper.node_name_from_input(
+                    each_input)].outputs.append(node_name)
 
         return self.node_name_details
 
@@ -361,6 +383,12 @@ class TFGraphRewriterHelper(object):
         Returns:
             [bool]: True if two node have the identical attributes.
         """
+        if len(node_a.input) > 1:
+            return False
+
+        if node_a.input != node_b.input:
+            return False
+
         if node_a.op != node_b.op:
             return False
 

@@ -28,13 +28,13 @@ class RemoveTrainingNodesOptimizer(GraphRewriterBase):
         names_to_splice = {}
 
         for node_name, v in graph_info.items():
-            for node_input in v.inputs:
+            for node_input in v.node.input:
                 if "^" in node_input:
                     control_input_names.add(node_input.replace("^", ""))
                     node_names_with_control_input.add(node_name)
 
         for node_name, v in graph_info.items():
-            if v.node.op in self.types_to_splice:
+            if v.node.op in self.types_to_splice and v.node.name not in self.protected_nodes:
                 # We don't want to remove nodes that have control edge inputs, because
                 # they might be involved in subtle dependency issues that removing them
                 # will jeopardize.
@@ -45,7 +45,7 @@ class RemoveTrainingNodesOptimizer(GraphRewriterBase):
         names_to_splice = {
             name: value
             for name, value in names_to_splice.items()
-            if name not in control_input_names or name in self.protected_nodes
+            if name not in control_input_names
         }
         for k, _ in names_to_splice.items():
             graph_handle.remove_node_with_single_input_output(k)

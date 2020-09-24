@@ -30,8 +30,10 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
         for node_combination in target_nodes:
             upper_node = graph_info[node_combination[0]].node
             mul_node = graph_info[node_combination[1]].node
-            weights_node = graph_info[graph_info[node_combination[0]].inputs[1]].node
-            mul_value_node = graph_info[graph_info[node_combination[1]].inputs[1]].node
+            if graph_info[Helper.node_name_from_input(mul_node.input[1])].node.op != "Const":
+                continue
+            weights_node = graph_info[graph_info[node_combination[0]].node.input[1]].node
+            mul_value_node = graph_info[graph_info[node_combination[1]].node.input[1]].node
             upper_node_type = upper_node.op
 
             if upper_node_type == 'Conv2D':
