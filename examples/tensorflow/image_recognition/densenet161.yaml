@@ -3,6 +3,19 @@ framework:
     inputs: Placeholder
     outputs: densenet161/predictions/Reshape_1
 
+dataloader:
+  batch_size: 10
+  dataset:
+      type: "Imagenet"
+      root: "./small_dataset" # NOTICE: config to your content images path
+  transform:
+      ParseDecodeImagenet:
+      ResizeCropImagenet: 
+          scale: 0.017
+          height: 224
+          width: 224
+          mean_value: [123.68, 116.78, 103.94]
+
 calibration:                                         
   - iterations: 5, 10
     algorithm:
@@ -11,9 +24,13 @@ quantization:
     weight:
       - granularity: per_channel
 
+postprocess:
+    transform:
+        LabelShift: 1
+
 tuning:
     metric:  
-      - topk: 1
+      topk: 1
     accuracy_criterion:
       - relative: 0.01                             # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                      # tuning timeout (seconds)

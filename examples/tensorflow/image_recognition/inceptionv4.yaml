@@ -3,6 +3,17 @@ framework:
     inputs: input
     outputs: InceptionV4/Logits/Predictions
 
+dataloader:
+  batch_size: 10
+  dataset:
+      type: "Imagenet"
+      root: "./small_dataset" # NOTICE: config to your content images path
+  transform:
+      ParseDecodeImagenet:
+      BilinearImagenet: 
+          height: 299
+          width: 299
+
 calibration:                                         
   - iterations: 5, 10
     algorithm:

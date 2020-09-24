@@ -30,7 +30,6 @@ class BaseTransforms(object):
         raise NotImplementedError
 
 
-@singleton
 class TensorflowTransforms(BaseTransforms):
 
     def _get_preprocess(self):
@@ -92,8 +91,6 @@ class TensorflowTransforms(BaseTransforms):
             "sample_distorted_bounding_box": WrapFunction(tf.image.sample_distorted_bounding_box),
             "draw_bounding_boxes": WrapFunction(tf.image.draw_bounding_boxes),
             "combined_non_max_suppression": WrapFunction(tf.image.combined_non_max_suppression),
-            "generate_bounding_box_proposals": WrapFunction(
-                tf.image.generate_bounding_box_proposals),
         }
         postprocess.update(TENSORFLOWTRANSFORMS["postprocess"])
         return postprocess
@@ -105,8 +102,6 @@ class TensorflowTransforms(BaseTransforms):
         general.update(TENSORFLOWTRANSFORMS["general"])
         return general
 
-
-@singleton
 class MXNetTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {
@@ -149,7 +144,6 @@ class MXNetTransforms(BaseTransforms):
         return general
 
 
-@singleton
 class PyTorchTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {
@@ -268,8 +262,6 @@ class WrapTransform(Transform):
         return self.transform_func(sample, **self.kwargs)
 
 # wrap tensorflow functions to a transform
-
-
 class WrapFunction(object):
     def __init__(self, transform_func):
         self.transform_func = transform_func

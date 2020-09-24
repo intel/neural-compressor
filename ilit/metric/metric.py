@@ -294,9 +294,38 @@ class WrapMXNetMetric(Metric):
         acc_name, acc = self._metric.get()
         return acc
 
+def _topk_shape_validate(preds, labels):
+    # preds shape can be Nxclass_num or class_num(N=1 by default)
+    # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
+    preds = np.array(preds)
 
-@metric_registry('topk', 'tensorflow, mxnet')
-class TopK(Metric):
+    # consider labels just int value 1x1
+    if isinstance(labels, int):
+        labels = [labels]
+    # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
+    # only support 2 dimension one-shot labels
+    # or 1 dimension one-hot class_num will confuse with N
+    labels = np.array(labels)
+
+    if len(preds.shape) == 1:
+        N = 1
+        class_num = preds.shape[0]
+        preds = preds.reshape([-1, class_num])
+    elif len(preds.shape) >= 2:
+        N = preds.shape[0]
+        preds = preds.reshape([N, -1])
+        class_num = preds.shape[1]
+    
+    label_N = labels.shape[0]
+    assert label_N == N, 'labels batch size should same with preds'
+    labels = labels.reshape([N, -1])
+    # one-hot labels will have 2 dimension not equal 1
+    if labels.shape[1] != 1:
+        labels = labels.argsort()[..., -1:]
+    return preds, labels
+
+@metric_registry('topk', 'mxnet')
+class MxnetTopK(Metric):
     """The class of calculating topk metric, which usually is used in classification.
 
     Args:
@@ -310,36 +339,9 @@ class TopK(Metric):
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-        # preds shape can be Nxclass_num or class_num(N=1 by default)
-        # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
-        preds = np.array(preds)
-
-        # consider labels just int value 1x1
-        if isinstance(labels, int):
-            labels = [labels]
-        # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
-        # only support 2 dimension one-shot labels
-        # or 1 dimension one-hot class_num will confuse with N
-        labels = np.array(labels)
-
-        if len(preds.shape) == 1:
-            N = 1
-            class_num = preds.shape[0]
-            preds = preds.reshape([-1, class_num])
-        elif len(preds.shape) >= 2:
-            N = preds.shape[0]
-            preds = preds.reshape([N, -1])
-            class_num = preds.shape[1]
-        
-        label_N = labels.shape[0]
-        assert label_N == N, 'labels batch size should same with preds'
-        labels = labels.reshape([N, -1])
-        # one-hot labels will have 2 dimension not equal 1
-        if labels.shape[1] != 1:
-            labels = labels.argsort()[..., -1:]
  
+        preds, labels = _topk_shape_validate(preds, labels)
         preds = preds.argsort()[..., -self.k:]
-
         if self.k == 1:
             correct = accuracy_score(preds, labels, normalize=False)
             self.num_correct += correct
@@ -351,6 +353,7 @@ class TopK(Metric):
                 l = l.astype('int32')
                 if l in p:
                     self.num_correct += 1
+
         self.num_sample += len(labels) 
 
     def reset(self):
@@ -363,3 +366,44 @@ class TopK(Metric):
             return 0
         else:
             return self.num_correct / self.num_sample
+
+@metric_registry('topk', 'tensorflow')
+class TensorflowTopK(Metric):
+    """The class of calculating topk metric, which usually is used in classification.
+
+    Args:
+        topk (dict): The dict of topk for configuration.
+
+    """
+
+    def __init__(self, k=1):
+        self.k = k
+        self.step = 0
+        self.total_acc = 0
+
+    def update(self, preds, labels, sample_weight=None):
+ 
+        preds, labels = _topk_shape_validate(preds, labels)
+
+        labels = labels.reshape([len(labels)])
+        with tf.Graph().as_default() as acc_graph:
+          acc = tf.reduce_sum(
+            input_tensor=tf.cast(tf.nn.in_top_k(predictions=tf.constant(preds),
+                                   targets=tf.constant(labels), k=self.k), tf.float32))
+          with tf.compat.v1.Session() as acc_sess:
+            step_acc  = acc_sess.run(acc)
+
+        self.step += 1
+        self.total_acc += step_acc
+
+    def reset(self):
+        self.step = 0
+        self.total_acc = 0
+
+    def result(self):
+        if self.step == 0:
+            logger.warning("sample step is 0 can't calculate topk")
+            return 0
+        else:
+            return self.total_acc / self.step
+

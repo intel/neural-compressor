@@ -5,7 +5,8 @@ import pickle
 from .conf.config import Conf
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.utility import get_preprocess
+from .utils.create_obj_from_config import create_dataset, create_dataloader
+from .utils.create_obj_from_config import update_config
 from .data import DataLoader as DATALOADER
 from .data import DATASETS, TRANSFORMS
 from collections import OrderedDict
@@ -134,49 +135,42 @@ class Tuner(object):
         """
         cfg = self.conf.usr_cfg
         self.snapshot_path = os.path.abspath(os.path.expanduser(cfg.snapshot.path))
-
+         
         # when eval_func is set, will be directly used and eval_dataloader can be None
-        if eval_dataloader is None and eval_func is None: 
-            if cfg.evaluation is None:
-                self.eval_func = self._fake_eval_func
-                self.eval_dataloader = None
+        if eval_func is None:
+            if eval_dataloader is None:
+                if cfg.dataloader is not None:
+                    eval_dataloader_cfg = cfg.dataloader if cfg.evaluation is None \
+                        else update_config(cfg.evaluation.dataloader, cfg.dataloader)
+                    self.eval_dataloader = create_dataloader(cfg.framework.name, \
+                                                             eval_dataloader_cfg)
+                    self.eval_func = None
+                else:
+                    self.eval_dataloader = None
+                    self.eval_func = self._fake_eval_func
             else:
-                assert cfg.evaluation.dataloader is not None, \
-                    "\'evaluation.dataloader\' field of yaml file is missing"
-                batch_size = 1
-                if cfg.evaluation.dataloader.get('batch_size') is not None:
-                    batch_size = int(cfg.evaluation.dataloader['batch_size'])
-
-                self.eval_dataset = self._create_dataset(cfg.evaluation.dataloader.dataset,
-                    cfg.evaluation.dataloader.transform, cfg.framework.name)
-
-                self.eval_dataloader = DATALOADER(dataset=self.eval_dataset,
-                                                  framework=cfg.framework.name,
-                                                  batch_size=batch_size) 
-                self.eval_func = eval_func
-        else: 
-            self.eval_dataloader = eval_dataloader
+                self.eval_dataloader = eval_dataloader
+                self.eval_func = None
+        else:
+            self.eval_dataloader =None
             self.eval_func = eval_func
 
-        if q_dataloader is None and q_func is None:
-            assert cfg.calibration is not None, "\'calibration\' field of yaml file is missing"
-            assert cfg.calibration.dataloader is not None, "\'calibration.dataloader\' field of\
-                 yaml file is missing"
-            batch_size = 1
-            if cfg.calibration.dataloader.batch_size is not None:
-                batch_size = int(cfg.calibration.dataloader['batch_size'])
+        if q_func is None:
+            if q_dataloader is None:
 
-            self.calib_dataset = self._create_dataset(cfg.calibration.dataloader.dataset,
-                                                      cfg.calibration.dataloader.transform,
-                                                      cfg.framework.name)
-
-            self.calib_dataloader = DATALOADER(dataset=self.calib_dataset,
-                                               framework=cfg.framework.name,
-                                               batch_size=batch_size)
+                calib_dataloader_cfg = cfg.dataloader if cfg.calibration is None \
+                    else update_config(cfg.calibration.dataloader, cfg.dataloader)
+                assert calib_dataloader_cfg is not None, \
+                    'dataloader field of yaml file is missing'
+                self.calib_dataloader = create_dataloader(cfg.framework.name, calib_dataloader_cfg)
+                self.q_func = None
+            else:
+                self.calib_dataloader = q_dataloader
+                self.q_func = None
         else:
-            self.calib_dataloader = q_dataloader
+            self.calib_dataloader =None
+            self.q_func = q_func
 
-        self.q_func = q_func
         strategy = cfg.tuning.strategy.lower()
         assert strategy.lower(
         ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
@@ -221,6 +215,7 @@ class Tuner(object):
 
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
                    sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+
         return DATALOADER(framework=self.conf.usr_cfg.framework.name, dataset=dataset,
                           batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
                           sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
@@ -230,19 +225,6 @@ class Tuner(object):
     # only do quantizetion without tuning
     def _fake_eval_func(self, model):
         return 1.
-
-    def _create_dataset(self, data_source, cfg_preprocess, framework):
-        transform_list = []
-        # generate framework specific transforms
-        preprocesses = TRANSFORMS(framework, 'preprocess')
-        preprocess = get_preprocess(preprocesses, cfg_preprocess)
-        # even we can unify transform, how can we handle the IO, or we do the transform here
-        datasets = DATASETS(framework)
-        dataset_type = data_source.pop("type")
-
-        # in this case we should prepare eval_data and calib_data sperately
-        dataset = datasets[dataset_type](**data_source, transform=preprocess)
-        return dataset
 
     def _save(self):
         """save current tuning state to snapshot for resuming.

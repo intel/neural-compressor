@@ -3,14 +3,34 @@ framework:
     inputs: input
     outputs: vgg_16/fc8/squeezed
 
+dataloader:
+  batch_size: 10
+  dataset:
+      type: "Imagenet"
+      root: "./small_dataset" # NOTICE: config to your content images path
+  transform:
+      ParseDecodeImagenet:
+      ResizeCropImagenet: 
+          height: 224
+          width: 224
+          mean_value: [123.68, 116.78, 103.94]
+
 calibration:                                         
-  - iterations: 5, 10
-    algorithm:
-        activation: minmax
+  iterations: 5, 10
+  algorithm:
+    activation: minmax
+
+postprocess:
+    transform:
+        LabelShift: 1
+
+benchmark:                            
+  dataloader:
+    batch_size: 1
 
 tuning:
     metric:  
-      - topk: 1
+      topk: 1
     accuracy_criterion:
       - relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                      # tuning timeout (seconds)
