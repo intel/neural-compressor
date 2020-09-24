@@ -108,6 +108,7 @@ class BayesianTuneStrategy(TuneStrategy):
         if len(self.calib_iter) > 1:
             pbounds['calib_iteration'] = (0, len(self.calib_iter))
         if len(pbounds) == 0:
+            yield self.params_to_tune_configs(params)
             return
         if self.bayes_opt is None:
             self.bayes_opt = BayesianOptimization(
@@ -115,7 +116,10 @@ class BayesianTuneStrategy(TuneStrategy):
         while True:
             params = self.bayes_opt.gen_next_params()
             yield self.params_to_tune_configs(params)
-            self.bayes_opt._space.register(params, self.last_tune_result[0])
+            try:
+                self.bayes_opt._space.register(params, self.last_tune_result[0])
+            except KeyError:
+                pass
 
 # Util part
 # Bayesian opt acq function
