@@ -338,13 +338,10 @@ class TopK(Metric):
         
         label_N = labels.shape[0]
         assert label_N == N, 'labels batch size should same with preds'
-        if len(labels.shape) == 1:
-            labels = labels.reshape([-1, 1])
-        elif len(labels.shape) >= 2:
-            labels = labels.reshape([N, -1])
-            # if second dimension not equal 1, argsort to get the label index
-            if labels.shape[1] != 1:
-                labels = labels.argsort()[..., -1:]
+        labels = labels.reshape([N, -1])
+        # one-hot labels will have 2 dimension not equal 1
+        if labels.shape[1] != 1:
+            labels = labels.argsort()[..., -1:]
  
         preds = preds.argsort()[..., -self.k:]
 
