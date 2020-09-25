@@ -79,24 +79,25 @@ class MxNetAdaptor(Adaptor):
             (dict): quantized model
         """
         assert q_func is None, "quantization aware training mode is not support on mxnet"
-        self.cfg = tune_cfg
-        self._cfg_to_qconfig(tune_cfg)
-        self.__config_dict['calib_data'] = dataloader
-        self.th_dict = None
-        qconfig = self.__config_dict
 
         # get symbol from FP32 model
         if isinstance(model, mx.gluon.HybridBlock):
-            # transfer hybridblock to symbo
+            # transfer hybridblock to symbol
             sym, arg_params, aux_params, calib_data = \
                 self._get_gluon_symbol(model, dataloader=dataloader)
             data_names = [pair[0] for pair in calib_data.provide_data]
+            self.__config_dict['calib_data'] = calib_data
         elif isinstance(model[0], mx.symbol.Symbol):
             sym, arg_params, aux_params = model
+            self.__config_dict['calib_data'] = dataloader
         else:
             raise ValueError(
                 'Need a symbol model or HybridBlock model, while received %s' % str(
                     type(model)))
+
+        self._cfg_to_qconfig(tune_cfg)
+        self.th_dict = None
+        qconfig = self.__config_dict
         sym = self._get_backedn_graph(sym, qconfig['ctx'])
 
         # 1. quantize_symbol
@@ -571,7 +572,7 @@ class MxNetAdaptor(Adaptor):
         excluded_op_names = []
         calib_minmax_layers = []
         calib_kl_layers = []
-
+        
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
             if tune_cfg['op'][(op["name"], op["type"])
@@ -589,17 +590,14 @@ class MxNetAdaptor(Adaptor):
         # for not tunable config
         quantized_dtype = 'auto'
         quantize_mode = 'smart'
-        quantize_granularity = 'channel-wise'
+        quantize_granularity = 'tensor-wise'
         logger = None
         ctx = mx.cpu()
-        calib_data = None
-        batch_size = 64
-        iteration = 2
-        if 'calib_iteration' in list(tune_cfg.keys()):
-            iteration = tune_cfg['calib_iteration']
+        batch_size = self.__config_dict['calib_data'].batch_size
+        iteration = tune_cfg['calib_iteration']
         num_calib_examples = batch_size * iteration
 
-        self.__config_dict = {
+        self.__config_dict.update({
             "excluded_sym_names": excluded_sym_names,
             "excluded_op_names": excluded_op_names,
             "LayerOutputCollector": LayerOutputCollector,
@@ -608,13 +606,12 @@ class MxNetAdaptor(Adaptor):
             "quantize_granularity": quantize_granularity,
             "logger": logger,
             "ctx": ctx,
-            "calib_data": calib_data,
             "num_calib_examples": num_calib_examples,
             "iteration": iteration,
             "exclude_layers_match": [],
             "calib_kl_layers": calib_kl_layers,
             "calib_minmax_layers": calib_minmax_layers,
-        }
+        })
 
     def _get_gluon_symbol(self, network, dataloader):
         """Convert symbol model and DataIter from gluon model HybridBlock/Dataloader.
@@ -786,7 +783,6 @@ class MxNetAdaptor(Adaptor):
 
         mod = mx.module.module.Module(
             symbol=sym, data_names=data_names, context=ctx)
-        # mod = Module(symbol=sym)
         if hasattr(
                 calib_data,
                 'provide_label') and len(
@@ -815,6 +811,13 @@ class MxNetAdaptor(Adaptor):
             if logger:
                 logger.info('Collected layer output KL values from FP32 model')
 
+        for data_name in data_names:
+            # the data_name of gluon model may diff with the name of input data layer,
+            # it caused by gluon model convert to symbol model
+            if data_name in layer_tensor.keys():
+                self.__config_dict["calib_minmax_layers"].append(data_name)
+
+        calib_data.reset()
         if len(self.__config_dict["calib_minmax_layers"]) != 0:
             th_dict_minmax, num_examples = mx.contrib.quantization._collect_layer_output_min_max(
                 mod, calib_data, quantized_dtype, include_layer=self.__config_dict[
