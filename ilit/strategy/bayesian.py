@@ -6,7 +6,7 @@ from scipy.stats import norm
 from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
-
+from ..utils import logger
 
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
@@ -115,10 +115,12 @@ class BayesianTuneStrategy(TuneStrategy):
                 pbounds=pbounds, random_seed=self.cfg.tuning.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
+            logger.debug("Current params are: %s" % params)
             yield self.params_to_tune_configs(params)
             try:
                 self.bayes_opt._space.register(params, self.last_tune_result[0])
             except KeyError:
+                logger.debug("This params has been registered before, will skip it!")
                 pass
 
 # Util part
