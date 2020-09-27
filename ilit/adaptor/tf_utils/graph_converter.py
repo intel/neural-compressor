@@ -24,18 +24,15 @@ from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
-from .transform_graph.strip_unused import StripUnusedNodes
-from .transform_graph.fold_batch_norm import FoldBatchNormNodes
 from .transform_graph.insert_logging import InsertLogging
-from .transform_graph.fold_constant import FoldConstant
 from .transform_graph.freeze_max_min import freeze_max
 from .transform_graph.freeze_max_min import freeze_min
 from .transform_graph.freeze_max_min import freeze_requantization_range
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
 from .transform_graph.freeze_max_min import combine_histogram
+from .transform_graph.fold_batch_norm import FoldBatchNormNodes
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
-from .transform_graph.fuse_column_wise_mul import FuseColumnWiseMul
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bf16_convert import BF16Convert
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format
@@ -49,6 +46,7 @@ from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOpt
 from .graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
+from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 import os
 import sys
 import logging
@@ -130,8 +128,7 @@ class OutputGrabber(object):
         and save the text in `capturedtext`.
         """
         while True:
-            char = os.read(self.pipe_out,
-                           10240).decode(self.origstream.encoding)
+            char = os.read(self.pipe_out, 10240).decode(self.origstream.encoding)
             if not char or self.escape_char == char[-1]:
                 break
             self.capturedtext += char
@@ -206,19 +203,17 @@ class GraphConverter:
             elif os.path.isdir(model):
                 ckpt_prefix = is_ckpt_format(model)
                 if ckpt_prefix:
-                    self.input_graph = parse_ckpt_model(
-                        os.path.join(model, ckpt_prefix), self.outputs)
+                    self.input_graph = parse_ckpt_model(os.path.join(model, ckpt_prefix),
+                                                        self.outputs)
                 elif is_saved_model_format(model):
                     self.input_graph = parse_savedmodel_model(model)
                 else:
                     raise ValueError('Failed to parse ckpt model.')
             else:
-                raise ValueError(
-                    'The input model format is neither pb nor ckpt format.')
+                raise ValueError('The input model format is neither pb nor ckpt format.')
 
         else:
-            raise ValueError(
-                'The input parameter is neither Graph nor path to the model.')
+            raise ValueError('The input parameter is neither Graph nor path to the model.')
 
     def _inference(self, input_graph):
         """Run the calibration on the input graph
@@ -235,21 +230,17 @@ class GraphConverter:
             tf.import_graph_def(graph_def, name='')
 
         if len(self.inputs) > 1:
-            input_tensor = [
-                graph.get_tensor_by_name(x + ":0") for x in self.inputs]
+            input_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.inputs]
         else:
             input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
 
-        output_tensor = [
-            graph.get_tensor_by_name(x + ":0") for x in self.outputs
-        ]
+        output_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.outputs]
 
         config = tf.compat.v1.ConfigProto()
         config.inter_op_parallelism_threads = 2
         config.intra_op_parallelism_threads = int(
-            subprocess.check_output(
-                'cat /proc/cpuinfo | grep "cpu cores"|uniq|cut -d ":" -f 2',
-                shell=True))
+            subprocess.check_output('cat /proc/cpuinfo | grep "cpu cores"|uniq|cut -d ":" -f 2',
+                                    shell=True))
 
         quantize_batch = 0
 
@@ -261,8 +252,7 @@ class GraphConverter:
             try:
                 np_images = content[0]
                 if not isinstance(input_tensor, list):
-                    _ = sess_graph.run(output_tensor,
-                                       {input_tensor: np_images})
+                    _ = sess_graph.run(output_tensor, {input_tensor: np_images})
                 else:
                     _ = sess_graph.run(output_tensor,
                                        dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
@@ -289,46 +279,39 @@ class GraphConverter:
             raise ValueError(e)
         finally:
             if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
-                self.logger.warn(str('Please note the {} version of Intel® Optimizations for'
-                                     ' TensorFlow is not fully verified!'
-                                     ' Suggest to use the versions'
-                                     ' between {} and {} if meet problem').
-                                    format(tf.version.VERSION,
-                                    TF_SUPPORTED_MIN_VERSION,
-                                    TF_SUPPORTED_MAX_VERSION))
+                self.logger.warn(
+                    str('Please note the {} version of Intel® Optimizations for'
+                        ' TensorFlow is not fully verified!'
+                        ' Suggest to use the versions'
+                        ' between {} and {} if meet problem').format(tf.version.VERSION,
+                                                                     TF_SUPPORTED_MIN_VERSION,
+                                                                     TF_SUPPORTED_MAX_VERSION))
             if not is_supported_version:
                 raise ValueError(
                     str('Please install Intel® Optimizations for TensorFlow'
                         ' or MKL enabled source build TensorFlow'
-                        ' with version >={} and <={}').format(
-                            TF_SUPPORTED_MIN_VERSION,
-                            TF_SUPPORTED_MAX_VERSION))
+                        ' with version >={} and <={}').format(TF_SUPPORTED_MIN_VERSION,
+                                                              TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
-        if self.output_graph and not os.path.exists(
-                os.path.dirname(self.output_graph)):
+        if self.output_graph and not os.path.exists(os.path.dirname(self.output_graph)):
             raise ValueError('"output_graph" directory does not exist.')
 
         self._output_path = os.path.dirname(
-            os.path.realpath(
-                self.output_graph if self.output_graph else self.input_graph))
+            os.path.realpath(self.output_graph if self.output_graph else self.input_graph))
 
     def _gen_tmp_filenames(self):
-        self._fp32_optimized_graph = os.path.join(self._output_path,
-                                                  'fp32_optimized_graph.pb')
-        self._int8_dynamic_range_graph = os.path.join(
-            self._output_path, 'int8_dynamic_range_graph.pb')
-        self._int8_logged_graph = os.path.join(self._output_path,
-                                               'int8_logged_graph.pb')
-        self._fp32_logged_graph = os.path.join(self._output_path,
-                                               'fp32_logged_graph.pb')
-        self._int8_frozen_range_graph = os.path.join(
-            self._output_path, 'int8_frozen_range_graph.pb')
-        self._bf16_mixed_precision_graph = os.path.join(
-            self._output_path, 'int8_bf16_mixed_precision_graph.pb')
+        self._fp32_optimized_graph = os.path.join(self._output_path, 'fp32_optimized_graph.pb')
+        self._int8_dynamic_range_graph = os.path.join(self._output_path,
+                                                      'int8_dynamic_range_graph.pb')
+        self._int8_logged_graph = os.path.join(self._output_path, 'int8_logged_graph.pb')
+        self._fp32_logged_graph = os.path.join(self._output_path, 'fp32_logged_graph.pb')
+        self._int8_frozen_range_graph = os.path.join(self._output_path,
+                                                     'int8_frozen_range_graph.pb')
+        self._bf16_mixed_precision_graph = os.path.join(self._output_path,
+                                                        'int8_bf16_mixed_precision_graph.pb')
         if not self.output_graph:
-            self.output_graph = os.path.join(self._output_path,
-                                             'int8_final_fused_graph.pb')
+            self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph.pb')
         # to keep temp graphDef
         self._tmp_graph_def = None
 
@@ -353,6 +336,7 @@ class GraphConverter:
         """
         try:
             self._optimize_frozen_fp32_graph()
+
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
@@ -373,8 +357,8 @@ class GraphConverter:
             "QuantizedConv2DWithBias": 1,
         }
         target_conv_op = []
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
-            self._fp32_origin_graph, self.inputs, self.outputs)
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph, self.inputs,
+                                                              self.outputs)
 
         node_name_mapping = {
             node.name: node
@@ -388,9 +372,7 @@ class GraphConverter:
             node.name: node
             for node in sorted_graph.node if node.op != "Const"
         }
-        sorted_node_names = [
-            i.name for i in sorted_graph.node if i.op != "Const"
-        ]
+        sorted_node_names = [i.name for i in sorted_graph.node if i.op != "Const"]
 
         output_node_names = []
         for i in target_conv_op:
@@ -401,14 +383,11 @@ class GraphConverter:
                 start_index = sorted_node_names.index(i)
                 for index, value in enumerate(sorted_node_names[start_index:]):
                     if fp32_node_name_mapping[value].op.startswith(
-                            "Add") and fp32_node_name_mapping[
-                                sorted_node_names[start_index + index +
-                                                  1]].op == "Relu":
-                        output_node_names.append(
-                            sorted_node_names[start_index + index + 1])
-                        self._print_node_mapping[sorted_node_names[start_index
-                                                                   + index +
-                                                                   1]] = i
+                            "Add") and fp32_node_name_mapping[sorted_node_names[start_index +
+                                                                                index +
+                                                                                1]].op == "Relu":
+                        output_node_names.append(sorted_node_names[start_index + index + 1])
+                        self._print_node_mapping[sorted_node_names[start_index + index + 1]] = i
 
             elif i in sorted_node_names:
                 start_index = sorted_node_names.index(i)
@@ -434,8 +413,7 @@ class GraphConverter:
         size = data.size
         new_data = data.reshape(size, )
         max_value = 255 if scale_info[0].find("Relu") != -1 else 127
-        return np.array([float(i / max_value)
-                         for i in new_data]).reshape(original_shape)
+        return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
     def dump_tensor(self, original_op_list, iteration_list):
         graph_node_name_mapping = {}
@@ -443,8 +421,8 @@ class GraphConverter:
         fp32_node_name = []
         fp32_node_name_mapping = {}
         q_node_scale = {}
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
-            self._fp32_origin_graph, self.inputs, self.outputs)
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph, self.inputs,
+                                                              self.outputs)
         graph_q_node_name = []
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
@@ -470,19 +448,14 @@ class GraphConverter:
                     q_node.input[-2]].attr["value"].tensor.float_val[0]
                 q_out_max = graph_node_name_mapping[
                     q_node.input[-1]].attr["value"].tensor.float_val[0]
-                q_node_scale[op_name +
-                             quantized_node_name_postfix] = (q_node.op, q_out_min, q_out_max)
+                q_node_scale[op_name + quantized_node_name_postfix] = (q_node.op, q_out_min,
+                                                                       q_out_max)
             else:
                 fp32_node_name.append(op_name)
-                if graph_node_name_mapping[op_name].op in (
-                        "Conv2D", "DepthwiseConv2dNative"):
-                    _, matched_nodes = FuseNodeStartWithConv2d(
-                        sorted_graph,
-                        self.outputs,
-                        False,
-                        op_name,
-                        self.device,
-                        False).get_longest_fuse()
+                if graph_node_name_mapping[op_name].op in ("Conv2D", "DepthwiseConv2dNative"):
+                    _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.outputs, False,
+                                                               op_name, self.device,
+                                                               False).get_longest_fuse()
 
                     if matched_nodes:
                         fp32_node_name_mapping[matched_nodes[-1]] = op_name
@@ -525,15 +498,15 @@ class GraphConverter:
                     found_flag = True
                     break
             assert found_flag == True
-            data = data[:quoto_index] + "'" + data[
-                quoto_index:-quoto_index] + "'" + data[-quoto_index:]
+            data = data[:quoto_index] + "'" + data[quoto_index:-quoto_index] + "'" + data[
+                -quoto_index:]
             data = data.replace("]][[", "']],[['")
             data = data.replace("][", "'],['")
 
             if key in fp32_node_name_mapping:
                 key = fp32_node_name_mapping[key]
-                result[(key, op_name_type_dict[key])] = np.array(
-                    ast.literal_eval(data), dtype=np.float)
+                result[(key, op_name_type_dict[key])] = np.array(ast.literal_eval(data),
+                                                                 dtype=np.float)
             else:
                 result_key = key.split(quantized_node_name_postfix)[0]
                 result[(result_key, op_name_type_dict[result_key])] = self._dequantize(
@@ -553,17 +526,14 @@ class GraphConverter:
             self._quantize_graph()
             if self._enable_kl_op_names:
                 self._get_fp32_print_node_names(self._enable_kl_op_names)
-                self._generate_calibration_data(self._fp32_logged_graph,
-                                                self._fp32_print_data, True)
+                self._generate_calibration_data(self._fp32_logged_graph, self._fp32_print_data,
+                                                True)
             self._insert_logging()
 
-            self._generate_calibration_data(self._int8_logged_graph,
-                                            self._calibration_data)
+            self._generate_calibration_data(self._int8_logged_graph, self._calibration_data)
             if len(self._calibration_data) > 0:
-                self._freeze_requantization_ranges(self._kl_op_dict,
-                                                   self._print_node_mapping)
+                self._freeze_requantization_ranges(self._kl_op_dict, self._print_node_mapping)
                 self._fuse_requantize_with_fused_quantized_node()
-
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
@@ -582,10 +552,7 @@ class GraphConverter:
            FP32 + INT8 mixed precision graph.
         """
         try:
-            BF16Convert(self._tmp_graph_def,
-                        self.device,
-                        self.outputs,
-                        self.fp32_ops,
+            BF16Convert(self._tmp_graph_def, self.device, self.outputs, self.fp32_ops,
                         self.bf16_ops).do_transformation()
             graph = tf.Graph()
             with graph.as_default():
@@ -603,18 +570,12 @@ class GraphConverter:
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self.input_graph, protected_nodes=self.outputs).do_transformation()
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = FoldConstant(
-            self._tmp_graph_def).do_transformation(
-            self.inputs, self.outputs)
-
+        self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = StripUnusedNodesOptimizer(
-            self._tmp_graph_def, self.inputs, self.outputs).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
+                                                        self.outputs).do_transformation()
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
-        
-        self._tmp_graph_def = FoldBatchNormNodes(
-            self._tmp_graph_def).do_transform()
-
+        self._tmp_graph_def = FoldBatchNormNodes(self._tmp_graph_def).do_transform()
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         if self.debug:
@@ -627,12 +588,10 @@ class GraphConverter:
         g = ops.Graph()
         with g.as_default():
             importer.import_graph_def(self._tmp_graph_def)
-        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
-            self._tmp_graph_def, self.inputs, self.outputs)
-        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def,
-                                                self.outputs,
-                                                self.op_wise_config,
-                                                self.device)
+        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
+                                                                     self.inputs, self.outputs)
+        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
+                                                self.op_wise_config, self.device)
         self._tmp_graph_def = intel_quantizer.do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
@@ -645,14 +604,11 @@ class GraphConverter:
         int8_dynamic_range_graph_def.CopyFrom(self._tmp_graph_def)
         # TODO need to insert op-wise logging op.
 
-        InsertLogging(
-            self._tmp_graph_def,
-            ops=["RequantizationRange", "RequantizationRangePerChannel"],
-            message="__requant_min_max:").do_transformation()
-        InsertLogging(self._tmp_graph_def, ops=["Min"],
-                      message="__min:").do_transformation()
-        InsertLogging(self._tmp_graph_def, ops=["Max"],
-                      message="__max:").do_transformation()
+        InsertLogging(self._tmp_graph_def,
+                      ops=["RequantizationRange", "RequantizationRangePerChannel"],
+                      message="__requant_min_max:").do_transformation()
+        InsertLogging(self._tmp_graph_def, ops=["Min"], message="__min:").do_transformation()
+        InsertLogging(self._tmp_graph_def, ops=["Max"], message="__max:").do_transformation()
         write_graph(self._tmp_graph_def, self._int8_logged_graph)
 
         self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
@@ -660,24 +616,18 @@ class GraphConverter:
     def _parse_output(self, input_data, output_data):
         assert input_data.count(';') % 2 == 0
         if input_data.count(';') > 0:
-            semicolon_index = [
-                index for index, value in enumerate(input_data) if value == ';'
-            ][::2]
+            semicolon_index = [index for index, value in enumerate(input_data)
+                               if value == ';'][::2]
 
             for index, value in enumerate(semicolon_index[:-1]):
-                output_data.append(
-                    ''.join(input_data[value:semicolon_index[index + 1]]).strip() +
-                    '\n')
+                output_data.append(''.join(input_data[value:semicolon_index[index + 1]]).strip() +
+                                   '\n')
 
-            output_data.append(''.join(input_data[semicolon_index[-1]:]).strip() +
-                               '\n')
+            output_data.append(''.join(input_data[semicolon_index[-1]:]).strip() + '\n')
         else:
             self.logger.warn("No quantizable op, will return FP32 graph!")
 
-    def _generate_calibration_data(self,
-                                   graph,
-                                   output_data,
-                                   enable_kl_algo=False):
+    def _generate_calibration_data(self, graph, output_data, enable_kl_algo=False):
         with OutputGrabber(sys.stderr, True) as out:
             self._inference(graph)
 
@@ -692,26 +642,20 @@ class GraphConverter:
                 if key not in self._kl_op_dict:
                     self._kl_op_dict[key] = get_tensor_histogram(fp32_data)
                 else:
-                    self._kl_op_dict[key] = combine_histogram(
-                        self._kl_op_dict[key], fp32_data)
+                    self._kl_op_dict[key] = combine_histogram(self._kl_op_dict[key], fp32_data)
 
-    def _freeze_requantization_ranges(self,
-                                      additional_data=None,
-                                      _print_node_mapping=None):
-        self._tmp_graph_def = freeze_max(self._tmp_graph_def,
-                                         self._calibration_data)
-        self._tmp_graph_def = freeze_min(self._tmp_graph_def,
-                                         self._calibration_data)
-        self._tmp_graph_def = freeze_requantization_range(
-            self._tmp_graph_def, self._calibration_data, additional_data,
-            _print_node_mapping, self.device)
+    def _freeze_requantization_ranges(self, additional_data=None, _print_node_mapping=None):
+        self._tmp_graph_def = freeze_max(self._tmp_graph_def, self._calibration_data)
+        self._tmp_graph_def = freeze_min(self._tmp_graph_def, self._calibration_data)
+        self._tmp_graph_def = freeze_requantization_range(self._tmp_graph_def,
+                                                          self._calibration_data, additional_data,
+                                                          _print_node_mapping, self.device)
 
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
     def _fuse_requantize_with_fused_quantized_node(self):
-        self._tmp_graph_def = fuse_quantized_conv_and_requantize(
-            self._tmp_graph_def, self.device)
+        self._tmp_graph_def = fuse_quantized_conv_and_requantize(self._tmp_graph_def, self.device)
         self._tmp_graph_def = FuseQuantizedMulAndRequantize(
             self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
@@ -720,22 +664,19 @@ class GraphConverter:
         #                                              self.outputs,
         #                                              dtypes,
         #                                              False)
-        self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
-                                               self.inputs, self.outputs
-                                               ).do_transform()
-        self._tmp_graph_def = QuantizeGraphHelper.remove_training_nodes(
-            self._tmp_graph_def, protected_nodes=self.outputs)
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
+                                                        self.outputs).do_transformation()
+        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
+            self._tmp_graph_def, protected_nodes=self.outputs).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodes(
-            self._tmp_graph_def).do_transform()
+        self._tmp_graph_def = FoldBatchNormNodes(self._tmp_graph_def).do_transform()
         RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()
 
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         if self.debug:
             write_graph(self._tmp_graph_def, self.output_graph)
-            self.logger.info('Converted graph file is saved to: %s',
-                             self.output_graph)
+            self.logger.info('Converted graph file is saved to: %s', self.output_graph)
 
     def _get_dtypes(self, in_graph_def):
         # TODO: keep dtypes list order as input list?

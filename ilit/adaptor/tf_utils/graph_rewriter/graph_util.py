@@ -285,6 +285,72 @@ class TFGraphAnalyzer(object):
                     self.node_name_details[sub_node].node.ClearField('input')
                     self.node_name_details[sub_node].node.input.extend(new_input_name)
 
+    def replace_constant_graph_with_constant_node(self, new_node, old_end_node_name,
+                                                  output_node_name):
+        """remove sub-graph with a const node
+
+        Args:
+            new_node (nodedef): the constant node 
+            old_end_node_name (string):  the sub-graph end node which will be updated by new node
+
+        Returns:
+            [bool]: True if remove the node without exception.
+                    False if failed to remove it.
+        """
+        new_node_name = new_node.name
+
+        if new_node.op != "Const":
+            self.logger.debug("input of replace_with_constant_node must be a constant node")
+            return False
+        try:
+            inputs = self.node_name_details[old_end_node_name].node.input
+            inputs = [TFGraphRewriterHelper.node_name_from_input(i) for i in inputs]
+            for input_name in inputs:
+                if self.node_name_details[input_name].node.op != "Const":
+                    self.logger.debug("the subgraph replaces must be constant")
+                    return False
+                else:
+                    self.node_name_details.pop(input_name)
+            output_node_name = self.node_name_details[old_end_node_name].outputs
+            self.replace_node(new_node, old_end_node_name, output_node_name)
+            self.node_name_details[new_node_name].node.ClearField('input')
+        except Exception as e:
+            self.logger.info("Failed to replace {} due to {}".format(old_end_node_name, str(e)))
+            return False
+        else:
+            self.logger.debug("{} has been replaced.".format(old_end_node_name))
+            return True
+
+    def replace_node(self, new_node, old_node_name, output_nodes_name):
+        """Replace the node into the internal data structure node_name_details
+
+        Args:
+            new_node (nodedef): the nodedef object.
+            old_node_name (string): the parent node of input node.
+            output_nodes_name (string list): output node names list
+        """
+        node_name = new_node.name
+        self.node_name_details[node_name] = self.node_details(node=new_node,
+                                                              outputs=output_nodes_name)
+        old_node = self.node_name_details[old_node_name].node
+        input_nodes_name = [TFGraphRewriterHelper.node_name_from_input(i) for i in old_node.input]
+        for input_node_name in input_nodes_name:
+            if input_node_name in self.node_name_details:
+                self.node_name_details[input_node_name].outputs.remove(old_node_name)
+                self.node_name_details[input_node_name].outputs.append(node_name)
+
+        for node_name in output_nodes_name:
+            for index, each_node_name in enumerate(self.node_name_details[node_name].node.input):
+                if self.node_name_details[
+                        node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
+                            each_node_name) == old_node_name:
+                    new_input_name = self.node_name_details[node_name].node.input[:index] + [
+                        node_name
+                    ] + self.node_name_details[node_name].node.input[index + 1:]
+                    self.node_name_details[node_name].node.ClearField('input')
+                    self.node_name_details[node_name].node.input.extend(new_input_name)
+        self.remove_node(old_node_name)
+
     def add_node(self, input_node, start_node_name, end_node_names):
         """Add the node into the internal data structure node_name_details
 
@@ -303,21 +369,22 @@ class TFGraphAnalyzer(object):
         self.node_name_details[node_name] = self.node_details(node=input_node,
                                                               outputs=end_node_names)
 
-        for node_name in end_node_names:
+        for end_node_name in end_node_names:
             # Update start node's output info
             if start_node_name:
-                self.node_name_details[start_node_name].outputs.remove(node_name)
+                self.node_name_details[start_node_name].outputs.remove(end_node_name)
 
             # reset output node's input
-            for index, each_node_name in enumerate(self.node_name_details[node_name].node.input):
+            for index, each_node_name in enumerate(
+                    self.node_name_details[end_node_name].node.input):
                 if self.node_name_details[
-                        node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
+                        end_node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
                             each_node_name) == start_node_name:
-                    new_input_name = self.node_name_details[node_name].node.input[:index] + [
+                    new_input_name = self.node_name_details[end_node_name].node.input[:index] + [
                         node_name
-                    ] + self.node_name_details[node_name].node.input[index + 1:]
-                    self.node_name_details[node_name].node.ClearField('input')
-                    self.node_name_details[node_name].node.input.extend(new_input_name)
+                    ] + self.node_name_details[end_node_name].node.input[index + 1:]
+                    self.node_name_details[end_node_name].node.ClearField('input')
+                    self.node_name_details[end_node_name].node.input.extend(new_input_name)
 
         # add the inserted node into the start node's output.
         if start_node_name:
@@ -494,6 +561,26 @@ class TFGraphRewriterHelper(object):
     @staticmethod
     def unique_node_name_from_input(node_name):
         return node_name.replace(":", "__port__").replace("^", "__hat__")
+
+    @staticmethod
+    def values_from_const(node_def):
+        """Extracts the values from a const NodeDef as a numpy ndarray.
+
+        Args:
+          node_def: Const NodeDef that has the values we want to access.
+
+        Returns:
+          Numpy ndarray containing the values.
+
+        Raises:
+          ValueError: If the node isn't a Const.
+        """
+        if node_def.op != "Const":
+            raise ValueError("Node named '%s' should be a Const op for values_from_const." %
+                             node_def.name)
+        input_tensor = node_def.attr["value"].tensor
+        tensor_value = tensor_util.MakeNdarray(input_tensor)
+        return tensor_value
 
 
 def read_graph(in_graph, in_graph_is_binary=True):
