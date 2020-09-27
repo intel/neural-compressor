@@ -329,15 +329,15 @@ class TFGraphAnalyzer(object):
             old_node_name (string): the parent node of input node.
             output_nodes_name (string list): output node names list
         """
-        node_name = new_node.name
-        self.node_name_details[node_name] = self.node_details(node=new_node,
-                                                              outputs=output_nodes_name)
+        new_node_name = new_node.name
+        self.node_name_details[new_node_name] = self.node_details(node=new_node,
+                                                                  outputs=output_nodes_name)
         old_node = self.node_name_details[old_node_name].node
         input_nodes_name = [TFGraphRewriterHelper.node_name_from_input(i) for i in old_node.input]
         for input_node_name in input_nodes_name:
             if input_node_name in self.node_name_details:
                 self.node_name_details[input_node_name].outputs.remove(old_node_name)
-                self.node_name_details[input_node_name].outputs.append(node_name)
+                self.node_name_details[input_node_name].outputs.append(new_node_name)
 
         for node_name in output_nodes_name:
             for index, each_node_name in enumerate(self.node_name_details[node_name].node.input):
@@ -345,7 +345,7 @@ class TFGraphAnalyzer(object):
                         node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
                             each_node_name) == old_node_name:
                     new_input_name = self.node_name_details[node_name].node.input[:index] + [
-                        node_name
+                        new_node_name
                     ] + self.node_name_details[node_name].node.input[index + 1:]
                     self.node_name_details[node_name].node.ClearField('input')
                     self.node_name_details[node_name].node.input.extend(new_input_name)
