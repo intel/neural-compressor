@@ -30,7 +30,6 @@ from .transform_graph.freeze_max_min import freeze_min
 from .transform_graph.freeze_max_min import freeze_requantization_range
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
 from .transform_graph.freeze_max_min import combine_histogram
-from .transform_graph.fold_batch_norm import FoldBatchNormNodes
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
@@ -47,6 +46,7 @@ from .graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
+from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 import os
 import sys
 import logging
@@ -575,7 +575,7 @@ class GraphConverter:
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
                                                         self.outputs).do_transformation()
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = FoldBatchNormNodes(self._tmp_graph_def).do_transform()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         if self.debug:
@@ -669,7 +669,7 @@ class GraphConverter:
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def, protected_nodes=self.outputs).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodes(self._tmp_graph_def).do_transform()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
         RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()
 
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)

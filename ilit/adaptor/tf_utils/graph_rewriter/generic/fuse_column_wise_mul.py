@@ -13,8 +13,8 @@ from ..graph_util import TFGraphRewriterHelper as Helper
 
 
 class FuseColumnWiseMulOptimizer(GraphRewriterBase):
-    """Fuse Mul op into Conv2D/DepthwiseCond2dNative/MatMul
-    Mul + Conv2D/DepthwiseCond2dNative/MatMul --> Conv2D/DepthwiseCond2dNative/MatMul
+    """Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul
+    Mul + Conv2D/DepthwiseCondvdNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul
     """
     def __init__(self, model):
         super(FuseColumnWiseMulOptimizer, self).__init__(model)
@@ -24,7 +24,7 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
         cur_graph.graph = self.model
 
         graph_info = cur_graph.parse_graph()
-        target_nodes = cur_graph.search_patterns([["Conv2D", "DepthwiseCond2dNative", "MatMul"],
+        target_nodes = cur_graph.search_patterns([["Conv2D", "DepthwiseConv2dNative", "MatMul"],
                                                   "Mul"])
 
         for node_combination in target_nodes:

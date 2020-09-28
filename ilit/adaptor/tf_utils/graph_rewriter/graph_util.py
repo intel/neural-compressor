@@ -291,7 +291,7 @@ class TFGraphAnalyzer(object):
         """remove sub-graph with a const node
 
         Args:
-            new_node (nodedef): the constant node 
+            new_node (nodedef): the constant node
             old_end_node_name (string):  the sub-graph end node which will be updated by new node
 
         Returns:
@@ -372,7 +372,8 @@ class TFGraphAnalyzer(object):
 
         for end_node_name in end_node_names:
             # Update start node's output info
-            if start_node_name:
+            if start_node_name and end_node_name in \
+                self.node_name_details[start_node_name].outputs:
                 self.node_name_details[start_node_name].outputs.remove(end_node_name)
 
             # reset output node's input
