@@ -134,7 +134,8 @@ class TFGraphAnalyzer(object):
                 find_first_match = validate_input(v.node.op, input_pattern[start_index])
                 if find_first_match:
                     break
-                elif isinstance(input_pattern[start_index], tuple):
+
+                if isinstance(input_pattern[start_index], tuple):
                     start_index -= 1
                     continue
                 else:
@@ -154,18 +155,18 @@ class TFGraphAnalyzer(object):
                 cur_node_name = TFGraphRewriterHelper.node_name_from_input(cur_node.input[0])
                 if validate_input(self.node_name_details[cur_node_name].node.op,
                                   input_pattern[pattern_index]):
-                    pattern_index -= 1
                     cur_node = self.node_name_details[cur_node_name].node
-                    single_set_res.append(cur_node.name)
-                    matched_op_type.append(cur_node.op)
+                    if cur_node.op in input_pattern[pattern_index]:
+                        single_set_res.append(cur_node.name)
+                        matched_op_type.append(cur_node.op)
+                    pattern_index -= 1
                 elif isinstance(input_pattern[pattern_index], tuple):
                     pattern_index -= 1
-                    continue_search_flag = True
-                    continue
                 else:
                     continue_search_flag = False
 
-            if len(matched_op_type) >= minimal_match_count:
+            if len(matched_op_type) >= minimal_match_count and validate_input(
+                    matched_op_type[-1], input_pattern[0]):
                 single_set_res.reverse()
                 matched_op_type.reverse()
                 single_set_res.append(matched_op_type)
@@ -367,7 +368,7 @@ class TFGraphAnalyzer(object):
             self.node_name_details.pop(new_node_name)
 
         self.node_name_details[new_node_name] = self.node_details(node=new_node,
-                                                              outputs=end_node_names)
+                                                                  outputs=end_node_names)
 
         for end_node_name in end_node_names:
             # Update start node's output info
