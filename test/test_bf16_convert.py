@@ -6,7 +6,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from ilit.adaptor.tf_utils.transform_graph.bf16_convert import BF16Convert
+from ilit.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
 
 class TestBF16Convert(unittest.TestCase):
 
@@ -21,6 +21,7 @@ class TestBF16Convert(unittest.TestCase):
         conv1_weight_node.name = "conv1_weights"
         conv1_weight_node.op = "Const"
         conv1_weight_value = np.float32(np.abs(np.random.randn(3,3,3,32)))
+        conv1_weight_node.attr['dtype'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
         conv1_weight_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
             tensor=tensor_util.make_tensor_proto(
         conv1_weight_value, conv1_weight_value.dtype.type, conv1_weight_value.shape)))
@@ -42,6 +43,7 @@ class TestBF16Convert(unittest.TestCase):
         bias_node.name = "conv1_bias"
         bias_node.op = "Const"
         bias_value = np.float32(np.abs(np.random.randn(32)))
+        bias_node.attr['dtype'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
         bias_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
             bias_value, bias_value.dtype.type, bias_value.shape)))
         
@@ -91,10 +93,9 @@ class TestBF16Convert(unittest.TestCase):
 
     def test_do_transform(self):
         self.create_test_graph()
-        bf16_converter = BF16Convert(self.test_graph, "cpu", ["conv2"], [], ["conv1"])
+        bf16_converter = BF16Convert(self.test_graph, [], ["conv1"])
         new_graph = bf16_converter.do_transformation()
-        bf16_converter._parse_graph()
-        new_conv1 = bf16_converter.node_name_mapping["conv1"].node
+        new_conv1 = bf16_converter.cur_graph.node_name_details["conv1"].node
         self.assertEqual(new_conv1.attr["T"].type, dtypes.bfloat16)
         self.assertTrue("input_FP32toBF16" in new_conv1.input)
 

@@ -351,22 +351,22 @@ class TFGraphAnalyzer(object):
                     self.node_name_details[node_name].node.input.extend(new_input_name)
         self.remove_node(old_node_name)
 
-    def add_node(self, input_node, start_node_name, end_node_names):
+    def add_node(self, new_node, start_node_name, end_node_names):
         """Add the node into the internal data structure node_name_details
 
         Args:
-            input_node (nodedef): the nodedef object.
+            new_node (nodedef): the nodedef object.
             start_node_name (string): the parent node of input node.
             end_node_names (string list): output node names list
         """
-        node_name = input_node.name
+        new_node_name = new_node.name
 
-        if node_name in self.node_name_details:
+        if new_node_name in self.node_name_details:
             self.logger.debug("Remove the existed node {} from internal data structure".format(
-                (node_name)))
-            self.node_name_details.pop(node_name)
+                (new_node_name)))
+            self.node_name_details.pop(new_node_name)
 
-        self.node_name_details[node_name] = self.node_details(node=input_node,
+        self.node_name_details[new_node_name] = self.node_details(node=new_node,
                                                               outputs=end_node_names)
 
         for end_node_name in end_node_names:
@@ -381,14 +381,14 @@ class TFGraphAnalyzer(object):
                         end_node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
                             each_node_name) == start_node_name:
                     new_input_name = self.node_name_details[end_node_name].node.input[:index] + [
-                        node_name
+                        new_node_name
                     ] + self.node_name_details[end_node_name].node.input[index + 1:]
                     self.node_name_details[end_node_name].node.ClearField('input')
                     self.node_name_details[end_node_name].node.input.extend(new_input_name)
 
         # add the inserted node into the start node's output.
         if start_node_name:
-            self.node_name_details[start_node_name].outputs.append(node_name)
+            self.node_name_details[start_node_name].outputs.append(new_node_name)
 
     def dump_graph(self):
         """Dump the current model's graphdef
