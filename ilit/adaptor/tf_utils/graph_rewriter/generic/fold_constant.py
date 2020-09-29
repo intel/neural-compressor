@@ -90,7 +90,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
             else:
                 tf_logging.info(
                     "Currently fold-constant only support limited ops {} but face {}".format(
-                        self.supported_ops, end_node.op))
+                        self.supported_op_type, end_node.op))
         else:
             return np.float32(TFGraphRewriterHelper.values_from_const(end_node))
 
@@ -114,7 +114,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         return constant_flag
 
     def do_transformation(self):
-        """fold all the sequences only consist of const and self.supported_ops
+        """fold all the sequences only consist of const and self.supported_op_type
 
         Args:
           input_graph_def (graphdef): graphdef object
