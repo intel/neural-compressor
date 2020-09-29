@@ -241,7 +241,8 @@ schema = Schema({
     },
     Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
         Optional('path', default='~/.ilit/snapshot/'): str
-    }
+    },
+    Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False])
 })
 
 

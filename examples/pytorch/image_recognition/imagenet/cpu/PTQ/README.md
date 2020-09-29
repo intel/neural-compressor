@@ -60,6 +60,13 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
   python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
   ```
 
+### 6. ResNet50 dump tensors for debug
+
+```Shell
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
+  python main_dump_tensors.py -t -a resnet50 --pretrained /path/to/imagenet
+```
+
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
 =======================================================
@@ -152,3 +159,13 @@ q_model = tuner.tune(model)
 ```
 
 The tune() function will return a best quantized model during timeout constrain.
+
+### Dump tensors for debug
+
+Intel® Low Precision Optimization Tool can dump every layer output tensor which you specify in evaluation. You just need to add some setting to yaml configure file as below:
+
+```
+tensorboard: true
+```
+
+The default value of "tensorboard" is "off".

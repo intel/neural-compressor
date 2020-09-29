@@ -182,7 +182,7 @@ class TuneStrategy(object):
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 assert self.last_qmodel
-                self.last_tune_result = self._evaluate(self.last_qmodel)
+                self.last_tune_result = self._evaluate(self.last_qmodel, tune_cfg)
 
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
@@ -222,7 +222,7 @@ class TuneStrategy(object):
 
         return conf.opwise_tune_space(opwise)
 
-    def _evaluate(self, model):
+    def _evaluate(self, model, tune_cfg=None):
         """The interface of evaluating model.
 
         Args:
@@ -232,7 +232,19 @@ class TuneStrategy(object):
             Objective: The objective value evaluated
         """
         if self.eval_func:
-            val = self.objective.evaluate(self.eval_func, model)
+            if self.cfg.tensorboard:
+
+                def eval_func(model):
+                    val, _ = self.adaptor.inspect_tensor(
+                        model,
+                        eval_func=self.eval_func,
+                        to_tensorboard=True,
+                        tune_cfg=tune_cfg)
+                    return val
+
+                val = self.objective.evaluate(eval_func, model)
+            else:
+                val = self.objective.evaluate(self.eval_func, model)
         else:
             # eval_func being None means user will provide dataloader and metric info
             # in config yaml file
@@ -252,7 +264,18 @@ class TuneStrategy(object):
             metric = get_metrics(metrics, self.cfg.tuning.metric, compose=False)
 
             def eval_func(model):
-                return self.adaptor.evaluate(model, dataloader, postprocess, metric)
+                if self.cfg.tensorboard:
+                    val, _ = self.adaptor.inspect_tensor(
+                        model,
+                        dataloader,
+                        to_tensorboard=True,
+                        postprocess=postprocess,
+                        metric=metric,
+                        tune_cfg=tune_cfg)
+                    return val
+                else:
+                    return self.adaptor.evaluate(model, dataloader, postprocess, metric)
+
             val = self.objective.evaluate(eval_func, model)
         return val
 

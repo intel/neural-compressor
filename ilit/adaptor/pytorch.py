@@ -535,5 +535,209 @@ class PyTorchAdaptor(Adaptor):
 
         return q_capability
 
-    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
-        pass
+    def inspect_tensor(self,
+                       model_in,
+                       dataloader=None,
+                       eval_func=None,
+                       q_func=None,
+                       tune_cfg=None,
+                       to_tensorboard=False,
+                       op_list=None,
+                       iteration_list=None,
+                       postprocess=None,
+                       metric=None):
+        from abc import ABCMeta
+        from torch.quantization import get_observer_dict
+
+        if to_tensorboard:
+            from torch.utils.tensorboard import SummaryWriter
+
+        ABC = ABCMeta(str("ABC"), (object, ),
+                      {})  # compatible with Python 2 *and* 3:
+
+        class _RecordingObserver(ABC, torch.nn.Module):
+            r"""
+            The module is mainly for debug and records the tensor values during runtime.
+
+            """
+            def __init__(self, iteration_list=None, **kwargs):
+                super(_RecordingObserver, self).__init__(**kwargs)
+                self.output_tensors_dict = OrderedDict()
+                self.current_iter = 0
+                self.iteration_list = iteration_list
+
+            def forward(self, x):
+                if (self.iteration_list is None and self.current_iter == 0) or \
+                    (self.iteration_list is not None and
+                     self.current_iter in self.iteration_list):
+                    self.output_tensors_dict[self.current_iter] = x.to("cpu") \
+                        if x.device != "cpu" else x.clone()
+                self.current_iter += 1
+                return x
+
+            @torch.jit.export
+            def calculate_qparams(self):
+                raise Exception(
+                    "calculate_qparams should not be called for RecordingObserver"
+                )
+
+            @torch.jit.export
+            def get_tensor_value(self):
+                return self.output_tensors_dict
+
+        def _observer_forward_hook(module, input, output):
+            r"""Forward hook that calls observer on the output
+            """
+            return module.activation_post_process(output)
+
+        def _add_observer_(module, op_list=None, prefix=""):
+            r"""Add observer for the leaf child of the module.
+
+            This function insert observer module to all leaf child module that
+            has a valid qconfig attribute.
+
+            Args:
+                module: input module with qconfig attributes for all the leaf modules that
+                we want to dump tensor
+
+            Return:
+                None, module is modified inplace with added observer modules and forward_hooks
+            """
+            for name, child in module.named_children():
+                op_name = name if prefix == "" else prefix + "." + name
+                if type(child) == torch.nn.quantized.FloatFunctional:
+                    if hasattr(child,
+                               'qconfig') and child.qconfig is not None and (
+                                   op_list is None or op_name in op_list):
+                        child.activation_post_process = \
+                            child.qconfig.activation(iteration_list=iteration_list)
+                else:
+                    _add_observer_(child, op_list, op_name)
+
+            # Insert observers only for leaf nodes
+            if hasattr(module, 'qconfig') and module.qconfig is not None and \
+                len(module._modules) == 0 and not isinstance(module, torch.nn.Sequential) and \
+                (op_list is None or prefix in op_list):
+                # observer and hook will be gone after we swap the module
+                module.add_module(
+                    'activation_post_process',
+                    module.qconfig.activation(iteration_list=iteration_list))
+                module.register_forward_hook(_observer_forward_hook)
+
+        def _propagate_qconfig_helper(module,
+                                      qconfig_dict,
+                                      white_list=None,
+                                      qconfig_parent=None,
+                                      prefix=''):
+            r"""This is a helper function for `propagate_qconfig_`
+
+            Args:
+                module: input module
+                qconfig_dict: dictionary that maps from name of submodule to quantization
+                             configuration
+                white_list: list of quantizable modules
+                qconfig_parent: config of parent module, we will fallback to
+                               this config when there is no specified config for current
+                               module
+                prefix: corresponding prefix of the current module, used as key in
+                        qconfig_dict
+
+            Return:
+                None, module is modified inplace with qconfig attached
+            """
+            # TODO: Add test
+            if white_list is None:
+                white_list = \
+                    torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+
+            module_qconfig = qconfig_dict.get(type(module), qconfig_parent)
+            module_qconfig = qconfig_dict.get(prefix, module_qconfig)
+            module_qconfig = getattr(module, 'qconfig', module_qconfig)
+
+            if type(module) in white_list:
+                module.qconfig = module_qconfig
+            for name, child in module.named_children():
+                module_prefix = prefix + '.' + name if prefix else name
+                _propagate_qconfig_helper(child, qconfig_dict, white_list,
+                                          module_qconfig, module_prefix)
+
+        def _prepare(model, inplace=True, op_list=[], white_list=None):
+            r"""
+            The model will be attached with observer or fake quant modules, and qconfig
+            will be propagated.
+
+            Args:
+                model: input model to be modified in-place
+                inplace: carry out model transformations in-place, the original module is mutated
+            """
+            if not inplace:
+                model = copy.deepcopy(model)
+            _propagate_qconfig_helper(model,
+                                      qconfig_dict={},
+                                      white_list=white_list)
+            # sanity check common API misusage
+            if not any(
+                    hasattr(m, 'qconfig') and m.qconfig
+                    for m in model.modules()):
+                logger.warn(
+                    "None of the submodule got qconfig applied. Make sure you "
+                    "passed correct configuration through `qconfig_dict` or "
+                    "by assigning the `.qconfig` attribute directly on submodules"
+                )
+            _add_observer_(model, op_list=op_list)
+            return model
+
+        # create properties
+        summary = OrderedDict()
+        white_list = self.white_list | \
+            (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) | \
+            set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) | \
+            set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
+
+        model = model_in if not self.is_baseline else copy.deepcopy(model_in)
+        self.is_baseline = False
+        writer = SummaryWriter('runs/eval')
+        if eval_func:
+            model.qconfig = torch.quantization.QConfig(
+                weight=torch.quantization.default_weight_observer,
+                activation=_RecordingObserver)
+            model = _prepare(model, op_list=op_list, white_list=white_list)
+            accuracy = eval_func(model)
+        else:
+            model.qconfig = torch.quantization.QConfig(
+                weight=torch.quantization.default_weight_observer,
+                activation=_RecordingObserver)
+            model = _prepare(model, op_list=op_list, white_list=white_list)
+            accuracy = self.evaluate(model, dataloader, postprocess, metric)
+
+        observer_dict = {}
+        get_observer_dict(model, observer_dict)
+        for key in observer_dict:
+            if isinstance(observer_dict[key],
+                          torch.nn.modules.linear.Identity):
+                continue
+            op_name = key.strip(".activation_post_process")
+            summary[op_name + ".output"] = observer_dict[key].get_tensor_value()
+            if to_tensorboard:
+                for iter in summary[op_name + ".output"]:
+                    if summary[op_name + ".output"][iter].is_quantized:
+                        writer.add_histogram(
+                            op_name + "_int8.output",
+                            torch.dequantize(summary[op_name +
+                                                     ".output"][iter]))
+                    else:
+                        writer.add_histogram(
+                            op_name + "_fp32.output",
+                            summary[op_name + ".output"][iter])
+                state_dict = model.state_dict()
+                for key in state_dict:
+                    if not isinstance(state_dict[key], torch.Tensor):
+                        continue
+                    if state_dict[key].is_quantized:
+                        writer.add_histogram("int8_" + key,
+                                             torch.dequantize(state_dict[key]))
+                    else:
+                        writer.add_histogram("fp32_" + key, state_dict[key])
+        writer.add_text("tune_cfg", str(tune_cfg))
+        writer.close()
+        return accuracy, summary
