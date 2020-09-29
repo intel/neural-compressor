@@ -25,8 +25,6 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from .transform_graph.insert_logging import InsertLogging
-from .transform_graph.freeze_max_min import freeze_max
-from .transform_graph.freeze_max_min import freeze_min
 from .transform_graph.freeze_max_min import freeze_requantization_range
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
 from .transform_graph.freeze_max_min import combine_histogram
@@ -47,6 +45,9 @@ from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+
+from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
+
 import os
 import sys
 import logging
@@ -645,8 +646,12 @@ class GraphConverter:
                     self._kl_op_dict[key] = combine_histogram(self._kl_op_dict[key], fp32_data)
 
     def _freeze_requantization_ranges(self, additional_data=None, _print_node_mapping=None):
-        self._tmp_graph_def = freeze_max(self._tmp_graph_def, self._calibration_data)
-        self._tmp_graph_def = freeze_min(self._tmp_graph_def, self._calibration_data)
+        self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def, self._calibration_data,
+                                                     '__max:').do_transformation()
+
+        self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def, self._calibration_data,
+                                                     '__min:').do_transformation()
+
         self._tmp_graph_def = freeze_requantization_range(self._tmp_graph_def,
                                                           self._calibration_data, additional_data,
                                                           _print_node_mapping, self.device)
