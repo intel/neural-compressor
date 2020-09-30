@@ -144,6 +144,8 @@ def generate_output_graph(
                 else:
                     for i in range(bias_length):
                         int32_bias.append((int)(bias_tensor[i] * scales[0]))
+                #(TODO) GPU not support qint32 bias tensor
+                # float32 type should be removed after GPU support qint32 bias
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(type=float32_type \
                                              if device =='gpu' else qint32_type))
@@ -283,6 +285,9 @@ def generate_output_graph(
                 else:
                     for i in range(bias_length):
                         int32_bias.append(int(bias_tensor[i] * scales[0]))
+
+                #(TODO) GPU not support qint32 bias tensor
+                # float32 type should be removed after GPU support qint32 bias
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(type=float32_type \
                                              if device =='gpu' else qint32_type))
