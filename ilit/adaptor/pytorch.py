@@ -6,6 +6,7 @@ from ..utils import logger
 import random
 
 torch = LazyImport('torch')
+cpuinfo = LazyImport('cpuinfo')
 
 
 @adaptor_registry
@@ -317,7 +318,9 @@ class PyTorchAdaptor(Adaptor):
             assert dtype == 'uint8'
             dtype = torch.quint8
 
-        return observer.with_args(qscheme=qscheme, dtype=dtype)
+        # Should reduce range if HW didn't support VNNI, otherwise accuracy will drop.
+        reduce_range = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
+        return observer.with_args(qscheme=qscheme, dtype=dtype, reduce_range=reduce_range)
 
     def _fake_quantize(self, algorithm, scheme, granularity, dtype):
         fake_quant = torch.quantization.FakeQuantize
@@ -364,8 +367,10 @@ class PyTorchAdaptor(Adaptor):
             qmax = 255
             dtype = torch.quint8
 
+        # Should reduce range if HW didn't support VNNI, otherwise accuracy will drop.
+        reduce_range = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
         return fake_quant.with_args(observer=observer, quant_min=qmin, quant_max=qmax,
-                                    dtype=dtype, qscheme=qscheme)
+                                    dtype=dtype, qscheme=qscheme, reduce_range=reduce_range)
 
     def _propagate_qconfig(self, model, op_qcfgs):
         fallback_ops = []

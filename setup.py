@@ -15,7 +15,7 @@ setup(
     packages = find_packages(),
     package_dir = {'':'.'},
     package_data={'': ['*.py', '*.yaml']},
-    install_requires=['numpy', 'pyyaml', 'scikit-learn', 'schema'],
+    install_requires=['numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo'],
     entry_points={
       'console_scripts':  [""]
     },
