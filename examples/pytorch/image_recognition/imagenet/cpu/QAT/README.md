@@ -31,6 +31,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
   cd examples/pytorch/image_recognition/imagenet/cpu/QAT
   python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
   ```
+  For ResNet50 model, we can get int8 0.7614 accuracy vs fp32 0.7613.
 
 ### 2. ResNet18
 
