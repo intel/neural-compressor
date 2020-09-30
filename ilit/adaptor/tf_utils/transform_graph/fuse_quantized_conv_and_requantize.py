@@ -69,7 +69,8 @@ def generate_output_graph(
         input_node_map,
         output_node_map,
         fuse_op_list,
-        fuse_op_deq_list):
+        fuse_op_deq_list,
+        device):
     output_graph_def = graph_pb2.GraphDef()
     skip_list = []
     skip_node_name = []
@@ -135,6 +136,7 @@ def generate_output_graph(
                                   (max(abs(max_input), abs(min_input)) *
                                    max(abs(max_filter_tensor[i]),
                                        abs(min_filter_tensor[i]))))
+
                 int32_bias = []
                 if channel_size > 1:
                     for i in range(bias_length):
@@ -143,17 +145,23 @@ def generate_output_graph(
                     for i in range(bias_length):
                         int32_bias.append((int)(bias_tensor[i] * scales[0]))
                 bias_node.attr['dtype'].CopyFrom(
-                    attr_value_pb2.AttrValue(type=qint32_type))
+                    attr_value_pb2.AttrValue(type=float32_type \
+                                             if device =='gpu' else qint32_type))
                 bias_node.attr['value'].CopyFrom(
                     attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(
-                            int32_bias, dtypes.int32, bias_tensor.shape)))
+                            bias_tensor if device == 'gpu' else int32_bias ,
+                            dtypes.float32 if device == 'gpu' else dtypes.int32,
+                            bias_tensor.shape)))
 
-                bias_node.attr['value'].tensor.dtype = qint32_type
+                bias_node.attr['value'].tensor.dtype = float32_type \
+                                        if device == 'gpu' else qint32_type
                 skip_node_name.append(bias_node.name)
                 output_graph_def.node.extend([bias_node])
                 new_node.attr["Tbias"].CopyFrom(
-                    attr_value_pb2.AttrValue(type=qint32_type))
+                    attr_value_pb2.AttrValue(type=float32_type \
+                                             if device == 'gpu' else qint32_type))
+
             else:
                 new_node.attr["Tbias"].CopyFrom(
                     attr_value_pb2.AttrValue(type=float32_type))
@@ -267,6 +275,7 @@ def generate_output_graph(
                                   (max(abs(max_input), abs(min_input)) *
                                    max(abs(max_filter_tensor[i]),
                                        abs(min_filter_tensor[i]))))
+
                 int32_bias = []
                 if channel_size > 1:
                     for i in range(bias_length):
@@ -275,16 +284,24 @@ def generate_output_graph(
                     for i in range(bias_length):
                         int32_bias.append(int(bias_tensor[i] * scales[0]))
                 bias_node.attr['dtype'].CopyFrom(
-                    attr_value_pb2.AttrValue(type=qint32_type))
+                    attr_value_pb2.AttrValue(type=float32_type \
+                                             if device =='gpu' else qint32_type))
                 bias_node.attr['value'].CopyFrom(
                     attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(
-                            int32_bias, dtypes.int32, bias_tensor.shape)))
-                bias_node.attr['value'].tensor.dtype = qint32_type
+                            bias_tensor if device == 'gpu' else int32_bias ,
+                            dtypes.float32 if device == 'gpu' else dtypes.int32,
+                            bias_tensor.shape)))
+
+                bias_node.attr['value'].tensor.dtype = float32_type \
+                                        if device == 'gpu' else qint32_type
                 new_node.attr["Tbias"].CopyFrom(
-                    attr_value_pb2.AttrValue(type=qint32_type))
+                    attr_value_pb2.AttrValue(type=float32_type \
+                                             if device == 'gpu' else qint32_type))
+
                 skip_node_name.append(bias_node.name)
                 output_graph_def.node.extend([bias_node])
+
             else:
                 new_node.attr["Tbias"].CopyFrom(
                     attr_value_pb2.AttrValue(type=float32_type))
@@ -348,4 +365,5 @@ def fuse_quantized_conv_and_requantize(input_graph, device):
         input_node_map,
         output_node_map,
         fuse_op_list,
-        fuse_op_deq_list)
+        fuse_op_deq_list,
+        device)
