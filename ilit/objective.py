@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import time
+import numpy as np
 import tracemalloc
 from .utils.utility import get_size
 
@@ -7,7 +8,6 @@ from .utils.utility import get_size
    To support new objective, developer just need implement a new subclass in this file.
 """
 OBJECTIVES = {}
-
 
 def objective_registry(cls):
     """The class decorator used to register all Objective subclasses.
@@ -23,6 +23,94 @@ def objective_registry(cls):
     OBJECTIVES[cls.__name__.lower()] = cls
     return cls
 
+class Measurer(object):
+    """The base class for precise benchmark supported by ilit.
+
+    """
+
+    def __init__(self):
+        self._result_list = [] 
+    
+    @abstractmethod
+    def reset(self):
+        """The interface reset benchmark measuring
+        Args:
+        """
+        self._result_list = []
+        return self._result_list
+
+    @abstractmethod
+    def start(self, *args, **kwargs):
+        """The interface start benchmark measuring
+        Args:
+           *args: params for start the measuring
+           **kargs: params for start the measuring
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def end(self, *args, **kwargs):
+        """The interface end benchmark measuring
+        Args:
+           *args: params for start the measuring
+           **kargs: params for start the measuring
+        """
+        raise NotImplementedError
+
+    def result(self, start=None, end=None):
+        """The interface to get benchmark measuring result
+           measurer may sart and end many times, result will
+           return the total mean of the result, can set the start
+           and end index of the result list to calculate
+        
+        Args:
+            start (int): start point to calculate result from result list
+                         used to skip steps for warm up
+            end (int): end point to calculate result from result list 
+        """
+        start_idx = 0
+        end_idx = len(self._result_list)
+        if start is not None and start in range(0, 1+len(self._result_list)):
+            start_idx = start
+        if end is not None and end in range(0, 1+len(self._result_list)):
+            end_idx = end
+        return np.array(self._result_list[start_idx:end_idx]).mean()
+
+    def result_list(self):
+        """The interface to get benchmark measuring result list
+           this interface will return a list of each start-end loop
+           measure value
+        Args:
+        """
+        return self._result_list
+
+class PerformanceMeasure(Measurer):
+
+    def start(self):
+        self.start_time = time.time()
+
+    def end(self):
+        self.duration = time.time() - self.start_time
+        assert self.duration > 0, 'please use start() before end()'
+        self._result_list.append(self.duration)
+
+class FootprintMeasure(Measurer):
+    def start(self):
+        tracemalloc.start()
+
+    def end(self):
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        self._result_list.append(peak)
+
+class ModelSizeMeasure(Measurer):
+    def start(self, model):
+        pass
+
+    def end(self, model):
+        model_size = get_size(model)
+        self._result_list.append(model_size)
+
 
 class Objective(object):
     """The base class of objectives supported by ilit.
@@ -32,7 +120,7 @@ class Objective(object):
                                     {'relative': 0.01} or {'absolute': 0.01}
     """
 
-    def __init__(self, accuracy_criterion):
+    def __init__(self, accuracy_criterion, is_measure=False):
         assert isinstance(
             accuracy_criterion,
             dict) and len(accuracy_criterion) == 1
@@ -44,19 +132,34 @@ class Objective(object):
         self.relative = True if k == 'relative' else False
         self.baseline = None
         self.val = None
+        self.is_measure = is_measure
+        self.measurer = None
 
-    @abstractmethod
     def compare(self, last, baseline):
-        """The interface of comparing if metric reaches the goal with acceptable accuracy loss.
+        """The interface of comparing if metric reaches 
+           the goal with acceptable accuracy loss.
 
         Args:
             last (tuple): The tuple of last metric.
             accuracy_criterion (float): The allowed accuracy absolute loss.
             baseline (tuple): The tuple saving FP32 baseline.
         """
-        raise NotImplementedError
+        acc, perf = self.val
 
-    @abstractmethod
+        if last is not None:
+            _, last_measure = last
+        else:
+            last_measure = 0
+
+        base_acc, _ = baseline
+
+        acc_target = base_acc - float(self.acc_goal) if not self.relative \
+            else base_acc * (1 - float(self.acc_goal))
+        if acc >= acc_target and (last_measure == 0 or perf < last_measure):
+            return True
+        else:
+            return False
+
     def evaluate(self, eval_func, model):
         """The interface of calculating the objective.
 
@@ -64,8 +167,17 @@ class Objective(object):
             eval_func (function): function to do evaluation.
             model (object): model to do evaluation.
         """
-        raise NotImplementedError
 
+        self.measurer.reset()
+        if self.is_measure:
+            acc = eval_func(model, self.measurer)
+        else:
+           self.measurer.start()
+           acc = eval_func(model)
+           self.measurer.end()
+
+        self.val = acc, self.measurer.result()
+        return self.val
 
 @objective_registry
 class Performance(Objective):
@@ -75,39 +187,14 @@ class Performance(Objective):
                                     {'relative': 0.01} or {'absolute': 0.01}
     """
 
-    def __init__(self, accuracy_criterion):
-        super(Performance, self).__init__(accuracy_criterion)
-
-    def compare(self, last, baseline):
-        acc, perf = self.val
-
-        if last is not None:
-            _, last_perf = last
-        else:
-            last_perf = 0
-
-        base_acc, _ = baseline
-
-        acc_target = base_acc - float(self.acc_goal) if not self.relative \
-            else base_acc * (1 - float(self.acc_goal))
-        if acc >= acc_target and (last_perf == 0 or perf < last_perf):
-            return True
-        else:
-            return False
-
-    def evaluate(self, eval_func, model):
-        start = time.time()
-        accuracy = eval_func(model)
-        end = time.time()
-        total_time = end - start
-
-        self.val = accuracy, total_time
-        return self.val
-
+    def __init__(self, accuracy_criterion, is_measure=False):
+        super(Performance, self).__init__(accuracy_criterion, is_measure)
+        self.measurer = PerformanceMeasure()
 
 @objective_registry
 class Footprint(Objective):
-    """The objective class of calculating peak memory footprint when running quantize model.
+    """The objective class of calculating peak memory footprint 
+       when running quantize model.
 
     Args:
         accuracy_criterion (dict): The dict of supported accuracy criterion.
@@ -116,33 +203,7 @@ class Footprint(Objective):
 
     def __init__(self, accuracy_criterion):
         super(Footprint, self).__init__(accuracy_criterion)
-
-    def compare(self, last, baseline):
-        acc, peak = self.val
-
-        if last is not None:
-            _, last_peak = last
-        else:
-            last_peak = 0
-
-        base_acc, _ = baseline
-
-        acc_target = base_acc - float(self.acc_goal) if not self.relative \
-            else base_acc * (1 - float(self.acc_goal))
-        if acc >= acc_target and (last_peak == 0 or peak < last_peak):
-            return True
-        else:
-            return False
-
-    def evaluate(self, eval_func, model):
-        tracemalloc.start()
-        accuracy = eval_func(model)
-        _, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-
-        self.val = accuracy, peak
-        return self.val
-
+        self.measurer = FootprintMeasure()
 
 @objective_registry
 class ModelSize(Objective):
@@ -155,27 +216,5 @@ class ModelSize(Objective):
 
     def __init__(self, accuracy_criterion):
         super(ModelSize, self).__init__(accuracy_criterion)
+        self.measurer = ModelSizeMeasure()
 
-    def compare(self, last, baseline):
-        acc, size = self.val
-
-        if last is not None:
-            _, last_size = last
-        else:
-            last_size = 0
-
-        base_acc, _ = baseline
-
-        acc_target = base_acc - float(self.acc_goal) if not self.relative \
-            else base_acc * (1 - float(self.acc_goal))
-        if acc >= acc_target and (last_size == 0 or size < last_size):
-            return True
-        else:
-            return False
-
-    def evaluate(self, eval_func, model):
-        accuracy = eval_func(model)
-        model_size = get_size(model)
-
-        self.val = accuracy, model_size
-        return self.val
