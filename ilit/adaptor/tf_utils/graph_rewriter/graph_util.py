@@ -262,7 +262,11 @@ class TFGraphAnalyzer(object):
             self.logger.debug("{} has been removed.".format(node_name))
             return True
 
-    def replace_const_node(self, new_const_node, target_node, old_constant_node_name):
+    def replace_const_node(self,
+                           new_const_node,
+                           target_node,
+                           old_constant_node_name,
+                           replace_all=True):
         """Replace the specified const node with another one.
 
         Args:
@@ -270,6 +274,7 @@ class TFGraphAnalyzer(object):
             target_node (list): the string list that contains name of node that
                                 need to be replaced const node.
             old_constant_node_name (string): the outdated const node name.
+            replace_all (bool): replace the specified node name once or not.
 
         """
         new_const_node_name = new_const_node.name
@@ -285,9 +290,13 @@ class TFGraphAnalyzer(object):
                     ] + self.node_name_details[sub_node].node.input[index + 1:]
                     self.node_name_details[sub_node].node.ClearField('input')
                     self.node_name_details[sub_node].node.input.extend(new_input_name)
+                    self.node_name_details[old_constant_node_name].outputs.remove(sub_node)
+                    if len(self.node_name_details[old_constant_node_name].outputs) == 0:
+                        self.remove_node(old_constant_node_name)
+                    if not replace_all:
+                        break
 
-    def replace_constant_graph_with_constant_node(self, new_node, old_end_node_name,
-                                                  output_node_name):
+    def replace_constant_graph_with_constant_node(self, new_node, old_end_node_name):
         """remove sub-graph with a const node
 
         Args:
@@ -311,7 +320,8 @@ class TFGraphAnalyzer(object):
                     self.logger.debug("the subgraph replaces must be constant")
                     return False
                 else:
-                    self.node_name_details.pop(input_name)
+                    if input_name in self.node_name_details:
+                        self.node_name_details.pop(input_name)
             output_node_name = self.node_name_details[old_end_node_name].outputs
             self.replace_node(new_node, old_end_node_name, output_node_name)
             self.node_name_details[new_node_name].node.ClearField('input')
@@ -330,6 +340,7 @@ class TFGraphAnalyzer(object):
             old_node_name (string): the parent node of input node.
             output_nodes_name (string list): output node names list
         """
+
         new_node_name = new_node.name
         self.node_name_details[new_node_name] = self.node_details(node=new_node,
                                                                   outputs=output_nodes_name)

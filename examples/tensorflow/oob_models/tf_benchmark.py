@@ -165,6 +165,32 @@ def _write_inputs_outputs_to_yaml(yaml_path, inputs, outputs):
     with open(yaml_path, 'w') as nf:
         yaml.dump(content, nf)
 
+class DataLoader(object):
+    def __init__(self, inputs_tensor, total_samples, batch_size):
+        """dataloader generator
+
+        Args:
+            data_location (str): tf recorder local path
+            batch_size (int): dataloader batch size
+        """
+        self.batch_size = batch_size
+        self.inputs_tensor = inputs_tensor
+        # self.input_dtypes = input_dtypes
+        self.total_samples = total_samples
+        self.n = math.ceil(float(self.total_samples) / self.batch_size)
+        # assert len(input_shapes) == len(input_dtypes)
+        print("batch size is " + str(self.batch_size) + "," + str(self.n) + " iteration")
+
+    def __iter__(self):
+        for i in range(self.n):
+            if len(self.inputs_tensor.values()) > 1:
+                data = [list(self.inputs_tensor.values())]
+            else:
+                data = list(self.inputs_tensor.values())
+            yield data
+
+def eval_func(graph):
+    return 1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -263,17 +289,29 @@ if __name__ == "__main__":
         graph = initialize_graph(model_detail, enable_optimize)
         tuner = ilit.Tuner(args.ilit_config_file)
 
-        inputs_shape = [item.shape for item in inputs.values()]
-        inputs_dtype = [str(item.dtype) for item in inputs.values()]        
-        
+        inputs_shape = []
+        inputs_dtype = []        
+        for item in inputs.values():
+            if isinstance(item, bool):
+                # TODO: wait scalar support in dummy dataset
+                pass
+            else:
+                inputs_shape.append(item.shape)
+                inputs_dtype.append(str(item.dtype))
         # generate dummy data
         dataset = ilit.data.datasets.DATASETS('tensorflow')['dummy'](shape=inputs_shape, 
-                                                low=1.0, high=20.0, dtype=inputs_dtype)
-        label_dataset = ilit.data.datasets.DATASETS('tensorflow')['dummy'](shape=[(1, 5)])
-        data_loader=ilit.data.DataLoader('tensorflow', dataset=(dataset, label_dataset), batch_size=1)
-
-        q_model = tuner.tune(graph, q_dataloader=data_loader)
-        write_graph(q_model.as_graph_def(), args.output_path)
+                                           low=1.0, high=20.0, dtype=inputs_dtype, label=True)
+        data_loader=ilit.data.DataLoader('tensorflow', dataset=dataset, batch_size=1)
+        
+        if args.model_name and args.model_name in ['aipg-vdcnn']:
+            # do not use ilit dummy dataset for aipg-vdcnn
+            self_dataloader = DataLoader(inputs_tensor=model_detail['input'], total_samples=100, batch_size=1)
+            q_model = tuner.tune(graph, q_dataloader=self_dataloader, eval_func=eval_func)
+            write_graph(q_model.as_graph_def(), args.output_path)
+        
+        else:    
+            q_model = tuner.tune(graph, q_dataloader=data_loader)
+            write_graph(q_model.as_graph_def(), args.output_path)
         
         # benchmark generator ilit int8 model
         model_detail['model_dir'] = args.output_path

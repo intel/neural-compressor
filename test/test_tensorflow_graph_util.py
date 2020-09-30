@@ -98,7 +98,7 @@ class TestGraph_util(unittest.TestCase):
         new_constant_node = TFGraphRewriterHelper.create_constant_node(
             self.add_node.name + "_const", new_constant_value, new_constant_type)
         assert graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.add_node.name, [self.mul_node.name])
+            new_constant_node, self.add_node.name)
         result_graph = graph_analyzer.dump_graph()
         assert len(list(result_graph.node)) == 10
 
@@ -107,7 +107,7 @@ class TestGraph_util(unittest.TestCase):
         new_constant_node = TFGraphRewriterHelper.create_constant_node(
             self.mul_node.name + "_const", new_constant_value, new_constant_type)
         assert graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.mul_node.name, [self.sqrt_node.name])
+            new_constant_node, self.mul_node.name)
         result_graph = graph_analyzer.dump_graph()
         assert len(list(result_graph.node)) == 8
 
@@ -116,7 +116,7 @@ class TestGraph_util(unittest.TestCase):
         new_constant_node = TFGraphRewriterHelper.create_constant_node(
             self.sqrt_node.name + "_const", new_constant_value, new_constant_type)
         assert graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.sqrt_node.name, [self.relu_node, self.block_node])
+            new_constant_node, self.sqrt_node.name)
         result_graph = graph_analyzer.dump_graph()
         assert len(list(result_graph.node)) == 7
 
@@ -125,7 +125,7 @@ class TestGraph_util(unittest.TestCase):
         new_constant_node = TFGraphRewriterHelper.create_constant_node(
             self.block_node.name + "_const", new_constant_value, new_constant_type)
         assert not graph_analyzer.replace_constant_graph_with_constant_node(
-            new_constant_node, self.block_node.name, [self.end_node])
+            new_constant_node, self.block_node.name)
 
     def test_replace_node(self):
         graph_analyzer = TFGraphAnalyzer()

@@ -5,7 +5,6 @@
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
-from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
 from ..graph_util import TFGraphAnalyzer
@@ -91,12 +90,17 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("mean_op")])
             mean_node = graph_info[mean_node_name].node
 
+            if mean_node.op != "Const":
+                continue
+
             mean_value = Helper.values_from_const(mean_node)
 
             if has_add_op:
                 bias_node_name = graph_info[Helper.node_name_from_input(
                     matched_node[1])].node.input[1]
                 bias_node = graph_info[Helper.node_name_from_input(bias_node_name)].node
+                if bias_node.op != "Const":
+                    continue
                 mean_value = mean_value - Helper.values_from_const(bias_node)
                 cur_graph.remove_node(bias_node.name)
                 cur_graph.remove_node(matched_node[1])
@@ -109,17 +113,20 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
             var_node_name = Helper.node_name_from_input(
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("var_op")])
             var_node = graph_info[var_node_name].node
-
+            if var_node.op != "Const":
+                continue
             var_value = Helper.values_from_const(var_node)
             beta_node_name = Helper.node_name_from_input(
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("beta_op")])
             beta_node = graph_info[beta_node_name].node
-
+            if beta_node.op != "Const":
+                continue
             beta_value = Helper.values_from_const(beta_node)
             gamma_node_name = Helper.node_name_from_input(
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("gamma_op")])
             gamma_node = graph_info[gamma_node_name].node
-
+            if gamma_node.op != "Const":
+                continue
             gamma_value = Helper.values_from_const(gamma_node)
 
             variance_epsilon_value = bn_node.attr[self.EPSILON_ATTR[bn_node.op]].f
