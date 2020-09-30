@@ -15,10 +15,10 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
 
     def __init__(self, model=None):
         super(GraphFoldConstantOptimizer, self).__init__(model)
-        graph_analyzer = TFGraphAnalyzer()
-        graph_analyzer.graph = self.model
+        self.graph_analyzer = TFGraphAnalyzer()
+        self.graph_analyzer.graph = self.model
 
-        self.graph_info = graph_analyzer.parse_graph()
+        self.graph_info = self.graph_analyzer.parse_graph()
 
     def _fold_value(self, end_node_name):
         """calculate values of end node of constant node sequence
@@ -101,6 +101,8 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         return True
 
     def check_const_inputs(self, node_name):
+        if node_name not in self.graph_info:
+            return False
         node_op = self.graph_info[node_name].node.op
         if node_op == "Placeholder" or node_op == "Const":
             return False
@@ -123,19 +125,16 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
            [graphdef]: optimized graph
         """
 
-        graph_analyzer = TFGraphAnalyzer()
-
         while not self.check_all_folded():
             for node_name, _ in self.graph_info.copy().items():
                 if self.check_const_inputs(node_name):
-                    outputs = self.graph_info[node_name].outputs
                     fold_value = self._fold_value(node_name)
                     fold_type = tf.as_dtype(np.float32(fold_value).dtype)
                     new_constant_node = TFGraphRewriterHelper.create_constant_node(
                         node_name + "_const", fold_value, fold_type)
-                    graph_analyzer.replace_constant_graph_with_constant_node(
-                        new_constant_node, node_name, outputs)
+                    self.graph_analyzer.replace_constant_graph_with_constant_node(
+                        new_constant_node, node_name)
 
-        output_graph_def = graph_analyzer.dump_graph()
+        output_graph_def = self.graph_analyzer.dump_graph()
 
         return output_graph_def
