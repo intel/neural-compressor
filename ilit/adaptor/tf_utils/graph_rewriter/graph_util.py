@@ -284,15 +284,17 @@ class TFGraphAnalyzer(object):
 
         for sub_node in target_node:
             for index, each_node_name in enumerate(self.node_name_details[sub_node].node.input):
-                if each_node_name == old_constant_node_name:
+                if each_node_name + ':0' == old_constant_node_name \
+                    or each_node_name == old_constant_node_name:
                     new_input_name = self.node_name_details[sub_node].node.input[:index] + [
                         new_const_node_name
                     ] + self.node_name_details[sub_node].node.input[index + 1:]
                     self.node_name_details[sub_node].node.ClearField('input')
                     self.node_name_details[sub_node].node.input.extend(new_input_name)
-                    self.node_name_details[old_constant_node_name].outputs.remove(sub_node)
-                    if len(self.node_name_details[old_constant_node_name].outputs) == 0:
-                        self.remove_node(old_constant_node_name)
+                    if old_constant_node_name in self.node_name_details:
+                        self.node_name_details[old_constant_node_name].outputs.remove(sub_node)
+                        if len(self.node_name_details[old_constant_node_name].outputs) == 0:
+                            self.remove_node(old_constant_node_name)
                     if not replace_all:
                         break
 
@@ -383,7 +385,7 @@ class TFGraphAnalyzer(object):
         for end_node_name in end_node_names:
             # Update start node's output info
             if start_node_name and end_node_name in \
-                self.node_name_details[start_node_name].outputs:
+                    self.node_name_details[start_node_name].outputs:
                 self.node_name_details[start_node_name].outputs.remove(end_node_name)
 
             # reset output node's input

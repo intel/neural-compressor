@@ -48,6 +48,7 @@ from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 
+from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 import os
 import sys
 import logging
@@ -604,14 +605,17 @@ class GraphConverter:
         int8_dynamic_range_graph_def = graph_pb2.GraphDef()
         int8_dynamic_range_graph_def.CopyFrom(self._tmp_graph_def)
         # TODO need to insert op-wise logging op.
-
-        InsertLogging(self._tmp_graph_def,
-                      ops=["RequantizationRange", "RequantizationRangePerChannel"],
+        self._tmp_graph_def = InsertLoggingTransformer(self._tmp_graph_def,
+                      target_op_types=["RequantizationRange", "RequantizationRangePerChannel"],
                       message="__requant_min_max:").do_transformation()
-        InsertLogging(self._tmp_graph_def, ops=["Min"], message="__min:").do_transformation()
-        InsertLogging(self._tmp_graph_def, ops=["Max"], message="__max:").do_transformation()
-        write_graph(self._tmp_graph_def, self._int8_logged_graph)
 
+        self._tmp_graph_def = InsertLoggingTransformer(
+            self._tmp_graph_def, target_op_types=["Min"], message="__min:").do_transformation()
+
+        self._tmp_graph_def = InsertLoggingTransformer(
+            self._tmp_graph_def, target_op_types=["Max"], message="__max:").do_transformation()
+
+        write_graph(self._tmp_graph_def, self._int8_logged_graph)
         self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
 
     def _parse_output(self, input_data, output_data):
