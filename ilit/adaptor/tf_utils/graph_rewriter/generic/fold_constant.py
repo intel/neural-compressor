@@ -9,9 +9,8 @@ from tensorflow.python.platform import tf_logging
 from ..graph_base import GraphRewriterBase
 from ..graph_util import TFGraphAnalyzer, TFGraphRewriterHelper
 
-
 class GraphFoldConstantOptimizer(GraphRewriterBase):
-    supported_op_type = ["Add", "AddV2", "Const", "Identity", "Mul", "Rsqrt", "Sub"]
+    supported_op_type = ["Add", "AddV2", "Const", "Mul", "Rsqrt", "Sub"]
 
     def __init__(self, model=None):
         super(GraphFoldConstantOptimizer, self).__init__(model)
@@ -74,8 +73,6 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                 return fold_value
             elif end_node.op == "Rsqrt":
                 return 1 / np.sqrt(self._fold_value(end_node.input[0]))
-            elif end_node.op == "Identity":
-                return self._fold_value(end_node.input[0])
             elif end_node.op == "Sub":
                 fold_value = np.array([0.])
                 for index, input in enumerate(end_node.input):
@@ -112,7 +109,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         for input_name in self.graph_info[node_name].node.input:
             input_name = TFGraphRewriterHelper.node_name_from_input(input_name)
             input_node = self.graph_info[input_name].node
-            constant_flag &= input_node.op == "Const"
+            constant_flag &= input_node.op == "Const" and not input_node.input
         return constant_flag
 
     def do_transformation(self):
