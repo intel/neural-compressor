@@ -614,6 +614,7 @@ class GraphConverter:
 
         self._tmp_graph_def = InsertLoggingTransformer(
             self._tmp_graph_def, target_op_types=["Max"], message="__max:").do_transformation()
+        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         write_graph(self._tmp_graph_def, self._int8_logged_graph)
         self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
