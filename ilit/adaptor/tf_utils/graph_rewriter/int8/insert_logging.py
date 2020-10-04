@@ -12,7 +12,6 @@ from ..graph_util import TFGraphAnalyzer
 
 class InsertLoggingTransformer(GraphRewriterBase):
     """Insert print op as the specified op type's successor.
-
     """
 
     def __init__(
@@ -25,7 +24,7 @@ class InsertLoggingTransformer(GraphRewriterBase):
         summarize=1024,
         message="",
     ):
-        """[summary]
+        """Constructor Function
 
         Args:
             model (graphdef): the input model graphdef object.
@@ -57,7 +56,7 @@ class InsertLoggingTransformer(GraphRewriterBase):
                 print_node.name = node_name + name_suffix
                 node_message = ''
                 if self.show_op:
-                    node_message += ';' + self.node_mapping[node_name].op + ';'
+                    node_message += ';' + self.node_info[node_name].op + ';'
                 if self.show_name:
                     node_message += ';' + print_node.name + ';'
                 node_message += self.message
