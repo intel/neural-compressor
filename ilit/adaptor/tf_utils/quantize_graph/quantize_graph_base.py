@@ -129,6 +129,9 @@ class QuantizeNodeBase(object):
                     self.logger.debug("Try to apply rule: {}".format(sub_rule))
 
                     cur_node_name = list(self.node_name_mapping.keys())[k]
+
+                    matched_node_name.clear()
+
                     matched_node_name.append(cur_node_name)
 
                     while sub_rule_len > 1:
