@@ -16,8 +16,16 @@
 #  limitations under the License.
 #
 
+import os
+import sys
+import logging
+import threading
+import time
+import ast
+import subprocess
+import numpy as np
 import tensorflow as tf
-from google.protobuf import text_format
+
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import importer
 from tensorflow.python.framework import ops
@@ -49,14 +57,7 @@ from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 
 from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
-import os
-import sys
-import logging
-import threading
-import time
-import numpy as np
-import ast
-import subprocess
+
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -77,6 +78,9 @@ class OutputGrabber(object):
         self.capturedtext = ""
         # Create a pipe so the stream can be captured:
         self.pipe_out, self.pipe_in = os.pipe()
+
+        self.buffer_size = os.getenv('ILIT_BUFFER_SIZE') if os.getenv(
+            'ILIT_BUFFER_SIZE') and os.getenv('ILIT_BUFFER_SIZE').isdigit() else 2**20
 
     def __enter__(self):
         self.start()
@@ -130,7 +134,7 @@ class OutputGrabber(object):
         and save the text in `capturedtext`.
         """
         while True:
-            char = os.read(self.pipe_out, 10240).decode(self.origstream.encoding)
+            char = os.read(self.pipe_out, self.buffer_size).decode(self.origstream.encoding)
             if not char or self.escape_char == char[-1]:
                 break
             self.capturedtext += char
