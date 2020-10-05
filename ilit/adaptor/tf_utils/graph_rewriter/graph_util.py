@@ -333,6 +333,29 @@ class TFGraphAnalyzer(object):
             self.logger.debug("{} has been replaced.".format(old_end_node_name))
             return True
 
+    def replace_single_node(self, new_node, old_output_node_names, old_output_name,
+                            old_input_node_names, old_input_name):
+        new_node_name = new_node.name
+        for i in old_output_node_names:
+            while old_output_name in self.node_name_details[i].outputs:
+                self.node_name_details[i].outputs.remove(old_output_name)
+            self.node_name_details[i].outputs.append(new_node_name)
+
+        self.node_name_details[new_node_name] = self.node_details(node=new_node,
+                                                                  outputs=old_input_node_names)
+
+        for each_input_node_name in old_input_node_names:
+            for index, each_node_name in enumerate(
+                    self.node_name_details[each_input_node_name].node.input):
+                if self.node_name_details[each_input_node_name].node.input and (
+                        each_node_name) == old_input_name:
+                    new_input_name = self.node_name_details[
+                        each_input_node_name].node.input[:index] + [
+                            new_node_name
+                        ] + self.node_name_details[each_input_node_name].node.input[index + 1:]
+                    self.node_name_details[each_input_node_name].node.ClearField('input')
+                    self.node_name_details[each_input_node_name].node.input.extend(new_input_name)
+
     def replace_node(self, new_node, old_node_name, output_nodes_name):
         """Replace the node into the internal data structure node_name_details
 
@@ -346,8 +369,7 @@ class TFGraphAnalyzer(object):
         self.node_name_details[new_node_name] = self.node_details(node=new_node,
                                                                   outputs=output_nodes_name)
         old_node = self.node_name_details[old_node_name].node
-        input_nodes_name = [TFGraphRewriterHelper.node_name_from_input(i) for i in old_node.input]
-        for input_node_name in input_nodes_name:
+        for input_node_name in old_node.input:
             if input_node_name in self.node_name_details:
                 self.node_name_details[input_node_name].outputs.remove(old_node_name)
                 self.node_name_details[input_node_name].outputs.append(new_node_name)

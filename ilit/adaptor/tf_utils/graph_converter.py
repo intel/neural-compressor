@@ -55,6 +55,7 @@ from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
+from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 
 from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 
@@ -661,15 +662,18 @@ class GraphConverter:
         self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def, self._calibration_data,
                                                      '__min:').do_transformation()
 
-        self._tmp_graph_def = freeze_requantization_range(self._tmp_graph_def,
-                                                          self._calibration_data, additional_data,
-                                                          _print_node_mapping, self.device)
+        self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def,
+                                                     self._calibration_data,
+                                                     '__requant_min_max',
+                                                     device=self.device).do_transformation()
 
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
     def _fuse_requantize_with_fused_quantized_node(self):
-        self._tmp_graph_def = fuse_quantized_conv_and_requantize(self._tmp_graph_def, self.device)
+        self._tmp_graph_def = FuseConvRequantizeTransformer(self._tmp_graph_def,
+                                                        self.device).do_transformation()
+
         self._tmp_graph_def = FuseQuantizedMulAndRequantize(
             self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
@@ -680,6 +684,7 @@ class GraphConverter:
         #                                              False)
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
                                                         self.outputs).do_transformation()
+
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def, protected_nodes=self.outputs).do_transformation()
 

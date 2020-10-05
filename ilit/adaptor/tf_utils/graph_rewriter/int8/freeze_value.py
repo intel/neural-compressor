@@ -13,7 +13,7 @@ from ..graph_util import TFGraphRewriterHelper as Helper
 
 
 class FreezeValueTransformer(GraphRewriterBase):
-    def __init__(self, model, sampling_data, postfix, threshold=0.95):
+    def __init__(self, model, sampling_data, postfix, threshold=0.95, device='gpu'):
         """Free Max/Min value into QuantizeV2 op.
 
         Args:
@@ -21,11 +21,13 @@ class FreezeValueTransformer(GraphRewriterBase):
             sampling_data (string list): the string context contains max/min values.
             postfix (string): the specified postfix to locate value.
             threshold (float, optional): The percentage of overall data.Defaults to 0.95.
+            device (string, optional): The hardware device type, 'cpu' or 'gpu'.
         """
         super(FreezeValueTransformer, self).__init__(model)
         self.data = sampling_data
         self.threshold = threshold
         self.postfix = postfix
+        self.device = device
         self.cur_graph = TFGraphAnalyzer()
         self.cur_graph.graph = self.model
 
@@ -76,6 +78,46 @@ class FreezeValueTransformer(GraphRewriterBase):
             res[key] = sorted(temp[key])[target_index]
         return res
 
+    def _parse_requantization_ranges(self):
+        """
+        Parse the max_min log to get requantization values
+        :return: dict saved the result
+        """
+        print_suffix = "__print__"
+        lines = self._get_valid_log()
+        res = {}
+        temp_min = {}
+        temp_max = {}
+        for i in lines:
+            if i.find(print_suffix + ";" + self.postfix) == -1:
+                continue
+            max_line_data = i.split(print_suffix + ";" + self.postfix)[-1]
+            min_value = max_line_data.split('][')[0].split('[')[1]
+            max_value = max_line_data.split('][')[1].split(']')[0]
+            name = i.split(';')[1].strip()[:-len(print_suffix)]
+            if name not in temp_min:
+                temp_min[name] = []
+            if name not in temp_max:
+                temp_max[name] = []
+
+            temp_min[name].append(float(min_value))
+            temp_max[name].append(float(max_value))
+
+        for key in temp_min:
+            target_min_index = int(round(len(temp_min[key]) * (1 - self.threshold)))
+            if target_min_index < 0:
+                target_min_index = 0
+            if key not in res:
+                res[key] = []
+            res[key].append(sorted(temp_min[key])[target_min_index])
+        for key in temp_max:
+            target_max_index = int(round(len(temp_max[key]) * self.threshold))
+            if target_max_index > len(temp_max[key]) - 1:
+                target_max_index = len(temp_max[key]) - 1
+            res[key].append(sorted(temp_max[key])[target_max_index])
+
+        return res
+
     def generate_output_graph(self, max_name_value):
         """
         Generate transformed graph for freeze_max/freeze_min transformation.
@@ -101,6 +143,47 @@ class FreezeValueTransformer(GraphRewriterBase):
 
         return TFGraphAnalyzer().dump_graph()
 
+    def generate_output_graph_ranges(self, max_name_value):
+        """
+        Generate transformed graph for freeze_max/freeze_min transformation.
+        :param max_name_value: target values
+        :return: transformed graph
+        """
+        for node_name, value in max_name_value.items():
+            min_node = node_def_pb2.NodeDef()
+            min_node.op = "HostConst" if self.device == "gpu" else "Const"
+            min_node_postfix = "/frozen_min"
+            min_node.name = node_name + min_node_postfix
+            min_node.attr["dtype"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            min_node.attr["value"].CopyFrom(
+                attr_value_pb2.AttrValue(
+                    tensor=tensor_util.make_tensor_proto(float(value[0]), dtypes.float32, [])))
+
+            max_node = node_def_pb2.NodeDef()
+            max_node.op = "HostConst" if self.device == "gpu" else "Const"
+            max_node_postfix = "/frozen_max"
+            max_node.name = node_name + max_node_postfix
+            max_node.attr["dtype"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            max_node.attr["value"].CopyFrom(
+                attr_value_pb2.AttrValue(
+                    tensor=tensor_util.make_tensor_proto(float(value[1]), dtypes.float32, [])))
+            output_node_name = self.graph_info[node_name].outputs[0]
+            self.cur_graph.replace_const_node(min_node,
+                                              [Helper.node_name_from_input(output_node_name)],
+                                              node_name + ':0')
+            self.cur_graph.replace_const_node(max_node,
+                                              [Helper.node_name_from_input(output_node_name)],
+                                              node_name + ':1')
+            self.cur_graph.remove_node(node_name)
+
+        return TFGraphAnalyzer().dump_graph()
+
     def do_transformation(self):
-        max_name_value = self._parse_max_min_log()
-        return self.generate_output_graph(max_name_value)
+        if self.postfix == '__requant_min_max':
+            range_data = self._parse_requantization_ranges()
+            return self.generate_output_graph_ranges(range_data)
+        else:
+            max_name_value = self._parse_max_min_log()
+            return self.generate_output_graph(max_name_value)
