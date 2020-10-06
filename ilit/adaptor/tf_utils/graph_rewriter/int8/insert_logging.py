@@ -49,6 +49,10 @@ class InsertLoggingTransformer(GraphRewriterBase):
         for node_name in list(self.node_info.keys()):
             details = self.node_info[node_name]
             op_type = details.node.op
+            op_name= details.node.name
+            # ignore the non quantized node.
+            if op_name.find('eightbit') == -1:
+                continue
             if self.target_op_types and op_type in self.target_op_types:
                 name_suffix = "__print__"
                 print_node = node_def_pb2.NodeDef()
