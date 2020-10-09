@@ -3,10 +3,8 @@ framework:
     inputs: input_tensor
     outputs: softmax_tensor
 
-device: gpu
-
 dataloader:
-  batch_size: 100
+  batch_size: 10
   dataset:
       type: "Imagenet"
       root: "./small_dataset" # NOTICE: config to your content images path

@@ -40,7 +40,7 @@ class TFDataDataLoader(BaseDataLoader):
     def batch(self, batch_size, last_batch='rollover'):
         drop_last = False if last_batch == 'rollover' else True
         self._batch_size = batch_size
-        self.dataset.batch(batch_size, drop_last)
+        self.dataset = self.dataset.batch(batch_size, drop_last)
 
     def __iter__(self):
         return self._generate_dataloader(
@@ -53,6 +53,7 @@ class TFDataDataLoader(BaseDataLoader):
                              num_workers=None, pin_memory=None):
 
         drop_last = False if last_batch == 'rollover' else True
+        dataset = dataset.batch(batch_size, drop_last)
         ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
         iter_tensors = ds_iterator.get_next()
         data_config = tf.compat.v1.ConfigProto() 

@@ -55,11 +55,7 @@ class ImagenetDataset(IterableDataset):
           parallel_interleave(
             tf.data.TFRecordDataset, cycle_length=num_cores))
 
-        from tensorflow.python.data.experimental import map_and_batch
-        ds = ds.apply(map_and_batch(
-                      map_func=transform,
-                      batch_size=1,
-                      num_parallel_calls=None))
+        ds = ds.map(transform, num_parallel_calls=None)
 
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
