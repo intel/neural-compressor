@@ -58,7 +58,7 @@ from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 
 from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
-
+from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -666,7 +666,7 @@ class GraphConverter:
                                                      self._calibration_data,
                                                      '__requant_min_max',
                                                      device=self.device).do_transformation()
-
+        self._tmp_graph_def = ScaleProPagationTransformer(self._tmp_graph_def).do_transformation()
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
