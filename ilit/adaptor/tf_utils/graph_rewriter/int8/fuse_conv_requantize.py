@@ -86,7 +86,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 min_input_node = self.graph_info[last_node.input[-2]].node
                 min_input = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input = (max_input_node.attr['value'].tensor.float_val)[0]
-                if requantize_node.op.find('PerChannel') != -1:
+                if 'Depthwise' in quantized_node_op or requantize_node.op.find('PerChannel') != -1:
                     channel_size = max_filter_node.attr['value'].tensor.tensor_shape.dim[0].size
                     max_filter_tensor = tensor_util.MakeNdarray(
                         min_filter_node.attr['value'].tensor)
