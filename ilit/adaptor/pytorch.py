@@ -58,6 +58,10 @@ class PyTorchAdaptor(Adaptor):
         self.white_list = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST\
             - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
+        # Should reduce range if HW didn't support VNNI, otherwise accuracy will drop.
+        self.reduce_range = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
+        logger.debug("reduce range:")
+        logger.debug(self.reduce_range)
 
         if self.device == "cpu":
             self.capability = \
@@ -318,9 +322,7 @@ class PyTorchAdaptor(Adaptor):
             assert dtype == 'uint8'
             dtype = torch.quint8
 
-        # Should reduce range if HW didn't support VNNI, otherwise accuracy will drop.
-        reduce_range = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
-        return observer.with_args(qscheme=qscheme, dtype=dtype, reduce_range=reduce_range)
+        return observer.with_args(qscheme=qscheme, dtype=dtype, reduce_range=self.reduce_range)
 
     def _fake_quantize(self, algorithm, scheme, granularity, dtype):
         fake_quant = torch.quantization.FakeQuantize
@@ -367,10 +369,8 @@ class PyTorchAdaptor(Adaptor):
             qmax = 255
             dtype = torch.quint8
 
-        # Should reduce range if HW didn't support VNNI, otherwise accuracy will drop.
-        reduce_range = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
         return fake_quant.with_args(observer=observer, quant_min=qmin, quant_max=qmax,
-                                    dtype=dtype, qscheme=qscheme, reduce_range=reduce_range)
+                                    dtype=dtype, qscheme=qscheme, reduce_range=self.reduce_range)
 
     def _propagate_qconfig(self, model, op_qcfgs):
         fallback_ops = []
