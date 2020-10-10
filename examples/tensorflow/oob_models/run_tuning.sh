@@ -54,6 +54,9 @@ PRNet
 Resnetv2_200
 text-recognition-0012
 Hierarchical
+icnet-camvid-ava-0001
+icnet-camvid-ava-sparse-30-0001
+icnet-camvid-ava-sparse-60-0001
 )
 
 # run_tuning

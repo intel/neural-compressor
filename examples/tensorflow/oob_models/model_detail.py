@@ -71,7 +71,7 @@ models = [
     # facenet-20180408-102900
     {
         'model_name': 'facenet-20180408-102900',
-        'input': {'image_batch': generate_data([160, 160, 3]), 'phase_train': False},
+        'input': {'batch_size': generate_data([300, 300, 3]), 'phase_train': False},
         'output': ['embeddings']
     },
 
@@ -160,13 +160,13 @@ models = [
 
     {
         'model_name': 'efficientnet-b5',
-        'input': {'sub': generate_data([224, 224, 3])},
+        'input': {'sub': generate_data([456, 456, 3])},
         'output': ['logits']
     },
 
     {
         'model_name': 'efficientnet-b7_auto_aug',
-        'input': {'sub': generate_data([224, 224, 3])},
+        'input': {'sub': generate_data([600, 600, 3])},
         'output': ['logits']
     },
 
@@ -231,5 +231,22 @@ models = [
         'input': {'sub': generate_data([512, 1000, 1])},
         'output': ['fc8/BiasAdd']
     },
-
+    # icnet-camvid-ava-0001
+    {
+        'model_name': 'icnet-camvid-ava-0001',
+        'input': {'data': generate_data([720, 960, 3],batch_size=16)},
+        'output': ['segmentation_output']
+    },
+    # icnet-camvid-ava-sparse-30-0001
+    {
+        'model_name': 'icnet-camvid-ava-sparse-30-0001',
+        'input': {'data': generate_data([720, 960, 3],batch_size=16)},
+        'output': ['segmentation_output']
+    },
+    # icnet-camvid-ava-sparse-60-0001
+    {
+        'model_name': 'icnet-camvid-ava-sparse-60-0001',
+        'input': {'data': generate_data([720, 960, 3],batch_size=16)},
+        'output': ['segmentation_output']
+    },
 ]

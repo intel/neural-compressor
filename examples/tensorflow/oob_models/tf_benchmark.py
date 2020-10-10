@@ -95,7 +95,7 @@ def create_tf_config():
 
 
 def run_benchmark(model_details, max_reps, num_warmup,
-                  enable_optimize_for_inference):
+                  enable_optimize_for_inference,batch_size):
     tf_config = create_tf_config()
     graph = initialize_graph(model_details, enable_optimize_for_inference)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
@@ -137,9 +137,9 @@ def run_benchmark(model_details, max_reps, num_warmup,
 
         avg_time = total_time / reps_done
         latency = avg_time * 1000
-        throughput = 1.0 / avg_time * BATCH_SIZE * NUM_INSTANCES
+        throughput = 1.0 / avg_time * batch_size * NUM_INSTANCES
 
-        print('Batch size = %d' % BATCH_SIZE) 
+        print('Batch size = %d' % batch_size) 
         print('Latency: %.3f ms' % (latency)) 
         print('Throughput: %.3f images/sec' % throughput)
 
@@ -219,7 +219,6 @@ if __name__ == "__main__":
     enable_optimize = args.disable_optimize
     # model_path = args.model_path
     is_meta = args.is_meta
-
     # benchmark PB model directly
     if args.model_path and not args.model_name:
         # generate model detail
@@ -265,45 +264,36 @@ if __name__ == "__main__":
         if not model_detail:
             logger.error("Model undefined.")
             sys.exit(1)
-
-    input_shapes = []
+    inputs_shape = []
+    inputs_dtype = []        
     for input_tensor in model_detail['input'].values():
         if not isinstance(input_tensor, bool):
-            input_shapes.append(list(input_tensor.shape))
+            inputs_shape.append(input_tensor.shape)
+            inputs_dtype.append(str(input_tensor.dtype))
         else:
-            input_shapes.append(['bool'])
-
+            # TODO: wait scalar support in dummy dataset
+            pass
     logger.info("***** Final benchmark input name: {}, shape: {}".format( \
-                model_detail['input'].keys(), input_shapes))
+                model_detail['input'].keys(), inputs_shape))
     logger.info("***** Final benchmark output name: {}".format(model_detail['output']))
-
+    batch_size=inputs_shape[0][0]
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
         import ilit
         from ilit.adaptor.tf_utils.util import write_graph
-
+        dummy_data_notsupport=['aipg-vdcnn','facenet-20180408-102900']
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.ilit_config_file, list(inputs.keys()), outputs)
 
         graph = initialize_graph(model_detail, enable_optimize)
         tuner = ilit.Tuner(args.ilit_config_file)
-
-        inputs_shape = []
-        inputs_dtype = []        
-        for item in inputs.values():
-            if isinstance(item, bool):
-                # TODO: wait scalar support in dummy dataset
-                pass
-            else:
-                inputs_shape.append(item.shape)
-                inputs_dtype.append(str(item.dtype))
         # generate dummy data
         dataset = ilit.data.datasets.DATASETS('tensorflow')['dummy'](shape=inputs_shape, 
                                            low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        data_loader=ilit.data.DataLoader('tensorflow', dataset=dataset, batch_size=1)
+        data_loader=ilit.data.DataLoader('tensorflow', dataset=dataset, batch_size=batch_size)
         
-        if args.model_name and args.model_name in ['aipg-vdcnn']:
+        if args.model_name and args.model_name in dummy_data_notsupport:
             # do not use ilit dummy dataset for aipg-vdcnn
             self_dataloader = DataLoader(inputs_tensor=model_detail['input'], total_samples=100, batch_size=1)
             q_model = tuner.tune(graph, q_dataloader=self_dataloader, eval_func=eval_func)
@@ -315,7 +305,7 @@ if __name__ == "__main__":
         
         # benchmark generator ilit int8 model
         model_detail['model_dir'] = args.output_path
-        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize)
+        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize,batch_size)
 
     else:
-        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize)
+        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize,batch_size)
