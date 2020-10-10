@@ -51,7 +51,7 @@ class TensorFlowAdaptor(Adaptor):
         graph_def = get_graph_def(input_graph)
         assert graph_def
         with graph.as_default():
-            tf.import_graph_def(graph_def, name='') 
+            tf.import_graph_def(graph_def, name='')
 
         input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
         output_tensor = [
@@ -114,6 +114,38 @@ class TensorFlowAdaptor(Adaptor):
                                                                algorithm, is_asymmetric)
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
+        int8_sum_count = 0
+        bf16_sum_count = 0
+        log_length = 50
+        print ('|', 'Mixed Precision Statistics'.center(log_length, "*"), "|")
+        for i in self._init_op_stat:
+            if len(self._init_op_stat[i]) == 0:
+                continue
+            count = 0
+            for j in self.quantize_config['op_wise_config'].keys():
+                if j in self._init_op_stat[i]:
+                    count += 1
+            int8_sum_count += count
+            print ('|', 'INT8 {}: {} '.format(i, count).ljust(log_length), "|")
+            bf16_count = 0
+            for k in self.bf16_ops:
+                if k in self._init_op_stat[i]:
+                    bf16_count += 1
+                if bf16_count > 0:
+                    print ('|', 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length), "|")
+            bf16_sum_count += bf16_count
+        overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
+        int8_percent = float(int8_sum_count/overall_ops_count)
+        bf16_percent = float(bf16_sum_count/overall_ops_count)
+        print('|', 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(int8_percent,
+                                                                            int8_sum_count,
+                                                                            overall_ops_count,
+                                                                            bf16_percent,
+                                                                            bf16_sum_count,
+                                                                            overall_ops_count)
+                                                                            .ljust(log_length),
+                                                                            "|")
+        print('|', '*'*log_length, "|")
 
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -195,8 +227,11 @@ class TensorFlowAdaptor(Adaptor):
         }
 
         self.quantizable_op_details = OrderedDict()
+        self._init_op_stat = {i:[] for i in tf_quantizable_op_type}
         for node in graph_def.node:
             if node.op in tf_quantizable_op_type:
+                self._init_op_stat[node.op].append(node.name)
+
                 if self.unify_op_type_mapping[node.op].find("conv2d") != -1:
                     self.quantizable_op_details[(
                         node.name, self.unify_op_type_mapping[node.op]
@@ -230,7 +265,7 @@ class TensorFlowAdaptor(Adaptor):
             is_supported_version = True
         command = "cat /proc/cpuinfo | grep flags | tail -n 1"
         all_flags = subprocess.check_output(command, shell=True).strip().decode()  # nosec
-        if ((is_supported_version and " avx512_bf16 " in all_flags) 
+        if ((is_supported_version and " avx512_bf16 " in all_flags)
                 or os.getenv('FORCE_BF16') == '1'):
             return True
         return False
