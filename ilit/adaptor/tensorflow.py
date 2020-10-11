@@ -85,6 +85,8 @@ class TensorFlowAdaptor(Adaptor):
 
         config = tf.compat.v1.ConfigProto() 
         config.use_per_session_threads = 1
+        # config.intra_op_parallelism_threads = 28
+        config.inter_op_parallelism_threads = 1
 
         logger.info("Start to evaluate model via tensorflow...")
 
