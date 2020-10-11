@@ -1,9 +1,18 @@
 from io import open
 from setuptools import find_packages, setup
+import re
+import sys
+
+try:
+    filepath = './ilit/version.py'
+    with open( filepath ) as version_file:
+        __version__ ,= re.findall( '__version__ = "(.*)"', version_file.read() )
+except Exception as error:
+    assert __version__,  "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 setup(
     name="ilit",
-    version="1.0b0",
+    version=__version__,
     author="Intel MLP/MLPC Team",
     author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com, xi2.chen@intel.com",
     description="Repository of Intel® Low Precision Optimization Tool",
