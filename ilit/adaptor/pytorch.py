@@ -330,7 +330,8 @@ class PyTorchAdaptor(Adaptor):
             assert dtype == 'uint8'
             dtype = torch.quint8
 
-        return observer.with_args(qscheme=qscheme, dtype=dtype, reduce_range=self.reduce_range)
+        return observer.with_args(qscheme=qscheme, dtype=dtype,
+                                  reduce_range=(self.reduce_range and scheme == 'asym'))
 
     def _fake_quantize(self, algorithm, scheme, granularity, dtype):
         fake_quant = torch.quantization.FakeQuantize
@@ -378,7 +379,8 @@ class PyTorchAdaptor(Adaptor):
             dtype = torch.quint8
 
         return fake_quant.with_args(observer=observer, quant_min=qmin, quant_max=qmax,
-                                    dtype=dtype, qscheme=qscheme, reduce_range=self.reduce_range)
+                                    dtype=dtype, qscheme=qscheme,
+                                    reduce_range=(self.reduce_range and scheme == 'asym'))
 
     def _propagate_qconfig(self, model, op_qcfgs):
         fallback_ops = []
