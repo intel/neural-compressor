@@ -3,8 +3,8 @@ import sys
 import time
 import logging
 import argparse
-import yaml
 import math
+import yaml
 import numpy as np
 
 from tensorflow.python.client import timeline
@@ -65,12 +65,12 @@ def initialize_graph(model_details, enable_optimize_for_inference):
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             od_graph_def = delete_assign(od_graph_def)
-        
+ 
         # optimize for inference
         if enable_optimize_for_inference:
             # optimize graph for inference
             input_list = [in_name for in_name,
-                            val in model_details['input'].items()]
+                          val in model_details['input'].items()]
             output_list = [
                 out_name for out_name in model_details['output']]
             input_data_type = [tf_v1.convert_to_tensor(item).dtype.as_datatype_enum for item in model_details['input'].values()]
@@ -95,7 +95,7 @@ def create_tf_config():
 
 
 def run_benchmark(model_details, max_reps, num_warmup,
-                  enable_optimize_for_inference,batch_size):
+                  enable_optimize_for_inference, batch_size):
     tf_config = create_tf_config()
     graph = initialize_graph(model_details, enable_optimize_for_inference)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
@@ -139,8 +139,8 @@ def run_benchmark(model_details, max_reps, num_warmup,
         latency = avg_time * 1000
         throughput = 1.0 / avg_time * batch_size * NUM_INSTANCES
 
-        print('Batch size = %d' % batch_size) 
-        print('Latency: %.3f ms' % (latency)) 
+        print('Batch size = %d' % batch_size)
+        print('Latency: %.3f ms' % (latency))
         print('Throughput: %.3f images/sec' % throughput)
 
 def _write_inputs_outputs_to_yaml(yaml_path, inputs, outputs):
@@ -207,11 +207,11 @@ if __name__ == "__main__":
                         help="input a meta file")
     parser.add_argument("--tune", action='store_true', help="Do ilit optimize.")
     parser.add_argument("--benchmark", action='store_true', help="Do ilit optimize.")
-    parser.add_argument("--ilit_config_file", type=str, help="config file path", 
+    parser.add_argument("--yaml", type=str, help="config yaml file of iLiT.",
                         default='./config.yaml')
     parser.add_argument("--topology", type=str, help="topology")
     parser.add_argument("--output_path", help="path of ilit convert model")
-    
+
     args = parser.parse_args()
 
     num_iter = args.num_iter
@@ -248,7 +248,6 @@ if __name__ == "__main__":
         model_detail['output'] = output
         model_detail['ckpt'] = args.is_meta
 
-
     # benchmark with input/output
     elif args.model_name:
         assert args.model_path is not None, "Model path is undefined."
@@ -264,8 +263,9 @@ if __name__ == "__main__":
         if not model_detail:
             logger.error("Model undefined.")
             sys.exit(1)
+
     inputs_shape = []
-    inputs_dtype = []        
+    inputs_dtype = []
     for input_tensor in model_detail['input'].values():
         if not isinstance(input_tensor, bool):
             inputs_shape.append(input_tensor.shape)
@@ -276,36 +276,36 @@ if __name__ == "__main__":
     logger.info("***** Final benchmark input name: {}, shape: {}".format( \
                 model_detail['input'].keys(), inputs_shape))
     logger.info("***** Final benchmark output name: {}".format(model_detail['output']))
-    batch_size=inputs_shape[0][0]
+    batch_size = inputs_shape[0][0]
+
     if args.tune:
-        # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+        # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         import ilit
         from ilit.adaptor.tf_utils.util import write_graph
-        dummy_data_notsupport=['aipg-vdcnn','facenet-20180408-102900']
+        dummy_data_notsupport = ['aipg-vdcnn', 'facenet-20180408-102900']
         inputs = model_detail['input']
         outputs = model_detail['output']
-        _write_inputs_outputs_to_yaml(args.ilit_config_file, list(inputs.keys()), outputs)
+        _write_inputs_outputs_to_yaml(args.yaml, list(inputs.keys()), outputs)
 
-        graph = initialize_graph(model_detail, enable_optimize)
-        tuner = ilit.Tuner(args.ilit_config_file)
+        tuner = ilit.Tuner(args.yaml)
         # generate dummy data
-        dataset = ilit.data.datasets.DATASETS('tensorflow')['dummy'](shape=inputs_shape, 
-                                           low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        data_loader=ilit.data.DataLoader('tensorflow', dataset=dataset, batch_size=batch_size)
-        
+        dataset = tuner.dataset(dataset_type='dummy', shape=inputs_shape,
+                                low=1.0, high=20.0, dtype=inputs_dtype, label=True)
+        data_loader = tuner.dataloader(dataset=dataset, batch_size=batch_size)
+
         if args.model_name and args.model_name in dummy_data_notsupport:
             # do not use ilit dummy dataset for aipg-vdcnn
             self_dataloader = DataLoader(inputs_tensor=model_detail['input'], total_samples=100, batch_size=1)
-            q_model = tuner.tune(graph, q_dataloader=self_dataloader, eval_func=eval_func)
+            q_model = tuner.tune(args.model_path, q_dataloader=self_dataloader, eval_func=eval_func)
             write_graph(q_model.as_graph_def(), args.output_path)
-        
-        else:    
-            q_model = tuner.tune(graph, q_dataloader=data_loader)
+
+        else:
+            q_model = tuner.tune(args.model_path, q_dataloader=data_loader)
             write_graph(q_model.as_graph_def(), args.output_path)
-        
+
         # benchmark generator ilit int8 model
         model_detail['model_dir'] = args.output_path
-        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize,batch_size)
+        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize, batch_size)
 
     else:
-        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize,batch_size)
+        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize, batch_size)
