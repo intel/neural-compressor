@@ -243,9 +243,11 @@ class GraphConverter:
 
         output_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.outputs]
 
-        tf.config.threading.set_inter_op_parallelism_threads(1)
+        config = tf.compat.v1.ConfigProto()
+        # config.use_per_session_threads = 1
+        config.inter_op_parallelism_threads = 1
 
-        sess_graph = tf.compat.v1.Session(graph=graph)
+        sess_graph = tf.compat.v1.Session(graph=graph, config=config)
         quantize_batch = 0
 
         self.logger.info("Sampling data...")
