@@ -378,8 +378,8 @@ class TensorflowTopK(Metric):
 
     def __init__(self, k=1):
         self.k = k
-        self.step = 0
-        self.total_acc = 0
+        self.num_correct = 0
+        self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
  
@@ -387,23 +387,25 @@ class TensorflowTopK(Metric):
 
         labels = labels.reshape([len(labels)])
         with tf.Graph().as_default() as acc_graph:
-          acc = tf.reduce_sum(
-            input_tensor=tf.cast(tf.nn.in_top_k(predictions=tf.constant(preds),
-                                   targets=tf.constant(labels), k=self.k), tf.float32))
-          with tf.compat.v1.Session() as acc_sess:
-            step_acc  = acc_sess.run(acc)
+          topk = tf.nn.in_top_k(predictions=tf.constant(preds, dtype=tf.float32),
+                                targets=tf.constant(labels, dtype=tf.int32), k=self.k)
+          fp32_topk = tf.cast(topk, tf.float32)
+          correct_tensor = tf.reduce_sum(input_tensor=fp32_topk)
 
-        self.step += 1
-        self.total_acc += step_acc
+          with tf.compat.v1.Session() as acc_sess:
+            correct  = acc_sess.run(correct_tensor)
+
+        self.num_sample += len(labels)
+        self.num_correct += correct
 
     def reset(self):
-        self.step = 0
-        self.total_acc = 0
+        self.num_correct = 0
+        self.num_sample = 0
 
     def result(self):
-        if self.step == 0:
-            logger.warning("sample step is 0 can't calculate topk")
+        if self.num_sample == 0:
+            logger.warning("sample num is 0 can't calculate topk")
             return 0
         else:
-            return self.total_acc / self.step
+            return self.num_correct / self.num_sample
 
