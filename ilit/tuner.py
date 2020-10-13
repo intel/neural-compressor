@@ -139,15 +139,16 @@ class Tuner(object):
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_func is None:
             if eval_dataloader is None:
-                if cfg.dataloader is not None:
-                    eval_dataloader_cfg = cfg.dataloader if cfg.evaluation is None \
-                        else update_config(cfg.evaluation.dataloader, cfg.dataloader)
+                eval_dataloader_cfg = cfg.dataloader if cfg.evaluation is None \
+                    else update_config(cfg.evaluation.dataloader, cfg.dataloader)
+
+                if eval_dataloader_cfg is None:
+                    self.eval_func = self._fake_eval_func
+                    self.eval_dataloader = None
+                else:
                     self.eval_dataloader = create_dataloader(cfg.framework.name, \
                                                              eval_dataloader_cfg)
                     self.eval_func = None
-                else:
-                    self.eval_dataloader = None
-                    self.eval_func = self._fake_eval_func
             else:
                 self.eval_dataloader = eval_dataloader
                 self.eval_func = None
