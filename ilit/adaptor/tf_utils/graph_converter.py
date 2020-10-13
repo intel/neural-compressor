@@ -37,7 +37,6 @@ from .transform_graph.freeze_max_min import freeze_requantization_range
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
 from .transform_graph.freeze_max_min import combine_histogram
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
-from .transform_graph.fuse_quantized_mul_and_requantize import FuseQuantizedMulAndRequantize
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bf16_convert import BF16Convert
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format
@@ -56,7 +55,7 @@ from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
-
+from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 
@@ -615,7 +614,6 @@ class GraphConverter:
         self._tmp_graph_def = InsertLoggingTransformer(
             self._tmp_graph_def, target_op_types=["Max"], message="__max:").do_transformation()
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
-
         write_graph(self._tmp_graph_def, self._int8_logged_graph)
         self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
 
@@ -669,7 +667,7 @@ class GraphConverter:
         self._tmp_graph_def = FuseConvRequantizeTransformer(self._tmp_graph_def,
                                                         self.device).do_transformation()
 
-        self._tmp_graph_def = FuseQuantizedMulAndRequantize(
+        self._tmp_graph_def = FuseMatMulRequantizeTransformer(
             self._tmp_graph_def).do_transformation()
         # strip_unused_nodes with optimize_for_inference
         # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def,
