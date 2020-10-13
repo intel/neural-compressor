@@ -38,7 +38,6 @@ from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histog
 from .transform_graph.freeze_max_min import combine_histogram
 from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .transform_graph.bf16_convert import BF16Convert
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format
 from .util import parse_savedmodel_model, get_graph_def
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
@@ -58,6 +57,7 @@ from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransfor
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
+from .graph_rewriter.bf16.bf16_convert import BF16Convert
 
 TF_SUPPORTED_MAX_VERSION = '2.1.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -553,8 +553,8 @@ class GraphConverter:
            FP32 + INT8 mixed precision graph.
         """
         try:
-            BF16Convert(self._tmp_graph_def, self.device, self.outputs, self.fp32_ops,
-                        self.bf16_ops).do_transformation()
+            self._tmp_graph_def = BF16Convert(self._tmp_graph_def, self.fp32_ops, 
+                                              self.bf16_ops).do_transformation()
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')

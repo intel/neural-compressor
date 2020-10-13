@@ -63,6 +63,7 @@ class TestBF16Convert(unittest.TestCase):
         conv2_weight_node.name = "conv2_weights"
         conv2_weight_node.op = "Const"
         conv2_weight_value = np.float32(np.abs(np.random.randn(3,3,3,32)))
+        conv2_weight_node.attr['dtype'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
         conv2_weight_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
             tensor=tensor_util.make_tensor_proto(
         conv2_weight_value, conv2_weight_value.dtype.type, conv2_weight_value.shape)))
@@ -72,13 +73,56 @@ class TestBF16Convert(unittest.TestCase):
         conv2_node.op = "Conv2D"
         conv2_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(
             type=dtypes.float32.as_datatype_enum))
-        conv2_node.input.extend([input_node.name, conv2_weight_node.name])
+        conv2_node.input.extend([relu_node.name, conv2_weight_node.name])
         conv2_node.attr['strides'].CopyFrom(attr_value_pb2.AttrValue(
             list=attr_value_pb2.AttrValue.ListValue(i=[1,2,2,1])))
         conv2_node.attr['dilations'].CopyFrom(attr_value_pb2.AttrValue(
             list=attr_value_pb2.AttrValue.ListValue(i=[1,1,1,1])))
         conv2_node.attr['padding'].CopyFrom(attr_value_pb2.AttrValue(s=b'SAME'))
         conv2_node.attr['data_format'].CopyFrom(attr_value_pb2.AttrValue(s=b'NHWC'))
+
+        bias_node2 = node_def_pb2.NodeDef()
+        bias_node2.name = "conv2_bias"
+        bias_node2.op = "Const"
+        bias_value2 = np.float32(np.abs(np.random.randn(32)))
+        bias_node2.attr['dtype'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+        bias_node2.attr['value'].CopyFrom(attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+            bias_value2, bias_value2.dtype.type, bias_value2.shape)))
+        
+        bias_add_node2 = node_def_pb2.NodeDef()
+        bias_add_node2.name = "conv2_bias_add"
+        bias_add_node2.op = "BiasAdd"
+        bias_add_node2.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+        bias_add_node2.input.extend([conv2_node.name, bias_node2.name])
+        bias_add_node2.attr['data_format'].CopyFrom(attr_value_pb2.AttrValue(s=b'NHWC'))
+        
+        relu_node2 = node_def_pb2.NodeDef()
+        relu_node2.op = "Relu"
+        relu_node2.name = "relu2"
+        relu_node2.input.extend([bias_add_node2.name])
+        
+        conv3_weight_node = node_def_pb2.NodeDef()
+        conv3_weight_node.name = "conv3_weights"
+        conv3_weight_node.op = "Const"
+        conv3_weight_value = np.float32(np.abs(np.random.randn(3,3,3,32)))
+        conv3_weight_node.attr['dtype'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+        conv3_weight_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
+            tensor=tensor_util.make_tensor_proto(
+        conv3_weight_value, conv3_weight_value.dtype.type, conv3_weight_value.shape)))
+        
+        conv3_node = node_def_pb2.NodeDef()
+        conv3_node.name = "conv3"
+        conv3_node.op = "Conv2D"
+        conv3_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(
+            type=dtypes.float32.as_datatype_enum))
+        conv3_node.input.extend([relu_node2.name, conv3_weight_node.name])
+        conv3_node.attr['strides'].CopyFrom(attr_value_pb2.AttrValue(
+            list=attr_value_pb2.AttrValue.ListValue(i=[1,2,2,1])))
+        conv3_node.attr['dilations'].CopyFrom(attr_value_pb2.AttrValue(
+            list=attr_value_pb2.AttrValue.ListValue(i=[1,1,1,1])))
+        conv3_node.attr['padding'].CopyFrom(attr_value_pb2.AttrValue(s=b'SAME'))
+        conv3_node.attr['data_format'].CopyFrom(attr_value_pb2.AttrValue(s=b'NHWC'))
+
         self.test_graph = graph_pb2.GraphDef()
 
         self.test_graph.node.extend([input_node, 
@@ -89,16 +133,25 @@ class TestBF16Convert(unittest.TestCase):
                                      relu_node,
                                      conv2_weight_node, 
                                      conv2_node, 
+                                     bias_node2, 
+                                     bias_add_node2, 
+                                     relu_node2,
+                                     conv3_weight_node, 
+                                     conv3_node, 
                                     ])
 
     def test_do_transform(self):
         self.create_test_graph()
-        bf16_converter = BF16Convert(self.test_graph, [], ["conv1"])
+        bf16_converter = BF16Convert(self.test_graph, ["conv3"], ["conv2"])
         new_graph = bf16_converter.do_transformation()
         new_conv1 = bf16_converter.cur_graph.node_name_details["conv1"].node
+        new_relu2 = bf16_converter.cur_graph.node_name_details["relu2"].node
+        new_conv3 = bf16_converter.cur_graph.node_name_details["conv3"].node
         self.assertEqual(new_conv1.attr["T"].type, dtypes.bfloat16)
+        self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertTrue("input_FP32toBF16" in new_conv1.input)
+        self.assertTrue("relu2_BF16toFP32" in new_conv3.input)
 
 if __name__ == "__main__":
     unittest.main()
-             
+

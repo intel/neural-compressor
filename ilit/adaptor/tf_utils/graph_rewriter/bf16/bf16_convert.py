@@ -168,13 +168,13 @@ class BF16Convert(GraphRewriterBase):
                     if input_name == each_input_node.name:
                         bf16_node.input[index] = cast_input_name
                 self.cur_graph.node_name_details[cast_input_name].outputs.append(bf16_node_name)
-                if len(each_input_detail.output) == 1:
+                if len(each_input_detail.outputs) == 1:
                     self.cur_graph.remove_node(each_input)
                     self.cur_graph.node_name_details[cast_input_name].outputs.pop(each_input)
             elif (each_input not in self.fp32_ops + self.converted_ops and
                     each_input_node.op in BF16Convert.WHITE_LIST + \
                     BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
-                if len(each_input_detail.output) == 1:
+                if len(each_input_detail.outputs) == 1:
                     self._bf16_convert(each_input)
                 # TODO: Consider multi-output case
             elif each_input in self.converted_ops:
