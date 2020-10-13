@@ -126,6 +126,7 @@ def training_func_for_ilit(model):
             # Freeze batch norm mean and variance estimates
             model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
     return
+model.module.fuse_model()
 import ilit
 tuner = ilit.Tuner("./conf.yaml")
 q_model = tuner.tune(model, q_dataloader=None, q_func=training_func_for_ilit, eval_dataloader=val_loader)
