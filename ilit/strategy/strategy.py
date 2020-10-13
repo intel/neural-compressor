@@ -1,18 +1,17 @@
 from abc import abstractmethod
-import copy
+from pathlib import Path
 import os
+import copy
+import pickle
 from collections import OrderedDict
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
-from ..metric import METRICS
-from ..data import TRANSFORMS
-from ..utils.utility import Timeout
+from ..utils.utility import Timeout, fault_tolerant_file, equal_dicts
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils import logger
 from ..utils.create_obj_from_config import update_config
-from pathlib import Path
+from ..version import __version__
 from datetime import datetime
-import pickle
 
 """The tuning strategies supported by ilit, including basic, random, bayesian and mse.
 
@@ -84,15 +83,15 @@ class TuneStrategy(object):
                                                     output = model(input)
                                                     accuracy = metric(output, label)
                                                     return accuracy
-        dicts (dict, optional):                The dict containing resume information.
+        resume(dict, optional):                The dict containing resume information.
                                                Defaults to None.
     """
 
     def __init__(self, model, conf, q_dataloader=None, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+                 eval_dataloader=None, eval_func=None, resume=None):
         self.model = model
         self.cfg = conf.usr_cfg
-        self.snapshot_path = os.path.abspath(os.path.expanduser(self.cfg.snapshot.path))
+        self.snapshot_path = os.path.abspath(os.path.expanduser(self.cfg.tuning.snapshot.path))
 
         logger.debug('Dump user yaml configuration:')
         logger.debug(self.cfg)
@@ -147,10 +146,49 @@ class TuneStrategy(object):
                     new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 
-        self.evaluated_cfgs = []
+        # The tuning history ever made, structured like below:
+        # [
+        #   {
+        #     'version': __version__, 
+        #     'cfg': cfg1,
+        #     'baseline': baseline1,
+        #     'last_tune_result': last_tune_result1,
+        #     'best_tune_result': best_tune_result1,
+        #     'history': [ 
+        #                  # tuning history under same yaml config
+        #                  {'tune_cfg': tune_cfg1, 'tune_result': tune_result1, ...},
+        #                   ...,
+        #                ],
+        #     # new fields added by subclass for resuming
+        #     ...,
+        #   },
+        #   # tuning history under different yaml configs
+        #   ...,
+        # ]
+        self.tuning_history = []
 
-        if dicts is not None:
-            self.__dict__.update(dicts)
+        if resume is not None:
+            self.__dict__.update(resume)
+            for history in self.tuning_history:
+                if self._same_yaml(history['cfg'], self.cfg):
+                    self.__dict__.update({k: v for k, v in history.items() \
+                                          if k not in ['version', 'history']})
+                    logger.info('Starting to resume tuning process...')
+                    break
+
+    def _same_yaml(self, src_yaml, dst_yaml):
+        """Check whether two yamls are same, excluding those keys which does not really
+           impact tuning result, such as tensorboard, snapshot, resume options under tuning
+           section of yaml.
+        """
+        if equal_dicts(src_yaml, dst_yaml, ignore_keys=['tuning']) and \
+           equal_dicts(src_yaml.tuning, src_yaml.tuning, compare_keys=['objective',
+                                                                       'accuracy_criterion',
+                                                                       'random_seed',
+                                                                       'exit_policy']):
+            return True
+        else:
+            return False
 
     @abstractmethod
     def next_tune_cfg(self):
@@ -171,32 +209,35 @@ class TuneStrategy(object):
             if self.baseline is None:
                 logger.info('Getting FP32 model baseline...')
                 self.baseline = self._evaluate(self.model)
+                # record the FP32 baseline
+                self._add_tuning_history()
             logger.info('FP32 baseline is: ' +
                         ('[{:.4f}, {:.4f}]'.format(*self.baseline) if self.baseline else 'None'))
 
             for tune_cfg in self.next_tune_cfg():
-                evaluated = False
-                for cfg in self.evaluated_cfgs:
-                    if tune_cfg == cfg[0]:
-                        self.last_tune_result = cfg[1]
-                        evaluated = True
-                if evaluated:
-                    logger.debug('Tuning config was evaluated, skip!')
+                tuning_history = self._find_tuning_history(tune_cfg)
+                if tuning_history:
+                    self.last_tune_result = tuning_history['last_tune_result']
+                    self.best_tune_result = tuning_history['best_tune_result']
+                    logger.debug('This tuning config was evaluated, skip!')
                     continue
 
                 logger.debug('Dump current tuning configuration:')
                 logger.debug(tune_cfg)
+
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 assert self.last_qmodel
                 self.last_tune_result = self._evaluate(self.last_qmodel, tune_cfg)
 
+                need_stop = self.stop(t)
+
+                # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-                self.evaluated_cfgs.append(
-                    [saved_tune_cfg, saved_last_tune_result])
+                self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
 
-                if self.stop(t):
+                if need_stop:
                     break
 
     def _modelwise_tune_space(self, model, conf):
@@ -301,20 +342,7 @@ class TuneStrategy(object):
         Returns:
             dict: Saved dict for resuming
         """
-        save_dict = {
-            'baseline': self.baseline,
-            'cfg': self.cfg,
-            'last_tune_result': self.last_tune_result,
-            'best_tune_result': self.best_tune_result,
-            'modelwise_tune_space': self.modelwise_tune_space,
-            'opwise_tune_space': self.opwise_tune_space,
-            'modelwise_tune_cfgs': self.modelwise_tune_cfgs,
-            'opwise_tune_cfgs': self.opwise_tune_cfgs,
-            'modelwise_quant_cfgs': self.modelwise_quant_cfgs,
-            'opwise_quant_cfgs': self.opwise_quant_cfgs,
-            'evaluated_cfgs': self.evaluated_cfgs
-        }
-        return save_dict
+        return {'tuning_history': self.tuning_history}
 
     def __setstate__(self, d):
         """Magic method for pickle loading.
@@ -323,21 +351,6 @@ class TuneStrategy(object):
             d (dict): The dict to load.
         """
         self.__dict__.update(d)
-
-    def _save(self, file_name=None):
-        """save current tuning state to snapshot for resuming.
-        """
-        path = Path(self.snapshot_path)
-        path.mkdir(exist_ok=True, parents=True)
-
-        if file_name is not None:
-            fname = self.snapshot_path + '/ilit-' + file_name + '.snapshot'
-        else:
-            fname = self.snapshot_path + '/ilit-' + datetime.today().strftime(
-                '%Y-%m-%d-%H-%M-%S') + '.snapshot'
-        with open(fname, 'wb') as f:
-            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
-            logger.info("Save snapshot to {}".format(os.path.abspath(fname)))
 
     def stop(self, timeout):
         """Check if need to stop traversing the tuning space, either accuracy goal is met
@@ -375,3 +388,69 @@ class TuneStrategy(object):
             need_stop = False
 
         return need_stop
+
+    def _save(self, snapshot_path):
+        """save current tuning state to snapshot for resuming.
+
+        """
+        snapshot_path = os.path.abspath(os.path.expanduser(snapshot_path))
+        path = Path(snapshot_path)
+        path.mkdir(exist_ok=True, parents=True)
+
+        fname = snapshot_path + '/tuning_history.snapshot'
+
+        logger.info('save to ' + fname)
+        with fault_tolerant_file(fname) as f:
+            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def _find_tuning_history(self, tune_cfg):
+        """check if the specified tune_cfg is evaluated or not on same yaml config.
+
+        Args:
+            tune_cfg (dict): The tune_cfg to check if evaluated before.
+
+        Returns:
+            tuning_history or None: The tuning history containing evaluated tune_cfg.
+        """
+        for tuning_history in self.tuning_history:
+            # only check if a tune_cfg is evaluated under same yam config, excluding
+            # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
+            if self._same_yaml(tuning_history['cfg'], self.cfg):
+                for history in tuning_history['history']:
+                    if history and history['tune_cfg'] == tune_cfg:
+                        return tuning_history
+
+        return None
+
+    def _add_tuning_history(self, tune_cfg=None, tune_result=None, **kwargs):
+        """add tuning history.
+           note this record is added under same yaml config.
+
+        """
+        found = False
+        for tuning_history in self.tuning_history:
+            if self._same_yaml(tuning_history['cfg'], self.cfg):
+                tuning_history['history'].append({'tune_cfg': tune_cfg, \
+                                                  'tune_result': tune_result}.update(kwargs))
+                tuning_history['last_tune_result'] = self.last_tune_result
+                tuning_history['best_tune_result'] = self.best_tune_result
+                tuning_history['cfg'] = self.cfg
+                found = True
+                break
+            
+        if not found:
+            tuning_history = {}
+            tuning_history['version']  = __version__
+            tuning_history['cfg']     = self.cfg
+            tuning_history['baseline'] = self.baseline
+            tuning_history['last_tune_result'] = self.last_tune_result
+            tuning_history['best_tune_result'] = self.best_tune_result
+            tuning_history['history']  = []
+            if tune_cfg and tune_result:
+                tuning_history['history'].append({'tune_cfg': tune_cfg, \
+                                                  'tune_result': tune_result}.update(kwargs))
+            self.tuning_history.append(tuning_history)
+
+        snapshot_path = self.cfg.tuning.snapshot.path
+        self._save(snapshot_path)
+

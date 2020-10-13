@@ -62,25 +62,18 @@ class TpeTuneStrategy(TuneStrategy):
     """
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
-        super(
-            TpeTuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts)
-        assert self.cfg.quantization.approach == 'post_training_static_quant', "TPE strategy is only for post training static quantization!"
+        assert conf.usr_cfg.quantization.approach == 'post_training_static_quant', \
+               "TPE strategy is only for post training static quantization!"
         self.hpopt_search_space = None
         self.warm_start = False
         self.hpopt_trials = Trials()
-        self.max_trials = self.cfg.tuning.get('max_trials', 200)
+        self.max_trials = conf.usr_cfg.tuning.get('max_trials', 200)
         self.loss_function_config = {
-            'acc_th': self.objective.acc_goal if self.objective.relative else 0.01,
-            'acc_weight': self.cfg.tuning.strategy.get('accuracy_weight', 1.0),
-            'lat_weight': self.cfg.tuning.strategy.get('latency_weight', 1.0)
+            'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
+                      conf.usr_cfg.tuning.accuracy_criterion and \
+                      conf.usr_cfg.tuning.accuracy_criterion.relative else 0.01,
+            'acc_weight': conf.usr_cfg.tuning.strategy.get('accuracy_weight', 1.0),
+            'lat_weight': conf.usr_cfg.tuning.strategy.get('latency_weight', 1.0)
         }
         self.tpe_params = {
             'n_initial_point': 10,
@@ -94,8 +87,17 @@ class TpeTuneStrategy(TuneStrategy):
             'best_lat_diff': 0.0
         }
         self._algo = None
-        if dicts is not None:
-            self.__dict__.update(dicts)
+
+        super(
+            TpeTuneStrategy,
+            self).__init__(
+            model,
+            conf,
+            q_dataloader,
+            q_func,
+            eval_dataloader,
+            eval_func,
+            dicts)
 
     def __getstate__(self):
         """Magic method for pickle saving.
@@ -103,23 +105,13 @@ class TpeTuneStrategy(TuneStrategy):
         Returns:
             dict: Saved dict for resuming
         """
-        save_dict = {
-            'baseline': self.baseline,
-            'cfg_tmp': self.cfg,
-            'last_tune_result': self.last_tune_result,
-            'best_tune_result': self.best_tune_result,
-            'modelwise_tune_space': self.modelwise_tune_space,
-            'opwise_tune_space': self.opwise_tune_space,
-            'modelwise_tune_cfgs': self.modelwise_tune_cfgs,
-            'opwise_tune_cfgs': self.opwise_tune_cfgs,
-            'modelwise_quant_cfgs': self.modelwise_quant_cfgs,
-            'opwise_quant_cfgs': self.opwise_quant_cfgs,
-            'evaluated_cfgs': self.evaluated_cfgs,
-            'warm_start': True,
-            'hpopt_trials': self.hpopt_trials,
-            'loss_function_config': self.loss_function_config,
-            'tpe_params': self.tpe_params
-            }
+        for history in self.tuning_history:
+            if self._same_yaml(history['cfg'], self.cfg):
+                history['warm_start'] = True
+                history['hpopt_trials'] = self.hpopt_trials
+                history['loss_function_config'] = self.loss_function_config
+                history['tpe_params'] = self.tpe_params
+        save_dict = super(TpeTuneStrategy, self).__getstate__()
         return save_dict
 
     def _configure_hpopt_search_space_and_params(self, search_space):
@@ -143,13 +135,12 @@ class TpeTuneStrategy(TuneStrategy):
         """
         logger.info('Start tpe strategy')
         # prepare log file
-        tmp_path = self.cfg.get('snapshot', './')
-        if tmp_path is not './':
-            tmp_path = tmp_path.path
+        tmp_path = self.cfg.tuning.snapshot.get('path', './')
         Path(os.path.expanduser(tmp_path)).mkdir(parents=True, exist_ok=True)
-        trials_file = os.path.join(tmp_path, 'tpe_trials.csv')
-        best_result_file = os.path.join(tmp_path, 'tpe_best_result.csv')
-        print('trials_file: {}'.format(trials_file))
+        trials_file = os.path.join(os.path.expanduser(tmp_path), 'tpe_trials.csv')
+        best_result_file = os.path.join(os.path.expanduser(tmp_path), 'tpe_best_result.csv')
+        logger.info('trials_file: {} '.format(trials_file) + \
+                    'best_result_file:{}'.format(best_result_file))
         if Path(trials_file).exists():
             os.remove(trials_file)
         self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
@@ -159,6 +150,7 @@ class TpeTuneStrategy(TuneStrategy):
             if self.baseline is None:
                 logger.info('Getting FP32 model baseline...')
                 self.baseline = self._evaluate(self.model)
+                self._add_tuning_history()
             logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline)
                                                 if self.baseline else 'None'))
             if not self.objective.relative:
@@ -167,7 +159,8 @@ class TpeTuneStrategy(TuneStrategy):
             # prepare loss function scaling
             self._calculate_loss_function_scaling_components(0.01, 2, self.loss_function_config)
             # start trials
-            while not self.stop(t, trials_count):
+            exit = False
+            while not exit:
                 logger.info('Trial iteration start: {} / {}'.format(trials_count, self.max_trials))
                 fmin(partial(self.object_evaluation, model=self.model),
                     space=self.hpopt_search_space,
@@ -179,33 +172,36 @@ class TpeTuneStrategy(TuneStrategy):
                 if pd is not None:
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
-                self._save('tpe')
+                self._save(tmp_path)
+                if self.stop(t, trials_count):
+                    exit = True
 
     def object_evaluation(self, tune_cfg, model):
+        # check if config was alredy evaluated
         op_cfgs = {}
         op_cfgs['calib_iteration'] = int(self.calib_iter[0])
         op_cfgs['op'] = {}
         for param, configs in tune_cfg.items():
             op_cfgs['op'][(param)] = configs
-        # check if config was alredy evaluated
-        for cfg in self.evaluated_cfgs:
-            if op_cfgs == cfg[0]:
-                self.last_tune_result = cfg[1]
-                self.last_qmodel = None
-                logger.info('Parameters already evaluated')
-                return cfg[2]
+        tuning_history = self._find_tuning_history(op_cfgs)
+        if tuning_history:
+            self.last_tune_result = tuning_history['last_tune_result']
+            self.best_tune_result = tuning_history['best_tune_result']
+            self.last_qmodel = None
+            logger.debug('This tuning config was evaluated!')
+            return tuning_history['result']
 
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
         self.last_tune_result = self._evaluate(self.last_qmodel)
         logger.info('last_tune_result: {}'.format(self.last_tune_result))
+
         saved_tune_cfg = copy.deepcopy(op_cfgs)
         saved_last_tune_result = copy.deepcopy(self.last_tune_result)
 
         # prepare result
         result = self._compute_metrics(tune_cfg)
-        result['params'] = tune_cfg
         result['status'] = STATUS_OK
-        self.evaluated_cfgs.append([saved_tune_cfg, saved_last_tune_result, result])
+        self._add_tuning_history(saved_tune_cfg, saved_last_tune_result, result=result)
         logger.info('Current iteration loss: {} acc_loss: {} lat_diff: {} quantization_ratio: {}'
                     .format(result['loss'],
                             result['acc_loss'],

@@ -275,8 +275,9 @@ class TestConf(unittest.TestCase):
         test = '''
         framework:
           - name: mxnet
-        snapshot:
-          -path: /path/to/snapshot
+        tuning:
+          - snapshot: 
+              -path: /path/to/snapshot
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')

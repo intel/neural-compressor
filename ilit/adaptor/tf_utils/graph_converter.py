@@ -280,7 +280,7 @@ class GraphConverter:
             raise ValueError(e)
         finally:
             if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
-                self.logger.warn(
+                self.logger.warning(
                     str('Please note the {} version of Intel® Optimizations for'
                         ' TensorFlow is not fully verified!'
                         ' Suggest to use the versions'
@@ -629,7 +629,7 @@ class GraphConverter:
 
             output_data.append(''.join(input_data[semicolon_index[-1]:]).strip() + '\n')
         else:
-            self.logger.warn("No quantizable op, will return FP32 graph!")
+            self.logger.warning("No quantizable op, will return FP32 graph!")
 
     def _generate_calibration_data(self, graph, output_data, enable_kl_algo=False):
         with OutputGrabber(sys.stderr, True) as out:

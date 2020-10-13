@@ -36,7 +36,7 @@ class Tuner(object):
         self.conf = Conf(conf_fname)
 
     def tune(self, model, q_dataloader=None, q_func=None,
-             eval_dataloader=None, eval_func=None, resume_file=None):
+             eval_dataloader=None, eval_func=None):
         """The main entry point of automatic quantization tuning.
 
            This interface works on all the DL frameworks that ilit supports
@@ -125,17 +125,16 @@ class Tuner(object):
                                                         output = model(input)
                                                         accuracy = metric(output, label)
                                                         return accuracy
-            resume_file (string, optional):        The path to the resume snapshot file.
-                                                   The resume snapshot file is saved when user
-                                                   press ctrl+c to interrupt tuning process.
 
         Returns:
             quantized model: best qanitized model found, otherwise return None
 
         """
         cfg = self.conf.usr_cfg
-        self.snapshot_path = os.path.abspath(os.path.expanduser(cfg.snapshot.path))
-         
+        self.snapshot_path = os.path.abspath(os.path.expanduser(cfg.tuning.snapshot.path))
+        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.resume.path)) \
+                           if cfg.tuning.resume and cfg.tuning.resume.path else None
+
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_func is None:
             if eval_dataloader is None:
@@ -175,16 +174,14 @@ class Tuner(object):
         strategy = cfg.tuning.strategy.name.lower()
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
-        dicts = None
+        _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        if resume_file:
-            resume_file = os.path.abspath(resume_file)
-            assert os.path.exists(
-                resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
-            with open(resume_file, 'rb') as f:
-                resume_strategy = pickle.load(f)
-                dicts = resume_strategy.__dict__
+        if self.resume_file:
+            assert os.path.exists(self.resume_file), \
+                "The specified resume file {} doesn't exist!".format(self.resume_file)
+            with open(self.resume_file, 'rb') as f:
+                _resume = pickle.load(f).__dict__
 
         self.strategy = STRATEGIES[strategy](
             model,
@@ -193,20 +190,18 @@ class Tuner(object):
             self.q_func,
             self.eval_dataloader,
             self.eval_func,
-            dicts)
-        try:
-            self.strategy.traverse()
-        except KeyboardInterrupt:
-            self._save()
+            _resume)
+
+        self.strategy.traverse()
 
         if self.strategy.best_qmodel:
             logger.info(
-                "Specified timeout is reached! Found a quantized model which meet accuracy goal. \
-                    Exit...")
+                "Specified timeout is reached! Found a quantized model which meet accuracy goal."
+                "Exit...")
         else:
             logger.info(
-                "Specified timeout is reached! Not found any quantized model which meet accuracy \
-                    goal. Exit...")
+                "Specified timeout is reached! Not found any quantized model which meet accuracy"
+                " goal. Exit...")
 
         return self.strategy.best_qmodel
 
@@ -226,14 +221,3 @@ class Tuner(object):
     def _fake_eval_func(self, model):
         return 1.
 
-    def _save(self):
-        """save current tuning state to snapshot for resuming.
-        """
-        path = Path(self.snapshot_path)
-        path.mkdir(exist_ok=True, parents=True)
-
-        fname = self.snapshot_path + '/ilit-' + datetime.today().strftime(
-            '%Y-%m-%d-%H-%M-%S') + '.snapshot'
-        with open(fname, 'wb') as f:
-            pickle.dump(self.strategy, f, protocol=pickle.HIGHEST_PROTOCOL)
-            logger.info("\nSave snapshot to {}".format(fname))

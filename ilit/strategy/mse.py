@@ -57,6 +57,7 @@ class MSETuneStrategy(TuneStrategy):
 
     def __init__(self, model, conf, dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
+        self.ordered_ops = None
         super(
             MSETuneStrategy,
             self).__init__(
@@ -67,11 +68,12 @@ class MSETuneStrategy(TuneStrategy):
             eval_dataloader,
             eval_func,
             dicts)
-        self.ordered_ops = None
 
     def __getstate__(self):
+        for history in self.tuning_history:
+            if self._same_yaml(history['cfg'], self.cfg):
+                history['ordered_ops'] = self.ordered_ops
         save_dict = super(MSETuneStrategy, self).__getstate__()
-        save_dict['ordered_ops'] = self.ordered_ops
         return save_dict
 
     def mse_metric_gap(self, fp32_tensor, dequantize_tensor):

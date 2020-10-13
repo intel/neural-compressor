@@ -11,8 +11,9 @@ import os.path as osp
 import inspect
 import time
 import sys
-from collections import OrderedDict
 import numpy as np
+from contextlib import contextmanager
+from tempfile import NamedTemporaryFile
 
 def print_info():
     print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
@@ -130,3 +131,29 @@ def compute_sparsity(tensor, eps = 1e-10):
     dense_mask = tensor != 0
     dense_size = dense_mask.sum()
     return tensor_size, tensor_size - dense_size, dense_size
+
+@contextmanager
+def fault_tolerant_file(name):
+    dirpath, filename = osp.split(name)
+    with NamedTemporaryFile(dir=os.path.abspath(os.path.expanduser(dirpath)), \
+                            delete=False, suffix='.tmp') as f:
+        yield f
+        f.flush()
+        os.fsync(f)
+        f.close()
+        os.replace(f.name, name)
+
+def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
+    """Check whether two dicts are same except for those ignored keys.
+    """
+    assert not (compare_keys and ignore_keys)
+    if compare_keys == None and ignore_keys == None:
+        return d1 == d2
+    elif compare_keys == None and ignore_keys != None:
+        return {k: v for k,v in d1.items() if k not in ignore_keys} == \
+               {k: v for k,v in d2.items() if k not in ignore_keys}
+    elif compare_keys != None and ignore_keys == None:
+        return {k: v for k,v in d1.items() if k in compare_keys} == \
+            {k: v for k,v in d2.items() if k in compare_keys}
+    else:
+        assert False

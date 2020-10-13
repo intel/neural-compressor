@@ -16,10 +16,12 @@ def build_fake_yaml():
         tuning:
             strategy:
                name: tpe
+            metric:
+              - topk: 1
             accuracy_criterion:
               - relative: 0.01
-        snapshot:
-          - path: saved
+            snapshot:
+              - path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
@@ -36,11 +38,13 @@ def build_fake_yaml2():
         tuning:
             strategy:
                 name: tpe
+            metric:
+              - topk: 1
             max_trials: 5
             accuracy_criterion:
               - relative: -0.01
-        snapshot:
-          - path: saved
+            snapshot:
+              - path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
@@ -78,16 +82,6 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-def build_dataloader():
-    from ilit.data import DataLoader
-    from ilit.data import DATASETS
-    dataset = DATASETS('tensorflow')['dummy']
-    dataloader = DataLoader('tensorflow', dataset)
-    return dataloader
-
-def accuracy_check(self, input_graph=None):
-    return 100
-
 class TestTuner(unittest.TestCase):
 
     @classmethod
@@ -95,13 +89,12 @@ class TestTuner(unittest.TestCase):
         self.constant_graph = build_fake_model()
         build_fake_yaml()
         build_fake_yaml2()
-        self.dataloader = build_dataloader()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
-        os.remove('saved/ilit-tpe.snapshot')
+        os.remove('saved/tuning_history.snapshot')
         os.remove('saved/tpe_best_result.csv')
         os.remove('saved/tpe_trials.csv')
         os.rmdir('saved')
@@ -111,11 +104,12 @@ class TestTuner(unittest.TestCase):
         from ilit import tuner as iLit
 
         at = iLit.Tuner('fake_yaml.yaml')
+        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = at.dataloader(dataset)
         at.tune(
             self.constant_graph,
-            q_dataloader=self.dataloader,
-            eval_dataloader=self.dataloader,
-            eval_func=accuracy_check
+            q_dataloader=dataloader,
+            eval_dataloader=dataloader
         )
 
     def test_run_tpe_max_trials(self):
@@ -123,11 +117,12 @@ class TestTuner(unittest.TestCase):
         from ilit import tuner as iLit
 
         at = iLit.Tuner('fake_yaml2.yaml')
+        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = at.dataloader(dataset)
         at.tune(
             self.constant_graph,
-            q_dataloader=self.dataloader,
-            eval_dataloader=self.dataloader,
-            eval_func=accuracy_check
+            q_dataloader=dataloader,
+            eval_dataloader=dataloader
         )
 
     def test_loss_calculation(self):
@@ -135,7 +130,9 @@ class TestTuner(unittest.TestCase):
         from ilit import tuner as iLit
 
         at = iLit.Tuner('fake_yaml.yaml')
-        testObject = TpeTuneStrategy(self.constant_graph, at.conf, self.dataloader)
+        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = at.dataloader(dataset)
+        testObject = TpeTuneStrategy(self.constant_graph, at.conf, dataloader)
         testObject._calculate_loss_function_scaling_components(0.01, 2, testObject.loss_function_config)
         # check if latency difference between min and max corresponds to 10 points of loss function
         tmp_val = testObject.calculate_loss(0.01, 2, testObject.loss_function_config)

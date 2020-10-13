@@ -10,8 +10,6 @@ framework:
   name: tensorflow
   outputs:
   - output
-snapshot:
-  path: /tmp/snapshot
 tuning:
   accuracy_criterion:
     relative: 0.01

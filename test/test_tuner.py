@@ -5,7 +5,8 @@ import os
 import yaml
 import tensorflow as tf
 import importlib
-
+import shutil
+     
 def build_fake_yaml():
     fake_yaml = '''
         framework:
@@ -16,10 +17,12 @@ def build_fake_yaml():
         tuning:
             strategy:
                 name: fake
+            metric:
+              - topk: 1
             accuracy_criterion:
-              - relative: 0.01
-        snapshot:
-          - path: saved
+              - relative: 0.01        
+            snapshot:
+              - path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
@@ -34,12 +37,16 @@ def build_fake_yaml2():
             outputs: op_to_store
         device: cpu
         tuning:
-            strategy:
-                name: test
+          - strategy:
+                name: fake
+            metric:
+              - topk: 1
             accuracy_criterion:
               - relative: 0.01
-        snapshot:
-          - path: saved
+            resume:
+              - path: ./saved/tuning_history.snapshot
+            snapshot:
+              - path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
@@ -82,96 +89,110 @@ def build_fake_strategy_1():
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
+            "from collections import OrderedDict\n",
+            "import copy\n",
             "@strategy_registry\n",
             "class FakeTuneStrategy(TuneStrategy):\n",
             "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):\n",
+            "    self.id = 0\n",
             "    super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",
             "  def __getstate__(self):\n",
+            "    for history in self.tuning_history:\n",
+            "      if self._same_yaml(history['cfg'], self.cfg):\n",
+            "        history['id'] = self.id\n",
             "    save_dict = super(FakeTuneStrategy, self).__getstate__()\n",
-            "    save_dict['id'] = self.id\n",
             "    return save_dict\n",
-            "  def traverse(self):\n",
-            "    gen = (x for x in range(5))\n",
-            "    while True:\n",
-            "      self.id = next(gen)\n"
-            "      if self.id == 2:\n",
-            "        raise KeyboardInterrupt\n"
+            "  def next_tune_cfg(self):\n",
+            "    op_cfgs = {}\n",
+            "    for iterations in self.calib_iter:\n",
+            "        op_cfgs['calib_iteration'] = int(iterations)\n",
+            "        op_cfgs['op'] = OrderedDict()\n",
+            "        for op in self.opwise_quant_cfgs:\n",
+            "            op_cfgs['op'][op] = copy.deepcopy(\n",
+            "                                    self.opwise_tune_cfgs[op][0])\n",
+            "        self.id += 1\n",
+            "        yield op_cfgs\n",
+            "        return\n"
         ]
         f.writelines(seq)
     f.close()
 
 def build_fake_strategy_2():
-    with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/test.py'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake2.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
+            "from collections import OrderedDict\n",
+            "import copy\n",
             "@strategy_registry\n",
-            "class TestTuneStrategy(TuneStrategy):\n",
+            "class FakeTuneStrategy(TuneStrategy):\n",
             "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):\n",
-            "    super(TestTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",
-            "  def traverse(self):\n",
-            "    assert self.id == 2\n"
+            "    self.id = 0\n",
+            "    super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",
+            "  def __getstate__(self):\n",
+            "    for history in self.tuning_history:\n",
+            "      if self._same_yaml(history['cfg'], self.cfg):\n",
+            "        history['id'] = self.id\n",
+            "    save_dict = super(FakeTuneStrategy, self).__getstate__()\n",
+            "    return save_dict\n",
+            "  def next_tune_cfg(self):\n",
+            "    print(self.id)\n",
+            "    assert self.id == 1\n",
+            "    op_cfgs = {}\n",
+            "    for iterations in self.calib_iter:\n",
+            "        op_cfgs['calib_iteration'] = int(iterations)\n",
+            "        op_cfgs['op'] = OrderedDict()\n",
+            "        for op in self.opwise_quant_cfgs:\n",
+            "            op_cfgs['op'][op] = copy.deepcopy(\n",
+            "                                    self.opwise_tune_cfgs[op][0])\n",
+            "        yield op_cfgs\n",
+            "        return\n" 
         ]
         f.writelines(seq)
     f.close()
-
-def build_dataloader():
-    from ilit.data import DataLoader
-    from ilit.data import DATASETS
-    dataset = DATASETS('tensorflow')['dummy']
-    dataloader = DataLoader('tensorflow', dataset)
-    return dataloader
 
 class TestTuner(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
-        build_fake_strategy_1()
-        build_fake_strategy_2()
         build_fake_yaml()
         build_fake_yaml2()
-        self.dataloader = build_dataloader()
 
     @classmethod
     def tearDownClass(self):
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/test.py'))
         os.remove('fake_yaml.yaml')
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
-        os.remove('fake_yaml2.yaml')
-        os.rmdir('saved')
+        os.remove('fake_yaml2.yaml')    
+        shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from ilit.strategy import strategy
+        build_fake_strategy_1()
+        from ilit.adaptor import adaptor
         from ilit import tuner as iLit
 
         at = iLit.Tuner('fake_yaml.yaml')
+        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = at.dataloader(dataset)
         at.tune(
             self.constant_graph,
-            q_dataloader=self.dataloader,
-            eval_dataloader=self.dataloader
+            q_dataloader=dataloader,
+            eval_dataloader=dataloader
         )
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
 
     def test_resume(self):
+        build_fake_strategy_2()
         from ilit.strategy import strategy
         from ilit import tuner as iLit
         at = iLit.Tuner('fake_yaml2.yaml')
-        snapshot_path = at.conf.usr_cfg.snapshot.path
-        files = os.listdir(snapshot_path)
-        record = 0
-        for file in files:
-            if file.endswith('.snapshot'):
-                record += 1
-                path = os.path.join(snapshot_path, file)
-                at.tune(
-                    self.constant_graph,
-                    q_dataloader=self.dataloader,
-                    eval_dataloader=self.dataloader,
-                    resume_file = path
-                    )
-                os.remove(os.path.join(snapshot_path, file))
-        self.assertGreater(record, 0)
-
+        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = at.dataloader(dataset)
+        q_model = at.tune(
+                      self.constant_graph,
+                      q_dataloader=dataloader,
+                      eval_dataloader=dataloader
+                      )
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake2.py'))
 
 if __name__ == "__main__":
     unittest.main()

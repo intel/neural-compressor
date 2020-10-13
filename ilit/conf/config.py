@@ -294,6 +294,12 @@ schema = Schema({
             str: ops_schema
         },
         Optional('max_trials', default=200): int,
+        Optional('resume', default={'path': None}): {
+            Optional('path', default=None): str
+        },
+        Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
+            Optional('path', default='~/.ilit/snapshot/'): str
+        },
     },
     Optional('postprocess'): {
         Optional('transform'): postprocess_schema
@@ -312,9 +318,6 @@ schema = Schema({
         }
     },
     Optional('dataloader', default=None): dataloader_schema,
-    Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
-        Optional('path', default='~/.ilit/snapshot/'): str
-    },
     Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),
     Optional('pruning'):
      {

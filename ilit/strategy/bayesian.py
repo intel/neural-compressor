@@ -56,6 +56,7 @@ class BayesianTuneStrategy(TuneStrategy):
 
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
+        self.bayes_opt = None
         super(
             BayesianTuneStrategy,
             self).__init__(
@@ -65,12 +66,13 @@ class BayesianTuneStrategy(TuneStrategy):
             q_func,
             eval_dataloader,
             eval_func,
-            dicts=None)
-        self.bayes_opt = None
+            dicts)
 
     def __getstate__(self):
+        for history in self.tuning_history:
+            if self._same_yaml(history['cfg'], self.cfg):
+                history['bayes_opt'] = self.bayes_opt
         save_dict = super(BayesianTuneStrategy, self).__getstate__()
-        save_dict['bayes_opt'] = self.bayes_opt
         return save_dict
 
     def params_to_tune_configs(self, params):

@@ -17,7 +17,7 @@ Intel® Low Precision Optimization Tool is an open source python library to help
 
    ```
    def tune(self, model, q_dataloader, q_func=None,
-            eval_dataloader=None, eval_func=None, resume_file=None)
+            eval_dataloader=None, eval_func=None)
    ```
 
    The tuning config and model-specific information are controlled by user config yaml file. As for the format of yaml file, please refer to [template.yaml](../examples/template.yaml)
