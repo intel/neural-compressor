@@ -1,3 +1,4 @@
+import os
 import unittest
 import tensorflow as tf
 import numpy as np
@@ -9,6 +10,31 @@ from tensorflow.python.framework import dtypes
 from ilit.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
 
 class TestBF16Convert(unittest.TestCase):
+    rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
+    pb_path = '/tmp/resnet50_fp32_pretrained_model.pb'
+
+    @classmethod
+    def setUpClass(self):
+        os.system('wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+        self.input_graph = tf.compat.v1.GraphDef()
+        with open(self.pb_path, "rb") as f:
+            self.input_graph.ParseFromString(f.read())
+
+    @classmethod
+    def tearDownClass(self):
+        os.system(
+            'rm -rf {}'.format(self.pb_path))
+
+    def test_rn50_convert(self):
+        bf16_nodes = [node.name for node in self.input_graph.node if node.op in ["Conv2D", "AvgPool", "MatMul"]]
+        bf16_nodes.remove("v0/resnet_v13/conv14/conv2d/Conv2D")
+        rn50_bf16_converter = BF16Convert(self.input_graph, ["v0/resnet_v13/conv14/conv2d/Conv2D"], bf16_nodes)
+        rn50_bf16_converter.do_transformation()
+        new_conv11 = rn50_bf16_converter.cur_graph.node_name_details["v0/resnet_v13/conv11/conv2d/Conv2D"].node
+        new_conv14 = rn50_bf16_converter.cur_graph.node_name_details["v0/resnet_v13/conv14/conv2d/Conv2D"].node
+        new_conv52 = rn50_bf16_converter.cur_graph.node_name_details["v0/resnet_v115/conv52/conv2d/Conv2D"].node
+        self.assertEqual(new_conv11.attr["T"].type, new_conv52.attr["T"].type)
+        self.assertNotEqual(new_conv11.attr["T"].type, new_conv14.attr["T"].type)
 
     def create_test_graph(self):
         input_node = node_def_pb2.NodeDef()

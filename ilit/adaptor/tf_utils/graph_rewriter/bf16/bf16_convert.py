@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 
 import logging
+import copy
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
@@ -170,7 +171,7 @@ class BF16Convert(GraphRewriterBase):
                 self.cur_graph.node_name_details[cast_input_name].outputs.append(bf16_node_name)
                 if len(each_input_detail.outputs) == 1:
                     self.cur_graph.remove_node(each_input)
-                    self.cur_graph.node_name_details[cast_input_name].outputs.pop(each_input)
+                    self.cur_graph.node_name_details[cast_input_name].outputs.remove(each_input)
             elif (each_input not in self.fp32_ops + self.converted_ops and
                     each_input_node.op in BF16Convert.WHITE_LIST + \
                     BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
@@ -199,7 +200,7 @@ class BF16Convert(GraphRewriterBase):
         # TODO: Need consider different op type
         Helper.set_attr_dtype(bf16_node, "T", dtypes.bfloat16)
 
-        bf16_node_outputs = bf16_node_detail.outputs
+        bf16_node_outputs = copy.deepcopy(bf16_node_detail.outputs)
         for each_output in bf16_node_outputs:
             each_output_detail = self.cur_graph.node_name_details[each_output]
             each_output_node = each_output_detail.node
@@ -213,8 +214,9 @@ class BF16Convert(GraphRewriterBase):
                     for index, input_name in enumerate(cast_output_node.input):
                         if each_output == input_name:
                             cast_output_node.input[index] = bf16_node.name
-                bf16_node_detail.outputs = each_output_detail.outputs
-                self.cur_graph.remove_node(each_input)
+                bf16_node_detail.outputs.remove(each_output)
+                bf16_node_detail.outputs.extend(each_output_detail.outputs)
+                self.cur_graph.remove_node(each_output)
             elif (each_output not in self.fp32_ops + self.converted_ops and
                     each_output_node.op in BF16Convert.WHITE_LIST + \
                     BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
