@@ -35,6 +35,7 @@ class Benchmark(object):
         framework = cfg.framework.name.lower()
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
+        iteration = -1 if cfg.benchmark is None else cfg.benchmark.iteration
         if b_dataloader is None:
             assert cfg.dataloader is not None, 'dataloader field of yaml file is missing'
 
@@ -49,12 +50,14 @@ class Benchmark(object):
                                       b_dataloader, \
                                       adaptor, \
                                       cfg.tuning.metric, \
-                                      b_postprocess_cfg)
+                                      b_postprocess_cfg,
+                                      iteration=iteration)
         else:
             b_func = create_eval_func(cfg.framework.name, \
                                       b_dataloader, \
                                       adaptor, \
-                                      cfg.tuning.metric)
+                                      cfg.tuning.metric,
+                                      iteration=iteration)
 
         objective = cfg.tuning.objective.lower()
         self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion, \

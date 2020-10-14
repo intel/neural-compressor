@@ -51,8 +51,8 @@ class TensorFlowAdaptor(Adaptor):
                 name = 'import/' + name
         raise ValueError('can not find tensor by name')
 
-    def evaluate(self, input_graph, dataloader, \
-                 postprocess=None, metric=None, measurer=None):
+    def evaluate(self, input_graph, dataloader, postprocess=None, \
+                 metric=None, measurer=None, iteration=-1):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
@@ -91,7 +91,8 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("Start to evaluate model via tensorflow...")
 
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        for images, labels in dataloader:
+
+        for idx, (images, labels) in enumerate(dataloader):
             if measurer is not None:
                 measurer.start()
                 predictions = sess_graph.run(output_tensor, {input_tensor: images})
@@ -102,6 +103,8 @@ class TensorFlowAdaptor(Adaptor):
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
                 metric.update(predictions[0], labels)
+            if idx + 1 == iteration:
+                break
         acc = metric.result() if metric is not None else 0
         sess_graph.close()
         return acc

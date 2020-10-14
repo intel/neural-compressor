@@ -274,6 +274,7 @@ schema = Schema({
         }
     },
     Optional('benchmark'): {
+        Optional('iteration', default=-1): int,
         Optional('dataloader'): dataloader_schema,
         Optional('postprocess'): {
             Optional('transform'): postprocess_schema

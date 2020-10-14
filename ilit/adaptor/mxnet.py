@@ -160,8 +160,8 @@ class MxNetAdaptor(Adaptor):
         """
         raise NotImplementedError
 
-    def evaluate(self, model, dataloader, \
-                 postprocess=None, metric=None, measurer=None):
+    def evaluate(self, model, dataloader, postprocess=None, \
+                 metric=None, measurer=None, iteration=-1):
         """The function is used to run evaluation on validation dataset.
 
         Args:
@@ -174,15 +174,15 @@ class MxNetAdaptor(Adaptor):
             acc: evaluate result.
         """
         if isinstance(model, mx.gluon.HybridBlock):
-            acc = self._mxnet_gluon_forward(model, dataloader, \
-                                            postprocess, metric, measurer)
+            acc = self._mxnet_gluon_forward(model, dataloader, postprocess, \
+                                            metric, measurer, iteration)
 
         elif isinstance(model[0], mx.symbol.symbol.Symbol):
             assert isinstance(dataloader, mx.io.DataIter), \
                 'need mx.io.DataIter. but recived %s' % str(type(dataloader))
             dataloader.reset()
-            acc = self._mxnet_symbol_forward(model, dataloader, \
-                                             postprocess, metric, measurer)
+            acc = self._mxnet_symbol_forward(model, dataloader, postprocess, \
+                                             metric, measurer, iteration)
 
         else:
             raise ValueError("Unknow graph tyep: %s" % (str(type(model))))
@@ -190,7 +190,7 @@ class MxNetAdaptor(Adaptor):
         return acc
 
     def _mxnet_symbol_forward(self, symbol_file, dataIter, \
-                              postprocess, metric, measurer):
+                              postprocess, metric, measurer, iteration):
         """MXNet symbol model evaluation process.
         Args:
             symbol_file (object): the symbole model need to do evaluate.
@@ -215,7 +215,7 @@ class MxNetAdaptor(Adaptor):
         mod.set_params(arg_params, aux_params)
 
         batch_num = 0
-        for batch in dataIter:
+        for idx, batch in enumerate(dataIter):
             if measurer is not None:
                 measurer.start()
                 mod.forward(batch, is_train=False)
@@ -231,11 +231,13 @@ class MxNetAdaptor(Adaptor):
             if metric is not None:
                 metric.update(output, label)
             batch_num += dataIter.batch_size
+            if idx + 1 == iteration:
+                break
         acc = metric.result() if metric is not None else 0
         return acc
 
     def _mxnet_gluon_forward(self, gluon_model, dataloader, 
-                             postprocess, metric, measurer):
+                             postprocess, metric, measurer, iteration):
         """MXNet gluon model evaluation process.
 
         Args:

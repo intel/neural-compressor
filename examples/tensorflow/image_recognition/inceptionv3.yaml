@@ -20,6 +20,7 @@ calibration:
         activation: minmax
 
 benchmark:
+    iteration: 100
     dataloader:
         batch_size: 1
 

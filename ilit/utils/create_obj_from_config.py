@@ -77,7 +77,8 @@ def create_dataloader(framework, dataloader_cfg):
 
     return DataLoader(dataset=eval_dataset, framework=framework, batch_size=batch_size)
 
-def create_eval_func(framework, dataloader, adaptor, metric_cfg, postprocess_cfg=None):
+def create_eval_func(framework, dataloader, adaptor, \
+                     metric_cfg, postprocess_cfg=None, iteration=-1):
     """The interface to create evaluate function from config.
 
     Args:
@@ -104,7 +105,8 @@ def create_eval_func(framework, dataloader, adaptor, metric_cfg, postprocess_cfg
         metric = None
     
     def eval_func(model, measurer=None):
-        return adaptor.evaluate(model, dataloader, postprocess, metric, measurer)
+        return adaptor.evaluate(model, dataloader, postprocess, \
+                                metric, measurer, iteration)
 
     return eval_func
 
