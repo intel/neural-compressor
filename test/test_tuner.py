@@ -5,18 +5,19 @@ import os
 import yaml
 import tensorflow as tf
 import importlib
-     
+
 def build_fake_yaml():
     fake_yaml = '''
-        framework: 
+        framework:
           - name: tensorflow
             inputs: x
             outputs: op_to_store
         device: cpu
         tuning:
-          - strategy: fake
+            strategy:
+                name: fake
             accuracy_criterion:
-              - relative: 0.01        
+              - relative: 0.01
         snapshot:
           - path: saved
         '''
@@ -33,7 +34,8 @@ def build_fake_yaml2():
             outputs: op_to_store
         device: cpu
         tuning:
-          - strategy: test
+            strategy:
+                name: test
             accuracy_criterion:
               - relative: 0.01
         snapshot:
@@ -52,10 +54,10 @@ def build_fake_model():
             x = tf.placeholder(tf.float64, shape=(1,3,3,1), name='x')
             y = tf.constant(np.random.random((2,2,1,1)), name='y')
             op = tf.nn.conv2d(input=x, filter=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
- 
+
             sess.run(tf.global_variables_initializer())
             constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
-        
+
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
@@ -66,13 +68,13 @@ def build_fake_model():
             x = tf.compat.v1.placeholder(tf.float64, shape=(1,3,3,1), name='x')
             y = tf.compat.v1.constant(np.random.random((2,2,1,1)), name='y')
             op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
- 
+
             sess.run(tf.compat.v1.global_variables_initializer())
             constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
-        
+
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
-            tf.import_graph_def(graph_def, name='')        
+            tf.import_graph_def(graph_def, name='')
     return graph
 
 def build_fake_strategy_1():
@@ -136,7 +138,7 @@ class TestTuner(unittest.TestCase):
         os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/test.py'))
         os.remove('fake_yaml.yaml')
         os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
-        os.remove('fake_yaml2.yaml')    
+        os.remove('fake_yaml2.yaml')
         os.rmdir('saved')
 
     def test_autosave(self):
@@ -169,7 +171,7 @@ class TestTuner(unittest.TestCase):
                     )
                 os.remove(os.path.join(snapshot_path, file))
         self.assertGreater(record, 0)
-        
+
 
 if __name__ == "__main__":
     unittest.main()

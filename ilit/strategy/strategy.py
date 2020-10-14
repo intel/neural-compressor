@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import copy
+import os
 from collections import OrderedDict
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
@@ -9,6 +10,9 @@ from ..utils.utility import Timeout
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils import logger
 from ..utils.create_obj_from_config import update_config
+from pathlib import Path
+from datetime import datetime
+import pickle
 
 """The tuning strategies supported by ilit, including basic, random, bayesian and mse.
 
@@ -88,6 +92,7 @@ class TuneStrategy(object):
                  eval_dataloader=None, eval_func=None, dicts=None):
         self.model = model
         self.cfg = conf.usr_cfg
+        self.snapshot_path = os.path.abspath(os.path.expanduser(self.cfg.snapshot.path))
 
         logger.debug('Dump user yaml configuration:')
         logger.debug(self.cfg)
@@ -292,6 +297,21 @@ class TuneStrategy(object):
             d (dict): The dict to load.
         """
         self.__dict__.update(d)
+
+    def _save(self, file_name=None):
+        """save current tuning state to snapshot for resuming.
+        """
+        path = Path(self.snapshot_path)
+        path.mkdir(exist_ok=True, parents=True)
+
+        if file_name is not None:
+            fname = self.snapshot_path + '/ilit-' + file_name + '.snapshot'
+        else:
+            fname = self.snapshot_path + '/ilit-' + datetime.today().strftime(
+                '%Y-%m-%d-%H-%M-%S') + '.snapshot'
+        with open(fname, 'wb') as f:
+            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
+            logger.info("Save snapshot to {}".format(os.path.abspath(fname)))
 
     def stop(self, timeout):
         """Check if need to stop traversing the tuning space, either accuracy goal is met

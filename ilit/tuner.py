@@ -172,9 +172,8 @@ class Tuner(object):
             self.calib_dataloader =None
             self.q_func = q_func
 
-        strategy = cfg.tuning.strategy.lower()
-        assert strategy.lower(
-        ) in STRATEGIES, "The tuning strategy {} specified is NOT supported".format(strategy)
+        strategy = cfg.tuning.strategy.name.lower()
+        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         dicts = None
         # check if interrupted tuning procedure exists. if yes, it will resume the

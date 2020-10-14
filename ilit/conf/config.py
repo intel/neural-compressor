@@ -243,12 +243,16 @@ schema = Schema({
         Optional('dataloader', default=None): dataloader_schema
     },
     Optional('tuning', default={
-        'strategy': 'basic',
+        'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01},
         'objective': 'performance',
         'timeout': 0,
         'random_seed': 1978}): {
-        Optional('strategy', default='basic'): And(str, lambda s: s in STRATEGIES),
+        Optional('strategy', default={'name': 'basic'}): {
+            'name': And(str, lambda s: s in STRATEGIES),
+            Optional('accuracy_weight', default=1.0): float,
+            Optional('latency_weight', default=1.0): float
+        } ,
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
         Optional('timeout', default=0): int,
         Optional('random_seed', default=1978): int,
@@ -262,7 +266,8 @@ schema = Schema({
         },
         Optional('ops', default=None): {
             str: ops_schema
-        }
+        },
+        Optional('max_trials', default=200): int,
     },
     Optional('postprocess'): {
         Optional('transform'): postprocess_schema
