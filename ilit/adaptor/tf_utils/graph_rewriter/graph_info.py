@@ -9,6 +9,7 @@ class TFLowbitPrecisionPatterns(object):
                   [["Conv2D", "DepthwiseConv2dNative"], ("BiasAdd",), ("Add", "AddN", "AddV2"),
                    ("Relu", "Relu6")]],
         "default": [[["ConcatV2"]], [["MaxPool", "AvgPool"]], [["MatMul"], ("BiasAdd")],
+                    [['Conv2D'], ['Add'], ['Relu']],
                     [["Conv2D", "DepthwiseConv2dNative"], ("BiasAdd",), ("Add", "AddN", "AddV2"),
                      ("Relu", "Relu6")]],
     }

@@ -13,6 +13,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ["Conv2D", "BiasAdd", "AddN", "Relu6"],
                 ["Conv2D", "BiasAdd", "Add", "Relu"], ["Conv2D", "BiasAdd"],
                 ["Conv2D", "BiasAdd", "Relu6"], ["Conv2D", "Add", "Relu6"],
+                ["Conv2D", "Add", "Relu"],
                 ["DepthwiseConv2dNative", "BiasAdd", "Relu6"],
                 ["DepthwiseConv2dNative", "Add", "Relu6"],
                 ["Conv2D", "BiasAdd", "Relu"], ["Conv2D"],
@@ -40,6 +41,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             'Conv2DBiasAddRelu6': self.apply_conv_biasadd_relu_fusion,
             'Conv2DBiasAddRelu': self.apply_conv_biasadd_relu_fusion,
             'Conv2DAddRelu6': self.apply_conv_biasadd_relu_fusion,
+            'Conv2DAddRelu': self.apply_conv_biasadd_relu_fusion,
             'DepthwiseConv2dNativeAddRelu6':
             self.apply_conv_biasadd_relu_fusion,
             'DepthwiseConv2dNativeBiasAddRelu6':
