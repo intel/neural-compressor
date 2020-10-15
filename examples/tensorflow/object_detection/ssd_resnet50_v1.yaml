@@ -1,17 +1,17 @@
 framework:
-  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
     inputs: image_tensor
     outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
 calibration:
-  - iterations: 100
+    iterations: 100
     algorithm:
-      - weight: minmax
+        weight: minmax
         activation: minmax
 
 tuning:
     accuracy_criterion:
-      - relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
+        relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed
     ops: {

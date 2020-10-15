@@ -1,16 +1,16 @@
 framework:
-  - name: tensorflow
+    name: tensorflow
     inputs: new_numeric_placeholder,new_categorical_placeholder
     outputs: import/head/predictions/probabilities
 
 calibration:
-  - iterations: 2000
+    iterations: 2000
     algorithm:
         activation: minmax
 
 tuning:
     accuracy_criterion:
-      - relative: 0.001
+        relative: 0.001
     timeout: 0
     random_seed: 9527
     ops: {

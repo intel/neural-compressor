@@ -1,5 +1,5 @@
 framework:
-  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
     inputs: input
     outputs: vgg_19/fc8/squeezed
 
@@ -16,7 +16,7 @@ dataloader:
           mean_value: [123.68, 116.78, 103.94]
 
 calibration:                                         
-  - iterations: 5, 10
+    iterations: 5, 10
     algorithm:
         activation: minmax
 

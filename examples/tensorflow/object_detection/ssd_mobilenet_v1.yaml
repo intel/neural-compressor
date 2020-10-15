@@ -1,17 +1,17 @@
 framework:
-  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
     inputs: image_tensor
     outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
 calibration:
-  - iterations: 1, 5, 10, 20
+    iterations: 1, 5, 10, 20
     algorithm:
-      - weight: minmax
+        weight: minmax
         activation: minmax
 
 tuning:
     accuracy_criterion:
-      - relative: 0.02                              # the tuning target of accuracy loss percentage: 2%
+        relative: 0.02                              # the tuning target of accuracy loss percentage: 2%
     timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed
 
@@ -19,10 +19,10 @@ evaluation:
     dataloader:
         batch_size: 1
         dataset:
-          - type: "TFRecordDataset"
-          - root: "./data/tf_val2017/coco_val.record" # Path to your TF Record COCO Dataset
+            type: "TFRecordDataset"
+            root: "./data/tf_val2017/coco_val.record" # Path to your TF Record COCO Dataset
         transform:
           Resize:
-            - size: 256
+              size: 256
           CenterCrop:
-            - size: 224
+              size: 224

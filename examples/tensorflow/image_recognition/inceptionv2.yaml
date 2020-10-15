@@ -1,5 +1,5 @@
 framework:
-  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
     inputs: input
     outputs: InceptionV2/Predictions/Reshape_1
 
@@ -15,7 +15,7 @@ dataloader:
           width: 224
 
 calibration:                                         
-  - iterations: 5, 10
+    iterations: 5, 10
     algorithm:
         activation: minmax
 
@@ -25,9 +25,9 @@ benchmark:
 
 tuning:
     metric:  
-      - topk: 1
+        topk: 1
     accuracy_criterion:
-      - relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
+        relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
     timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed                       
 

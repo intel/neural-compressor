@@ -6,10 +6,12 @@ calibration:
 device: cpu
 framework:
   inputs:
-  - input
+    input
   name: tensorflow
   outputs:
-  - output
+    output
+snapshot:
+  path: /tmp/snapshot
 tuning:
   accuracy_criterion:
     relative: 0.01

@@ -1,5 +1,5 @@
 framework:
-  - name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
+    name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
     inputs: input
     outputs: MobilenetV1/Predictions/Reshape_1
 
@@ -21,13 +21,13 @@ calibration:
 
 quantization: 
     weight:
-      - granularity: per_channel
+        granularity: per_channel
 
 tuning:
     metric:  
-      - topk: 1
+        topk: 1
     accuracy_criterion:
-      - relative: 0.02                              # the tuning target of accuracy loss percentage: 2%
+        relative: 0.02                              # the tuning target of accuracy loss percentage: 2%
     timeout: 0                                      # tuning timeout (seconds)
     random_seed: 9527                               # random seed                       
 
