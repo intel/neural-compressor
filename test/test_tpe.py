@@ -96,7 +96,6 @@ class TestTuner(unittest.TestCase):
         build_fake_yaml()
         build_fake_yaml2()
         self.dataloader = build_dataloader()
-        os.mkdir('saved')
 
     @classmethod
     def tearDownClass(self):

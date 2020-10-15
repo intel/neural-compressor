@@ -72,6 +72,7 @@ class TpeTuneStrategy(TuneStrategy):
             eval_dataloader,
             eval_func,
             dicts)
+        assert self.cfg.quantization.approach == 'post_training_static_quant', "TPE strategy is only for post training static quantization!"
         self.hpopt_search_space = None
         self.warm_start = False
         self.hpopt_trials = Trials()

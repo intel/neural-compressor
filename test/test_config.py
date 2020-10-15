@@ -194,7 +194,8 @@ class TestConf(unittest.TestCase):
         tuning: 
           - accuracy_criterion:
               - relative: 0.01
-          - strategy: basic, mse
+          - strategy:
+              name: basic, mse
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
@@ -225,7 +226,8 @@ class TestConf(unittest.TestCase):
         tuning: 
           - accuracy_criterion:
               - relative: 0.01
-          - strategy: fake
+          - strategy:
+              name: fake
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
@@ -236,7 +238,8 @@ class TestConf(unittest.TestCase):
         tuning: 
           - accuracy_criterion:
               - relative: 
-            strategy: basic
+            strategy:
+              name: basic
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')

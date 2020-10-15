@@ -47,7 +47,8 @@ quantization:                                        # optional. tuning constrai
         dtype: int8
 
 tuning:
-  - strategy: basic                                  # optional. default value is basic. other values are bayesian, mse.
+  - strategy:
+      name: basic                                  # optional. default value is basic. other values are bayesian, mse.
     metric:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
       - topk: 1                                      # built-in metrics are topk, map, f1, allow user to register new metric.
     accuracy_criterion:
