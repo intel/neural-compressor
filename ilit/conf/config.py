@@ -9,6 +9,7 @@ import re
 import copy
 import itertools
 from collections import OrderedDict
+from .dotdict import DotDict
 
 
 # Schema library has different loading sequence priorities for different
@@ -17,48 +18,6 @@ from collections import OrderedDict
 # get loaded with written sequence, this workaround is used to convert
 # None to {} in yaml load().
 yaml.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {})
-
-
-class DotDict(dict):
-    """access yaml using attributes instead of using the dictionary notation.
-
-    Args:
-        value (dict): The dict object to access.
-
-    """
-
-    def __init__(self, value=None):
-        if value is None:
-            pass
-        elif isinstance(value, dict):
-            for key in value:
-                self.__setitem__(key, value[key])
-        else:
-            raise TypeError('expected dict')
-
-    def __getitem__(self, key):
-        value = self.get(key, None)
-        return value
-
-    def __setitem__(self, key, value):
-        if isinstance(value, dict) and not isinstance(value, DotDict):
-            value = DotDict(value)
-        if isinstance(value, list) and len(value) == 1 and isinstance(
-                value[0], dict):
-            value = DotDict(value[0])
-        if isinstance(value, list) and len(value) > 1 and all(isinstance(
-                v, dict) for v in value):
-            value = DotDict({k: v for d in value for k, v in d.items()})
-        super(DotDict, self).__setitem__(key, value)
-
-    def __getstate__(self):
-        return self.__dict__
-
-    def __setstate__(self, d):
-        self.__dict__.update(d)
-
-    __setattr__, __getattr__ = __setitem__, __getitem__
-
 
 def _valid_framework_field(key, scope, error):
     if scope['name'] == 'tensorflow':
@@ -83,6 +42,16 @@ def _valid_prune_sparsity(key, scope, error):
         assert scope["init_sparsity"] >= 0
     else:
         assert scope["target_sparsity"] < 1
+
+# used for '123.68 116.78 103.94' style to float list
+def input_to_list_float(data):
+    if isinstance(data, str):
+        return [float(s.strip()) for s in data.split()]
+    if isinstance(data, float):
+        return [data]
+    else:
+        assert isinstance(data, list)
+        return [float(d) for d in data]
 
 def input_to_list(data):
     if isinstance(data, str):
@@ -166,7 +135,7 @@ transform_schema = Schema({
         'height': And(int, lambda s: s > 0),
         'width': And(int, lambda s: s > 0),
         Optional('central_fraction'): bool,
-        Optional('mean_value'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float,
     },
     Optional('ResizeCropImagenet'): {
@@ -176,13 +145,13 @@ transform_schema = Schema({
         Optional('slice_crop'): bool,
         Optional('resize_side'): And(int, lambda s: s > 0),
         Optional('random_flip_left_right'): bool,
-        Optional('mean_value'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float
     },
     Optional('ParseDecodeImagenet'): Or({}, None),
-    Optional('FP32ToInt8'): {
-        'dtype': str,
-        'scale': And(float, lambda s: s > 0),
+    Optional('QuantizedInput'): {
+        Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
+        Optional('scale'): And(float, lambda s: s > 0),
     },
 })
 

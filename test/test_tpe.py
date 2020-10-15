@@ -106,6 +106,7 @@ class TestQuantization(unittest.TestCase):
         os.remove('saved/tuning_history.snapshot')
         os.remove('saved/tpe_best_result.csv')
         os.remove('saved/tpe_trials.csv')
+        os.remove('./ilit_deploy.yaml')
         os.rmdir('saved')
 
     def test_run_tpe_one_trial(self):

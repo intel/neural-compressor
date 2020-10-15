@@ -193,12 +193,13 @@ class Quantization(object):
 
         if self.strategy.best_qmodel:
             logger.info(
-                "Specified timeout is reached! Found a quantized model which meet accuracy goal."
-                "Exit...")
+                "Specified timeout or max trials is reached! "
+                "Found a quantized model which meet accuracy goal. Exit...")
+            self.strategy.deploy_config()
         else:
             logger.info(
-                "Specified timeout is reached! Not found any quantized model which meet accuracy"
-                " goal. Exit...")
+                "Specified timeout or max trials is reached! "
+                "Not found any quantized model which meet accuracy goal. Exit...")
 
         return self.strategy.best_qmodel
 

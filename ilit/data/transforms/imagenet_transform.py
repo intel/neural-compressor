@@ -119,10 +119,10 @@ class ResizeCropImagenetTransform(Transform):
     image = (image - means) * self.scale
     return (image, label)
 
-@transform_registry(transform_type="FP32ToInt8", \
+@transform_registry(transform_type="QuantizedInput", \
                     process="preprocess", framework="tensorflow")
-class FP32ToInt8(Transform):
-  def __init__(self, dtype, scale):
+class QuantizedInput(Transform):
+  def __init__(self, dtype, scale=None):
     self.dtype_map = {'uint8': tf.uint8, 'int8': tf.int8}
     assert dtype in self.dtype_map.keys(), \
         'only support cast dtype {}'.format(self.dtype_map.keys())
@@ -130,6 +130,10 @@ class FP32ToInt8(Transform):
     self.scale = scale
 
   def __call__(self, sample):
+    # scale is not know when tuning, in this case this transform
+    # do nothing, it's only used when scale is set
+    if self.scale == None:
+        return sample
     image, label = sample
     image = image * self.scale
     if self.dtype == 'uint8':

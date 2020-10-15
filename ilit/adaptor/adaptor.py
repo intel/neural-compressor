@@ -89,11 +89,23 @@ class Adaptor(object):
 
     @abstractmethod
     def mapping(self, src_model, dst_model):
-        '''The function is used to create a dict to map tensor name of src model to tensor name of
-           dst model.
+        '''The function is used to create a dict to map tensor name 
+           of src model to tensor name of dst model.
 
            Return:
                Dict
                {'src_op1': 'dst_op1'}
         '''
         raise NotImplementedError
+
+    def quantize_input(self, model):
+        ''' quantize the model to be able to take quantized input
+
+            Args:
+                model (object): The model to quantize input
+
+            Return:
+                model (object): The quantized input model
+                scale (float): The scale for dataloader to generate quantized input
+        '''
+        return model, 1.

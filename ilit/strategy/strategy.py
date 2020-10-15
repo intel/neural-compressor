@@ -1,16 +1,17 @@
 from abc import abstractmethod
-from pathlib import Path
 import os
+import yaml
 import copy
 import pickle
 from collections import OrderedDict
+from pathlib import Path
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils.utility import Timeout, fault_tolerant_file, equal_dicts
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils import logger
 from ..version import __version__
-from datetime import datetime
+from ..conf.dotdict import DotDict, deep_get
 
 """The tuning strategies supported by ilit, including basic, random, bayesian and mse.
 
@@ -246,6 +247,45 @@ class TuneStrategy(object):
 
                 if need_stop:
                     break
+
+    def deploy_config(self):
+        eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader if \
+                              self.cfg.evaluation and self.cfg.evaluation.accuracy and \
+                              self.cfg.evaluation.accuracy.dataloader else None
+
+        self.deploy_cfg = OrderedDict()
+
+        # int8 dataloader graph transform
+        if deep_get(eval_dataloader_cfg, 'transform.QuantizedInput') is not None:
+            self.best_qmodel, scale = self.adaptor.quantize_input(self.best_qmodel)
+            eval_dataloader_cfg.transform.QuantizedInput['scale'] = scale
+
+        self.deploy_cfg['framework'] = self.cfg.framework
+        self.deploy_cfg['device'] = self.cfg.device
+        self.deploy_cfg['evaluation'] = self.cfg.evaluation
+
+        if self.cfg.evaluation:
+            if self.cfg.evaluation.accuracy and eval_dataloader_cfg:
+                self.cfg.evaluation.accuracy.update(eval_dataloader_cfg)
+            if self.cfg.evaluation.performance and eval_dataloader_cfg:
+                self.cfg.evaluation.performance.update(eval_dataloader_cfg)
+
+        deploy_path = self.cfg.tuning.deployment.path \
+            if self.cfg.tuning.deployment is not None \
+            else self.cfg.tuning.snapshot.path
+        deploy_path = os.path.abspath(os.path.expanduser(deploy_path))
+        deploy_dir = Path(os.path.dirname(deploy_path))
+        deploy_dir.mkdir(exist_ok=True, parents=True)
+
+        def setup_yaml():
+            represent_dict_order = lambda self, \
+                data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
+            yaml.add_representer(OrderedDict, represent_dict_order)    
+            yaml.add_representer(DotDict, represent_dict_order)    
+        setup_yaml()
+        with open(deploy_path, 'w+') as f:
+            yaml.dump(self.deploy_cfg, f)
+            logger.info('save deploy yaml to path {}'.format(deploy_path)) 
 
     def _modelwise_tune_space(self, model, conf):
         """Merge user yaml config with framework model wise capability.

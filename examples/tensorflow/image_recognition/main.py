@@ -37,10 +37,6 @@ class eval_classifier_optimized_graph:
                             help='Specify tune result model save dir',
                             dest='output_graph')
 
-    arg_parser.add_argument("--int8-input", type=bool, default=False,
-                            help="use int8 input",
-                            dest='int8_input')
-
     arg_parser.add_argument("--warmup_steps", type=int, default=10,
                             help="skip number of steps")
 
@@ -59,10 +55,6 @@ class eval_classifier_optimized_graph:
           from ilit import Quantization
           quantizer = Quantization(self.args.config)
           q_model = quantizer(self.args.input_graph)
-
-          if self.args.int8_input:
-              from ilit.adaptor.tf_utils.util import remove_quantize_op
-              q_model = remove_quantize_op(q_model)
 
           def save(model, path):
               from tensorflow.python.platform import gfile

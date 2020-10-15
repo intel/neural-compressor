@@ -9,7 +9,6 @@ from ..utils.utility import LazyImport
 from ..utils import logger
 tensorflow = LazyImport('tensorflow')
 
-
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -388,3 +387,90 @@ class TensorFlowAdaptor(Adaptor):
                                    qt_config=self.quantize_config,
                                    data_loader=dataloader)
         return converter.inspect_tensor(op_list, iteration_list)
+
+    def quantize_input(self, model):
+        ''' quantize the model to be able to take quantized input
+            remove graph QuantizedV2 op and move its input tensor to QuantizedConv2d
+            and calculate the min-max scale
+
+            Args:
+                model (tf.compat.v1.GraphDef): The model to quantize input
+
+            Return:
+                model (tf.compat.v1.GraphDef): The quantized input model
+                scale (float): The scale for dataloader to generate quantized input
+        '''
+        scale = None
+        # quantize input only support tensorflow version > 2.1.0
+        import tensorflow as tf
+        if tf.version.VERSION < '2.1.0':
+            logger.warning('quantize input need tensorflow version > 2.1.0') 
+            return model, scale
+
+        graph_def = model.as_graph_def()
+        node_name_mapping = {}
+        quantize_nodes = []
+        for node in graph_def.node:
+            node_name_mapping[node.name] = node
+            if node.op == 'QuantizeV2':
+                quantize_nodes.append(node)
+
+        target_quantize_nodes = []
+        for node in quantize_nodes:
+            # only support Quantizev2 input op Pad and Placeholder
+            if (node_name_mapping[node.input[0]].op == 'Pad' and node_name_mapping[\
+                node_name_mapping[node.input[0]].input[0]].op == 'Placeholder') or \
+                node_name_mapping[node.input[0]].op == 'Placeholder':
+                target_quantize_nodes.append(node)
+        assert len(target_quantize_nodes) == 1, 'only support 1 QuantizeV2 from Placeholder'
+        quantize_node = target_quantize_nodes[0]
+
+        quantize_node_input = node_name_mapping[quantize_node.input[0]]
+        quantize_node_outputs = [node for node in graph_def.node \
+                       if quantize_node.name in node.input]
+        
+        from .tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+        if quantize_node_input.op == 'Pad':
+            pad_node_input = node_name_mapping[quantize_node_input.input[0]]
+            assert pad_node_input.op == 'Placeholder', \
+                'only support Pad between QuantizeV2 and Placeholder'
+            from tensorflow.python.framework import tensor_util
+            paddings_tensor = tensor_util.MakeNdarray(node_name_mapping[\
+                quantize_node_input.input[1]].attr['value'].tensor).flatten()
+
+            quantize_node.input[0] = quantize_node_input.input[0]
+            for conv_node in quantize_node_outputs:
+                assert 'Conv2D' in conv_node.op, 'only support QuantizeV2 to Conv2D'
+
+                QuantizeGraphHelper.set_attr_int_list(conv_node, \
+                                         "padding_list", paddings_tensor)
+            graph_def.node.remove(quantize_node_input)
+
+        from tensorflow.python.framework import dtypes
+        QuantizeGraphHelper.set_attr_dtype(node_name_mapping[quantize_node.input[0]],\
+                                           "dtype", dtypes.qint8)
+
+        for conv_node in quantize_node_outputs:
+            for index, conv_input in enumerate(conv_node.input): 
+                if conv_input == quantize_node.name:
+                    conv_node.input[index] = quantize_node.input[0]
+                elif conv_input == quantize_node.name + ":1":
+                    conv_node.input[index] = quantize_node.input[1]
+                elif conv_input == quantize_node.name + ":2":
+                    conv_node.input[index] = quantize_node.input[2]
+
+        # get the input's min-max value and calculate scale
+        max_node = node_name_mapping[quantize_node.input[2]]
+        min_node = node_name_mapping[quantize_node.input[1]]
+        max_value = max_node.attr['value'].tensor.float_val[0]
+        min_value = min_node.attr['value'].tensor.float_val[0]
+        scale = 127. / max(abs(max_value), abs(min_value))
+        # remove QuantizeV2 node
+        graph_def.node.remove(quantize_node)
+
+        graph = tensorflow.Graph()
+        with graph.as_default():
+            # use name='' to avoid 'import/' to name scope 
+            tensorflow.import_graph_def(graph_def, name='')
+        return graph, scale
+
