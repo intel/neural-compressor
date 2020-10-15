@@ -69,7 +69,7 @@ class TestGraphCommonSequenceElimated(unittest.TestCase):
         analyzer = TFGraphAnalyzer()
         analyzer.graph = float_graph_def
         analyzer.parse_graph()
-        res = analyzer.search_patterns([['MatMul'], ("BiasAdd"), ("Relu")])
+        res = analyzer.query_fusion_pattern_nodes([['MatMul'], ("BiasAdd"), ("Relu")])
         self.assertEqual(3, len(res[0][-1]))
 
 

@@ -7,7 +7,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
+from ..graph_util import GraphAnalyzer
 
 
 class InsertLoggingTransformer(GraphRewriterBase):
@@ -39,7 +39,7 @@ class InsertLoggingTransformer(GraphRewriterBase):
         self.first_n = first_n
         self.summarize = summarize
         self.message = message
-        self.cur_graph = TFGraphAnalyzer()
+        self.cur_graph = GraphAnalyzer()
         self.node_info = self.cur_graph.parse_graph(self.model)
 
     def do_transformation(self):

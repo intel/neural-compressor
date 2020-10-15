@@ -5,16 +5,14 @@
 from tensorflow.core.framework import node_def_pb2
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 
 class SplitSharedInputOptimizer(GraphRewriterBase):
-    def __init__(self, model):
-        super(SplitSharedInputOptimizer, self).__init__(model)
 
     def do_transformation(self):
-        cur_graph = TFGraphAnalyzer()
+        cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
         graph_info = cur_graph.parse_graph()

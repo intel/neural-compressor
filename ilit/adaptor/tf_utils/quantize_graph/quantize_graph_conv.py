@@ -5,6 +5,7 @@ from tensorflow.python.framework import dtypes
 
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
+from .quantize_graph_pad import FuseNodeStartWithPad
 
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
@@ -17,7 +18,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ["Conv2D", "BiasAdd", "Relu"], ["Conv2D"],
                 ["DepthwiseConv2dNative"]]
 
-    def __init__(self, input_graph, output_node_names, perchannel, start_node_name, device, _):
+    def __init__(self, input_graph, output_node_names, perchannel,
+                 start_node_name, device, _):
+        input_graph = FuseNodeStartWithPad(input_graph, output_node_names,
+                                           perchannel, start_node_name, device,
+                                           _).apply_the_transform()
         super(FuseNodeStartWithConv2d,
               self).__init__(input_graph, output_node_names, perchannel,
                              start_node_name, device)

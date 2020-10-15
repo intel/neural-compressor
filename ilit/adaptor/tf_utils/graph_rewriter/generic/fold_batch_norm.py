@@ -7,8 +7,8 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 import numpy as np
 import math
@@ -29,9 +29,6 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
         "FusedBatchNorm": "epsilon",
         "FusedBatchNormV3": "epsilon"
     }
-
-    def __init__(self, model):
-        super(FoldBatchNormNodesOptimizer, self).__init__(model)
 
     def scale_after_normalization(self, node):
         if node.op == "BatchNormWithGlobalNormalization":
@@ -58,11 +55,11 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
         Raises:
           ValueError: If the graph is badly formed with duplicate node names.
         """
-        cur_graph = TFGraphAnalyzer()
+        cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
         graph_info = cur_graph.parse_graph()
-        target_nodes = cur_graph.search_patterns(
+        target_nodes = cur_graph.query_fusion_pattern_nodes(
             [["Conv2D", "DepthwiseConv2dNative"], ("BiasAdd", "Add", "AddV2"),
              ["BatchNormWithGlobalNormalization", "FusedBatchNorm", "FusedBatchNormV3"]])
         for node_combination in target_nodes:

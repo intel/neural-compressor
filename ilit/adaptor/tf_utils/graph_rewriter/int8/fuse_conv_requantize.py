@@ -8,8 +8,8 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 
 class FuseConvRequantizeTransformer(GraphRewriterBase):
@@ -25,7 +25,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
     def __init__(self, model, device='cpu'):
         super().__init__(model)
         self.device = device
-        self.graph_analyzer = TFGraphAnalyzer()
+        self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model
 
         self.graph_info = self.graph_analyzer.parse_graph()
@@ -43,7 +43,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
         qint32_type = dtypes.qint32.as_datatype_enum
 
         while True:
-            target_nodes = self.graph_analyzer.search_patterns(self.fuse_patterns)
+            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.fuse_patterns)
             if len(target_nodes) == 0:
                 break
 
@@ -146,7 +146,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             self.graph_analyzer.remove_node(quantized_node_name)
 
         while True:
-            target_nodes = self.graph_analyzer.search_patterns(self.sum_pattern)
+            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.sum_pattern)
             if len(target_nodes) == 0:
                 break
 

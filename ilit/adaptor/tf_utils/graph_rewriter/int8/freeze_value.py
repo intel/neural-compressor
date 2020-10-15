@@ -8,8 +8,8 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 
 class FreezeValueTransformer(GraphRewriterBase):
@@ -23,12 +23,12 @@ class FreezeValueTransformer(GraphRewriterBase):
             threshold (float, optional): The percentage of overall data.Defaults to 0.95.
             device (string, optional): The hardware device type, 'cpu' or 'gpu'.
         """
-        super(FreezeValueTransformer, self).__init__(model)
+        super().__init__(model)
         self.data = sampling_data
         self.threshold = threshold
         self.postfix = postfix
         self.device = device
-        self.cur_graph = TFGraphAnalyzer()
+        self.cur_graph = GraphAnalyzer()
         self.cur_graph.graph = self.model
 
         self.graph_info = self.cur_graph.parse_graph()
@@ -141,7 +141,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                                               node_name)
             self.cur_graph.remove_node(node_name)
 
-        return TFGraphAnalyzer().dump_graph()
+        return GraphAnalyzer().dump_graph()
 
     def generate_output_graph_ranges(self, max_name_value):
         """
@@ -178,7 +178,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                                               node_name + ':1')
             self.cur_graph.remove_node(node_name)
 
-        return TFGraphAnalyzer().dump_graph()
+        return GraphAnalyzer().dump_graph()
 
     def do_transformation(self):
         if self.postfix == '__requant_min_max':

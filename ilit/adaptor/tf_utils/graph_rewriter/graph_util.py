@@ -25,7 +25,7 @@ from ilit.utils.utility import singleton
 
 
 @singleton
-class TFGraphAnalyzer(object):
+class GraphAnalyzer(object):
     """Tensorflow Graph Analyzer class which implemented under singleton mode.
     This class provides the following API:
     * Analyze the graph
@@ -34,9 +34,10 @@ class TFGraphAnalyzer(object):
     # TODO add the positive input flag
     node_details = namedtuple('node_details', ['node', 'outputs'])
 
-    def __init__(self):
+    def __init__(self, extend_engine=None):
         self.logger = logging.getLogger()
         self._graph = None
+        self.extend_engine = extend_engine
 
     @property
     def graph(self):
@@ -62,10 +63,22 @@ class TFGraphAnalyzer(object):
                          "MaxPool", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
                          "Mean", "MatMul"):
             return self._has_positive_input(
-                self.node_name_details[TFGraphRewriterHelper.node_name_from_input(
-                    start_node.input[0])])
+                self.node_name_details[GraphRewriterHelper.node_name_from_input(
+                    start_node.input[0])].node)
         else:
             return False
+
+    def has_positive_input(self, node_name):
+        """Check the specified node has positive input data or not.
+
+        Args:
+            node_name (string): node name
+
+        Returns:
+            bool: retrun True if the node has the positive input data,
+                return False if the node has the negative input data.
+        """
+        return self._has_positive_input(self.node_name_details[node_name].node)
 
     def get_graph_input_output(self):
         input_node_names = []
@@ -87,7 +100,22 @@ class TFGraphAnalyzer(object):
 
         return (input_node_names, output_node_names)
 
-    def search_patterns(self, input_pattern):
+    def query_fusion_pattern_nodes(self, patterns=None):
+        """Public interface for query the nodes aggregation status.
+
+        Args:
+            patterns (string list): Please check the _search_patterns definition.
+
+        Returns:
+            [string list]: The matched node names which saved as the string list.
+        """
+        if self.extend_engine:
+            #Todo keep this for future extension API
+            pass
+        else:
+            return self._search_patterns(patterns)
+
+    def _search_patterns(self, input_pattern):
         """search user specified patterns on internal grpah structure.
 
         Args:
@@ -102,8 +130,8 @@ class TFGraphAnalyzer(object):
             Conv2D + BiasAdd + Relu
             Conv2D + BiasAdd + Relu6
 
-        Return: list. Each matched pattern composed of matched node name and we put the match node
-                    op as the last element of each pair.
+        Return: [string list]. Each matched pattern composed of matched node name and we put the
+                    match node op as the last element of each pair.
                     e.g
                     [
                         ['resnet_model/conv2d_4/Conv2D',
@@ -152,7 +180,7 @@ class TFGraphAnalyzer(object):
             single_set_res.append(cur_node.name)
             matched_op_type.append(cur_node.op)
             while continue_search_flag and pattern_index >= 0:
-                cur_node_name = TFGraphRewriterHelper.node_name_from_input(cur_node.input[0])
+                cur_node_name = GraphRewriterHelper.node_name_from_input(cur_node.input[0])
                 if validate_input(self.node_name_details[cur_node_name].node.op,
                                   input_pattern[pattern_index]):
                     cur_node = self.node_name_details[cur_node_name].node
@@ -203,9 +231,9 @@ class TFGraphAnalyzer(object):
             return False
 
         non_const_node_count = len([
-            TFGraphRewriterHelper.node_name_from_input(i)
+            GraphRewriterHelper.node_name_from_input(i)
             for i in self.node_name_details[node_name].node.input if self.node_name_details[
-                TFGraphRewriterHelper.node_name_from_input(i)].node.op != "Const"
+                GraphRewriterHelper.node_name_from_input(i)].node.op != "Const"
         ])
 
         if non_const_node_count > 1:
@@ -214,7 +242,7 @@ class TFGraphAnalyzer(object):
 
         try:
 
-            top_node_name = TFGraphRewriterHelper.node_name_from_input(
+            top_node_name = GraphRewriterHelper.node_name_from_input(
                 self.node_name_details[node_name].node.input[0])
 
             for bottom_node_name in self.node_name_details[node_name].outputs:
@@ -316,7 +344,7 @@ class TFGraphAnalyzer(object):
             return False
         try:
             inputs = self.node_name_details[old_end_node_name].node.input
-            inputs = [TFGraphRewriterHelper.node_name_from_input(i) for i in inputs]
+            inputs = [GraphRewriterHelper.node_name_from_input(i) for i in inputs]
             for input_name in inputs:
                 if self.node_name_details[input_name].node.op != "Const":
                     self.logger.debug("the subgraph replaces must be constant")
@@ -377,7 +405,7 @@ class TFGraphAnalyzer(object):
         for node_name in output_nodes_name:
             for index, each_node_name in enumerate(self.node_name_details[node_name].node.input):
                 if self.node_name_details[
-                        node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
+                        node_name].node.input and GraphRewriterHelper.node_name_from_input(
                             each_node_name) == old_node_name:
                     new_input_name = self.node_name_details[node_name].node.input[:index] + [
                         new_node_name
@@ -414,7 +442,7 @@ class TFGraphAnalyzer(object):
             for index, each_node_name in enumerate(
                     self.node_name_details[end_node_name].node.input):
                 if self.node_name_details[
-                        end_node_name].node.input and TFGraphRewriterHelper.node_name_from_input(
+                        end_node_name].node.input and GraphRewriterHelper.node_name_from_input(
                             each_node_name) == start_node_name:
                     new_input_name = self.node_name_details[end_node_name].node.input[:index] + [
                         new_node_name
@@ -455,7 +483,7 @@ class TFGraphAnalyzer(object):
         self.node_name_details = {}
 
         for node in input_graph_def.node:
-            node_name = TFGraphRewriterHelper.node_name_from_input(node.name)
+            node_name = GraphRewriterHelper.node_name_from_input(node.name)
 
             each_node = self.node_details(node=node, outputs=[])
 
@@ -465,13 +493,13 @@ class TFGraphAnalyzer(object):
         for node_name, node_details in self.node_name_details.items():
             # update the upper node's output infomation.
             for each_input in node_details.node.input:
-                self.node_name_details[TFGraphRewriterHelper.node_name_from_input(
+                self.node_name_details[GraphRewriterHelper.node_name_from_input(
                     each_input)].outputs.append(node_name)
 
         return self.node_name_details
 
 
-class TFGraphRewriterHelper(object):
+class GraphRewriterHelper(object):
     node_name_cache = {}
     node_name_port_cache = {}
 
@@ -521,10 +549,10 @@ class TFGraphRewriterHelper(object):
 
     @staticmethod
     def create_constant_node(name, value, dtype, shape=None, device='cpu'):
-        node = TFGraphRewriterHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
+        node = GraphRewriterHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
                                                  [])
-        TFGraphRewriterHelper.set_attr_dtype(node, "dtype", dtype)
-        TFGraphRewriterHelper.set_attr_tensor(node, "value", value, dtype, shape)
+        GraphRewriterHelper.set_attr_dtype(node, "dtype", dtype)
+        GraphRewriterHelper.set_attr_tensor(node, "value", value, dtype, shape)
         return node
 
     @staticmethod
@@ -570,29 +598,29 @@ class TFGraphRewriterHelper(object):
     @staticmethod
     def ensure_tensor_name_has_port(node_name):
         """Makes sure that a tensor name has :0 if no explicit port exists."""
-        if node_name not in TFGraphRewriterHelper.node_name_port_cache:
+        if node_name not in GraphRewriterHelper.node_name_port_cache:
             key = node_name
             m = re.search(r"(.*):\d+$", node_name)
             if not m:
                 node_name = node_name + ":0"
-            TFGraphRewriterHelper.node_name_port_cache[key] = node_name
+            GraphRewriterHelper.node_name_port_cache[key] = node_name
             return node_name
         else:
-            return TFGraphRewriterHelper.node_name_port_cache[node_name]
+            return GraphRewriterHelper.node_name_port_cache[node_name]
 
     @staticmethod
     def node_name_from_input(node_name):
-        if node_name not in TFGraphRewriterHelper.node_name_cache:
+        if node_name not in GraphRewriterHelper.node_name_cache:
             key = node_name
             if node_name.startswith("^"):
                 node_name = node_name[1:]
             m = re.search(r"(.*):\d+$", node_name)
             if m:
                 node_name = m.group(1)
-            TFGraphRewriterHelper.node_name_cache[key] = node_name
+            GraphRewriterHelper.node_name_cache[key] = node_name
             return node_name
         else:
-            return TFGraphRewriterHelper.node_name_cache[node_name]
+            return GraphRewriterHelper.node_name_cache[node_name]
 
     @staticmethod
     def unique_node_name_from_input(node_name):

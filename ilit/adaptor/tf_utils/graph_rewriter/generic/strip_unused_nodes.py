@@ -6,18 +6,17 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
 
 
 class StripUnusedNodesOptimizer(GraphRewriterBase):
     def __init__(self, model, input_node_names, output_node_names):
-        super(StripUnusedNodesOptimizer, self).__init__(model)
+        super().__init__(model)
         self.input_node_names = input_node_names
         self.output_node_names = output_node_names
 
     def do_transformation(self):
-        cur_graph = TFGraphAnalyzer()
+        cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
         graph_info = cur_graph.parse_graph()

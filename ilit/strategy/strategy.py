@@ -229,6 +229,32 @@ class TuneStrategy(object):
 
         return conf.opwise_tune_space(opwise)
 
+    def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
+        """Get the common parts from the model_wise_cfg.
+            This function is focused on composing the configuration that consists of
+            model-wise field and op-wise unique field data.
+
+        Args:
+            model_wise_cfg ([DotDict]): The model-wise configuration.
+            op_wise_cfgs ([List]): The list of each op's config in DotDict type.
+
+        Returns:
+            [DotDict]: The combined configration with the op-wise unique field.
+        """
+        model_wise_keys = model_wise_cfg.keys()
+
+        result = op_wise_cfgs[0]
+        for each_op_wise_cfg in op_wise_cfgs:
+            tmp_cfg = {}
+            for k in model_wise_keys:
+                tmp_cfg[k] = each_op_wise_cfg[k]
+
+            if model_wise_cfg == tmp_cfg:
+                result = each_op_wise_cfg
+                break
+
+        return result
+
     def _evaluate(self, model, tune_cfg=None):
         """The interface of evaluating model.
 

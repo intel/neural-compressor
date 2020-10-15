@@ -2,22 +2,18 @@
 #  -*- coding: utf-8 -*-
 #
 
-import re
-from tensorflow.core.framework import node_def_pb2
-
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
 
 
 class RemoveTrainingNodesOptimizer(GraphRewriterBase):
     def __init__(self, model, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics']):
-        super(RemoveTrainingNodesOptimizer, self).__init__(model)
+        super().__init__(model)
         self.protected_nodes = protected_nodes
         self.types_to_splice = types_to_splice
 
     def do_transformation(self):
-        graph_handle = TFGraphAnalyzer()
+        graph_handle = GraphAnalyzer()
         graph_handle.graph = self.model
 
         graph_info = graph_handle.parse_graph()

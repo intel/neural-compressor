@@ -7,8 +7,8 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 
 class ScaleProPagationTransformer(GraphRewriterBase):
@@ -22,7 +22,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
     def __init__(self, model, direction='Up'):
         super().__init__(model)
         self.direction = direction if direction not in ('Up', 'Down') else 'Up'
-        self.cur_graph = TFGraphAnalyzer()
+        self.cur_graph = GraphAnalyzer()
         self.cur_graph.graph = self.model
 
         self.graph_info = self.cur_graph.parse_graph()
@@ -43,7 +43,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
         self.cur_graph.remove_node(old_const_node_name)
 
     def _cac_transformation(self):
-        target_nodes = self.cur_graph.search_patterns(self.cac_pattern)
+        target_nodes = self.cur_graph.query_fusion_pattern_nodes(self.cac_pattern)
         quantize_v2_min_index = 1
         requntize_min_index = 3
         quantize_v2_max_index = 2

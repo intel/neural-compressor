@@ -5,16 +5,16 @@
 from tensorflow.core.framework import graph_pb2
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 
 class GraphCseOptimizer(GraphRewriterBase):
     """ We introduce the CSE optimizer to optimize the nodes that contains identical op type.
-        Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs 
+        Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs
                 (B1/C1C2/D1).
                 Node A
-              /    |    \ 
+              /    |    \
              /     |     \
         NODE B   NODE C  NODE D
         |        |   |     |
@@ -26,13 +26,13 @@ class GraphCseOptimizer(GraphRewriterBase):
                 |
                Node B
               / |  \  \
-             /  |   \  \ 
+             /  |   \  \
             /   |    \  \
             B1  C1   C2  D1
         Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs
                 (B1/C1C2/D1).
                 Node A
-              /   |    \ 
+              /   |    \
              /    |     \
         NODE B   NODE C  NODE D
           |      |   |     |
@@ -44,7 +44,7 @@ class GraphCseOptimizer(GraphRewriterBase):
                    |     \
                 Node B  Node D
                 /   |  \    \
-                /   |   \    \ 
+                /   |   \    \
                 /   |    \    \
                B1   C1    C2   D1
 
@@ -53,8 +53,6 @@ class GraphCseOptimizer(GraphRewriterBase):
     """
     computational_op_type = ("Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul")
 
-    def __init__(self, model):
-        super(GraphCseOptimizer, self).__init__(model)
 
     def do_transformation(self):
         """Optimize the graph contains multi output nodes. If those nodes' type are identical,
@@ -66,9 +64,9 @@ class GraphCseOptimizer(GraphRewriterBase):
         Returns:
             [graphdef]: optimized graph
         """
-        TFGraphAnalyzer().graph = self.model
+        GraphAnalyzer().graph = self.model
 
-        graph_info = TFGraphAnalyzer().parse_graph()
+        graph_info = GraphAnalyzer().parse_graph()
 
         need_to_update_node = []
         #TODO Enhance below code snippet by using recursive method.

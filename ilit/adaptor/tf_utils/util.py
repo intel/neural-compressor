@@ -18,9 +18,9 @@
 
 import os
 
-from google.protobuf import text_format
-
 import tensorflow as tf
+
+from google.protobuf import text_format
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.platform import gfile

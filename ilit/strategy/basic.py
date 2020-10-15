@@ -88,10 +88,7 @@ class BasicTuneStrategy(TuneStrategy):
                 for op in self.opwise_quant_cfgs:
                     op_cfg = copy.deepcopy(self.opwise_quant_cfgs[op])
                     if len(op_cfg) > 0:
-                        if tune_cfg not in op_cfg:
-                            op_cfgs['op'][op] = copy.deepcopy(op_cfg[0])
-                        else:
-                            op_cfgs['op'][op] = copy.deepcopy(tune_cfg)
+                         op_cfgs['op'][op] = copy.deepcopy(self._get_common_cfg(tune_cfg, op_cfg))
                     else:
                         op_cfgs['op'][op] = copy.deepcopy(
                             self.opwise_tune_cfgs[op][0])

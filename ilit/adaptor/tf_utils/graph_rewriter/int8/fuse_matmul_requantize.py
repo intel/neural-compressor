@@ -9,22 +9,21 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer
-from ..graph_util import TFGraphRewriterHelper as Helper
+from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphRewriterHelper as Helper
 
 
 class FuseMatMulRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized MatMul Op with the successor Requantize Op.
     """
-    fuse_patterns = {"2.2.0": [["QuantizedMatMulWithBiasAndRelu",
-                                "QuantizedMatMulWithBias"], ['Requantize']],
+    fuse_patterns = {"2.2.0": [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']],
                      "2.1.0": [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']],
                      "default": [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']]}
 
     def __init__(self, model, device='cpu'):
         super().__init__(model)
         self.device = device
-        self.graph_analyzer = TFGraphAnalyzer()
+        self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model
 
         self.graph_info = self.graph_analyzer.parse_graph()
@@ -39,7 +38,8 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
         qint32_type = dtypes.qint32.as_datatype_enum
 
         while True:
-            target_nodes = self.graph_analyzer.search_patterns(self.fuse_patterns['default'])
+            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
+                self.fuse_patterns['default'])
             if len(target_nodes) == 0:
                 break
 

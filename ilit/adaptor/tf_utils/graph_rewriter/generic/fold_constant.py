@@ -7,14 +7,14 @@ import tensorflow as tf
 
 from tensorflow.python.platform import tf_logging
 from ..graph_base import GraphRewriterBase
-from ..graph_util import TFGraphAnalyzer, TFGraphRewriterHelper
+from ..graph_util import GraphAnalyzer, GraphRewriterHelper
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):
     supported_op_type = ["Add", "AddV2", "Const", "Mul", "Rsqrt", "Sub"]
 
     def __init__(self, model=None):
-        super(GraphFoldConstantOptimizer, self).__init__(model)
-        self.graph_analyzer = TFGraphAnalyzer()
+        super().__init__(model)
+        self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model
 
         self.graph_info = self.graph_analyzer.parse_graph()
@@ -89,7 +89,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                     "Currently fold-constant only support limited ops {} but face {}".format(
                         self.supported_op_type, end_node.op))
         else:
-            return np.float32(TFGraphRewriterHelper.values_from_const(end_node))
+            return np.float32(GraphRewriterHelper.values_from_const(end_node))
 
     def check_all_folded(self):
         for node_name, _ in self.graph_info.items():
@@ -107,7 +107,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
             return False
         constant_flag = True
         for input_name in self.graph_info[node_name].node.input:
-            input_name = TFGraphRewriterHelper.node_name_from_input(input_name)
+            input_name = GraphRewriterHelper.node_name_from_input(input_name)
             input_node = self.graph_info[input_name].node
             constant_flag &= input_node.op == "Const" and not input_node.input
         return constant_flag
@@ -127,7 +127,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                 if self.check_const_inputs(node_name):
                     fold_value = self._fold_value(node_name)
                     fold_type = tf.as_dtype(np.float32(fold_value).dtype)
-                    new_constant_node = TFGraphRewriterHelper.create_constant_node(
+                    new_constant_node = GraphRewriterHelper.create_constant_node(
                         node_name + "_const", fold_value, fold_type)
                     self.graph_analyzer.replace_constant_graph_with_constant_node(
                         new_constant_node, node_name)

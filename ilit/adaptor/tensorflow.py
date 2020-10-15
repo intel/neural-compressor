@@ -30,6 +30,8 @@ class TensorFlowAdaptor(Adaptor):
         self.inputs = self.framework_specific_info['inputs']
         self.outputs = self.framework_specific_info['outputs']
         self.device = self.framework_specific_info['device']
+        self.pre_optimized_graph = None
+        self.pre_optimizer_handle = None
         self.bf16_ops = []
         self.fp32_ops = []
 
@@ -57,7 +59,7 @@ class TensorFlowAdaptor(Adaptor):
 
         Args:
             input_graph ([Graph, GraphDef or Path String]): The model could be the graph,
-                          graph_def object, the frozen pb or ckpt/savedmodel folder path.
+                        graph_def object, the frozen pb or ckpt/savedmodel folder path.
             dataloader (generator): generate the data and labels.
             metric (object, optional): Depends on model category. Defaults to None.
             measurer (object, optional): for precise benchmark measurement.
@@ -68,12 +70,11 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("start to evaluate model....")
         from .tf_utils.util import get_graph_def
         import tensorflow as tf
+        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+
         graph = tf.Graph()
-        graph_def = get_graph_def(input_graph)
-        from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference 
-        from tensorflow.python.framework import dtypes
-        graph_def = optimize_for_inference(graph_def, [self.inputs[0]], self.outputs, \
-                                           dtypes.float32.as_datatype_enum, False) 
+        graph_def = PreOptimization(get_graph_def(input_graph),
+                                      self.inputs, self.outputs).get_optimized_graphdef()
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
@@ -135,15 +136,14 @@ class TensorFlowAdaptor(Adaptor):
             if 'weight' in tuning_cfg['op'][each_op_info]:
                 is_perchannel = tuning_cfg['op'][each_op_info]['weight'][
                     'granularity'] == 'per_channel'
-            algorithm = tuning_cfg['op'][each_op_info]['activation'][
-                'algorithm']
+            algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
 
             is_asymmetric = False
             if 'activation' in tuning_cfg['op'][each_op_info]:
-                is_asymmetric = tuning_cfg['op'][each_op_info]['activation'][
-                    'scheme'] == 'asym'
+                is_asymmetric = tuning_cfg['op'][each_op_info]['activation']['scheme'] == 'asym'
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
-                                                               algorithm, is_asymmetric)
+                                                               algorithm,
+                                                               is_asymmetric)
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         int8_sum_count = 0
@@ -167,16 +167,17 @@ class TensorFlowAdaptor(Adaptor):
                     print ('|', 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length), "|")
             bf16_sum_count += bf16_count
         overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
-        int8_percent = float(int8_sum_count/overall_ops_count)
-        bf16_percent = float(bf16_sum_count/overall_ops_count)
-        print('|', 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(int8_percent,
-                                                                            int8_sum_count,
-                                                                            overall_ops_count,
-                                                                            bf16_percent,
-                                                                            bf16_sum_count,
-                                                                            overall_ops_count)
-                                                                            .ljust(log_length),
-                                                                            "|")
+        if overall_ops_count > 0:
+            int8_percent = float(int8_sum_count/overall_ops_count)
+            bf16_percent = float(bf16_sum_count/overall_ops_count)
+            print('|', 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(int8_percent,
+                                                                                int8_sum_count,
+                                                                                overall_ops_count,
+                                                                                bf16_percent,
+                                                                                bf16_sum_count,
+                                                                                overall_ops_count)
+                                                                                .ljust(log_length),
+                                                                                "|")
         print('|', '*'*log_length, "|")
 
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -187,7 +188,7 @@ class TensorFlowAdaptor(Adaptor):
             model (tf.compat.v1.GraphDef): fp32 model
             data_loader (generator): generator the data and labels
             q_func (optional): training function for quantization aware training mode,
-                               unimplement yet for tensorflow
+                                which not enabled for tensorflow yet.
 
         Returns:
             tf.compat.v1.GraphDef: the quantized model
@@ -199,7 +200,7 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(model,
+        converter = GraphConverter(self.pre_optimized_graph if self.pre_optimized_graph else model,
                                    quantized_model,
                                    inputs=self.inputs,
                                    outputs=self.outputs,
@@ -209,18 +210,15 @@ class TensorFlowAdaptor(Adaptor):
                                    data_loader=data_loader)
         return converter.convert()
 
-    def _query_quantizable_ops(self, graph, activation_dtype, weight_dtype):
+    def _query_quantizable_ops(self, matched_nodes, activation_dtype, weight_dtype):
         """Collect the op-wise configuration for quantization.
 
         Returns:
             OrderDict: op-wise configuration.
         """
-        from .tf_utils.util import get_graph_def
 
-        graph_def = get_graph_def(graph)
-        assert graph_def
-        tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative", "MaxPool",
-                                  "AvgPool", "ConcatV2", "MatMul", "Pad")
+        tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative",
+                                  "MaxPool", "AvgPool", "ConcatV2", "MatMul", "Pad")
         conv_config = {
             'activation': {
                 'dtype': activation_dtype,
@@ -259,26 +257,40 @@ class TensorFlowAdaptor(Adaptor):
         }
 
         self.quantizable_op_details = OrderedDict()
-        self._init_op_stat = {i:[] for i in tf_quantizable_op_type}
-        for node in graph_def.node:
-            if node.op in tf_quantizable_op_type:
-                self._init_op_stat[node.op].append(node.name)
 
-                if self.unify_op_type_mapping[node.op].find("conv2d") != -1:
+        self._init_op_stat = {i:[] for i in tf_quantizable_op_type}
+        for details in matched_nodes:
+            node_op = details[-1][0]
+            node_name = details[0]
+            patterns = details[-1]
+            pat_length = len(patterns)
+            pattern_info = {
+                'sequence': [','.join(patterns[:pat_length - i]) for i in range(pat_length)][0],
+                'precision': ['int8']
+            }
+            if node_op in tf_quantizable_op_type:
+                self._init_op_stat[node_op].append(node_name)
+                if self.unify_op_type_mapping[node_op].find("conv2d") != -1:
+                    conv2d_int8_config = copy.deepcopy(conv_config)
+                    conv2d_int8_config['pattern'] = pattern_info
                     self.quantizable_op_details[(
-                        node.name, self.unify_op_type_mapping[node.op]
-                    )] = copy.deepcopy(conv_config)
-                elif self.unify_op_type_mapping[node.op].find("matmul") != -1:
+                        node_name, self.unify_op_type_mapping[node_op]
+                    )] = conv2d_int8_config
+                elif self.unify_op_type_mapping[node_op].find("matmul") != -1:
+                    is_positive_input = self.pre_optimizer_handle.has_positive_input(node_name)
+                    matmul_int8_config = copy.deepcopy(matmul_config)
+                    matmul_int8_config['pattern'] = pattern_info
+                    matmul_scheme = 'sym' if is_positive_input else 'asym'
+                    matmul_int8_config['activation']['scheme'] = matmul_scheme
                     self.quantizable_op_details[(
-                        node.name, self.unify_op_type_mapping[node.op]
-                    )] = copy.deepcopy(matmul_config)
+                        node_name, self.unify_op_type_mapping[node_op]
+                    )] = matmul_int8_config
                 else:
                     self.quantizable_op_details[(
-                        node.name, self.unify_op_type_mapping[node.op]
+                        node_name, self.unify_op_type_mapping[node_op]
                     )] = copy.deepcopy(other_config)
 
-                self.quantize_config['op_wise_config'][node.name] = (False,
-                                                                     "minmax", False)
+                self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
         return self.quantizable_op_details
 
     def _support_bf16(self):
@@ -311,6 +323,16 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: model-wise & op-wise configuration for quantization.
         """
+        import tensorflow as tf
+        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        from .tf_utils.graph_rewriter.graph_info import TFLowbitPrecisionPatterns
+
+        self.pre_optimizer_handle = PreOptimization(model, self.inputs, self.outputs)
+        self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
+        tf_version = tf.version.VERSION
+        patterns = TFLowbitPrecisionPatterns(tf_version).get_supported_patterns()
+        matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
+
         activation_dtype = ['uint8', 'fp32']
         weight_dtype = ['int8', 'fp32']
         if self._support_bf16():
@@ -334,7 +356,7 @@ class TensorFlowAdaptor(Adaptor):
                 },
             }
         }
-        self._query_quantizable_ops(model, activation_dtype, weight_dtype)
+        self._query_quantizable_ops(matched_nodes, activation_dtype, weight_dtype)
         capability['opwise'] = self.quantizable_op_details
         logger.debug('Dump framework quantization capability:')
         logger.debug(capability)
