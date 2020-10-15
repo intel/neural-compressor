@@ -1,7 +1,7 @@
 Intel® Low Precision Optimization Tool
 =========================================
 
-Intel® Low Precision Optimization Tool is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like performance, model size, or memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
+Intel® Low Precision Optimization Tool is an open-source python library which is intended to deliver a unified low-precision inference interface cross multiple Intel optimized DL frameworks on both CPU and GPU. It supports automatic accuracy-driven tuning strategies, along with additional objectives like optimizing for performance, model size and memory footprint. It also provides the easy extension capability for new backends, tuning strategies, metrics and objectives.
 
 
 > **WARNING**
@@ -123,11 +123,11 @@ The followings are the examples integrated with Intel® Low Precision Optimizati
 
 1. KL Divergence Algorithm is very slow at TensorFlow
 
-   Due to TensorFlow not supporting tensor dump naturally, current solution of dumping the tensor content is adding print op and dumpping the value to stdout. So if the model to tune is a TensorFlow model, please restrict calibration.algorithm.activation and calibration.algorithm.weight in user yaml config file to minmax.
+   Due to TensorFlow not supporting tensor dump naturally, current solution of dumping the tensor content is adding print op and dumping the value to stdout. So if the model to tune is a TensorFlow model, please restrict calibration.algorithm.activation and calibration.algorithm.weight in user YAML config file to minmax.
 
 2. MSE tuning strategy doesn't work with PyTorch adaptor layer
 
-   MSE tuning strategy requires to compare FP32 tensor and INT8 tensor to decide which op has impact on final quantization accuracy. PyTorch adaptor layer doesn't implement this inspect tensor interface. So if the model to tune is a PyTorch model, please not choose MSE tuning strategy.
+   MSE tuning strategy requires to compare FP32 tensor and INT8 tensor to decide which op has impact on final quantization accuracy. PyTorch adaptor layer doesn't implement this inspect tensor interface. So if the model to tune is a PyTorch model, please do not choose MSE tuning strategy.
 
 # Support
 
