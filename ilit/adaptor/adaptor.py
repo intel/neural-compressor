@@ -109,3 +109,18 @@ class Adaptor(object):
                 scale (float): The scale for dataloader to generate quantized input
         '''
         return model, 1.
+
+    @abstractmethod
+    def _pre_eval_hook(self, model):
+        '''The function is used to do some preprocession before evaluation phase.
+
+        Return:
+              model
+        '''
+        raise NotImplementedError
+
+    @abstractmethod
+    def _post_eval_hook(self):
+        '''The function is used to do some post process after complete evaluation.
+        '''
+        raise NotImplementedError

@@ -52,8 +52,36 @@ class TensorFlowAdaptor(Adaptor):
                 name = 'import/' + name
         raise ValueError('can not find tensor by name')
 
+    def log_histogram(self, writer, tag, values, step=0, bins=1000):
+        import tensorflow as tf
+        # Convert to a numpy array
+        values = np.array(values)
+    
+        # Create histogram using numpy
+        counts, bin_edges = np.histogram(values, bins=bins)
+    
+        # Fill fields of histogram proto
+        hist = tf.compat.v1.HistogramProto()
+        hist.min = float(np.min(values))
+        hist.max = float(np.max(values))
+        hist.num = int(np.prod(values.shape))
+        hist.sum = float(np.sum(values))
+        hist.sum_squares = float(np.sum(values**2))
+    
+        bin_edges = bin_edges[1:]
+    
+        for edge in bin_edges:
+            hist.bucket_limit.append(edge)
+        for c in counts:
+            hist.bucket.append(c)
+    
+        # Create and write Summary
+        summary = tf.compat.v1.Summary(value=[tf.compat.v1.Summary.Value(tag=tag, histo=hist)])
+        writer.add_summary(summary, step)
+        writer.flush()
+
     def evaluate(self, input_graph, dataloader, postprocess=None, \
-                 metric=None, measurer=None, iteration=-1):
+                 metric=None, measurer=None, iteration=-1, tensorboard=False):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
@@ -62,6 +90,7 @@ class TensorFlowAdaptor(Adaptor):
             dataloader (generator): generate the data and labels.
             metric (object, optional): Depends on model category. Defaults to None.
             measurer (object, optional): for precise benchmark measurement.
+            tensorboard (boolean, optional): for tensorboard inspect tensor.
 
         Returns:
             [float]: evaluation result, the larger is better.
@@ -69,6 +98,7 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("start to evaluate model....")
         from .tf_utils.util import get_graph_def
         import tensorflow as tf
+        from tensorflow.python.framework import tensor_util
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         graph = tf.Graph()
@@ -78,9 +108,21 @@ class TensorFlowAdaptor(Adaptor):
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
 
+        outputs = copy.deepcopy(self.outputs)
+        if tensorboard:
+            inspect_node_name = [node.name for node in graph_def.node if node.op not in ['Const']]
+            outputs.extend(inspect_node_name)
+            writer = tf.compat.v1.summary.FileWriter("./run/eval")
+
+            # Inspect weights, bias. Need further optimize
+            for node in graph_def.node:
+                if node.op == "Const":
+                    const_value = tensor_util.MakeNdarray(node.attr.get('value').tensor)
+                    self.log_histogram(writer, node.name, const_value)
+
         input_tensor = self.get_tensor_by_name_with_import(graph, self.inputs[0] + ":0")
         output_tensor = [
-            self.get_tensor_by_name_with_import(graph, x + ":0") for x in self.outputs
+            self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
         ]
 
         config = tf.compat.v1.ConfigProto() 
@@ -99,6 +141,11 @@ class TensorFlowAdaptor(Adaptor):
                 measurer.end()
             else:
                 predictions = sess_graph.run(output_tensor, {input_tensor: images})
+            # Inspect node output, just get 1st iteration output tensors for now 
+            if idx == 0 and tensorboard:
+                for index, node_name in enumerate(outputs):
+                    self.log_histogram(writer, node_name + ".output", predictions[index], idx)
+                writer.close()
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
@@ -474,3 +521,8 @@ class TensorFlowAdaptor(Adaptor):
             tensorflow.import_graph_def(graph_def, name='')
         return graph, scale
 
+    def _pre_eval_hook(self, model):
+        return model
+
+    def _post_eval_hook(self):
+        pass

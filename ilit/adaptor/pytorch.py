@@ -169,8 +169,8 @@ class PyTorchAdaptor(Adaptor):
 
         return q_model
 
-    def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1):
+    def evaluate(self, model, dataloader, postprocess=None, \
+                 metric=None, measurer=None, iteration=-1, tensorboard=False):
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model.eval()

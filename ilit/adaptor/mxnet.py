@@ -161,7 +161,7 @@ class MxNetAdaptor(Adaptor):
         raise NotImplementedError
 
     def evaluate(self, model, dataloader, postprocess=None, \
-                 metric=None, measurer=None, iteration=-1):
+                 metric=None, measurer=None, iteration=-1, tensorboard=False):
         """The function is used to run evaluation on validation dataset.
 
         Args:

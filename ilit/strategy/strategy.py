@@ -343,7 +343,7 @@ class TuneStrategy(object):
 
         return result
 
-    def _evaluate(self, model, tune_cfg=None):
+    def _evaluate(self, model):
         """The interface of evaluating model.
 
         Args:
@@ -354,18 +354,12 @@ class TuneStrategy(object):
         """
         if self.eval_func:
             if self.cfg.tuning.tensorboard:
-
-                def eval_func(model):
-                    val, _ = self.adaptor.inspect_tensor(
-                        model,
-                        eval_func=self.eval_func,
-                        to_tensorboard=True,
-                        tune_cfg=tune_cfg)
-                    return val
-
-                val = self.objective.evaluate(eval_func, model)
-            else:
-                val = self.objective.evaluate(self.eval_func, model)
+                # Pytorch can insert observer to model in this hook. 
+                # Tensorflow don't support this mode for now
+                model = self.adaptor._pre_eval_hook(model)
+            val = self.objective.evaluate(self.eval_func, model)
+            # post_eval_hook to deal the tensor
+            self.adaptor._post_eval_hook()
         else:
             assert self.cfg.evaluation.accuracy.metric is not None, \
                 'metric field of accuracy field of evaluation section should not be empty'
@@ -375,7 +369,8 @@ class TuneStrategy(object):
                                          self.eval_dataloader, \
                                          self.adaptor, \
                                          self.cfg.evaluation.accuracy.metric, \
-                                         postprocess_cfg)
+                                         postprocess_cfg, \
+                                         tensorboard = self.cfg.tuning.tensorboard)
 
             val = self.objective.evaluate(eval_func, model)
         return val

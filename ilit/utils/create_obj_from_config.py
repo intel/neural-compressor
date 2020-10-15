@@ -56,7 +56,8 @@ def create_dataloader(framework, dataloader_cfg):
     return DataLoader(dataset=eval_dataset, framework=framework, batch_size=batch_size)
 
 def create_eval_func(framework, dataloader, adaptor, \
-                     metric_cfg, postprocess_cfg=None, iteration=-1):
+                     metric_cfg, postprocess_cfg=None, \
+                     iteration=-1, tensorboard=False):
     """The interface to create evaluate function from config.
 
     Args:
@@ -84,7 +85,7 @@ def create_eval_func(framework, dataloader, adaptor, \
     
     def eval_func(model, measurer=None):
         return adaptor.evaluate(model, dataloader, postprocess, \
-                                metric, measurer, iteration)
+                                metric, measurer, iteration, tensorboard)
 
     return eval_func
 
