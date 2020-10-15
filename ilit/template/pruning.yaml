@@ -9,7 +9,8 @@ device: cpu                                          # optional. default value i
 pruning:                                             # mandotory only for pruning.
   magnitude_pruning:
     prune1:
-      weights: {'layer1.0.conv1.weight': 0.3,  'layer1.0.conv1.weight': 0.4}
+      weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
+      target_sparsity: 0.3
       epoch: [1, 5, 2]
     prune2:
       weights: ['layer1.0.conv3.weight', 'layer1.0.conv4.weight']
@@ -26,7 +27,8 @@ pruning:                                             # mandotory only for prunin
   start_epoch: 0
   end_epoch: 20
   frequency: 2
-  sparsity: 0.5
+  init_sparsity: 0
+  target_sparsity: 0.5
 
 evaluation:                                          # optional. used to config evaluation process. 
   accuracy:                                          # optional. used to evaluate accuracy of passing model.
