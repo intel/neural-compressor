@@ -52,6 +52,20 @@ class PyTorchAdaptor(Adaptor):
         self.is_baseline = True
         self.tune_cfg = None
 
+        # for tensorboard         
+        self.dump_times = 0
+        self.fused_op = ['nni.ConvReLU1d', 
+                         'nni.ConvReLU2d', 
+                         'nni.ConvReLU3d', 
+                         'nni.LinearReLU', 
+                         'nni.BNReLU2d', 
+                         'nni.BNReLU3d', 
+                         'nniqat.ConvReLU2d', 
+                         'nniqat.ConvBn2d', 
+                         'nniqat.ConvBnReLU2d', 
+                         'nni.LinearReLU']
+        self.fused_dict = {}
+
         if framework_specific_info['approach'] == "post_training_static_quant":
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
         elif framework_specific_info['approach'] == "quant_aware_training":
@@ -221,7 +235,7 @@ class PyTorchAdaptor(Adaptor):
         acc = metric.result() if metric is not None else 0
 
         if tensorboard:
-            self._post_eval_hook(model)
+            self._post_eval_hook(model, accuracy=acc)
 
         return acc
 
@@ -645,11 +659,22 @@ class PyTorchAdaptor(Adaptor):
                     module.qconfig.activation())
                 module.register_forward_hook(_observer_forward_hook)
 
+        def is_fused_module(module):
+            op_type = str(type(module))
+            op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'') 
+            op_type = 'nni.' + op_type
+            if op_type in self.fused_op:
+                return True 
+            else:
+                return False
+
+
         def _propagate_qconfig_helper(module,
                                       qconfig_dict,
                                       white_list=None,
                                       qconfig_parent=None,
-                                      prefix=''):
+                                      prefix='',
+                                      fused=False):
             r"""This is a helper function for `propagate_qconfig_`
 
             Args:
@@ -679,8 +704,17 @@ class PyTorchAdaptor(Adaptor):
                 module.qconfig = module_qconfig
             for name, child in module.named_children():
                 module_prefix = prefix + '.' + name if prefix else name
+                if is_fused_module(module):
+                   if prefix in self.fused_dict:
+                      self.fused_dict[prefix] = [self.fused_dict[prefix], module_prefix]
+                   else:
+                      self.fused_dict[prefix] = module_prefix 
+                   _fused = True
+                else:
+                   _fused = False 
+
                 _propagate_qconfig_helper(child, qconfig_dict, white_list,
-                                          module_qconfig, module_prefix)
+                                          module_qconfig, module_prefix, fused=_fused)
 
         def _prepare(model, inplace=True, op_list=[], white_list=None):
             r"""
@@ -725,13 +759,42 @@ class PyTorchAdaptor(Adaptor):
 
         return model
 
-    def _post_eval_hook(self, model):
+    def is_fused_child(self, op_name):
+        op = op_name[:op_name.rfind('.')] 
+        if op in self.fused_dict and op_name[op_name.rfind('.')+1:].isdigit():
+           return True
+        else:
+           return False
+
+    def is_fused_op(self, op_name):
+        op = op_name[:op_name.rfind('.')] 
+        if op in self.fused_dict:
+           return True
+        else:
+           return False
+
+    def is_last_fused_child(self, op_name):
+        op = op_name[:op_name.rfind('.')] 
+        if op_name in self.fused_dict[op][-1]:
+           return True
+        else:
+           return False
+ 
+    def _post_eval_hook(self, model, **args):
         '''The function is used to do some post process after complete evaluation.
         '''
         from torch.utils.tensorboard import SummaryWriter
         from torch.quantization import get_observer_dict
 
-        writer = SummaryWriter('./run/eval')
+        if args is not None and 'accuracy' in args:
+           accuracy = args['accuracy'] 
+        else:
+           accuracy = '' 
+
+        writer = SummaryWriter('runs/eval/tune_' + 
+                               str(self.dump_times) + 
+                               '_acc' + str(accuracy))
+        
         summary = OrderedDict()
         observer_dict = {}
         get_observer_dict(model, observer_dict)
@@ -742,28 +805,62 @@ class PyTorchAdaptor(Adaptor):
             op_name = key.strip(".activation_post_process")
             summary[op_name + ".output"] = observer_dict[key].get_tensor_value()
             for iter in summary[op_name + ".output"]:
+                # Only collect last fused child output
+                op = op_name
+                if self.is_fused_child(op_name) == True and self.is_last_fused_child(op_name) == True:
+                    op = op_name[:op_name.rfind('.')] 
+                else:
+                    if self.is_fused_child(op_name) == True and \
+                       self.is_last_fused_child(op_name) == False: 
+                        continue 
+                    else:
+                        op = op_name
+        
+
                 if summary[op_name + ".output"][iter].is_quantized:
                     writer.add_histogram(
-                        op_name + "_int8.output",
+                        op + "/Output/int8",
                         torch.dequantize(summary[op_name +
                                                  ".output"][iter]))
                 else:
                     writer.add_histogram(
-                        op_name + "_fp32.output",
+                        op + "/Output/fp32",
                         summary[op_name + ".output"][iter])
+    
 
         state_dict = model.state_dict()
         for key in state_dict:
             if not isinstance(state_dict[key], torch.Tensor):
                 continue
+
+            op = key[:key.rfind('.')] 
+            if self.is_fused_child(op) == True:
+               # fused child tensorboard tag will be merge   
+               weight = key[key.rfind('.')+1:]
+               op = op[:op.rfind('.')] + '/' + weight 
+            else:
+               weight = key[key.rfind('.')+1:]
+               op = key[:key.rfind('.')] + '/' + weight 
+            
+            # To merge ._packed_params 
+            op = op.replace('._packed_params', '')
+
             if state_dict[key].is_quantized:
-                writer.add_histogram("int8_" + key,
+                writer.add_histogram(op + "/int8",
                                      torch.dequantize(state_dict[key]))
             else:
-                writer.add_histogram("fp32_" + key, state_dict[key])
-        writer.add_text("tune_cfg",
+                writer.add_histogram(op + "/fp32", state_dict[key])
+
+
+        if self.dump_times == 0:
+            writer.add_text("accuracy/baseline - ", text_string=str(accuracy))
+        else:
+            writer.add_text("accuracy/tune_" + str(self.dump_times) + " - ", str(accuracy))
+            writer.add_text("tune_cfg",
                         "fp32_baseline" if self.tune_cfg is None else str(self.tune_cfg))
-        writer.close()
+            writer.close()
+        self.dump_times = self.dump_times + 1
+     
         return summary
 
     def get_all_weight_names(self, model):

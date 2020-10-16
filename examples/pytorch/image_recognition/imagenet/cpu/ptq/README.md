@@ -191,5 +191,20 @@ Intel® Low Precision Optimization Tool can dump every layer output tensor which
 ```
 tensorboard: true
 ```
-
 The default value of "tensorboard" is "off".
+
+For example: 
+```
+sh run_tuning_dump_tensor.sh --topology=resnet18 --dataset_location=<Dataset>
+```
+A "./runs" folder will be generated, for example 
+
+```
+ls runs/eval/
+tune_0_acc0.73  tune_1_acc0.71 tune_2_acc0.72
+```
+"tune_0_acc0.73" means FP32 baseline is accuracy 0.73, and the best tune result is tune_2 with accuracy 0.72. You may want to compare them in tensorboard. It will demonstrate the output tensor and weight of each op in "Histogram", you can also find the tune config of each tuning run in "Text":  
+```
+tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.72
+```
+
