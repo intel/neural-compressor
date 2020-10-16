@@ -33,6 +33,7 @@ class TensorFlowAdaptor(Adaptor):
         self.pre_optimizer_handle = None
         self.bf16_ops = []
         self.fp32_ops = []
+        self.dump_times = 0   # for tensorboard
 
     def get_tensor_by_name_with_import(self, graph, name, try_cnt=3):
         """Get the tensor by name considering the 'import' scope when model
@@ -80,6 +81,13 @@ class TensorFlowAdaptor(Adaptor):
         writer.add_summary(summary, step)
         writer.flush()
 
+    def _dequantize(self, data, scale_info):
+        original_shape = data.shape
+        size = data.size
+        new_data = data.reshape(size, )
+        max_value = 255 if scale_info[0].find("Relu") != -1 else 127
+        return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
+
     def evaluate(self, input_graph, dataloader, postprocess=None, \
                  metric=None, measurer=None, iteration=-1, tensorboard=False):
         """Evaluate the model for specified metric on validation dataset.
@@ -98,7 +106,6 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("start to evaluate model....")
         from .tf_utils.util import get_graph_def
         import tensorflow as tf
-        from tensorflow.python.framework import tensor_util
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         graph = tf.Graph()
@@ -110,16 +117,52 @@ class TensorFlowAdaptor(Adaptor):
 
         outputs = copy.deepcopy(self.outputs)
         if tensorboard:
-            inspect_node_name = [node.name for node in graph_def.node if node.op not in ['Const']]
-            outputs.extend(inspect_node_name)
-            writer = tf.compat.v1.summary.FileWriter("./run/eval")
+            from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+            from tensorflow.python.framework import tensor_util
 
-            # Inspect weights, bias. Need further optimize
+            output_postfix = "_fp32.output"
+            inspect_node_types = ["Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool", 
+                                  "ConcatV2", "MatMul", "FusedBatchNormV3", "BiasAdd", 
+                                  "Relu", "Relu6", "Dequantize"]
+            fp32_inspect_node_name = []
+            int8_inspect_node_name = []
+            q_node_scale = {}
+            if self.dump_times == 0:
+                temp_dir = "./run/eval/baseline"
+            else:
+                temp_dir = "./run/eval/tune_" + str(self.dump_times)
+            if os.path.isdir(temp_dir):
+                import shutil
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            writer = tf.compat.v1.summary.FileWriter(temp_dir)
+
+            cur_graph = GraphAnalyzer()
+            cur_graph.graph = graph_def
+            cur_graph.parse_graph()
+            graph_info = cur_graph.node_name_details
             for node in graph_def.node:
-                if node.op == "Const":
+                if node.op in inspect_node_types:
+                    fp32_inspect_node_name.append(node.name)
+                elif node.op.find("QuantizedConv") != -1:
+                    out_min = -2
+                    out_max = -1
+                    if node.op.find("Sum") != -1:
+                        out_min = -5
+                        out_max = -4
+                    q_out_min = graph_info[node.input[out_min]].node.attr["value"].tensor.float_val[0]
+                    q_out_max = graph_info[node.input[out_max]].node.attr["value"].tensor.float_val[0]
+                    q_node_scale[node.name] = (node.op, q_out_min, q_out_max)
+                    int8_inspect_node_name.append(node.name)
+                # Inspect weights, bias. Need further optimize
+                if node.op == "Const" and (graph_info[graph_info[node.name].outputs[0]].node.op in 
+                    ["Conv2D", "DepthwiseConv2dNative", "MatMul", "FusedBatchNormV3", "BiasAdd"]):
                     const_value = tensor_util.MakeNdarray(node.attr.get('value').tensor)
                     self.log_histogram(writer, node.name, const_value)
 
+            outputs.extend(fp32_inspect_node_name)
+            if len(int8_inspect_node_name) > 0:
+                output_postfix = "_int8.output"
+                outputs.extend(int8_inspect_node_name)
         input_tensor = self.get_tensor_by_name_with_import(graph, self.inputs[0] + ":0")
         output_tensor = [
             self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
@@ -144,7 +187,10 @@ class TensorFlowAdaptor(Adaptor):
             # Inspect node output, just get 1st iteration output tensors for now 
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):
-                    self.log_histogram(writer, node_name + ".output", predictions[index], idx)
+                    tensor = predictions[index]
+                    if node_name in int8_inspect_node_name:
+                        tensor = self._dequantize(predictions[index], q_node_scale[node_name])
+                    self.log_histogram(writer, node_name + output_postfix, tensor, idx)
                 writer.close()
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
@@ -153,6 +199,13 @@ class TensorFlowAdaptor(Adaptor):
             if idx + 1 == iteration:
                 break
         acc = metric.result() if metric is not None else 0
+        if tensorboard:
+            new_dir = temp_dir + "_acc_" + str(acc)
+            if os.path.isdir(new_dir):
+                import shutil
+                shutil.rmtree(new_dir, ignore_errors=True)
+            os.rename(temp_dir, new_dir)
+            self.dump_times += 1
         sess_graph.close()
         return acc
 

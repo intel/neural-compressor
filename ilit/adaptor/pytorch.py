@@ -807,7 +807,8 @@ class PyTorchAdaptor(Adaptor):
             for iter in summary[op_name + ".output"]:
                 # Only collect last fused child output
                 op = op_name
-                if self.is_fused_child(op_name) == True and self.is_last_fused_child(op_name) == True:
+                if self.is_fused_child(op_name) == True and \
+                   self.is_last_fused_child(op_name) == True:
                     op = op_name[:op_name.rfind('.')] 
                 else:
                     if self.is_fused_child(op_name) == True and \
