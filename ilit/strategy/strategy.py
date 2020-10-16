@@ -236,7 +236,7 @@ class TuneStrategy(object):
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 assert self.last_qmodel
                 trials_count += 1
-                self.last_tune_result = self._evaluate(self.last_qmodel, tune_cfg)
+                self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 need_stop = self.stop(t, trials_count)
 
@@ -358,8 +358,9 @@ class TuneStrategy(object):
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
             val = self.objective.evaluate(self.eval_func, model)
-            # post_eval_hook to deal the tensor
-            self.adaptor._post_eval_hook()
+            if self.cfg.tensorboard:
+                # post_eval_hook to deal the tensor
+                self.adaptor._post_eval_hook(model)
         else:
             assert self.cfg.evaluation.accuracy.metric is not None, \
                 'metric field of accuracy field of evaluation section should not be empty'

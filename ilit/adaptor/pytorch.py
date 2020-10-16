@@ -50,6 +50,7 @@ class PyTorchAdaptor(Adaptor):
         self.approach = framework_specific_info['approach']
         self.device = framework_specific_info['device']
         self.is_baseline = True
+        self.tune_cfg = None
 
         if framework_specific_info['approach'] == "post_training_static_quant":
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
@@ -126,6 +127,9 @@ class PyTorchAdaptor(Adaptor):
         elif self.approach == 'post_training_static_quant':
             q_model.eval()
 
+        # For tensorboard display
+        self.tune_cfg = tune_cfg
+
         op_cfgs = self._cfg_to_qconfig(tune_cfg)
         self._propagate_qconfig(q_model, op_cfgs)
         # sanity check common API misusage
@@ -179,7 +183,13 @@ class PyTorchAdaptor(Adaptor):
         elif self.device == "gpu":
             if self.is_baseline:
                 model.to("dpcpp")
-                self.is_baseline = False
+
+        if tensorboard:
+            model = self._pre_eval_hook(model)
+
+        if self.is_baseline:
+            self.is_baseline = False
+
         with torch.no_grad():
             for idx, (input, label) in enumerate(dataloader):
                 if measurer is not None:
@@ -209,6 +219,10 @@ class PyTorchAdaptor(Adaptor):
                 if idx + 1 == iteration:
                     break
         acc = metric.result() if metric is not None else 0
+
+        if tensorboard:
+            self._post_eval_hook(model)
+
         return acc
 
     def _cfg_to_qconfig(self, tune_cfg):
@@ -547,22 +561,16 @@ class PyTorchAdaptor(Adaptor):
 
         return q_capability
 
-    def inspect_tensor(self,
-                       model_in,
-                       dataloader=None,
-                       eval_func=None,
-                       q_func=None,
-                       tune_cfg=None,
-                       to_tensorboard=False,
-                       op_list=None,
-                       iteration_list=None,
-                       postprocess=None,
-                       metric=None):
-        from abc import ABCMeta
-        from torch.quantization import get_observer_dict
+    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+        pass
 
-        if to_tensorboard:
-            from torch.utils.tensorboard import SummaryWriter
+    def _pre_eval_hook(self, model):
+        '''The function is used to do some preprocession before evaluation phase.
+
+        Return:
+              model
+        '''
+        from abc import ABCMeta
 
         ABC = ABCMeta(str("ABC"), (object, ),
                       {})  # compatible with Python 2 *and* 3:
@@ -623,7 +631,7 @@ class PyTorchAdaptor(Adaptor):
                                'qconfig') and child.qconfig is not None and (
                                    op_list is None or op_name in op_list):
                         child.activation_post_process = \
-                            child.qconfig.activation(iteration_list=iteration_list)
+                            child.qconfig.activation()
                 else:
                     _add_observer_(child, op_list, op_name)
 
@@ -634,7 +642,7 @@ class PyTorchAdaptor(Adaptor):
                 # observer and hook will be gone after we swap the module
                 module.add_module(
                     'activation_post_process',
-                    module.qconfig.activation(iteration_list=iteration_list))
+                    module.qconfig.activation())
                 module.register_forward_hook(_observer_forward_hook)
 
         def _propagate_qconfig_helper(module,
@@ -701,28 +709,30 @@ class PyTorchAdaptor(Adaptor):
             return model
 
         # create properties
-        summary = OrderedDict()
         white_list = self.white_list | \
             (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
 
-        model = model_in if not self.is_baseline else copy.deepcopy(model_in)
-        self.is_baseline = False
-        writer = SummaryWriter('runs/eval')
-        if eval_func:
-            model.qconfig = torch.quantization.QConfig(
-                weight=torch.quantization.default_weight_observer,
-                activation=_RecordingObserver)
-            model = _prepare(model, op_list=op_list, white_list=white_list)
-            accuracy = eval_func(model)
-        else:
-            model.qconfig = torch.quantization.QConfig(
-                weight=torch.quantization.default_weight_observer,
-                activation=_RecordingObserver)
-            model = _prepare(model, op_list=op_list, white_list=white_list)
-            accuracy = self.evaluate(model, dataloader, postprocess, metric)
+        model = model if not self.is_baseline else copy.deepcopy(model)
+        model.qconfig = torch.quantization.QConfig(
+            weight=torch.quantization.default_weight_observer,
+            activation=_RecordingObserver)
+        model = _prepare(model, op_list=None, white_list=white_list)
 
+        if self.is_baseline:
+            self.is_baseline = False
+
+        return model
+
+    def _post_eval_hook(self, model):
+        '''The function is used to do some post process after complete evaluation.
+        '''
+        from torch.utils.tensorboard import SummaryWriter
+        from torch.quantization import get_observer_dict
+
+        writer = SummaryWriter('./run/eval')
+        summary = OrderedDict()
         observer_dict = {}
         get_observer_dict(model, observer_dict)
         for key in observer_dict:
@@ -731,29 +741,30 @@ class PyTorchAdaptor(Adaptor):
                 continue
             op_name = key.strip(".activation_post_process")
             summary[op_name + ".output"] = observer_dict[key].get_tensor_value()
-            if to_tensorboard:
-                for iter in summary[op_name + ".output"]:
-                    if summary[op_name + ".output"][iter].is_quantized:
-                        writer.add_histogram(
-                            op_name + "_int8.output",
-                            torch.dequantize(summary[op_name +
-                                                     ".output"][iter]))
-                    else:
-                        writer.add_histogram(
-                            op_name + "_fp32.output",
-                            summary[op_name + ".output"][iter])
-                state_dict = model.state_dict()
-                for key in state_dict:
-                    if not isinstance(state_dict[key], torch.Tensor):
-                        continue
-                    if state_dict[key].is_quantized:
-                        writer.add_histogram("int8_" + key,
-                                             torch.dequantize(state_dict[key]))
-                    else:
-                        writer.add_histogram("fp32_" + key, state_dict[key])
-        writer.add_text("tune_cfg", str(tune_cfg))
+            for iter in summary[op_name + ".output"]:
+                if summary[op_name + ".output"][iter].is_quantized:
+                    writer.add_histogram(
+                        op_name + "_int8.output",
+                        torch.dequantize(summary[op_name +
+                                                 ".output"][iter]))
+                else:
+                    writer.add_histogram(
+                        op_name + "_fp32.output",
+                        summary[op_name + ".output"][iter])
+
+        state_dict = model.state_dict()
+        for key in state_dict:
+            if not isinstance(state_dict[key], torch.Tensor):
+                continue
+            if state_dict[key].is_quantized:
+                writer.add_histogram("int8_" + key,
+                                     torch.dequantize(state_dict[key]))
+            else:
+                writer.add_histogram("fp32_" + key, state_dict[key])
+        writer.add_text("tune_cfg",
+                        "fp32_baseline" if self.tune_cfg is None else str(self.tune_cfg))
         writer.close()
-        return accuracy, summary
+        return summary
 
     def get_all_weight_names(self, model):
         names = []

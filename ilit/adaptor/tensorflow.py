@@ -524,5 +524,5 @@ class TensorFlowAdaptor(Adaptor):
     def _pre_eval_hook(self, model):
         return model
 
-    def _post_eval_hook(self):
+    def _post_eval_hook(self, model):
         pass

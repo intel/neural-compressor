@@ -120,7 +120,7 @@ class Adaptor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def _post_eval_hook(self):
+    def _post_eval_hook(self, model):
         '''The function is used to do some post process after complete evaluation.
         '''
         raise NotImplementedError
