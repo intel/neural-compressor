@@ -3,29 +3,6 @@ from ..data import DATASETS, TRANSFORMS, DataLoader
 from collections import OrderedDict
 import copy
 
-def update_config(new_cfg, default_cfg):
-    if new_cfg is None:
-        return default_cfg
-    elif default_cfg is None:
-        return new_cfg
-
-    assert isinstance(new_cfg, dict) and isinstance(default_cfg, dict),\
-        'new config and default conifg should be dict'
-    return merge_dict(OrderedDict(new_cfg), default_cfg)
-
-def merge_dict(new_dict, default_dict, branch=None):
-    if branch is None:
-        branch = []
-    for key in default_dict.keys():
-        if key in new_dict.keys():
-            if isinstance(default_dict[key], dict) and \
-               isinstance(new_dict[key], dict):
-                merge_dict(new_dict[key], default_dict[key], branch + [str(key)])
-        else:
-            new_dict[key] = default_dict[key]
-    return new_dict
-
-    
 def get_func_from_config(func_dict, cfg, compose=True):
     func_list = []
     for func_name, func_value in OrderedDict(cfg).items():
@@ -61,9 +38,9 @@ def create_dataset(framework, data_source, cfg_preprocess):
     preprocess = get_preprocess(preprocesses, cfg_preprocess)
     # even we can unify transform, how can we handle the IO, or we do the transform here
     datasets = DATASETS(framework)
-    dataset_type = data_source.pop("type")
+    dataset_type = list(data_source.keys())[0]
     # in this case we should prepare eval_data and calib_data sperately
-    dataset = datasets[dataset_type](**data_source, transform=preprocess)
+    dataset = datasets[dataset_type](**data_source[dataset_type], transform=preprocess)
     return dataset
 
 def create_dataloader(framework, dataloader_cfg):

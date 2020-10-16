@@ -158,22 +158,38 @@ if input_graph:
 In examples directory, there is a ssd_resnet50_v1.yaml. We could remove most of items and only keep mandatory item for tuning.
 
 ```yaml
-framework:
-  - name: tensorflow
-    inputs: image_tensor
-    outputs: num_detections,detection_boxes,detection_scores,detection_classes
+model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+  name: ssd_resnet50_v1
 
-calibration:
-  - iterations: 1, 5, 10, 20
-    algorithm:
-      - weight: minmax
-        activation: minmax
+framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  name: tensorflow
+  inputs: image_tensor
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  calibration:
+    sampling_size: 100                               # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    activation:
+      algorithm: minmax
+    weight:
+      algorithm: minmax
+  op_wise: {
+             'FeatureExtractor/resnet_v1_50/fpn/bottom_up_block5/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'WeightSharedConvolutionalBoxPredictor_2/ClassPredictionTower/conv2d_0/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             }
+           }
 
 tuning:
-    accuracy_criterion:
-      - relative: 0.01
-    timeout: 0
-    random_seed: 9527
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
 ```
 Here we set the input tensor and output tensors name into *inputs* and *outputs* field. Meanwhile, we set mAp target as tolerating 0.01 relative mAp of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 

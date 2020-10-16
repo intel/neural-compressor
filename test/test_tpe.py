@@ -8,16 +8,20 @@ import importlib
 
 def build_fake_yaml():
     fake_yaml = '''
+        model:
+          - name: fake_yaml
         framework: 
           - name: tensorflow
             inputs: x
             outputs: op_to_store
         device: cpu
+        evaluation:
+          - accuracy:
+              metric:
+                - topk: 1
         tuning:
             strategy:
                name: tpe
-            metric:
-              - topk: 1
             accuracy_criterion:
               - relative: 0.01
             snapshot:
@@ -30,17 +34,22 @@ def build_fake_yaml():
 
 def build_fake_yaml2():
     fake_yaml = '''
+        model:
+          - name: fake_yaml
         framework: 
           - name: tensorflow
             inputs: x
             outputs: op_to_store
         device: cpu
+        evaluation:
+          - accuracy:
+              metric:
+                - topk: 1
         tuning:
             strategy:
                 name: tpe
-            metric:
-              - topk: 1
-            max_trials: 5
+            exit_policy:
+                max_trials: 5
             accuracy_criterion:
               - relative: -0.01
             snapshot:

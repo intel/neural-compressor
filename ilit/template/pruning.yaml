@@ -78,9 +78,9 @@ tuning:
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 
   snapshot:
-    saving_path: /path/to/saving/directory           # optional. if not specified, snapshot will be saved under ~/.ilit/$framework_name/$module_name directory.
+    path: /path/to/saving/directory                  # optional. if not specified, snapshot will be saved under ~/.ilit/$framework_name/$module_name directory.
   resume:
-    from: /path/to/a/specified/snapshot/file         # optional. if specified, resume from history.
+    path: /path/to/a/specified/snapshot/file         # optional. if specified, resume from history.
 
   deployment:
     output_yaml: /path/to/deploy/yaml/file           # optional. yaml generated during tuning for final deployment.

@@ -18,6 +18,8 @@ class TestConf(unittest.TestCase):
 
     def test_main_key(self):
         test = '''
+        model:
+          - name: main_key_yaml
         framework:
           - name: pytorch
         test: cpu
@@ -27,6 +29,8 @@ class TestConf(unittest.TestCase):
 
     def test_framework(self):
         test = '''
+        model:
+          - name: framework_yaml 
         framework:
           - name: pytorch, mxnet
         '''
@@ -41,6 +45,8 @@ class TestConf(unittest.TestCase):
 
     def test_device(self):
         test = '''
+        model:
+          - name: device_yaml 
         framework:
           - name: mxnet
         device: xpu
@@ -49,6 +55,8 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: device_yaml 
         framework:
           - name: tensorflow
         device: cpu
@@ -57,6 +65,8 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: device_yaml 
         framework:
           - name: mxnet
         device: cpu, gpu
@@ -66,93 +76,87 @@ class TestConf(unittest.TestCase):
 
     def test_calibration(self):
         test = '''
+        model:
+          - name: calib_yaml 
         framework:
           - name: mxnet
-        calibration:
-          - iteration: 10
+        quantization:
+          - calibration:
+             - sampling_sizes: 10
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: calib_yaml 
         framework:
           - name: mxnet
-        calibration:
-          - iterations:
+        quantization:
+          - calibration:
+             - sampling_size:
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: calib_yaml 
         framework:
           - name: mxnet
-        calibration:
-          - algorithm: kl
+        quantization:
+          - calibration:
+             - dataloader:
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: calib_yaml 
         framework:
           - name: mxnet
-        calibration:
-        algorithm:
-        - weight: kl
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
+        quantization:
+          - calibration:
+            op_wise: {
+              'test': {
+                  'activation': [{'dtype': 'uint8'}, {'algorithm': 'minmax'}]
+              }
+            }
 
-        test = '''
-        framework:
-          - name: mxnet
-        calibration:
-          - algorithm:
-          - activation: minmax
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
-        framework:
-          - name: mxnet
-        calibration:
-          - algorithm:
-            activation: minmax
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
-        framework:
-          - name: mxnet
-        calibration:
-        algorithm:
-        activation: minmax
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
     def test_quantization(self):
         test = '''
+        model:
+          - name: quant_yaml 
         framework:
           - name: mxnet
         quantization:
-          - weights:
-            - granularity: per_channel
+          - model_wise:
+              - weights:
+              - granularity: per_channel
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: quant_yaml 
         framework:
           - name: mxnet
         quantization:
+          - model_wise:
           - approach:
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: quant_yaml 
         framework:
           - name: mxnet
         quantization:
@@ -162,35 +166,43 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: quant_yaml 
         framework:
           - name: mxnet
         quantization:
-          - activation:
-              scheme: asym
-              dtype: int8
-          - weight:
-            - scheme: asym
-            - dtype: int8
+          - model_wise:
+              - activation:
+                  scheme: asym
+                  dtype: int8
+              - weight:
+                - scheme: asym
+                - dtype: int8
         '''
         helper(test)
         conf.Conf('fake_conf.yaml')
 
         test = '''
+        model:
+          - name: quant_yaml 
         framework:
           - name: mxnet
         quantization:
-          - activation:
-              scheme:
-              dtype: int8
-          - weight:
-              scheme: asym
-              dtype: int8
+          - model_wise:
+              - activation:
+                  scheme:
+                  dtype: int8
+              - weight:
+                  scheme: asym
+                  dtype: int8
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
     def test_tuning(self):
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
@@ -203,6 +215,8 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
@@ -213,6 +227,8 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
@@ -223,6 +239,8 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
@@ -235,6 +253,8 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
@@ -247,32 +267,35 @@ class TestConf(unittest.TestCase):
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
           - accuracy_criterion:
-            timeout: 3
+            exit_policy:
+              - timeout: 3
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
         test = '''
+        model:
+          - name: tuning_yaml 
         framework:
           - name: mxnet
         tuning:
           - accuracy_criterion:
               - relative: 0.01
-            ops: {
-              'test': {
-                  'activation': [{'dtype': 'uint8'}, {'algorithm': 'minmax'}]
-              }
-            }
+              - absolute: 0.01
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
     def test_snapshot(self):
         test = '''
+        model:
+          - name: snapshot_yaml 
         framework:
           - name: mxnet
         tuning:
@@ -284,6 +307,8 @@ class TestConf(unittest.TestCase):
 
     def test_inputs_outputs(self):
         test = '''
+        model:
+          - name: inout_yaml 
         framework:
           - name: mxnet
             inputs: x, y
@@ -294,12 +319,16 @@ class TestConf(unittest.TestCase):
 
     def test_modelwise_conf_merge(self):
         test = '''
+        model:
+          - name: inout_yaml 
         framework:
           - name: mxnet
-        calibration:
-          - algorithm:
-              - weight:  minmax
-                activation: minmax
+        quantization:
+          - model_wise:
+              - weight:
+                 - algorithm:  minmax
+                activation:
+                 - algorithm:  minmax
         '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')
@@ -326,10 +355,12 @@ class TestConf(unittest.TestCase):
 
     def test_ops_override(self):
         test = '''
+        model:
+          - name: ops_override_yaml 
         framework:
           - name: mxnet
-        tuning:
-          - ops: {
+        quantization:
+          - op_wise: {
                 'conv1': {
                   'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax'], 'scheme':['sym']},
                   'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
@@ -339,6 +370,11 @@ class TestConf(unittest.TestCase):
                   'weight': {'dtype': ['fp32']}
                 }
             }
+        tuning:
+          - accuracy_criterion:
+              - relative: 0.01
+          - objective: performance
+          
         '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')
@@ -401,6 +437,8 @@ class TestConf(unittest.TestCase):
 
     def test_prune(self):
         test = '''
+        model:
+          - name: prune_yaml 
         framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
           name: pytorch 
 

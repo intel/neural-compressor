@@ -270,23 +270,69 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 # resnet50_v1_5.yaml
 
-framework:
-  - name: tensorflow
-    inputs: input_tensor
-    outputs: softmax_tensor
+model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+  name: resnet50_v1_5
 
-calibration:                                         
-  - iterations: 5, 10
-    algorithm:
-        activation: minmax
+framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  name: tensorflow
+  inputs: input_tensor
+  outputs: softmax_tensor
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  calibration:
+    sampling_size: 5, 10                             # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    dataloader:
+      dataset:
+        Imagenet:
+          root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
+      transform:
+        ParseDecodeImagenet:
+        ResizeCropImagenet: 
+          height: 224
+          width: 224
+          mean_value: [123.68, 116.78, 103.94]
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    activation:
+      algorithm: minmax
+
+evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+    metric:
+      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    dataloader:
+      batch_size: 10
+      dataset:
+        Imagenet:
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+      transform:
+        ParseDecodeImagenet:
+        ResizeCropImagenet: 
+          height: 224
+          width: 224
+          mean_value: [123.68, 116.78, 103.94]
+  performance:                                       # optional. used to benchmark performance of passing model.
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      batch_size: 1 
+      dataset:
+        Imagenet:
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+      transform:
+        ParseDecodeImagenet:
+        ResizeCropImagenet: 
+          height: 224
+          width: 224
+          mean_value: [123.68, 116.78, 103.94]
 
 tuning:
-    metric:  
-      - topk: 1
-    accuracy_criterion:
-      - relative: 0.01  
-    timeout: 0
-    random_seed: 9527
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+
 ```
 
 Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.

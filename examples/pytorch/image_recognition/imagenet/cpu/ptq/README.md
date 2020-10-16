@@ -89,48 +89,72 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 
 ```
+model:
+  name: imagenet
+
 framework:
-  - name: pytorch                              # possible values are tensorflow, mxnet and pytorch
+  name: pytorch
 
-tuning:
-  metric:
-    topk: 1                                    # tuning metrics: accuracy 
-  accuracy_criterion:
-    - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
-  timeout: 0                                   # tuning timeout (seconds)
-  random_seed: 9527                            # random seed
-
-calibration:
-    iterations: 10
+quantization:
+  calibration:
+    sampling_size: 300
     dataloader:
-      batch_size: 30
       dataset:
-        - type: "ImageFolder"
-        - root: "../imagenet/img/train" # NOTICE: config to your imagenet data path
+        ImageFolder:
+          root: /path/to/calibration/dataset
       transform:
         RandomResizedCrop:
-          - size: 224
+          size: 224
         RandomHorizontalFlip:
         ToTensor:
         Normalize:
-          - mean: [0.485, 0.456, 0.406]
-          - std: [0.229, 0.224, 0.225]
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
 
 evaluation:
-  dataloader:
-    batch_size: 30
-    dataset:
-      - type: "ImageFolder"
-      - root: "../imagenet/img/val" # NOTICE: config to your imagenet data path
-    transform:
-      Resize:
-        - size: 256
-      CenterCrop:
-        - size: 224
-      ToTensor:
-      Normalize:
-        - mean: [0.485, 0.456, 0.406]
-        - std: [0.229, 0.224, 0.225]
+  accuracy:
+    metric:
+      topk: 1
+    dataloader:
+      batch_size: 30
+      dataset:
+        ImageFolder:
+          root: /path/to/evaluation/dataset
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
+  performance:
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      batch_size: 1
+      dataset:
+        ImageFolder:
+          root: /path/to/evaluation/dataset
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
+
+tuning:
+  accuracy_criterion:
+    relative:  0.01
+  exit_policy:
+    timeout: 0
+  random_seed: 9527
+
 ```
 
 Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited time for a tuning config meet accuracy target.

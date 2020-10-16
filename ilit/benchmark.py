@@ -4,7 +4,6 @@ from .objective import OBJECTIVES
 from .conf.config import Conf
 from .utils import logger
 from .utils.create_obj_from_config import create_eval_func, create_dataset, create_dataloader
-from .utils.create_obj_from_config import update_config
 
 from .data import DataLoader as DATALOADER
 
@@ -37,26 +36,22 @@ class Benchmark(object):
 
         iteration = -1 if cfg.benchmark is None else cfg.benchmark.iteration
         if b_dataloader is None:
-            assert cfg.dataloader is not None, 'dataloader field of yaml file is missing'
+            assert cfg.evaluation.performance.dataloader is not None, 'dataloader field of yaml file is missing'
 
-            b_dataloader_cfg = cfg.dataloader if cfg.benchmark is None \
-                else update_config(cfg.benchmark.dataloader, cfg.dataloader)
+            b_dataloader_cfg = cfg.evaluation.performance.dataloader
             b_dataloader = create_dataloader(framework, b_dataloader_cfg)
-
-            b_postprocess_cfg = cfg.postprocess if cfg.benchmark is None \
-                else update_config(cfg.benchmark.postprocess, cfg.postprocess)
-
+            b_postprocess_cfg = cfg.evaluation.performance.postprocess
             b_func = create_eval_func(cfg.framework.name, \
                                       b_dataloader, \
                                       adaptor, \
-                                      cfg.tuning.metric, \
+                                      cfg.evaluation.accuracy.metric, \
                                       b_postprocess_cfg,
                                       iteration=iteration)
         else:
             b_func = create_eval_func(cfg.framework.name, \
                                       b_dataloader, \
                                       adaptor, \
-                                      cfg.tuning.metric,
+                                      cfg.evaluation.accuracy.metric, \
                                       iteration=iteration)
 
         objective = cfg.tuning.objective.lower()

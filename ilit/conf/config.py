@@ -64,16 +64,6 @@ def _valid_framework_field(key, scope, error):
     if scope['name'] == 'tensorflow':
         assert 'inputs' in scope and 'outputs' in scope
 
-
-def _valid_type_field(key, scope, error):
-    if scope['type'] == 'style_transfer':
-        params = ('type', 'style_folder', 'content_folder')
-        assert all([key in scope.keys() for key in params])
-    if scope['type'] == 'Imagenet':
-        params = ('type', 'root', 'subset', 'num_cores')
-        assert 'root' in scope.keys()
-        assert all([key in params for key in scope.keys()])
-
 def _valid_accuracy_field(key, scope, error):
     assert bool(
         'relative' in scope['accuracy_criterion']) != bool(
@@ -201,16 +191,21 @@ postprocess_schema = Schema({
 })
 
 dataset_schema = Schema({
-        Hook('type', handler=_valid_type_field): object,
-        Optional('type'): str,
-        Optional('root'): str,
-        Optional(object): object,
+    str: object,
 })
 
 dataloader_schema = Schema({
     Optional('batch_size'): And(int, lambda s: s > 0),
-    Optional('dataset'): dataset_schema,
+    'dataset': dataset_schema,
     Optional('transform'): transform_schema,
+})
+
+configs_schema = Schema({
+    Optional('cores_per_instance'): And(int, lambda s: s > 0),
+    Optional('num_of_instance'): And(int, lambda s: s > 0),
+    Optional('inter_num_of_threads'): And(int, lambda s: s > 0),
+    Optional('intra_num_of_threads'): And(int, lambda s: s > 0),
+    Optional('kmp_blocktime'): And(int, lambda s: s >= 0),
 })
 
 schema = Schema({
@@ -224,111 +219,118 @@ schema = Schema({
         Optional('outputs', default=None): And(Or(str, list), Use(input_to_list))
     },
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
-    Optional('quantization', default={'approach': 'post_training_static_quant'}): {
+    Optional('quantization', default={'approach': 'post_training_static_quant', \
+                                      'calibration': {'sampling_size': [100]}, \
+                                      'model_wise': {'weight': {}, 'activation': {}}}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
             lambda s: s in ['post_training_static_quant', 'quant_aware_training']),
-        Optional('weight', default=None): {
-            Optional('granularity', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-            Optional('scheme', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['asym', 'sym'] for i in s)),
-            Optional('dtype', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
+        Optional('calibration', default={'sampling_size': [100]}): {
+            Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
+            Optional('dataloader', default=None): dataloader_schema
         },
-        Optional('activation', default=None): {
-            Optional('granularity', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-            Optional('scheme', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['asym', 'sym'] for i in s)),
-            Optional('dtype', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s))
-        }
-    },
-    Optional('calibration', default={'iterations': [1]}): {
-        Optional('iterations', default=[1]): And(Or(str, int, list), Use(input_to_list)),
-        Optional('algorithm', default=None): {
-            Optional('weight', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['minmax', 'kl'] for i in s)),
-            Optional('activation', default=None): And(
-                Or(str, list),
-                Use(input_to_list),
-                lambda s: all(i in ['minmax', 'kl'] for i in s))
+        Optional('model_wise', default={'weight': {}, 'activation': {}}): {
+            Optional('weight', default=None): {
+                Optional('granularity', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+                Optional('scheme', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['asym', 'sym'] for i in s)),
+                Optional('dtype', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                Optional('algorithm', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['minmax', 'kl'] for i in s)),
+            },
+            Optional('activation', default=None): {
+                Optional('granularity', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+                Optional('scheme', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['asym', 'sym'] for i in s)),
+                Optional('dtype', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                Optional('algorithm', default=None): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['minmax', 'kl'] for i in s)),
+            }
         },
-        Optional('dataloader', default=None): dataloader_schema
+        Optional('op_wise', default=None): {
+            str: ops_schema
+        },
     },
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01},
         'objective': 'performance',
-        'timeout': 0,
-        'random_seed': 1978}): {
+        'exit_policy': {'timeout': 0, 'max_trials': 100},
+        'random_seed': 1978, 'tensorboard': False,
+        'snapshot': {'path': '~/.ilit/snapshot/'}}): {
         Optional('strategy', default={'name': 'basic'}): {
             'name': And(str, lambda s: s in STRATEGIES),
             Optional('accuracy_weight', default=1.0): float,
             Optional('latency_weight', default=1.0): float
         } ,
-        Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
-        Optional('timeout', default=0): int,
-        Optional('random_seed', default=1978): int,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
             Optional('relative'): And(Or(str, float), Use(percent_to_float)),
             Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
         },
-        Optional('metric', default=None): {
-            Optional('topk'): And(int, lambda s: s in [1, 5]),
+        Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
+        Optional('exit_policy', default={'timeout': 0, 'max_trials': 100}): {
+            Optional('timeout', default=0): int,
+            Optional('max_trials', default=100): int,
         },
-        Optional('ops', default=None): {
-            str: ops_schema
-        },
-        Optional('max_trials', default=200): int,
+        Optional('random_seed', default=1978): int,
+        Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),
         Optional('resume', default={'path': None}): {
             Optional('path', default=None): str
         },
         Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
             Optional('path', default='~/.ilit/snapshot/'): str
         },
-    },
-    Optional('postprocess'): {
-        Optional('transform'): postprocess_schema
+        Optional('deployment', default={'path': './ilit_deploy.yaml'}): {
+            Optional('path', default='./ilit_deploy.yaml'): str
+        },
     },
     Optional('evaluation', default=None): {
-        Optional('dataloader'): dataloader_schema,
-        Optional('postprocess'): {
-            Optional('transform'): postprocess_schema
-        }
+        Optional('accuracy'): {
+            Optional('metric', default=None): {
+                Optional('topk'): And(int, lambda s: s in [1, 5]),
+            },
+            Optional('configs'): configs_schema,
+            Optional('dataloader'): dataloader_schema,
+            Optional('postprocess'): {
+                Optional('transform'): postprocess_schema
+            },
+        },
+        Optional('performance', default={'warmup': 10, 'iteration': -1}): {
+            Optional('warmup', default=10): int,
+            Optional('iteration', default=-1): int,
+            Optional('configs'): configs_schema,
+            Optional('dataloader'): dataloader_schema,
+            Optional('postprocess'): {
+                Optional('transform'): postprocess_schema
+            }
+        },
     },
-    Optional('benchmark'): {
-        Optional('iteration', default=-1): int,
-        Optional('dataloader'): dataloader_schema,
-        Optional('postprocess'): {
-            Optional('transform'): postprocess_schema
-        }
-    },
-    Optional('dataloader', default=None): dataloader_schema,
-    Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),
-    Optional('pruning'):
-     {
-        Optional("magnitude"):{
+    Optional('pruning'): {
+        Optional("magnitude"): {
             str: policy_schema
         },
-        Optional('start_epoch', default=0): object,
-        'start_epoch': (int),
+        Optional('start_epoch', default=0): int,
         Hook('end_epoch', handler=_valid_prune_epoch): object,
         Optional('end_epoch', default=4): int,
         Optional('frequency', default=2): int,
@@ -405,35 +407,9 @@ class Conf(object):
         return dst
 
     def modelwise_tune_space(self, modelwise_quant):
-        src = DotDict({'weight': dict(), 'activation': dict()})
-
         cfg = self.usr_cfg
-        if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.weight:
-            src.weight.algorithm = cfg.calibration.algorithm.weight
+        self._modelwise_tune_space = self._merge_dicts(cfg.quantization.model_wise, modelwise_quant)
 
-        if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.granularity:
-            src.weight.granularity = cfg.quantization.weight.granularity
-
-        if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.scheme:
-            src.weight.scheme = cfg.quantization.weight.scheme
-
-        if cfg.quantization and cfg.quantization.weight and cfg.quantization.weight.dtype:
-            src.weight.dtype = cfg.quantization.weight.dtype
-
-        if cfg.calibration and cfg.calibration.algorithm and cfg.calibration.algorithm.activation:
-            src.activation.algorithm = cfg.calibration.algorithm.activation
-
-        if cfg.quantization and cfg.quantization.activation and \
-                cfg.quantization.activation.granularity:
-            src.activation.granularity = cfg.quantization.activation.granularity
-
-        if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.scheme:
-            src.activation.scheme = cfg.quantization.activation.scheme
-
-        if cfg.quantization and cfg.quantization.activation and cfg.quantization.activation.dtype:
-            src.activation.dtype = cfg.quantization.activation.dtype
-
-        self._modelwise_tune_space = self._merge_dicts(src, modelwise_quant)
         return self._modelwise_tune_space
 
     def opwise_tune_space(self, opwise_quant):
@@ -442,8 +418,8 @@ class Conf(object):
             opwise[k] = self._merge_dicts(self._modelwise_tune_space, opwise[k])
 
         cfg = self.usr_cfg
-        if cfg.tuning.ops:
-            for k, v in cfg.tuning.ops.items():
+        if cfg.quantization.op_wise:
+            for k, v in cfg.quantization.op_wise.items():
                 for k_op, _ in opwise.items():
                     if k == k_op[0]:
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])

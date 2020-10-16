@@ -60,40 +60,41 @@ tuning:
 Below is an example for advance user, which constrain the tuning space by specifing calibration, quantization, tuning.ops fields accordingly.
 
 ```
+model:
+  - name: mobilenet_v1
+
 framework:
   - name: tensorflow
     inputs: input
     outputs: MobilenetV1/Predictions/Reshape_1
 
-calibration:
-  - iterations: 10, 50
-    algorithm:
-      - weight:  minmax
-        activation: minmax
-
 quantization:
-  - weight:
-      - granularity: per_channel
-        scheme: asym
-        dtype: int8
-    activation:
-      - granularity: per_tensor
-        scheme: asym
-        dtype: int8
+    calibration:
+      sampling_size: 10, 50
+    model_wise:
+      - weight:
+          - granularity: per_channel
+            scheme: asym
+            dtype: int8
+            algorithm: minmax
+        activation:
+          - granularity: per_tensor
+            scheme: asym
+            dtype: int8
+            algorithm: minmax
+    op_wise: {
+               'conv1': {
+                 'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
+                 'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
+               }
+             }
 
 tuning:
-    metric:
-      - topk: 1
     accuracy_criterion:
       - relative:  0.01
     objective: performance
-    timeout: 36000
-    ops: {
-           'conv1': {
-             'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
-             'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
-           }
-         }
+    exit_policy:
+      - timeout: 36000
 
 ```
 

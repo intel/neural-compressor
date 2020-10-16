@@ -67,7 +67,7 @@ class TpeTuneStrategy(TuneStrategy):
         self.hpopt_search_space = None
         self.warm_start = False
         self.hpopt_trials = Trials()
-        self.max_trials = conf.usr_cfg.tuning.get('max_trials', 200)
+        self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
         self.loss_function_config = {
             'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
                       conf.usr_cfg.tuning.accuracy_criterion and \
@@ -144,7 +144,7 @@ class TpeTuneStrategy(TuneStrategy):
         if Path(trials_file).exists():
             os.remove(trials_file)
         self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
-        with Timeout(self.cfg.tuning.timeout) as t:
+        with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
             trials_count = len(self.hpopt_trials.trials) + 1
             # get fp32 model baseline
             if self.baseline is None:

@@ -6,7 +6,6 @@ from .conf.config import Conf
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.create_obj_from_config import create_dataset, create_dataloader
-from .utils.create_obj_from_config import update_config
 from .data import DataLoader as DATALOADER
 from .data import DATASETS, TRANSFORMS
 from collections import OrderedDict
@@ -138,8 +137,7 @@ class Quantization(object):
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_func is None:
             if eval_dataloader is None:
-                eval_dataloader_cfg = cfg.dataloader if cfg.evaluation is None \
-                    else update_config(cfg.evaluation.dataloader, cfg.dataloader)
+                eval_dataloader_cfg = cfg.evaluation.accuracy.dataloader
 
                 if eval_dataloader_cfg is None:
                     self.eval_func = self._fake_eval_func
@@ -157,9 +155,7 @@ class Quantization(object):
 
         if q_func is None:
             if q_dataloader is None:
-
-                calib_dataloader_cfg = cfg.dataloader if cfg.calibration is None \
-                    else update_config(cfg.calibration.dataloader, cfg.dataloader)
+                calib_dataloader_cfg = cfg.quantization.calibration.dataloader
                 assert calib_dataloader_cfg is not None, \
                     'dataloader field of yaml file is missing'
                 self.calib_dataloader = create_dataloader(cfg.framework.name, calib_dataloader_cfg)

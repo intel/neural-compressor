@@ -9,7 +9,6 @@ from ..objective import OBJECTIVES
 from ..utils.utility import Timeout, fault_tolerant_file, equal_dicts
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils import logger
-from ..utils.create_obj_from_config import update_config
 from ..version import __version__
 from datetime import datetime
 
@@ -130,7 +129,13 @@ class TuneStrategy(object):
             self.opwise_tune_cfgs[key] = conf.expand_tune_cfgs(
                 self.opwise_tune_space[key])
 
-        self.calib_iter = self.cfg.calibration.iterations
+        self.calib_iter = [x / self.cfg.quantization.calibration.dataloader.batch_size for \
+                               x in self.cfg.quantization.calibration.sampling_size] if \
+                               self.cfg.quantization and \
+                               self.cfg.quantization.calibration and \
+                               self.cfg.quantization.calibration.dataloader and \
+                               self.cfg.quantization.calibration.dataloader.batch_size else \
+                               self.cfg.quantization.calibration.sampling_size
 
         self.modelwise_quant_cfgs = []
         for cfg in self.modelwise_tune_cfgs:
@@ -204,7 +209,7 @@ class TuneStrategy(object):
         """The main traverse logic, which could be override by some concrete strategy which needs
            more hooks.
         """
-        with Timeout(self.cfg.tuning.timeout) as t:
+        with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
             # get fp32 model baseline
             if self.baseline is None:
                 logger.info('Getting FP32 model baseline...')
@@ -214,6 +219,7 @@ class TuneStrategy(object):
             logger.info('FP32 baseline is: ' +
                         ('[{:.4f}, {:.4f}]'.format(*self.baseline) if self.baseline else 'None'))
 
+            trials_count = 0
             for tune_cfg in self.next_tune_cfg():
                 tuning_history = self._find_tuning_history(tune_cfg)
                 if tuning_history:
@@ -228,9 +234,10 @@ class TuneStrategy(object):
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 assert self.last_qmodel
+                trials_count += 1
                 self.last_tune_result = self._evaluate(self.last_qmodel, tune_cfg)
 
-                need_stop = self.stop(t)
+                need_stop = self.stop(t, trials_count)
 
                 # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
@@ -306,7 +313,7 @@ class TuneStrategy(object):
             Objective: The objective value evaluated
         """
         if self.eval_func:
-            if self.cfg.tensorboard:
+            if self.cfg.tuning.tensorboard:
 
                 def eval_func(model):
                     val, _ = self.adaptor.inspect_tensor(
@@ -320,17 +327,14 @@ class TuneStrategy(object):
             else:
                 val = self.objective.evaluate(self.eval_func, model)
         else:
-            assert self.cfg.tuning.metric is not None, \
-                'metric field of tuning should not be empty'
+            assert self.cfg.evaluation.accuracy.metric is not None, \
+                'metric field of accuracy field of evaluation section should not be empty'
 
-            postprocess_cfg = self.cfg.postprocess if self.cfg.evaluation is None \
-                else update_config(self.cfg.evaluation.postprocess, \
-                                   self.cfg.postprocess)
-
+            postprocess_cfg = self.cfg.evaluation.accuracy.postprocess
             eval_func = create_eval_func(self.cfg.framework.name, \
                                          self.eval_dataloader, \
                                          self.adaptor, \
-                                         self.cfg.tuning.metric, \
+                                         self.cfg.evaluation.accuracy.metric, \
                                          postprocess_cfg)
 
             val = self.objective.evaluate(eval_func, model)
@@ -352,7 +356,7 @@ class TuneStrategy(object):
         """
         self.__dict__.update(d)
 
-    def stop(self, timeout):
+    def stop(self, timeout, trials_count):
         """Check if need to stop traversing the tuning space, either accuracy goal is met
            or timeout is reach.
 
@@ -383,6 +387,8 @@ class TuneStrategy(object):
         if timeout.seconds != 0 and timeout.timed_out:
             need_stop = True
         elif timeout.seconds == 0 and self.best_tune_result:
+            need_stop = True
+        elif trials_count >= self.cfg.tuning.exit_policy.max_trials:
             need_stop = True
         else:
             need_stop = False
