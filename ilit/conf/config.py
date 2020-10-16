@@ -2,12 +2,14 @@ import yaml
 from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
+from ..policy import POLICIES
 from ..objective import OBJECTIVES
 from ..utils import logger
 import re
 import copy
 import itertools
 from collections import OrderedDict
+
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -77,6 +79,20 @@ def _valid_accuracy_field(key, scope, error):
         'relative' in scope['accuracy_criterion']) != bool(
         'absolute' in scope['accuracy_criterion'])
 
+def _valid_prune_epoch(key, scope, error):
+    if "start_epoch" in scope and "end_epoch" in scope:
+        assert scope["start_epoch"] <= scope["end_epoch"]
+
+def _valid_prune_sparsity(key, scope, error):
+    if "init_sparsity" in scope and "target_sparsity" in scope:
+        assert scope["init_sparsity"] <= scope["target_sparsity"]
+        if "start_epoch" in scope and "end_epoch" in scope:
+            if scope["start_epoch"] == scope["end_epoch"]:
+                assert scope["init_sparsity"] == scope["target_sparsity"]
+    elif "init_sparsity" in scope:
+        assert scope["init_sparsity"] >= 0
+    else:
+        assert scope["target_sparsity"] < 1
 
 def input_to_list(data):
     if isinstance(data, str):
@@ -95,6 +111,16 @@ def percent_to_float(data):
         assert isinstance(data, float), 'This field should be float or percent string'
     return data
 
+policy_schema = Schema({
+    Optional('weights', default=None): list,
+    Optional('method', default=None): And(str, lambda s: s in ["per_channel", "per_tensor"]),
+    Optional('init_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
+    Hook('target_sparsity', handler=_valid_prune_sparsity): object,
+    Optional('target_sparsity', default=0.5): float,
+    Optional("start_epoch", default=0): int,
+    Hook('end_epoch', handler=_valid_prune_epoch): object,
+    Optional('end_epoch', default=4): int
+})
 
 ops_schema = Schema({
     Optional('weight', default=None): {
@@ -289,7 +315,21 @@ schema = Schema({
     Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
         Optional('path', default='~/.ilit/snapshot/'): str
     },
-    Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False])
+    Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),
+    Optional('pruning'):
+     {
+        Optional("magnitude"):{
+            str: policy_schema
+        },
+        Optional('start_epoch', default=0): object,
+        'start_epoch': (int),
+        Hook('end_epoch', handler=_valid_prune_epoch): object,
+        Optional('end_epoch', default=4): int,
+        Optional('frequency', default=2): int,
+        Optional('init_sparsity', default=0.0): And(float, lambda s: s < 1.0 and s >= 0.0),
+        Hook("target_sparsity", handler=_valid_prune_sparsity): object,
+        Optional('target_sparsity', default=0.5): And(float, lambda s: s < 1.0 and s >= 0.0)
+    }
 })
 
 

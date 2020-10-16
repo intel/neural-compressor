@@ -1,0 +1,25 @@
+framework:
+  - name: pytorch                                # possible values are tensorflow, mxnet and pytorch
+
+quantization:
+  approach: post_training_static_quant
+
+tuning:
+  metric:
+    topk: 1                                  # tuning metrics: accuracy 
+  accuracy_criterion:
+    - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
+  timeout: 0                                   # tuning timeout (seconds)
+  random_seed: 9527                            # random seed
+
+pruning:
+  magnitude:
+      prune1:
+        weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
+        target_sparsity: 0.3
+        start_epoch: 1
+  start_epoch: 0
+  end_epoch: 4
+  frequency: 1
+  init_sparsity: 0.05
+  target_sparsity: 0.25

@@ -1,5 +1,6 @@
+import pandas as pd
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, AverageMeter
+from ..utils.utility import LazyImport, AverageMeter, compute_sparsity
 import copy
 from collections import OrderedDict
 from ..utils import logger
@@ -169,7 +170,7 @@ class PyTorchAdaptor(Adaptor):
 
         return q_model
 
-    def evaluate(self, model, dataloader, postprocess=None, \
+    def evaluate(self, model, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1):
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
@@ -572,6 +573,7 @@ class PyTorchAdaptor(Adaptor):
             The module is mainly for debug and records the tensor values during runtime.
 
             """
+
             def __init__(self, iteration_list=None, **kwargs):
                 super(_RecordingObserver, self).__init__(**kwargs)
                 self.output_tensors_dict = OrderedDict()
@@ -617,7 +619,7 @@ class PyTorchAdaptor(Adaptor):
             """
             for name, child in module.named_children():
                 op_name = name if prefix == "" else prefix + "." + name
-                if type(child) == torch.nn.quantized.FloatFunctional:
+                if isinstance(child, torch.nn.quantized.FloatFunctional):
                     if hasattr(child,
                                'qconfig') and child.qconfig is not None and (
                                    op_list is None or op_name in op_list):
@@ -628,8 +630,8 @@ class PyTorchAdaptor(Adaptor):
 
             # Insert observers only for leaf nodes
             if hasattr(module, 'qconfig') and module.qconfig is not None and \
-                len(module._modules) == 0 and not isinstance(module, torch.nn.Sequential) and \
-                (op_list is None or prefix in op_list):
+                    len(module._modules) == 0 and not isinstance(module, torch.nn.Sequential) and \
+                    (op_list is None or prefix in op_list):
                 # observer and hook will be gone after we swap the module
                 module.add_module(
                     'activation_post_process',
@@ -702,9 +704,9 @@ class PyTorchAdaptor(Adaptor):
         # create properties
         summary = OrderedDict()
         white_list = self.white_list | \
-            (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) | \
-            set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) | \
-            set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
+            (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
+             set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
+             set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
 
         model = model_in if not self.is_baseline else copy.deepcopy(model_in)
         self.is_baseline = False
@@ -753,3 +755,60 @@ class PyTorchAdaptor(Adaptor):
         writer.add_text("tune_cfg", str(tune_cfg))
         writer.close()
         return accuracy, summary
+
+    def get_all_weight_names(self, model):
+        names = []
+        for name, param in model.named_parameters():
+            names.append(name)
+        return names
+
+    def get_weight(self, model, tensor_name):
+        for name, param in model.named_parameters():
+            if tensor_name == name:
+                return param.data
+
+    def update_weights(self, model, tensor_name, new_tensor):
+        new_tensor = torch.Tensor(new_tensor)
+        for name, param in model.named_parameters():
+            if name == tensor_name:
+                param.data.copy_(new_tensor.data)
+        return model
+
+    def report_sparsity(self, model):
+        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
+                                   'Std', 'Mean', 'Abs-Mean'])
+        pd.set_option('precision', 2)
+        param_dims = [2, 4]
+        params_size = 0
+        sparse_params_size = 0
+        for name, param in model.named_parameters():
+            # Extract just the actual parameter's name, which in this context we treat
+            # as its "type"
+            if param.dim() in param_dims and any(type in name for type in ['weight', 'bias']):
+                param_size, sparse_param_size, dense_param_size = compute_sparsity(
+                    param.detach().numpy())
+                density = dense_param_size / param_size
+                params_size += param_size
+                sparse_params_size += sparse_param_size
+                df.loc[len(df.index)] = ([
+                    name,
+                    list(param.shape),
+                    dense_param_size,
+                    sparse_param_size,
+                    (1 - density) * 100,
+                    param.std().item(),
+                    param.mean().item(),
+                    param.abs().mean().item()
+                ])
+
+        total_sparsity = sparse_params_size / params_size * 100
+
+        df.loc[len(df.index)] = ([
+            'Total sparsity:',
+            params_size,
+            "-",
+            int(sparse_params_size),
+            total_sparsity,
+            0, 0, 0])
+
+        return df, total_sparsity

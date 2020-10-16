@@ -11,6 +11,8 @@ import os.path as osp
 import inspect
 import time
 import sys
+from collections import OrderedDict
+import numpy as np
 
 def print_info():
     print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
@@ -121,3 +123,10 @@ def get_size(obj, seen=None):
         size += sum([get_size(v, seen) for v in dir(obj)])
 
     return size
+
+def compute_sparsity(tensor, eps = 1e-10):
+    mask = np.ones_like(tensor)
+    tensor_size = tensor.size 
+    dense_mask = tensor != 0
+    dense_size = dense_mask.sum()
+    return tensor_size, tensor_size - dense_size, dense_size
