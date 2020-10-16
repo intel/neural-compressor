@@ -22,7 +22,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-import ilit
+from ilit import Quantization
 import logging
 
 from ilit.adaptor.tf_utils.util import write_graph
@@ -355,9 +355,9 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     infer = model_infer(args)
     if args.tune:
-        at = ilit.Tuner(args.config)
-        q_dataloader = at.dataloader(infer, args.batch_size)
-        output_graph = at.tune(infer.get_graph(),
+        quantizer = Quantization(args.config)
+        q_dataloader = quantizer.dataloader(infer, args.batch_size)
+        output_graph = quantizer(infer.get_graph(),
                             q_dataloader=q_dataloader,
                             eval_func=infer.accuracy_check)
         try:

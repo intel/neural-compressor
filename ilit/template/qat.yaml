@@ -7,7 +7,7 @@ framework:                                           # mandatory. supported valu
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 
 quantization:                                        # optional. required for QAT and PTQ.
-  approach: quantization_aware_training              # mandatory. supported values are quantization_aware_training and post_training_static_quant.
+  approach: quant_aware_training                     # mandatory. supported values are quant_aware_training and post_training_static_quant.
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
     weight:
       granularity: per_channel
@@ -34,13 +34,13 @@ quantization:                                        # optional. required for QA
        }
 
 evaluation:                                          # optional. optional. used to config evaluation process.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
     metric:                                          # optional. used to evaluate accuracy of passing model.
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     configs:
       cores_per_instance: 28
       num_of_instance: 1
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.tune().
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
       batch_size: 256
       dataset:
         ImageFolder:

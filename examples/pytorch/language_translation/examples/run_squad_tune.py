@@ -661,11 +661,11 @@ def main():
                 dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 eval_task = "squad"
-                import ilit
-                dataset = ilit.data.DATASETS('pytorch')['bert'](dataset=dataset, task=eval_task)
-                test_dataloader = ilit.data.DataLoader('pytorch', dataset, batch_size=args.eval_batch_size)
-                tuner = ilit.Tuner("./conf.yaml")
-                tuner.tune(model, test_dataloader, eval_func=eval_func_for_ilit)
+                from ilit import Quantization
+                quantizer = Quantization("./conf.yaml")
+                dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task)
+                test_dataloader = quantizer.dataloader(dataset, batch_size=args.eval_batch_size)
+                quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)
 
             if args.do_calibration:

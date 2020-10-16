@@ -32,12 +32,12 @@ pruning:                                             # mandotory only for prunin
 
 evaluation:                                          # optional. used to config evaluation process. 
   accuracy:                                          # optional. used to evaluate accuracy of passing model.
-    metric:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
+    metric:                                          # optional. required if user doesn't provide eval_func in ilit.Pruning.
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     configs:                                         # optional. if not specified, use all cores in 1 socket.
       cores_per_instance: 28
       num_of_instance: 1
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.tune().
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Pruning.
       batch_size: 256
       dataset:
         ImageFolder:

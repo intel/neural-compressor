@@ -152,9 +152,9 @@ def main():
     if args.tune:
         model.eval()
         model.module.fuse_model()
-        import ilit
-        tuner = ilit.Tuner("./conf.yaml")
-        q_model = tuner.tune(model)
+        from ilit import Quantization
+        quantizer = Quantization("./conf.yaml")
+        q_model = quantizer(model)
         exit(0)
 
     # Training data loading

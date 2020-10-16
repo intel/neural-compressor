@@ -73,24 +73,37 @@ def eval_func(model):
 In examples directory, there is a conf.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader
 
 ```yaml
+model:
+  name: style_transfer
+
 framework:
   name: tensorflow
-  inputs: 'import/style_input,import/content_input'
-  outputs: 'import/transformer/expand/conv3/conv/Sigmoid'
+  inputs: import/style_input,import/content_input
+  outputs: import/transformer/expand/conv3/conv/Sigmoid
 
-calibration:
-  dataloader:
-    batch_size: 2
-    dataset:
-      - type: "style_transfer"
-      - content_folder: "./content_images/" # NOTICE: config to your content images path
-      - style_folder: "./style_images/" # NOTICE: config to your style images path
-    transform:
+quantization:
+  calibration:
+    dataloader:
+      batch_size: 2
+      dataset:
+        style_transfer:
+          content_folder: ./content_images/          # NOTE: modify to content images path if needed
+          style_folder: ./style_images/              # NOTE: modify to style images path if needed
+
+evaluation:
+  accuracy:
+    dataloader:
+      batch_size: 2
+      dataset:
+        style_transfer:
+          content_folder: ./content_images/          # NOTE: modify to content images path if needed
+          style_folder: ./style_images/              # NOTE: modify to style images path if needed
 
 tuning:
     accuracy_criterion:
-      - relative: 0.01
-    timeout: 0
+      relative: 0.01
+    exit_policy:
+      timeout: 0
     random_seed: 9527
 ```
 Here we set the input tensor and output tensors name into *inputs* and *outputs* field. In this case we only calibration and quantize the model without tune the accuracy
@@ -99,10 +112,10 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need add 2 lines to get the quantized model.
 ```python
-import ilit
+from ilit import Quantization
 
-at = ilit.Tuner(args.config)
-q_model = at.tune(graph, eval_func=eval_func)
+quantizer = Quantization(args.config)
+q_model = quantizer(graph, eval_func=eval_func)
 ```
 
-The Intel® Low Precision Optimization Tool tune() function will return a best quantized model during timeout constrain.
+The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model during timeout constrain.

@@ -12,7 +12,7 @@ quantization:                                        # optional. tuning constrai
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.tune().
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
       dataset:
         TFRecordDataset:
           root: /path/to/tf_record
@@ -47,7 +47,7 @@ quantization:                                        # optional. tuning constrai
        }
 
 evaluation:                                          # optional. used to config evaluation process.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
     metric:                                          # optional. used to evaluate accuracy of passing model.
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     configs:                                         # optional. if not specified, use all cores in 1 socket.
@@ -56,7 +56,7 @@ evaluation:                                          # optional. used to config 
       inter_num_of_threads: 4
       intra_num_of_threads: 28
       kmp_blocktime: 1
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.tune().
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
       batch_size: 256
       dataset:
         TFRecordDataset:

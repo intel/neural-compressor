@@ -126,10 +126,10 @@ After prepare step is done, we just need update main.py like below.
 ```python
     # Intel® Low Precision Optimization Tool auto-tuning
     calib_data = dev_data_list[0][1]
-    import ilit
-    bert_tuner = ilit.Tuner("./bert.yaml")
-    bert_tuner.tune(model, q_dataloader=calib_data, val_dataloader=calib_data, eval_func=test_func)
+    from ilit import Quantization
+    quantizer = Quantization("./bert.yaml")
+    quantizer(model, q_dataloader=calib_data, val_dataloader=calib_data, eval_func=test_func)
 
 ```
 
-The tune() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.

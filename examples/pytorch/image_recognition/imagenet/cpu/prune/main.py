@@ -171,7 +171,7 @@ def main_worker(gpu, args):
         return
 
     if args.prune:
-        from ilit.pruning import Pruning
+        from ilit import Pruning
         prune = Pruning(args.config)
 
         def training_func_for_ilit(model):

@@ -264,9 +264,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
             return
         model.module.fuse_model()
-        import ilit
-        tuner = ilit.Tuner(args.config)
-        q_model = tuner.tune(model, q_dataloader=None, q_func=training_func_for_ilit,
+        from ilit import Quantization
+        quantizer = Quantization(args.config)
+        q_model = quantizer(model, q_dataloader=None, q_func=training_func_for_ilit,
                              eval_dataloader=val_loader)
         return
 

@@ -37,9 +37,9 @@ This exmaple can demonstrate the steps to do quantization on Keras generated sav
     model = tf.keras.models.load_model("../models/simple_model")
 
     # Run ilit to get the quantized graph 
-    tuner = ilit.Tuner('./conf.yaml')
-    dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-    quantized_model = tuner.tune(model, q_dataloader=dataloader, eval_func=eval_func)
+    quantizer = Quantization('./conf.yaml')
+    dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+    quantized_model = quantizer(model, q_dataloader=dataloader, eval_func=eval_func)
 
 ```
 ### 3. Run quantized model.

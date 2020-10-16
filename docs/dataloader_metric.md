@@ -70,13 +70,19 @@ evaluation:
         - mean: [0.485, 0.456, 0.406]
         - std: [0.229, 0.224, 0.225]
 
-## create Intel® Low Precision Optimization Tool internal dataloader and metric and pass to tuner
-eval_dataset = tuner.dataset('bert', dataset=eval_dataset, task=eval_task)
-test_dataloader = tuner.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-tuner.tune(model, test_dataloader, eval_func=eval_func_for_ilit)
+## create Intel® Low Precision Optimization Tool internal dataloader and metric and pass to quantizer
+from ilit import Quantization
+quantizer = Quantization('conf.yaml')
+eval_dataset = quantizer.dataset('bert', dataset=eval_dataset, task=eval_task)
+test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
+quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
 
 ## use user specific dataloader and metric
 
-calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)
+calib_data = mx.io.ImageRecordIter(path_imgrec=dataset, label_width=1, preprocess_threads=data_nthreads, 
+                                   batch_size=batch_size, data_shape=data_shape, label_name=label_name,
+                                   rand_crop=False, rand_mirror=False, shuffle=args.shuffle_dataset,
+                                   shuffle_chunk_seed=args.shuffle_chunk_seed, seed=args.shuffle_seed,
+                                   dtype=data_layer_type, ctx=args.ctx, **combine_mean_std)
 
-ilit_model = cnn_tuner.tune(fp32_model, q_dataloader=calib_data, eval_dataloader=calib_data)
+q_model = quantizer(fp32_model, q_dataloader=calib_data, eval_dataloader=calib_data)

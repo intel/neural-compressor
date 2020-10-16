@@ -13,11 +13,11 @@ In this case, a model consists of three or four files stored in the same directo
 
 You can directly pass the directory to tuner, for example:
 ```python
-import ilit
-tuner = ilit.Tuner('./conf.yaml')
+from ilit import Quantization
+quantizer = Quantization('./conf.yaml')
 dataset = mnist_dataset(mnist.test.images, mnist.test.labels)
-data_loader = tuner.dataloader(dataset=dataset, batch_size=1)
-q_model = tuner.tune('./model', q_dataloader=data_loader, eval_func=eval_func)
+data_loader = quantizer.dataloader(dataset=dataset, batch_size=1)
+q_model = quantizer('./model', q_dataloader=data_loader, eval_func=eval_func)
 ```
 
 # SavedModel format of TensorFlow 1.x and 2.x versions
@@ -29,16 +29,16 @@ You can pass the tf.keras.Model to tuner, for example:
     model = tf.keras.models.load_model("./models/saved_model")
 
     # Run ilit to get the quantized graph
-    tuner = ilit.Tuner('./conf.yaml')
-    dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-    quantized_model = tuner.tune(model, q_dataloader=dataloader, eval_func=eval_func)
+    quantizer = Quantization('./conf.yaml')
+    dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+    quantized_model = quantizer(model, q_dataloader=dataloader, eval_func=eval_func)
 ``` 
 
 # GraphDef
 If you have GraphDef object you can also pass it to tuner directly. 
 
 ```python
-import ilit
+from ilit import Quantization
 import os
 
 graph_def = tf.compat.v1.GraphDef()
@@ -47,9 +47,9 @@ with open(model_file, "rb") as f:
    graph_def.ParseFromString(f.read())
 
 # Run ilit to get the quantized pb
-tuner = ilit.Tuner('./conf.yaml')
-dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-quantized_model = tuner.tune(graph_def, q_dataloader=dataloader, eval_func=eval_func)
+quantizer = Quantization('./conf.yaml')
+dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+quantized_model = quantizer(graph_def, q_dataloader=dataloader, eval_func=eval_func)
 
 ```
 

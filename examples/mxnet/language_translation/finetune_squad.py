@@ -902,9 +902,9 @@ if __name__ == '__main__':
     elif args.tune:
         # ilit auto-tuning
         dev_dataloader = gen_dataset()
-        import ilit
-        bert_tuner = ilit.Tuner("./bert.yaml")
-        bert_tuner.tune(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
+        from ilit import Quantization
+        quantizer = Quantization("./bert.yaml")
+        quantizer(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
     elif model_parameters or deploy:
         evaluate()
 

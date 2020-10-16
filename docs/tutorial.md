@@ -12,7 +12,7 @@ Intel® Low Precision Optimization Tool supports three usages:
 
 2. Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code.
    The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
-   __getitem__ methods and invoke dataloader() with dataset as input parameter before calling tune().
+   __getitem__ methods and invoke dataloader() with dataset as input parameter to create ilit dataloader before calling quantizer().
 
    After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader".
    The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified

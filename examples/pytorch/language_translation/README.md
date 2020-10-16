@@ -280,9 +280,9 @@ if args.tune:
     eval_sampler = SequentialSampler(dataset)
     eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
     test_dataloader = Bert_DataLoader(eval_dataloader, args.model_type, args.device)
-    import ilit
-    tuner = ilit.Tuner("./conf.yaml")
-    tuner.tune(model, test_dataloader, eval_func=eval_func_for_ilit)
+    from ilit import Quantization
+    quantizer = Quantization("./conf.yaml")
+    quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
     exit(0)
 ```
 

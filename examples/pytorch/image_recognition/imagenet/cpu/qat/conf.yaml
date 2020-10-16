@@ -5,10 +5,10 @@ framework:                                           # mandatory. supported valu
   name: pytorch
 
 quantization:                                        # optional. required for QAT and PTQ.
-  approach: quantization_aware_training              # mandatory. supported values are quantization_aware_training and post_training_static_quant.
+  approach: quant_aware_training                     # mandatory. supported values are quant_aware_training and post_training_static_quant.
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
+evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
 

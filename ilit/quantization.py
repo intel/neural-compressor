@@ -12,10 +12,10 @@ from .data import DATASETS, TRANSFORMS
 from collections import OrderedDict
 
 
-class Tuner(object):
-    """Tuner class automatically searches for optimal quantization recipes for low precision
-       model inference, achieving best tuning objectives like inference performance within
-       accuracy loss constraints.
+class Quantization(object):
+    """Quantization class automatically searches for optimal quantization recipes for low
+       precision model inference, achieving best tuning objectives like inference performance
+       within accuracy loss constraints.
 
        Tuner abstracts out the differences of quantization APIs across various DL frameworks
        and brings a unified API for automatic quantization that works on frameworks including
@@ -35,8 +35,8 @@ class Tuner(object):
     def __init__(self, conf_fname):
         self.conf = Conf(conf_fname)
 
-    def tune(self, model, q_dataloader=None, q_func=None,
-             eval_dataloader=None, eval_func=None):
+    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
+                 eval_func=None):
         """The main entry point of automatic quantization tuning.
 
            This interface works on all the DL frameworks that ilit supports
@@ -51,7 +51,8 @@ class Tuner(object):
               and evaluation phase by code.
               The tool provides built-in dataloaders and evaluators, user just need provide
               a dataset implemented __iter__ or __getitem__ methods and invoke dataloader()
-              with dataset as input parameter before calling tune().
+              with dataset as input parameter to create ilit dataloader before calling this
+              function.
 
               After that, User specifies fp32 "model", calibration dataset "q_dataloader"
               and evaluation dataset "eval_dataloader".
@@ -90,7 +91,7 @@ class Tuner(object):
                                                    as well as it can be taken as model input.
             q_func (function, optional):           Training function for Quantization-Aware
                                                    Training. It is optional and only takes effect
-                                                   when user choose "quantization_aware_training"
+                                                   when user choose "quant_aware_training"
                                                    approach in yaml.
                                                    This function takes "model" as input parameter
                                                    and executes entire training process with self
@@ -131,7 +132,6 @@ class Tuner(object):
 
         """
         cfg = self.conf.usr_cfg
-        self.snapshot_path = os.path.abspath(os.path.expanduser(cfg.tuning.snapshot.path))
         self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.resume.path)) \
                            if cfg.tuning.resume and cfg.tuning.resume.path else None
 

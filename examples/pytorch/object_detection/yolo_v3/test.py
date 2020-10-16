@@ -152,14 +152,14 @@ if __name__ == "__main__":
 
         model.eval()
         model.fuse_model()
-        import ilit
+        from ilit import Quantization
         dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
         dataloader = torch.utils.data.DataLoader(
             dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn
         )
         ilit_dataloader = yolo_dataLoader(dataloader)
-        tuner = ilit.Tuner("./conf.yaml")
-        tuner.tune(model, q_dataloader=ilit_dataloader, eval_func=eval_func)
+        quantizer = Quantization("./conf.yaml")
+        quantizer(model, q_dataloader=ilit_dataloader, eval_func=eval_func)
         exit(0)
 
     print("Compute mAP...")

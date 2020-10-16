@@ -23,8 +23,8 @@ quantization:                                        # optional. tuning constrai
     activation:
       algorithm: minmax
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.tune().
+evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:

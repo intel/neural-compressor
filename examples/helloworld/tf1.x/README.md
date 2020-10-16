@@ -33,9 +33,9 @@ Add inputs and outputs information into conf.yaml
 ### 2. Run ilit to get the quantized Graph. 
 ```PyThon
     # Run ilit to get the quantized pb
-    tuner = ilit.Tuner('./conf.yaml')
-    dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-    quantized_graph = tuner.tune(frozen_model.graph, q_dataloader=dataloader, eval_func=eval_func)
+    quantizer = Quantization('./conf.yaml')
+    dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+    quantized_graph = quantizer(frozen_model.graph, q_dataloader=dataloader, eval_func=eval_func)
 ```
 ### 3. Run quantized model.
 ```PyThon

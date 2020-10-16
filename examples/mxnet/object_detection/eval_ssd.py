@@ -102,8 +102,8 @@ def get_dataloader(val_dataset, data_shape, batch_size, num_workers):
     # val_loader = gluon.data.DataLoader(
     #     val_dataset.transform(SSDDefaultValTransform(width, height)), batchify_fn=batchify_fn,
     #     batch_size=batch_size, shuffle=False, last_batch='rollover', num_workers=num_workers)
-    import ilit
-    val_loader = ilit.data.DataLoader('mxnet',
+    from ilit import data
+    val_loader = data.DataLoader('mxnet',
         val_dataset.transform(SSDDefaultValTransform(width, height)),
         collate_fn=batchify_fn, batch_size=batch_size, last_batch='rollover', num_workers=num_workers)
     return val_loader
@@ -270,10 +270,10 @@ if __name__ == '__main__':
 
     if args.tune:
         # Doing auto-tuning here
-        import ilit
-        ssd_tuner = ilit.Tuner("./ssd.yaml")
-        ilit_model = ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
-        save(ilit_model, args.output_graph)
+        from ilit import Quantization
+        quantizer = Quantization("./ssd.yaml")
+        q_model = quantizer(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
+        save(q_model, args.output_graph)
         sys.exit()
 
     if args.accuracy_only:

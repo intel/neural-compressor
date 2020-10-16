@@ -16,8 +16,11 @@ Intel® Low Precision Optimization Tool is an open source python library to help
    User API is intented to provide best out-of-box experiences and unify the low precision quantization workflow cross multiple DL frameworks.
 
    ```
-   def tune(self, model, q_dataloader, q_func=None,
-            eval_dataloader=None, eval_func=None)
+   class Quantization(object):
+       def __init__(self, conf_fname):
+           ...
+       def __call__(self, model, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None):
+           ...
    ```
 
    The tuning config and model-specific information are controlled by user config yaml file. As for the format of yaml file, please refer to [template.yaml](../examples/template.yaml)
@@ -31,7 +34,7 @@ Intel® Low Precision Optimization Tool is an open source python library to help
    
    b) Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code.
       The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
-      __getitem__ methods and invoke dataloader() with dataset as input parameter before calling tune().
+      __getitem__ methods and invoke dataloader() with dataset as input parameter before calling Quantization().
    
       After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader".
       The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
@@ -51,7 +54,7 @@ Intel® Low Precision Optimization Tool is an open source python library to help
 
    The first usage is designed for minimal code changes when integrating with Intel® Low Precision Optimization Tool. All calibration and evaluation process is constructed by ilit upon yaml configuration.
 
-   The second usage is designed for concise yaml configuration and constructing calibration and evaluation dataloaders by code. ilit provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or __getitem__ methods to tuner.dataloader() function.
+   The second usage is designed for concise yaml configuration and constructing calibration and evaluation dataloaders by code. ilit provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or __getitem__ methods to quantizer.dataloader() function.
 
    The third usage is designed for ease of tuning enablement for models with custom metric evaluation or metrics not supported by Intel® Low Precision Optimization Tool yet. Currently this usage model works for object detection and NLP networks.
 

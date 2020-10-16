@@ -149,9 +149,9 @@ After preparation is done, we just need update main.py like below.
 ```python
 
     # Doing auto-tuning here
-    import ilit
-    ssd_tuner = ilit.Tuner("./ssd.yaml")
-    ssd_tuner.tune(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
+    from ilit import Quantization
+    quantizer = Quantization("./ssd.yaml")
+    quantizer(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
 ```
 
-The tune() function will return a best quantized model under timeout constrain.
+The quantizer() function will return a best quantized model under timeout constrain.

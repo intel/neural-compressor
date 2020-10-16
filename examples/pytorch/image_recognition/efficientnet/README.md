@@ -148,9 +148,9 @@ After prepare step is done, we just need update main.py like below.
 ```
 model.eval()
 model.fuse_model()
-import ilit
-tuner = ilit.Tuner("./conf_efficientnet_b0.yaml")
-q_model = tuner.tune(model)
+from ilit import Quantization
+quantizer = Quantization("./conf_efficientnet_b0.yaml")
+q_model = quantizer(model)
 ```
 
-The tune() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.

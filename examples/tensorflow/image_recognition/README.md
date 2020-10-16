@@ -373,14 +373,14 @@ After completed preparation steps, we just need add a tuning part in `eval_class
     Returns:
         graph: it will return a quantized pb
     """
-    import ilit
+    from ilit import Quantization
     fp32_graph = load_graph(self.args.input_graph)
-    tuner = ilit.Tuner(self.args.config)
+    quantizer = Quantization(self.args.config)
     dataloader = Dataloader(self.args.data_location, 'validation',
                             RESNET_IMAGE_SIZE, RESNET_IMAGE_SIZE, self.args.batch_size,
                             num_cores=self.args.num_cores,
                             resize_method='crop')
-    q_model = tuner.tune(
+    q_model = quantizer(
                         fp32_graph,
                         q_dataloader=dataloader,
                         eval_func=None,
@@ -397,4 +397,4 @@ We can use below cmd to test it.
 python eval_image_classifier_inference.py -b 10 -a 28 -e 1 -m resnet50_v1_5 \
         -g /PATH/TO/resnet50_v1.pb -d /PATH/TO/imagenet/
 ```
-The tune() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.

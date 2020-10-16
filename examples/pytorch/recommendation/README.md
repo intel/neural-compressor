@@ -115,8 +115,8 @@ dlrm.bot_l.insert(0, QuantStub())
 dlrm.bot_l.append(DeQuantStub())
 dlrm.top_l.insert(0, QuantStub())
 dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-import ilit
-tuner = ilit.Tuner("./conf.yaml")
-tuner.tune(dlrm, eval_dataloader, eval_func=eval_func)
+from ilit import Quantization
+quantizer = Quantization("./conf.yaml")
+quantizer(dlrm, eval_dataloader, eval_func=eval_func)
 ```
 

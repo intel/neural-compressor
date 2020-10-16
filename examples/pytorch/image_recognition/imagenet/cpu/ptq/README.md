@@ -153,12 +153,12 @@ After prepare step is done, we just need update main.py like below.
 ```
 model.eval()
 model.module.fuse_model()
-import ilit
-tuner = ilit.Tuner("./conf.yaml")
-q_model = tuner.tune(model)
+from ilit import Quantization
+quantizer = Quantization("./conf.yaml")
+q_model = quantizer(model)
 ```
 
-The tune() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.
 
 ### Dump tensors for debug
 

@@ -56,9 +56,9 @@ class eval_classifier_optimized_graph:
       """ This is ilit function include tuning and benchmark option """
 
       if self.args.tune:
-          import ilit
-          tuner = ilit.Tuner(self.args.config)
-          q_model = tuner.tune(self.args.input_graph)
+          from ilit import Quantization
+          quantizer = Quantization(self.args.config)
+          q_model = quantizer(self.args.input_graph)
 
           if self.args.int8_input:
               from ilit.adaptor.tf_utils.util import remove_quantize_op
@@ -78,10 +78,10 @@ class eval_classifier_optimized_graph:
               print("Unexpected error while saving the model: {0}".format(exc))
 
       if self.args.benchmark:
-          import ilit 
+          from ilit import Quantization 
           evaluator = ilit.Benchmark(self.args.config)
           acc, batch_size, measurer = \
-              evaluator.benchmark(model=self.args.input_graph)
+              evaluator(model=self.args.input_graph)
 
           print('Accuracy is {:.3f}'.format(acc))
           print('Batch size = {}'.format(batch_size))

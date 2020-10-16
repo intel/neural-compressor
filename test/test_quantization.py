@@ -1,4 +1,4 @@
-"""Tests for tuner"""
+"""Tests for ilit quantization"""
 import numpy as np
 import unittest
 import os
@@ -151,7 +151,7 @@ def build_fake_strategy_2():
         f.writelines(seq)
     f.close()
 
-class TestTuner(unittest.TestCase):
+class TestQuantization(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -168,12 +168,12 @@ class TestTuner(unittest.TestCase):
     def test_autosave(self):
         build_fake_strategy_1()
         from ilit.adaptor import adaptor
-        from ilit import tuner as iLit
+        from ilit import Quantization
 
-        at = iLit.Tuner('fake_yaml.yaml')
-        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = at.dataloader(dataset)
-        at.tune(
+        quantizer = Quantization('fake_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        quantizer(
             self.constant_graph,
             q_dataloader=dataloader,
             eval_dataloader=dataloader
@@ -182,12 +182,11 @@ class TestTuner(unittest.TestCase):
 
     def test_resume(self):
         build_fake_strategy_2()
-        from ilit.strategy import strategy
-        from ilit import tuner as iLit
-        at = iLit.Tuner('fake_yaml2.yaml')
-        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = at.dataloader(dataset)
-        q_model = at.tune(
+        from ilit import Quantization
+        quantizer = Quantization('fake_yaml2.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        q_model = quantizer(
                       self.constant_graph,
                       q_dataloader=dataloader,
                       eval_dataloader=dataloader

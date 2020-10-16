@@ -4,7 +4,7 @@ from tensorflow import keras
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 import numpy as np
 
-import ilit
+from ilit import Quantization
 
 def eval_func(model):
     return 1.
@@ -33,9 +33,9 @@ def main():
     model = tf.keras.models.load_model("../models/simple_model")
 
     # Run ilit to get the quantized graph 
-    tuner = ilit.Tuner('./conf.yaml')
-    dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-    quantized_model = tuner.tune(model, q_dataloader=dataloader, eval_func=eval_func)
+    quantizer = Quantization('./conf.yaml')
+    dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+    quantized_model = quantizer(model, q_dataloader=dataloader, eval_func=eval_func)
 
     # Run inference with quantized model
     concrete_function = get_concrete_function(graph_def=quantized_model.as_graph_def(),

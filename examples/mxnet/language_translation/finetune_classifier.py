@@ -752,8 +752,8 @@ if __name__ == '__main__':
         # ilit auto-tuning
         if only_inference:
             calib_data = dev_data_list[0][1]
-            import ilit
-            bert_tuner = ilit.Tuner("./bert.yaml")
-            bert_tuner.tune(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
+            from ilit import Quantization
+            quantizer = Quantization("./bert.yaml")
+            quantizer(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
     else:
         train(task.metrics)

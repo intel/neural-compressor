@@ -1,4 +1,4 @@
-"""Tests for tuner"""
+"""Tests for quantization"""
 import numpy as np
 import unittest
 import os
@@ -82,7 +82,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-class TestTuner(unittest.TestCase):
+class TestQuantization(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -101,12 +101,12 @@ class TestTuner(unittest.TestCase):
 
     def test_run_tpe_one_trial(self):
         from ilit.strategy import strategy
-        from ilit import tuner as iLit
+        from ilit import Quantization
 
-        at = iLit.Tuner('fake_yaml.yaml')
-        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = at.dataloader(dataset)
-        at.tune(
+        quantizer = Quantization('fake_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        quantizer(
             self.constant_graph,
             q_dataloader=dataloader,
             eval_dataloader=dataloader
@@ -114,12 +114,12 @@ class TestTuner(unittest.TestCase):
 
     def test_run_tpe_max_trials(self):
         from ilit.strategy import strategy
-        from ilit import tuner as iLit
+        from ilit import Quantization
 
-        at = iLit.Tuner('fake_yaml2.yaml')
-        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = at.dataloader(dataset)
-        at.tune(
+        quantizer = Quantization('fake_yaml2.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        quantizer(
             self.constant_graph,
             q_dataloader=dataloader,
             eval_dataloader=dataloader
@@ -127,12 +127,12 @@ class TestTuner(unittest.TestCase):
 
     def test_loss_calculation(self):
         from ilit.strategy.tpe import TpeTuneStrategy
-        from ilit import tuner as iLit
+        from ilit import Quantization
 
-        at = iLit.Tuner('fake_yaml.yaml')
-        dataset = at.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = at.dataloader(dataset)
-        testObject = TpeTuneStrategy(self.constant_graph, at.conf, dataloader)
+        quantizer = Quantization('fake_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        testObject = TpeTuneStrategy(self.constant_graph, quantizer.conf, dataloader)
         testObject._calculate_loss_function_scaling_components(0.01, 2, testObject.loss_function_config)
         # check if latency difference between min and max corresponds to 10 points of loss function
         tmp_val = testObject.calculate_loss(0.01, 2, testObject.loss_function_config)

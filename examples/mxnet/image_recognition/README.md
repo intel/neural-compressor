@@ -135,11 +135,11 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 After prepare step is done, we just need update imagenet_inference.py like below.
 
 ```python
-    import ilit
+    from ilit import Quantization
     fp32_model = load_model(symbol_file, param_file, logger)
-    cnn_tuner = Tuner("./cnn.yaml")
-    cnn_tuner.tune(fp32_model, q_dataloader=data, eval_dataloader=data)
+    quantizer = Quantization("./cnn.yaml")
+    q_model = quantizer(fp32_model, q_dataloader=data, eval_dataloader=data)
 
 ```
 
-The tune() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.

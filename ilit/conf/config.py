@@ -214,6 +214,9 @@ dataloader_schema = Schema({
 })
 
 schema = Schema({
+    'model': {
+        'name': str,
+    },
     'framework': {
         Hook('name', handler=_valid_framework_field): object,
         'name': And(str, lambda s: s in FRAMEWORKS),

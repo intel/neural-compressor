@@ -181,12 +181,12 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need update infer_detections.py like below.
 ```python
-import ilit
+from ilit import Quantization
 
-at = ilit.Tuner(args.config)
-q_model = at.tune(infer.get_graph(),
-                        q_dataloader=infer,
-                        eval_func=infer.accuracy_check)
+quantizer = Quantization(args.config)
+q_model = quantizer(infer.get_graph(),
+                    q_dataloader=infer,
+                    eval_func=infer.accuracy_check)
 ```
 
-The tune() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.

@@ -238,9 +238,9 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         model.eval()
         model.module.fuse_model()
-        import ilit
-        tuner = ilit.Tuner("./conf_dump_tensors.yaml")
-        q_model = tuner.tune(model)
+        from ilit import Quantization
+        quantizer = Quantization("./conf_dump_tensors.yaml")
+        q_model = quantizer(model)
         return
 
     for epoch in range(args.start_epoch, args.epochs):

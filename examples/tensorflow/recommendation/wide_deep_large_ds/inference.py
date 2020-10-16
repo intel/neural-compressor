@@ -180,13 +180,13 @@ class eval_classifier_optimized_graph:
         Returns:
             graph: it will return a quantized pb
         """
-        import ilit
+        from ilit import Quantization
 
         fp32_graph = load_graph(self.args.input_graph)
-        tuner = ilit.Tuner(self.args.config)
+        quantizer = Quantization(self.args.config)
         if self.args.calib_data:
             calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
-            q_model = tuner.tune(
+            q_model = quantizer(
                                 fp32_graph,
                                 q_dataloader=calib_dataloader,
                                 eval_func=self.eval_inference,

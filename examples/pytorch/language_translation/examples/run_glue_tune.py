@@ -643,13 +643,13 @@ def main():
                         from torch.utils import mkldnn as mkldnn_utils
                         model = mkldnn_utils.to_mkldnn(model)
                         print(model)
-                    import ilit
-                    tuner = ilit.Tuner("./conf.yaml")
+                    from ilit import Quantization
+                    quantizer = Quantization("./conf.yaml")
                     if eval_task != "squad":
                         eval_task = 'classifier'
-                    eval_dataset = tuner.dataset('bert', dataset=eval_dataset, task=eval_task)
-                    test_dataloader = tuner.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-                    tuner.tune(model, test_dataloader, eval_func=eval_func_for_ilit)
+                    eval_dataset = quantizer.dataset('bert', dataset=eval_dataset, task=eval_task)
+                    test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
+                    quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)
 
             if args.do_calibration:

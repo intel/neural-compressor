@@ -25,7 +25,8 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
-import ilit
+from ilit import Quantization
+from ilit.data import DataLoader, DATASETS
 from ilit.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
@@ -121,8 +122,8 @@ def main(args=None):
       if FLAGS.tune:
           with tf.Graph().as_default() as graph:
               tf.import_graph_def(frozen_graph)
-              tuner = ilit.Tuner(FLAGS.config)
-              quantized_model = tuner.tune(graph, eval_func=eval_func)
+              quantizer = Quantization(FLAGS.config)
+              quantized_model = quantizer(graph, eval_func=eval_func)
 
               # save the frozen model for deployment
               with tf.io.gfile.GFile(FLAGS.output_model, "wb") as f:
@@ -133,11 +134,11 @@ def main(args=None):
   # validate the quantized model here
   with tf.Graph().as_default(), tf.Session() as sess:
       # create dataloader using default style_transfer dataset and generate stylized images
-      dataset = ilit.data.DATASETS('tensorflow')['style_transfer'](FLAGS.content_images_paths,
+      dataset = DATASETS('tensorflow')['style_transfer'](FLAGS.content_images_paths,
                                                                    FLAGS.style_images_paths,
                                                                    crop_ratio=0.2,
                                                                    resize_shape=(256, 256))
-      dataloader = ilit.data.DataLoader('tensorflow', dataset=dataset)
+      dataloader = DataLoader('tensorflow', dataset=dataset)
       tf.import_graph_def(frozen_graph)
       style_transfer(sess, dataloader, FLAGS.precision)
 

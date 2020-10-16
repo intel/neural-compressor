@@ -110,9 +110,9 @@ def main():
         model.eval()
         model.fuse_model()
         conf_yaml = "conf_" + args.model + ".yaml"
-        import ilit
-        tuner = ilit.Tuner(conf_yaml)
-        q_model = tuner.tune(model)
+        from ilit import Quantization
+        quantizer = Quantization(conf_yaml)
+        q_model = quantizer(model)
         exit(0)
 
     valdir = os.path.join(args.data, 'val')

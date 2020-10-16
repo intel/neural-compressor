@@ -2,7 +2,7 @@ import tensorflow as tf
 import time
 from tensorflow import keras
 import numpy as np
-import ilit
+from ilit import Quantization
 
 def eval_func(model):
     return 1.
@@ -43,9 +43,9 @@ def main():
     graph = load_graph(model_file)
 
     # Run ilit to get the quantized pb
-    tuner = ilit.Tuner('./conf.yaml')
-    dataloader = tuner.dataloader(dataset=(test_images, test_labels))
-    quantized_model = tuner.tune(graph, q_dataloader=dataloader, eval_func=eval_func)
+    quantizer = Quantization('./conf.yaml')
+    dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+    quantized_model = quantizer(graph, q_dataloader=dataloader, eval_func=eval_func)
 
     # Run quantized model 
     with tf.compat.v1.Session() as sess:

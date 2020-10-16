@@ -8,7 +8,7 @@ framework:                                           # mandatory. supported valu
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.tune().
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
       batch_size: 2
       dataset:
         style_transfer:
@@ -17,7 +17,7 @@ quantization:                                        # optional. tuning constrai
 
 evaluation:
   accuracy:
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.tune().
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
       batch_size: 2
       dataset:
         style_transfer:

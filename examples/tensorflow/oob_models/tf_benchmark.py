@@ -280,27 +280,27 @@ if __name__ == "__main__":
 
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        import ilit
+        from ilit import Quantization
         from ilit.adaptor.tf_utils.util import write_graph
         dummy_data_notsupport = ['aipg-vdcnn', 'facenet-20180408-102900']
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.yaml, list(inputs.keys()), outputs)
 
-        tuner = ilit.Tuner(args.yaml)
+        quantizer = Quantization(args.yaml)
         # generate dummy data
-        dataset = tuner.dataset(dataset_type='dummy', shape=inputs_shape,
+        dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
                                 low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        data_loader = tuner.dataloader(dataset=dataset, batch_size=batch_size)
+        data_loader = quantizer.dataloader(dataset=dataset, batch_size=batch_size)
 
         if args.model_name and args.model_name in dummy_data_notsupport:
             # do not use ilit dummy dataset for aipg-vdcnn
             self_dataloader = DataLoader(inputs_tensor=model_detail['input'], total_samples=100, batch_size=1)
-            q_model = tuner.tune(args.model_path, q_dataloader=self_dataloader, eval_func=eval_func)
+            q_model = quantizer(args.model_path, q_dataloader=self_dataloader, eval_func=eval_func)
             write_graph(q_model.as_graph_def(), args.output_path)
 
         else:
-            q_model = tuner.tune(args.model_path, q_dataloader=data_loader)
+            q_model = quantizer(args.model_path, q_dataloader=data_loader)
             write_graph(q_model.as_graph_def(), args.output_path)
 
         # benchmark generator ilit int8 model
