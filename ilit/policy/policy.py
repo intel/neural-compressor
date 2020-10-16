@@ -42,14 +42,14 @@ class PrunePolicy:
         if local_config.init_sparsity:
             self.init_sparsity = local_config["init_sparsity"]
         else:
-            self.init_sparsity = global_config.Pruner["init_sparsity"]
+            self.init_sparsity = global_config.pruning["init_sparsity"]
         if local_config.target_sparsity:
             self.target_sparsity = local_config.target_sparsity
         else:
-            self.target_sparsity = global_config.Pruner.target_sparsity
-        self.start_epoch = global_config.Pruner["start_epoch"]
-        self.end_epoch = global_config.Pruner["end_epoch"]
-        self.freq = global_config.Pruner["frequency"]
+            self.target_sparsity = global_config.pruning.target_sparsity
+        self.start_epoch = global_config.pruning["start_epoch"]
+        self.end_epoch = global_config.pruning["end_epoch"]
+        self.freq = global_config.pruning["frequency"]
         if local_config.weights:
             self.weights = local_config.weights
         else:

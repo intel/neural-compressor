@@ -5,7 +5,7 @@ import pickle
 import schema
 from .adaptor import FRAMEWORKS
 from .conf.config import Conf
-from .pruning import POLICIES
+from .policy import POLICIES
 from .utils import logger
 from .utils.utility import singleton
 from .data import DataLoader as DATALOADER
@@ -64,9 +64,14 @@ class Pruning(object):
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         self.model = model
-        policies = self.cfg["Pruner"]["Policies"]
+        policies = {}
+        for policy in POLICIES:
+            for name in self.cfg["pruning"][policy]:
+                policies[name] = {"policy_name": policy,
+                                  "policy_spec": self.cfg["pruning"][policy][name]}
         self.policies = []
-        for _, policy_spec in policies.items():
-            self.policies.append(POLICIES[policy_spec["policyname"]](
-                self.model, policy_spec, self.cfg, self.adaptor))
-        q_func(model)
+        for name, policy_spec in policies.items():
+            print(policy_spec)
+            self.policies.append(POLICIES[policy_spec["policy_name"]](
+                self.model, policy_spec["policy_spec"], self.cfg, self.adaptor))
+        return q_func(model)

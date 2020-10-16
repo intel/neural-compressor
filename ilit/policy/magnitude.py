@@ -40,7 +40,8 @@ class MagnitudePrunePolicy(PrunePolicy):
                     threshold = np.repeat(threshold, tensor.shape[-2], axis=-2)
                     self.masks[weight] = threshold < tensor
                 else:
-                    tensor_flat = sorted(np.abs(tensor.flatten()))
+                    tensor_flat = np.abs(tensor.flatten())
+                    tensor_flat.sort()
                     threshold = float(tensor_flat[int(tensor_flat.size * self.sparsity)])
                     self.masks[weight] = threshold < np.abs(tensor)
 

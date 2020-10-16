@@ -402,7 +402,7 @@ class TestConf(unittest.TestCase):
     def test_prune(self):
         test = '''
         framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-          name: pytorch
+          name: pytorch 
 
         device: cpu                                          # optional. default value is cpu. other value is gpu.
 
