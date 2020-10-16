@@ -1,24 +1,18 @@
 #  -*- coding: utf-8 -*-
 
+import logging
+import tensorflow as tf
+import numpy as np
+import os
 from collections import OrderedDict
 from collections import namedtuple
 
 from tensorflow.python.platform import gfile
 from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
-from tensorflow.python.client import session
 from tensorflow.python.ops import array_ops
-
-# from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import \
-#     QuantizeGraphHelper as helper
 from .quantize_graph_common import QuantizeGraphHelper as helper
-import logging
-import tensorflow as tf
-import numpy as np
-import os
-
 
 class QuantizeGraphBase(object):
     """
@@ -635,6 +629,7 @@ class QuantizeNodeBase(object):
                     ) if tf.executing_eagerly() else quantize_op[1].eval()
                     max_value = quantize_op[2].numpy(
                     ) if tf.executing_eagerly() else quantize_op[2].eval()
+                sess.close()
         elif parent == "DepthwiseConv2dNative":
             # get the max values based on dim 0 and 1 for depthwise conv
             # since, the output channel will be dim 2 * dim 3
