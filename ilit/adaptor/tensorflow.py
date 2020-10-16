@@ -277,10 +277,12 @@ class TensorFlowAdaptor(Adaptor):
                         node_name, self.unify_op_type_mapping[node_op]
                     )] = conv2d_int8_config
                 elif self.unify_op_type_mapping[node_op].find("matmul") != -1:
-                    is_positive_input = self.pre_optimizer_handle.has_positive_input(node_name)
                     matmul_int8_config = copy.deepcopy(matmul_config)
                     matmul_int8_config['pattern'] = pattern_info
-                    matmul_scheme = 'sym' if is_positive_input else 'asym'
+                    #TODO enable the sym mode once the tf fixed the mkldequantize_op.cc bug.
+                    # is_positive_input = self.pre_optimizer_handle.has_positive_input(node_name)
+                    # matmul_scheme = 'sym' if is_positive_input else 'asym'
+                    matmul_scheme = 'asym'
                     matmul_int8_config['activation']['scheme'] = matmul_scheme
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
