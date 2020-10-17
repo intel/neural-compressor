@@ -85,7 +85,6 @@ class PyTorchAdaptor(Adaptor):
                     }
                 }
         elif self.device == "gpu":
-            import torch_ipex
             self.capability = \
                 {
                     'activation':

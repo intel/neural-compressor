@@ -129,13 +129,13 @@ class TuneStrategy(object):
             self.opwise_tune_cfgs[key] = conf.expand_tune_cfgs(
                 self.opwise_tune_space[key])
 
-        self.calib_iter = [x / self.cfg.quantization.calibration.dataloader.batch_size for \
+        self.calib_iter = [int(x) / self.cfg.quantization.calibration.dataloader.batch_size for \
                                x in self.cfg.quantization.calibration.sampling_size] if \
                                self.cfg.quantization and \
                                self.cfg.quantization.calibration and \
                                self.cfg.quantization.calibration.dataloader and \
                                self.cfg.quantization.calibration.dataloader.batch_size else \
-                               self.cfg.quantization.calibration.sampling_size
+                               [int(x) for x in self.cfg.quantization.calibration.sampling_size]
 
         self.modelwise_quant_cfgs = []
         for cfg in self.modelwise_tune_cfgs:
