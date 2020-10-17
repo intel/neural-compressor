@@ -36,7 +36,8 @@ class Benchmark(object):
 
         iteration = -1 if cfg.benchmark is None else cfg.benchmark.iteration
         if b_dataloader is None:
-            assert cfg.evaluation.performance.dataloader is not None, 'dataloader field of yaml file is missing'
+            assert cfg.evaluation.performance.dataloader is not None, \
+                   'dataloader field of yaml file is missing'
 
             b_dataloader_cfg = cfg.evaluation.performance.dataloader
             b_dataloader = create_dataloader(framework, b_dataloader_cfg)

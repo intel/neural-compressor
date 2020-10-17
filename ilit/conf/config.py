@@ -408,7 +408,8 @@ class Conf(object):
 
     def modelwise_tune_space(self, modelwise_quant):
         cfg = self.usr_cfg
-        self._modelwise_tune_space = self._merge_dicts(cfg.quantization.model_wise, modelwise_quant)
+        self._modelwise_tune_space = self._merge_dicts(cfg.quantization.model_wise,
+                                                       modelwise_quant)
 
         return self._modelwise_tune_space
 
