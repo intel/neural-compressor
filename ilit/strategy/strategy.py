@@ -434,10 +434,10 @@ class TuneStrategy(object):
 
         """
         found = False
+        d = {'tune_cfg': tune_cfg, 'tune_result': tune_result}
         for tuning_history in self.tuning_history:
             if self._same_yaml(tuning_history['cfg'], self.cfg):
-                tuning_history['history'].append({'tune_cfg': tune_cfg, \
-                                                  'tune_result': tune_result}.update(kwargs))
+                tuning_history['history'].append(d.update(kwargs))
                 tuning_history['last_tune_result'] = self.last_tune_result
                 tuning_history['best_tune_result'] = self.best_tune_result
                 tuning_history['cfg'] = self.cfg
@@ -453,8 +453,7 @@ class TuneStrategy(object):
             tuning_history['best_tune_result'] = self.best_tune_result
             tuning_history['history']  = []
             if tune_cfg and tune_result:
-                tuning_history['history'].append({'tune_cfg': tune_cfg, \
-                                                  'tune_result': tune_result}.update(kwargs))
+                tuning_history['history'].append(d.update(kwargs))
             self.tuning_history.append(tuning_history)
 
         snapshot_path = self.cfg.tuning.snapshot.path
