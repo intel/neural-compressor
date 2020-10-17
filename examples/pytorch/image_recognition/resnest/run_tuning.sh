@@ -37,8 +37,8 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    sed -i "s|/Path/to/imagenet/img/train|$dataset_location/train|g" conf.yaml
-    sed -i "s|/Path/to/imagenet/img/val|$dataset_location/val|g" conf.yaml
+    sed -i "s|/path/to/calibration/dataset|$dataset_location/train|g" conf.yaml
+    sed -i "s|/path/to/evaluation/dataset|$dataset_location/val|g" conf.yaml
     python setup.py install
     extra_cmd="${dataset_location}"
     batch_size=30

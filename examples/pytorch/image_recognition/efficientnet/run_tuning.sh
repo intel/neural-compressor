@@ -43,8 +43,8 @@ function run_tuning {
         conf_yaml=conf_mobilenetv3_rw.yaml
         sed -i "/relative:/s|relative:.*|relative: 0.02|g" $conf_yaml
     fi
-    sed -i "/Path to imagenet train data/s|root:.*|root: $dataset_location/train|g" $conf_yaml
-    sed -i "/Path to imagenet val data/s|root:.*|root: $dataset_location/val|g" $conf_yaml
+    sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" $conf_yaml
+    sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" $conf_yaml
     extra_cmd="${dataset_location}"
 
     python validate.py \

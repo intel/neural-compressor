@@ -78,8 +78,8 @@ class eval_classifier_optimized_graph:
               print("Unexpected error while saving the model: {0}".format(exc))
 
       if self.args.benchmark:
-          from ilit import Quantization 
-          evaluator = ilit.Benchmark(self.args.config)
+          from ilit import Benchmark
+          evaluator = Benchmark(self.args.config)
           acc, batch_size, measurer = \
               evaluator(model=self.args.input_graph)
 

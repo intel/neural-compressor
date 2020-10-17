@@ -40,6 +40,22 @@ evaluation:                                          # optional. required if use
     postprocess:
       transform:
         LabelShift: 1
+  performance:                                       # optional. used to benchmark performance of passing model.
+    iteration: 100
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      batch_size: 1
+      dataset:
+        Imagenet:
+          root: /path/to/evaluation/dataset
+      transform:
+        ParseDecodeImagenet:
+        ResizeCropImagenet:
+          height: 224
+          width: 224
+          mean_value: [123.68, 116.78, 103.94]
 
 tuning:
   accuracy_criterion:
