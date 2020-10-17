@@ -33,9 +33,10 @@ def get_postprocess(postprocesses, cfg, compose=True):
 def create_dataset(framework, data_source, cfg_preprocess):
     transform_list = []
     # generate framework specific transforms
-    preprocesses = TRANSFORMS(framework, 'preprocess')
-
-    preprocess = get_preprocess(preprocesses, cfg_preprocess)
+    preprocess = None
+    if cfg_preprocess is not None:
+        preprocesses = TRANSFORMS(framework, 'preprocess')
+        preprocess = get_preprocess(preprocesses, cfg_preprocess)
     # even we can unify transform, how can we handle the IO, or we do the transform here
     datasets = DATASETS(framework)
     dataset_type = list(data_source.keys())[0]
