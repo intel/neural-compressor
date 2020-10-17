@@ -137,7 +137,8 @@ class Quantization(object):
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_func is None:
             if eval_dataloader is None:
-                eval_dataloader_cfg = cfg.evaluation.accuracy.dataloader
+                eval_dataloader_cfg = cfg.evaluation.accuracy.dataloader if \
+                                      cfg.evaluation and cfg.evaluation.accuracy else None
 
                 if eval_dataloader_cfg is None:
                     self.eval_func = self._fake_eval_func
