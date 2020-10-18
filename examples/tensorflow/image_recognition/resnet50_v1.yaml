@@ -19,7 +19,6 @@ quantization:                                        # optional. tuning constrai
         ResizeCropImagenet: 
           height: 224
           width: 224
-          mean_value: [123.68, 116.78, 103.94]
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
     activation:
       algorithm: minmax
@@ -38,7 +37,6 @@ evaluation:                                          # optional. required if use
         ResizeCropImagenet: 
           height: 224
           width: 224
-          mean_value: [123.68, 116.78, 103.94]
   performance:                                       # optional. used to benchmark performance of passing model.
     iteration: 100
     configs:
@@ -54,7 +52,6 @@ evaluation:                                          # optional. required if use
         BilinearImagenet:
           height: 224
           width: 224
-          mean_value: [123.68, 116.78, 103.94]
 
 tuning:
   accuracy_criterion:
