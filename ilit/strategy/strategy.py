@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import os
+import math
 import yaml
 import copy
 import pickle
@@ -130,13 +131,11 @@ class TuneStrategy(object):
             self.opwise_tune_cfgs[key] = conf.expand_tune_cfgs(
                 self.opwise_tune_space[key])
 
-        self.calib_iter = [int(x) / self.cfg.quantization.calibration.dataloader.batch_size for \
-                               x in self.cfg.quantization.calibration.sampling_size] if \
-                               self.cfg.quantization and \
-                               self.cfg.quantization.calibration and \
-                               self.cfg.quantization.calibration.dataloader and \
-                               self.cfg.quantization.calibration.dataloader.batch_size else \
-                               [int(x) for x in self.cfg.quantization.calibration.sampling_size]
+        if self.calib_dataloader:
+            self.calib_iter = [math.ceil(int(x) / self.calib_dataloader.batch_size) \
+                               for x in self.cfg.quantization.calibration.sampling_size]
+        else: 
+            self.calib_iter = [1]
 
         self.modelwise_quant_cfgs = []
         for cfg in self.modelwise_tune_cfgs:

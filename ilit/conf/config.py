@@ -164,7 +164,7 @@ dataset_schema = Schema({
 })
 
 dataloader_schema = Schema({
-    Optional('batch_size'): And(int, lambda s: s > 0),
+    Optional('batch_size', default=1): And(int, lambda s: s > 0),
     'dataset': dataset_schema,
     Optional('transform'): transform_schema,
 })

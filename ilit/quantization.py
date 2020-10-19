@@ -148,6 +148,8 @@ class Quantization(object):
                                                              eval_dataloader_cfg)
                     self.eval_func = None
             else:
+                assert hasattr(eval_dataloader, 'batch_size'), \
+                       'eval_dataloader must have batch_size attribute'
                 self.eval_dataloader = eval_dataloader
                 self.eval_func = None
         else:
@@ -162,6 +164,8 @@ class Quantization(object):
                 self.calib_dataloader = create_dataloader(cfg.framework.name, calib_dataloader_cfg)
                 self.q_func = None
             else:
+                assert hasattr(q_dataloader, 'batch_size'), \
+                       'q_dataloader must have batch_size attribute'
                 self.calib_dataloader = q_dataloader
                 self.q_func = None
         else:
