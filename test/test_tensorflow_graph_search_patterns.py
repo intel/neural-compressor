@@ -8,7 +8,7 @@ from tensorflow.python.framework import dtypes
 
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 
-from ilit.adaptor.tf_utils.graph_rewriter.graph_util import TFGraphAnalyzer
+from ilit.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 
 
 class TestGraphCommonSequenceElimated(unittest.TestCase):
@@ -66,7 +66,7 @@ class TestGraphCommonSequenceElimated(unittest.TestCase):
                                                              [post_relu_name])
         float_graph_def.node.extend([last_identity_node])
 
-        analyzer = TFGraphAnalyzer()
+        analyzer = GraphAnalyzer()
         analyzer.graph = float_graph_def
         analyzer.parse_graph()
         res = analyzer.query_fusion_pattern_nodes([['MatMul'], ("BiasAdd"), ("Relu")])

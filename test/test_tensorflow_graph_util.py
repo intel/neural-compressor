@@ -6,7 +6,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
-from ilit.adaptor.tf_utils.graph_rewriter.graph_util import TFGraphAnalyzer, TFGraphRewriterHelper
+from ilit.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer, GraphRewriterHelper
 
 
 class TestGraph_util(unittest.TestCase):
@@ -88,14 +88,14 @@ class TestGraph_util(unittest.TestCase):
     ])
 
     def test_replace_constant_graph_with_constant_node(self):
-        graph_analyzer = TFGraphAnalyzer()
+        graph_analyzer = GraphAnalyzer()
         graph_analyzer.graph = copy.deepcopy(self.graph_def)
 
         graph_analyzer.parse_graph()
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
-        new_constant_node = TFGraphRewriterHelper.create_constant_node(
+        new_constant_node = GraphRewriterHelper.create_constant_node(
             self.add_node.name + "_const", new_constant_value, new_constant_type)
         assert graph_analyzer.replace_constant_graph_with_constant_node(
             new_constant_node, self.add_node.name)
@@ -104,7 +104,7 @@ class TestGraph_util(unittest.TestCase):
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
-        new_constant_node = TFGraphRewriterHelper.create_constant_node(
+        new_constant_node = GraphRewriterHelper.create_constant_node(
             self.mul_node.name + "_const", new_constant_value, new_constant_type)
         assert graph_analyzer.replace_constant_graph_with_constant_node(
             new_constant_node, self.mul_node.name)
@@ -113,7 +113,7 @@ class TestGraph_util(unittest.TestCase):
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
-        new_constant_node = TFGraphRewriterHelper.create_constant_node(
+        new_constant_node = GraphRewriterHelper.create_constant_node(
             self.sqrt_node.name + "_const", new_constant_value, new_constant_type)
         assert graph_analyzer.replace_constant_graph_with_constant_node(
             new_constant_node, self.sqrt_node.name)
@@ -122,13 +122,13 @@ class TestGraph_util(unittest.TestCase):
 
         new_constant_value = np.random.random([4, 1])
         new_constant_type = tf.as_dtype(np.float32(new_constant_value).dtype)
-        new_constant_node = TFGraphRewriterHelper.create_constant_node(
+        new_constant_node = GraphRewriterHelper.create_constant_node(
             self.block_node.name + "_const", new_constant_value, new_constant_type)
         assert not graph_analyzer.replace_constant_graph_with_constant_node(
             new_constant_node, self.block_node.name)
 
     def test_replace_node(self):
-        graph_analyzer = TFGraphAnalyzer()
+        graph_analyzer = GraphAnalyzer()
         graph_analyzer.graph = copy.deepcopy(self.graph_def)
 
         graph_analyzer.parse_graph()
