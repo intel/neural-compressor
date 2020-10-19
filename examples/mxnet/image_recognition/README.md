@@ -45,7 +45,7 @@ This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1
                           model to download, default is resnet18_v1
     --model_path MODEL_PATH
                           directory to put models, default is ./model
-``
+  ```
   
 
 
@@ -113,18 +113,26 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 
 ```
-#conf.yaml
+# conf.yaml
+
+model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+  name: cnn
 
 framework:
-  - name: mxnet
+  name: mxnet                                        # possible values are tensorflow, mxnet and pytorch
+
+evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+    metric:
+      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
 
 tuning:
-    metric:
-      - topk: 1
-    accuracy_criterion:
-      - relative: 0.01
-    timeout: 0
-    random_seed: 9527
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+
 ```
 
 Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.

@@ -108,16 +108,20 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 
 ```
-#conf.yaml
+# conf.yaml
+
+model:                                           
+  name: ssd
 
 framework:
-  - name: mxnet
+  name: mxnet
 
 tuning:
-    accuracy_criterion:
-      - relative: 0.01
+  accuracy_criterion:
+    relative: 0.01
+  exit_policy:
     timeout: 0
-    random_seed: 9527
+  random_seed: 9527
 ```
 
 Because we use the second use case which need user to provide a custom "eval_func" which encapsulates the evaluation dataset and metric, we can not see a metric at config file tuning filed. We set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
