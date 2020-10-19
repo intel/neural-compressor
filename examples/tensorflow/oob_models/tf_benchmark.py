@@ -18,30 +18,15 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger("OOB-Benchmark")
 
 
-if "PRINT_LATENCY" in os.environ and int(os.environ["PRINT_LATENCY"]) == 1:
-    PRINT_LATENCY = True
-else:
-    PRINT_LATENCY = False
-
 if "RUN_PROFILING" in os.environ and int(os.environ["RUN_PROFILING"]) == 1:
     RUN_PROFILING = True
 else:
     RUN_PROFILING = False
 
-if "CHECK_ACCURACY" in os.environ and os.environ["CHECK_ACCURACY"] == "1":
-    CHECK_ACCURACY = True
-else:
-    CHECK_ACCURACY = False
-
 if "BS" in os.environ:
     BATCH_SIZE = int(os.environ["BS"])
 else:
     BATCH_SIZE = 1
-
-if "NUM_INSTANCES" in os.environ:
-    NUM_INSTANCES = int(os.environ["NUM_INSTANCES"])
-else:
-    NUM_INSTANCES = 1
 
 if "OMP_NUM_THREADS" in os.environ:
     NUM_THREADS = int(os.environ["OMP_NUM_THREADS"])
@@ -55,19 +40,18 @@ def metrics_generator(array, tolerance):
     success_rate = np.sum(array < tolerance) / array.size
     return max_diff, mean_diff, median_diff, success_rate
 
-
-def initialize_graph(model_details, enable_optimize_for_inference):
+def initialize_graph(model_details, disable_optimize_for_inference):
     graph = tf_v1.Graph()
     with graph.as_default():
 
         od_graph_def = tf_v1.GraphDef()
-        with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_dir']), 'rb') as fid:
+        with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_path']), 'rb') as fid:
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             od_graph_def = delete_assign(od_graph_def)
  
         # optimize for inference
-        if enable_optimize_for_inference:
+        if not disable_optimize_for_inference:
             # optimize graph for inference
             input_list = [in_name for in_name,
                           val in model_details['input'].items()]
@@ -95,12 +79,12 @@ def create_tf_config():
 
 
 def run_benchmark(model_details, max_reps, num_warmup,
-                  enable_optimize_for_inference, batch_size):
+                  disable_optimize_for_inference, batch_size):
     tf_config = create_tf_config()
-    graph = initialize_graph(model_details, enable_optimize_for_inference)
+    graph = initialize_graph(model_details, disable_optimize_for_inference)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
     run_metadata = tf_v1.RunMetadata()
-    # graph = initialize_graph(model_details, enable_optimize_for_inference)
+    
     with tf_v1.Session(config=tf_config, graph=graph) as sess:
         output_dict = {out_name: graph.get_tensor_by_name(out_name + ':0')
                        for out_name in model_details['output']}
@@ -108,8 +92,6 @@ def run_benchmark(model_details, max_reps, num_warmup,
         input_dict = {
             graph.get_tensor_by_name(in_name + ':0'): val
             for in_name, val in model_details['input'].items()}
-
-        # sess.run(tf_v1.global_variables_initializer())
 
         total_time = 0.0
         reps_done = 0
@@ -137,7 +119,7 @@ def run_benchmark(model_details, max_reps, num_warmup,
 
         avg_time = total_time / reps_done
         latency = avg_time * 1000
-        throughput = 1.0 / avg_time * batch_size * NUM_INSTANCES
+        throughput = 1.0 / avg_time * batch_size
 
         print('Batch size = %d' % batch_size)
         print('Latency: %.3f ms' % (latency))
@@ -201,7 +183,7 @@ if __name__ == "__main__":
                         help="numbers of inference iteration, default is 500")
     parser.add_argument("--num_warmup", type=int, default=10,
                         help="numbers of warmup iteration, default is 10")
-    parser.add_argument("--disable_optimize", action='store_false',
+    parser.add_argument("--disable_optimize", action='store_true',
                         help="use this to disable optimize_for_inference")
     parser.add_argument("--is_meta", action='store_true',
                         help="input a meta file")
@@ -216,17 +198,17 @@ if __name__ == "__main__":
 
     num_iter = args.num_iter
     num_warmup = args.num_warmup
-    enable_optimize = args.disable_optimize
-    # model_path = args.model_path
+    disable_optimize = args.disable_optimize
     is_meta = args.is_meta
+
     # benchmark PB model directly
     if args.model_path and not args.model_name:
         # generate model detail
-        model_dir = args.model_path
+        model_path = args.model_path
         model_detail = {}
-        model_input_output = get_input_output(model_dir, is_meta)
+        model_input_output = get_input_output(model_path, is_meta)
         # ckpt/meta model will save freezed pb in the same dir
-        model_dir = model_dir if not is_meta else args.model_path[:-5] + "_freeze.pb"
+        model_path = model_path if not is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']
         input_dic = {}
         for _input in model_input_output['inputs']:
@@ -243,10 +225,10 @@ if __name__ == "__main__":
                 input_dic[_input] = dummy_input
                 logger.info("Find benchmark input name: {}, dtype: {}, shape: {}"
                             .format(_input, dtype, dummy_input.shape))
-        model_detail['model_dir'] = model_dir
+        model_detail['model_path'] = model_path
         model_detail['input'] = input_dic
         model_detail['output'] = output
-        model_detail['ckpt'] = args.is_meta
+        model_detail['ckpt'] = is_meta
 
     # benchmark with input/output
     elif args.model_name:
@@ -256,8 +238,8 @@ if __name__ == "__main__":
         for model in models:
             if model['model_name'] == args.model_name:
                 model_detail = model
-                model_detail['model_dir'] = args.model_path
-                model_detail['ckpt'] = args.is_meta
+                model_detail['model_path'] = args.model_path
+                model_detail['ckpt'] = is_meta
                 break
 
         if not model_detail:
@@ -303,9 +285,6 @@ if __name__ == "__main__":
             q_model = quantizer(args.model_path, q_dataloader=data_loader)
             write_graph(q_model.as_graph_def(), args.output_path)
 
-        # benchmark generator ilit int8 model
-        model_detail['model_dir'] = args.output_path
-        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize, batch_size)
-
     else:
-        run_benchmark(model_detail, num_iter, num_warmup, enable_optimize, batch_size)
+        run_benchmark(model_detail, num_iter, num_warmup, disable_optimize, batch_size)
+

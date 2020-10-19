@@ -73,7 +73,7 @@ optical_character_recognition-text_recognition-tf
 PRNet
 Resnetv2_200
 text-recognition-0012
-Hierarchical
+Hierarchical_LSTM
 icnet-camvid-ava-0001
 icnet-camvid-ava-sparse-30-0001
 icnet-camvid-ava-sparse-60-0001
@@ -96,7 +96,7 @@ function run_benchmark {
     fi
 
     if [[ "${models_need_disable_optimize[@]}"  =~ "${topology}" ]]; then
-      echo "$topology need model name!"
+      echo "$topology need to disable optimize_for_inference!"
       extra_cmd='--num_warmup 10 --disable_optimize --model_name '${topology}
     fi
 
