@@ -1,7 +1,6 @@
 import os
 import subprocess
 import copy
-import time
 import numpy as np
 from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor

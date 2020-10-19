@@ -22,7 +22,6 @@ import logging
 import threading
 import time
 import ast
-import subprocess
 import numpy as np
 import tensorflow as tf
 
@@ -33,10 +32,8 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from .transform_graph.insert_logging import InsertLogging
-from .transform_graph.freeze_max_min import freeze_requantization_range
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
 from .transform_graph.freeze_max_min import combine_histogram
-from .transform_graph.fuse_quantized_conv_and_requantize import fuse_quantized_conv_and_requantize
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format
 from .util import parse_savedmodel_model, get_graph_def

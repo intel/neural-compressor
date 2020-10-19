@@ -1,16 +1,10 @@
-import os
-from pathlib import Path
-from datetime import datetime
-import pickle
-import schema
+
 from .adaptor import FRAMEWORKS
 from .conf.config import Conf
 from .policy import POLICIES
 from .utils import logger
 from .utils.utility import singleton
-from .data import DataLoader as DATALOADER
 from .data import DATASETS, TRANSFORMS
-from collections import OrderedDict
 
 
 @singleton

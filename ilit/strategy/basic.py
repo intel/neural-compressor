@@ -1,6 +1,5 @@
 import copy
 from collections import OrderedDict
-import itertools
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
