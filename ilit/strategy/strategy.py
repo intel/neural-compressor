@@ -469,6 +469,35 @@ class TuneStrategy(object):
 
         return None
 
+    def _find_history(self, tune_cfg):
+        """check if the specified tune_cfg is evaluated or not on same yaml config.
+
+        Returns:
+            history or None: The history containing evaluated tune_cfg.
+        """
+        for tuning_history in self.tuning_history:
+            # only check if a tune_cfg is evaluated under same yam config, excluding
+            # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
+            if self._same_yaml(tuning_history['cfg'], self.cfg):
+                for history in tuning_history['history']:
+                    if history and history['tune_cfg'] == tune_cfg:
+                        return history
+        return None
+
+    def _find_self_tuning_history(self):
+        """find self history dict.
+
+        Returns:
+            history or None: The history for self.
+        """
+        for tuning_history in self.tuning_history:
+            # only check if a tune_cfg is evaluated under same yam config, excluding
+            # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
+            if self._same_yaml(tuning_history['cfg'], self.cfg):
+                return tuning_history
+
+        return None
+
     def _add_tuning_history(self, tune_cfg=None, tune_result=None, **kwargs):
         """add tuning history.
            note this record is added under same yaml config.

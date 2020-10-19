@@ -68,6 +68,8 @@ class TpeTuneStrategy(TuneStrategy):
         self.warm_start = False
         self.hpopt_trials = Trials()
         self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
+        self.first_run_cfg = None
+        self.full_cfg = None
         self.loss_function_config = {
             'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
                       conf.usr_cfg.tuning.accuracy_criterion and \
@@ -111,6 +113,8 @@ class TpeTuneStrategy(TuneStrategy):
                 history['hpopt_trials'] = self.hpopt_trials
                 history['loss_function_config'] = self.loss_function_config
                 history['tpe_params'] = self.tpe_params
+                history['hpopt_search_space'] = self.hpopt_search_space
+                history['_algo'] = self._algo
         save_dict = super(TpeTuneStrategy, self).__getstate__()
         return save_dict
 
@@ -143,7 +147,47 @@ class TpeTuneStrategy(TuneStrategy):
                     'best_result_file:{}'.format(best_result_file))
         if Path(trials_file).exists():
             os.remove(trials_file)
-        self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
+        
+        tuning_history = self._find_self_tuning_history()
+        if tuning_history and not self.warm_start:
+            # prepare loss function scaling (best result from basic can be used)
+            best_lat, worse_acc_loss = 0, 0
+            for history in tuning_history['history']:
+                acc_loss, lat_diff = self._calculate_acc_lat_diff(
+                    history['tune_result'][0],
+                    history['tune_result'][1])
+                if lat_diff > best_lat:
+                    best_lat = lat_diff
+                if acc_loss > worse_acc_loss:
+                    worse_acc_loss = acc_loss
+            self._calculate_loss_function_scaling_components(
+                worse_acc_loss,
+                best_lat,
+                self.loss_function_config)
+            self.add_loss_to_tuned_history_and_find_best(tuning_history['history'])
+            # Prepare hpopt config with best cfg from history
+            self._configure_hpopt_search_space_and_params(self.first_run_cfg)
+            # Run first iteration with best result from history
+            trials_count = len(self.hpopt_trials.trials) + 1
+            logger.info('First iteration start.')
+            fmin(partial(self.object_evaluation, model=self.model),
+                space=self.hpopt_search_space,
+                algo=self._algo,
+                max_evals=trials_count,
+                trials=self.hpopt_trials,
+                show_progressbar=False)
+            if pd is not None:
+                self._save_trials(trials_file)
+                self._update_best_result(best_result_file)
+            # Prepare full hpopt search space
+            new_tune_cfgs = self._prepare_final_searchspace(
+                self.first_run_cfg,
+                self.opwise_tune_cfgs)
+            self._configure_hpopt_search_space_and_params(new_tune_cfgs)
+        elif not self.warm_start:
+            self._calculate_loss_function_scaling_components(0.01, 2, self.loss_function_config)
+            self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
+
         with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
             trials_count = len(self.hpopt_trials.trials) + 1
             # get fp32 model baseline
@@ -156,8 +200,6 @@ class TpeTuneStrategy(TuneStrategy):
             if not self.objective.relative:
                 self.loss_function_config['acc_th'] =\
                     (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
-            # prepare loss function scaling
-            self._calculate_loss_function_scaling_components(0.01, 2, self.loss_function_config)
             # start trials
             exit = False
             while not exit:
@@ -176,6 +218,36 @@ class TpeTuneStrategy(TuneStrategy):
                 if self.stop(t, trials_count):
                     exit = True
 
+    def _prepare_final_searchspace(self, first, second):
+        for key, cfgs in second.items():
+            new_cfg = []
+            for cfg in cfgs:
+                if cfg != first[key][0]:
+                    new_cfg.append(cfg)
+            first[key] = first[key] + new_cfg
+        return first
+
+    def add_loss_to_tuned_history_and_find_best(self, tuning_history_list):
+        logger.info('Number of resumed configs: {}'.format(len(tuning_history_list)))
+        best_loss = None
+        for history in tuning_history_list:
+            result = self._compute_metrics(
+                history['tune_cfg']['op'],
+                history['tune_result'][0],
+                history['tune_result'][1])
+            if best_loss is None or result['loss'] < best_loss:
+                best_loss = result['loss']
+                self.best_tune_result = history['tune_result']
+                self.first_run_cfg = history['tune_cfg']['op']
+            result['source'] = 'finetune'
+            history['result'] = result
+            logger.info(
+                'Resumed iteration loss: {} acc_loss: {} lat_diff: {} quantization_ratio: {}'
+                .format(result['loss'], result['acc_loss'],
+                result['lat_diff'], result['quantization_ratio']))
+        for op, cfg in self.first_run_cfg.items():
+            self.first_run_cfg[op] = [cfg,]
+
     def object_evaluation(self, tune_cfg, model):
         # check if config was alredy evaluated
         op_cfgs = {}
@@ -183,13 +255,12 @@ class TpeTuneStrategy(TuneStrategy):
         op_cfgs['op'] = {}
         for param, configs in tune_cfg.items():
             op_cfgs['op'][(param)] = configs
-        tuning_history = self._find_tuning_history(op_cfgs)
-        if tuning_history:
-            self.last_tune_result = tuning_history['last_tune_result']
-            self.best_tune_result = tuning_history['best_tune_result']
+        history = self._find_history(op_cfgs)
+        if history:
+            self.last_tune_result = history['tune_result']
             self.last_qmodel = None
-            logger.debug('This tuning config was evaluated!')
-            return tuning_history['result']
+            logger.info('This tuning config was evaluated!')
+            return history['result']
 
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
         self.last_tune_result = self._evaluate(self.last_qmodel)
@@ -199,8 +270,11 @@ class TpeTuneStrategy(TuneStrategy):
         saved_last_tune_result = copy.deepcopy(self.last_tune_result)
 
         # prepare result
-        result = self._compute_metrics(tune_cfg)
-        result['status'] = STATUS_OK
+        result = self._compute_metrics(
+            tune_cfg,
+            self.last_tune_result[0],
+            self.last_tune_result[1])
+        result['source'] = 'tpe'
         self._add_tuning_history(saved_tune_cfg, saved_last_tune_result, result=result)
         logger.info('Current iteration loss: {} acc_loss: {} lat_diff: {} quantization_ratio: {}'
                     .format(result['loss'],
@@ -209,22 +283,27 @@ class TpeTuneStrategy(TuneStrategy):
                             result['quantization_ratio']))
         return result
 
-    def _compute_metrics(self, tune_cfg):
+    def _compute_metrics(self, tune_cfg, acc, lat):
         quantization_ratio = 100 - len([param for param in tune_cfg.values()
                                         if param['activation']['dtype'] =='fp32']) / len(tune_cfg)
-        int8_acc = self.last_tune_result[0]
-        int8_lat = self.last_tune_result[1]
+        acc_diff, lat_diff = self._calculate_acc_lat_diff(acc, lat)
+        return {
+            'loss': self.calculate_loss(acc_diff, lat_diff, self.loss_function_config),
+            'acc' : acc,
+            'lat' : lat,
+            'acc_loss': acc_diff,
+            'lat_diff': lat_diff,
+            'quantization_ratio': quantization_ratio,
+            'status': STATUS_OK}
+
+    def _calculate_acc_lat_diff(self, acc, lat):
+        int8_acc = acc
+        int8_lat = lat
         fp32_acc = self.baseline[0]
         fp32_lat = self.baseline[1]
         acc_diff = (fp32_acc - int8_acc) / fp32_acc
         lat_diff = fp32_lat / int8_lat
-        return {
-            'loss': self.calculate_loss(acc_diff, lat_diff, self.loss_function_config),
-            'acc' : int8_acc,
-            'lat' : int8_lat,
-            'acc_loss': acc_diff,
-            'lat_diff': lat_diff,
-            'quantization_ratio': quantization_ratio}
+        return acc_diff, lat_diff
 
     def calculate_loss(self, acc_diff, lat_diff, config):
         gamma_penalty = 40  # penalty term
@@ -312,41 +391,3 @@ class TpeTuneStrategy(TuneStrategy):
                                                         self.best_result['best_lat_diff'],
                                                         self.best_result['quantization_ratio']))
 
-    def stop(self, timeout, trials_count):
-        """Check if need to stop traversing the tuning space, either accuracy goal is met
-           or timeout is reach.
-
-        Args:
-            timeout (Timeout): The timeout object instantiated in utils.py
-
-        Returns:
-            bool: True if need stop, otherwise False
-        """
-        need_stop = False
-
-        if self.objective.compare(self.best_tune_result, self.baseline):
-            del self.best_tune_result
-            del self.best_qmodel
-            self.best_tune_result = self.last_tune_result
-            self.best_qmodel = self.last_qmodel
-        else:
-            del self.last_qmodel
-
-        logger.info(
-            'Tune result is: ' +
-            ('[{:.4f}, {:.4f}]'.format(
-                *self.last_tune_result) if self.last_tune_result else 'None') +
-            ' Best tune result is: ' +
-            ('[{:.4f}, {:.4f}]'.format(
-                *self.best_tune_result) if self.best_tune_result else 'None'))
-
-        if timeout.seconds != 0 and timeout.timed_out:
-            need_stop = True
-        elif timeout.seconds == 0 and self.best_tune_result:
-            need_stop = True
-        elif trials_count > self.max_trials:
-            need_stop = True
-        else:
-            need_stop = False
-
-        return need_stop
