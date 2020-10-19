@@ -27,12 +27,13 @@ Intel® Low Precision Optimization Tool is an open source python library to help
 
    Intel® Low Precision Optimization Tool supports three usages:
 
-   a) Fully yaml configuration: User specifies all the info through yaml, including dataloaders used in calibration and evaluation
-      phases and quantization tuning settings.
+   a) Fully yaml configuration: 
+      This usage is designed for minimal code changes when integrating with Intel® Low Precision Optimization Tool. All calibration and evaluation process is constructed by ilit upon yaml configuration. including dataloaders used in calibration and evaluation
+      phases and quantization tuning settings. For this usage, only model parameter is mandotory.
+
    
-      For this usage, only model parameter is mandotory.
-   
-   b) Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code.
+   b) User specifies dataloaders: 
+      The second usage is designed for concise yaml configuration and constructing calibration and evaluation dataloaders by code. ilit provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or __getitem__ methods to tuner.dataloader() function. User specifies dataloaders used in calibration and evaluation phase by code.
       The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
       __getitem__ methods and invoke dataloader() with dataset as input parameter before calling Quantization().
    
@@ -43,21 +44,19 @@ Intel® Low Precision Optimization Tool is an open source python library to help
    
       For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
    
-   c) Partial yaml configuration: User specifies dataloaders used in calibration phase by code.
-      This usage is quite similar with b), just user specifies a custom "eval_func" which encapsulates
-      the evaluation dataset by itself.
+   c) User specifed eval_func: 
+      The third usage is designed for ease of tuning enablement for models with custom metric evaluation or metrics not supported by Intel® Low Precision Optimization Tool yet. Currently this usage model works for object detection and NLP networks.
+      User specifies dataloaders used in calibration phase by code. This usage is quite similar with b), just user specifies a custom "eval_func" which encapsulates the evaluation dataset by itself.
       The calibrated and quantized model is evaluated with "eval_func". The "eval_func" tells the
       tuner whether the quantized model meets the accuracy criteria. If not, the Tuner starts a new
       calibration and tuning flow.
    
       For this usage, model, q_dataloader and eval_func parameters are mandotory
 
-   The first usage is designed for minimal code changes when integrating with Intel® Low Precision Optimization Tool. All calibration and evaluation process is constructed by ilit upon yaml configuration.
-
-   The second usage is designed for concise yaml configuration and constructing calibration and evaluation dataloaders by code. ilit provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or __getitem__ methods to quantizer.dataloader() function.
-
-   The third usage is designed for ease of tuning enablement for models with custom metric evaluation or metrics not supported by Intel® Low Precision Optimization Tool yet. Currently this usage model works for object detection and NLP networks.
-
+<<<<<<< HEAD
+=======
+   
+>>>>>>> 27ba7ee46173479d80ea4cbad045d87f81cba96c
 2. Framework Adaptation API
 
    Framework adaptation layer abstracts out the API differences of various DL frameworks needed for supporting low-precision quantization workflow and provides a unified API for auto-tuning engine to use. The abstracted functionalities include quantization configurations, quantization capabilities, calibration, quantization-aware training, graph transformation for quantization, data loader and metric evaluation, and tensor inspection.
