@@ -6,8 +6,8 @@ import os
 import tensorflow as tf
 
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from ilit.adaptor.tf_utils.transform_graph.strip_unused import StripUnusedNodes
-from ilit.adaptor.tf_utils.transform_graph.fold_batch_norm import FoldBatchNormNodes
+from ilit.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
+from ilit.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
 
 class TestGraphConvFusion(unittest.TestCase):
@@ -39,10 +39,10 @@ class TestGraphConvFusion(unittest.TestCase):
 
         self._tmp_graph_def = graph_util.remove_training_nodes(self.input_graph, self.outputs)
 
-        self._tmp_graph_def = StripUnusedNodes(self._tmp_graph_def,
-                                                self.inputs, self.outputs).do_transform()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
+                                                self.inputs, self.outputs).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodes(self._tmp_graph_def).do_transform()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
 
         output_graph = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
                                              self.op_wise_config,
