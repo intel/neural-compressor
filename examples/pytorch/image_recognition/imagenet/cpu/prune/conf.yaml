@@ -14,10 +14,10 @@ tuning:
 
 pruning:
   magnitude:
-      prune1:
-        weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
-        target_sparsity: 0.3
-        start_epoch: 1
+    prune1:
+      weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
+      target_sparsity: 0.3
+      start_epoch: 1
   start_epoch: 0
   end_epoch: 4
   frequency: 1

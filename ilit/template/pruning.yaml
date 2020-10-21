@@ -7,23 +7,14 @@ framework:                                           # mandatory. supported valu
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 
 pruning:                                             # mandotory only for pruning.
-  magnitude_pruning:
+  magnitude:
     prune1:
       weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
       target_sparsity: 0.3
-      epoch: [1, 5, 2]
+      end_epoch: [1, 5, 2]
     prune2:
       weights: ['layer1.0.conv3.weight', 'layer1.0.conv4.weight']
-      sparsity: 0.2
-  abc_pruning:
-    prune1:
-      weights: ['layer1.0.conv5.weight',  'layer1.0.conv6.weight']
-      sparsity: 0.5
-      epoch: 0
-    prune2:
-      weights: ['layer1.0.conv7.weight',  'layer1.0.conv8.weight']
-      sparsity: 0.2
-      epoch: 1
+      target_sparsity: 0.2
   start_epoch: 0
   end_epoch: 20
   frequency: 2
