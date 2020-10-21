@@ -146,7 +146,21 @@ def _write_inputs_outputs_to_yaml(yaml_path, inputs, outputs):
 
     with open(yaml_path, 'w') as nf:
         yaml.dump(content, nf)
-
+def oob_collate_data_func(batch):
+    """Puts each data field into a pd frame with outer dimension batch size"""
+    elem = batch[0]
+    import collections
+    if isinstance(elem, collections.abc.Mapping):
+        return {key: oob_collate_data_func([d[key] for d in batch]) for key in elem}
+    elif isinstance(elem, collections.abc.Sequence):
+        batch = zip(*batch)
+        return [oob_collate_data_func(samples) for samples in batch]
+    elif isinstance(elem, np.ndarray):
+        return np.stack(batch)
+    elif elem in (True,False):
+        return elem
+    else:
+        return batch
 class DataLoader(object):
     def __init__(self, inputs_tensor, total_samples, batch_size):
         """dataloader generator
@@ -254,7 +268,8 @@ if __name__ == "__main__":
             inputs_dtype.append(str(input_tensor.dtype))
         else:
             # TODO: wait scalar support in dummy dataset
-            pass
+            inputs_shape.append((1,))
+            inputs_dtype.append('bool')
     logger.info("***** Final benchmark input name: {}, shape: {}".format( \
                 model_detail['input'].keys(), inputs_shape))
     logger.info("***** Final benchmark output name: {}".format(model_detail['output']))
@@ -264,7 +279,6 @@ if __name__ == "__main__":
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         from ilit import Quantization
         from ilit.adaptor.tf_utils.util import write_graph
-        dummy_data_notsupport = ['aipg-vdcnn', 'facenet-20180408-102900']
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.yaml, list(inputs.keys()), outputs)
@@ -273,17 +287,9 @@ if __name__ == "__main__":
         # generate dummy data
         dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
                                 low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        data_loader = quantizer.dataloader(dataset=dataset, batch_size=batch_size)
-
-        if args.model_name and args.model_name in dummy_data_notsupport:
-            # do not use ilit dummy dataset for aipg-vdcnn
-            self_dataloader = DataLoader(inputs_tensor=model_detail['input'], total_samples=100, batch_size=1)
-            q_model = quantizer(args.model_path, q_dataloader=self_dataloader, eval_func=eval_func)
-            write_graph(q_model.as_graph_def(), args.output_path)
-
-        else:
-            q_model = quantizer(args.model_path, q_dataloader=data_loader)
-            write_graph(q_model.as_graph_def(), args.output_path)
+        data_loader = quantizer.dataloader(dataset=dataset, batch_size=batch_size,collate_fn=oob_collate_data_func)
+        q_model = quantizer(args.model_path, q_dataloader=data_loader)
+        write_graph(q_model.as_graph_def(), args.output_path)
 
     else:
         run_benchmark(model_detail, num_iter, num_warmup, disable_optimize, batch_size)

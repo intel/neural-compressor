@@ -20,8 +20,8 @@ class TensorflowDataLoader(BaseDataLoader):
         if isinstance(dataset, tf.data.Dataset):
             return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
         else:
-            return DefaultDataLoader(dataset, batch_size, collate_fn,
-                                     sampler, batch_sampler, last_batch, num_workers, pin_memory)
+            return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
+                                     sampler, batch_sampler, num_workers, pin_memory)
 
 class TFDataDataLoader(BaseDataLoader):
     """In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
