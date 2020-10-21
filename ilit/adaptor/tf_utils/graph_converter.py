@@ -188,35 +188,6 @@ class GraphConverter:
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
 
-    def _get_graph_def(self, model):
-        """Get the input model graphdef
-
-        Args:
-            model ([Graph or Path String]): Graph object or ckpt
-                                            folder path.
-
-        """
-        if isinstance(model, Graph):
-            self.input_graph = model.as_graph_def()
-        elif isinstance(model, str):
-            self.input_graph = tf.compat.v1.GraphDef()
-            if model.endswith(".pb") and os.path.isfile(model):
-                with open(model, "rb") as f:
-                    self.input_graph.ParseFromString(f.read())
-            elif os.path.isdir(model):
-                ckpt_prefix = is_ckpt_format(model)
-                if ckpt_prefix:
-                    self.input_graph = parse_ckpt_model(os.path.join(model, ckpt_prefix),
-                                                        self.outputs)
-                elif is_saved_model_format(model):
-                    self.input_graph = parse_savedmodel_model(model)
-                else:
-                    raise ValueError('Failed to parse ckpt model.')
-            else:
-                raise ValueError('The input model format is neither pb nor ckpt format.')
-
-        else:
-            raise ValueError('The input parameter is neither Graph nor path to the model.')
 
     def _inference(self, input_graph):
         """Run the calibration on the input graph
