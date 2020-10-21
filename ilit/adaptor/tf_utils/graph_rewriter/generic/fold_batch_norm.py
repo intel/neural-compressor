@@ -7,7 +7,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, write_graph
 from ..graph_util import GraphRewriterHelper as Helper
 
 import numpy as np
@@ -98,6 +98,10 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
                 bias_node = graph_info[Helper.node_name_from_input(bias_node_name)].node
                 if bias_node.op != "Const":
                     continue
+
+                if mean_value.shape != (channel_count, ):
+                    continue
+
                 mean_value = mean_value - Helper.values_from_const(bias_node)
                 cur_graph.remove_node(bias_node.name)
                 cur_graph.remove_node(matched_node[1])
@@ -113,18 +117,30 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
             if var_node.op != "Const":
                 continue
             var_value = Helper.values_from_const(var_node)
+
+            if var_value.shape != (channel_count, ):
+                continue
+
             beta_node_name = Helper.node_name_from_input(
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("beta_op")])
             beta_node = graph_info[beta_node_name].node
             if beta_node.op != "Const":
                 continue
             beta_value = Helper.values_from_const(beta_node)
+
+            if beta_value.shape != (channel_count, ):
+                continue
+
             gamma_node_name = Helper.node_name_from_input(
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("gamma_op")])
             gamma_node = graph_info[gamma_node_name].node
+
             if gamma_node.op != "Const":
                 continue
             gamma_value = Helper.values_from_const(gamma_node)
+
+            if gamma_value.shape != (channel_count, ):
+                continue
 
             variance_epsilon_value = bn_node.attr[self.EPSILON_ATTR[bn_node.op]].f
 
