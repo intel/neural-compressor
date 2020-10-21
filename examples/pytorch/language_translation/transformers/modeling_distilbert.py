@@ -36,6 +36,8 @@ from .modeling_utils import PreTrainedModel, prune_linear_layer
 from .configuration_distilbert import DistilBertConfig
 from .file_utils import add_start_docstrings
 
+from torch.quantization import QuantStub, DeQuantStub
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -117,6 +119,11 @@ class MultiHeadSelfAttention(nn.Module):
         self.out_lin = nn.Linear(in_features=config.dim, out_features=config.dim)
 
         self.pruned_heads = set()
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.quant3 = QuantStub()
+        self.quant4 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def prune_heads(self, heads):
         attention_head_size = self.dim // self.n_heads
@@ -172,10 +179,22 @@ class MultiHeadSelfAttention(nn.Module):
             """ group heads """
             return x.transpose(1, 2).contiguous().view(bs, -1, self.n_heads * dim_per_head)
 
+        if not query.is_quantized:
+            query = self.quant1(query)
+        if not key.is_quantized:
+            key = self.quant2(key)
+        if not value.is_quantized:
+            value = self.quant3(value)
         q = shape(self.q_lin(query))           # (bs, n_heads, q_length, dim_per_head)
         k = shape(self.k_lin(key))             # (bs, n_heads, k_length, dim_per_head)
         v = shape(self.v_lin(value))           # (bs, n_heads, k_length, dim_per_head)
 
+        if q.is_quantized:
+            q = self.dequant(q)
+        if k.is_quantized:
+            k = self.dequant(k)
+        if v.is_quantized:
+            v = self.dequant(v)
         q = q / math.sqrt(dim_per_head)                     # (bs, n_heads, q_length, dim_per_head)
         scores = torch.matmul(q, k.transpose(2,3))          # (bs, n_heads, q_length, k_length)
         mask = (mask==0).view(mask_reshp).expand_as(scores) # (bs, n_heads, q_length, k_length)
@@ -190,7 +209,9 @@ class MultiHeadSelfAttention(nn.Module):
 
         context = torch.matmul(weights, v)     # (bs, n_heads, q_length, dim_per_head)
         context = unshape(context)             # (bs, q_length, dim)
+        context = self.quant4(context)
         context = self.out_lin(context)        # (bs, q_length, dim)
+        context = self.dequant(context)
 
         if self.output_attentions:
             return (context, weights)
@@ -205,12 +226,21 @@ class FFN(nn.Module):
         self.lin2 = nn.Linear(in_features=config.hidden_dim, out_features=config.dim)
         assert config.activation in ['relu', 'gelu'], "activation ({}) must be in ['relu', 'gelu']".format(config.activation)
         self.activation = gelu if config.activation == 'gelu' else nn.ReLU()
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, input):
+        input = self.quant1(input)
         x = self.lin1(input)
+        if self.activation.__name__ == 'gelu':
+            x = self.dequant(x)
         x = self.activation(x)
+        if self.activation.__name__ == 'gelu':
+            x = self.quant2(x)
         x = self.lin2(x)
         x = self.dropout(x)
+        x = self.dequant(x)
         return x
 
 class TransformerBlock(nn.Module):
@@ -225,6 +255,7 @@ class TransformerBlock(nn.Module):
         self.output_attentions = config.output_attentions
 
         assert config.dim % config.n_heads == 0
+        self.quant = QuantStub()
 
         self.attention = MultiHeadSelfAttention(config)
         self.sa_layer_norm = nn.LayerNorm(normalized_shape=config.dim, eps=1e-12)
@@ -587,7 +618,7 @@ class DistilBertForSequenceClassification(DistilBertPreTrainedModel):
         loss, logits = outputs[:2]
 
     """
-    def __init__(self, config):
+    def __init__(self, config, *model_args, **model_kwargs):
         super(DistilBertForSequenceClassification, self).__init__(config)
         self.num_labels = config.num_labels
 
@@ -595,6 +626,9 @@ class DistilBertForSequenceClassification(DistilBertPreTrainedModel):
         self.pre_classifier = nn.Linear(config.dim, config.dim)
         self.classifier = nn.Linear(config.dim, config.num_labels)
         self.dropout = nn.Dropout(config.seq_classif_dropout)
+
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
         self.init_weights()
 
@@ -605,10 +639,12 @@ class DistilBertForSequenceClassification(DistilBertPreTrainedModel):
                                             inputs_embeds=inputs_embeds)
         hidden_state = distilbert_output[0]                    # (bs, seq_len, dim)
         pooled_output = hidden_state[:, 0]                    # (bs, dim)
+        pooled_output = self.quant(pooled_output)
         pooled_output = self.pre_classifier(pooled_output)   # (bs, dim)
         pooled_output = nn.ReLU()(pooled_output)             # (bs, dim)
         pooled_output = self.dropout(pooled_output)         # (bs, dim)
         logits = self.classifier(pooled_output)              # (bs, dim)
+        logits = self.dequant(logits)
 
         outputs = (logits,) + distilbert_output[1:]
         if labels is not None:

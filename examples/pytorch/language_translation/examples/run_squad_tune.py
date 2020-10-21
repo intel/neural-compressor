@@ -663,7 +663,8 @@ def main():
                 eval_task = "squad"
                 from ilit import Quantization
                 quantizer = Quantization("./conf.yaml")
-                dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task)
+                dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task,
+                                            model_type=args.model_type)
                 test_dataloader = quantizer.dataloader(dataset, batch_size=args.eval_batch_size)
                 quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)

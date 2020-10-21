@@ -647,7 +647,8 @@ def main():
                     quantizer = Quantization("./conf.yaml")
                     if eval_task != "squad":
                         eval_task = 'classifier'
-                    eval_dataset = quantizer.dataset('bert', dataset=eval_dataset, task=eval_task)
+                    eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
+                                                     task=eval_task, model_type=args.model_type)
                     test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
                     quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)

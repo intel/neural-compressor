@@ -41,10 +41,15 @@ function run_tuning {
     batch_size=16
     SCRIPTS=examples/run_glue_tune.py
     MAX_SEQ_LENGTH=128
+    model_type='bert'
 
     if [ "${topology}" = "bert_base_MRPC" ];then
         TASK_NAME='MRPC'
         model_name_or_path='bert-base-uncased'
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path='distilbert-base-uncased'
+        model_type='distilbert'
     elif [ "${topology}" = "bert_base_CoLA" ]; then
         TASK_NAME='CoLA'
         model_name_or_path='bert-base-uncased'
@@ -78,7 +83,7 @@ function run_tuning {
     fi
 
     python -u $SCRIPTS \
-        --model_type bert \
+        --model_type ${model_type} \
         --model_name_or_path ${model_name_or_path} \
         --task_name ${TASK_NAME} \
         --do_eval \
