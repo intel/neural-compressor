@@ -4,7 +4,7 @@ from .objective import OBJECTIVES
 from .conf.config import Conf
 from .utils import logger
 from .utils.create_obj_from_config import create_eval_func, create_dataset, create_dataloader
-
+from .conf.dotdict import deep_get
 from .data import DataLoader as DATALOADER
 
 class Benchmark(object):
@@ -34,45 +34,50 @@ class Benchmark(object):
         framework = cfg.framework.name.lower()
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
-        if cfg.evaluation and cfg.evaluation.performance and cfg.evaluation.performance.iteration:
-            iteration = cfg.evaluation.performance.iteration
-        else:
-            iteration = -1 
+        assert cfg.evaluation is not None, 'benchmark need evaluation filed not be None'
+        results = {}
+        for mode in cfg.evaluation.keys():
+            iteration = -1 if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) is None \
+                else deep_get(cfg, 'evaluation.{}.iteration'.format(mode))
+            metric =  deep_get(cfg, 'evaluation.{}.metric'.format(mode))
 
-        if cfg.evaluation and cfg.evaluation.accuracy and cfg.evaluation.accuracy.metric:
-            metric = cfg.evaluation.accuracy.metric
-        else:
-            metric = None 
+            if b_dataloader is None:
+                assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
+                    'dataloader field of yaml file is missing'
 
-        if b_dataloader is None:
-            assert cfg.evaluation is not None and cfg.evaluation.performance is not None \
-                   and cfg.evaluation.performance.dataloader is not None, \
-                   'dataloader field of yaml file is missing'
+                b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
+                b_dataloader = create_dataloader(framework, b_dataloader_cfg)
+                b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
+                b_func = create_eval_func(cfg.framework.name, \
+                                          b_dataloader, \
+                                          adaptor, \
+                                          metric, \
+                                          b_postprocess_cfg,
+                                          iteration=iteration)
+            else:
+                b_func = create_eval_func(cfg.framework.name, \
+                                          b_dataloader, \
+                                          adaptor, \
+                                          metric, \
+                                          iteration=iteration)
 
-            b_dataloader_cfg = cfg.evaluation.performance.dataloader
-            b_dataloader = create_dataloader(framework, b_dataloader_cfg)
-            b_postprocess_cfg = cfg.evaluation.performance.postprocess
-            b_func = create_eval_func(cfg.framework.name, \
-                                      b_dataloader, \
-                                      adaptor, \
-                                      metric, \
-                                      b_postprocess_cfg,
-                                      iteration=iteration)
-        else:
-            b_func = create_eval_func(cfg.framework.name, \
-                                      b_dataloader, \
-                                      adaptor, \
-                                      metric, \
-                                      iteration=iteration)
+            objective = cfg.tuning.objective.lower()
+            self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion, \
+                                                   is_measure=True)
 
-        objective = cfg.tuning.objective.lower()
-        self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion, \
-                                               is_measure=True)
+            val = self.objective.evaluate(b_func, model)
+            logger.info('{} mode benchmark done!'.format(mode))
+            # measurer contain info not only performance(eg, memory, model_size)
+            # also measurer have result list among steps
+            acc, _ = val
+            batch_size = b_dataloader.batch_size
+            warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
+                else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
-        val = self.objective.evaluate(b_func, model)
-        # measurer contain info not only performance(eg, memory, model_size)
-        # also measurer have result list among steps
-        acc, _ = val
-        batch_size = b_dataloader.batch_size
-        return acc, batch_size, self.objective.measurer
+            assert len(self.objective.measurer.result_list()) > warmup, \
+                'itreation should larger than warmup'
 
+            results[mode] = acc, batch_size, \
+                            self.objective.measurer.result_list()[warmup:]
+
+        return results

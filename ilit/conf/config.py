@@ -285,7 +285,7 @@ schema = Schema({
                 Optional('transform'): postprocess_schema
             },
         },
-        Optional('performance', default={'warmup': 10, 'iteration': -1}): {
+        Optional('performance'): {
             Optional('warmup', default=10): int,
             Optional('iteration', default=-1): int,
             Optional('configs'): configs_schema,

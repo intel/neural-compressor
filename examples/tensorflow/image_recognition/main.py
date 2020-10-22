@@ -17,6 +17,7 @@
 #
 
 import time
+import numpy as np
 from argparse import ArgumentParser
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -36,9 +37,6 @@ class eval_classifier_optimized_graph:
     arg_parser.add_argument("--output-graph",
                             help='Specify tune result model save dir',
                             dest='output_graph')
-
-    arg_parser.add_argument("--warmup_steps", type=int, default=10,
-                            help="skip number of steps")
 
     arg_parser.add_argument("--config", default=None, help="tuning config")
 
@@ -72,16 +70,16 @@ class eval_classifier_optimized_graph:
       if self.args.benchmark:
           from ilit import Benchmark
           evaluator = Benchmark(self.args.config)
-          acc, batch_size, measurer = \
-              evaluator(model=self.args.input_graph)
+          results = evaluator(model=self.args.input_graph)
+          for mode, result in results.items():
+              acc, batch_size, result_list = result
+              latency = np.array(result_list).mean() / batch_size
 
-          print('Accuracy is {:.3f}'.format(acc))
-          print('Batch size = {}'.format(batch_size))
-
-          latency = measurer.result(self.args.warmup_steps) / batch_size
-
-          print('Latency: {:.3f} ms'.format(latency * 1000))
-          print('Throughput: {:.3f} images/sec'.format(1./ latency))
+              print('\n{} mode benchmark result:'.format(mode))
+              print('Accuracy is {:.3f}'.format(acc))
+              print('Batch size = {}'.format(batch_size))
+              print('Latency: {:.3f} ms'.format(latency * 1000))
+              print('Throughput: {:.3f} images/sec'.format(1./ latency))
 
 if __name__ == "__main__":
 

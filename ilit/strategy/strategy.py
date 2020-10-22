@@ -12,7 +12,7 @@ from ..utils.utility import Timeout, fault_tolerant_file, equal_dicts
 from ..utils.create_obj_from_config import create_eval_func
 from ..utils import logger
 from ..version import __version__
-from ..conf.dotdict import DotDict, deep_get
+from ..conf.dotdict import DotDict, deep_get, deep_set
 
 """The tuning strategies supported by ilit, including basic, random, bayesian and mse.
 
@@ -248,26 +248,32 @@ class TuneStrategy(object):
                     break
 
     def deploy_config(self):
-        eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader if \
-                              self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-                              self.cfg.evaluation.accuracy.dataloader else None
+        acc_dataloader_cfg = deep_get(self.cfg, 'evaluation.accuracy.dataloader')
+        perf_dataloader_cfg = deep_get(self.cfg, 'evaluation.performance.dataloader')
+        # use acc dataloader if perf dataloader is not configured
+        if perf_dataloader_cfg is None:
+            perf_dataloader_cfg = acc_dataloader_cfg
 
         self.deploy_cfg = OrderedDict()
-
         # int8 dataloader graph transform
-        if deep_get(eval_dataloader_cfg, 'transform.QuantizedInput') is not None:
+        if deep_get(perf_dataloader_cfg, 'transform.QuantizedInput') is not None \
+          or deep_get(acc_dataloader_cfg, 'transform.QuantizedInput') is not None:
             self.best_qmodel, scale = self.adaptor.quantize_input(self.best_qmodel)
-            eval_dataloader_cfg.transform.QuantizedInput['scale'] = scale
+            deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
+            deep_set(perf_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
+            deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
+            deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
 
+
+        self.deploy_cfg['model'] = self.cfg.model
         self.deploy_cfg['framework'] = self.cfg.framework
         self.deploy_cfg['device'] = self.cfg.device
-        self.deploy_cfg['evaluation'] = self.cfg.evaluation
-
-        if self.cfg.evaluation:
-            if self.cfg.evaluation.accuracy and eval_dataloader_cfg:
-                self.cfg.evaluation.accuracy.update(eval_dataloader_cfg)
-            if self.cfg.evaluation.performance and eval_dataloader_cfg:
-                self.cfg.evaluation.performance.update(eval_dataloader_cfg)
+        if self.cfg.evaluation is not None:
+            deep_set(self.cfg, 'evaluation.performance.dataloader',\
+                perf_dataloader_cfg)
+            deep_set(self.cfg, 'evaluation.accuracy.dataloader', \
+                acc_dataloader_cfg)
+            self.deploy_cfg['evaluation'] = self.cfg.evaluation
 
         deploy_path = self.cfg.tuning.deployment.path \
             if self.cfg.tuning.deployment is not None \
