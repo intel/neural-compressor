@@ -33,7 +33,7 @@ def main():
 
     # # Train model
     model.fit(x={"input": train_images}, y={"output": train_labels}, epochs=1)
-    tf.saved_model.save(model, "./models/simple_model")
+    model.save("./models/simple_model")
 
     # Convert Keras model to ConcreteFunction
     full_model = tf.function(lambda x: model(x))

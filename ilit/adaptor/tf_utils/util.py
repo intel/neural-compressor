@@ -220,13 +220,16 @@ def parse_kerasmodel_model(model):
         input_names: input node names
         output_names: output node name
     """
+    #import pdb
+    #pdb.set_trace()
+    
     kwargs = dict(zip(model.input_names, model.inputs))
     full_model = tf.function(lambda **kwargs: model(kwargs.values()))
     concrete_function = full_model.get_concrete_function(**kwargs)
     frozen_model = convert_variables_to_constants_v2(concrete_function)
     graph_def = frozen_model.graph.as_graph_def()
     input_names = [node.name for node in graph_def.node if node.op == 'Placeholder']
-    output_names = [output.name.split(':')[0] for output in model.outputs]
+    output_names = [output.split(':')[0] for output in model.output_names]
     # replace the output name with squential
     for output_name in output_names:
         for node in graph_def.node[::-1]:
