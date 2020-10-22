@@ -20,7 +20,7 @@ class Benchmark(object):
     def __init__(self, conf_fname):
         self.conf = Conf(conf_fname)
 
-    def __call__(self, model, b_dataloader=None):
+    def __call__(self, model, b_dataloader=None, b_func=None):
         cfg = self.conf.usr_cfg
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \

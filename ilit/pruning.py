@@ -44,8 +44,8 @@ class Pruning(object):
         logger.info(stats)
         logger.info(sparsity)
 
-    def __call__(self, model, q_dataloader=None, q_func=None,
-                 eval_dataloader=None, eval_func=None, resume_file=None):
+    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
+                 eval_func=None):
         self.cfg = self.conf.usr_cfg
 
         framework_specific_info = {'device': self.cfg.device,
