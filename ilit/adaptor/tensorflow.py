@@ -39,13 +39,13 @@ class TensorFlowAdaptor(Adaptor):
            may be imported more then once
 
         Args:
-            graph (tf.compat.v1.GraphDef): the model to get name from 
+            graph (tf.compat.v1.GraphDef): the model to get name from
             name (string): tensor name do not have 'import'
 
         Returns:
             tensor: evaluation result, the larger is better.
         """
-        for i in range(0, try_cnt):
+        for _ in range(try_cnt):
             try:
                 return graph.get_tensor_by_name(name)
             except:
@@ -56,10 +56,10 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
         # Convert to a numpy array
         values = np.array(values)
-    
+
         # Create histogram using numpy
         counts, bin_edges = np.histogram(values, bins=bins)
-    
+
         # Fill fields of histogram proto
         hist = tf.compat.v1.HistogramProto()
         hist.min = float(np.min(values))
@@ -67,14 +67,14 @@ class TensorFlowAdaptor(Adaptor):
         hist.num = int(np.prod(values.shape))
         hist.sum = float(np.sum(values))
         hist.sum_squares = float(np.sum(values**2))
-    
+
         bin_edges = bin_edges[1:]
-    
+
         for edge in bin_edges:
             hist.bucket_limit.append(edge)
         for c in counts:
             hist.bucket.append(c)
-    
+
         # Create and write Summary
         summary = tf.compat.v1.Summary(value=[tf.compat.v1.Summary.Value(tag=tag, histo=hist)])
         writer.add_summary(summary, step)
@@ -120,8 +120,8 @@ class TensorFlowAdaptor(Adaptor):
             from tensorflow.python.framework import tensor_util
 
             output_postfix = "_fp32.output"
-            inspect_node_types = ["Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool", 
-                                  "ConcatV2", "MatMul", "FusedBatchNormV3", "BiasAdd", 
+            inspect_node_types = ["Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool",
+                                  "ConcatV2", "MatMul", "FusedBatchNormV3", "BiasAdd",
                                   "Relu", "Relu6", "Dequantize"]
             fp32_inspect_node_name = []
             int8_inspect_node_name = []
@@ -148,12 +148,14 @@ class TensorFlowAdaptor(Adaptor):
                     if node.op.find("Sum") != -1:
                         out_min = -5
                         out_max = -4
-                    q_out_min = graph_info[node.input[out_min]].node.attr["value"].tensor.float_val[0]
-                    q_out_max = graph_info[node.input[out_max]].node.attr["value"].tensor.float_val[0]
+                    q_out_min = graph_info[node.input[out_min]
+                                           ].node.attr["value"].tensor.float_val[0]
+                    q_out_max = graph_info[node.input[out_max]
+                                           ].node.attr["value"].tensor.float_val[0]
                     q_node_scale[node.name] = (node.op, q_out_min, q_out_max)
                     int8_inspect_node_name.append(node.name)
                 # Inspect weights, bias. Need further optimize
-                if node.op == "Const" and (graph_info[graph_info[node.name].outputs[0]].node.op in 
+                if node.op == "Const" and (graph_info[graph_info[node.name].outputs[0]].node.op in
                     ["Conv2D", "DepthwiseConv2dNative", "MatMul", "FusedBatchNormV3", "BiasAdd"]):
                     const_value = tensor_util.MakeNdarray(node.attr.get('value').tensor)
                     self.log_histogram(writer, node.name, const_value)
@@ -167,7 +169,7 @@ class TensorFlowAdaptor(Adaptor):
             self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
         ]
 
-        config = tf.compat.v1.ConfigProto() 
+        config = tf.compat.v1.ConfigProto()
         config.use_per_session_threads = 1
         # config.intra_op_parallelism_threads = 28
         config.inter_op_parallelism_threads = 1
@@ -183,7 +185,7 @@ class TensorFlowAdaptor(Adaptor):
                 measurer.end()
             else:
                 predictions = sess_graph.run(output_tensor, {input_tensor: images})
-            # Inspect node output, just get 1st iteration output tensors for now 
+            # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):
                     tensor = predictions[index]
@@ -503,7 +505,7 @@ class TensorFlowAdaptor(Adaptor):
         # quantize input only support tensorflow version > 2.1.0
         import tensorflow as tf
         if tf.version.VERSION < '2.1.0':
-            logger.warning('quantize input need tensorflow version > 2.1.0') 
+            logger.warning('quantize input need tensorflow version > 2.1.0')
             return model, scale
 
         graph_def = model.as_graph_def()
@@ -527,7 +529,7 @@ class TensorFlowAdaptor(Adaptor):
         quantize_node_input = node_name_mapping[quantize_node.input[0]]
         quantize_node_outputs = [node for node in graph_def.node \
                        if quantize_node.name in node.input]
-        
+
         from .tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
         if quantize_node_input.op == 'Pad':
             pad_node_input = node_name_mapping[quantize_node_input.input[0]]
@@ -550,7 +552,7 @@ class TensorFlowAdaptor(Adaptor):
                                            "dtype", dtypes.qint8)
 
         for conv_node in quantize_node_outputs:
-            for index, conv_input in enumerate(conv_node.input): 
+            for index, conv_input in enumerate(conv_node.input):
                 if conv_input == quantize_node.name:
                     conv_node.input[index] = quantize_node.input[0]
                 elif conv_input == quantize_node.name + ":1":
@@ -569,7 +571,7 @@ class TensorFlowAdaptor(Adaptor):
 
         graph = tensorflow.Graph()
         with graph.as_default():
-            # use name='' to avoid 'import/' to name scope 
+            # use name='' to avoid 'import/' to name scope
             tensorflow.import_graph_def(graph_def, name='')
         return graph, scale
 
