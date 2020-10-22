@@ -10,7 +10,7 @@ quantization:                                        # optional. tuning constrai
   calibration:
     sampling_size: 50, 100                           # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:
-      batch_size: 30
+      batch_size: 10
       dataset:
         Imagenet:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
@@ -28,7 +28,7 @@ evaluation:                                          # optional. required if use
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
-      batch_size: 10
+      batch_size: 32
       dataset:
         Imagenet:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed

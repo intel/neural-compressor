@@ -1,16 +1,8 @@
+model:
+  name: imagenet_prune
+
 framework:
-  - name: pytorch                                # possible values are tensorflow, mxnet and pytorch
-
-quantization:
-  approach: post_training_static_quant
-
-tuning:
-  metric:
-    topk: 1                                  # tuning metrics: accuracy 
-  accuracy_criterion:
-    - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
-  timeout: 0                                   # tuning timeout (seconds)
-  random_seed: 9527                            # random seed
+  name: pytorch                                # possible values are tensorflow, mxnet and pytorch
 
 pruning:
   magnitude:
@@ -23,3 +15,11 @@ pruning:
   frequency: 1
   init_sparsity: 0.05
   target_sparsity: 0.25
+
+tuning:
+  metric:
+    topk: 1                                    # tuning metrics: accuracy 
+  accuracy_criterion:
+    - relative: 0.01                           # the tuning target of accuracy loss percentage: 1%
+  timeout: 0                                   # tuning timeout (seconds)
+  random_seed: 9527                            # random seed
