@@ -92,7 +92,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-def build_fake_strategy_1():
+def build_fake_strategy():
     with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
@@ -103,6 +103,7 @@ def build_fake_strategy_1():
             "class FakeTuneStrategy(TuneStrategy):\n",
             "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):\n",
             "    self.id = 0\n",
+            "    self.resume = True if dicts else False\n",
             "    super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",
             "  def __getstate__(self):\n",
             "    for history in self.tuning_history:\n",
@@ -111,73 +112,45 @@ def build_fake_strategy_1():
             "    save_dict = super(FakeTuneStrategy, self).__getstate__()\n",
             "    return save_dict\n",
             "  def next_tune_cfg(self):\n",
+            "    if self.resume:\n",
+            "      assert self.id == 1\n",
+            "      assert len(self.tuning_history) == 1\n",
+            "      history = self.tuning_history[0]\n",
+            "      assert self._same_yaml(history['cfg'], self.cfg)\n",
+            "      assert len(history['history'])\n",
+            "      for h in history['history']:\n",
+            "        assert h\n",
             "    op_cfgs = {}\n",
             "    for iterations in self.calib_iter:\n",
-            "        op_cfgs['calib_iteration'] = int(iterations)\n",
-            "        op_cfgs['op'] = OrderedDict()\n",
-            "        for op in self.opwise_quant_cfgs:\n",
-            "            op_cfgs['op'][op] = copy.deepcopy(\n",
-            "                                    self.opwise_tune_cfgs[op][0])\n",
-            "        self.id += 1\n",
-            "        yield op_cfgs\n",
-            "        return\n"
-        ]
-        f.writelines(seq)
-    f.close()
-
-def build_fake_strategy_2():
-    with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake2.py'), 'w', encoding='utf-8') as f:
-        seq = [
-            "import time\n",
-            "from .strategy import strategy_registry, TuneStrategy\n",
-            "from collections import OrderedDict\n",
-            "import copy\n",
-            "@strategy_registry\n",
-            "class FakeTuneStrategy(TuneStrategy):\n",
-            "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):\n",
-            "    self.id = 0\n",
-            "    super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",
-            "  def __getstate__(self):\n",
-            "    for history in self.tuning_history:\n",
-            "      if self._same_yaml(history['cfg'], self.cfg):\n",
-            "        history['id'] = self.id\n",
-            "    save_dict = super(FakeTuneStrategy, self).__getstate__()\n",
-            "    return save_dict\n",
-            "  def next_tune_cfg(self):\n",
-            "    print(self.id)\n",
-            "    assert self.id == 1\n",
-            "    op_cfgs = {}\n",
-            "    for iterations in self.calib_iter:\n",
-            "        op_cfgs['calib_iteration'] = int(iterations)\n",
-            "        op_cfgs['op'] = OrderedDict()\n",
-            "        for op in self.opwise_quant_cfgs:\n",
-            "            op_cfgs['op'][op] = copy.deepcopy(\n",
-            "                                    self.opwise_tune_cfgs[op][0])\n",
-            "        yield op_cfgs\n",
-            "        return\n" 
+            "      op_cfgs['calib_iteration'] = int(iterations)\n",
+            "      op_cfgs['op'] = OrderedDict()\n",
+            "      for op in self.opwise_quant_cfgs:\n",
+            "        op_cfgs['op'][op] = copy.deepcopy(\n",
+            "                                self.opwise_tune_cfgs[op][0])\n",
+            "      self.id += 1\n",
+            "      yield op_cfgs\n",
+            "      return\n"
         ]
         f.writelines(seq)
     f.close()
 
 class TestQuantization(unittest.TestCase):
-
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
         build_fake_yaml()
         build_fake_yaml2()
+        build_fake_strategy()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')    
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        build_fake_strategy_1()
-        from ilit.adaptor import adaptor
         from ilit import Quantization
-
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)
@@ -186,10 +159,8 @@ class TestQuantization(unittest.TestCase):
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
 
     def test_resume(self):
-        build_fake_strategy_2()
         from ilit import Quantization
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
@@ -199,7 +170,6 @@ class TestQuantization(unittest.TestCase):
                       q_dataloader=dataloader,
                       eval_dataloader=dataloader
                       )
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake2.py'))
 
 if __name__ == "__main__":
     unittest.main()
