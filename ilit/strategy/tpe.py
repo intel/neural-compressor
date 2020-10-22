@@ -68,8 +68,6 @@ class TpeTuneStrategy(TuneStrategy):
         self.warm_start = False
         self.hpopt_trials = Trials()
         self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
-        self.first_run_cfg = None
-        self.full_cfg = None
         self.loss_function_config = {
             'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
                       conf.usr_cfg.tuning.accuracy_criterion and \
@@ -143,7 +141,7 @@ class TpeTuneStrategy(TuneStrategy):
         Path(os.path.expanduser(tmp_path)).mkdir(parents=True, exist_ok=True)
         trials_file = os.path.join(os.path.expanduser(tmp_path), 'tpe_trials.csv')
         best_result_file = os.path.join(os.path.expanduser(tmp_path), 'tpe_best_result.csv')
-        logger.info('trials_file: {} '.format(trials_file) + \
+        logger.debug('trials_file: {} '.format(trials_file) + \
                     'best_result_file:{}'.format(best_result_file))
         if Path(trials_file).exists():
             os.remove(trials_file)
@@ -164,9 +162,9 @@ class TpeTuneStrategy(TuneStrategy):
                 worse_acc_loss,
                 best_lat,
                 self.loss_function_config)
-            self.add_loss_to_tuned_history_and_find_best(tuning_history['history'])
+            first_run_cfg = self.add_loss_to_tuned_history_and_find_best(tuning_history['history'])
             # Prepare hpopt config with best cfg from history
-            self._configure_hpopt_search_space_and_params(self.first_run_cfg)
+            self._configure_hpopt_search_space_and_params(first_run_cfg)
             # Run first iteration with best result from history
             trials_count = len(self.hpopt_trials.trials) + 1
             logger.info('First iteration start.')
@@ -181,7 +179,7 @@ class TpeTuneStrategy(TuneStrategy):
                 self._update_best_result(best_result_file)
             # Prepare full hpopt search space
             new_tune_cfgs = self._prepare_final_searchspace(
-                self.first_run_cfg,
+                first_run_cfg,
                 self.opwise_tune_cfgs)
             self._configure_hpopt_search_space_and_params(new_tune_cfgs)
         elif not self.warm_start:
@@ -228,8 +226,9 @@ class TpeTuneStrategy(TuneStrategy):
         return first
 
     def add_loss_to_tuned_history_and_find_best(self, tuning_history_list):
-        logger.info('Number of resumed configs: {}'.format(len(tuning_history_list)))
+        logger.debug('Number of resumed configs: {}'.format(len(tuning_history_list)))
         best_loss = None
+        first_run_cfg = None
         for history in tuning_history_list:
             result = self._compute_metrics(
                 history['tune_cfg']['op'],
@@ -238,15 +237,16 @@ class TpeTuneStrategy(TuneStrategy):
             if best_loss is None or result['loss'] < best_loss:
                 best_loss = result['loss']
                 self.best_tune_result = history['tune_result']
-                self.first_run_cfg = history['tune_cfg']['op']
+                first_run_cfg = history['tune_cfg']['op']
             result['source'] = 'finetune'
             history['result'] = result
-            logger.info(
+            logger.debug(
                 'Resumed iteration loss: {} acc_loss: {} lat_diff: {} quantization_ratio: {}'
                 .format(result['loss'], result['acc_loss'],
                 result['lat_diff'], result['quantization_ratio']))
-        for op, cfg in self.first_run_cfg.items():
-            self.first_run_cfg[op] = [cfg,]
+        for op, cfg in first_run_cfg.items():
+            first_run_cfg[op] = [cfg,]
+        return first_run_cfg
 
     def object_evaluation(self, tune_cfg, model):
         # check if config was alredy evaluated
