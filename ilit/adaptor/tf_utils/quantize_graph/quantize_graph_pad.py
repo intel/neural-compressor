@@ -26,8 +26,10 @@ class FuseNodeStartWithPad(QuantizeNodeBase):
         for _, value in self.node_name_mapping.items():
             if value.node.op in ("Pad") and self.node_name_mapping[
                     value.
-                    output[0]].node.op == "Conv2D" and self._find_relu_node(
-                        value.node):
+                    output[0]].node.op == "Conv2D" and self.node_name_mapping[
+                        value.output[
+                            0]].node.name == self.start_node_name and self._find_relu_node(
+                                value.node):
                 paddings_tensor = tensor_util.MakeNdarray(
                     self.node_name_mapping[value.node.input[1]].node.
                     attr["value"].tensor).flatten()

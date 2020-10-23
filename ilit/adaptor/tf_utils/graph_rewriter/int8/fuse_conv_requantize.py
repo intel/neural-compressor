@@ -20,7 +20,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
         "QuantizedDepthwiseConv2DWithBiasAndRelu",
         "QuantizedConv2DWithBias",
     ], ['RequantizePerChannel', 'Requantize']]
-    sum_pattern = ["QuantizedConv2DWithBiasSumAndRelu", ['RequantizePerChannel', 'Requantize']]
+    sum_pattern = [["QuantizedConv2DWithBiasSumAndRelu"], ['RequantizePerChannel', 'Requantize']]
 
     def __init__(self, model, device='cpu'):
         super().__init__(model)
@@ -144,14 +144,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node, [parent_node_name], quantized_node_name,
                 [self.graph_info[requantize_node_name].outputs[0]], requantize_node_name)
             self.graph_analyzer.remove_node(quantized_node_name)
-
-        while True:
-            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.sum_pattern)
-            if len(target_nodes) == 0:
-                break
-
+        
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.sum_pattern)
+        while target_nodes:
             i = target_nodes[0]
-
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
             requantize_node_name = i[1]
@@ -177,8 +173,15 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
             deq_node = self.graph_info[Helper.node_name_from_input(quantized_node.input[-1])].node
-            original_summand_node = self.graph_info[Helper.node_name_from_input(
-                deq_node.input[0])].node
+            if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+                self.logger.debug('Dropping fusion due to unsupported pattern..... {}'.format(i))
+                target_nodes.remove(i)
+                continue
+            if deq_node.op == 'Dequantize':
+                original_summand_node = self.graph_info[Helper.node_name_from_input(
+                    deq_node.input[0])].node
+            else:
+                original_summand_node = deq_node
             summand_op_type = uint8_type if dtypes.as_dtype(
                 deq_node.attr["T"].type) == uint8_type else int8_type
 
@@ -203,6 +206,9 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 quantized_node.name, self.graph_info[requantize_node_name].outputs,
                 requantize_node_name)
             self.graph_analyzer.remove_node(quantized_node_name)
-            self.graph_analyzer.remove_node(deq_node.name)
+
+            if deq_node.op == 'Dequantize':
+                self.graph_analyzer.remove_node_with_single_input_output(deq_node.name)
+            target_nodes.remove(i)
 
         return self.graph_analyzer.dump_graph()
