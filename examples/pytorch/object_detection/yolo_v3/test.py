@@ -121,10 +121,11 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load(opt.weights_path))
 
     if opt.tune:
-        class yolo_dataLoader(DataLoader):
+        class yolo_dataLoader(object):
             def __init__(self, loader=None, model_type=None, device='cpu'):
                 self.loader = loader
                 self.device = device
+                self.batch_size = loader.batch_size
             def __iter__(self):
                 labels = []
                 for _, imgs, targets in self.loader:

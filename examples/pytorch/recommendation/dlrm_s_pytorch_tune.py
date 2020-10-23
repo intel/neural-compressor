@@ -387,9 +387,10 @@ class DLRM_Net(nn.Module):
         return z0
 
 
-class DLRM_DataLoader(DataLoader):
+class DLRM_DataLoader(object):
     def __init__(self, loader=None):
         self.loader = loader
+        self.batch_size = loader.dataset.batch_size
     def __iter__(self):
         for X_test, lS_o_test, lS_i_test, T in self.loader:
             yield (X_test, lS_o_test, lS_i_test), T
@@ -857,30 +858,9 @@ if __name__ == "__main__":
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         from ilit import Quantization
         quantizer = Quantization("./conf.yaml")
-        quantizer(dlrm, eval_dataloader, eval_func=eval_func)
-
-        # run int8 model without ilit tuning
-        dlrm.qconfig = torch.quantization.QConfig(activation=torch.quantization.observer.MinMaxObserver.with_args(reduce_range=False),
-            weight=torch.quantization.default_weight_observer)
-        if args.per_tensor_linear:
-            dlrm.bot_l.qconfig = default_qconfig
-            dlrm.top_l.qconfig = default_qconfig
-        prepare(dlrm, inplace=True)
-        j = 0
-        for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
-            Z = dlrm_wrap(X_test, lS_o_test, lS_i_test, use_gpu, device)
-            if j > nbatches * 0.05:
-                break
-        print("convert")
-        convert(dlrm, inplace=True)
-        print("convert done")
-        import time
-        start = time.time()
-        accuracy = eval_func(dlrm)
-        end = time.time()
-        total_time = end - start
-        print('int8 result is: ', '[{:.4f}, {:.4f}]'.format(accuracy, total_time))
+        q_model = quantizer(dlrm, eval_dataloader, eval_func=eval_func)
         exit(0)
+
 
     if args.do_int8_inference and args.inference_only:
         print('do_int8_inference')
