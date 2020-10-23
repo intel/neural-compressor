@@ -6,7 +6,7 @@ model:                                               # mandatory. ilit uses this
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 50, 100                           # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 5, 10, 50, 100                           # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:
       batch_size: 10
       dataset:
@@ -63,7 +63,7 @@ evaluation:                                          # optional. required if use
       cores_per_instance: 4
       num_of_instance: 7
     dataloader:
-      batch_size: 1
+      batch_size: 10
       dataset:
         Imagenet:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
