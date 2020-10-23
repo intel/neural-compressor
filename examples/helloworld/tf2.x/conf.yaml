@@ -3,7 +3,7 @@ model:
 
 framework:
   name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
-  inputs: input_1
+  inputs: input
   outputs: output
 quantization:
   calibration:
