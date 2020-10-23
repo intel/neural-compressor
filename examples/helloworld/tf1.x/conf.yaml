@@ -1,9 +1,7 @@
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: hello_world
-
-framework:
-  name: tensorflow                                   # possible values are tensorflow, mxnet and pytorch
-  inputs: 'args_0'
+  framework: tensorflow                              # possible values are tensorflow, mxnet and pytorch.
+  inputs: 'args_0'                                   # optional. inputs and outputs fields are only required for tensorflow backend.
   outputs: 'Identity'
 
 tuning:

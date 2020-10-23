@@ -69,19 +69,25 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 #conf.yaml
 
-framework:
-  - name: pytorch
-
-tuning:
-    metric:
-      - topk: 1
-    accuracy_criterion:
-      - relative: 0.01
-    timeout: 0
-    random_seed: 9527
+model:
+  name: imagenet_qat 
+  framework: pytorch
 
 quantization:
   approach: quant_aware_training
+
+evaluation:
+  accuracy:
+    metric:
+      topk: 1
+
+tuning:
+    accuracy_criterion:
+      relative: 0.01
+    exit_policy:
+      timeout: 0
+    random_seed: 9527
+
 ```
 
 Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited tuning time until accuracy target is met, but the result maybe is not a model of best accuracy and performance.

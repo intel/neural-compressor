@@ -112,9 +112,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 model:                                           
   name: ssd
-
-framework:
-  name: mxnet
+  framework: mxnet
 
 tuning:
   accuracy_criterion:

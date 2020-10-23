@@ -1,8 +1,6 @@
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: inceptionv4
-
-framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-  name: tensorflow
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: input
   outputs: InceptionV4/Logits/Predictions
 

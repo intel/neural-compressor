@@ -20,7 +20,7 @@ from .dotdict import DotDict
 yaml.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {})
 
 def _valid_framework_field(key, scope, error):
-    if scope['name'] == 'tensorflow':
+    if scope['framework'] == 'tensorflow':
         assert 'inputs' in scope and 'outputs' in scope
 
 def _valid_accuracy_field(key, scope, error):
@@ -180,10 +180,8 @@ configs_schema = Schema({
 schema = Schema({
     'model': {
         'name': str,
-    },
-    'framework': {
-        Hook('name', handler=_valid_framework_field): object,
-        'name': And(str, lambda s: s in FRAMEWORKS),
+        Hook('framework', handler=_valid_framework_field): object,
+        'framework': And(str, lambda s: s in FRAMEWORKS),
         Optional('inputs', default=None): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=None): And(Or(str, list), Use(input_to_list))
     },

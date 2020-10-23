@@ -9,23 +9,22 @@ import importlib
 def build_fake_yaml():
     fake_yaml = '''
         model:
-          - name: fake_yaml
-        framework: 
-          - name: tensorflow
-            inputs: x
-            outputs: op_to_store
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
         device: cpu
         evaluation:
-          - accuracy:
-              metric:
-                - topk: 1
+          accuracy:
+            metric:
+              topk: 1
         tuning:
             strategy:
-               name: tpe
+              name: tpe
             accuracy_criterion:
-              - relative: 0.01
+              relative: 0.01
             snapshot:
-              - path: saved
+              path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
@@ -35,25 +34,24 @@ def build_fake_yaml():
 def build_fake_yaml2():
     fake_yaml = '''
         model:
-          - name: fake_yaml
-        framework: 
-          - name: tensorflow
-            inputs: x
-            outputs: op_to_store
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
         device: cpu
         evaluation:
-          - accuracy:
-              metric:
-                - topk: 1
+          accuracy:
+            metric:
+              topk: 1
         tuning:
-            strategy:
-                name: tpe
-            exit_policy:
-                max_trials: 5
-            accuracy_criterion:
-              - relative: -0.01
-            snapshot:
-              - path: saved
+          strategy:
+            name: tpe
+          exit_policy:
+            max_trials: 5
+          accuracy_criterion:
+            relative: -0.01
+          snapshot:
+            path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:

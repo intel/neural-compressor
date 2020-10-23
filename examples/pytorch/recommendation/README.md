@@ -67,16 +67,18 @@ As DLRM's matrics is 'f1', so customer should provide evaluation function 'eval_
 ### Write Yaml config file
 In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
 ```
-framework:
-  - name: pytorch
+model:
+  name: dlrm
+  framework: pytorch
 
 device: cpu
 
 tuning:
-    accuracy_criterion:
-      - relative: 0.01
+  accuracy_criterion:
+    relative: 0.01
+  exit_policy:
     timeout: 0
-    random_seed: 9527
+  random_seed: 9527
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 > **Note** : Intel® Low Precision Optimization Tool does NOT support "mse" tuning strategy for pytorch framework

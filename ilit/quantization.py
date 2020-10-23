@@ -33,6 +33,7 @@ class Quantization(object):
 
     def __init__(self, conf_fname):
         self.conf = Conf(conf_fname)
+        self.framework = self.conf.usr_cfg.model.framework.lower()
 
     def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
                  eval_func=None):
@@ -131,8 +132,6 @@ class Quantization(object):
 
         """
         cfg = self.conf.usr_cfg
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.resume.path)) \
-                           if cfg.tuning.resume and cfg.tuning.resume.path else None
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_func is None:
@@ -144,12 +143,15 @@ class Quantization(object):
                     self.eval_func = self._fake_eval_func
                     self.eval_dataloader = None
                 else:
-                    self.eval_dataloader = create_dataloader(cfg.framework.name, \
+                    self.eval_dataloader = create_dataloader(self.framework, \
                                                              eval_dataloader_cfg)
                     self.eval_func = None
             else:
                 assert hasattr(eval_dataloader, 'batch_size'), \
-                       'eval_dataloader must have batch_size attribute'
+                       "eval_dataloader must have batch_size attribute!"
+                assert hasattr(eval_dataloader, '__iter__') or \
+                       hasattr(eval_dataloader, '__getitem__'), \
+                       "eval_dataloader must implement __iter__ or __getitem__ magic method!"
                 self.eval_dataloader = eval_dataloader
                 self.eval_func = None
         else:
@@ -160,12 +162,16 @@ class Quantization(object):
             if q_dataloader is None:
                 calib_dataloader_cfg = cfg.quantization.calibration.dataloader
                 assert calib_dataloader_cfg is not None, \
-                    'dataloader field of yaml file is missing'
-                self.calib_dataloader = create_dataloader(cfg.framework.name, calib_dataloader_cfg)
+                       "dataloader field of calibration field of quantization section " \
+                       "in yaml file should be configured as q_dataloader is None!"
+                self.calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
                 self.q_func = None
             else:
                 assert hasattr(q_dataloader, 'batch_size'), \
-                       'q_dataloader must have batch_size attribute'
+                       "q_dataloader must have batch_size attribute!"
+                assert hasattr(q_dataloader, '__iter__') or \
+                       hasattr(q_dataloader, '__getitem__'), \
+                       "q_dataloader must implement __iter__ or __getitem__ magic method!"
                 self.calib_dataloader = q_dataloader
                 self.q_func = None
         else:
@@ -178,6 +184,8 @@ class Quantization(object):
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
+        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.resume.path)) \
+                           if cfg.tuning.resume and cfg.tuning.resume.path else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
@@ -208,18 +216,17 @@ class Quantization(object):
         return self.strategy.best_qmodel
 
     def dataset(self, dataset_type, *args, **kwargs):
-        return DATASETS(self.conf.usr_cfg.framework.name)[dataset_type](*args, **kwargs)
+        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
 
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
                    sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
-
-        return DATALOADER(framework=self.conf.usr_cfg.framework.name, dataset=dataset,
+        return DATALOADER(framework=self.framework, dataset=dataset,
                           batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
                           sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
                           pin_memory=pin_memory)
 
-    # if user don't config evaluation dataloader give eval_func, create fake eval func
-    # only do quantizetion without tuning
+    # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
+    # fake eval func is created to do quantization once without tuning
     def _fake_eval_func(self, model):
         return 1.
 

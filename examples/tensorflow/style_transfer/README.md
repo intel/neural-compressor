@@ -75,9 +75,7 @@ In examples directory, there is a conf.yaml. We could remove most of items and o
 ```yaml
 model:
   name: style_transfer
-
-framework:
-  name: tensorflow
+  framework: tensorflow
   inputs: import/style_input,import/content_input
   outputs: import/transformer/expand/conv3/conv/Sigmoid
 

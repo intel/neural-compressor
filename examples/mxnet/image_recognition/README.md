@@ -117,9 +117,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: cnn
-
-framework:
-  name: mxnet                                        # possible values are tensorflow, mxnet and pytorch
+  framework: mxnet                                   # possible values are tensorflow, mxnet and pytorch
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.

@@ -24,10 +24,12 @@ pip install intel-tensorflow==2.2.0
 ### Examples of enabling Intel® Low Precision Optimization Tool 
 This exmaple can demonstrate the steps to do quantization on Keras generated saved model. 
 ### 1.Add inputs and outputs information into conf.yaml
-   framework:
-  - name: tensorflow                         # possible values are tensorflow, mxnet and pytorch
-  - inputs: 'args_0'                                                       
-  - outputs: 'Identity'
+
+    model:
+      name: helloworld
+      framework: tensorflow                         # possible values are tensorflow, mxnet and pytorch
+      inputs: 'args_0'                                                       
+      outputs: 'Identity'
 
 
 ### 2. Gererate the quantized model. 

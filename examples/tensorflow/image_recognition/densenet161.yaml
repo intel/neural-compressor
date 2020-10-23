@@ -1,8 +1,6 @@
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: densenet161
-
-framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-  name: tensorflow
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: Placeholder
   outputs: densenet161/predictions/Reshape_1
 

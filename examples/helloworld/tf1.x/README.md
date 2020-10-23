@@ -25,10 +25,11 @@ This exmaple can demonstrate the steps to do quantization on frozen pb.
 ### 1. Prepare conf.yaml  
 Add inputs and outputs information into conf.yaml
 ```
-   framework:
-  - name: tensorflow                         # possible values are tensorflow, mxnet and pytorch
-  - inputs: 'x'                               
-  - outputs: 'Identity'
+    model:
+      name: helloworld
+      framework: tensorflow                         # possible values are tensorflow, mxnet and pytorch
+      inputs: 'x'                               
+      outputs: 'Identity'
 ```
 ### 2. Run ilit to get the quantized Graph. 
 ```PyThon

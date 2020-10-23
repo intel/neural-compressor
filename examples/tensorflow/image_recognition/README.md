@@ -285,9 +285,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: resnet50_v1_5
-
-framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-  name: tensorflow
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: input_tensor
   outputs: softmax_tensor
 

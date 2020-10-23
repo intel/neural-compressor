@@ -1,10 +1,8 @@
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: wide_deep_large_ds
-
-framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-  name: tensorflow
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: new_numeric_placeholder,new_categorical_placeholder
-  outputs: import/head/predictions/probabilities
+  outputs: import/head/predictions/probabilities     # optional. inputs and outputs fields are only required for tensorflow backend.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:

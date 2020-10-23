@@ -220,15 +220,17 @@ As BERT's matricses are 'f1', 'acc_and_f1', mcc', 'spearmanr', 'acc', so custome
 ### Write Yaml config file
 In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
 ```
-framework:
-  - name: pytorch
+model:
+  name: bert
+  framework: pytorch
 
 device: cpu
 
 tuning:
     accuracy_criterion:
-      - relative: 0.01
-    timeout: 0
+      relative: 0.01
+    exit_policy:
+      timeout: 0
     random_seed: 9527
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.

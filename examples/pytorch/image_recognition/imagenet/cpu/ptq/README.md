@@ -90,10 +90,8 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 ```
 model:
-  name: imagenet
-
-framework:
-  name: pytorch
+  name: imagenet_ptq
+  framework: pytorch
 
 quantization:
   calibration:

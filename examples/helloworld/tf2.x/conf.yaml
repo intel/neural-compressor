@@ -1,10 +1,9 @@
 model: 
   name: hello_world
-
-framework:
-  name: tensorflow                              # possible values are tensorflow, mxnet and pytorch
-  inputs: input
+  framework: tensorflow                          # possible values are tensorflow, mxnet and pytorch
+  inputs: input                                  # optional. inputs and outputs fields are only required for tensorflow backend.
   outputs: output
+
 quantization:
   calibration:
     sampling_size: 5, 10
@@ -21,7 +20,7 @@ tuning:
   accuracy_criterion:
     relative: 0.05                               # the tuning target of accuracy loss percentage: 1%
   exit_policy:
-    timeout: 0                                  # tuning timeout (seconds)
+    timeout: 0                                   # tuning timeout (seconds)
   random_seed: 100                               # random seed
 
 

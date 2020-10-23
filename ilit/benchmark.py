@@ -25,13 +25,13 @@ class Benchmark(object):
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
                                    'random_seed': cfg.tuning.random_seed}
-        if cfg.framework.name.lower() == 'tensorflow':
-            framework_specific_info.update({"inputs": cfg.framework.inputs, \
-                                            "outputs": cfg.framework.outputs})
-        if cfg.framework.name.lower() == 'mxnet':
+        framework = cfg.model.framework.lower()
+        if framework == 'tensorflow':
+            framework_specific_info.update({"inputs": cfg.model.inputs, \
+                                            "outputs": cfg.model.outputs})
+        if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": b_dataloader})
 
-        framework = cfg.framework.name.lower()
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         assert cfg.evaluation is not None, 'benchmark need evaluation filed not be None'
@@ -48,14 +48,14 @@ class Benchmark(object):
                 b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
                 b_dataloader = create_dataloader(framework, b_dataloader_cfg)
                 b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
-                b_func = create_eval_func(cfg.framework.name, \
+                b_func = create_eval_func(framework, \
                                           b_dataloader, \
                                           adaptor, \
                                           metric, \
                                           b_postprocess_cfg,
                                           iteration=iteration)
             else:
-                b_func = create_eval_func(cfg.framework.name, \
+                b_func = create_eval_func(framework, \
                                           b_dataloader, \
                                           adaptor, \
                                           metric, \

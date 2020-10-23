@@ -1,8 +1,6 @@
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: ssd 
-
-framework:
-  name: mxnet                                        # possible values are tensorflow, mxnet and pytorch
+  framework: mxnet                                   # possible values are tensorflow, mxnet and pytorch
 
 tuning:
   accuracy_criterion:

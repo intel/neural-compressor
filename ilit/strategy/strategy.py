@@ -105,13 +105,13 @@ class TuneStrategy(object):
         framework_specific_info = {'device': self.cfg.device,
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
-        if self.cfg.framework.name.lower() == 'tensorflow':
+        framework = self.cfg.model.framework.lower()
+        if framework == 'tensorflow':
             framework_specific_info.update(
-                {"inputs": self.cfg.framework.inputs, "outputs": self.cfg.framework.outputs})
-        if self.cfg.framework.name.lower() == 'mxnet':
+                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+        if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
 
-        framework = self.cfg.framework.name.lower()
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         self.baseline = None
@@ -266,7 +266,6 @@ class TuneStrategy(object):
 
 
         self.deploy_cfg['model'] = self.cfg.model
-        self.deploy_cfg['framework'] = self.cfg.framework
         self.deploy_cfg['device'] = self.cfg.device
         if self.cfg.evaluation is not None:
             deep_set(self.cfg, 'evaluation.performance.dataloader',\
@@ -371,7 +370,7 @@ class TuneStrategy(object):
                 'metric field of accuracy field of evaluation section should not be empty'
 
             postprocess_cfg = self.cfg.evaluation.accuracy.postprocess
-            eval_func = create_eval_func(self.cfg.framework.name, \
+            eval_func = create_eval_func(self.cfg.model.framework.lower(), \
                                          self.eval_dataloader, \
                                          self.adaptor, \
                                          self.cfg.evaluation.accuracy.metric, \

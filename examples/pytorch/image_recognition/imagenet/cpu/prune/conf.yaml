@@ -1,8 +1,6 @@
 model:
   name: imagenet_prune
-
-framework:
-  name: pytorch                                # possible values are tensorflow, mxnet and pytorch
+  framework: pytorch                           # possible values are tensorflow, mxnet and pytorch
 
 pruning:
   magnitude:
