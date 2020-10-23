@@ -1,2 +1,2 @@
 scikit-image
-Pillow
+Pillow==7.1.0
