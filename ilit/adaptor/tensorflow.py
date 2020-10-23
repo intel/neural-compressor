@@ -129,13 +129,13 @@ class TensorFlowAdaptor(Adaptor):
             int8_inspect_node_name = []
             q_node_scale = {}
             if self.dump_times == 0:
-                temp_dir = "./run/eval/baseline"
+                temp_dir = "./runs/eval/baseline"
             else:
-                temp_dir = "./run/eval/tune_" + str(self.dump_times)
+                temp_dir = "./runs/eval/tune_" + str(self.dump_times)
             if os.path.isdir(temp_dir):
                 import shutil
                 shutil.rmtree(temp_dir, ignore_errors=True)
-            writer = tf.compat.v1.summary.FileWriter(temp_dir)
+            writer = tf.compat.v1.summary.FileWriter(temp_dir, graph)
 
             cur_graph = GraphAnalyzer()
             cur_graph.graph = graph_def
@@ -204,6 +204,7 @@ class TensorFlowAdaptor(Adaptor):
         acc = metric.result() if metric is not None else 0
         if tensorboard:
             new_dir = temp_dir + "_acc_" + str(acc)
+            writer.close() 
             if os.path.isdir(new_dir):
                 import shutil
                 shutil.rmtree(new_dir, ignore_errors=True)

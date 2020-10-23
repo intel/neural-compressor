@@ -235,8 +235,22 @@ class PyTorchAdaptor(Adaptor):
         acc = metric.result() if metric is not None else 0
 
         if tensorboard:
-            self._post_eval_hook(model, accuracy=acc)
 
+            for idx, (input, label) in enumerate(dataloader):
+                if isinstance(input, dict):
+                    if self.device == "gpu":
+                        for inp in input.keys():
+                            input[inp] = input[inp].to("dpcpp")
+                    self._post_eval_hook(model, accuracy=acc, input=input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    if self.device == "gpu":
+                        input = [inp.to("dpcpp") for inp in input]
+                    self._post_eval_hook(model, accuracy=acc, input=input)
+                else:
+                    if self.device == "gpu":
+                        input = input.to("dpcpp")
+                    self._post_eval_hook(model, accuracy=acc, input=input)
+                break
         return acc
 
     def _cfg_to_qconfig(self, tune_cfg):
@@ -791,10 +805,17 @@ class PyTorchAdaptor(Adaptor):
         else:
            accuracy = '' 
 
-        writer = SummaryWriter('runs/eval/tune_' + 
-                               str(self.dump_times) + 
-                               '_acc' + str(accuracy))
-        
+        if self.dump_times == 0:
+           writer = SummaryWriter('runs/eval/baseline' + 
+                               '_acc' + str(accuracy), model)
+        else:
+           writer = SummaryWriter('runs/eval/tune_' + 
+                                  str(self.dump_times) + 
+                                  '_acc' + str(accuracy), model)
+
+        if args is not None and 'input' in args and self.dump_times == 0:
+           writer.add_graph(model, args['input'])  
+
         summary = OrderedDict()
         observer_dict = {}
         get_observer_dict(model, observer_dict)
@@ -852,14 +873,7 @@ class PyTorchAdaptor(Adaptor):
             else:
                 writer.add_histogram(op + "/fp32", state_dict[key])
 
-
-        if self.dump_times == 0:
-            writer.add_text("accuracy/baseline - ", text_string=str(accuracy))
-        else:
-            writer.add_text("accuracy/tune_" + str(self.dump_times) + " - ", str(accuracy))
-            writer.add_text("tune_cfg",
-                        "fp32_baseline" if self.tune_cfg is None else str(self.tune_cfg))
-            writer.close()
+        writer.close()
         self.dump_times = self.dump_times + 1
      
         return summary
