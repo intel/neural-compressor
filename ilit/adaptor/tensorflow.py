@@ -402,6 +402,7 @@ class TensorFlowAdaptor(Adaptor):
 
         """
         import tensorflow as tf
+        import cpuinfo
         is_supported_version = False
         from tensorflow import python
         if (hasattr(python, "pywrap_tensorflow")
@@ -411,9 +412,8 @@ class TensorFlowAdaptor(Adaptor):
             from tensorflow.python._pywrap_util_port import IsMklEnabled
         if IsMklEnabled() and (tf.version.VERSION >= "2.3.0"):
             is_supported_version = True
-        command = "cat /proc/cpuinfo | grep flags | tail -n 1"
-        all_flags = subprocess.check_output(command, shell=True).strip().decode()  # nosec
-        if ((is_supported_version and " avx512_bf16 " in all_flags)
+        all_flags = cpuinfo.get_cpu_info()['flags']
+        if ((is_supported_version and "avx512_bf16" in all_flags)
                 or os.getenv('FORCE_BF16') == '1'):
             return True
         return False
