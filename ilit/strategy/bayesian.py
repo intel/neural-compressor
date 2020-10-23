@@ -87,7 +87,7 @@ class BayesianTuneStrategy(TuneStrategy):
             elif len(configs) == 1:
                 op_cfgs['op'][op] = copy.deepcopy(configs[0])
             else:
-                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[0])
+                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
         if len(self.calib_iter) > 1:
             value = int(params['calib_iteration'])
             if value == len(self.calib_iter):

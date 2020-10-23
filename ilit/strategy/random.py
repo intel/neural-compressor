@@ -74,6 +74,9 @@ class RandomTuneStrategy(TuneStrategy):
             op_cfgs['calib_iteration'] = int(np.random.choice(self.calib_iter))
             op_cfgs['op'] = {}
             for op, configs in self.opwise_quant_cfgs.items():
-                op_cfgs['op'][op] = np.random.choice(configs)
+                if len(configs) > 0:
+                    op_cfgs['op'][op] = np.random.choice(configs)
+                else:
+                    op_cfgs['op'][op] = np.random.choice(self.opwise_tune_cfgs[op])
 
             yield op_cfgs

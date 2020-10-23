@@ -367,7 +367,7 @@ class TensorFlowAdaptor(Adaptor):
             patterns = details[-1]
             pat_length = len(patterns)
             pattern_info = {
-                'sequence': [','.join(patterns[:pat_length - i]) for i in range(pat_length)][0],
+                'sequence': [[','.join(patterns[:pat_length - i]) for i in range(pat_length)][0]],
                 'precision': ['int8']
             }
             if node_op in tf_quantizable_op_type:
@@ -384,7 +384,7 @@ class TensorFlowAdaptor(Adaptor):
                     #TODO enable the sym mode once the tf fixed the mkldequantize_op.cc bug.
                     # is_positive_input = self.pre_optimizer_handle.has_positive_input(node_name)
                     # matmul_scheme = 'sym' if is_positive_input else 'asym'
-                    matmul_scheme = 'asym'
+                    matmul_scheme = ['asym']
                     matmul_int8_config['activation']['scheme'] = matmul_scheme
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
