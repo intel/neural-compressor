@@ -144,7 +144,7 @@ class TensorFlowAdaptor(Adaptor):
             for node in graph_def.node:
                 if node.op in inspect_node_types:
                     fp32_inspect_node_name.append(node.name)
-                elif node.op.find("QuantizedConv") != -1:
+                elif node.op.find("Requantize") != -1: 
                     out_min = -2
                     out_max = -1
                     if node.op.find("Sum") != -1:
