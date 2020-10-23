@@ -46,11 +46,18 @@ class Adaptor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, model, dataloader, metric):
+    def evaluate(self, model, dataloader, postprocess=None, \
+                 metric=None, measurer=None, iteration=-1, tensorboard=False):
         '''The function is used to run evaluation on validation dataset.
 
            Args:
                model (object): The model to do calibration.
+               dataloader (generator): generate the data and labels.
+               postprocess (object, optional): process the result from the model
+               metric (object, optional): Depends on model category. Defaults to None.
+               measurer (object, optional): for precise benchmark measurement.
+               iteration(int, optional): control steps of mini-batch
+               tensorboard (boolean, optional): for tensorboard inspect tensor.
         '''
         raise NotImplementedError
 

@@ -95,8 +95,10 @@ class TensorFlowAdaptor(Adaptor):
             input_graph ([Graph, GraphDef or Path String]): The model could be the graph,
                         graph_def object, the frozen pb or ckpt/savedmodel folder path.
             dataloader (generator): generate the data and labels.
+            postprocess (object, optional): process the result from the model
             metric (object, optional): Depends on model category. Defaults to None.
             measurer (object, optional): for precise benchmark measurement.
+            iteration(int, optional): control steps of mini-batch
             tensorboard (boolean, optional): for tensorboard inspect tensor.
 
         Returns:
