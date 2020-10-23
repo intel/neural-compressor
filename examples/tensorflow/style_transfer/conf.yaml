@@ -3,8 +3,8 @@ model:                                               # mandatory. ilit uses this
 
 framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   name: tensorflow
-  inputs: import/style_input,import/content_input
-  outputs: import/transformer/expand/conv3/conv/Sigmoid
+  inputs: style_input,content_input
+  outputs: transformer/expand/conv3/conv/Sigmoid
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:

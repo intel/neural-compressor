@@ -42,6 +42,8 @@ flags.DEFINE_string('input_model', None, 'Output directory.')
 
 flags.DEFINE_string('precision', 'fp32', 'precision')
 
+flags.DEFINE_integer('batch_size', 1, 'batch_size')
+
 flags.DEFINE_bool('tune', False, 'if use tune')
 
 flags.DEFINE_string('config', None, 'yaml configuration for tuning')
@@ -121,7 +123,7 @@ def main(args=None):
 
       if FLAGS.tune:
           with tf.Graph().as_default() as graph:
-              tf.import_graph_def(frozen_graph)
+              tf.import_graph_def(frozen_graph, name='')
               quantizer = Quantization(FLAGS.config)
               quantized_model = quantizer(graph, eval_func=eval_func)
 
@@ -133,13 +135,20 @@ def main(args=None):
 
   # validate the quantized model here
   with tf.Graph().as_default(), tf.Session() as sess:
-      # create dataloader using default style_transfer dataset and generate stylized images
-      dataset = DATASETS('tensorflow')['style_transfer'](FLAGS.content_images_paths,
-                                                                   FLAGS.style_images_paths,
-                                                                   crop_ratio=0.2,
-                                                                   resize_shape=(256, 256))
-      dataloader = DataLoader('tensorflow', dataset=dataset)
-      tf.import_graph_def(frozen_graph)
+      if FLAGS.tune:
+          # create dataloader using default style_transfer dataset
+          # generate stylized images
+          dataset = DATASETS('tensorflow')['style_transfer']( \
+              FLAGS.content_images_paths.strip(),
+              FLAGS.style_images_paths.strip(),
+              crop_ratio=0.2,
+              resize_shape=(256, 256))
+      else: 
+          dataset = DATASETS('tensorflow')['dummy']( \
+              shape=[(200, 256, 256, 3), (200, 256, 256, 3)], label=True) 
+      dataloader = DataLoader('tensorflow', \
+          dataset=dataset, batch_size=FLAGS.batch_size)
+      tf.import_graph_def(frozen_graph, name='')
       style_transfer(sess, dataloader, FLAGS.precision)
 
 def add_import_to_name(sess, name, try_cnt=2):
@@ -170,12 +179,9 @@ def style_transfer(sess, dataloader, precision='fp32'):
                   content_name: content_img_np})
           duration = time.time() - start_time
           time_list.append(duration)
-          # Saves stylized image.
-          save_image(stylized_image_res, os.path.join(FLAGS.output_dir,
-                                                      '{}_{}.jpg'.format(precision, len(time_list))))
-      warm_up = 2
+      warm_up = 1
       throughput = (len(time_list) - warm_up)/ np.array(time_list[warm_up:]).sum()
-      print('Batch size = {}'.format(1)) 
+      print('Batch size = {}'.format(FLAGS.batch_size)) 
       print('Latency: {:.3f} ms'.format(np.array(time_list[warm_up:]).mean() * 1000)) 
       print('Throughput: {:.3f} images/sec'.format(throughput)) 
 
