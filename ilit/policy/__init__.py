@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .policy import POLICIES
 from os.path import dirname, basename, isfile, join
 import glob
+from .policy import POLICIES
 
 modules = glob.glob(join(dirname(__file__), "*.py"))
 

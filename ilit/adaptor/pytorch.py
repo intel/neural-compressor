@@ -897,17 +897,47 @@ class PyTorchAdaptor(Adaptor):
         return summary
 
     def get_all_weight_names(self, model):
+        """ get all  model weights names
+
+        Args:
+            model (torch.nn.module):   current model instance
+
+        Returns:
+            names (list(str)):         all weights names
+        """
+
         names = []
         for name, param in model.named_parameters():
             names.append(name)
         return names
 
     def get_weight(self, model, tensor_name):
+        """ get model weights
+
+        Args:
+            model (torch.nn.module):   current model instance
+            tensor_name (str):         weight names
+
+        Returns:
+            weights (numpy.array):     related weights
+        """
+
         for name, param in model.named_parameters():
             if tensor_name == name:
                 return param.data
 
     def update_weights(self, model, tensor_name, new_tensor):
+        """ update model weights
+
+        Args:
+            model (torch.nn.module):   current model instance
+            tensor_name (str):         weight names
+            new_tensor (numpy.array):  weight data
+
+        Returns:
+            model (torch.nn.module):   updated model instance
+        """
+
         new_tensor = torch.Tensor(new_tensor)
         for name, param in model.named_parameters():
             if name == tensor_name:
@@ -915,6 +945,17 @@ class PyTorchAdaptor(Adaptor):
         return model
 
     def report_sparsity(self, model):
+        """ report sparsity of the model
+
+        Args:
+            model (torch.nn.module):    current model instance
+
+        Return:
+            df (pandas.DataFrame):      layer by layer sparsity report
+            total_sparsity (float):     total model sparsity
+
+        """
+
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])
         pd.set_option('precision', 2)

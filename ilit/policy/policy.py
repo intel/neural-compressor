@@ -15,17 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
-import copy
-from collections import OrderedDict
-from ..adaptor import FRAMEWORKS
-from ..objective import OBJECTIVES
-from ..metric import METRICS
-from ..data import TRANSFORMS
-from ..utils import logger
-
 POLICIES = {}
-
 
 def policy_registry(cls):
     """The class decorator used to register all PrunePolicy subclasses.
@@ -44,9 +34,19 @@ def policy_registry(cls):
     POLICIES[cls.__name__[:-len('PrunePolicy')].lower()] = cls
     return cls
 
-
 class PrunePolicy:
     def __init__(self, model, local_config, global_config, adaptor):
+        """The base clase of Prune policies
+
+        Args:
+            model (object):                        The original model (currently torhc.nn.module
+                                                   instance).
+            local_config (Conf):                   configs specific for this pruning instance
+            global_config (Conf):                  global configs which may be overwritten by 
+                                                   local_config
+            adaptor (Adaptor):                     Correspond adaptor for current framework
+
+        """
         self.model = model
         self.adaptor = adaptor
         self.tensor_dims = [4]
@@ -88,6 +88,14 @@ class PrunePolicy:
         raise NotImplementedError
 
     def update_sparsity(self, epoch):
+        """ update sparsity goals according to epoch numbers
+
+        Args:
+            epoch (int): the epoch number
+
+        Returns:
+            sprsity (float): sparsity target in this epoch
+        """
         if self.start_epoch == self.end_epoch:
             return self.init_sparsity
         if epoch < self.start_epoch:

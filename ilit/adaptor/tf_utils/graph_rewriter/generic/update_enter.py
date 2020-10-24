@@ -22,6 +22,9 @@ from ..graph_util import GraphAnalyzer
 
 
 class UpdateEnterOptimizer(GraphRewriterBase):
+    """ This is a workaround of control ops
+        exclude all nodes following Enters
+    """
     supported_ops = ["MatMul", "BiasAdd"]
 
     def __init__(self, model):

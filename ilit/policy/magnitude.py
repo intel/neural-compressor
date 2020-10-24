@@ -15,10 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import numpy as np
-from collections import OrderedDict
-import itertools
 from .policy import policy_registry, PrunePolicy
 from ..utils import logger
 
@@ -45,6 +42,7 @@ class MagnitudePrunePolicy(PrunePolicy):
                 self.adaptor.update_weights(self.model, weight, new_weight)
 
     def compute_mask(self):
+        """compute masks according to absolute values"""
         for weight in self.weights:
             tensor = np.array(self.adaptor.get_weight(self.model, weight))
             if len(tensor.shape) in self.tensor_dims:
@@ -57,8 +55,7 @@ class MagnitudePrunePolicy(PrunePolicy):
                     threshold = np.repeat(threshold, tensor.shape[-2], axis=-2)
                     self.masks[weight] = threshold < tensor
                 else:
-                    tensor_flat = np.abs(tensor.flatten())
-                    tensor_flat.sort()
+                    tensor_flat = sorted(np.abs(tensor.flatten()))
                     threshold = float(tensor_flat[int(tensor_flat.size * self.sparsity)])
                     self.masks[weight] = threshold < np.abs(tensor)
 
@@ -69,9 +66,9 @@ class MagnitudePrunePolicy(PrunePolicy):
                     logger.info(
                         "{} with mask sparsity {} {} {}".format(
                             weight, str(
-                                self.masks[weight].size), str(
-                                self.masks[weight].sum()), str(
-                                1 - self.masks[weight].sum() / self.masks[weight].size)))
+                            self.masks[weight].size), str(
+                            self.masks[weight].sum()), str(
+                            1 - self.masks[weight].sum() / self.masks[weight].size)))
                     new_weight = self.masks[weight] * \
                         np.array(self.adaptor.get_weight(self.model, weight))
                     self.adaptor.update_weights(self.model, weight, new_weight)

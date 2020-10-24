@@ -118,12 +118,14 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
             return GraphRewriterHelper.values_from_const(end_node)
 
     def check_all_folded(self):
+        """ check whether constant parts in the model"""
         for node_name, _ in self.graph_info.items():
             if self.check_const_inputs(node_name):
                 return False
         return True
 
     def check_const_inputs(self, node_name):
+        """ check if all the node inputs are constant """
         if node_name not in self.graph_info:
             return False
         node_op = self.graph_info[node_name].node.op
