@@ -140,8 +140,8 @@ def _write_inputs_outputs_to_yaml(yaml_path, inputs, outputs):
             tmp_i = tmp_i + str(item) + ','
         for item in outputs:
             tmp_o = tmp_o + str(item) + ','
-        content['framework'].update({'inputs': tmp_i[:-1]})
-        content['framework'].update({'outputs': tmp_o[:-1]})
+        content['model'].update({'inputs': tmp_i[:-1]})
+        content['model'].update({'outputs': tmp_o[:-1]})
         print(content)
 
     with open(yaml_path, 'w') as nf:
