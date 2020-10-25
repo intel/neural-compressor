@@ -8,6 +8,7 @@ from ..utils import logger
 import hyperopt as hpo
 from hyperopt import fmin, hp, STATUS_OK, Trials
 from functools import partial
+
 try:
     import pandas as pd
 except ImportError:
@@ -66,6 +67,7 @@ class TpeTuneStrategy(TuneStrategy):
                "TPE strategy is only for post training static quantization!"
         self.hpopt_search_space = None
         self.warm_start = False
+        self.cfg_evaluated = False
         self.hpopt_trials = Trials()
         self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
         self.loss_function_config = {
@@ -201,6 +203,7 @@ class TpeTuneStrategy(TuneStrategy):
             # start trials
             exit = False
             while not exit:
+                self.cfg_evaluated = False
                 logger.info('Trial iteration start: {} / {}'.format(trials_count, self.max_trials))
                 fmin(partial(self.object_evaluation, model=self.model),
                     space=self.hpopt_search_space,
@@ -213,6 +216,8 @@ class TpeTuneStrategy(TuneStrategy):
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
                 self._save(tmp_path)
+                if self.cfg_evaluated:
+                    continue
                 if self.stop(t, trials_count):
                     exit = True
 
@@ -236,8 +241,7 @@ class TpeTuneStrategy(TuneStrategy):
                 history['tune_result'][1])
             if best_loss is None or result['loss'] < best_loss:
                 best_loss = result['loss']
-                self.best_tune_result = history['tune_result']
-                first_run_cfg = history['tune_cfg']['op']
+                first_run_cfg = history['tune_cfg']['op'].copy()
             result['source'] = 'finetune'
             history['result'] = result
             logger.debug(
@@ -259,6 +263,7 @@ class TpeTuneStrategy(TuneStrategy):
         if history:
             self.last_tune_result = history['tune_result']
             self.last_qmodel = None
+            self.cfg_evaluated = True
             logger.info('This tuning config was evaluated!')
             return history['result']
 
