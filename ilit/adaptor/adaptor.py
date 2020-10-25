@@ -131,3 +131,13 @@ class Adaptor(object):
         '''The function is used to do some post process after complete evaluation.
         '''
         raise NotImplementedError
+
+    @abstractmethod
+    def save(self, model, path):
+        '''The function is used by tune strategy class for saving model.
+
+           Args:
+               model (object): The model to saved.
+               path (string): The path where to save.
+        '''
+        raise NotImplementedError

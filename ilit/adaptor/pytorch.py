@@ -5,11 +5,327 @@ import copy
 from collections import OrderedDict
 from ..utils import logger
 import random
-import time
 import numpy as np
+import os
+import yaml
 
 torch = LazyImport('torch')
 cpuinfo = LazyImport('cpuinfo')
+WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST\
+             - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+
+REDUCE_RANGE = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
+logger.debug("reduce range:")
+logger.debug(REDUCE_RANGE)
+
+
+def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
+    '''tune_cfg should be a format like below:
+      {
+        'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
+                 'fp32': [['CONV2D', 'RELU', 'BN']]},
+        'calib_iteration': 10,
+        'op': {
+           ('op1', 'CONV2D'): {
+             'activation':  {'dtype': 'uint8',
+                             'algorithm': 'minmax',
+                             'scheme':'sym',
+                             'granularity': 'per_tensor'},
+             'weight': {'dtype': 'int8',
+                        'algorithm': 'kl',
+                        'scheme':'asym',
+                        'granularity': 'per_channel'}
+           },
+           ('op2', 'RELU): {
+             'activation': {'dtype': 'int8',
+             'scheme': 'asym',
+             'granularity': 'per_tensor',
+             'algorithm': 'minmax'}
+           },
+           ('op3', 'CONV2D'): {
+             'activation':  {'dtype': 'fp32'},
+             'weight': {'dtype': 'fp32'}
+           },
+           ...
+        }
+      }
+    '''
+    op_qcfgs = OrderedDict()
+    for key in tune_cfg['op']:
+        value = tune_cfg['op'][key]
+        assert isinstance(value, dict)
+        assert 'weight' in value
+        assert 'activation' in value
+        if value['activation']['dtype'] == 'fp32':
+            assert value['weight']['dtype'] == 'fp32'
+            op_qcfgs[key] = None
+        else:
+            weight = value['weight']
+            activation = value['activation']
+
+            scheme = weight['scheme']
+            granularity = weight['granularity']
+            algorithm = weight['algorithm']
+            dtype = weight['dtype']
+            if is_insert_fakequant:
+                weights_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
+            else:
+                weights_observer = _observer(algorithm, scheme, granularity, dtype)
+
+            scheme = activation['scheme']
+            granularity = activation['granularity']
+            algorithm = activation['algorithm']
+            dtype = activation['dtype']
+            if is_insert_fakequant:
+                activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
+            else:
+                activation_observer = _observer(algorithm, scheme, granularity, dtype)
+
+            if is_insert_fakequant:
+                qconfig = torch.quantization.QConfig(
+                    activation=activation_fake_quantize, weight=weights_fake_quantize)
+            else:
+                qconfig = torch.quantization.QConfig(
+                    activation=activation_observer, weight=weights_observer)
+
+            op_qcfgs[key] = qconfig
+
+    return op_qcfgs
+
+
+def _observer(algorithm, scheme, granularity, dtype):
+    if algorithm == 'minmax':
+        if granularity == 'per_channel':
+            observer = torch.quantization.PerChannelMinMaxObserver
+            if scheme == 'sym':
+                qscheme = torch.per_channel_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_channel_affine
+        else:
+            assert granularity == 'per_tensor'
+            observer = torch.quantization.MinMaxObserver
+            if scheme == 'sym':
+                qscheme = torch.per_tensor_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_tensor_affine
+    else:
+        assert algorithm == 'kl'
+        observer = torch.quantization.HistogramObserver
+        if granularity == 'per_channel':
+            if scheme == 'sym':
+                qscheme = torch.per_channel_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_channel_affine
+        else:
+            assert granularity == 'per_tensor'
+            if scheme == 'sym':
+                qscheme = torch.per_tensor_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_tensor_affine
+
+    if dtype == 'int8':
+        dtype = torch.qint8
+    else:
+        assert dtype == 'uint8'
+        dtype = torch.quint8
+
+    return observer.with_args(qscheme=qscheme, dtype=dtype,
+                              reduce_range=(REDUCE_RANGE and scheme == 'asym'))
+
+def _fake_quantize(algorithm, scheme, granularity, dtype):
+    fake_quant = torch.quantization.FakeQuantize
+    if algorithm == 'minmax':
+        if granularity == 'per_channel':
+            observer = torch.quantization.MovingAveragePerChannelMinMaxObserver
+            if scheme == 'sym':
+                qscheme = torch.per_channel_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_channel_affine
+        else:
+            assert granularity == 'per_tensor'
+            observer = torch.quantization.MovingAverageMinMaxObserver
+            if scheme == 'sym':
+                qscheme = torch.per_tensor_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_tensor_affine
+    else:
+        assert algorithm == 'kl'
+        observer = torch.quantization.HistogramObserver
+        if granularity == 'per_channel':
+            if scheme == 'sym':
+                qscheme = torch.per_channel_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_channel_affine
+        else:
+            assert granularity == 'per_tensor'
+            if scheme == 'sym':
+                qscheme = torch.per_tensor_symmetric
+            else:
+                assert scheme == 'asym'
+                qscheme = torch.per_tensor_affine
+
+    if dtype == 'int8':
+        qmin = -128
+        qmax = 127
+        dtype = torch.qint8
+    else:
+        assert dtype == 'uint8'
+        qmin = 0
+        qmax = 255
+        dtype = torch.quint8
+
+    return fake_quant.with_args(observer=observer, quant_min=qmin, quant_max=qmax,
+                                dtype=dtype, qscheme=qscheme,
+                                reduce_range=(REDUCE_RANGE and scheme == 'asym'))
+
+
+def _propagate_qconfig(model, op_qcfgs):
+    fallback_ops = []
+    for k, v in op_qcfgs.items():
+        if v is None and k[1] != str(torch.quantization.QuantStub) \
+                and k[1] != str(torch.quantization.DeQuantStub):
+            fallback_ops.append(k[0])
+        else:
+            if v is None:
+                weights_observer = _observer('minmax', 'asym',
+                                             'per_channel', 'int8')
+                activation_observer = _observer('minmax', 'sym',
+                                                'per_tensor', 'uint8')
+                v = torch.quantization.QConfig(
+                    activation=activation_observer, weight=weights_observer)
+            op_qcfg = {k[0]: v}
+            _propagate_qconfig_recursively(model, '', op_qcfg)
+
+    if fallback_ops:
+        _fallback_quantizable_ops_recursively(model, '', fallback_ops)
+
+
+def _propagate_qconfig_recursively(model, prefix, op_qcfg, qconfig_parent=None):
+    for name, child in model.named_children():
+        model_qconfig = qconfig_parent
+        op_name = prefix + name
+        if op_name in op_qcfg:
+            child.qconfig = op_qcfg[op_name]
+            model_qconfig = op_qcfg[op_name]
+        elif model_qconfig is not None and type(child) in WHITE_LIST:
+            child.qconfig = model_qconfig
+        _propagate_qconfig_recursively(
+            child, op_name + '.', op_qcfg, model_qconfig)
+
+
+def _find_quantized_op_num(model, op_count=0):
+    quantize_op_num = op_count
+    for name_tmp, child_tmp in model.named_children():
+        if type(child_tmp) in WHITE_LIST \
+            and not (isinstance(child_tmp, torch.quantization.QuantStub)
+                     or isinstance(child_tmp, torch.quantization.DeQuantStub)):
+            quantize_op_num += 1
+        else:
+            quantize_op_num = _find_quantized_op_num(
+                child_tmp, quantize_op_num)
+    return quantize_op_num
+
+
+def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
+    class DequantQuantWrapper(torch.nn.Module):
+        r"""A wrapper class that wraps the input module, adds DeQuantStub and
+        surround the call to module with call to dequant.
+        this is used by fallback layer when the data type of quantized op
+        is  input:int8/output:int8.
+
+        This is used by the fallback utility functions to add the dequant and
+        quant modules, before `convert` function `QuantStub` will just be observer,
+        it observes the input tensor, after `convert`, `QuantStub`
+        will be swapped to `nnq.Quantize` which does actual quantization. Similarly
+        for `DeQuantStub`.
+        """
+
+        def __init__(self, module, observer=None):
+            super(DequantQuantWrapper, self).__init__()
+            if not module.qconfig and observer:
+                weights_observer = observer('minmax', 'asym', 'per_channel', 'int8')
+                activation_observer = observer('minmax', 'sym', 'per_tensor', 'uint8')
+                module.qconfig = torch.quantization.QConfig(
+                    activation=activation_observer, weight=weights_observer)
+            self.add_module('quant', torch.quantization.QuantStub(module.qconfig))
+            self.add_module('dequant', torch.quantization.DeQuantStub())
+            self.add_module('module', module)
+            module.qconfig = None
+            self.train(module.training)
+
+        def forward(self, X):
+            X = self.dequant(X)
+            X = self.module(X)
+            return self.quant(X)
+
+        def add(self, x, y):
+            # type: (Tensor, Tensor) -> Tensor
+            x = self.dequant(x)
+            y = self.dequant(y)
+            r = self.module.add(x, y)
+            return self.quant(r)
+
+        def add_scalar(self, x, y):
+            # type: (Tensor, float) -> Tensor
+            x = self.dequant(x)
+            r = self.module.add_scalar(x, y)
+            return self.quant(r)
+
+        def mul(self, x, y):
+            # type: (Tensor, Tensor) -> Tensor
+            x = self.dequant(x)
+            y = self.dequant(y)
+            r = self.module.mul(x, y)
+            return self.quant(r)
+
+        def mul_scalar(self, x, y):
+            # type: (Tensor, float) -> Tensor
+            x = self.dequant(x)
+            r = self.module.mul_scalar(x, y)
+            return self.quant(r)
+
+        def cat(self, x, dim=0):
+            # type: (List[Tensor], int) -> Tensor
+            X = [self.dequant(x_) for x_ in x]
+            r = self.module.cat(X, dim)
+            return self.quant(r)
+
+        def add_relu(self, x, y):
+            # type: (Tensor, Tensor) -> Tensor
+            x = self.dequant(x)
+            y = self.dequant(y)
+            r = self.module.add_relu(x, y)
+            return self.quant(r)
+
+    for name, child in model.named_children():
+        op_name = prefix + name
+        if op_name in fallback_ops:
+            child.qconfig = None
+            quantize_op_num = _find_quantized_op_num(model)
+            if quantize_op_num == 1:
+                found = False
+                for name_tmp, child_tmp in model.named_children():
+                    if isinstance(
+                            child_tmp, torch.quantization.QuantStub) or isinstance(
+                            child_tmp, torch.quantization.DeQuantStub):
+                        model._modules[name_tmp] = torch.nn.Identity()
+                        found = True
+                if not found:
+                    model._modules[name] = DequantQuantWrapper(
+                        child, observer=_observer)
+            else:
+                model._modules[name] = DequantQuantWrapper(
+                    child, observer=_observer)
+        else:
+            _fallback_quantizable_ops_recursively(
+                child, op_name + '.', fallback_ops)
 
 
 @adaptor_registry
@@ -72,14 +388,6 @@ class PyTorchAdaptor(Adaptor):
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
-
-        self.white_list = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST\
-            - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
-
-        # Should reduce range if HW didn't support VNNI, otherwise accuracy will drop.
-        self.reduce_range = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
-        logger.debug("reduce range:")
-        logger.debug(self.reduce_range)
 
         if self.device == "cpu":
             self.capability = \
@@ -144,8 +452,8 @@ class PyTorchAdaptor(Adaptor):
         # For tensorboard display
         self.tune_cfg = tune_cfg
 
-        op_cfgs = self._cfg_to_qconfig(tune_cfg)
-        self._propagate_qconfig(q_model, op_cfgs)
+        op_cfgs = _cfg_to_qconfig(tune_cfg, (self.approach == 'quant_aware_training'))
+        _propagate_qconfig(q_model, op_cfgs)
         # sanity check common API misusage
         if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
             logger.warn("None of the submodule got qconfig applied. Make sure you "
@@ -253,322 +561,12 @@ class PyTorchAdaptor(Adaptor):
                 break
         return acc
 
-    def _cfg_to_qconfig(self, tune_cfg):
-        '''tune_cfg should be a format like below:
-          {
-            'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
-                     'fp32': [['CONV2D', 'RELU', 'BN']]},
-            'calib_iteration': 10,
-            'op': {
-               ('op1', 'CONV2D'): {
-                 'activation':  {'dtype': 'uint8',
-                                 'algorithm': 'minmax',
-                                 'scheme':'sym',
-                                 'granularity': 'per_tensor'},
-                 'weight': {'dtype': 'int8',
-                            'algorithm': 'kl',
-                            'scheme':'asym',
-                            'granularity': 'per_channel'}
-               },
-               ('op2', 'RELU): {
-                 'activation': {'dtype': 'int8',
-                 'scheme': 'asym',
-                 'granularity': 'per_tensor',
-                 'algorithm': 'minmax'}
-               },
-               ('op3', 'CONV2D'): {
-                 'activation':  {'dtype': 'fp32'},
-                 'weight': {'dtype': 'fp32'}
-               },
-               ...
-            }
-          }
-        '''
-        op_qcfgs = OrderedDict()
-        for key in tune_cfg['op']:
-            value = tune_cfg['op'][key]
-            assert isinstance(value, dict)
-            assert 'weight' in value
-            assert 'activation' in value
-            if value['activation']['dtype'] == 'fp32':
-                assert value['weight']['dtype'] == 'fp32'
-                op_qcfgs[key] = None
-            else:
-                weight = value['weight']
-                activation = value['activation']
-
-                scheme = weight['scheme']
-                granularity = weight['granularity']
-                algorithm = weight['algorithm']
-                dtype = weight['dtype']
-                if self.approach == 'post_training_static_quant':
-                    weights_observer = self._observer(algorithm, scheme, granularity, dtype)
-                elif self.approach == 'quant_aware_training':
-                    weights_fake_quantize = self._fake_quantize(
-                        algorithm, scheme, granularity, dtype)
-                else:
-                    assert False, "Unsupport quantization approach: {}".format(self.approach)
-
-                scheme = activation['scheme']
-                granularity = activation['granularity']
-                algorithm = activation['algorithm']
-                dtype = activation['dtype']
-                if self.approach == 'post_training_static_quant':
-                    activation_observer = self._observer(algorithm, scheme, granularity, dtype)
-                elif self.approach == 'quant_aware_training':
-                    activation_fake_quantize = self._fake_quantize(
-                        algorithm, scheme, granularity, dtype)
-                else:
-                    assert False, "Unsupport quantization approach: {}".format(self.approach)
-
-                if self.approach == 'post_training_static_quant':
-                    qconfig = torch.quantization.QConfig(
-                        activation=activation_observer, weight=weights_observer)
-                elif self.approach == 'quant_aware_training':
-                    qconfig = torch.quantization.QConfig(
-                        activation=activation_fake_quantize, weight=weights_fake_quantize)
-                else:
-                    assert False, "Unsupport quantization approach: {}".format(self.approach)
-
-                op_qcfgs[key] = qconfig
-
-        return op_qcfgs
-
-    def _observer(self, algorithm, scheme, granularity, dtype):
-        if algorithm == 'minmax':
-            if granularity == 'per_channel':
-                observer = torch.quantization.PerChannelMinMaxObserver
-                if scheme == 'sym':
-                    qscheme = torch.per_channel_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_channel_affine
-            else:
-                assert granularity == 'per_tensor'
-                observer = torch.quantization.MinMaxObserver
-                if scheme == 'sym':
-                    qscheme = torch.per_tensor_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_tensor_affine
-        else:
-            assert algorithm == 'kl'
-            observer = torch.quantization.HistogramObserver
-            if granularity == 'per_channel':
-                if scheme == 'sym':
-                    qscheme = torch.per_channel_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_channel_affine
-            else:
-                assert granularity == 'per_tensor'
-                if scheme == 'sym':
-                    qscheme = torch.per_tensor_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_tensor_affine
-
-        if dtype == 'int8':
-            dtype = torch.qint8
-        else:
-            assert dtype == 'uint8'
-            dtype = torch.quint8
-
-        return observer.with_args(qscheme=qscheme, dtype=dtype,
-                                  reduce_range=(self.reduce_range and scheme == 'asym'))
-
-    def _fake_quantize(self, algorithm, scheme, granularity, dtype):
-        fake_quant = torch.quantization.FakeQuantize
-        if algorithm == 'minmax':
-            if granularity == 'per_channel':
-                observer = torch.quantization.MovingAveragePerChannelMinMaxObserver
-                if scheme == 'sym':
-                    qscheme = torch.per_channel_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_channel_affine
-            else:
-                assert granularity == 'per_tensor'
-                observer = torch.quantization.MovingAverageMinMaxObserver
-                if scheme == 'sym':
-                    qscheme = torch.per_tensor_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_tensor_affine
-        else:
-            assert algorithm == 'kl'
-            observer = torch.quantization.HistogramObserver
-            if granularity == 'per_channel':
-                if scheme == 'sym':
-                    qscheme = torch.per_channel_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_channel_affine
-            else:
-                assert granularity == 'per_tensor'
-                if scheme == 'sym':
-                    qscheme = torch.per_tensor_symmetric
-                else:
-                    assert scheme == 'asym'
-                    qscheme = torch.per_tensor_affine
-
-        if dtype == 'int8':
-            qmin = -128
-            qmax = 127
-            dtype = torch.qint8
-        else:
-            assert dtype == 'uint8'
-            qmin = 0
-            qmax = 255
-            dtype = torch.quint8
-
-        return fake_quant.with_args(observer=observer, quant_min=qmin, quant_max=qmax,
-                                    dtype=dtype, qscheme=qscheme,
-                                    reduce_range=(self.reduce_range and scheme == 'asym'))
-
-    def _propagate_qconfig(self, model, op_qcfgs):
-        fallback_ops = []
-        for k, v in op_qcfgs.items():
-            if v is None and k[1] != torch.quantization.QuantStub \
-                    and k[1] != torch.quantization.DeQuantStub:
-                fallback_ops.append(k[0])
-            else:
-                if v is None:
-                    weights_observer = self._observer('minmax', 'asym', 'per_channel', 'int8')
-                    activation_observer = self._observer('minmax', 'sym', 'per_tensor', 'uint8')
-                    v = torch.quantization.QConfig(
-                        activation=activation_observer, weight=weights_observer)
-                op_qcfg = {k[0]: v}
-                self._propagate_qconfig_recursively(model, '', op_qcfg)
-
-        if fallback_ops:
-            self._fallback_quantizable_ops_recursively(model, '', fallback_ops)
-
-    def _propagate_qconfig_recursively(
-            self, model, prefix, op_qcfg, qconfig_parent=None):
-        for name, child in model.named_children():
-            model_qconfig = qconfig_parent
-            op_name = prefix + name
-            if op_name in op_qcfg:
-                child.qconfig = op_qcfg[op_name]
-                model_qconfig = op_qcfg[op_name]
-            elif model_qconfig is not None and type(child) in self.white_list:
-                child.qconfig = model_qconfig
-            self._propagate_qconfig_recursively(
-                child, op_name + '.', op_qcfg, model_qconfig)
-
-    def _find_quantized_op_num(self, model, op_count=0):
-        quantize_op_num = op_count
-        for name_tmp, child_tmp in model.named_children():
-            if type(child_tmp) in self.white_list \
-                and not (isinstance(child_tmp, torch.quantization.QuantStub)
-                         or isinstance(child_tmp, torch.quantization.DeQuantStub)):
-                quantize_op_num += 1
-            else:
-                quantize_op_num = self._find_quantized_op_num(
-                    child_tmp, quantize_op_num)
-        return quantize_op_num
-
-    def _fallback_quantizable_ops_recursively(
-            self, model, prefix, fallback_ops):
-        class DequantQuantWrapper(torch.nn.Module):
-            r"""A wrapper class that wraps the input module, adds DeQuantStub and
-            surround the call to module with call to dequant.
-            this is used by fallback layer when the data type of quantized op
-            is  input:int8/output:int8.
-
-            This is used by the fallback utility functions to add the dequant and
-            quant modules, before `convert` function `QuantStub` will just be observer,
-            it observes the input tensor, after `convert`, `QuantStub`
-            will be swapped to `nnq.Quantize` which does actual quantization. Similarly
-            for `DeQuantStub`.
-            """
-
-            def __init__(self, module, observer=None):
-                super(DequantQuantWrapper, self).__init__()
-                if not module.qconfig and observer:
-                    weights_observer = observer('minmax', 'asym', 'per_channel', 'int8')
-                    activation_observer = observer('minmax', 'sym', 'per_tensor', 'uint8')
-                    module.qconfig = torch.quantization.QConfig(
-                        activation=activation_observer, weight=weights_observer)
-                self.add_module('quant', torch.quantization.QuantStub(module.qconfig))
-                self.add_module('dequant', torch.quantization.DeQuantStub())
-                self.add_module('module', module)
-                module.qconfig = None
-                self.train(module.training)
-
-            def forward(self, X):
-                X = self.dequant(X)
-                X = self.module(X)
-                return self.quant(X)
-
-            def add(self, x, y):
-                # type: (Tensor, Tensor) -> Tensor
-                x = self.dequant(x)
-                y = self.dequant(y)
-                r = self.module.add(x, y)
-                return self.quant(r)
-
-            def add_scalar(self, x, y):
-                # type: (Tensor, float) -> Tensor
-                x = self.dequant(x)
-                r = self.module.add_scalar(x, y)
-                return self.quant(r)
-
-            def mul(self, x, y):
-                # type: (Tensor, Tensor) -> Tensor
-                x = self.dequant(x)
-                y = self.dequant(y)
-                r = self.module.mul(x, y)
-                return self.quant(r)
-
-            def mul_scalar(self, x, y):
-                # type: (Tensor, float) -> Tensor
-                x = self.dequant(x)
-                r = self.module.mul_scalar(x, y)
-                return self.quant(r)
-
-            def cat(self, x, dim=0):
-                # type: (List[Tensor], int) -> Tensor
-                X = [self.dequant(x_) for x_ in x]
-                r = self.module.cat(X, dim)
-                return self.quant(r)
-
-            def add_relu(self, x, y):
-                # type: (Tensor, Tensor) -> Tensor
-                x = self.dequant(x)
-                y = self.dequant(y)
-                r = self.module.add_relu(x, y)
-                return self.quant(r)
-
-        for name, child in model.named_children():
-            op_name = prefix + name
-            if op_name in fallback_ops:
-                child.qconfig = None
-                quantize_op_num = self._find_quantized_op_num(model)
-                if quantize_op_num == 1:
-                    found = False
-                    for name_tmp, child_tmp in model.named_children():
-                        if isinstance(
-                                child_tmp, torch.quantization.QuantStub) or isinstance(
-                                child_tmp, torch.quantization.DeQuantStub):
-                            model._modules[name_tmp] = torch.nn.Identity()
-                            found = True
-                    if not found:
-                        model._modules[name] = DequantQuantWrapper(
-                            child, observer=self._observer)
-                else:
-                    model._modules[name] = DequantQuantWrapper(
-                        child, observer=self._observer)
-            else:
-                self._fallback_quantizable_ops_recursively(
-                    child, op_name + '.', fallback_ops)
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         for name, child in model.named_children():
             op_name = prefix + name
-            if type(child) in self.white_list:
-                quantizable_ops.append((op_name, type(child)))
+            if type(child) in WHITE_LIST:
+                quantizable_ops.append((op_name, str(type(child))))
             else:
                 self._get_quantizable_ops_recursively(
                     child, op_name + '.', quantizable_ops)
@@ -678,7 +676,7 @@ class PyTorchAdaptor(Adaptor):
             op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'') 
             op_type = 'nni.' + op_type
             if op_type in self.fused_op:
-                return True 
+                return True
             else:
                 return False
 
@@ -757,7 +755,7 @@ class PyTorchAdaptor(Adaptor):
             return model
 
         # create properties
-        white_list = self.white_list | \
+        white_list = WHITE_LIST | \
             (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
@@ -774,26 +772,26 @@ class PyTorchAdaptor(Adaptor):
         return model
 
     def is_fused_child(self, op_name):
-        op = op_name[:op_name.rfind('.')] 
+        op = op_name[:op_name.rfind('.')]
         if op in self.fused_dict and op_name[op_name.rfind('.')+1:].isdigit():
            return True
         else:
            return False
 
     def is_fused_op(self, op_name):
-        op = op_name[:op_name.rfind('.')] 
+        op = op_name[:op_name.rfind('.')]
         if op in self.fused_dict:
            return True
         else:
            return False
 
     def is_last_fused_child(self, op_name):
-        op = op_name[:op_name.rfind('.')] 
+        op = op_name[:op_name.rfind('.')]
         if op_name in self.fused_dict[op][-1]:
            return True
         else:
            return False
- 
+
     def _post_eval_hook(self, model, **args):
         '''The function is used to do some post process after complete evaluation.
         '''
@@ -803,18 +801,18 @@ class PyTorchAdaptor(Adaptor):
         if args is not None and 'accuracy' in args:
            accuracy = args['accuracy'] 
         else:
-           accuracy = '' 
+           accuracy = ''
 
         if self.dump_times == 0:
-           writer = SummaryWriter('runs/eval/baseline' + 
-                               '_acc' + str(accuracy), model)
+            writer = SummaryWriter('runs/eval/baseline' +
+                                   '_acc' + str(accuracy), model)
         else:
-           writer = SummaryWriter('runs/eval/tune_' + 
-                                  str(self.dump_times) + 
-                                  '_acc' + str(accuracy), model)
+            writer = SummaryWriter('runs/eval/tune_' +
+                                   str(self.dump_times) +
+                                   '_acc' + str(accuracy), model)
 
         if args is not None and 'input' in args and self.dump_times == 0:
-           writer.add_graph(model, args['input'])  
+           writer.add_graph(model, args['input'])
 
         summary = OrderedDict()
         observer_dict = {}
@@ -830,14 +828,13 @@ class PyTorchAdaptor(Adaptor):
                 op = op_name
                 if self.is_fused_child(op_name) == True and \
                    self.is_last_fused_child(op_name) == True:
-                    op = op_name[:op_name.rfind('.')] 
+                    op = op_name[:op_name.rfind('.')]
                 else:
                     if self.is_fused_child(op_name) == True and \
-                       self.is_last_fused_child(op_name) == False: 
-                        continue 
+                       self.is_last_fused_child(op_name) == False:
+                        continue
                     else:
                         op = op_name
-        
 
                 if summary[op_name + ".output"][iter].is_quantized:
                     writer.add_histogram(
@@ -848,7 +845,6 @@ class PyTorchAdaptor(Adaptor):
                     writer.add_histogram(
                         op + "/Output/fp32",
                         summary[op_name + ".output"][iter])
-    
 
         state_dict = model.state_dict()
         for key in state_dict:
@@ -857,14 +853,14 @@ class PyTorchAdaptor(Adaptor):
 
             op = key[:key.rfind('.')] 
             if self.is_fused_child(op) == True:
-               # fused child tensorboard tag will be merge   
+               # fused child tensorboard tag will be merge
                weight = key[key.rfind('.')+1:]
-               op = op[:op.rfind('.')] + '/' + weight 
+               op = op[:op.rfind('.')] + '/' + weight
             else:
                weight = key[key.rfind('.')+1:]
-               op = key[:key.rfind('.')] + '/' + weight 
-            
-            # To merge ._packed_params 
+               op = key[:key.rfind('.')] + '/' + weight
+
+            # To merge ._packed_params
             op = op.replace('._packed_params', '')
 
             if state_dict[key].is_quantized:
@@ -875,7 +871,7 @@ class PyTorchAdaptor(Adaptor):
 
         writer.close()
         self.dump_times = self.dump_times + 1
-     
+
         return summary
 
     def get_all_weight_names(self, model):
@@ -934,3 +930,21 @@ class PyTorchAdaptor(Adaptor):
             0, 0, 0])
 
         return df, total_sparsity
+
+    def save(self, model, path):
+        '''The function is used by tune strategy class for saving model.
+
+           Args:
+               model (object): The model to saved.
+               path (string): The path where to save.
+        '''
+
+        path = os.path.expanduser(path)
+        os.makedirs(path, exist_ok=True)
+        try:
+            with open(os.path.join(path, "best_configure.yaml"), 'w') as f:
+                yaml.dump(self.tune_cfg, f, default_flow_style=False)
+        except IOError as e:
+            logger.error("Unable to save configure file. %s" % e)
+
+        torch.save(model.state_dict(), os.path.join(path, "best_model_weights.pt"))

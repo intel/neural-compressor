@@ -582,3 +582,6 @@ class TensorFlowAdaptor(Adaptor):
 
     def _post_eval_hook(self, model):
         pass
+
+    def save(self, model, path):
+        pass

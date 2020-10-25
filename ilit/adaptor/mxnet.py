@@ -861,3 +861,6 @@ class MxNetAdaptor(Adaptor):
                 dst[key] = src[key]
 
         return dst
+
+    def save(self, model, path):
+        pass
