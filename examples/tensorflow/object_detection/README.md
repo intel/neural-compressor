@@ -91,7 +91,7 @@ wget http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet10
 tar -xvzf faster_rcnn_resnet101_coco_2018_01_28.tar.gz
 ```
 
-##### mask_rcnn_inception_resnet_v2
+##### mask_rcnn_inception_v2
 
 ```shell
 wget http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
