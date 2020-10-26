@@ -53,7 +53,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
             if end_node.op == "Mul":
                 first_value = self._fold_value(list(end_node.input)[0])
                 first_type = first_value.dtype
-                fold_value = np.array([1.]).astype(first_type)
+                fold_value = np.array(1.).astype(first_type)
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
@@ -63,11 +63,11 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                     else:
                         raise ValueError("input {} of node {} can't be broadcast".format(
                             input.name, end_node.name))
-                return fold_value
+                return fold_value.astype(first_type)
             elif end_node.op == "Add" or end_node.op == "AddV2":
                 first_value = self._fold_value(list(end_node.input)[0])
                 first_type = first_value.dtype
-                fold_value = np.array([0.]).astype(first_type)
+                fold_value = np.array(0.).astype(first_type).reshape(())
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
@@ -76,13 +76,13 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                     else:
                         raise ValueError("input {} of node {} can't be broadcast".format(
                             input.name, end_node.name))
-                return fold_value
+                return fold_value.astype(first_type)
             elif end_node.op == "Rsqrt":
                 return 1 / np.sqrt(self._fold_value(end_node.input[0]))
             elif end_node.op == "Sub":
                 first_value = self._fold_value(list(end_node.input)[0])
                 first_type = first_value.dtype
-                fold_value = np.array([0.]).astype(first_type)
+                fold_value = np.array(0., dtype=first_type)
                 for index, input in enumerate(end_node.input):
                     # broadcast if needed
                     input_value = self._fold_value(input)
@@ -95,7 +95,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                     else:
                         raise ValueError("input {} of node {} can't be broadcast".format(
                             input.name, end_node.name))
-                return fold_value
+                return fold_value.astype(first_type)
             else:
                 tf_logging.info(
                     "Currently fold-constant only support limited ops {} but face {}".format(

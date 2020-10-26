@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -132,6 +133,34 @@ class TestFoldConstant(unittest.TestCase):
         for node in new_graph.node:
             assert node.name in ["switch", "cond", "input4", "input5"]
 
+    def test_slice_int_input(self):
+        graph_def = graph_pb2.GraphDef()
+        index0_node = node_def_pb2.NodeDef()
+        index0_node.name = "index0"
+        index0_node.op = "Const"
+        index0_value = np.array(3).astype(np.int32).reshape(())
+        index0_node.attr["value"].CopyFrom(
+        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+            index0_value, index0_value.dtype.type, index0_value.shape)))
+
+        index1_node = node_def_pb2.NodeDef()
+        index1_node.name = "index1"
+        index1_node.op = "Const"
+        index1_value = np.array(1).astype(np.int32).reshape(())
+        index1_node.attr["value"].CopyFrom(
+        attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+            index1_value, index1_value.dtype.type, index1_value.shape)))
+
+        minus_node = node_def_pb2.NodeDef()
+        minus_node.name = "sub"
+        minus_node.op = "Sub"
+        minus_node.input.extend([index0_node.name, index1_node.name])
+
+        graph_def.node.extend([index0_node, index1_node, minus_node])
+        rewriter = GraphFoldConstantOptimizer(graph_def)
+        new_graph = rewriter.do_transformation()
+        with tf.compat.v1.Session() as sess:
+            tf.compat.v1.import_graph_def(new_graph)
 
 if __name__ == "__main__":
     unittest.main()
