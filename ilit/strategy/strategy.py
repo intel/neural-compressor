@@ -123,8 +123,9 @@ class TuneStrategy(object):
         objective = self.cfg.tuning.objective.lower()
         self.objective = OBJECTIVES[objective](self.cfg.tuning.accuracy_criterion)
 
-        self.modelwise_tune_space = self._modelwise_tune_space(model, conf)
-        self.opwise_tune_space = self._opwise_tune_space(model, conf)
+        self.capability = self.adaptor.query_fw_capability(model)
+        self.modelwise_tune_space = conf.modelwise_tune_space(self.capability['modelwise'])
+        self.opwise_tune_space = conf.opwise_tune_space(self.capability['opwise'])
         self.modelwise_tune_cfgs = conf.expand_tune_cfgs(self.modelwise_tune_space)
         self.opwise_tune_cfgs = OrderedDict()
         for key in self.opwise_tune_space:
@@ -290,36 +291,6 @@ class TuneStrategy(object):
         with open(deploy_path, 'w+') as f:
             yaml.dump(self.deploy_cfg, f)
             logger.info('save deploy yaml to path {}'.format(deploy_path)) 
-
-    def _modelwise_tune_space(self, model, conf):
-        """Merge user yaml config with framework model wise capability.
-
-        Args:
-            model (object): The FP32 model to tune.
-            conf (Conf):    The instance of Conf class.
-
-        Returns:
-            dict: The override model wise tunining space
-        """
-        capability = self.adaptor.query_fw_capability(model)
-        dst = capability['modelwise']
-
-        return conf.modelwise_tune_space(dst)
-
-    def _opwise_tune_space(self, model, conf):
-        """Generate all tuning spaces for op wise.
-
-        Args:
-            model (object): The FP32 model to tune.
-            conf (Conf):    The instance of Conf class.
-
-        Returns:
-            dict: The opwise tunining space
-        """
-        capability = self.adaptor.query_fw_capability(model)
-        opwise = capability['opwise']
-
-        return conf.opwise_tune_space(opwise)
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.
