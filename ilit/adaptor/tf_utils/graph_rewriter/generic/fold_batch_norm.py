@@ -2,6 +2,7 @@
 #  -*- coding: utf-8 -*-
 #
 
+import enum
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
@@ -152,22 +153,26 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
                 scale_value = (1.0 / np.vectorize(math.sqrt)(var_value + variance_epsilon_value))
 
             offset_value = (-mean_value * scale_value) + beta_value
-            scaled_weights = np.copy(weights)
 
-            it = np.nditer(scaled_weights, flags=["multi_index"], op_flags=["readwrite"])
 
             if conv_node.op == "Conv2D":
-                while not it.finished:
-                    current_scale = scale_value[it.multi_index[3]]
-                    it[0] *= current_scale
-                    it.iternext()
+                original_shape =weights.shape
+                tmp_shape = (original_shape[-1], int(weights.size/original_shape[-1]))
+                tmp_order = [weights.ndim - 1] + [i for i in range(weights.ndim - 1)]
+                scaled_weights = np.copy(weights).transpose(tmp_order).ravel().reshape(tmp_shape)
+                reshape_scale = np.array(scale_value).reshape(len(scale_value), 1)
+                scaled_weights = np.multiply(
+                    scaled_weights, reshape_scale).transpose().reshape(original_shape)
             elif conv_node.op == "DepthwiseConv2dNative":
+                scaled_weights = np.copy(weights)
+                it = np.nditer(scaled_weights, flags=["multi_index"], op_flags=["readwrite"])
                 channel_multiplier = weights.shape[3]
                 while not it.finished:
                     current_scale = scale_value[it.multi_index[2] * channel_multiplier +
                                                 it.multi_index[3]]
                     it[0] *= current_scale
                     it.iternext()
+
             scaled_weights_node = node_def_pb2.NodeDef()
             scaled_weights_node.op = "Const"
             scaled_weights_node.name = weights_node_name + "_bn_offset"
