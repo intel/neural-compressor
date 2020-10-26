@@ -82,7 +82,8 @@ class QuantizeNodeBase(object):
         self.start_node_name = start_node_name
         self.is_asymmetric = is_asymmetric
         self.device = device
-        self.enable_s8 = False if tf.version.VERSION < '2.1.0' else enable_s8
+        self.enable_s8 = False if tf.version.VERSION < '2.1.0' and \
+            tf.version.VERSION != '1.15.0-up1' else enable_s8
 
     def apply_the_transform(self):
         """
