@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('--dataset', type=str, default='voc',
                         help='eval dataset.')
     parser.add_argument('--num-workers', '-j', dest='num_workers', type=int,
-                        default=4, help='Number of data workers')
+                        default=0, help='Number of data workers')
     parser.add_argument('--num-gpus', type=int, default=0,
                         help='number of gpus to use.')
     parser.add_argument('--pretrained', type=str, default='True',

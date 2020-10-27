@@ -440,9 +440,9 @@ class MxNetAdaptor(Adaptor):
                 handle = ctypes.cast(arr, NDArrayHandle)
                 arr = mx.ndarray.NDArray(handle, writable=False)  # pylint: disable=no-member
                 if name in self.tensor_dict.keys():
-                    self.tensor_dict[name].append(arr.asnumpy())
+                    self.tensor_dict[name].append(arr)
                 else:
-                    self.tensor_dict[name] = [arr.asnumpy()]
+                    self.tensor_dict[name] = [arr]
 
             def reset(self,):
                 self.tensor_dict.clear()
@@ -525,7 +525,7 @@ class MxNetAdaptor(Adaptor):
                     tensor = mx.nd.contrib.dequantize(mx.nd.array(tensor, dtype='uint8'),
                                                       min_range=op_min,
                                                       max_range=op_max,
-                                                      out_type='float32').asnumpy()
+                                                      out_type='float32')
                     assert tensor.dtype == np.float32
             if op.endswith("_output"):
                 op = op[:-7]
@@ -807,11 +807,17 @@ class MxNetAdaptor(Adaptor):
             mod.bind(for_training=False, data_shapes=calib_data.provide_data)
         mod.set_params(arg_params, aux_params)
 
-        # inspect each quantized layer activate tensor for calibration
-        layer_tensor = self._inspect_tensor(
-            (sym, arg_params, aux_params), dataloader=calib_data, op_list=calib_layer)
+        for data_name in data_names:
+            # the data_name of gluon model may diff with the name of input data layer,
+            # it caused by gluon model convert to symbol model
+            if data_name in calib_layer:
+                self.__config_dict["calib_minmax_layers"].append(data_name)
 
         if len(self.__config_dict["calib_kl_layers"]) != 0:
+            # inspect each quantized layer activate tensor for calibration
+            layer_tensor = self._inspect_tensor((sym, arg_params, aux_params), 
+                                                 dataloader=calib_data, 
+                                                 op_list=calib_layer)
             _histogram = LayerHistogramCollector(
                 layer_tensor=layer_tensor,
                 include_layer=self.__config_dict["calib_kl_layers"])
@@ -824,12 +830,6 @@ class MxNetAdaptor(Adaptor):
             self._merge_dicts(th_dict_kl, th_dict)
             if logger:
                 logger.info('Collected layer output KL values from FP32 model')
-
-        for data_name in data_names:
-            # the data_name of gluon model may diff with the name of input data layer,
-            # it caused by gluon model convert to symbol model
-            if data_name in layer_tensor.keys():
-                self.__config_dict["calib_minmax_layers"].append(data_name)
 
         calib_data.reset()
         if len(self.__config_dict["calib_minmax_layers"]) != 0:

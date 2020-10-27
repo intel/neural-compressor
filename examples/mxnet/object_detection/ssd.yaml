@@ -2,6 +2,10 @@ model:                                               # mandatory. ilit uses this
   name: ssd 
   framework: mxnet                                   # possible values are tensorflow, mxnet and pytorch
 
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  calibration:
+    sampling_size: 32, 64
+
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
