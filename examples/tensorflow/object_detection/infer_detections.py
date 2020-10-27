@@ -25,7 +25,7 @@ import tensorflow as tf
 from ilit import Quantization
 import logging
 
-from ilit.adaptor.tf_utils.util import write_graph
+from ilit.adaptor.tf_utils.util import write_graph, get_graph_def
 from tensorflow.python.data.experimental import parallel_interleave
 from tensorflow.python.data.experimental import map_and_batch
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
@@ -102,17 +102,22 @@ class model_infer:
             'num_detections', 'detection_boxes', 'detection_scores',
             'detection_classes'
         ]
-        self.load_graph()
+        # self.load_graph()
 
-        if self.args.batch_size == -1:
-            self.args.batch_size = 1
+        # if self.args.batch_size == -1:
+        #     self.args.batch_size = 1
 
-        self.input_tensor = self.infer_graph.get_tensor_by_name(
-            self.input_layer + ":0")
-        self.output_tensors = [
-            self.infer_graph.get_tensor_by_name(x + ":0")
-            for x in self.output_layers
-        ]
+        # self.input_tensor = self.infer_graph.get_tensor_by_name(
+        #     self.input_layer + ":0")
+        # self.output_tensors = [
+        #     self.infer_graph.get_tensor_by_name(x + ":0")
+        #     for x in self.output_layers
+        # ]
+        
+        graph_def = get_graph_def(self.args.input_graph, [self.input_layer]+self.output_layers)
+        self.infer_graph = tf.compat.v1.Graph()
+        with self.infer_graph.as_default():
+            tf.compat.v1.import_graph_def(graph_def, name='')
 
         self.category_map_reverse = {v: k for k, v in category_map.items()}
 
@@ -235,15 +240,26 @@ class model_infer:
 
     def accuracy_check(self, input_graph=None):
         print("Inference for accuracy check.")
+        #graph_def = get_graph_def(input_graph, [self.input_layer]+self.output_layers)
+        #self.infer_graph = tf.compat.v1.Graph()
+        #with self.infer_graph.as_default():
+        #    tf.compat.v1.import_graph_def(graph_def, name='')
+        
         if input_graph:
-            self.infer_graph = input_graph
-            # Need to reset the input_tensor/output_tensor
-            self.input_tensor = self.infer_graph.get_tensor_by_name(
-                self.input_layer + ":0")
-            self.output_tensors = [
-                self.infer_graph.get_tensor_by_name(x + ":0")
-                for x in self.output_layers
-            ]
+             self.infer_graph = input_graph
+             # Need to reset the input_tensor/output_tensor
+             self.input_tensor = self.infer_graph.get_tensor_by_name(
+                 self.input_layer + ":0")
+             self.output_tensors = [
+                 self.infer_graph.get_tensor_by_name(x + ":0")
+                 for x in self.output_layers
+             ]
+        #self.input_tensor = self.infer_graph.get_tensor_by_name(
+        #    self.input_layer + ":0")
+        #self.output_tensors = [
+        #    self.infer_graph.get_tensor_by_name(x + ":0")
+        #    for x in self.output_layers
+        #]
         self.build_data_sess()
         evaluator = CocoDetectionEvaluator()
         with tf.compat.v1.Session(graph=self.infer_graph,

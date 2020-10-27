@@ -17,7 +17,7 @@ from .fold_batch_norm import FoldBatchNormNodesOptimizer
 
 class PreOptimization(object):
     def __init__(self, model, inputs_name, outputs_name):
-        self.input_graph = get_graph_def(model)
+        self.input_graph = get_graph_def(model, inputs_name + outputs_name)
 
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = self.input_graph

@@ -105,13 +105,12 @@ class TensorFlowAdaptor(Adaptor):
             [float]: evaluation result, the larger is better.
         """
         logger.info("start to evaluate model....")
-        from .tf_utils.util import get_graph_def
         import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         graph = tf.Graph()
-        graph_def = PreOptimization(get_graph_def(input_graph),
-                                      self.inputs, self.outputs).get_optimized_graphdef()
+        graph_def = PreOptimization(input_graph, self.inputs, \
+                                    self.outputs).get_optimized_graphdef()
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')

@@ -163,7 +163,7 @@ class GraphConverter:
         self.debug = True if self.logger.level == logging.DEBUG else False
 
         # For ilit, the input_graph is not graph file path but Graph object.
-        self.input_graph = get_graph_def(input_graph, outputs)
+        self.input_graph = get_graph_def(input_graph, outputs+inputs)
         self.output_graph = output_graph
         self.inputs = inputs
         self.outputs = outputs
@@ -305,7 +305,7 @@ class GraphConverter:
         """
         try:
             self._optimize_frozen_fp32_graph()
-
+            import pdb; pdb.set_trace()
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
