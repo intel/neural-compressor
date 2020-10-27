@@ -33,6 +33,9 @@ class PreOptimization(object):
     def get_excluded_node_names(self):
         return self._excluded_node_names
 
+        if not self.inputs or not self.outputs:
+            self.inputs, self.outputs = self.analyzer.get_graph_input_output()
+
     def get_optimized_graphdef(self):
         """Executed the non-precision dependant graph optimization.
         The input graph will be optimized with following passes:

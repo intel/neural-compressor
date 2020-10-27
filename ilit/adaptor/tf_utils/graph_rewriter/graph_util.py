@@ -83,19 +83,24 @@ class GraphAnalyzer(object):
     def get_graph_input_output(self):
         input_node_names = []
         output_node_names = []
+        unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save', \
+            'global_step', 'read', 'switch', 'cond', 'train', 'init_ops']
+
         for _, i in self.node_name_details.items():
             if i.node.op == 'Const':
                 continue
             if not i.node.input and not i.outputs:
                 self.logger.debug("skip isolated node .. {}".format(i.node.name))
+            elif  i.node.op == 'Placeholder':
+                input_node_names.append(i.node.name)
             elif not i.node.input:
                 input_node_names.append(i.node.name)
-            elif not i.outputs:
+            elif not i.outputs and i.node.op not in unlikely_output_types:
                 output_node_names.append(i.node.name)
             else:
                 pass
 
-        self.logger.debug("Found possible input node names: {}, output node names: {}".format(
+        self.logger.warning("Found possible input node names: {}, output node names: {}".format(
             input_node_names, output_node_names))
 
         return (input_node_names, output_node_names)
