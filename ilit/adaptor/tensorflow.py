@@ -8,6 +8,7 @@ from ..utils.utility import LazyImport
 from ..utils import logger
 tensorflow = LazyImport('tensorflow')
 
+
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -48,7 +49,7 @@ class TensorFlowAdaptor(Adaptor):
         for _ in range(try_cnt):
             try:
                 return graph.get_tensor_by_name(name)
-            except:
+            except BaseException:
                 name = 'import/' + name
         raise ValueError('can not find tensor by name')
 
@@ -87,7 +88,7 @@ class TensorFlowAdaptor(Adaptor):
         max_value = 255 if scale_info[0].find("Relu") != -1 else 127
         return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
-    def evaluate(self, input_graph, dataloader, postprocess=None, \
+    def evaluate(self, input_graph, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1, tensorboard=False):
         """Evaluate the model for specified metric on validation dataset.
 
@@ -143,7 +144,7 @@ class TensorFlowAdaptor(Adaptor):
             for node in graph_def.node:
                 if node.op in inspect_node_types:
                     fp32_inspect_node_name.append(node.name)
-                elif node.op.find("Requantize") != -1: 
+                elif node.op.find("Requantize") != -1:
                     out_min = -2
                     out_max = -1
                     if node.op.find("Sum") != -1:
@@ -203,7 +204,7 @@ class TensorFlowAdaptor(Adaptor):
         acc = metric.result() if metric is not None else 0
         if tensorboard:
             new_dir = temp_dir + "_acc_" + str(acc)
-            writer.close() 
+            writer.close()
             if os.path.isdir(new_dir):
                 import shutil
                 shutil.rmtree(new_dir, ignore_errors=True)
@@ -251,7 +252,7 @@ class TensorFlowAdaptor(Adaptor):
         int8_sum_count = 0
         bf16_sum_count = 0
         log_length = 50
-        print ('|', 'Mixed Precision Statistics'.center(log_length, "*"), "|")
+        print('|', 'Mixed Precision Statistics'.center(log_length, "*"), "|")
         for i in self._init_op_stat:
             if len(self._init_op_stat[i]) == 0:
                 continue
@@ -260,27 +261,27 @@ class TensorFlowAdaptor(Adaptor):
                 if j in self._init_op_stat[i]:
                     count += 1
             int8_sum_count += count
-            print ('|', 'INT8 {}: {} '.format(i, count).ljust(log_length), "|")
+            print('|', 'INT8 {}: {} '.format(i, count).ljust(log_length), "|")
             bf16_count = 0
             for k in self.bf16_ops:
                 if k in self._init_op_stat[i]:
                     bf16_count += 1
                 if bf16_count > 0:
-                    print ('|', 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length), "|")
+                    print('|', 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length), "|")
             bf16_sum_count += bf16_count
         overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
         if overall_ops_count > 0:
-            int8_percent = float(int8_sum_count/overall_ops_count)
-            bf16_percent = float(bf16_sum_count/overall_ops_count)
+            int8_percent = float(int8_sum_count / overall_ops_count)
+            bf16_percent = float(bf16_sum_count / overall_ops_count)
             print('|', 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(int8_percent,
-                                                                                int8_sum_count,
-                                                                                overall_ops_count,
-                                                                                bf16_percent,
-                                                                                bf16_sum_count,
-                                                                                overall_ops_count)
-                                                                                .ljust(log_length),
-                                                                                "|")
-        print('|', '*'*log_length, "|")
+                                                                                 int8_sum_count,
+                                                                                 overall_ops_count,
+                                                                                 bf16_percent,
+                                                                                 bf16_sum_count,
+                                                                                 overall_ops_count)
+                  .ljust(log_length),
+                  "|")
+        print('|', '*' * log_length, "|")
 
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -360,7 +361,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.quantizable_op_details = OrderedDict()
 
-        self._init_op_stat = {i:[] for i in tf_quantizable_op_type}
+        self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
         for details in matched_nodes:
             node_op = details[-1][0]
             node_name = details[0]
@@ -370,7 +371,7 @@ class TensorFlowAdaptor(Adaptor):
                 'sequence': [[','.join(patterns[:pat_length - i]) for i in range(pat_length)][0]],
                 'precision': ['int8']
             }
-            if node_op in tf_quantizable_op_type:
+            if node_op in tf_quantizable_op_type and node_name not in self.exclude_node_names:
                 self._init_op_stat[node_op].append(node_name)
                 if self.unify_op_type_mapping[node_op].find("conv2d") != -1:
                     conv2d_int8_config = copy.deepcopy(conv_config)
@@ -381,7 +382,7 @@ class TensorFlowAdaptor(Adaptor):
                 elif self.unify_op_type_mapping[node_op].find("matmul") != -1:
                     matmul_int8_config = copy.deepcopy(matmul_config)
                     matmul_int8_config['pattern'] = pattern_info
-                    #TODO enable the sym mode once the tf fixed the mkldequantize_op.cc bug.
+                    # TODO enable the sym mode once the tf fixed the mkldequantize_op.cc bug.
                     # is_positive_input = self.pre_optimizer_handle.has_positive_input(node_name)
                     # matmul_scheme = 'sym' if is_positive_input else 'asym'
                     matmul_scheme = ['asym']
@@ -433,6 +434,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.pre_optimizer_handle = PreOptimization(model, self.inputs, self.outputs)
         self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
+        self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         tf_version = tf.version.VERSION
         patterns = TFLowbitPrecisionPatterns(tf_version).get_supported_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
@@ -521,16 +523,16 @@ class TensorFlowAdaptor(Adaptor):
         target_quantize_nodes = []
         for node in quantize_nodes:
             # only support Quantizev2 input op Pad and Placeholder
-            if (node_name_mapping[node.input[0]].op == 'Pad' and node_name_mapping[\
-                node_name_mapping[node.input[0]].input[0]].op == 'Placeholder') or \
-                node_name_mapping[node.input[0]].op == 'Placeholder':
+            if (node_name_mapping[node.input[0]].op == 'Pad' and node_name_mapping[
+                    node_name_mapping[node.input[0]].input[0]].op == 'Placeholder') or \
+                    node_name_mapping[node.input[0]].op == 'Placeholder':
                 target_quantize_nodes.append(node)
         assert len(target_quantize_nodes) == 1, 'only support 1 QuantizeV2 from Placeholder'
         quantize_node = target_quantize_nodes[0]
 
         quantize_node_input = node_name_mapping[quantize_node.input[0]]
-        quantize_node_outputs = [node for node in graph_def.node \
-                       if quantize_node.name in node.input]
+        quantize_node_outputs = [node for node in graph_def.node
+                                 if quantize_node.name in node.input]
 
         from .tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
         if quantize_node_input.op == 'Pad':
@@ -538,19 +540,19 @@ class TensorFlowAdaptor(Adaptor):
             assert pad_node_input.op == 'Placeholder', \
                 'only support Pad between QuantizeV2 and Placeholder'
             from tensorflow.python.framework import tensor_util
-            paddings_tensor = tensor_util.MakeNdarray(node_name_mapping[\
+            paddings_tensor = tensor_util.MakeNdarray(node_name_mapping[
                 quantize_node_input.input[1]].attr['value'].tensor).flatten()
 
             quantize_node.input[0] = quantize_node_input.input[0]
             for conv_node in quantize_node_outputs:
                 assert 'Conv2D' in conv_node.op, 'only support QuantizeV2 to Conv2D'
 
-                QuantizeGraphHelper.set_attr_int_list(conv_node, \
-                                         "padding_list", paddings_tensor)
+                QuantizeGraphHelper.set_attr_int_list(conv_node,
+                                                      "padding_list", paddings_tensor)
             graph_def.node.remove(quantize_node_input)
 
         from tensorflow.python.framework import dtypes
-        QuantizeGraphHelper.set_attr_dtype(node_name_mapping[quantize_node.input[0]],\
+        QuantizeGraphHelper.set_attr_dtype(node_name_mapping[quantize_node.input[0]],
                                            "dtype", dtypes.qint8)
 
         for conv_node in quantize_node_outputs:

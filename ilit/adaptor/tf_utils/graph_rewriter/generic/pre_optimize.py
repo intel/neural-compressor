@@ -13,6 +13,7 @@ from .strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_cse_optimizer import GraphCseOptimizer
 from .fold_constant import GraphFoldConstantOptimizer
 from .fold_batch_norm import FoldBatchNormNodesOptimizer
+from .update_enter import UpdateEnterOptimizer
 
 
 class PreOptimization(object):
@@ -27,6 +28,10 @@ class PreOptimization(object):
         self.logger = logging.getLogger()
         self._tmp_graph_def = None
         # self.tf_version = tf.version.VERSION
+        self._excluded_node_names = []
+
+    def get_excluded_node_names(self):
+        return self._excluded_node_names
 
     def get_optimized_graphdef(self):
         """Executed the non-precision dependant graph optimization.
@@ -66,7 +71,11 @@ class PreOptimization(object):
 
         self.logger.debug("Pre Optimize FoldBatchNormNodesOptimizer is working...")
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-
+        
+        #TODO we should handle all control ops elegantly not bypass it.
+        self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
+            self._tmp_graph_def).do_transformation()
+        self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         return self._tmp_graph_def

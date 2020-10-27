@@ -48,6 +48,7 @@ from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+from .graph_rewriter.generic.update_enter import UpdateEnterOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
@@ -187,7 +188,6 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
-
 
     def _inference(self, input_graph):
         """Run the calibration on the input graph
@@ -520,7 +520,7 @@ class GraphConverter:
            FP32 + INT8 mixed precision graph.
         """
         try:
-            self._tmp_graph_def = BF16Convert(self._tmp_graph_def, self.fp32_ops, 
+            self._tmp_graph_def = BF16Convert(self._tmp_graph_def, self.fp32_ops,
                                               self.bf16_ops).do_transformation()
             graph = tf.Graph()
             with graph.as_default():
@@ -544,11 +544,14 @@ class GraphConverter:
                                                         self.outputs).do_transformation()
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def, exclude_node_names = UpdateEnterOptimizer(
+            self._tmp_graph_def).do_transformation()
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 
         if self.debug:
             write_graph(self._tmp_graph_def, self._fp32_optimized_graph)
         self._fp32_origin_graph = self._tmp_graph_def
+        self._exclude_node_names = exclude_node_names
 
     def _quantize_graph(self):
         """quantize graph."""
@@ -632,7 +635,7 @@ class GraphConverter:
 
     def _fuse_requantize_with_fused_quantized_node(self):
         self._tmp_graph_def = FuseConvRequantizeTransformer(self._tmp_graph_def,
-                                                        self.device).do_transformation()
+                                                            self.device).do_transformation()
 
         self._tmp_graph_def = FuseMatMulRequantizeTransformer(
             self._tmp_graph_def).do_transformation()
