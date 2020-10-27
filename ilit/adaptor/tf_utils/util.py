@@ -128,6 +128,22 @@ def is_ckpt_format(model_path):
     else:
         return None
 
+def is_keras_savedmodel_format(model_path):
+    """check the model_path format is keras saved model or not.
+
+    Args:
+        model_path (string): the model folder path
+
+    Returns:
+        bool: return the keras model if the model is keras model else None.
+    """
+    if is_saved_model_format(model_path):
+        model = tf.keras.models.load_model(model_path)
+        if isinstance(model, tf.keras.Model):
+            return model
+        else:
+            return None
+
 
 def parse_ckpt_model(ckpt_prefix, outputs):
     """Parse the ckpt model
@@ -220,8 +236,6 @@ def parse_kerasmodel_model(model):
         input_names: input node names
         output_names: output node name
     """
-    #import pdb
-    #pdb.set_trace()
     
     kwargs = dict(zip(model.input_names, model.inputs))
     full_model = tf.function(lambda **kwargs: model(kwargs.values()))
@@ -275,7 +289,6 @@ def parse_savedmodel_model(model_path):
 
         return output_graph_def, input_names, output_names
 
-
 def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names, output_dir):
     """Convert the graphdef to SavedModel
 
@@ -312,13 +325,12 @@ def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names,
 
     builder.save()
 
-
 def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
 
     Args:
-        model ([Graph, GraphDef or Path String]): The model could be the graph, graph_def object,
-                                                  the frozen pb or ckpt/savedmodel folder path.
+        model ([Graph, GraphDef or Path String]): support Graph, GraphDef, keras.Model,
+                                                  frozen pb or ckpt/savedmodel path.
         outputs ([String]): output node names list.
 
     Returns:
@@ -333,24 +345,36 @@ def get_graph_def(model, outputs=[]):
         graph_def, _, _ = parse_kerasmodel_model(model)
     elif isinstance(model, str):
         graph_def = tf.compat.v1.GraphDef()
-        if model.endswith(".pb") and os.path.isfile(model):
-            with open(model, "rb") as f:
+        if model.endswith('.pb') and os.path.isfile(model):
+            with open(model, 'rb') as f:
                 graph_def.ParseFromString(f.read())
+        elif model.endswith('.ckpt') and os.path.isfile(model):
+            # (TODO) support slim ckpt
+            raise ValueError('slim ckpt not supported yet, soon')
+        elif model.endswith('.h5') and os.path.isfile(model):
+            # (TODO) support h5 saved model, notice there is also h5 weights
+            raise ValueError('saved model h5 format not supported yet, soon')
         elif os.path.isdir(model):
+            # tf2.x checkpoint only save weight and do not contain any 
+            # description of the computation, so we drop tf2.x checkpoint support
             ckpt_prefix = is_ckpt_format(model)
-            if ckpt_prefix:
+            if ckpt_prefix is not None:
                 graph_def = parse_ckpt_model(
                     os.path.join(model, ckpt_prefix), outputs)
-            elif is_saved_model_format(model):
-                graph_def, _, _ = parse_savedmodel_model(model)
-            else:
-                raise ValueError('Failed to parse ckpt model.')
-        else:
-            raise ValueError(
-                'The input model format is neither pb nor ckpt format.')
-
+            # (TODO) support tf2.x saved model 
+            # tf1.x saved model is out of date and few examples, drop
+            if is_saved_model_format(model) is not None:
+                keras_model = is_keras_savedmodel_format(model)
+                if keras_model is not None:
+                    graph_def, _, _ = parse_kerasmodel_model(keras_model)
+                else:
+                    raise ValueError('tf saved model format not supported yet, soon')
+            if graph_def is None:
+                raise ValueError('only support tf1.x checkpoint or tf2.x keras saved model')
+        else: 
+            raise ValueError('only support frozen pb file or model path')
     else:
         raise ValueError(
-            'The input parameter is neither Graph nor path to the model.')
+            'only support Graph, GraghDef, keras.Model, tf1.x checkpoint, keras saved model')
 
     return graph_def
