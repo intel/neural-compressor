@@ -29,12 +29,11 @@ class PreOptimization(object):
         self._tmp_graph_def = None
         # self.tf_version = tf.version.VERSION
         self._excluded_node_names = []
+        if not self.inputs or not self.outputs:
+            self.inputs, self.outputs = self.analyzer.get_graph_input_output()
 
     def get_excluded_node_names(self):
         return self._excluded_node_names
-
-        if not self.inputs or not self.outputs:
-            self.inputs, self.outputs = self.analyzer.get_graph_input_output()
 
     def get_optimized_graphdef(self):
         """Executed the non-precision dependant graph optimization.
@@ -74,7 +73,7 @@ class PreOptimization(object):
 
         self.logger.debug("Pre Optimize FoldBatchNormNodesOptimizer is working...")
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-        
+
         #TODO we should handle all control ops elegantly not bypass it.
         self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
             self._tmp_graph_def).do_transformation()
