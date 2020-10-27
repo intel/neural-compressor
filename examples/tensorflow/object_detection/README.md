@@ -100,6 +100,8 @@ tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 
 ## Run Command
 
+Now we support both pb and ckpt formats.
+
 ### For PB model
   
   ```Shell
@@ -154,6 +156,11 @@ The Class model_infer has the run_accuracy function which actually could be re-u
 Compare with the original version, we added the additional parameter **input_graph** as the Intel® Low Precision Optimization Tool would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors.
 ```python
 if input_graph:
+    graph_def = get_graph_def(self.args.input_graph, self.output_layers)
+    input_graph = tf.Graph()
+    with input_graph.as_default():
+        tf.compat.v1.import_graph_def(graph_def, name='')
+
     self.infer_graph = input_graph
     # Need to reset the input_tensor/output_tensor
     self.input_tensor = self.infer_graph.get_tensor_by_name(
@@ -208,7 +215,7 @@ After prepare step is done, we just need update infer_detections.py like below.
 from ilit import Quantization
 
 quantizer = Quantization(args.config)
-q_model = quantizer(infer.get_graph(),
+q_model = quantizer(args.input_graph,
                     q_dataloader=infer,
                     eval_func=infer.accuracy_check)
 ```
