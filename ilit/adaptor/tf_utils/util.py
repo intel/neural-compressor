@@ -363,7 +363,7 @@ def get_graph_def(model, outputs=[]):
                     os.path.join(model, ckpt_prefix), outputs)
             # (TODO) support tf2.x saved model 
             # tf1.x saved model is out of date and few examples, drop
-            if is_saved_model_format(model) is not None:
+            if is_saved_model_format(model):
                 keras_model = is_keras_savedmodel_format(model)
                 if keras_model is not None:
                     graph_def, _, _ = parse_kerasmodel_model(keras_model)

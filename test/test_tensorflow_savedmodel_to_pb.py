@@ -32,11 +32,6 @@ class TestSavedModelToPbConvert(unittest.TestCase):
         converted_graph_def, _, _ = parse_savedmodel_model(
             'ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
         self.assertNotEqual(converted_graph_def, None)
-        alternative_graph_def = get_graph_def(
-            'ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
-        self.assertNotEqual(alternative_graph_def, None)
-
-        self.assertEqual(len(alternative_graph_def.node), len(converted_graph_def.node))
 
 
 if __name__ == "__main__":
