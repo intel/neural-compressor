@@ -102,11 +102,6 @@ class model_infer:
             'num_detections', 'detection_boxes', 'detection_scores',
             'detection_classes'
         ]
-        
-        graph_def = get_graph_def(self.args.input_graph, self.output_layers)
-        self.infer_graph = tf.compat.v1.Graph()
-        with self.infer_graph.as_default():
-            tf.compat.v1.import_graph_def(graph_def, name='')
 
         self.category_map_reverse = {v: k for k, v in category_map.items()}
 
@@ -231,14 +226,19 @@ class model_infer:
         print("Inference for accuracy check.")
         
         if input_graph:
-             self.infer_graph = input_graph
-             # Need to reset the input_tensor/output_tensor
-             self.input_tensor = self.infer_graph.get_tensor_by_name(
-                 self.input_layer + ":0")
-             self.output_tensors = [
-                 self.infer_graph.get_tensor_by_name(x + ":0")
-                 for x in self.output_layers
-             ]
+            graph_def = get_graph_def(self.args.input_graph, self.output_layers)
+            input_graph = tf.Graph()
+            with input_graph.as_default(): 
+                tf.compat.v1.import_graph_def(graph_def, name='')
+
+            self.infer_graph = input_graph
+            # Need to reset the input_tensor/output_tensor
+            self.input_tensor = self.infer_graph.get_tensor_by_name(
+                self.input_layer + ":0")
+            self.output_tensors = [
+                self.infer_graph.get_tensor_by_name(x + ":0")
+                for x in self.output_layers
+            ]
         self.build_data_sess()
         evaluator = CocoDetectionEvaluator()
         with tf.compat.v1.Session(graph=self.infer_graph,
@@ -352,7 +352,7 @@ if __name__ == "__main__":
     if args.tune:
         quantizer = Quantization(args.config)
         q_dataloader = quantizer.dataloader(infer, args.batch_size)
-        output_graph = quantizer(infer.get_graph(),
+        output_graph = quantizer(args.input_graph,
                             q_dataloader=q_dataloader,
                             eval_func=infer.accuracy_check)
         try:
