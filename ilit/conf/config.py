@@ -244,7 +244,7 @@ schema = Schema({
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100},
         'random_seed': 1978, 'tensorboard': False,
-        'snapshot': {'path': '~/.ilit/snapshot/'}}): {
+        'workspace': {'path': None}}): {
         Optional('strategy', default={'name': 'basic'}): {
             'name': And(str, lambda s: s in STRATEGIES),
             Optional('accuracy_weight', default=1.0): float,
@@ -262,15 +262,11 @@ schema = Schema({
         },
         Optional('random_seed', default=1978): int,
         Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),
-        Optional('resume', default={'path': None}): {
-            Optional('path', default=None): str
-        },
-        Optional('snapshot', default={'path': '~/.ilit/snapshot/'}): {
-            Optional('path', default='~/.ilit/snapshot/'): str
-        },
-        Optional('deployment', default={'path': './ilit_deploy.yaml'}): {
-            Optional('path', default='./ilit_deploy.yaml'): str
-        },
+        # workspace default value is ./ilit_workspace/$framework/$module_name/, set by code
+        Optional('workspace', default={'path': None}): {
+            Optional('path', default=None): str,
+            Optional('resume'): str
+        }
     },
     Optional('evaluation', default=None): {
         Optional('accuracy'): {
@@ -321,6 +317,11 @@ class Conf(object):
         self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
         self._modelwise_tune_space = None
         self._opwise_tune_space = None
+        # set ilit workspace default path
+        if self.usr_cfg.tuning.workspace.path is None:
+            self.usr_cfg.tuning.workspace.path = './ilit_workspace/{}/{}/'.format(
+                                                        self.usr_cfg.model.framework,
+                                                        self.usr_cfg.model.name)
 
     def _read_cfg(self, cfg_fname):
         """Load a config file following yaml syntax.

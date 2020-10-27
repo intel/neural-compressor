@@ -24,7 +24,7 @@ def build_fake_yaml():
             name: fake
           accuracy_criterion:
             relative: 0.01        
-          snapshot:
+          workspace:
             path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
@@ -49,10 +49,9 @@ def build_fake_yaml2():
             name: fake
           accuracy_criterion:
             relative: 0.01
-          resume:
-            path: ./saved/tuning_history.snapshot
-          snapshot:
+          workspace:
             path: saved
+            resume: ./saved/history.snapshot
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:

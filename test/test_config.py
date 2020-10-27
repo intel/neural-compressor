@@ -271,14 +271,14 @@ class TestConf(unittest.TestCase):
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
-    def test_snapshot(self):
+    def test_workspace(self):
         test = '''
         model:
-          name: snapshot_yaml 
+          name: workspace_yaml 
           framework: mxnet
         tuning:
-          snapshot: 
-            -path: /path/to/snapshot
+          workspace: 
+            -path: ./workspace
         '''
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')

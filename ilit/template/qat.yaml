@@ -1,8 +1,6 @@
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50v1.5
-
-framework:                                           # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-  name: pytorch 
+  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
 
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 
@@ -82,10 +80,7 @@ tuning:
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 
-  snapshot:
-    path: /path/to/saving/directory                  # optional. if not specified, snapshot will be saved under ~/.ilit/$framework_name/$module_name directory.
-  resume:
-    path: /path/to/a/specified/snapshot/file         # optional. if specified, resume from history.
+  workspace:
+    path: /path/to/saving/directory                  # optional. default workspace is ./ilit_workspace/$framework/$module_name/, saving tuning history and deploy yaml.
+    resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
 
-  deployment:
-    output_yaml: /path/to/deploy/yaml/file           # optional. yaml generated during tuning for final deployment.

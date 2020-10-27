@@ -283,7 +283,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 # resnet50_v1_5.yaml
 
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50_v1_5
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: input_tensor

@@ -92,7 +92,18 @@ class TuneStrategy(object):
                  eval_dataloader=None, eval_func=None, resume=None):
         self.model = model
         self.cfg = conf.usr_cfg
-        self.snapshot_path = os.path.abspath(os.path.expanduser(self.cfg.tuning.snapshot.path))
+
+        self.history_path = os.path.join(os.path.abspath(os.path.expanduser( \
+                                                         self.cfg.tuning.workspace.path)),
+                                                         './history.snapshot')
+        self.deploy_path  = os.path.join(os.path.abspath(os.path.expanduser( \
+                                                         self.cfg.tuning.workspace.path)),
+                                                         './deploy.yaml')
+
+        path = Path(os.path.dirname(self.history_path))
+        path.mkdir(exist_ok=True, parents=True)
+        path = Path(os.path.dirname(self.deploy_path))
+        path.mkdir(exist_ok=True, parents=True)
 
         logger.debug('Dump user yaml configuration:')
         logger.debug(self.cfg)
@@ -184,7 +195,7 @@ class TuneStrategy(object):
 
     def _same_yaml(self, src_yaml, dst_yaml):
         """Check whether two yamls are same, excluding those keys which does not really
-           impact tuning result, such as tensorboard, snapshot, resume options under tuning
+           impact tuning result, such as tensorboard, workspace, resume options under tuning
            section of yaml.
         """
         if equal_dicts(src_yaml, dst_yaml, ignore_keys=['tuning']) and \
@@ -265,7 +276,6 @@ class TuneStrategy(object):
             deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.dtype', 'int8')
             deep_set(acc_dataloader_cfg, 'transform.QuantizedInput.scale', scale)
 
-
         self.deploy_cfg['model'] = self.cfg.model
         self.deploy_cfg['device'] = self.cfg.device
         if self.cfg.evaluation is not None:
@@ -275,22 +285,15 @@ class TuneStrategy(object):
                 acc_dataloader_cfg)
             self.deploy_cfg['evaluation'] = self.cfg.evaluation
 
-        deploy_path = self.cfg.tuning.deployment.path \
-            if self.cfg.tuning.deployment is not None \
-            else self.cfg.tuning.snapshot.path
-        deploy_path = os.path.abspath(os.path.expanduser(deploy_path))
-        deploy_dir = Path(os.path.dirname(deploy_path))
-        deploy_dir.mkdir(exist_ok=True, parents=True)
-
         def setup_yaml():
             represent_dict_order = lambda self, \
                 data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
             yaml.add_representer(OrderedDict, represent_dict_order)    
             yaml.add_representer(DotDict, represent_dict_order)    
         setup_yaml()
-        with open(deploy_path, 'w+') as f:
+        with open(self.deploy_path, 'w+') as f:
             yaml.dump(self.deploy_cfg, f)
-            logger.info('save deploy yaml to path {}'.format(deploy_path)) 
+            logger.info('save deploy yaml to path {}'.format(self.deploy_path)) 
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.
@@ -406,18 +409,13 @@ class TuneStrategy(object):
 
         return need_stop
 
-    def _save(self, snapshot_path):
+    def _save(self):
         """save current tuning state to snapshot for resuming.
 
         """
-        snapshot_path = os.path.abspath(os.path.expanduser(snapshot_path))
-        path = Path(snapshot_path)
-        path.mkdir(exist_ok=True, parents=True)
 
-        fname = snapshot_path + '/tuning_history.snapshot'
-
-        logger.info('save to ' + fname)
-        with fault_tolerant_file(fname) as f:
+        logger.info('Save tuning history to ' + self.history_path)
+        with fault_tolerant_file(self.history_path) as f:
             pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def _find_tuning_history(self, tune_cfg):
@@ -498,6 +496,5 @@ class TuneStrategy(object):
                 tuning_history['history'].append(d)
             self.tuning_history.append(tuning_history)
 
-        snapshot_path = self.cfg.tuning.snapshot.path
-        self._save(snapshot_path)
+        self._save()
 

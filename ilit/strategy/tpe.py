@@ -139,10 +139,8 @@ class TpeTuneStrategy(TuneStrategy):
         """
         logger.info('Start tpe strategy')
         # prepare log file
-        tmp_path = self.cfg.tuning.snapshot.get('path', './')
-        Path(os.path.expanduser(tmp_path)).mkdir(parents=True, exist_ok=True)
-        trials_file = os.path.join(os.path.expanduser(tmp_path), 'tpe_trials.csv')
-        best_result_file = os.path.join(os.path.expanduser(tmp_path), 'tpe_best_result.csv')
+        trials_file = os.path.join(os.path.dirname(self.history_path), 'tpe_trials.csv')
+        best_result_file = os.path.join(os.path.dirname(self.history_path), 'tpe_best_result.csv')
         logger.debug('trials_file: {} '.format(trials_file) + \
                     'best_result_file:{}'.format(best_result_file))
         if Path(trials_file).exists():
@@ -215,7 +213,7 @@ class TpeTuneStrategy(TuneStrategy):
                 if pd is not None:
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
-                self._save(tmp_path)
+                self._save()
                 if self.cfg_evaluated:
                     continue
                 if self.stop(t, trials_count):

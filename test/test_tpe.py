@@ -23,7 +23,7 @@ def build_fake_yaml():
               name: tpe
             accuracy_criterion:
               relative: 0.01
-            snapshot:
+            workspace:
               path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
@@ -50,7 +50,7 @@ def build_fake_yaml2():
             max_trials: 5
           accuracy_criterion:
             relative: -0.01
-          snapshot:
+          workspace:
             path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
@@ -101,10 +101,10 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
-        os.remove('saved/tuning_history.snapshot')
+        os.remove('saved/history.snapshot')
         os.remove('saved/tpe_best_result.csv')
         os.remove('saved/tpe_trials.csv')
-        os.remove('./ilit_deploy.yaml')
+        os.remove('saved/deploy.yaml')
         os.rmdir('saved')
 
     def test_run_tpe_one_trial(self):
