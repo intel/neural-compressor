@@ -1,11 +1,10 @@
 from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig
 from . import logger
+import torch
 from torch.quantization import add_observer_, convert
-from torch import load
 import yaml
 import os
 import copy
-
 
 def load(tune_cfg_file, weights_file, model):
     """Execute the quantize process on the specified model.
@@ -18,8 +17,10 @@ def load(tune_cfg_file, weights_file, model):
         (object): quantized model
     """
 
-    assert os.path.exists(os.path.expanduser(tune_cfg_file)), "tune configure file didn't exist" % tune_cfg_file
-    assert os.path.exists(os.path.expanduser(weights_file)), "weight file %s didn't exist" % weights_file
+    assert os.path.exists(os.path.expanduser(tune_cfg_file)), \
+           "tune configure file %s didn't exist" % tune_cfg_file
+    assert os.path.exists(os.path.expanduser(weights_file)), \
+           "weight file %s didn't exist" % weights_file
 
     q_model = copy.deepcopy(model.eval())
 
@@ -35,6 +36,6 @@ def load(tune_cfg_file, weights_file, model):
                     "by assigning the `.qconfig` attribute directly on submodules")
     add_observer_(q_model)
     q_model = convert(q_model, inplace=True)
-    weights = load(os.path.expanduser(weights_file))
+    weights = torch.load(os.path.expanduser(weights_file))
     q_model.load_state_dict(weights)
     return q_model

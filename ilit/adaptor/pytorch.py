@@ -11,8 +11,6 @@ import yaml
 
 torch = LazyImport('torch')
 cpuinfo = LazyImport('cpuinfo')
-WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST\
-             - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
 REDUCE_RANGE = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
 logger.debug("reduce range:")
@@ -188,6 +186,8 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
 
 def _propagate_qconfig(model, op_qcfgs):
     fallback_ops = []
+    WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
+        - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
     for k, v in op_qcfgs.items():
         if v is None and k[1] != str(torch.quantization.QuantStub) \
                 and k[1] != str(torch.quantization.DeQuantStub):
@@ -201,35 +201,35 @@ def _propagate_qconfig(model, op_qcfgs):
                 v = torch.quantization.QConfig(
                     activation=activation_observer, weight=weights_observer)
             op_qcfg = {k[0]: v}
-            _propagate_qconfig_recursively(model, '', op_qcfg)
+            _propagate_qconfig_recursively(model, '', op_qcfg, white_list=WHITE_LIST)
 
     if fallback_ops:
         _fallback_quantizable_ops_recursively(model, '', fallback_ops)
 
 
-def _propagate_qconfig_recursively(model, prefix, op_qcfg, qconfig_parent=None):
+def _propagate_qconfig_recursively(model, prefix, op_qcfg, white_list, qconfig_parent=None):
     for name, child in model.named_children():
         model_qconfig = qconfig_parent
         op_name = prefix + name
         if op_name in op_qcfg:
             child.qconfig = op_qcfg[op_name]
             model_qconfig = op_qcfg[op_name]
-        elif model_qconfig is not None and type(child) in WHITE_LIST:
+        elif model_qconfig is not None and type(child) in white_list:
             child.qconfig = model_qconfig
         _propagate_qconfig_recursively(
-            child, op_name + '.', op_qcfg, model_qconfig)
+            child, op_name + '.', op_qcfg, white_list, model_qconfig)
 
 
-def _find_quantized_op_num(model, op_count=0):
+def _find_quantized_op_num(model, white_list, op_count=0):
     quantize_op_num = op_count
     for name_tmp, child_tmp in model.named_children():
-        if type(child_tmp) in WHITE_LIST \
+        if type(child_tmp) in white_list \
             and not (isinstance(child_tmp, torch.quantization.QuantStub)
                      or isinstance(child_tmp, torch.quantization.DeQuantStub)):
             quantize_op_num += 1
         else:
             quantize_op_num = _find_quantized_op_num(
-                child_tmp, quantize_op_num)
+                child_tmp, white_list, quantize_op_num)
     return quantize_op_num
 
 
@@ -304,11 +304,13 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
             r = self.module.add_relu(x, y)
             return self.quant(r)
 
+    WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
+        - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
     for name, child in model.named_children():
         op_name = prefix + name
         if op_name in fallback_ops:
             child.qconfig = None
-            quantize_op_num = _find_quantized_op_num(model)
+            quantize_op_num = _find_quantized_op_num(model, white_list=WHITE_LIST)
             if quantize_op_num == 1:
                 found = False
                 for name_tmp, child_tmp in model.named_children():
@@ -367,6 +369,10 @@ class PyTorchAdaptor(Adaptor):
         self.device = framework_specific_info['device']
         self.is_baseline = True
         self.tune_cfg = None
+
+        self.white_list = \
+            torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
+            - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
         # for tensorboard         
         self.dump_times = 0
@@ -565,7 +571,7 @@ class PyTorchAdaptor(Adaptor):
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         for name, child in model.named_children():
             op_name = prefix + name
-            if type(child) in WHITE_LIST:
+            if type(child) in self.white_list:
                 quantizable_ops.append((op_name, str(type(child))))
             else:
                 self._get_quantizable_ops_recursively(
@@ -755,7 +761,7 @@ class PyTorchAdaptor(Adaptor):
             return model
 
         # create properties
-        white_list = WHITE_LIST | \
+        white_list = self.white_list | \
             (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
