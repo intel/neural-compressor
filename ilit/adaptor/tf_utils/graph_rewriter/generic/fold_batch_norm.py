@@ -2,13 +2,12 @@
 #  -*- coding: utf-8 -*-
 #
 
-import enum
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer, write_graph
+from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
 import numpy as np

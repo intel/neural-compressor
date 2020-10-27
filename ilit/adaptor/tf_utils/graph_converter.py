@@ -35,8 +35,8 @@ from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
 from .transform_graph.freeze_max_min import combine_histogram
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
-from .util import write_graph, is_ckpt_format, parse_ckpt_model, is_saved_model_format
-from .util import parse_savedmodel_model, get_graph_def
+from .util import write_graph
+from .util import get_graph_def
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
