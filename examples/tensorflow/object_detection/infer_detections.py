@@ -113,22 +113,6 @@ class model_infer:
         self.data_sess = tf.compat.v1.Session(graph=data_graph,
                                               config=self.config)
 
-    def load_graph(self):
-        print('load graph from: ' + self.args.input_graph)
-
-        self.infer_graph = tf.Graph()
-        with self.infer_graph.as_default():
-            graph_def = tf.compat.v1.GraphDef()
-            with tf.compat.v1.gfile.FastGFile(self.args.input_graph,
-                                              'rb') as input_file:
-                input_graph_content = input_file.read()
-                graph_def.ParseFromString(input_graph_content)
-
-            tf.import_graph_def(graph_def, name='')
-
-    def get_graph(self):
-        return self.infer_graph
-
     def __iter__(self):
         """Enable the generator for q_dataloader
 
@@ -152,6 +136,18 @@ class model_infer:
         else:
             print("Inference with dummy data.")
 
+        graph_def = get_graph_def(self.args.input_graph, self.output_layers)
+        input_graph = tf.Graph()
+        with input_graph.as_default():
+            tf.compat.v1.import_graph_def(graph_def, name='')
+        self.infer_graph = input_graph
+
+        self.input_tensor = self.infer_graph.get_tensor_by_name(
+            self.input_layer + ":0")
+        self.output_tensors = [
+            self.infer_graph.get_tensor_by_name(x + ":0")
+            for x in self.output_layers
+        ]
         with tf.compat.v1.Session(graph=self.infer_graph,
                                   config=self.config) as sess:
 
