@@ -73,7 +73,7 @@ Intel® Low Precision Optimization Tool is an open source python library to help
 
 This strategy is Intel® Low Precision Optimization Tool default tuning strategy, which does model-wise tuning by adjusting gloabl tuning parameters, such as calibration related parameters, kl or minmax algo, quantization related parameters, symmetric or asymmetric, per_channel or per_tensor. If the model-wise tuning result does not meet accuracy goal, this strategy will attempt to do op-wise fallback from bottom to top to prioritize which fallback op has biggest impact on final accuracy, and then do incremental fallback till achieving the accuracy goal.
 
-### Bayersian Strategy
+### Bayesian Strategy
 
 Bayesian optimization is a sequential design strategy for global optimization of black-box functions. The strategy refers to the Bayesian optimization package [bayesian-optimization](https://github.com/fmfn/BayesianOptimization) and changes it to a discrete version that complies with the strategy standard of Intel® Low Precision Optimization Tool. It uses Gaussian Processes to define the prior/posterior distribution over the black-box function, and then finds the tuning configuration that maximizes the expected improvement.
 

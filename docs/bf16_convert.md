@@ -35,7 +35,7 @@ Intel® Low Precision Optimization Tool can support op-wise BF16 precision for T
 
  For now, if we want try this feature, we can follow below steps.
 
-1. Build TensorFlow by using below command, we test this feature on TensorFlow master commit [f0b33d6](https://github.com/tensorflow/tensorflow/tree/f0b33d6feea2044ac0f9ccdd67f19ebc85adaab2)
+1. Build TensorFlow by using below command, we test this feature on `intel-tensorflow 2.3.0` by `pip install` and Intel TensorFlow [tag `v1.15.0up1`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1) by source code build with below command.
 ```shell
 bazel build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=0 --copt=-O3 --copt=-Wformat --copt=-Wformat-security \
         --copt=-fstack-protector --copt=-fPIC --copt=-fpic --linkopt=-znoexecstack --linkopt=-zrelro \
@@ -47,4 +47,4 @@ bazel build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=0 --copt=-O3 --copt=-Wformat --cop
 
 2. Install the wheel into your test python environment.
 
-3. Add `bf16` in `weight` and `activation dtype` of `yaml` config file . By default, it has been added.
+3. Add `bf16` in `weight` and `activation dtype` of `yaml` config file . By default, it has been added. For now, the `Basic` strategy is the only one strategy support multiple fall back data type.
