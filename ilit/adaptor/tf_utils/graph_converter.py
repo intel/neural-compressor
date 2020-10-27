@@ -305,7 +305,6 @@ class GraphConverter:
         """
         try:
             self._optimize_frozen_fp32_graph()
-            import pdb; pdb.set_trace()
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
