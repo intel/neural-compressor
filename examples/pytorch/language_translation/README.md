@@ -231,6 +231,7 @@ tuning:
       relative: 0.01
     exit_policy:
       timeout: 0
+      max_trials: 300
     random_seed: 9527
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
@@ -248,23 +249,6 @@ The related code changes please refer to examples/pytorch/bert/transformers/mode
 ### code update
 After prepare step is done, we just need update run_squad_tune.py and run_glue_tune.py like below
 ```
-class Bert_DataLoader(DataLoader):
-    def __init__(self, loader=None, model_type=None, device='cpu'):
-        self.loader = loader
-        self.model_type = model_type
-        self.device = device
-    def __iter__(self):
-        for batch in self.loader:
-            batch = tuple(t.to(self.device) for t in batch)
-            outputs = {'input_ids':      batch[0],
-                      'attention_mask': batch[1],
-                      'labels':         batch[3]}
-            if self.model_type != 'distilbert':
-                outputs['token_type_ids'] = batch[2] if self.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
-            yield outputs, outputs['labels']
-```
-
-```
 if args.tune:
     def eval_func_for_ilit(model):
         result, _ = evaluate(args, model, tokenizer)
@@ -277,13 +261,15 @@ if args.tune:
                 acc = result[key]
                 break
         return acc
-    dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
+    eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    eval_sampler = SequentialSampler(dataset)
-    eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-    test_dataloader = Bert_DataLoader(eval_dataloader, args.model_type, args.device)
     from ilit import Quantization
     quantizer = Quantization("./conf.yaml")
+    if eval_task != "squad":
+        eval_task = 'classifier'
+    eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
+                                     task=eval_task, model_type=args.model_type)
+    test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
     quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
     exit(0)
 ```

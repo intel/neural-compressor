@@ -87,10 +87,11 @@ The related code please refer to examples/pytorch/object_detection/yolo_v3/model
 After prepare step is done, we just need update test.py like below.
 
 ```
-class yolo_dataLoader(DataLoader):
+class yolo_dataLoader(object):
     def __init__(self, loader=None, model_type=None, device='cpu'):
         self.loader = loader
         self.device = device
+        self.batch_size = loader.batch_size
     def __iter__(self):
         labels = []
         for _, imgs, targets in self.loader:
@@ -99,6 +100,7 @@ class yolo_dataLoader(DataLoader):
             # Rescale target
             targets[:, 2:] = xywh2xyxy(targets[:, 2:])
             targets[:, 2:] *= opt.img_size
+
             Tensor = torch.FloatTensor
             imgs = Variable(imgs.type(Tensor), requires_grad=False)
             yield imgs, targets

@@ -95,9 +95,10 @@ The related code changes please refer to examples/pytorch/recommendation/dlrm_s_
 ### code update
 After prepare step is done, we just need update run_squad_tune.py and run_glue_tune.py like below
 ```
-class DLRM_DataLoader(DataLoader):
+class DLRM_DataLoader(object):
     def __init__(self, loader=None):
         self.loader = loader
+        self.batch_size = loader.dataset.batch_size
     def __iter__(self):
         for X_test, lS_o_test, lS_i_test, T in self.loader:
             yield (X_test, lS_o_test, lS_i_test), T

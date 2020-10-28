@@ -40,33 +40,34 @@ evaluation function and the metric used is supported by ilit, then the second us
 
 ### 2. Write yaml config file
 
-Copy [template.yaml](../examples/template.yaml) to work directory and modify correspondingly.
+Copy [ptq.yaml](../ilit/template/ptq.yaml) or [qat.yaml](../ilit/template/qat.yaml) or [pruning.yaml](../ilit/template/pruning.yaml) to work directory and modify correspondingly.
 
 Below is an example for beginner.
 
-```
-framework:
-  - name: pytorch
+```yaml
+model:                  # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+  name: ssd_mobilenet_v1
+  framework: tensorflow
+  inputs: image_tensor
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
 tuning:
-    metric
-      - topk: 1
-    accuracy_criterion:
-      - relative: 0.01
+  accuracy_criterion:
+    relative:  0.01
+  exit_policy:
     timeout: 0
-    random_seed: 9527
+    max_trials: 300
+  random_seed: 9527
 ```
 
 Below is an example for advance user, which constrain the tuning space by specifing calibration, quantization, tuning.ops fields accordingly.
 
-```
+```yaml
 model:
-  - name: mobilenet_v1
-
-framework:
-  - name: tensorflow
-    inputs: input
-    outputs: MobilenetV1/Predictions/Reshape_1
+  name: ssd_mobilenet_v1
+  framework: tensorflow
+  inputs: image_tensor
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
 quantization:
     calibration:
@@ -91,10 +92,14 @@ quantization:
 
 tuning:
     accuracy_criterion:
-      - relative:  0.01
+      relative:  0.01
     objective: performance
     exit_policy:
-      - timeout: 36000
+      timeout: 36000
+      max_trials: 1000
+    workspace:
+      path: /path/to/saving/directory
+      resume: /path/to/a/specified/snapshot/file
 
 ```
 
@@ -118,7 +123,7 @@ tuning:
 | Examples Tutorials |
 | ------ | 
 |[Hello World examples for quick start](../examples/helloworld/README.md)| 
-|[PyTorch imagenet recognition/imagenet](../examples/pytorch/image_recognition/imagenet/cpu/PTQ/README.md)| 
+|[PyTorch imagenet recognition/imagenet](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)| 
 |[PyTorch imagenet recognition/peleenet](../examples/pytorch/image_recognition/peleenet/README.md)|
 |[PyTorch imagenet recognition/resnest50](../examples/pytorch/image_recognition/resnest/README.md)|
 |[PyTorch imagenet recognition/se_resnext50](../examples/pytorch/image_recognition/se_resnext/README.md)|

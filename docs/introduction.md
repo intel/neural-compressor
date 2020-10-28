@@ -23,7 +23,7 @@ Intel® Low Precision Optimization Tool is an open source python library to help
            ...
    ```
 
-   The tuning config and model-specific information are controlled by user config yaml file. As for the format of yaml file, please refer to [template.yaml](../examples/template.yaml)
+   The tuning config and model-specific information are controlled by user config yaml file. As for the format of yaml file, please refer to [ptq.yaml](../ilit/template/ptq.yaml) or [qat.yaml](../ilit/template/qat.yaml) or [pruning.yaml](../ilit/template/pruning.yaml).
 
    Intel® Low Precision Optimization Tool supports three usages:
 
@@ -53,16 +53,12 @@ Intel® Low Precision Optimization Tool is an open source python library to help
    
       For this usage, model, q_dataloader and eval_func parameters are mandotory
 
-<<<<<<< HEAD
-=======
-   
->>>>>>> 27ba7ee46173479d80ea4cbad045d87f81cba96c
 2. Framework Adaptation API
 
    Framework adaptation layer abstracts out the API differences of various DL frameworks needed for supporting low-precision quantization workflow and provides a unified API for auto-tuning engine to use. The abstracted functionalities include quantization configurations, quantization capabilities, calibration, quantization-aware training, graph transformation for quantization, data loader and metric evaluation, and tensor inspection.
 
 3. Extension API
-   
+
    Intel® Low Precision Optimization Tool is designed to be highly extensible. New tuning strategies can be added by inheriting "Strategy" class. New frameworks can be added by inheriting "Adaptor" class. New metrics can be added by inheriting "Metric" class. New tuning objectives can be added by inheriting "Objective" class.
 
 # Workflow
