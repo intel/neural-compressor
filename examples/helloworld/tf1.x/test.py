@@ -5,7 +5,27 @@ import numpy as np
 from ilit import Quantization
 
 def eval_func(model):
-    return 1.
+    (train_images, train_labels), (test_images,
+                                    test_labels) = keras.datasets.fashion_mnist.load_data()
+
+    with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
+        tf.compat.v1.import_graph_def(model.as_graph_def(), name='')
+        predictions = sess.run(['Identity:0'], feed_dict={'x:0':test_images})
+ 
+    with tf.compat.v1.Graph().as_default():
+        topk = tf.nn.in_top_k(predictions=tf.constant(predictions[0], dtype=tf.float32),
+                                targets=tf.constant(test_labels, dtype=tf.int32), k=1) 
+
+        fp32_topk = tf.cast(topk, tf.float32)
+        correct_tensor = tf.reduce_sum(input_tensor=fp32_topk)
+
+        with tf.compat.v1.Session() as acc_sess:
+            correct  = acc_sess.run(correct_tensor)
+
+        return correct/len(predictions[0])
+
+    return 0
+
 
 def load_graph(model_file):
   """This is a function to load TF graph from pb file
@@ -44,13 +64,13 @@ def main():
 
     # Run ilit to get the quantized pb
     quantizer = Quantization('./conf.yaml')
-    dataloader = quantizer.dataloader(dataset=(test_images, test_labels))
+    dataloader = quantizer.dataloader(dataset=list(zip(test_images, test_labels)))
     quantized_model = quantizer(graph, q_dataloader=dataloader, eval_func=eval_func)
 
     # Run quantized model 
-    with tf.compat.v1.Session() as sess:
-        tf.compat.v1.import_graph_def(quantized_model.as_graph_def())
-        styled_image = sess.run(['import/Identity:0'], feed_dict={'import/x:0':test_images})
+    with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
+        tf.compat.v1.import_graph_def(quantized_model.as_graph_def(), name='')
+        styled_image = sess.run(['Identity:0'], feed_dict={'x:0':test_images})
         print("Inference is done.")
 
 if __name__ == "__main__":
