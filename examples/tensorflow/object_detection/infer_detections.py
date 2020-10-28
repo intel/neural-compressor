@@ -220,21 +220,19 @@ class model_infer:
 
     def accuracy_check(self, input_graph=None):
         print("Inference for accuracy check.")
-        
-        if input_graph:
-            graph_def = get_graph_def(self.args.input_graph, self.output_layers)
-            input_graph = tf.Graph()
-            with input_graph.as_default(): 
-                tf.compat.v1.import_graph_def(graph_def, name='')
+        graph_def = get_graph_def(self.args.input_graph, self.output_layers)
+        input_graph = tf.Graph()
+        with input_graph.as_default(): 
+            tf.compat.v1.import_graph_def(graph_def, name='')
 
-            self.infer_graph = input_graph
-            # Need to reset the input_tensor/output_tensor
-            self.input_tensor = self.infer_graph.get_tensor_by_name(
-                self.input_layer + ":0")
-            self.output_tensors = [
-                self.infer_graph.get_tensor_by_name(x + ":0")
-                for x in self.output_layers
-            ]
+        self.infer_graph = input_graph
+        # Need to reset the input_tensor/output_tensor
+        self.input_tensor = self.infer_graph.get_tensor_by_name(
+            self.input_layer + ":0")
+        self.output_tensors = [
+            self.infer_graph.get_tensor_by_name(x + ":0")
+            for x in self.output_layers
+        ]
         self.build_data_sess()
         evaluator = CocoDetectionEvaluator()
         with tf.compat.v1.Session(graph=self.infer_graph,
