@@ -214,8 +214,6 @@ class TpeTuneStrategy(TuneStrategy):
                     self._save_trials(trials_file)
                     self._update_best_result(best_result_file)
                 self._save()
-                if self.cfg_evaluated:
-                    continue
                 if self.stop(t, trials_count):
                     exit = True
 
@@ -394,3 +392,42 @@ class TpeTuneStrategy(TuneStrategy):
                                                         self.best_result['best_lat_diff'],
                                                         self.best_result['quantization_ratio']))
 
+    def stop(self, timeout, trials_count):
+        """Check if need to stop traversing the tuning space, either accuracy goal is met
+           or timeout is reach.
+
+        Args:
+            timeout (Timeout): The timeout object instantiated in utils.py
+
+        Returns:
+            bool: True if need stop, otherwise False
+        """
+        need_stop = False
+        if not self.cfg_evaluated:
+            if self.objective.compare(self.best_tune_result, self.baseline):
+                del self.best_tune_result
+                del self.best_qmodel
+                self.best_tune_result = self.last_tune_result
+                self.best_qmodel = self.last_qmodel
+                self.adaptor.save(self.best_qmodel, os.path.dirname(self.deploy_path))
+            else:
+                del self.last_qmodel
+
+        logger.info(
+            'Tune result is: ' +
+            ('[{:.4f}, {:.4f}]'.format(
+                *self.last_tune_result) if self.last_tune_result else 'None') +
+            ' Best tune result is: ' +
+            ('[{:.4f}, {:.4f}]'.format(
+                *self.best_tune_result) if self.best_tune_result else 'None'))
+
+        if timeout.seconds != 0 and timeout.timed_out:
+            need_stop = True
+        elif timeout.seconds == 0 and self.best_tune_result:
+            need_stop = True
+        elif trials_count >= self.cfg.tuning.exit_policy.max_trials:
+            need_stop = True
+        else:
+            need_stop = False
+
+        return need_stop
