@@ -67,6 +67,17 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
   python main_dump_tensors.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
 
+# Saving and loading model:
+* Saving model:  
+Intel® Low Precision Optimization Tool will automatically save tuning configure and weights of model which meet target goal when tuning process.
+* loading model:  
+```python
+model                 # fp32 model
+from ilit.utils.pytorch import load
+quantized_model = load(
+    os.path.join(Path, 'best_configure.yaml'),
+    os.path.join(Path, 'best_model_weights.pt'), model)
+```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
 =======================================================
