@@ -1,6 +1,6 @@
 import pandas as pd
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, AverageMeter, compute_sparsity
+from ..utils.utility import LazyImport, AverageMeter, compute_sparsity, CPUINFO_FLAGS
 import copy
 from collections import OrderedDict
 from ..utils import logger
@@ -10,9 +10,8 @@ import os
 import yaml
 
 torch = LazyImport('torch')
-cpuinfo = LazyImport('cpuinfo')
 
-REDUCE_RANGE = False if "avx512_vnni" in cpuinfo.get_cpu_info()['flags'] else True
+REDUCE_RANGE = False if "avx512vnni" in CPUINFO_FLAGS else True
 logger.debug("reduce range:")
 logger.debug(REDUCE_RANGE)
 

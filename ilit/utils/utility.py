@@ -12,8 +12,13 @@ import inspect
 import time
 import sys
 import numpy as np
+import cpuinfo
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
+
+CPUINFO_FLAGS = \
+    cpuinfo.cpuinfo.CPUID().get_flags(cpuinfo.cpuinfo.CPUID().get_max_extension_support())
+
 
 def print_info():
     print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
