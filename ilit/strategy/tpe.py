@@ -287,7 +287,7 @@ class TpeTuneStrategy(TuneStrategy):
         return result
 
     def _compute_metrics(self, tune_cfg, acc, lat):
-        quantization_ratio = 100 - len([param for param in tune_cfg.values()
+        quantization_ratio = 1 - len([param for param in tune_cfg.values()
                                         if param['activation']['dtype'] =='fp32']) / len(tune_cfg)
         acc_diff, lat_diff = self._calculate_acc_lat_diff(acc, lat)
         return {
