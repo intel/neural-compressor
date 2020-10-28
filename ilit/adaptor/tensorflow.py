@@ -4,7 +4,7 @@ import copy
 import numpy as np
 from collections import OrderedDict
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, CPUINFO_FLAGS
+from ..utils.utility import LazyImport, CpuInfo
 from ..utils import logger
 tensorflow = LazyImport('tensorflow')
 
@@ -412,7 +412,7 @@ class TensorFlowAdaptor(Adaptor):
             from tensorflow.python._pywrap_util_port import IsMklEnabled
         if IsMklEnabled() and (tf.version.VERSION >= "2.3.0"):
             is_supported_version = True
-        if ((is_supported_version and "avx512_bf16" in CPUINFO_FLAGS)
+        if ((is_supported_version and CpuInfo.bf16)
                 or os.getenv('FORCE_BF16') == '1'):
             return True
         return False
