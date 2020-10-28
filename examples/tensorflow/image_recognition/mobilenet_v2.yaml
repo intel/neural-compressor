@@ -23,6 +23,63 @@ quantization:                                        # optional. tuning constrai
     weight:
       granularity: per_channel
 
+  op_wise: {
+             'MobilenetV2/expanded_conv/depthwise/depthwise': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_1/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_2/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_3/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_4/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_5/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_6/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_7/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_8/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_9/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_10/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_11/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_12/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_13/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_14/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_15/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/expanded_conv_16/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV2/Conv_1/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             }
+           }
+
 evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
     metric:
