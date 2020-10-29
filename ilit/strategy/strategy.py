@@ -233,8 +233,9 @@ class TuneStrategy(object):
 
             trials_count = 0
             for tune_cfg in self.next_tune_cfg():
+                trials_count += 1
                 tuning_history = self._find_tuning_history(tune_cfg)
-                if tuning_history:
+                if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
                     self.last_tune_result = tuning_history['last_tune_result']
                     self.best_tune_result = tuning_history['best_tune_result']
                     logger.debug('This tuning config was evaluated, skip!')
@@ -246,7 +247,6 @@ class TuneStrategy(object):
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 assert self.last_qmodel
-                trials_count += 1
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 need_stop = self.stop(t, trials_count)
