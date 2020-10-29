@@ -220,12 +220,15 @@ class model_infer:
 
     def accuracy_check(self, input_graph=None):
         print("Inference for accuracy check.")
-        graph_def = get_graph_def(self.args.input_graph, self.output_layers)
-        input_graph = tf.Graph()
-        with input_graph.as_default(): 
+        if input_graph is None:
+            graph_def = get_graph_def(self.args.input_graph, self.output_layers)
+        else:
+            graph_def = get_graph_def(input_graph, self.output_layers)
+        graph = tf.Graph()
+        with graph.as_default(): 
             tf.compat.v1.import_graph_def(graph_def, name='')
 
-        self.infer_graph = input_graph
+        self.infer_graph = graph
         # Need to reset the input_tensor/output_tensor
         self.input_tensor = self.infer_graph.get_tensor_by_name(
             self.input_layer + ":0")
