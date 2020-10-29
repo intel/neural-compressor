@@ -412,7 +412,7 @@ class TensorFlowAdaptor(Adaptor):
             from tensorflow.python._pywrap_util_port import IsMklEnabled
         if IsMklEnabled() and (tf.version.VERSION >= "2.3.0"):
             is_supported_version = True
-        if ((is_supported_version and CpuInfo.bf16)
+        if ((is_supported_version and CpuInfo().bf16)
                 or os.getenv('FORCE_BF16') == '1'):
             return True
         return False
