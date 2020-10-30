@@ -59,7 +59,7 @@ Supported tuning strategies are:
   pip install ilit
 
   # install from conda
-  conda install ilit -c intel
+  conda install ilit -c intel -c conda-forge
   ```
 
 # System Requirements
