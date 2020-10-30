@@ -166,7 +166,9 @@ class TensorFlowAdaptor(Adaptor):
             if len(int8_inspect_node_name) > 0:
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
-        input_tensor = self.get_tensor_by_name_with_import(graph, self.inputs[0] + ":0")
+        input_tensor = [
+            self.get_tensor_by_name_with_import(graph, x + ":0") for x in self.inputs \
+        ]
         output_tensor = [
             self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
         ]
@@ -175,18 +177,24 @@ class TensorFlowAdaptor(Adaptor):
         config.use_per_session_threads = 1
         # config.intra_op_parallelism_threads = 28
         config.inter_op_parallelism_threads = 1
-
-        logger.info("Start to evaluate model via tensorflow...")
-
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
 
-        for idx, (images, labels) in enumerate(dataloader):
+        logger.info("Start to evaluate model via tensorflow...")
+        for idx, (inputs, labels) in enumerate(dataloader):
+            # dataloader should keep the order and len of inputs same with input_tensor
+            if len(input_tensor) == 1:
+                feed_dict = {input_tensor[0]: inputs} # get raw tensor using index [0]
+            else:
+                assert len(input_tensor) == len(inputs), \
+                    'inputs len must equal with input_tensor'
+                feed_dict = dict(zip(input_tensor, inputs))
+
             if measurer is not None:
                 measurer.start()
-                predictions = sess_graph.run(output_tensor, {input_tensor: images})
+                predictions = sess_graph.run(output_tensor, feed_dict) 
                 measurer.end()
             else:
-                predictions = sess_graph.run(output_tensor, {input_tensor: images})
+                predictions = sess_graph.run(output_tensor, feed_dict)
             # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):

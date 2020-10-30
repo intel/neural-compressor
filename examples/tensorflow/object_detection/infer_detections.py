@@ -127,8 +127,9 @@ class model_infer:
         self.data_sess = tf.compat.v1.Session(graph=data_graph,
                                               config=self.config)
         for i in range(COCO_NUM_VAL_IMAGES):
-            input_images = self.data_sess.run([self.input_images])
-            yield input_images[0]
+            input_images = self.data_sess.run(self.input_images)
+            # dataloader should include image, label by default
+            yield input_images[0], None
 
     def run_benchmark(self):
         if self.args.data_location:

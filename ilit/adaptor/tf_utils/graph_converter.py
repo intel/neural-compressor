@@ -203,32 +203,25 @@ class GraphConverter:
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
 
-        if len(self.inputs) > 1:
-            input_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.inputs]
-        else:
-            input_tensor = graph.get_tensor_by_name(self.inputs[0] + ":0")
-
+        input_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.inputs]
         output_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.outputs]
 
         config = tf.compat.v1.ConfigProto()
         # config.use_per_session_threads = 1
         config.inter_op_parallelism_threads = 1
-
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
-        quantize_batch = 0
 
         self.logger.info("Sampling data...")
-        for content in self.data_loader:
-            np_images = content[0]
-            if not isinstance(input_tensor, list):
-                _ = sess_graph.run(output_tensor,
-                                   {input_tensor: np_images})
+        for idx, (inputs, labels) in enumerate(self.data_loader):
+            if len(input_tensor) == 1:
+                feed_dict = {input_tensor[0]: inputs} # get raw tensor using index [0]
             else:
-                _ = sess_graph.run(output_tensor,
-                                   dict(zip(input_tensor, np_images[0:len(input_tensor) + 1])))
-            # print("Processed %d batches."% (quantize_batch + 1))
-            quantize_batch += 1
-            if quantize_batch == self.calib_iteration:  # set the quantize iteration to 100
+                assert len(input_tensor) == len(inputs), \
+                    'inputs len must equal with input_tensor'
+                feed_dict = dict(zip(input_tensor, inputs))
+
+            _ = sess_graph.run(output_tensor, feed_dict)
+            if idx + 1 == self.calib_iteration: 
                 break
 
         sess_graph.close()
