@@ -104,11 +104,13 @@ class QuantizeNodeBase(object):
     def apply_the_transform(self):
         """
         This is the virtual interface to be implemented by derived class
-        :return:
+        :return: transformed graphdef
         """
         pass
 
     def get_longest_fuse(self):
+        """This is the virtual interface to be implemented by derived class
+        """
         pass
 
     def _is_match(self, patterns):

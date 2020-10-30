@@ -45,6 +45,17 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
     }
 
     def scale_after_normalization(self, node):
+        """Check the scale_after_normalization attribute value if the node op type
+            is BatchNormWithGlobalNormalization
+
+        Args:
+            node (nodedef): input nodedef object
+
+        Returns:
+            bool: True if the node op is not BatchNormWithGlobalNormalization else it
+                    depends on the BatchNormWithGlobalNormalization attribute value of
+                    `scale_after_normalization`.
+        """
         if node.op == "BatchNormWithGlobalNormalization":
             return node.attr["scale_after_normalization"].b
         return True

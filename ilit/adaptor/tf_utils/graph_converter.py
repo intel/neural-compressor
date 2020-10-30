@@ -278,6 +278,15 @@ class GraphConverter:
         self._tmp_graph_def = None
 
     def inspect_tensor(self, op_list, op_iteration_list):
+        """Inspect the tensor content
+
+        Args:
+            op_list (string list): op name's list
+            op_iteration_list (int list): dump the tensor on the specified iteration.
+
+        Returns:
+            dict: key is op name while value is the content saved in np.array format.
+        """
         try:
             self._optimize_frozen_fp32_graph()
         except Exception as e:
@@ -377,6 +386,15 @@ class GraphConverter:
         return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
     def dump_tensor(self, original_op_list, iteration_list):
+        """dump the specified op's output tensor content
+
+        Args:
+            original_op_list (string list): the ops name
+            iteration_list (int list): the specified iteration to dump tensor
+
+        Returns:
+            dict: key is op name while value is the content saved in np.array format.
+        """
         graph_node_name_mapping = {}
         q_node_name = []
         fp32_node_name = []

@@ -47,6 +47,11 @@ class PreOptimization(object):
             self.inputs, self.outputs = self.analyzer.get_graph_input_output()
 
     def get_excluded_node_names(self):
+        """Get the excluded node name
+
+        Returns:
+            string list: the excluded ops' name
+        """
         return self._excluded_node_names
 
     def get_optimized_graphdef(self):

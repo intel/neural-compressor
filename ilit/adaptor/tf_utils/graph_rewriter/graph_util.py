@@ -55,10 +55,20 @@ class GraphAnalyzer(object):
 
     @property
     def graph(self):
+        """Getter of the _graph object 
+
+        Returns:
+            graph: current graphdef object
+        """
         return self._graph
 
     @graph.setter
     def graph(self, new_graph):
+        """Update the internal graph value.
+
+        Args:
+            new_graph (graphdef object): new model object
+        """
         self._graph = new_graph
 
     def _has_positive_input(self, start_node):
@@ -95,6 +105,13 @@ class GraphAnalyzer(object):
         return self._has_positive_input(self.node_name_details[node_name].node)
 
     def get_graph_input_output(self):
+        """Get the graphdef input/output node names. Sometimes, the configuration doesn't
+            specifies the input/output names of the graph, but tensorflow need to know them
+            clearly to run the graph.We implement this function has the similar feature like 
+            summarize_graph.py which writtern by Google.
+        Returns:
+            tuple: (inputs' name list, outputs'name list)
+        """
         input_node_names = []
         output_node_names = []
         unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save', \
@@ -382,6 +399,16 @@ class GraphAnalyzer(object):
 
     def replace_single_node(self, new_node, old_output_node_names, old_output_name,
                             old_input_node_names, old_input_name):
+        """Insert one node into the graph.
+        Args:
+            new_node (nodedef): new nodedef object
+            old_output_node_names (string list):the node names that would be the top node of new
+                                                node.
+            old_output_name (string list): the names that need to be updated with new node name 
+            old_input_node_names (string list): the node names that would be the bottom node of new
+                                                node.
+            old_input_name (string list): the names that need to be updated with new node name
+        """
         new_node_name = new_node.name
         for i in old_output_node_names:
             while old_output_name in self.node_name_details[i].outputs:
@@ -559,6 +586,16 @@ class GraphRewriterHelper(object):
 
     @staticmethod
     def create_node(op, name, inputs):
+        """Create a nodedef object
+
+        Args:
+            op (string): op type
+            name (string): op name
+            inputs (string list): op's inputs name
+
+        Returns:
+            nodedef: the created nodedef object
+        """
         new_node = node_def_pb2.NodeDef()
         new_node.op = op
         new_node.name = name
@@ -568,6 +605,19 @@ class GraphRewriterHelper(object):
 
     @staticmethod
     def create_constant_node(name, value, dtype, shape=None, device='cpu'):
+        """create constant node.
+
+        Args:
+            name (string): op name
+            value (np.array): input data
+            dtype (datatype): data type of the input value
+            shape (int list, optional): the value's shape. Defaults to None.
+            device (str, optional): the device type, it may be the 'cpu' or 'gpu'.
+                                    Defaults to 'cpu'.
+
+        Returns:
+            [type]: [description]
+        """
         node = GraphRewriterHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
                                                  [])
         GraphRewriterHelper.set_attr_dtype(node, "dtype", dtype)
@@ -576,42 +626,72 @@ class GraphRewriterHelper(object):
 
     @staticmethod
     def copy_attr(node, key, attr_value):
+        """Copy the specified attr value to node.
+
+        Args:
+            node (nodedef): a nodedef object
+            key (string): string name
+            attr_value (any): the specified attribute value
+        """
         node.attr[key].CopyFrom(attr_value)
 
     @staticmethod
     def set_attr_dtype(node, key, value):
+        """Set the attribute data type
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(type=value.as_datatype_enum))
 
     @staticmethod
     def set_attr_shape(node, key, value):
+        """Set the attribute data type
+        """
         node.attr[key].CopyFrom(
             attr_value_pb2.AttrValue(shape=tensor_shape.as_shape(value).as_proto()))
 
     @staticmethod
     def set_attr_tensor(node, key, value, dtype, shape=None):
+        """Set the tensor value to specified attribute field.
+
+        Args:
+            node (nodedef): the target nodedef object
+            key (string): attribute name
+            value (np.array): the content
+            dtype (dtypes): data type
+            shape (int list, optional): the input tensor's shape. Defaults to None.
+        """
         node.attr[key].CopyFrom(
             attr_value_pb2.AttrValue(
                 tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
 
     @staticmethod
     def set_attr_string(node, key, value):
+        """Set the node's attr which data type is string.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(s=value))
 
     @staticmethod
     def set_attr_int_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
         list_value = attr_value_pb2.AttrValue.ListValue(i=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
 
     @staticmethod
     def set_attr_bool(node, key, value):
+        """Set the node's attr which data type is bool.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(b=value))
 
     @staticmethod
     def set_attr_int(node, key, value):
+        """Set the node's attr which data type is int.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
 
     @staticmethod
     def set_attr_float(node, key, value):
+        """Set the node's attr which data type is float.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
 
     @staticmethod
@@ -629,6 +709,14 @@ class GraphRewriterHelper(object):
 
     @staticmethod
     def node_name_from_input(node_name):
+        """Static method that get the valid node name from input name.
+
+        Args:
+            node_name (string): node name defined in the input field.
+
+        Returns:
+            string: node's name
+        """
         if node_name not in GraphRewriterHelper.node_name_cache:
             key = node_name
             if node_name.startswith("^"):
@@ -643,6 +731,8 @@ class GraphRewriterHelper(object):
 
     @staticmethod
     def unique_node_name_from_input(node_name):
+        """Get the node name from other node name's input field.
+        """
         return node_name.replace(":", "__port__").replace("^", "__hat__")
 
     @staticmethod

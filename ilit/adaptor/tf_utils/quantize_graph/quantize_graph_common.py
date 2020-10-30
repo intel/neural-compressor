@@ -55,6 +55,16 @@ class QuantizeGraphHelper(object):
             self._recursive_graph_sorting(output_name)
 
     def get_sorted_graph(self, input_graph, input_node_names, output_node_names):
+        """Return a sorted graphdef object.Sometimes the input graphdef was composed of
+        the randome nodedef objects, we reorder the graph to make the parsing more easier.
+        Args:
+            input_graph (graphdef]): the input graphdef object
+            input_node_names (string list): the input node names
+            output_node_names (string list): the output node names
+
+        Returns:
+            [type]: [description]
+        """
         self.node_name_mapping = {}
         self.op_list = [input_node_name for input_node_name in input_node_names]
         for node in input_graph.node:
@@ -176,6 +186,16 @@ class QuantizeGraphHelper(object):
 
     @staticmethod
     def create_node(op, name, inputs):
+        """Create a nodedef object
+
+        Args:
+            op (string): op type
+            name (string): op name
+            inputs (string list): op's inputs name
+
+        Returns:
+            nodedef: the created nodedef object
+        """
         new_node = node_def_pb2.NodeDef()
         new_node.op = op
         new_node.name = name
@@ -185,56 +205,105 @@ class QuantizeGraphHelper(object):
 
     @staticmethod
     def create_constant_node(name, value, dtype, shape=None, device='cpu'):
-        node = QuantizeGraphHelper.create_node(
-            "Const" if device == 'cpu' else "HostConst", name, [])
+        """create constant node.
+
+        Args:
+            name (string): op name
+            value (np.array): input data
+            dtype (datatype): data type of the input value
+            shape (int list, optional): the value's shape. Defaults to None.
+            device (str, optional): the device type, it may be the 'cpu' or 'gpu'.
+                                    Defaults to 'cpu'.
+
+        Returns:
+            [type]: [description]
+        """
+        node = QuantizeGraphHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
+                                                 [])
         QuantizeGraphHelper.set_attr_dtype(node, "dtype", dtype)
         QuantizeGraphHelper.set_attr_tensor(node, "value", value, dtype, shape)
         return node
 
     @staticmethod
     def copy_attr(node, key, attr_value):
+        """Copy the specified attr value to node.
+
+        Args:
+            node (nodedef): a nodedef object
+            key (string): string name
+            attr_value (any): the specified attribute value
+        """
         node.attr[key].CopyFrom(attr_value)
 
     @staticmethod
     def set_attr_dtype(node, key, value):
-        node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(type=value.as_datatype_enum))
+        """Set the attribute data type
+        """
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(type=value.as_datatype_enum))
 
     @staticmethod
     def set_attr_shape(node, key, value):
+        """Set the attribute data type
+        """
         node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(
-                shape=tensor_shape.as_shape(value).as_proto()))
+            attr_value_pb2.AttrValue(shape=tensor_shape.as_shape(value).as_proto()))
 
     @staticmethod
     def set_attr_tensor(node, key, value, dtype, shape=None):
+        """Set the tensor value to specified attribute field.
+
+        Args:
+            node (nodedef): the target nodedef object
+            key (string): attribute name
+            value (np.array): the content
+            dtype (dtypes): data type
+            shape (int list, optional): the input tensor's shape. Defaults to None.
+        """
         node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                value, dtype=dtype, shape=shape)))
+            attr_value_pb2.AttrValue(
+                tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
 
     @staticmethod
     def set_attr_string(node, key, value):
+        """Set the node's attr which data type is string.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(s=value))
 
     @staticmethod
     def set_attr_int_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
         list_value = attr_value_pb2.AttrValue.ListValue(i=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
 
     @staticmethod
     def set_attr_bool(node, key, value):
+        """Set the node's attr which data type is bool.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(b=value))
 
     @staticmethod
     def set_attr_int(node, key, value):
+        """Set the node's attr which data type is int.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
 
     @staticmethod
     def set_attr_float(node, key, value):
+        """Set the node's attr which data type is float.
+        """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
 
     @staticmethod
     def node_name_from_input(node_name):
+        """Static method that get the valid node name from input name.
+
+        Args:
+            node_name (string): node name defined in the input field.
+
+        Returns:
+            string: node's name
+        """
         if node_name not in QuantizeGraphHelper.node_name_cache:
             key = node_name
             if node_name.startswith("^"):
@@ -249,6 +318,8 @@ class QuantizeGraphHelper(object):
 
     @staticmethod
     def unique_node_name_from_input(node_name):
+        """Get the node name from other node name's input field.
+        """
         return node_name.replace(":", "__port__").replace("^", "__hat__")
 
     @staticmethod
