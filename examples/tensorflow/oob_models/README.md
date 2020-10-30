@@ -4,16 +4,15 @@ Step-by-Step
 This document is used to list steps of reproducing Intel Optimized TensorFlow OOB models tuning zoo result.
 
 > **Note**: 
-> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. We use 1.15.2 as an example.
+> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. We use 2.2.0 as an example.
 
 # Prerequisite
 
 ## 1. Installation
   Recommend python 3.6 or higher version.
 
-  ```Shell
-  pip install -r requirements.txt
-  
+  ```bash
+  pip install intel-tensorflow==2.2.0
   ```
 
 ## 2. Prepare Dataset
@@ -60,9 +59,6 @@ List models names can get with open_model_zoo:
 
 |	Model name	|	URL	|
 |	--------------------------------	|	--------------------------------	|
-|	faster_rcnn_resnet101_ava_v2.1	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_ava_v2.1_2018_04_30.tar.gz	|
-|	faster_rcnn_resnet101_kitti	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_kitti_2018_01_28.tar.gz	|
-|	faster_rcnn_resnet101_lowproposals_coco	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_lowproposals_coco_2018_01_28.tar.gz	|
 |	faster_rcnn_resnet101_ava_v2.1	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_ava_v2.1_2018_04_30.tar.gz	|
 |	faster_rcnn_resnet101_kitti	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_kitti_2018_01_28.tar.gz	|
 |	faster_rcnn_resnet101_lowproposals_coco	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_lowproposals_coco_2018_01_28.tar.gz	|
