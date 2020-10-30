@@ -34,36 +34,46 @@ logger.debug(REDUCE_RANGE)
 
 
 def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
-    '''tune_cfg should be a format like below:
-      {
-        'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
-                 'fp32': [['CONV2D', 'RELU', 'BN']]},
-        'calib_iteration': 10,
-        'op': {
-           ('op1', 'CONV2D'): {
-             'activation':  {'dtype': 'uint8',
-                             'algorithm': 'minmax',
-                             'scheme':'sym',
-                             'granularity': 'per_tensor'},
-             'weight': {'dtype': 'int8',
-                        'algorithm': 'kl',
-                        'scheme':'asym',
-                        'granularity': 'per_channel'}
-           },
-           ('op2', 'RELU): {
-             'activation': {'dtype': 'int8',
-             'scheme': 'asym',
-             'granularity': 'per_tensor',
-             'algorithm': 'minmax'}
-           },
-           ('op3', 'CONV2D'): {
-             'activation':  {'dtype': 'fp32'},
-             'weight': {'dtype': 'fp32'}
-           },
-           ...
+    """Convert tune configure to quantization config for each op.
+
+        Args:
+            tune_cfg (dict): dictionary of tune configure for each op
+            is_insert_fakequant (bool, optional): specify if the module to insert is
+                                                  fake quantization module.
+
+        Returns:
+            op_qcfgs (dict): dictionary of quantization configure for each op
+
+        tune_cfg should be a format like below:
+        {
+          'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
+                   'fp32': [['CONV2D', 'RELU', 'BN']]},
+          'calib_iteration': 10,
+          'op': {
+             ('op1', 'CONV2D'): {
+               'activation':  {'dtype': 'uint8',
+                               'algorithm': 'minmax',
+                               'scheme':'sym',
+                               'granularity': 'per_tensor'},
+               'weight': {'dtype': 'int8',
+                          'algorithm': 'kl',
+                          'scheme':'asym',
+                          'granularity': 'per_channel'}
+             },
+             ('op2', 'RELU): {
+               'activation': {'dtype': 'int8',
+               'scheme': 'asym',
+               'granularity': 'per_tensor',
+               'algorithm': 'minmax'}
+             },
+             ('op3', 'CONV2D'): {
+               'activation':  {'dtype': 'fp32'},
+               'weight': {'dtype': 'fp32'}
+             },
+             ...
+          }
         }
-      }
-    '''
+    """
     op_qcfgs = OrderedDict()
     for key in tune_cfg['op']:
         value = tune_cfg['op'][key]
@@ -108,6 +118,20 @@ def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
 
 
 def _observer(algorithm, scheme, granularity, dtype):
+    """Construct an observer module, In forward, observer will update the statistics of
+       the observed Tensor. And they should provide a `calculate_qparams` function
+       that computes the quantization parameters given the collected statistics.
+
+    Args:
+        algorithm (string): What algorithm for computing the quantization parameters based on.
+        scheme (string): Quantization scheme to be used.
+        granularity (string): What granularity to computing the quantization parameters,
+                              per channel or per tensor.
+        dtype (string): Quantized data type
+
+    Returns:
+        oberser (object)
+    """
     if algorithm == 'minmax':
         if granularity == 'per_channel':
             observer = torch.quantization.PerChannelMinMaxObserver
@@ -150,7 +174,23 @@ def _observer(algorithm, scheme, granularity, dtype):
     return observer.with_args(qscheme=qscheme, dtype=dtype,
                               reduce_range=(REDUCE_RANGE and scheme == 'asym'))
 
+
 def _fake_quantize(algorithm, scheme, granularity, dtype):
+    """Construct a fake quantize module, In forward, fake quantize module will update
+       the statistics of the observed Tensor and fake quantize the input.
+       They should also provide a `calculate_qparams` function
+       that computes the quantization parameters given the collected statistics.
+
+    Args:
+        algorithm (string): What algorithm for computing the quantization parameters based on.
+        scheme (string): Quantization scheme to be used.
+        granularity (string): What granularity to computing the quantization parameters,
+                              per channel or per tensor.
+        dtype (sting): Quantized data type
+
+    Return:
+        fake quantization (object)
+    """
     fake_quant = torch.quantization.FakeQuantize
     if algorithm == 'minmax':
         if granularity == 'per_channel':
@@ -201,6 +241,18 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
 
 
 def _propagate_qconfig(model, op_qcfgs):
+    """Propagate qconfig through the module hierarchy and assign `qconfig`
+       attribute on each leaf module
+
+    Args:
+        model (object): input model
+        op_qcfgs (dict): dictionary that maps from name or type of submodule to
+                         quantization configuration, qconfig applies to all submodules of a
+                         given module unless qconfig for the submodules are specified (when
+                         the submodule already has qconfig attribute)
+    Return:
+        None, module is modified inplace with qconfig attached
+    """
     fallback_ops = []
     WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
         - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
@@ -224,6 +276,19 @@ def _propagate_qconfig(model, op_qcfgs):
 
 
 def _propagate_qconfig_recursively(model, prefix, op_qcfg, white_list, qconfig_parent=None):
+    """This is a helper function for `propagate_qconfig`
+
+    Args:
+        model (object): input model
+        prefix (string): prefix of op name
+        op_qcfg (dict): dictionary that maps from name or type of submodule to
+                        quantization configuration
+        white_list (list): list of quantizable op types in pytorch
+        qconfig_parent (object, optional): qconfig of parent module
+
+    Returns:
+        None
+    """
     for name, child in model.named_children():
         model_qconfig = qconfig_parent
         op_name = prefix + name
@@ -237,6 +302,16 @@ def _propagate_qconfig_recursively(model, prefix, op_qcfg, white_list, qconfig_p
 
 
 def _find_quantized_op_num(model, white_list, op_count=0):
+    """This is a helper function for `_fallback_quantizable_ops_recursively`
+
+    Args:
+        model (object): input model
+        white_list (list): list of quantizable op types in pytorch
+        op_count (int, optional): count the quantizable op quantity in this module
+
+    Returns:
+        the quantizable op quantity in this module
+    """
     quantize_op_num = op_count
     for name_tmp, child_tmp in model.named_children():
         if type(child_tmp) in white_list \
@@ -250,17 +325,27 @@ def _find_quantized_op_num(model, white_list, op_count=0):
 
 
 def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
-    class DequantQuantWrapper(torch.nn.Module):
-        r"""A wrapper class that wraps the input module, adds DeQuantStub and
-        surround the call to module with call to dequant.
-        this is used by fallback layer when the data type of quantized op
-        is  input:int8/output:int8.
+    """Handle all fallback ops(fp32 ops)
 
-        This is used by the fallback utility functions to add the dequant and
-        quant modules, before `convert` function `QuantStub` will just be observer,
-        it observes the input tensor, after `convert`, `QuantStub`
-        will be swapped to `nnq.Quantize` which does actual quantization. Similarly
-        for `DeQuantStub`.
+    Args:
+        model (object): input model
+        prefix (string): the prefix of op name
+        fallback_ops (list): list of fallback ops(fp32 ops)
+
+    Returns:
+        None
+    """
+    class DequantQuantWrapper(torch.nn.Module):
+        """A wrapper class that wraps the input module, adds DeQuantStub and
+           surround the call to module with call to dequant.
+           this is used by fallback layer when the data type of quantized op
+           is  input:int8/output:int8.
+
+           This is used by the fallback utility functions to add the dequant and
+           quant modules, before `convert` function `QuantStub` will just be observer,
+           it observes the input tensor, after `convert`, `QuantStub`
+           will be swapped to `nnq.Quantize` which does actual quantization. Similarly
+           for `DeQuantStub`.
         """
 
         def __init__(self, module, observer=None):
@@ -348,10 +433,16 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
 
 @adaptor_registry
 class PyTorchAdaptor(Adaptor):
+    """Adaptor of PyTorch framework, all PyTorch API is in this class.
+
+    Args:
+        framework_specific_info (dict): dictionary of tuning configure from yaml file.
+    """
     def __init__(self, framework_specific_info):
         super(PyTorchAdaptor, self).__init__(framework_specific_info)
         """
-        # Map for swapping float module to quantized ones
+        # Map for swapping float module to quantized ones,
+        # and this dictionary will change with different PoTorch versions
         DEFAULT_MODULE_MAPPING = {
             nn.Linear: nnq.Linear,
             nn.ReLU: nnq.ReLU,
@@ -390,7 +481,7 @@ class PyTorchAdaptor(Adaptor):
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
             - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
-        # for tensorboard         
+        # for tensorboard
         self.dump_times = 0
         self.fused_op = ['nni.ConvReLU1d', 
                          'nni.ConvReLU2d', 
@@ -457,7 +548,7 @@ class PyTorchAdaptor(Adaptor):
             tune_cfg (dict): quantization config.
             model (object): model need to do quantization.
             dataloader (object): calibration dataset.
-            q_func (optional): training function for quantization aware training mode.
+            q_func (objext, optional): training function for quantization aware training mode.
 
         Returns:
             (dict): quantized model
@@ -517,8 +608,18 @@ class PyTorchAdaptor(Adaptor):
 
         return q_model
 
-    def evaluate(self, model, dataloader, postprocess=None, \
+    def evaluate(self, model, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1, tensorboard=False):
+        """Execute the evaluate process on the specified model.
+
+        Args:
+            model (object): model to run evaluation.
+            dataloader (object): calibration dataset.
+            q_func (object, optional): training function for quantization aware training mode.
+
+        Returns:
+            (dict): quantized model
+        """
         assert isinstance(
             model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model.eval()
@@ -583,8 +684,18 @@ class PyTorchAdaptor(Adaptor):
                 break
         return acc
 
-
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            quantizable_ops (list): list of quantizable ops from model include op name and type.
+
+        Returns:
+            None
+        """
         for name, child in model.named_children():
             op_name = prefix + name
             if type(child) in self.white_list:
@@ -594,9 +705,25 @@ class PyTorchAdaptor(Adaptor):
                     child, op_name + '.', quantizable_ops)
 
     def query_fused_patterns(self, model):
+        """This is a helper function.
+
+        Args:
+            model (object): input model
+
+        Returns:
+            None
+        """
         pass
 
     def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
         quantizable_ops = []
         self._get_quantizable_ops_recursively(model, '', quantizable_ops)
 
@@ -613,20 +740,25 @@ class PyTorchAdaptor(Adaptor):
         pass
 
     def _pre_eval_hook(self, model):
-        '''The function is used to do some preprocession before evaluation phase.
+        """The function is used to do some preprocession before evaluation phase.
+           Here, it used to add hook for dump output tensor for quantizable ops.
 
-        Return:
-              model
-        '''
+        Args:
+             model (object): input model
+
+        Returns:
+              model (object): model with hook
+        """
         from abc import ABCMeta
 
         ABC = ABCMeta(str("ABC"), (object, ),
                       {})  # compatible with Python 2 *and* 3:
 
         class _RecordingObserver(ABC, torch.nn.Module):
-            r"""
-            The module is mainly for debug and records the tensor values during runtime.
+            """The module is mainly for debug and records the tensor values during runtime.
 
+            Args:
+                iteration_list (list, optional): indexs of iteration which to dump tensor.
             """
 
             def __init__(self, iteration_list=None, **kwargs):
@@ -655,21 +787,31 @@ class PyTorchAdaptor(Adaptor):
                 return self.output_tensors_dict
 
         def _observer_forward_hook(module, input, output):
-            r"""Forward hook that calls observer on the output
+            """Forward hook that calls observer on the output
+
+            Args:
+                module (object): input module
+                input (object): module input
+                output (object): module output
+
+            Returns:
+                module output tensor (object)
             """
             return module.activation_post_process(output)
 
         def _add_observer_(module, op_list=None, prefix=""):
-            r"""Add observer for the leaf child of the module.
+            """Add observer for the leaf child of the module.
 
-            This function insert observer module to all leaf child module that
-            has a valid qconfig attribute.
+               This function insert observer module to all leaf child module that
+               has a valid qconfig attribute.
 
             Args:
-                module: input module with qconfig attributes for all the leaf modules that
-                we want to dump tensor
+                module (object): input module with qconfig attributes for all the leaf modules that
+                                 we want to dump tensor
+                op_list (list, optional): list of ops which to be dumped in module
+                prefix (string): name of module
 
-            Return:
+            Returns:
                 None, module is modified inplace with added observer modules and forward_hooks
             """
             for name, child in module.named_children():
@@ -694,14 +836,22 @@ class PyTorchAdaptor(Adaptor):
                 module.register_forward_hook(_observer_forward_hook)
 
         def is_fused_module(module):
+            """This is a helper function for `_propagate_qconfig_helper` to detecte
+               if this module is fused.
+
+            Args:
+                module (object): input module
+
+            Returns:
+                (bool): is fused or not
+            """
             op_type = str(type(module))
-            op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'') 
+            op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
             op_type = 'nni.' + op_type
             if op_type in self.fused_op:
                 return True
             else:
                 return False
-
 
         def _propagate_qconfig_helper(module,
                                       qconfig_dict,
@@ -709,18 +859,19 @@ class PyTorchAdaptor(Adaptor):
                                       qconfig_parent=None,
                                       prefix='',
                                       fused=False):
-            r"""This is a helper function for `propagate_qconfig_`
+            """This is a helper function for `propagate_qconfig_`
 
             Args:
-                module: input module
-                qconfig_dict: dictionary that maps from name of submodule to quantization
-                             configuration
-                white_list: list of quantizable modules
-                qconfig_parent: config of parent module, we will fallback to
-                               this config when there is no specified config for current
-                               module
-                prefix: corresponding prefix of the current module, used as key in
-                        qconfig_dict
+                module (object): input module
+                qconfig_dict (dictionary): dictionary that maps from name of submodule to
+                                           quantization configuration
+                white_list (list, optional): list of quantizable modules
+                qconfig_parent (object, optional): config of parent module, we will fallback to
+                                                   this config when there is no specified config
+                                                   for current module
+                prefix (string, optional): corresponding prefix of the current module,
+                                           used as key in qconfig_dict
+                fused (bool, optional): Indicates whether the module is fused or not
 
             Return:
                 None, module is modified inplace with qconfig attached
@@ -751,13 +902,18 @@ class PyTorchAdaptor(Adaptor):
                                           module_qconfig, module_prefix, fused=_fused)
 
         def _prepare(model, inplace=True, op_list=[], white_list=None):
-            r"""
-            The model will be attached with observer or fake quant modules, and qconfig
-            will be propagated.
+            """The model will be attached with observer or fake quant modules, and qconfig
+               will be propagated.
 
             Args:
-                model: input model to be modified in-place
-                inplace: carry out model transformations in-place, the original module is mutated
+                model (object): input model to be modified in-place
+                inplace (bool, optional): carry out model transformations in-place,
+                                          the original module is mutated
+                op_list (list, optional): list of ops which to be dumped in module
+                white_list (list, optional): list of quantizable modules
+
+            Returns:
+                model (object): model with qconfig
             """
             if not inplace:
                 model = copy.deepcopy(model)
@@ -794,6 +950,15 @@ class PyTorchAdaptor(Adaptor):
         return model
 
     def is_fused_child(self, op_name):
+        """This is a helper function for `_post_eval_hook`
+
+        Args:
+            op_name (string): op name
+
+        Returns:
+            (bool): if this op is fused
+
+        """
         op = op_name[:op_name.rfind('.')]
         if op in self.fused_dict and op_name[op_name.rfind('.')+1:].isdigit():
            return True
@@ -801,6 +966,15 @@ class PyTorchAdaptor(Adaptor):
            return False
 
     def is_fused_op(self, op_name):
+        """This is a helper function for `_post_eval_hook`
+
+        Args:
+            op_name (string): op name
+
+        Returns:
+            (bool): if this op is fused
+
+        """
         op = op_name[:op_name.rfind('.')]
         if op in self.fused_dict:
            return True
@@ -808,6 +982,15 @@ class PyTorchAdaptor(Adaptor):
            return False
 
     def is_last_fused_child(self, op_name):
+        """This is a helper function for `_post_eval_hook`
+
+        Args:
+            op_name (string): op name
+
+        Returns:
+            (bool): if this op is last fused op
+
+        """
         op = op_name[:op_name.rfind('.')]
         if op_name in self.fused_dict[op][-1]:
            return True
@@ -815,8 +998,15 @@ class PyTorchAdaptor(Adaptor):
            return False
 
     def _post_eval_hook(self, model, **args):
-        '''The function is used to do some post process after complete evaluation.
-        '''
+        """The function is used to do some post process after complete evaluation.
+           Here, it used to dump quantizable op's output tensor.
+
+        Args:
+            model (object): input model
+
+        Returns:
+            None
+        """
         from torch.utils.tensorboard import SummaryWriter
         from torch.quantization import get_observer_dict
 
@@ -897,47 +1087,47 @@ class PyTorchAdaptor(Adaptor):
         return summary
 
     def get_all_weight_names(self, model):
-        """ get all  model weights names
+        """Get weight names
 
         Args:
-            model (torch.nn.module):   current model instance
+            model (object): input model
 
         Returns:
-            names (list(str)):         all weights names
-        """
+            names (list): list of weight names
 
+        """
         names = []
         for name, param in model.named_parameters():
             names.append(name)
         return names
 
     def get_weight(self, model, tensor_name):
-        """ get model weights
+        """Get weight value
 
         Args:
-            model (torch.nn.module):   current model instance
-            tensor_name (str):         weight names
+            model (object): input model
+            tensor_name (string): weight name
 
         Returns:
-            weights (numpy.array):     related weights
-        """
+            (object): weight tensor
 
+        """
         for name, param in model.named_parameters():
             if tensor_name == name:
                 return param.data
 
     def update_weights(self, model, tensor_name, new_tensor):
-        """ update model weights
+        """Update weight value
 
         Args:
-            model (torch.nn.module):   current model instance
-            tensor_name (str):         weight names
-            new_tensor (numpy.array):  weight data
+            model (object): input model
+            tensor_name (string): weight name
+            new_tensor (ndarray): weight value
 
         Returns:
-            model (torch.nn.module):   updated model instance
-        """
+            model (object): model with new weight
 
+        """
         new_tensor = torch.Tensor(new_tensor)
         for name, param in model.named_parameters():
             if name == tensor_name:
@@ -945,17 +1135,16 @@ class PyTorchAdaptor(Adaptor):
         return model
 
     def report_sparsity(self, model):
-        """ report sparsity of the model
+        """Get sparsity of the model
 
         Args:
-            model (torch.nn.module):    current model instance
+            model (object): input model
 
-        Return:
-            df (pandas.DataFrame):      layer by layer sparsity report
-            total_sparsity (float):     total model sparsity
+        Returns:
+            df (DataFrame): DataFrame of sparsity of each weight
+            total_sparsity (float): total sparsity of model
 
         """
-
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])
         pd.set_option('precision', 2)
@@ -995,12 +1184,15 @@ class PyTorchAdaptor(Adaptor):
         return df, total_sparsity
 
     def save(self, model, path):
-        '''The function is used by tune strategy class for saving model.
+        """The function is used by tune strategy class for saving model.
 
            Args:
                model (object): The model to saved.
                path (string): The path where to save.
-        '''
+
+        Returns:
+            None
+        """
 
         path = os.path.expanduser(path)
         os.makedirs(path, exist_ok=True)
