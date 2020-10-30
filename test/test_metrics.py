@@ -8,15 +8,6 @@ class TestMetrics(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_tensorflow_accuracy(self):
-        metrics = METRICS('tensorflow')
-        acc = metrics['Accuracy']()
-        predicts = [1, 0, 1, 1]
-        labels = [0, 1, 1, 1]
-        acc.update(predicts, labels)
-        acc_result = acc.result()
-        self.assertEqual(acc_result, 0.5)
-
     def test_tensorflow_topk(self):
         metrics = METRICS('tensorflow')
         top1 = metrics['topk']()
