@@ -112,29 +112,87 @@ tuning:
    c. If user choose the first use case, that is using Intel® Low Precision Optimization Tool build-in metrics. User need ensure metric built in Intel® Low Precision Optimization Tool could take output of model and label of eval_dataloader as input.
 
 
-# Features
-| Features | Link |
-| ------ | ------ |
-| Unified dataloader and metric |  [dataloader_metric.md](./dataloader_metric.md)|
-| QAT for PyTorch (Experimental) | [qat_calibration_mode.md](./qat_calibration_mode.md)| 
-| BF16 of TensorFlow | [bf16_convert.md](./bf16_convert.md)| 
+# Model Zoo
 
- # Examples
-| Examples Tutorials |
-| ------ | 
-|[Hello World examples for quick start](../examples/helloworld/README.md)| 
-|[PyTorch imagenet recognition/imagenet](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)| 
-|[PyTorch imagenet recognition/peleenet](../examples/pytorch/image_recognition/peleenet/README.md)|
-|[PyTorch imagenet recognition/resnest50](../examples/pytorch/image_recognition/resnest/README.md)|
-|[PyTorch imagenet recognition/se_resnext50](../examples/pytorch/image_recognition/se_resnext/README.md)|
-|[PyTorch language translation](../examples/pytorch/language_translation/README.md)| 
-|[PyTorch object detection](../examples/pytorch/object_detection/yolo_v3/README.md)|
-|[PyTorch recommendation](../examples/pytorch/recommendation/README.md)| 
-|[TensorFlow Image Recognition](../examples/tensorflow/image_recognition/README.md)|
-|[TensorFlow object detection](../examples/tensorflow/object_detection/README.md)|
-|[TensorFlow recommendation](../examples/tensorflow/recommendation/wide_deep_large_ds/WND_README.md)|
-|[TensorFlow style_transfer](../examples/tensorflow/style_transfer/README.md)|
-|[MxNet Image Recognition](../examples/mxnet/image_recognition/README.md)|
-|[Mxnet language translation](../examples/mxnet/language_translation/README.md)|
-|[MxNet object detection](../examples/mxnet/object_detection/README.md)|
-
+|tensorflow|[	resnet50v1.0  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	resnet50v1.5  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	resnet101  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	inception_v1  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	inception_v2  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	inception_v3  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	inception_v4  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	inception_resnet_v2  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	mobilenetv1  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	ssd_resnet50_v1  ](../examples/tensorflow/object_detection/README.md)|
+|tensorflow|[	mask_rcnn_inception_v2  ](../examples/tensorflow/object_detection/README.md)|
+|tensorflow|[	wide_deep_large_ds  ](../examples/tensorflow/recommendation/wide_deep_large_ds/WND_README.md)|
+|tensorflow|[	vgg16  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	vgg19  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	resnetv2_50  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	resnetv2_101  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	resnetv2_152  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	densenet121  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	densenet161  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	densenet169  ](../examples/tensorflow/image_recognition/README.md)|
+|tensorflow|[	style_transfer  ](../examples/tensorflow/style_transfer/README.md)|
+|tensorflow|[	retinanet  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	googlenet-v3  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_resnet101_kitti  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_resnet101_ava_v2.1  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_resnet101_coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	vgg19-oob  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_resnet101_lowproposals_coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_resnet50_coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	vgg16-oob  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_resnet50_lowproposals_coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	rfcn-resnet101-coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	openpose-pose  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	googlenet-v1  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	resnet-50  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	googlenet-v2  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	ssd-resnet34_300x300  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	ssd_resnet50_v1_fpn_coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	RetinaNet50  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	googlenet-v4  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	faster_rcnn_inception_v2_coco  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	yolo-v2-ava-sparse-35-0001  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	yolo-v2-ava-sparse-70-0001  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	resnet-152  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	resnet-v2-152  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	resnet-101  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	person-vehicle-bike-detection-crossroad-yolov3-1020  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	squeezenet-1.1  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	yolo-v3  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	resnet-v2-101  ](../examples/tensorflow/oob_models/README.md)|
+|tensorflow|[	darknet53  ](../examples/tensorflow/oob_models/README.md)|
+|pytorch|[	resnet18  ](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)|
+|pytorch|[	resnet50  ](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)|
+|pytorch|[	resnext101_32x8d  ](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)|
+|pytorch|[	bert_base_MRPC  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_base_CoLA  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_base_STS-B  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_base_SST-2  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_base_RTE  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_large_MRPC  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_large_SQuAD  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_large_QNLI  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_large_RTE  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	bert_large_CoLA  ](../examples/pytorch/language_translation/README.md)|
+|pytorch|[	dlrm  ](../examples/pytorch/recommendation/README.md)|
+|pytorch|[	resnet18_qat  ](../examples/pytorch/image_recognition/imagenet/cpu/qat/README.md)|
+|pytorch|[	resnet50_qat  ](../examples/pytorch/image_recognition/imagenet/cpu/qat/README.md)|
+|pytorch|[	inception_v3  ](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)|
+|pytorch|[	peleenet  ](../examples/pytorch/image_recognition/peleenet/PeleeNet_README.md)|
+|pytorch|[	yolo_v3  ](../examples/pytorch/object_detection/yolo_v3/README.md)|
+|pytorch|[	se_resnext50_32x4d  ](../examples/pytorch/image_recognition/se_resnext/README.md)|
+|pytorch|[	mobilenet_v2  ](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)|
+|pytorch|[	resnest50  ](../examples/pytorch/image_recognition/resnest/README.md)|
+|mxnet|[	resnet50v1  ](../examples/mxnet/image_recognition/README.md)|
+|mxnet|[	inceptionv3  ](../examples/mxnet/image_recognition/README.md)|
+|mxnet|[	mobilenet1.0  ](../examples/mxnet/image_recognition/README.md)|
+|mxnet|[	mobilenetv2_1.0  ](../examples/mxnet/image_recognition/README.md)|
+|mxnet|[	resnet18_v1  ](../examples/mxnet/image_recognition/README.md)|
+|mxnet|[	squeezenet1.0  ](../examples/mxnet/language_translation/README.md)|
+|mxnet|[	ssd-resnet50_v1  ](../examples/mxnet/object_detection/README.md)|
+|mxnet|[	ssd-mobilenet1.0  ](../examples/mxnet/object_detection/README.md)|
+|mxnet|[	resnet152_v1  ](../examples/mxnet/image_recognition/README.md)|
