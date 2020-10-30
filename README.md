@@ -8,17 +8,22 @@ Intel® Low Precision Optimization Tool is an open-source python library which i
 >
 > GPU support is under development.
 
-Currently supported Intel optimized DL frameworks are:
+Supported Intel optimized DL frameworks are:
 * [Tensorflow\*](https://www.tensorflow.org)
 * [PyTorch\*](https://pytorch.org/)
 * [Apache\* MXNet](https://mxnet.apache.org)
 
-Currently supported tuning strategies are:
+Supported tuning strategies are:
 * [Basic](docs/introduction.md#basic-strategy)
 * [Bayesian](docs/introduction.md#bayesian-strategy)
 * [MSE](docs/introduction.md#mse-strategy)
 * [Exhaustive](docs/introduction.md#exhaustive-strategy)
 * [Random](docs/introduction.md#random-strategy)
+* [TPE](docs/tuning_strategy.md#TPE-strategy)
+
+Mixed precision support:
+* [int8](docs/mixed_precision.md#int8)
+* [BFP16](docs/mixed_precision.md#BFP16)
 
 
 # Introduction 
@@ -27,8 +32,8 @@ Currently supported tuning strategies are:
 
 # Tutorials
 * [Hello World](examples/helloworld/README.md) demonstrates the simple steps to utilize Intel® Low Precision Optimization Tool for quanitzation, which can help you quick start with the tool.
-* [Tutorials](docs/README.md) provides
-comprehensive instructions of how to utilize diffrennt features of Intel® Low Precision Optimization Tool.
+* [Tutorials](docs/README.md) provides comprehensive instructions of how to utilize diffrennt features of Intel® Low Precision Optimization Tool.
+* [Features](docs/index.md) provides the introduction of features such as tuning strategy, QAT, pruning and so on.
 * [Examples](examples) is a tuning zoo to demonstrate the usage of Intel® Low Precision Optimization Tool in TensorFlow, PyTorch and MxNet for industry models of diffrent categories.  
 
 # Install from source 
