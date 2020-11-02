@@ -79,7 +79,7 @@ def create_tf_config():
 
 
 def run_benchmark(model_details, max_reps, num_warmup,
-                  disable_optimize_for_inference, batch_size):
+                  disable_optimize_for_inference, batch_size,timeline_dir):
     tf_config = create_tf_config()
     graph = initialize_graph(model_details, disable_optimize_for_inference)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
@@ -106,17 +106,20 @@ def run_benchmark(model_details, max_reps, num_warmup,
             else:
                 _ = sess.run(output_dict, feed_dict=input_dict)
 
-            if RUN_PROFILING:
-                trace = timeline.Timeline(step_stats=run_metadata.step_stats)
-                with open('timeline_' + str(rep + 1) + '.json', 'w') as trace_file:
-                    trace_file.write(
-                        trace.generate_chrome_trace_format(show_memory=False))
-
             end = time.time()
             delta = end - start
             total_time += delta
             reps_done += 1
-
+            if RUN_PROFILING:
+                if rep==max_reps/2:
+                    trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+                    timeline_name=model_detail['model_path'].split('/')[-1].split('.')[0]
+                    timeline_path=timeline_dir+'/'+timeline_name
+                    if not os.path.exists(timeline_path):
+                        os.makedirs(timeline_path)
+                    with open(timeline_path+ '/' + timeline_name + '_' + str(rep) + '_' + str(os.getpid())+ '.json', 'w') as trace_file:
+                        trace_file.write(
+                            trace.generate_chrome_trace_format(show_memory=False))
         avg_time = total_time / reps_done
         latency = avg_time * 1000
         throughput = 1.0 / avg_time * batch_size
@@ -205,6 +208,8 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action='store_true', help="Do ilit optimize.")
     parser.add_argument("--yaml", type=str, help="config yaml file of iLiT.",
                         default='./config.yaml')
+    parser.add_argument("--timeline", type=str, help="timeline of ilit convert model",
+                        default='./timeline_json')
     parser.add_argument("--topology", type=str, help="topology")
     parser.add_argument("--output_path", help="path of ilit convert model")
 
@@ -292,5 +297,4 @@ if __name__ == "__main__":
         write_graph(q_model.as_graph_def(), args.output_path)
 
     else:
-        run_benchmark(model_detail, num_iter, num_warmup, disable_optimize, batch_size)
-
+        run_benchmark(model_detail, num_iter, num_warmup, disable_optimize, batch_size,args.timeline)
