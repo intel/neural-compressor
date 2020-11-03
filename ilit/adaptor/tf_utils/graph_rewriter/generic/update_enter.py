@@ -18,7 +18,7 @@
 
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, dump_elapsed_time
 
 
 class UpdateEnterOptimizer(GraphRewriterBase):
@@ -34,6 +34,7 @@ class UpdateEnterOptimizer(GraphRewriterBase):
         self.exclude_node_names = []
         self.graph_info = self.graph_analyzer.parse_graph()
 
+    @dump_elapsed_time("Pass UpdateEnterOptimizer")
     def do_transformation(self):
         """ replace all enter ops whose output is matmul with const
 

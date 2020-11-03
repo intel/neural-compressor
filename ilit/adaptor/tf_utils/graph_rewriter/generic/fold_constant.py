@@ -21,7 +21,7 @@ import tensorflow as tf
 
 from tensorflow.python.platform import tf_logging
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer, GraphRewriterHelper
+from ..graph_util import GraphAnalyzer, GraphRewriterHelper, dump_elapsed_time
 
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):
@@ -151,6 +151,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
             constant_flag &= input_node.op == "Const" and not input_node.input
         return constant_flag
 
+    @dump_elapsed_time("Pass GraphFoldConstantOptimizer")
     def do_transformation(self):
         """fold all the sequences only consist of const and self.supported_op_type
 

@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ilit.adaptor.tf_utils.graph_rewriter.graph_util import dump_elapsed_time
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
@@ -79,6 +80,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         else:
             return []
 
+    @dump_elapsed_time("Pass Quantization")
     def do_transform(self):
         for _, node in enumerate(self.input_graph.node):
             if node in self.input_graph.node and node.op in self.transformers.keys(

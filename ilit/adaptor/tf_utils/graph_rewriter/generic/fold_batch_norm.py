@@ -21,7 +21,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, dump_elapsed_time
 from ..graph_util import GraphRewriterHelper as Helper
 
 import numpy as np
@@ -60,6 +60,7 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
             return node.attr["scale_after_normalization"].b
         return True
 
+    @dump_elapsed_time("Pass FoldBatchNormNodesOptimizer")
     def do_transformation(self):
         """Removes batch normalization ops by folding them into convolutions.
 

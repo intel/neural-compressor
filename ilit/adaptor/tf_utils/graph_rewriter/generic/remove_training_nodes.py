@@ -17,7 +17,7 @@
 
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, dump_elapsed_time
 
 
 class RemoveTrainingNodesOptimizer(GraphRewriterBase):
@@ -25,7 +25,8 @@ class RemoveTrainingNodesOptimizer(GraphRewriterBase):
         super().__init__(model)
         self.protected_nodes = protected_nodes
         self.types_to_splice = types_to_splice
-
+    
+    @dump_elapsed_time("Pass RemoveTrainingNodesOptimizer")
     def do_transformation(self):
         graph_handle = GraphAnalyzer()
         graph_handle.graph = self.model

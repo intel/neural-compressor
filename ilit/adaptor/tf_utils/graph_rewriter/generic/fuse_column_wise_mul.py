@@ -21,7 +21,7 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, dump_elapsed_time
 from ..graph_util import GraphRewriterHelper as Helper
 
 
@@ -29,7 +29,7 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
     """Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul
     Mul + Conv2D/DepthwiseConv2dNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul
     """
-
+    @dump_elapsed_time("Pass FuseColumnWiseMulOptimizer")
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model

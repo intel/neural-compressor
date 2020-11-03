@@ -18,7 +18,7 @@
 
 import logging
 from ilit.adaptor.tf_utils.util import get_graph_def
-from ilit.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+from ilit.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer, dump_elapsed_time
 
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer
@@ -54,6 +54,7 @@ class PreOptimization(object):
         """
         return self._excluded_node_names
 
+    @dump_elapsed_time("Pass Pre Optimization")
     def get_optimized_graphdef(self):
         """Executed the non-precision dependant graph optimization.
         The input graph will be optimized with following passes:
@@ -70,27 +71,20 @@ class PreOptimization(object):
         """
         self.logger.debug("Start to pre optimize input model...")
 
-        self.logger.debug("Pre Optimize RemoveTrainingNodesOptimizer is working...")
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self.input_graph, protected_nodes=self.outputs).do_transformation()
 
-        self.logger.debug("Pre Optimize SplitSharedInputOptimizer is working...")
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
-        self.logger.debug("Pre Optimize GraphFoldConstantOptimizer is working...")
         self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
 
-        self.logger.debug("Pre Optimize FuseColumnWiseMulOptimizer is working...")
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
-        self.logger.debug("Pre Optimize StripUnusedNodesOptimizer is working...")
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
                                                         self.outputs).do_transformation()
 
-        self.logger.debug("Pre Optimize GraphCseOptimizer is working...")
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
 
-        self.logger.debug("Pre Optimize FoldBatchNormNodesOptimizer is working...")
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
 
         #TODO we should handle all control ops elegantly not bypass it.

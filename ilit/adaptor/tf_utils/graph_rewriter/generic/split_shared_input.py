@@ -19,12 +19,13 @@
 from tensorflow.core.framework import node_def_pb2
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, dump_elapsed_time
 from ..graph_util import GraphRewriterHelper as Helper
 
 
 class SplitSharedInputOptimizer(GraphRewriterBase):
 
+    @dump_elapsed_time("Pass SplitSharedInputOptimizer")
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model

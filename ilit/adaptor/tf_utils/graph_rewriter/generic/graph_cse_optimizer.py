@@ -19,7 +19,7 @@
 from tensorflow.core.framework import graph_pb2
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from ..graph_util import GraphAnalyzer, dump_elapsed_time
 from ..graph_util import GraphRewriterHelper as Helper
 
 
@@ -67,7 +67,7 @@ class GraphCseOptimizer(GraphRewriterBase):
     """
     computational_op_type = ("Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul")
 
-
+    @dump_elapsed_time("Pass GraphCseOptimizer")
     def do_transformation(self):
         """Optimize the graph contains multi output nodes. If those nodes' type are identical,
             those nodes should be elimated. Currently, we supported memory bound ops only.

@@ -27,7 +27,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv2D
     Pad + Conv2D --> Conv2D
     """
-
+    
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model

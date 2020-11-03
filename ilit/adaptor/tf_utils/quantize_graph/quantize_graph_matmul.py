@@ -22,7 +22,6 @@ from tensorflow.python.framework import dtypes
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 
-
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
     patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
