@@ -136,7 +136,7 @@ def get_input_output(graph_path, input_meta=False):
     path = graph_path.split('/')
     is_detection = False
     for item in path:
-        if 'detection' in item or 'mask' in item or 'rcnn' in item:
+        if 'detection' in item or 'mask' in item or 'rcnn' in item or 'yolo' in item:
             is_detection = True
             break
     fix_dynamic_shape = 600 if is_detection else 300
