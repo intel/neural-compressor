@@ -122,13 +122,11 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [float]: evaluation result, the larger is better.
         """
-        logger.info("start to evaluate model....")
         import tensorflow as tf
-        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        from .tf_utils.util import get_graph_def
 
         graph = tf.Graph()
-        graph_def = PreOptimization(input_graph, self.inputs, \
-                                    self.outputs).get_optimized_graphdef()
+        graph_def = get_graph_def(input_graph, self.outputs)
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
@@ -196,7 +194,7 @@ class TensorFlowAdaptor(Adaptor):
         config.inter_op_parallelism_threads = 1
         sess_graph = tf.compat.v1.Session(graph=graph, config=config)
 
-        logger.info("Start to evaluate model via tensorflow...")
+        logger.info("Start to evaluate Tensorflow model...")
         for idx, (inputs, labels) in enumerate(dataloader):
             # dataloader should keep the order and len of inputs same with input_tensor
             if len(input_tensor) == 1:

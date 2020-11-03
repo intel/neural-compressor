@@ -275,7 +275,7 @@ class GraphConverter:
         if not self.output_graph:
             self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph.pb')
         # to keep temp graphDef
-        self._tmp_graph_def = None
+        self._tmp_graph_def = self.input_graph
 
     def inspect_tensor(self, op_list, op_iteration_list):
         """Inspect the tensor content
@@ -306,7 +306,6 @@ class GraphConverter:
         :return:
         """
         try:
-            self._optimize_frozen_fp32_graph()
             graph = tf.Graph()
             with graph.as_default():
                 tf.import_graph_def(self._tmp_graph_def, name='')
