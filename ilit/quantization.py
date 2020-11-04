@@ -201,8 +201,8 @@ class Quantization(object):
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.resume.path)) \
-                           if cfg.tuning.resume and cfg.tuning.resume.path else None
+        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
+                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
         if self.resume_file:
             assert os.path.exists(self.resume_file), \
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
