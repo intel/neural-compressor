@@ -233,7 +233,7 @@ def fallback_layer(model, layer_name="", exculde_layers={}):
         if sub_model_layer_name in exculde_layers:
            print("fallback_layer:", sub_model_layer_name)
            sub_model.qconfig = None
-           for  name_tmp, sub_model_tmp in list(model.named_children()):
+           for name_tmp, sub_model_tmp in list(model.named_children()):
                 if (isinstance(sub_model_tmp, QuantStub) or isinstance(sub_model_tmp, DeQuantStub)):
                        model._modules[name_tmp]=torch.nn.Identity()
         else:
@@ -310,11 +310,14 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
                 else:
                     preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                     out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
+
+            if args.iter > 0 and nb_eval_steps > (args.warmup + args.iter):
+                break
         if nb_eval_steps >= args.warmup:
-            perf = (len(eval_dataloader)-args.warmup) * args.eval_batch_size / total_time
-            logger.info("***** perfformance {} samples/s *****".format(perf))
+            perf = (nb_eval_steps-args.warmup) * args.eval_batch_size / total_time
+            logger.info("***** performance {} samples/s *****".format(perf))
         else:
-            logger.info("*****no perfformance, please check dataset length and warmup number *****")
+            logger.info("*****no performance, please check dataset length and warmup number *****")
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
             preds = np.argmax(preds, axis=1)
@@ -377,7 +380,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
- 
+
     dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
     return dataset
 
@@ -491,6 +494,16 @@ def main():
                         help="run ilit to tune int8 acc.")
     parser.add_argument("--warmup", type=int, default=2,
                         help="warmup for performance")
+    parser.add_argument('-i', "--iter", default=0, type=int,
+                        help='For accuracy measurement only.')
+    parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                        help='run benchmark')
+    parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
+                        help='For accuracy measurement only.')
+    parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by iLiT (default: ./)')
+    parser.add_argument('--int8', dest='int8', action='store_true',
+                        help='run benchmark')
 
     args = parser.parse_args()
 
@@ -651,6 +664,20 @@ def main():
                                                      task=eval_task, model_type=args.model_type)
                     test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
                     quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
+                exit(0)
+
+            if args.benchmark or args.accuracy_only:
+                model = model_class.from_pretrained(checkpoint, mix_qkv=True)
+                model.to(args.device)
+
+                if args.int8:
+                    from ilit.utils.pytorch import load
+                    new_model = load(
+                        os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+                        os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+                else:
+                    new_model = model
+                result, _ = evaluate(args, new_model, tokenizer, prefix=prefix)
                 exit(0)
 
             if args.do_calibration:

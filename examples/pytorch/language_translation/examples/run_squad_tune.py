@@ -302,15 +302,20 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
                 )
 
             all_results.append(result)
-            if nb_eval_steps >= args.warmup:
-                evalTime += (timeit.default_timer() - start_time)
 
-        nb_eval_steps += 1 
+        if nb_eval_steps >= args.warmup:
+            evalTime += (timeit.default_timer() - start_time)
+
+        nb_eval_steps += 1
+
+        if args.iter > 0 and nb_eval_steps >= (args.warmup + args.iter):
+            break
+
     if nb_eval_steps >= args.warmup:
-        perf = (len(eval_dataloader)-args.warmup) * args.eval_batch_size / evalTime
-        logger.info("Evaluation done in total %f secs (%f samples/sec)", evalTime, (len(dataset) - args.warmup) * args.eval_batch_size / evalTime)
+        perf = (nb_eval_steps - args.warmup) * args.eval_batch_size / evalTime
+        logger.info("Evaluation done in total %f secs (%f samples/sec)", evalTime, perf)
     else:
-        logger.info("*****no perfformance, please check dataset length and warmup number *****")
+        logger.info("*****no performance, please check dataset length and warmup number *****")
 
     # Compute predictions
     output_prediction_file = os.path.join(dataset_cached, "predictions_{}.json".format(prefix))
@@ -513,6 +518,16 @@ def main():
                         help="SQuAD task")
     parser.add_argument("--warmup", type=int, default=5,
                         help="warmup for performance")
+    parser.add_argument('-i', "--iter", default=0, type=int,
+                        help='For accuracy measurement only.')
+    parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                        help='run benchmark')
+    parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
+                        help='For accuracy measurement only.')
+    parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by iLiT (default: ./)')
+    parser.add_argument('--int8', dest='int8', action='store_true',
+                        help='run benchmark')
 
 
     args = parser.parse_args()
@@ -669,6 +684,19 @@ def main():
                 quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
                 exit(0)
 
+            if args.benchmark or args.accuracy_only:
+                model = model_class.from_pretrained(checkpoint, mix_qkv=True)
+                model.to(args.device)
+                if args.int8:
+                    from ilit.utils.pytorch import load
+                    new_model = load(
+                        os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+                        os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+                else:
+                    new_model = model
+                result, _ = evaluate(args, new_model, tokenizer, prefix=global_step)
+                exit(0)
+
             if args.do_calibration:
                model = model_class.from_pretrained(checkpoint, force_download=True, mix_qkv=True)
                model.to(args.device)
@@ -682,7 +710,7 @@ def main():
                if not os.path.exists(quantized_model_path):
                         os.makedirs(quantized_model_path)
                model.save_pretrained(quantized_model_path)
-               result, _ = evaluate(args, model, tokenizer, prefix=global_step)   
+               result, _ = evaluate(args, model, tokenizer, prefix=global_step)
                result = dict((k + ('_{}'.format(global_step) if global_step else ''), v) for k, v in result.items())
                results.update(result)
             if args.do_int8_inference:
