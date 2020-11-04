@@ -426,3 +426,82 @@ class TensorflowTopK(Metric):
         else:
             return self.num_correct / self.num_sample
 
+@metric_registry('COCOmAP', 'tensorflow')
+class TensorflowCOCOMAP(Metric):
+    """The class of calculating mAP metric
+
+    """
+    def __init__(self):
+        import ilit.metric.coco_label_map as coco_label_map
+        self.image_ids = []
+        self.ground_truth_list = []
+        self.detection_list = []
+        self.annotation_id = 1
+        self.category_map = coco_label_map.category_map
+        self.category_id_set = set(
+            [cat for cat in self.category_map])
+
+    def update(self, detection, labels, sample_weight=None):
+        from ilit.metric.coco_tools import ExportSingleImageGroundtruthToCoco,\
+            ExportSingleImageDetectionBoxesToCoco
+        image_id = labels[1]
+        ground_truth = labels[0]
+        if image_id in self.image_ids:
+            return
+        self.image_ids.append(image_id)
+        self.ground_truth_list.extend(
+            ExportSingleImageGroundtruthToCoco(
+                image_id=image_id,
+                next_annotation_id=self.annotation_id,
+                category_id_set=self.category_id_set,
+                groundtruth_boxes=ground_truth['boxes'],
+                groundtruth_classes=ground_truth['classes']))
+        self.annotation_id += ground_truth['boxes'].shape[0]
+        
+        self.detection_list.extend(
+            ExportSingleImageDetectionBoxesToCoco(
+                image_id=image_id,
+                category_id_set=self.category_id_set,
+                detection_boxes=detection['boxes'],
+                detection_scores=detection['scores'],
+                detection_classes=detection['classes']))
+
+    def reset(self):
+        self.image_ids = []
+        self.ground_truth_list = []
+        self.detection_list = []
+        self.annotation_id = 1
+
+    def result(self):
+        from ilit.metric.coco_tools import COCOWrapper, COCOEvalWrapper
+        if len(self.ground_truth_list) == 0:
+            logger.warning("sample num is 0 can't calculate mAP") 
+            return 0
+        else:
+            groundtruth_dict = {
+                'annotations':
+                self.ground_truth_list,
+                'images': [{
+                    'id': image_id
+                } for image_id in self.image_ids],
+                'categories': [{
+                    'id': k,
+                    'name': v
+                } for k, v in self.category_map.items()]
+            }
+            coco_wrapped_groundtruth = COCOWrapper(groundtruth_dict)
+            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(
+                self.detection_list)
+            box_evaluator = COCOEvalWrapper(coco_wrapped_groundtruth,
+                                                 coco_wrapped_detections,
+                                                 agnostic_mode=False)
+            box_metrics, box_per_category_ap = box_evaluator.ComputeMetrics(
+                include_metrics_per_category=False, all_metrics_per_category=False)
+            box_metrics.update(box_per_category_ap)
+            box_metrics = {
+                'DetectionBoxes_' + key: value
+                for key, value in iter(box_metrics.items())
+            }
+
+            return box_metrics['DetectionBoxes_Precision/mAP']
+

@@ -193,6 +193,7 @@ class TensorFlowAdaptor(Adaptor):
             self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
         ]
 
+        output_tensor = output_tensor[0] if len(output_tensor) == 1 else output_tensor
         config = tf.compat.v1.ConfigProto()
         config.use_per_session_threads = 1
         # config.intra_op_parallelism_threads = 28
@@ -226,7 +227,7 @@ class TensorFlowAdaptor(Adaptor):
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
-                metric.update(predictions[0], labels)
+                metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
         acc = metric.result() if metric is not None else 0

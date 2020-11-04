@@ -15,21 +15,14 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo "$var" |cut -f2 -d=)
-      ;;
-      --dataset_location=*)
-          dataset_location=$(echo "$var" |cut -f2 -d=)
+      --config=*)
+          config=$(echo "$var" |cut -f2 -d=)
       ;;
       --input_model=*)
           input_model=$(echo "$var" |cut -f2 -d=)
       ;;
       --output_model=*)
           output_model=$(echo "$var" |cut -f2 -d=)
-      ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
       ;;
     esac
   done
@@ -38,27 +31,11 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-  if [ "$topology" = "ssd_resnet50_v1" ];then
-    config_file='ssd_resnet50_v1.yaml'
-  elif [ "$topology" = "ssd_mobilenet_v1" ];then
-    config_file='ssd_mobilenet_v1.yaml'
-  elif [ "$topology" = "mask_rcnn_inception_v2" ];then
-    config_file='mask_rcnn_inception_v2.yaml'
-  elif [ "$topology" = "faster_rcnn_resnet101" ];then
-    config_file='faster_rcnn_resnet101.yaml'
-  elif [ "$topology" = "faster_rcnn_inception_resnet_v2" ];then
-    config_file='faster_rcnn_inception_resnet_v2.yaml'
-  fi
-  
-  echo $config_file
-
-  python  infer_detections.py \
-          --batch-size 1 \
+  python  main.py \
           --input-graph "${input_model}" \
-          --data-location "${dataset_location}" \
-          --config ${config_file} \
+          --config ${config} \
           --output_model "${output_model}" \
-          --accuracy-only --tune
+          --tune
 }
 
 main "$@"

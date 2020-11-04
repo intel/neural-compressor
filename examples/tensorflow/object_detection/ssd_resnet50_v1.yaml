@@ -7,6 +7,13 @@ model:                                               # mandatory. ilit uses this
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 100                               # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+      batch_size: 1
+      dataset:
+        COCORecord:
+          root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
+      transform:
+        ParseDecodeCoco:
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
     activation:
       algorithm: minmax
@@ -21,6 +28,40 @@ quantization:                                        # optional. tuning constrai
              }
            }
 
+evaluation:                                          # optional. used to config evaluation process.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+    metric: 
+      COCOmAP:
+    configs:                                         # optional. if not specified, use all cores in 1 socket.
+      cores_per_instance: 28
+      num_of_instance: 1
+      kmp_blocktime: 1
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+      batch_size: 1
+      dataset:
+        COCORecord:
+          root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
+      transform:
+        ParseDecodeCoco: 
+    postprocess:
+      transform:
+        COCOPreds:
+  performance:
+    iteration: 100
+    configs:
+      cores_per_instance: 28
+      num_of_instance: 1
+      kmp_blocktime: 1
+    dataloader:
+      batch_size: 1
+      dataset:
+        COCORecord:
+          root: /path/to/evaluation/dataset 
+      transform:
+        ParseDecodeCoco:
+    postprocess:
+      transform:
+        COCOPreds:
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.

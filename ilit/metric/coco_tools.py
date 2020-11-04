@@ -40,16 +40,17 @@ then evaluation (in multi-class mode) can be invoked as follows:
 
 """
 from collections import OrderedDict
+from ilit.utils.utility import LazyImport
 import copy
 import time
 import numpy as np
 
+tf = LazyImport('tensorflow')
+pycocotools = LazyImport('pycocotools')
+
 from pycocotools import coco
 from pycocotools import cocoeval
 from pycocotools import mask
-
-import tensorflow as tf
-
 
 class COCOWrapper(coco.COCO):
     """Wrapper for the pycocotools COCO class."""

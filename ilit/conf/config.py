@@ -166,6 +166,7 @@ transform_schema = Schema({
         Optional('scale'): float
     },
     Optional('ParseDecodeImagenet'): Or({}, None),
+    Optional('ParseDecodeCoco'): Or({}, None),
     Optional('QuantizedInput'): {
         Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
         Optional('scale'): And(float, lambda s: s > 0),
@@ -174,6 +175,7 @@ transform_schema = Schema({
 
 postprocess_schema = Schema({
     Optional('LabelShift'):  And(int, lambda s: s > 0),
+    Optional('COCOPreds'): Or({}, None),
 })
 
 dataset_schema = Schema({
@@ -289,6 +291,7 @@ schema = Schema({
         Optional('accuracy'): {
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
+                Optional('COCOmAP'): {}
             },
             Optional('configs'): configs_schema,
             Optional('dataloader'): dataloader_schema,
