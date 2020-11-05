@@ -313,7 +313,9 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
 
     if nb_eval_steps >= args.warmup:
         perf = (nb_eval_steps - args.warmup) * args.eval_batch_size / evalTime
-        logger.info("Evaluation done in total %f secs (%f samples/sec)", evalTime, perf)
+        if args.eval_batch_size == 1:
+                logger.info('Latency: %.3f ms' % (evalTime / (nb_eval_steps - args.warmup) * 1000))
+        logger.info("Evaluation done in total %f secs (Throughput: %f samples/sec)", evalTime, perf)
     else:
         logger.info("*****no performance, please check dataset length and warmup number *****")
 
@@ -336,16 +338,24 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
                         output_nbest_file, output_null_log_odds_file,
                         start_n_top, end_n_top,
                         args.version_2_with_negative, tokenizer, args.verbose_logging)
-    elif not calibration:
+    elif not calibration and args.iter == 0:
         predictions = compute_predictions_logits(examples, features, all_results, args.n_best_size,
                         args.max_answer_length, args.do_lower_case, output_prediction_file,
                         output_nbest_file, output_null_log_odds_file, args.verbose_logging,
                         args.version_2_with_negative, args.null_score_diff_threshold)
 
     # Compute the F1 and exact scores.
-    if not calibration:
-       results = squad_evaluate(examples, predictions)
-       return results, perf
+    if not calibration and args.iter == 0:
+        results = squad_evaluate(examples, predictions)
+        bert_task_acc_keys = ['best_f1', 'f1', 'mcc', 'spearmanr', 'acc']
+        for key in bert_task_acc_keys:
+            if key in results.keys():
+                acc = results[key]
+                break
+        logger.info("Accuracy: %.5f", acc)
+    else:
+        results = None
+    return results, perf
 
 
 def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=False):

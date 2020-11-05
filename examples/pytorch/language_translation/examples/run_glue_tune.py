@@ -314,8 +314,10 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
             if args.iter > 0 and nb_eval_steps > (args.warmup + args.iter):
                 break
         if nb_eval_steps >= args.warmup:
-            perf = (nb_eval_steps-args.warmup) * args.eval_batch_size / total_time
-            logger.info("***** performance {} samples/s *****".format(perf))
+            perf = (nb_eval_steps - args.warmup) * args.eval_batch_size / total_time
+            if args.eval_batch_size == 1:
+                logger.info('Latency: %.3f ms' % (total_time / (nb_eval_steps - args.warmup) * 1000))
+            logger.info("Throughput: {} samples/s".format(perf))
         else:
             logger.info("*****no performance, please check dataset length and warmup number *****")
         eval_loss = eval_loss / nb_eval_steps
@@ -326,6 +328,12 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
         result = compute_metrics(eval_task, preds, out_label_ids)
         results.update(result)
 
+        bert_task_acc_keys = ['acc_and_f1', 'f1', 'mcc', 'spearmanr', 'acc']
+        for key in bert_task_acc_keys:
+            if key in result.keys():
+                acc = result[key]
+                break
+        logger.info("Accuracy: %.5f", acc)
         logger.info("***** Eval results {} *****".format(prefix))
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))

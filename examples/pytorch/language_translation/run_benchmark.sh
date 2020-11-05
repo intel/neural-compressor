@@ -11,6 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
+  batch_size=16
   ilit_checkpoint=ilit_workspace/pytorch/bert
   for var in "$@"
   do
@@ -49,7 +50,6 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     extra_cmd=''
-    batch_size=16
     SCRIPTS=examples/run_glue_tune.py
     MAX_SEQ_LENGTH=128
     model_type='bert'
