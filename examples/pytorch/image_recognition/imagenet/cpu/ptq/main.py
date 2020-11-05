@@ -398,8 +398,8 @@ def validate(val_loader, model, criterion, args):
         print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
 
         # TODO: this should also be done with the ProgressMeter
-        print('Accuracy: {top1.avg:.5f} Accuracy@5 {top5.avg:.5f}'
-              .format(top1=top1, top5=top5))
+        print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
+              .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
     return top1.avg
 
