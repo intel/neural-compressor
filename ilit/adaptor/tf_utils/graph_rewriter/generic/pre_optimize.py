@@ -18,7 +18,8 @@
 
 import logging
 from ilit.adaptor.tf_utils.util import get_graph_def
-from ilit.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer, dump_elapsed_time
+from ilit.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+from ilit.utils.utility import dump_elapsed_time
 
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer

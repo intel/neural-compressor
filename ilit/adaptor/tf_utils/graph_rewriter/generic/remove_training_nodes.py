@@ -17,7 +17,8 @@
 
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer, dump_elapsed_time
+from ..graph_util import GraphAnalyzer
+from ilit.utils.utility import dump_elapsed_time
 
 
 class RemoveTrainingNodesOptimizer(GraphRewriterBase):

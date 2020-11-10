@@ -19,7 +19,6 @@
 import os
 import re
 import logging
-import time
 from collections import namedtuple
 import tensorflow as tf
 
@@ -1017,23 +1016,3 @@ def get_graph_def(model, outputs=[]):
         raise ValueError('The input parameter is neither Graph nor path to the model.')
 
     return graph_def
-
-
-def dump_elapsed_time(customized_msg=""):
-    """Get the elapsed time for decorated functions.
-
-    Args:
-        arg (string, optional): the parameter passed to decorator. Defaults to None.
-    """
-    def f(func):
-        def fi(*args,**kwargs):
-            start = time.time()
-            res = func(*args,**kwargs)
-            end = time.time()
-            logging.getLogger().info('%s elapsed time: %s ms' %
-                                    (customized_msg if customized_msg else func.__qualname__,
-                                    round((end - start) * 1000, 2)))
-            return res
-    
-        return fi
-    return f

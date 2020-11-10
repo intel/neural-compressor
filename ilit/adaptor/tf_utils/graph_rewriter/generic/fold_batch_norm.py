@@ -21,8 +21,9 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer, dump_elapsed_time
+from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
+from ilit.utils.utility import dump_elapsed_time
 
 import numpy as np
 import math

@@ -21,6 +21,7 @@ from ..utils.utility import LazyImport, AverageMeter, compute_sparsity, CpuInfo
 import copy
 from collections import OrderedDict
 from ..utils import logger
+from ilit.utils.utility import dump_elapsed_time
 import random
 import numpy as np
 import os
@@ -541,6 +542,7 @@ class PyTorchAdaptor(Adaptor):
         else:
             assert False, "Unsupport this device {}".format(self.device)
 
+    @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """Execute the quantize process on the specified model.
 
@@ -715,6 +717,7 @@ class PyTorchAdaptor(Adaptor):
         """
         pass
 
+    @dump_elapsed_time("Pass query framework capability")
     def query_fw_capability(self, model):
         """This is a helper function to get all quantizable ops from model.
 
@@ -1183,6 +1186,7 @@ class PyTorchAdaptor(Adaptor):
 
         return df, total_sparsity
 
+    @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path):
         """The function is used by tune strategy class for saving model.
 

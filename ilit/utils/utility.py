@@ -24,14 +24,15 @@ options.
 """
 
 import os
-import os.path as osp
 import inspect
 import time
 import sys
-import numpy as np
+import logging
 import cpuinfo
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
+import os.path as osp
+import numpy as np
 
 
 def print_info():
@@ -146,7 +147,7 @@ def get_size(obj, seen=None):
 
 def compute_sparsity(tensor, eps = 1e-10):
     mask = np.ones_like(tensor)
-    tensor_size = tensor.size 
+    tensor_size = tensor.size
     dense_mask = tensor != 0
     dense_size = dense_mask.sum()
     return tensor_size, tensor_size - dense_size, dense_size
@@ -209,3 +210,21 @@ class CpuInfo(object):
     @property
     def vnni(self):
         return self._vnni
+
+def dump_elapsed_time(customized_msg=""):
+    """Get the elapsed time for decorated functions.
+
+    Args:
+        customized_msg (string, optional): the parameter passed to decorator. Defaults to None.
+    """
+    def f(func):
+        def fi(*args,**kwargs):
+            start = time.time()
+            res = func(*args,**kwargs)
+            end = time.time()
+            logging.getLogger().info('%s elapsed time: %s ms' %
+                                    (customized_msg if customized_msg else func.__qualname__,
+                                    round((end - start) * 1000, 2)))
+            return res
+        return fi
+    return f

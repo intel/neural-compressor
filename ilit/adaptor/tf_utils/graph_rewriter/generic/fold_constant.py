@@ -21,7 +21,8 @@ import tensorflow as tf
 
 from tensorflow.python.platform import tf_logging
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer, GraphRewriterHelper, dump_elapsed_time
+from ..graph_util import GraphAnalyzer, GraphRewriterHelper
+from ilit.utils.utility import dump_elapsed_time
 
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):

@@ -16,7 +16,6 @@
 # limitations under the License.
 
 import os
-import subprocess
 import copy
 import numpy as np
 from collections import OrderedDict

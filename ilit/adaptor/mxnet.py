@@ -15,13 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport
-from ..utils.kl_divergence import KL_Divergence
-from ..utils.collect_layer_histogram import LayerHistogramCollector
-from collections import OrderedDict
-import numpy as np
-
 import os
 import time
 import logging
@@ -30,6 +23,14 @@ import tempfile
 import json
 import re
 from tempfile import TemporaryDirectory
+import numpy as np
+
+from .adaptor import adaptor_registry, Adaptor
+from ..utils.utility import LazyImport
+from ..utils.kl_divergence import KL_Divergence
+from ..utils.collect_layer_histogram import LayerHistogramCollector
+from collections import OrderedDict
+from ilit.utils.utility import dump_elapsed_time
 
 mx = LazyImport("mxnet")
 
@@ -253,7 +254,7 @@ class MxNetAdaptor(Adaptor):
         acc = metric.result() if metric is not None else 0
         return acc
 
-    def _mxnet_gluon_forward(self, gluon_model, dataloader, 
+    def _mxnet_gluon_forward(self, gluon_model, dataloader,
                              postprocess, metric, measurer, iteration):
         """MXNet gluon model evaluation process.
 
@@ -290,6 +291,7 @@ class MxNetAdaptor(Adaptor):
 
         return sym, arg_params, aux_params, calib_data
 
+    @dump_elapsed_time("Query quantizable operators")
     def _query_quantizable_ops(self, model, calib_data):
         """Query quantizable ops of the given model.
 
@@ -411,6 +413,7 @@ class MxNetAdaptor(Adaptor):
 
         return {'modelwise': model_wise, 'opwise': op_wise}
 
+    @dump_elapsed_time("Collect calibration statistics")
     def _inspect_tensor(
             self,
             model,
@@ -489,12 +492,12 @@ class MxNetAdaptor(Adaptor):
                 num_batches += 1
                 if calib_iter is not None and num_batches >= calib_iter:
                     break
-            if logger is not None:
-                logger.info(
-                    "Inspect tensors from %d batches with batch_size=%d" %
-                    (num_batches, data.batch_size))
 
+            self.logger.info(
+                "Inspect tensors from %d batches with batch_size=%d" %
+                (num_batches, data.batch_size))
             return collector.tensor_dict
+
         else:
             iter_tensor = {}
             num_batches = 0
@@ -509,10 +512,9 @@ class MxNetAdaptor(Adaptor):
                     collector.reset()
                 num_batches += 1
 
-            if logger is not None:
-                logger.info(
-                    "Inspect tensors from %d batches with batch_size=%d" %
-                    (num_batches, data.batch_size))
+            self.logger.info(
+                "Inspect tensors from %d batches with batch_size=%d" %
+                (num_batches, data.batch_size))
             return iter_tensor
 
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
@@ -603,7 +605,7 @@ class MxNetAdaptor(Adaptor):
         excluded_op_names = []
         calib_minmax_layers = []
         calib_kl_layers = []
-        
+
         for _, op in enumerate(self.quantizable_ops):
             # get qdata type per op
             if tune_cfg['op'][(op["name"], op["type"])
@@ -622,7 +624,7 @@ class MxNetAdaptor(Adaptor):
         quantized_dtype = 'auto'
         quantize_mode = 'smart'
         quantize_granularity = 'tensor-wise'
-        logger = None
+        logger = self.logger
         ctx = mx.cpu()
         batch_size = self.__config_dict['calib_data'].batch_size
         iteration = tune_cfg['calib_iteration']
@@ -725,6 +727,7 @@ class MxNetAdaptor(Adaptor):
 
         return symnet, args, auxs, calib_data
 
+    @dump_elapsed_time("Compute quantization scaling using KL algorithm")
     def _get_optimal_thresholds(self, hist_dict, quantized_dtype,
                                 num_quantized_bins=255, logger=None):
         """Given a ndarray dict, find the optimal threshold for quantizing each value of the key.
@@ -739,11 +742,9 @@ class MxNetAdaptor(Adaptor):
             th_dict (dict): optimal_thresholds of each layer tensor.
         """
         assert isinstance(hist_dict, dict)
-        if logger is not None:
-            logger.info(
-                'Calculating optimal thresholds for quantization using KL divergence'
-                ' with num_quantized_bins=%d' %
-                num_quantized_bins)
+        self.logger.info(
+            'Calculating optimal thresholds for quantization using KL divergence'
+            ' with num_quantized_bins=%d' % num_quantized_bins)
         th_dict = {}
         # copy hist_dict keys since the keys() only returns a view in python3
         layer_names = list(hist_dict.keys())
@@ -764,10 +765,20 @@ class MxNetAdaptor(Adaptor):
             else:
                 th_dict[name] = (-th, th)
             del hist_dict[name]  # release the memory
-            if logger:
-                logger.debug('layer=%s, min_val=%f, max_val=%f, th=%f, '
-                             % (name, min_val, max_val, th))
+            self.logger.debug('layer=%s, min_val=%f, max_val=%f, th=%f, '
+                              % (name, min_val, max_val, th))
         return th_dict
+
+    @dump_elapsed_time("Compute quantization scaling using minmax algorithm")
+    def _get_min_max_thresholds(self, mod, calib_data, quantized_dtype,
+                                include_layer, max_num_examples, logger):
+        th_dict_min_max, num_examples = mx.contrib.quantization._collect_layer_output_min_max(
+            mod, calib_data, quantized_dtype, include_layer=include_layer,
+            max_num_examples=max_num_examples, logger=logger)
+
+        logger.info('Collected layer output min/max values from FP32 model using %d examples' %
+                    num_examples)
+        return th_dict_min_max
 
     def _get_calibration_th(
             self,
@@ -814,10 +825,9 @@ class MxNetAdaptor(Adaptor):
 
         mod = mx.module.module.Module(
             symbol=sym, data_names=data_names, context=ctx)
-        if hasattr(
-                calib_data,
-                'provide_label') and len(
-                calib_data.provide_label) > 0:
+        if hasattr(calib_data,
+                   'provide_label') and len(
+                       calib_data.provide_label) > 0:
             mod.bind(for_training=False, data_shapes=calib_data.provide_data,
                      label_shapes=calib_data.provide_label)
         else:
@@ -832,33 +842,28 @@ class MxNetAdaptor(Adaptor):
 
         if len(self.__config_dict["calib_kl_layers"]) != 0:
             # inspect each quantized layer activate tensor for calibration
-            layer_tensor = self._inspect_tensor((sym, arg_params, aux_params), 
-                                                 dataloader=calib_data, 
-                                                 op_list=calib_layer)
+            layer_tensor = self._inspect_tensor((sym, arg_params, aux_params),
+                                                dataloader=calib_data,
+                                                op_list=calib_layer)
             _histogram = LayerHistogramCollector(
                 layer_tensor=layer_tensor,
                 include_layer=self.__config_dict["calib_kl_layers"])
             _histogram.collect()
             hist_dict = _histogram.hist_dict
-            if logger:
-                logger.info('Calculating optimal thresholds for quantization')
+            self.logger.info('Calculating optimal thresholds for quantization')
+
             th_dict_kl = self._get_optimal_thresholds(
                 hist_dict, quantized_dtype, logger=logger)
             self._merge_dicts(th_dict_kl, th_dict)
-            if logger:
-                logger.info('Collected layer output KL values from FP32 model')
 
         calib_data.reset()
         if len(self.__config_dict["calib_minmax_layers"]) != 0:
-            th_dict_minmax, num_examples = mx.contrib.quantization._collect_layer_output_min_max(
-                mod, calib_data, quantized_dtype, include_layer=self.__config_dict[
-                    "calib_minmax_layers"], max_num_examples=num_calib_examples,
+            th_dict_minmax = self._get_min_max_thresholds(
+                mod, calib_data, quantized_dtype,
+                include_layer=self.__config_dict["calib_minmax_layers"],
+                max_num_examples=num_calib_examples,
                 logger=logger)
             self._merge_dicts(th_dict_minmax, th_dict)
-            if logger:
-                logger.info(
-                    'Collected layer output min/max values from FP32 model using %d examples' %
-                    num_examples)
 
         return th_dict
 
