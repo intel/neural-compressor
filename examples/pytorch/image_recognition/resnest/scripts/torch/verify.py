@@ -60,8 +60,14 @@ class Options():
                             help='path to dataset')
         parser.add_argument('-i', '--iterations', default=0, type=int, metavar='N',
                             help='number of total iterations to run')
-        parser.add_argument('-w', '--warmup-iterations', default=0, type=int, metavar='N',
+        parser.add_argument('-w', '--warmup-iterations', default=5, type=int, metavar='N',
                             help='number of warmup iterations to run')
+        parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                            help='run benchmark')
+        parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                            help='path to checkpoint tuned by iLiT (default: ./)')
+        parser.add_argument('--int8', dest='int8', action='store_true',
+                            help='run benchmark for int8')
         self.parser = parser
 
     def parse(self):
@@ -124,13 +130,21 @@ def main():
                                format(args.resume))
 
     model.eval()
+    model.fuse_model()
 
     if args.tune:
-        model.fuse_model()
         from ilit import Quantization
         quantizer = Quantization("./conf.yaml")
         q_model = quantizer(model)
         exit(0)
+
+    if args.int8:
+        from ilit.utils.pytorch import load
+        new_model = load(
+            os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+            os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+    else:
+        new_model = model
 
     top1 = AverageMeter()
     top5 = AverageMeter()
@@ -156,7 +170,12 @@ def main():
         elif batch_idx == iterations + warmup:
             break
 
-    print('Top1 Acc: %.3f | Top5 Acc: %.3f ' % (top1.avg, top5.avg))
+    print('Batch size = %d' % args.batch_size)
+    if args.batch_size == 1:
+        print('Latency: %.3f ms' % (batch_time.avg * 1000))
+    print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
+    print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
+          .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
 
 class ECenterCrop:

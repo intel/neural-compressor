@@ -10,6 +10,7 @@ function main {
 
 # init params
 function init_params {
+  batch_size=30
 
   for var in "$@"
   do
@@ -41,7 +42,6 @@ function run_tuning {
     sed -i "s|/path/to/evaluation/dataset|$dataset_location/val|g" conf.yaml
     python setup.py install
     extra_cmd="${dataset_location}"
-    batch_size=30
 
     python -u scripts/torch/verify.py \
         --model ${topology} \

@@ -37,7 +37,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    if [ "${topology}" = "efficient_b0" ];then
+    if [ "${topology}" = "efficientnet_b0" ];then
         conf_yaml=conf_efficientnet_b0.yaml
     elif [ "${topology}" = "mobilenetv3_rw" ]; then
         conf_yaml=conf_mobilenetv3_rw.yaml

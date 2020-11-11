@@ -94,6 +94,30 @@ from torch.quantization import QuantWrapper, QuantStub, DeQuantStub, \
 exc = getattr(builtins, "IOError", "FileNotFoundError")
 
 
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self, name, fmt=':f'):
+        self.name = name
+        self.fmt = fmt
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+    def __str__(self):
+        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        return fmtstr.format(**self.__dict__)
+
+
 ### define dlrm in PyTorch ###
 class DLRM_Net(nn.Module):
     def create_mlp(self, ln, sigmoid_layer):
@@ -484,6 +508,16 @@ if __name__ == "__main__":
     parser.add_argument("--mlperf-bin-shuffle", action='store_true', default=False)
     parser.add_argument("--tune", action='store_true', default=False)
     parser.add_argument("--output-model", type=str, default="")
+    parser.add_argument('-i', "--iter", default=0, type=int,
+                        help='For accuracy measurement only.')
+    parser.add_argument('-w', "--warmup_iter", default=5, type=int,
+                        help='For benchmark measurement only.')
+    parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                        help='run benchmark')
+    parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by iLiT (default: ./)')
+    parser.add_argument('--int8', dest='int8', action='store_true',
+                        help='run benchmark for int8')
     args = parser.parse_args()
 
     if args.mlperf_logging:
@@ -755,22 +789,6 @@ if __name__ == "__main__":
             loss_sc_ = loss_ws_ * loss_fn_
             return loss_sc_.mean()
 
-    def eval_func(model):
-        scores = []
-        targets = []
-        for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
-            Z = model(X_test, lS_o_test, lS_i_test)
-            S = Z.detach().cpu().numpy()  # numpy array
-            T = T.detach().cpu().numpy()  # numpy array
-            scores.append(S)
-            targets.append(T)
-        scores = np.concatenate(scores, axis=0)
-        targets = np.concatenate(targets, axis=0)
-        acc = sklearn.metrics.roc_auc_score(targets, scores)
-        print("acc:", acc)
-        return acc
-
-
     # training or inference
     best_gA_test = 0
     best_auc_test = 0
@@ -841,6 +859,33 @@ if __name__ == "__main__":
             )
         )
 
+    def eval_func(model):
+        batch_time = AverageMeter('Time', ':6.3f')
+        scores = []
+        targets = []
+        for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
+            if j >= args.warmup_iter:
+                start = time_wrap(False)
+            Z = model(X_test, lS_o_test, lS_i_test)
+            S = Z.detach().cpu().numpy()  # numpy array
+            T = T.detach().cpu().numpy()  # numpy array
+            scores.append(S)
+            targets.append(T)
+            if j >= args.warmup_iter:
+                batch_time.update(time_wrap(False) - start)
+            if args.iter > 0 and j >= args.warmup_iter + args.iter - 1:
+                break
+
+        scores = np.concatenate(scores, axis=0)
+        targets = np.concatenate(targets, axis=0)
+        roc_auc = sklearn.metrics.roc_auc_score(targets, scores)
+        print('Batch size = %d' % args.test_mini_batch_size)
+        if args.test_mini_batch_size == 1:
+            print('Latency: %.3f ms' % (batch_time.avg * 1000))
+        print('Throughput: %.3f images/sec' % (args.test_mini_batch_size / batch_time.avg))
+        print('Accuracy: {roc_auc:.5f}'.format(roc_auc=roc_auc))
+        return roc_auc
+
     if args.tune:
         print('tune')
         eval_dataloader = DLRM_DataLoader(test_ld)
@@ -859,6 +904,29 @@ if __name__ == "__main__":
         from ilit import Quantization
         quantizer = Quantization("./conf.yaml")
         q_model = quantizer(dlrm, eval_dataloader, eval_func=eval_func)
+        exit(0)
+
+    if args.benchmark:
+        fuse_list = []
+        for i in range(0, len(dlrm.bot_l), 2):
+            fuse_list.append(["bot_l.%d" % (i), "bot_l.%d" % (i + 1)])
+        dlrm = fuse_modules(dlrm, fuse_list)
+        fuse_list = []
+        for i in range(0, len(dlrm.top_l) - 2, 2):
+            fuse_list.append(["top_l.%d" % (i), "top_l.%d" % (i + 1)])
+        dlrm = fuse_modules(dlrm, fuse_list)
+        dlrm.bot_l.insert(0, QuantStub())
+        dlrm.bot_l.append(DeQuantStub())
+        dlrm.top_l.insert(0, QuantStub())
+        dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
+        if args.do_int8_inference:
+            from ilit.utils.pytorch import load
+            new_model = load(
+                os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+                os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), dlrm)
+        else:
+            new_model = model
+        eval_func(new_model)
         exit(0)
 
 

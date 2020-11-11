@@ -11,7 +11,8 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet
+  ilit_checkpoint=ilit_workspace/pytorch/yolo_v3
+  batch_size=8
   for var in "$@"
   do
     case $var in
@@ -48,28 +49,31 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
+    current_dir="$PWD"
+    cd $dataset_location/coco
+    paste <(awk "{print \"$PWD\"}" <5k.part) 5k.part | tr -d '\t' > 5k.txt
+    cd $current_dir
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --benchmark"
     elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --iter ${iters} --benchmark "
+        mode_cmd=" -i ${iters} --benchmark "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
     if [[ ${int8} == "true" ]]; then
-        extra_cmd="--int8 ${dataset_location}"
+        extra_cmd="--int8"
     else
-        extra_cmd="${dataset_location}"
+        extra_cmd=""
     fi
 
-    python main.py \
-            --pretrained \
-            --ilit_checkpoint ${ilit_checkpoint} \
-            -b ${batch_size} \
-            -a $topology \
-            ${mode_cmd} \
-            ${extra_cmd}
+    python -u test.py \
+        --ilit_checkpoint ${ilit_checkpoint} \
+        --weights_path $input_model \
+        --batch_size ${batch_size} \
+        ${mode_cmd} \
+        ${extra_cmd}
 }
 
 main "$@"

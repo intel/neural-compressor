@@ -11,7 +11,12 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet
+  if [ "${topology}" = "efficientnet_b0" ];then
+      ilit_checkpoint=ilit_workspace/pytorch/efficient_b0
+  elif [ "${topology}" = "mobilenetv3_rw" ]; then
+      ilit_checkpoint=ilit_workspace/pytorch/mobilenetv3_rw
+  fi
+  batch_size=30
   for var in "$@"
   do
     case $var in
@@ -48,10 +53,11 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
+    python setup.py install
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --benchmark"
     elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --iter ${iters} --benchmark "
+        mode_cmd=" -i ${iters} --benchmark "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -63,13 +69,14 @@ function run_benchmark {
         extra_cmd="${dataset_location}"
     fi
 
-    python main.py \
-            --pretrained \
-            --ilit_checkpoint ${ilit_checkpoint} \
-            -b ${batch_size} \
-            -a $topology \
-            ${mode_cmd} \
-            ${extra_cmd}
+    python -u scripts/torch/verify.py \
+        --ilit_checkpoint ${ilit_checkpoint} \
+        --model $topology \
+        -b ${batch_size} \
+        --no-cuda \
+        -j 1 \
+        ${mode_cmd} \
+        ${extra_cmd}
 }
 
 main "$@"

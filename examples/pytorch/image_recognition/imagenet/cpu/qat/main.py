@@ -81,6 +81,16 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
 parser.add_argument("--config", default=None, help="tuning config")
+parser.add_argument('-i', "--iter", default=0, type=int,
+                    help='For accuracy measurement only.')
+parser.add_argument('-w', "--warmup_iter", default=5, type=int,
+                    help='For benchmark measurement only.')
+parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                    help='run benchmark')
+parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                    help='path to checkpoint tuned by iLiT (default: ./)')
+parser.add_argument('--int8', dest='int8', action='store_true',
+                    help='run benchmark')
 
 best_acc1 = 0
 
@@ -270,6 +280,19 @@ def main_worker(gpu, ngpus_per_node, args):
                              eval_dataloader=val_loader)
         return
 
+    if args.benchmark:
+        model.eval()
+        model.module.fuse_model()
+        if args.int8:
+            from ilit.utils.pytorch import load
+            new_model = load(
+                os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+                os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+        else:
+            new_model = model
+        validate(val_loader, new_model, criterion, args)
+        return
+
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
@@ -352,8 +375,9 @@ def validate(val_loader, model, criterion, args):
     model.eval()
 
     with torch.no_grad():
-        end = time.time()
         for i, (input, target) in enumerate(val_loader):
+            if i >= args.warmup_iter:
+                start = time.time()
             if args.gpu is not None:
                 input = input.cuda(args.gpu, non_blocking=True)
                 target = target.cuda(args.gpu, non_blocking=True)
@@ -369,15 +393,23 @@ def validate(val_loader, model, criterion, args):
             top5.update(acc5[0], input.size(0))
 
             # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+            if i >= args.warmup_iter:
+                batch_time.update(time.time() - start)
 
             if i % args.print_freq == 0:
                 progress.print(i)
 
+            if args.iter > 0 and i >= (args.warmup_iter + args.iter - 1):
+                break
+
+        print('Batch size = %d' % args.batch_size)
+        if args.batch_size == 1:
+            print('Latency: %.3f ms' % (batch_time.avg * 1000))
+        print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
+
         # TODO: this should also be done with the ProgressMeter
-        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
-              .format(top1=top1, top5=top5))
+        print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
+              .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
     return top1.avg
 

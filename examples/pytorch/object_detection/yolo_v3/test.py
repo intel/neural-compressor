@@ -44,7 +44,7 @@ class AverageMeter(object):
         return fmtstr.format(**self.__dict__)
 
 
-def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size, iter=0):
+def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size, iter=0, warmup=0):
     batch_time = AverageMeter('Time', ':6.3f')
     model.eval()
 
@@ -68,20 +68,26 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
 
         imgs = Variable(imgs.type(Tensor), requires_grad=False)
 
-        end = time.time()
+        if batch_i >= warmup:
+            end = time.time()
         with torch.no_grad():
             outputs = model(imgs)
             outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
-        batch_time.update(time.time() - end)
+        if batch_i >= warmup:
+            batch_time.update(time.time() - end)
 
         sample_metrics += get_batch_statistics(outputs, targets, iou_threshold=iou_thres)
-        if iter > 0 and batch_i >= iter:
+        if iter > 0 and batch_i >= iter + warmup - 1:
             break
 
     # Concatenate sample statistics
     true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*sample_metrics))]
     precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
-    throughput = batch_size / batch_time.avg
+    print('Batch size = %d' % batch_size)
+    if batch_size == 1:
+        print('Latency: %.3f ms' % (batch_time.avg * 1000))
+    print('Throughput: %.3f images/sec' % (batch_size / batch_time.avg))
+    print('Accuracy: {mAP:.5f}'.format(mAP=AP.mean()))
     print(' Time {batch_time.val:.3f}s ({batch_time.avg:.3f}s)'
               .format(batch_time=batch_time))
 
@@ -102,6 +108,16 @@ if __name__ == "__main__":
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument('-t', '--tune', dest='tune', action='store_true',
                         help='tune best int8 model on calibration dataset')
+    parser.add_argument('-i', "--iter", default=0, type=int,
+                        help='For accuracy measurement only.')
+    parser.add_argument('-w', "--warmup_iter", default=5, type=int,
+                        help='For benchmark measurement only.')
+    parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                        help='run benchmark')
+    parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by iLiT (default: ./)')
+    parser.add_argument('--int8', dest='int8', action='store_true',
+                        help='run benchmark for int8')
     opt = parser.parse_args()
     print(opt)
 
@@ -161,6 +177,29 @@ if __name__ == "__main__":
         ilit_dataloader = yolo_dataLoader(dataloader)
         quantizer = Quantization("./conf.yaml")
         quantizer(model, q_dataloader=ilit_dataloader, eval_func=eval_func)
+        exit(0)
+
+    if opt.benchmark:
+        model.eval()
+        model.fuse_model()
+        if opt.int8:
+            from ilit.utils.pytorch import load
+            new_model = load(
+                os.path.join(opt.ilit_checkpoint, 'best_configure.yaml'),
+                os.path.join(opt.ilit_checkpoint, 'best_model_weights.pt'), model)
+        else:
+            new_model = model
+        evaluate(
+            new_model,
+            path=valid_path,
+            iou_thres=opt.iou_thres,
+            conf_thres=opt.conf_thres,
+            nms_thres=opt.nms_thres,
+            img_size=opt.img_size,
+            batch_size=opt.batch_size,
+            iter=opt.iter,
+            warmup=opt.warmup_iter
+        )
         exit(0)
 
     print("Compute mAP...")

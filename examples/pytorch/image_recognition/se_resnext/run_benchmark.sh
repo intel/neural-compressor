@@ -11,7 +11,8 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet
+  ilit_checkpoint=ilit_workspace/pytorch/se_resnext
+  batch_size=30
   for var in "$@"
   do
     case $var in
@@ -48,28 +49,28 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
+    python setup.py install
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --benchmark"
     elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --iter ${iters} --benchmark "
+        mode_cmd=" -i ${iters} --benchmark "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
     if [[ ${int8} == "true" ]]; then
-        extra_cmd="--int8 ${dataset_location}"
-    else
-        extra_cmd="${dataset_location}"
+        extra_cmd="--int8"
     fi
 
-    python main.py \
-            --pretrained \
-            --ilit_checkpoint ${ilit_checkpoint} \
-            -b ${batch_size} \
-            -a $topology \
-            ${mode_cmd} \
-            ${extra_cmd}
+    python -u examples/imagenet_eval.py \
+        --data ${dataset_location} \
+        --ilit_checkpoint ${ilit_checkpoint} \
+        -a $topology \
+        -b ${batch_size} \
+        -j 1 \
+        ${mode_cmd} \
+        ${extra_cmd}
 }
 
 main "$@"

@@ -65,6 +65,16 @@ parser.add_argument('--tf-preprocessing', dest='tf_preprocessing', action='store
 parser.add_argument('--no-cuda', dest='no_cuda', action='store_true',
                     help='')
 parser.add_argument('--tune', action='store_true', help='int8 quantization tune with ilit')
+parser.add_argument('-i', "--iter", default=0, type=int,
+                    help='For accuracy measurement only.')
+parser.add_argument('-w', "--warmup_iter", default=5, type=int,
+                    help='For benchmark measurement only.')
+parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                    help='run benchmark')
+parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                    help='path to checkpoint tuned by iLiT (default: ./)')
+parser.add_argument('--int8', dest='int8', action='store_true',
+                    help='run benchmark for int8')
 
 
 def main():
@@ -134,15 +144,25 @@ def main():
     top5 = AverageMeter()
 
     model.eval()
-    end = time.time()
+    model.fuse_model()
+    if args.int8:
+        from ilit.utils.pytorch import load
+        new_model = load(
+            os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+            os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+    else:
+        new_model = model
+
     with torch.no_grad():
         for i, (input, target) in enumerate(loader):
+            if i >= args.warmup_iterations:
+                start = time.time()
             if not args.no_cuda:
                 target = target.cuda()
                 input = input.cuda()
 
             # compute output
-            output = model(input)
+            output = new_model(input)
             loss = criterion(output, target)
 
             # measure accuracy and record loss
@@ -151,9 +171,9 @@ def main():
             top1.update(prec1.item(), input.size(0))
             top5.update(prec5.item(), input.size(0))
 
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+            if i >= args.warmup_iterations:
+                # measure elapsed time
+                batch_time.update(time.time() - start)
 
             if i % args.print_freq == 0:
                 print('Test: [{0}/{1}]\t'
@@ -164,6 +184,15 @@ def main():
                     i, len(loader), batch_time=batch_time,
                     rate_avg=input.size(0) / batch_time.avg,
                     loss=losses, top1=top1, top5=top5))
+            if args.iterations > 0 and i >= args.iterations + args.warmup_iterations - 1:
+                break
+
+        print('Batch size = %d' % args.batch_size)
+        if args.batch_size == 1:
+            print('Latency: %.3f ms' % (batch_time.avg * 1000))
+        print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
+        print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
+              .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
 
 def get_image_size_crop_pct(model_name):

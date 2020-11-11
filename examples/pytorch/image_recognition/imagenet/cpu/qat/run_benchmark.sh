@@ -11,7 +11,8 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet
+  ilit_checkpoint=ilit_workspace/pytorch/imagenet_qat
+  batch_size=30
   for var in "$@"
   do
     case $var in
@@ -49,7 +50,7 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --benchmark"
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd=" --iter ${iters} --benchmark "
     else

@@ -10,6 +10,7 @@ function main {
 
 # init params
 function init_params {
+  input_model=weights/peleenet_acc7208.pth.tar
 
   for var in "$@"
   do

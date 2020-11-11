@@ -59,6 +59,16 @@ parser.add_argument('--do-not-preserve-aspect-ratio',
                     action='store_false')
 parser.add_argument('-t', '--tune', dest='tune', action='store_true',
                     help='tune best int8 model on calibration dataset')
+parser.add_argument('-i', '--iterations', default=0, type=int, metavar='N',
+                    help='number of total iterations to run')
+parser.add_argument('-w', '--warmup-iterations', default=5, type=int, metavar='N',
+                    help='number of warmup iterations to run')
+parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                    help='run benchmark')
+parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
+                    help='path to checkpoint tuned by iLiT (default: ./)')
+parser.add_argument('--int8', dest='int8', action='store_true',
+                    help='run benchmark for int8')
 parser.set_defaults(preserve_aspect_ratio=True)
 best_prec1 = 0
 
@@ -143,8 +153,21 @@ def main():
         q_model = quantizer(model)
         return
 
+    if args.benchmark:
+        model.eval()
+        model.module.fuse_model()
+        if args.int8:
+            from ilit.utils.pytorch import load
+            new_model = load(
+                os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
+                os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+        else:
+            new_model = model
+        validate(val_loader, new_model, criterion, args)
+        return
+
     if args.evaluate:
-        validate(val_loader, model, criterion)
+        validate(val_loader, model, criterion, args)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -154,7 +177,7 @@ def main():
         train(train_loader, model, criterion, optimizer, epoch)
 
         # evaluate on validation set
-        prec1 = validate(val_loader, model, criterion)
+        prec1 = validate(val_loader, model, criterion, args)
 
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
@@ -216,7 +239,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
 
 
-def validate(val_loader, model, criterion):
+def validate(val_loader, model, criterion, args):
     with torch.no_grad():
         batch_time = AverageMeter()
         losses = AverageMeter()
@@ -225,13 +248,10 @@ def validate(val_loader, model, criterion):
 
         # switch to evaluate mode
         model.eval()
-        model.module.fuse_model()
 
-        end = time.time()
         for i, (input, target) in enumerate(val_loader):
-            # target = target.cuda()
-            # input = input.cuda()
-
+            if i >= args.warmup_iterations:
+                start = time.time()
             # compute output
             output = model(input)
             loss = criterion(output, target)
@@ -242,9 +262,9 @@ def validate(val_loader, model, criterion):
             top1.update(prec1.item(), input.size(0))
             top5.update(prec5.item(), input.size(0))
 
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+            if i >= args.warmup_iterations:
+                # measure elapsed time
+                batch_time.update(time.time() - start)
 
             if i % args.print_freq == 0:
                 print('Test: [{0}/{1}]\t'
@@ -255,8 +275,15 @@ def validate(val_loader, model, criterion):
                        i, len(val_loader), batch_time=batch_time, loss=losses,
                        top1=top1, top5=top5))
 
-        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
-              .format(top1=top1, top5=top5))
+            if args.iterations > 0 and i >= args.iterations + args.warmup_iterations - 1:
+                break
+
+        print('Batch size = %d' % args.batch_size)
+        if args.batch_size == 1:
+            print('Latency: %.3f ms' % (batch_time.avg * 1000))
+        print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
+        print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
+              .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
         return top1.avg, top5.avg
 

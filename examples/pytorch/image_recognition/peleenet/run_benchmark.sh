@@ -11,7 +11,8 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet
+  ilit_checkpoint=ilit_workspace/pytorch/peleenet
+  batch_size=30
   for var in "$@"
   do
     case $var in
@@ -49,7 +50,7 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --benchmark"
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd=" --iter ${iters} --benchmark "
     else
@@ -64,10 +65,9 @@ function run_benchmark {
     fi
 
     python main.py \
-            --pretrained \
             --ilit_checkpoint ${ilit_checkpoint} \
+            -j 1 \
             -b ${batch_size} \
-            -a $topology \
             ${mode_cmd} \
             ${extra_cmd}
 }
