@@ -458,7 +458,7 @@ class MxNetAdaptor(Adaptor):
                     return
 
                 handle = ctypes.cast(arr, NDArrayHandle)
-                arr = mx.ndarray.NDArray(handle, writable=False)  # pylint: disable=no-member
+                arr = mx.ndarray.NDArray(handle, writable=False).asnumpy()  # pylint: disable=no-member
                 if name in self.tensor_dict.keys():
                     self.tensor_dict[name].append(arr)
                 else:
