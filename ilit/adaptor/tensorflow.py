@@ -15,12 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 import os
 import copy
-import numpy as np
 from collections import OrderedDict
+import yaml
+import numpy as np
+from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, CpuInfo
+from ..utils.utility import LazyImport, CpuInfo, singleton
 from ..utils import logger
 tensorflow = LazyImport('tensorflow')
 
@@ -50,6 +53,8 @@ class TensorFlowAdaptor(Adaptor):
         self.bf16_ops = []
         self.fp32_ops = []
         self.dump_times = 0   # for tensorboard
+        self.query_handler = TensorflowQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "tensorflow.yaml"))
 
     def get_tensor_by_name_with_import(self, graph, name, try_cnt=3):
         """Get the tensor by name considering the 'import' scope when model
@@ -126,6 +131,7 @@ class TensorFlowAdaptor(Adaptor):
 
         graph = tf.Graph()
         graph_def = get_graph_def(input_graph, self.outputs)
+
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
@@ -205,7 +211,7 @@ class TensorFlowAdaptor(Adaptor):
 
             if measurer is not None:
                 measurer.start()
-                predictions = sess_graph.run(output_tensor, feed_dict) 
+                predictions = sess_graph.run(output_tensor, feed_dict)
                 measurer.end()
             else:
                 predictions = sess_graph.run(output_tensor, feed_dict)
@@ -335,53 +341,31 @@ class TensorFlowAdaptor(Adaptor):
                                    data_loader=data_loader)
         return converter.convert()
 
-    def _query_quantizable_ops(self, matched_nodes, activation_dtype, weight_dtype):
+    def _query_quantizable_ops(self, matched_nodes):
         """Collect the op-wise configuration for quantization.
 
         Returns:
             OrderDict: op-wise configuration.
         """
+        u8_type = self.query_handler.get_op_types_by_precision(precision='u8')
+        s8_type = self.query_handler.get_op_types_by_precision(precision='s8')
+        tf_quantizable_op_type =  list(set(u8_type).union(set(s8_type)))
 
-        tf_quantizable_op_type = ("Conv2D", "DepthwiseConv2dNative",
-                                  "MaxPool", "AvgPool", "ConcatV2", "MatMul", "Pad")
-        conv_config = {
-            'activation': {
-                'dtype': activation_dtype,
-                'algorithm': ['minmax', 'kl'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor']
-            },
-            'weight': {
-                'dtype': weight_dtype,
-                'algorithm': ['minmax'],
-                'scheme': ['sym'],
-                'granularity': ['per_channel', 'per_tensor']
-            }
-        }
-        matmul_config = {
-            'activation': {
-                'dtype': activation_dtype,
-                'algorithm': ['minmax'],
-                'scheme': ['asym', 'sym'],
-                'granularity': ['per_tensor']
-            },
-            'weight': {
-                'dtype': weight_dtype,
-                'algorithm': ['minmax'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor']
-            }
-        }
-        other_config = {
-            'activation': {
-                'dtype': activation_dtype,
-                'algorithm': ['minmax'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor']
-            },
-        }
+        invalid_precisions = [] if self._support_bf16() else ['bf16']
+        valid_precision = self.query_handler.get_mixed_precision_combination(invalid_precisions)
 
-        self.quantizable_op_details = OrderedDict()
+        conv_config = self.query_handler.get_quantization_capability()['u8']['Conv2D']
+        matmul_config = self.query_handler.get_quantization_capability()['u8']['MatMul']
+        other_config = self.query_handler.get_quantization_capability()['u8']['default']
+
+        if 'bf16' in valid_precision:
+            conv_config['weights']['dtype'].append('bf16')
+            matmul_config['weights']['dtype'].append('bf16')
+            conv_config['activation']['dtype'].append('bf16')
+            matmul_config['activation']['dtype'].append('bf16')
+            other_config['activation']['dtype'].append('bf16')
+
+        self.quantizable_op_details = OrderedDict() 
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
         for details in matched_nodes:
@@ -482,7 +466,7 @@ class TensorFlowAdaptor(Adaptor):
                 },
             }
         }
-        self._query_quantizable_ops(matched_nodes, activation_dtype, weight_dtype)
+        self._query_quantizable_ops(matched_nodes)
         capability['opwise'] = self.quantizable_op_details
         logger.debug('Dump framework quantization capability:')
         logger.debug(capability)
@@ -607,3 +591,118 @@ class TensorFlowAdaptor(Adaptor):
 
     def save(self, model, path):
         pass
+
+@singleton
+class TensorflowQuery(QueryBackendCapability):
+
+    def __init__(self, local_config_file=None):
+        import tensorflow as tf
+
+        super().__init__()
+        self.version = tf.version.VERSION
+        self.cfg = local_config_file
+        self.cur_config = None
+        self._one_shot_query()
+
+    def _get_specified_version_cfg(self, data):
+        """Get the configuration for the current runtime。
+        If there's no matched configuration in the input yaml, we'll
+        use the `default` field of yaml.
+
+        Args:
+            data (Yaml content): input yaml file.
+
+        Returns:
+            [dictionary]: the content for specific version.
+        """
+        default_config = None
+        for sub_data in data:
+            if sub_data['version']['name'] == self.version:
+                return sub_data
+
+            if sub_data['version']['name'] == 'default':
+                default_config = sub_data
+
+        return default_config
+
+    def _one_shot_query(self):
+        with open(self.cfg) as f:
+            content = yaml.safe_load(f)
+            try:
+                self.cur_config = self._get_specified_version_cfg(content)
+            except Exception as e:
+                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                self.cur_config = None
+                raise ValueError("Please check the {} format.".format(self.cfg))
+
+    def get_version(self):
+        """Get the current backend version infomation.
+
+        Returns:
+            [string]: version string.
+        """
+        return self.cur_config['version']['name']
+
+    def get_precisions(self):
+        """Get supported precisions for current backend.
+
+        Returns:
+            [string list]: the precisions' name.
+        """
+        return self.cur_config['precisions']['names']
+
+    def get_op_types(self):
+        """Get the supported op types by all precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the op types.
+        """
+        return self.cur_config['ops']
+
+    def get_fuse_patterns(self):
+        """Get supported patterns by low precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the supported patterns.
+        """
+        return self.cur_config['patterns']
+
+    def get_quantization_capability(self):
+        """Get the supported op types' quantization capability.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is a dict that describes all op types' quantization capability.
+        """
+        return self.cur_config['capabilities']
+
+    def get_op_types_by_precision(self, precision):
+        """Get op types per precision
+
+        Args:
+            precision (string): precision name
+
+        Returns:
+            [string list]: A list composed of op type.
+        """
+        assert precision in list(self.cur_config['ops'].keys())
+
+        return self.cur_config['ops'][precision]
+
+    def get_mixed_precision_combination(self, invalid_precisions):
+        """Get the valid mixed precisions.
+
+        Args:
+            unsupported_precisions (string list): unsupported precisions.
+
+        Returns:
+            [string list]: valid precision list.
+        """
+        if self.cur_config['precisions']['valid_mixed_precisions']:
+            return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
+        
+        return list(self.get_precisions().split(','))
+
+        

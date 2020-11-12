@@ -1,0 +1,250 @@
+---
+-
+  version:
+    name: '2.4.0'
+  
+  precisions:
+    names: s8, u8, bf16, fp32
+    valid_mixed_precisions: []
+  
+  ops:
+    s8: ['Conv2D']
+    u8: ['Conv2D', 'MatMul', 'DepthwiseConv2dNative', 'MaxPool', 'AvgPool', 'ConcatV2', 'MatMul']
+    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities:
+    s8: &ref_2_4 {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+    u8: *ref_2_4
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd'
+        ]
+    s8: ['Conv2D + BiasAdd', 'Conv2D + BiasAdd+Relu']
+    u8: [
+        'Conv2D + BiasAdd + AddN + Relu',
+        'Conv2D + BiasAdd + AddN + Relu6',
+        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Relu6',
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd',
+        'DepthwiseConv2dNative + BiasAdd + Relu6',
+        'DepthwiseConv2dNative + Add + Relu6',
+        'DepthwiseConv2dNative + BiasAdd',
+        'MatMul + BiasAdd + Relu',
+        'MatMul + BiasAdd',
+  ]
+
+-
+  version:
+    name: '2.3.0'
+  
+  precisions:
+    names: s8, u8, bf16, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    s8: ['Conv2D']
+    u8: ['Conv2D', 'MatMul', 'DepthwiseConv2dNative','MaxPool', 'AvgPool', 'ConcatV2', 'MatMul']
+    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    fp32: ['*']
+
+  capabilities:
+    s8: &ref_2_3 {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel', 'per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+    u8: *ref_2_3
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd'
+        ]
+    s8: [Conv2D+BiasAdd', 'Conv2D+BiasAdd+Relu']
+    u8: [
+        'Conv2D + BiasAdd + AddN + Relu',
+        'Conv2D + BiasAdd + AddN + Relu6',
+        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Relu6',
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd',
+        'DepthwiseConv2dNative + BiasAdd + Relu6',
+        'DepthwiseConv2dNative + Add + Relu6',
+        'DepthwiseConv2dNative + BiasAdd',
+        'MatMul + BiasAdd + Relu',
+        'MatMul + BiasAdd',
+  ]
+
+-
+  version:
+    name: 'default'
+
+  precisions:
+    names: u8, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    s8: []
+    u8: ['Conv2D', 'MatMul', 'DepthwiseConv2dNative','MaxPool', 'AvgPool', 'ConcatV2', 'MatMul']
+    fp32: ['*']
+
+  capabilities:
+    u8:  {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel', 'per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+    s8: []
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd'
+        ]
+    s8: []
+    u8: [
+        'Conv2D + BiasAdd + AddN + Relu',
+        'Conv2D + BiasAdd + AddN + Relu6',
+        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Relu6',
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd',
+        'DepthwiseConv2dNative + BiasAdd + Relu6',
+        'DepthwiseConv2dNative + Add + Relu6',
+        'DepthwiseConv2dNative + BiasAdd',
+        'MatMul + BiasAdd + Relu',
+        'MatMul + BiasAdd',
+  ]
