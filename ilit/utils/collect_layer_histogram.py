@@ -16,7 +16,7 @@
 # limitations under the License.
 
 import numpy as np
-
+from ilit.utils.utility import combine_histogram
 
 class LayerHistogramCollector(object):
     """Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
@@ -50,34 +50,9 @@ class LayerHistogramCollector(object):
                 max_range = np.max(arr)
                 th = max(abs(min_range), abs(max_range))
                 if name in self.hist_dict:
-                    self.hist_dict[name] = self.combine_histogram(
-                        self.hist_dict[name], arr, min_range, max_range, th)
+                    self.hist_dict[name] = combine_histogram(self.hist_dict[name], arr)
                 else:
                     hist, hist_edges = np.histogram(
                         arr, bins=self.num_bins, range=(-th, th))
                     self.hist_dict[name] = (
                         hist, hist_edges, min_range, max_range, th)
-
-    def combine_histogram(self, old_hist, arr, new_min, new_max, new_th):
-        """ Collect layer histogram for arr and combine it with old histogram.
-        """
-        (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
-        if new_th <= old_th:
-            hist, _ = np.histogram(arr, bins=len(old_hist), range=(-old_th, old_th))
-            return (old_hist + hist, old_hist_edges,
-                    min(old_min, new_min), max(old_max, new_max), old_th)
-        else:
-            # Need to generate new histogram with new_th
-            old_num_bins = len(old_hist)
-            old_step = 2 * old_th / old_num_bins
-            half_increased_bins = int((new_th - old_th) // old_step + 1)
-            new_num_bins = half_increased_bins * 2 + old_num_bins
-            new_th = half_increased_bins * old_step + old_th
-            hist, hist_edges = np.histogram(
-                arr, bins=new_num_bins, range=(-new_th, new_th))
-            hist[half_increased_bins:new_num_bins -
-                 half_increased_bins] += old_hist
-            return (
-                hist, hist_edges, min(
-                    old_min, new_min), max(
-                    old_max, new_max), new_th)

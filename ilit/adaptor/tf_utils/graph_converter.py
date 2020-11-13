@@ -29,11 +29,11 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import importer
 from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
-from tensorflow.python.framework.ops import Graph
 # from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
+from ilit.utils.utility import get_all_fp32_data
+from ilit.utils.utility import get_tensor_histogram
+from ilit.utils.utility import combine_histogram
 from .transform_graph.insert_logging import InsertLogging
-from .transform_graph.freeze_max_min import get_all_fp32_data, get_tensor_histogram
-from .transform_graph.freeze_max_min import combine_histogram
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .util import write_graph
 from .util import get_graph_def
@@ -221,7 +221,7 @@ class GraphConverter:
                 feed_dict = dict(zip(input_tensor, inputs))
 
             _ = sess_graph.run(output_tensor, feed_dict)
-            if idx + 1 == self.calib_iteration: 
+            if idx + 1 == self.calib_iteration:
                 break
 
         sess_graph.close()

@@ -67,52 +67,6 @@ def write_graph(out_graph_def, out_graph_file):
     f = gfile.GFile(out_graph_file, 'wb')
     f.write(out_graph_def.SerializeToString())
 
-
-def split_shared_inputs(in_graph, ops=[]):
-    """
-    Split shared inputs(like weights and bias) of ops list.
-    :param in_graph: input graph file.
-    :param ops: ops list to processing.
-    :return: path to ouput graph file.
-    """
-    if not ops:
-        return in_graph
-
-    input_graph_def = read_graph(in_graph)
-
-    # map of node_name - node
-    node_map = {}
-    for node in input_graph_def.node:
-        if node.name not in node_map.keys():
-            node_map[node.name] = node
-
-    output_graph_def = graph_pb2.GraphDef()
-    # map of input_name - op_name
-    input_map = {}
-    for node_name in node_map.keys():
-        node = node_map[node_name]
-        if node.op in ops:
-            for input_idx, input_node_name in enumerate(node.input):
-                if node_map[input_node_name].op == 'Const':
-                    # is shared and current node is not the first one sharing
-                    # the input
-                    if input_node_name in input_map.keys():
-                        input_map[input_node_name].append(node.name)
-                        new_input_node = node_def_pb2.NodeDef()
-                        new_input_node.CopyFrom(node_map[input_node_name])
-                        new_input_node.name = input_node_name + '_' + str(
-                            len(input_map[input_node_name]))
-                        node.input[input_idx] = new_input_node.name
-                        output_graph_def.node.extend([new_input_node])
-                    else:
-                        input_map[input_node_name] = [node.name]
-        output_graph_def.node.extend([node])
-    rewrite_graph = os.path.join(os.path.dirname(in_graph),
-                                 'frozen_inference_graph_rewrite.pb')
-    write_graph(output_graph_def, rewrite_graph)
-    return rewrite_graph
-
-
 def is_ckpt_format(model_path):
     """check the model_path format is ckpt or not.
 

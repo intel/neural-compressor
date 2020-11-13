@@ -28,10 +28,10 @@ import inspect
 import time
 import sys
 import logging
-import cpuinfo
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 import os.path as osp
+import cpuinfo
 import numpy as np
 
 
@@ -228,3 +228,41 @@ def dump_elapsed_time(customized_msg=""):
             return res
         return fi
     return f
+
+def combine_histogram(old_hist, arr):
+    """ Collect layer histogram for arr and combine it with old histogram.
+    """
+    new_max = np.max(arr)
+    new_min = np.min(arr)
+    new_th = max(abs(new_min), abs(new_max))
+    (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
+    if new_th <= old_th:
+        hist, _ = np.histogram(arr,
+                               bins=len(old_hist),
+                               range=(-old_th, old_th))
+        return (old_hist + hist, old_hist_edges, min(old_min, new_min),
+                max(old_max, new_max), old_th)
+    else:
+        old_num_bins = len(old_hist)
+        old_step = 2 * old_th / old_num_bins
+        half_increased_bins = int((new_th - old_th) // old_step + 1)
+        new_num_bins = half_increased_bins * 2 + old_num_bins
+        new_th = half_increased_bins * old_step + old_th
+        hist, hist_edges = np.histogram(arr,
+                                        bins=new_num_bins,
+                                        range=(-new_th, new_th))
+        hist[half_increased_bins:new_num_bins - half_increased_bins] += old_hist
+        return (hist, hist_edges, min(old_min, new_min), max(old_max,
+                                                             new_max), new_th)
+
+def get_tensor_histogram(tensor_data, bins=2048):
+    max_val = np.max(tensor_data)
+    min_val = np.min(tensor_data)
+    th = max(abs(min_val), abs(max_val))
+
+    hist, hist_edeges = np.histogram(tensor_data, bins=2048, range=(-th, th))
+
+    return (hist, hist_edeges, max_val, min_val, th)
+
+def get_all_fp32_data(data):
+    return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip()]
