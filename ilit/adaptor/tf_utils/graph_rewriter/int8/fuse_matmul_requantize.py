@@ -73,7 +73,6 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
             new_node.name = requantize_node_name
             for _, value in enumerate(quantized_node.input):
                 new_node.input.append(value)
-
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
             if 'T1' in quantized_node.attr:
@@ -86,6 +85,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
             min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
 
+            is_min_first = bool(quantized_node.attr['input_quant_mode'] == 'MIN_FIRST')
             if last_node.op.find('Requantize') != -1 or last_node.op.find('QuantizeV2') != -1:
 
                 bias_node = self.graph_info[new_node.input[2]].node
@@ -101,9 +101,11 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                         self.graph_info[new_node.input[1]].node.attr['value'].tensor)
                 bias_tensor = tensor_util.MakeNdarray(
                     self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                input_range = max_input_value - \
+                    min_input_value if is_min_first else max(
+                        abs(max_input_value), abs(min_input_value))
                 bias_scale = 255.0 * 127.0 / (
-                        max(abs(max_input_value), abs(min_input_value)) *
-                        max(abs(max_filter_value), abs(min_filter_value)))
+                        input_range * max(abs(max_filter_value), abs(min_filter_value)))
                 relative_scale = 255 * min_input_value / (max_input_value - min_input_value)
                 int32_bias = []
                 for bias_index, value in enumerate(
