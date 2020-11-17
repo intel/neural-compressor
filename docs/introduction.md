@@ -1,32 +1,32 @@
 Introduction
 =========================================
 
-Intel® Low Precision Optimization Tool is an open source python library to help users to fast deploy low-precision inference solution on popular DL frameworks including TensorFlow, PyTorch, MxNet etc. It automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives like inference performance and memory usage with expected accuracy criteria.
+Intel® Low Precision Optimization Tool is an open-source Python library designed to help users quickly deploy low-precision inference solutions on popular deep learning (DL) frameworks such as TensorFlow\*, PyTorch\*, and MXNet. It automatically optimizes low-precision recipes for deep learning models in order to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria.
 
 
-# User facing API
+# User-facing API
 
-The API is intented to unify the low precision quantization interfaces cross multiple DL frameworks for best out-of-box experiences.
+The API is intended to unify low-precision quantization interfaces cross multiple DL frameworks for the best out-of-the-box experiences.
 
-It consists of three components:
+The API consists of three components:
 
-### quantization related APIs
+### quantization-related APIs
 ```
 class Quantization(object):
     def __init__(self, conf_fname):
         ...
-    
+
     def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None):
         ...
 
 ```
 
-### pruning related APIs
+### pruning-related APIs
 ```
 class Pruning(object):
     def __init__(self, conf_fname):
         ...
-    
+
     def on_epoch_begin(self, epoch):
         ...
 
@@ -38,12 +38,12 @@ class Pruning(object):
 
     def on_epoch_end(self):
         ...
-    
+
     def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None):
         ...
 ```
 
-### benchmarking related APIs
+### benchmarking-related APIs
 ```
 class Benchmark(object):
     def __init__(self, conf_fname):
@@ -53,35 +53,35 @@ class Benchmark(object):
         ...
 ```
 
-The conf_fname parameter used in above class initialization is a path to Intel® Low Precision Optimization Tool configuration file, which is a yaml file and used to control the whole tuning behavior.
+The `conf_fname` parameter used in the above class initialization is the path to the Intel® Low Precision Optimization Tool configuration file. This is a yaml file that is used to control the entire tuning behavior.
 
 # YAML Syntax
 
-Intel® Low Precision Optimization Tool provides three template yaml files for [PTQ](../ilit/template/ptq.yaml), [QAT](../ilit/template/qat.yaml), [Pruning](../ilit/template/pruning.yaml) scenarios. User could refer to this complete template to understand the meaning of each fields.
+Intel® Low Precision Optimization Tool provides template yaml files for the [PTQ](../ilit/template/ptq.yaml), [QAT](../ilit/template/qat.yaml), and [Pruning](../ilit/template/pruning.yaml) scenarios. Refer to the complete template to understand the meaning of each field.
 
-> Most of fields in yaml template is optional and a typical yaml file needed is very concise. for example, [HelloWorld Yaml](../examples/helloworld/tf2.x/conf.yaml)
+Note that most fields in the yaml templates are optional. Additionally, a typical yaml file must be very concise. View the [HelloWorld Yaml](../examples/helloworld/tf2.x/conf.yaml) example for reference.
 
-# How to use the quantization API
+# Quantization API Usage
 
-Intel® Low Precision Optimization Tool supports three different usages replying on how user code orgnized:
+Intel® Low Precision Optimization Tool supports three different usages, depending on how the user code is organized:
 
-### *Template-based yaml setting + 3 lines code changes*
+### Template-based yaml setting + 3 lines of code changes
 
-This first usage is designed for minimal code changes when integrating with Intel® Low Precision Optimization Tool. All calibration and evaluation process is constructed by yaml, including dataloaders used in calibration and evaluation phases and quantization tuning settings. For this usage, only model parameter is mandotory.
+This first usage is designed for minimal code changes when integrating with Intel® Low Precision Optimization Tool. All calibration and evaluation processes are constructed by yaml, including dataloaders used in the calibration and evaluation phases and in the quantization tuning settings. For this usage, only the `model` parameter is mandatory.
 
-Examples of this usage are at [TensorFlow Classification Models](../examples/tensorflow/image_recognition/README.md).
+View examples of this usage at [TensorFlow Classification Models](../examples/tensorflow/image_recognition/README.md).
 
-### *Concise template-based yaml + few lines code changes*
+### Concise template-based yaml + few lines of code changes
 
-The second usage is designed for concise yaml configuration by moving calibration and evaluation dataloader construction from yaml to code. If user model is using ilit supported evaluation metrics, this usages will be a good choice.
- 
-user need provide a *dataloader* implemented __iter__ or __getitem__ methods and batch_size attribute, which usually have existed or easily develop in user code. ilit also provides built-in dataloaders to support dynamic batching, user can implement a *dataset* implemented __iter__ or __getitem__ methods to yield one single batch. Quanitzation().dataloader() will take this dataset as input parameter to construct ilit dataloader.    
+The second usage is designed for a concise yaml configuration by moving the calibration and evaluation dataloader construction from yaml to code. If the user model is using **ilit**-supported evaluation metrics (such as TOPK and MAP), this usage is a good choice.
 
-After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader". The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified in the yaml configuration file. The evaluation tells the tuner whether the quantized model meets the accuracy criteria. If not, the tuner starts a new calibration and tuning flow. For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
+The user must provide a **dataloader**-implemented `iter` or `getitem` method and `batch_size` attribute, which usually already exists or can be easily developed in the user code. ilit also provides built-in dataloaders to support dynamic batching; the user can set up a **dataset**-implemented `iter` or `getitem` method to yield one single batch. The `quantization().dataloader()` takes this dataset as an input parameter to construct the ilit dataloader.
 
-### *Most concise template-based yaml + few lines code changes*
-   
-The third usage is designed for ease of tuning enablement for models with custom metric evaluation or metrics not supported by Intel® Low Precision Optimization Tool yet. Currently this usage model works for object detection and NLP networks.
+After that, the user specifies the fp32 `model`, the `q_dataloader` calibration dataset, and the `eval_dataloader` evaluation dataset. The `eval_dataloader` parameter evaluates the calibrated and quantized model; the evaluation metrics are specified in the yaml configuration file. The evaluation tells the tuner if the quantized model meets accuracy criteria. If it does not, the tuner starts a new calibration and tuning flow. For this usage, the `model`, `q_dataloader`, and `eval_dataloader` parameters are mandatory.
 
-User constructs calibration dataloader by code and pass to "q_dataloader" parameter. This usage is quite similar with the second usage, just user specifies a custom "eval_func" which encapsulates the evaluation dataset and evaluation process by self. The FP32 and quantized INT8 model is evaluated with "eval_func". The "eval_func" yields a higher-is-better accuracy value to the tuner, the tuner will check whether the quantized model meets the accuracy criteria. If not, the Tuner starts a new calibration and tuning flow. For this usage, model, q_dataloader and eval_func parameters are mandotory
+### Most concise template-based yaml + few lines of code changes
+
+The third usage is designed for ease of tuning enablement for models with custom metric evaluations or for metrics not yet supported by Intel® Low Precision Optimization Tool. Currently, this usage model works for object detection and NLP networks.
+
+The user constructs the calibration dataloader by code and passes it to the `q_dataloader` parameter. This usage is similar to the second usage; the difference is that the user specifies a custom `eval_func` parameter that encapsulates the evaluation dataset and evaluation process by `self`. The FP32 and quantized INT8 model is evaluated by `eval_func`. The `eval_func` yields a higher-is-better accuracy value to the tuner; the tuner checks to see if the quantized model meets the accuracy criteria. If it does not, the tuner starts a new calibration and tuning flow. For this usage, the `model`, `q_dataloader` and `eval_func` parameters are mandatory.
 
