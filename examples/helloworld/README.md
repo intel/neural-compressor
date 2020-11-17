@@ -1,15 +1,15 @@
-### 1. Prepare Dataset and pretrained models for Hello World examples
+Enter the following commands to prepare a dataset and pretrained models for the included Hello World examples:
+
 ```Shell
 pip install intel-tensorflow==2.3.0
 python train.py
 
 ```
-This script will generate a saved model and a frozen pb for you. 
+The `train.py` script generates a saved model and a frozen pb for your use.
 
-### 2. Hello World Examples
- 
-*  Frozen pb example: Please see tf1.x/README.md. 
- 
-*  Saved model example: Please see tf2.x/README.md. 
+The following Hello World examples are available:
 
-*  Quantize frozen pb only for performance: tf1.x_dummy/README.md. 
+*  Frozen pb example: [tf1.x](examples/helloworld/tf1.x/README.md)
+
+*  Saved model example: [tf2.x](examples/helloworld/tf2.x/README.md)
+
