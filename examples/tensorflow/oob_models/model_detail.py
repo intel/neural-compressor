@@ -249,4 +249,16 @@ models = [
         'input': {'data': generate_data([720, 960, 3],batch_size=16)},
         'output': ['segmentation_output']
     },
+    # deeplabv3
+    {
+        'model_name': 'deeplabv3',
+        'input': {'ImageTensor': generate_data([300, 300, 3],input_dtype='uint8')},
+        'output': ['SemanticPredictions']
+    },
+    # ssd_resnet34_300x300
+    {
+        'model_name': 'ssd-resnet34_300x300',
+        'input': {'input': generate_data([300, 300, 3])},
+        'output': ['v/stack',"v/Softmax"]
+    },
 ]

@@ -57,6 +57,8 @@ Hierarchical_LSTM
 icnet-camvid-ava-0001
 icnet-camvid-ava-sparse-30-0001
 icnet-camvid-ava-sparse-60-0001
+deeplabv3
+ssd-resnet34_300x300
 )
 
 # run_tuning

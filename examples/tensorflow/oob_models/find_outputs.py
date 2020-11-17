@@ -132,14 +132,7 @@ def _load_meta(model_network_path):
         return graph
 
 def get_input_output(graph_path, input_meta=False):
-    # judge object_detection model 
-    path = graph_path.split('/')
-    is_detection = False
-    for item in path:
-        if 'detection' in item or 'mask' in item or 'rcnn' in item or 'yolo' in item:
-            is_detection = True
-            break
-    fix_dynamic_shape = 600 if is_detection else 300
+    fix_dynamic_shape = 600
 
     if input_meta:
         # meta file
