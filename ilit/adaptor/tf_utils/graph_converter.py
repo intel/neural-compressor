@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 
+import copy
 import os
 import sys
 import logging
@@ -49,7 +50,7 @@ from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.generic.update_enter import UpdateEnterOptimizer
-
+from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
@@ -275,7 +276,7 @@ class GraphConverter:
         if not self.output_graph:
             self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph.pb')
         # to keep temp graphDef
-        self._tmp_graph_def = self.input_graph
+        self._tmp_graph_def = copy.deepcopy(self.input_graph)
 
     def inspect_tensor(self, op_list, op_iteration_list):
         """Inspect the tensor content
@@ -569,6 +570,11 @@ class GraphConverter:
         g = ops.Graph()
         with g.as_default():
             importer.import_graph_def(self._tmp_graph_def)
+        non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+
+        self._tmp_graph_def = FusePadWithConv2DOptimizer(
+            self._tmp_graph_def, non_pad_ops, self.inputs, self.op_wise_config).do_transformation()
+
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
                                                                      self.inputs, self.outputs)
         intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
