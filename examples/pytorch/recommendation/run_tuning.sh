@@ -64,6 +64,7 @@ function run_tuning {
             --mlperf-bin-shuffle \
             --load-model=${input_model} \
             --tune \
+            --inference-only \
             ${extra_cmd}
 
 }

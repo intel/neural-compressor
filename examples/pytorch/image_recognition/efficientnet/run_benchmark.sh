@@ -66,7 +66,7 @@ function run_benchmark {
     if [[ ${int8} == "true" ]]; then
         extra_cmd="--int8 ${dataset_location}"
     else
-        extra_cmd="${dataset_location}"
+        extra_cmd="--pretrained ${dataset_location}"
     fi
 
     python -u scripts/torch/verify.py \

@@ -843,6 +843,8 @@ if __name__ == "__main__":
             args.print_freq = ld_nbatches
             args.test_freq = 0
 
+        del ld_model
+
         print(
             "Saved at: epoch = {:d}/{:d}, batch = {:d}/{:d}, ntbatch = {:d}".format(
                 ld_k, ld_nepochs, ld_j, ld_nbatches, ld_nbatches_test
@@ -880,8 +882,7 @@ if __name__ == "__main__":
         targets = np.concatenate(targets, axis=0)
         roc_auc = sklearn.metrics.roc_auc_score(targets, scores)
         print('Batch size = %d' % args.test_mini_batch_size)
-        if args.test_mini_batch_size == 1:
-            print('Latency: %.3f ms' % (batch_time.avg * 1000))
+        print('Latency: %.3f ms' % (batch_time.avg / args.test_mini_batch_size * 1000))
         print('Throughput: %.3f images/sec' % (args.test_mini_batch_size / batch_time.avg))
         print('Accuracy: {roc_auc:.5f}'.format(roc_auc=roc_auc))
         return roc_auc
@@ -925,7 +926,7 @@ if __name__ == "__main__":
                 os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
                 os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), dlrm)
         else:
-            new_model = model
+            new_model = dlrm
         eval_func(new_model)
         exit(0)
 

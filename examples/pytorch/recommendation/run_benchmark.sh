@@ -12,7 +12,6 @@ function main {
 function init_params {
   iters=100
   ilit_checkpoint=ilit_workspace/pytorch/dlrm
-  batch_size=8
   for var in "$@"
   do
     case $var in
@@ -51,8 +50,10 @@ function init_params {
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --benchmark"
+        batch_size=16384
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd=" -i ${iters} --benchmark "
+        batch_size=16
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -81,7 +82,7 @@ function run_benchmark {
         --print-freq=2048 \
         --print-time \
         --test-freq=102400 \
-        --test-mini-batch-size=16384 \
+        --test-mini-batch-size=${batch_size} \
         --test-num-workers=16 \
         --memory-map \
         --mlperf-logging \
@@ -89,6 +90,7 @@ function run_benchmark {
         --mlperf-bin-loader \
         --mlperf-bin-shuffle \
         --load-model=${input_model} \
+        --inference-only \
         ${mode_cmd} \
         ${extra_cmd}
 }

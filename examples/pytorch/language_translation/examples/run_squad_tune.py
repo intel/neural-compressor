@@ -236,7 +236,7 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
     # Eval!
     logger.info("***** Running evaluation {} *****".format(prefix))
     logger.info("  Num examples = %d", len(dataset))
-    logger.info("  Batch size = %d", args.eval_batch_size)
+    print("  Batch size = %d" % args.eval_batch_size)
 
     if args.mkldnn_eval:
         from torch.utils import mkldnn as mkldnn_utils
@@ -314,8 +314,8 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
     if nb_eval_steps >= args.warmup:
         perf = (nb_eval_steps - args.warmup) * args.eval_batch_size / evalTime
         if args.eval_batch_size == 1:
-                logger.info('Latency: %.3f ms' % (evalTime / (nb_eval_steps - args.warmup) * 1000))
-        logger.info("Evaluation done in total %f secs (Throughput: %f samples/sec)", evalTime, perf)
+                print('Latency: %.3f ms' % (evalTime / (nb_eval_steps - args.warmup) * 1000))
+        print("Evaluation done in total %f secs (Throughput: %f samples/sec)" % (evalTime, perf))
     else:
         logger.info("*****no performance, please check dataset length and warmup number *****")
 
@@ -352,7 +352,7 @@ def evaluate(args, model, tokenizer, prefix="", calibration=False):
             if key in results.keys():
                 acc = results[key]
                 break
-        logger.info("Accuracy: %.5f", acc)
+        print("Accuracy: %.5f" % acc)
     else:
         results = None
     return results, perf

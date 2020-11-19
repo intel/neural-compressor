@@ -61,13 +61,14 @@ function run_benchmark {
     if [[ ${int8} == "true" ]]; then
         extra_cmd="--int8 ${dataset_location}"
     else
-        extra_cmd="${dataset_location}"
+        extra_cmd="--pretrained ${dataset_location}"
     fi
 
     python main.py \
             --ilit_checkpoint ${ilit_checkpoint} \
             -j 1 \
             -b ${batch_size} \
+            --weights ${input_model} \
             ${mode_cmd} \
             ${extra_cmd}
 }
