@@ -28,7 +28,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 1. ResNet50
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/QAT
+  cd examples/pytorch/image_recognition/imagenet/cpu/qat
   python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
   ```
   For ResNet50 model, we can get int8 0.7614 accuracy vs fp32 0.7613.
@@ -36,14 +36,14 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ### 2. ResNet18
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/QAT
+  cd examples/pytorch/image_recognition/imagenet/cpu/qat
   python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
   ```
 
 ### 3. ResNext101_32x8d
 
   ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/QAT
+  cd examples/pytorch/image_recognition/imagenet/cpu/qat
   python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
   ```
 
@@ -101,7 +101,7 @@ PyTorch quantization requires two manual steps:
 
 Torchvision provide quantized_model, so we didn't do these steps above for all torchvision models. Please refer [torchvision](https://github.com/pytorch/vision/tree/master/torchvision/models/quantization)
 
-The related code please refer to examples/pytorch/image_recognition/imagenet/cpu/QAT/main.py.
+The related code please refer to examples/pytorch/image_recognition/imagenet/cpu/qat/main.py.
 
 ### Code Update
 
