@@ -24,8 +24,11 @@ from .quantize_graph_base import QuantizeNodeBase
 
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
-    patterns = [["Conv2D", "BiasAdd", "AddN", "Relu"],
+    patterns = [
+                ["Conv2D", "BiasAdd", "AddN", "Relu"],
                 ["Conv2D", "BiasAdd", "AddN", "Relu6"],
+                ["Conv2D", "BiasAdd", "AddV2", "Relu"],
+                ["Conv2D", "BiasAdd", "AddV2", "Relu6"],
                 ["Conv2D", "BiasAdd", "Add", "Relu"], ["Conv2D", "BiasAdd"],
                 ["Conv2D", "BiasAdd", "Relu6"], ["Conv2D", "Add", "Relu6"],
                 ["Conv2D", "Add", "Relu"],
@@ -49,6 +52,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             'Conv2DBiasAdd': self.apply_conv_biasadd_fusion,
             'Conv2DBiasAddAddNRelu': self.apply_conv_biasadd_addn_relu_fusion,
             'Conv2DBiasAddAddNRelu6': self.apply_conv_biasadd_addn_relu_fusion,
+            'Conv2DBiasAddAddV2Relu': self.apply_conv_biasadd_addn_relu_fusion,
+            'Conv2DBiasAddAddV2Relu6': self.apply_conv_biasadd_addn_relu_fusion,
             'Conv2DBiasAddAddRelu': self.apply_conv_biasadd_addn_relu_fusion,
             'Conv2DBiasAddRelu6': self.apply_conv_biasadd_relu_fusion,
             'Conv2DBiasAddRelu': self.apply_conv_biasadd_relu_fusion,
