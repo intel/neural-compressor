@@ -22,7 +22,8 @@ User should not change values in this file. Instead, user should write a config
 file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
 options.
 """
-
+import re
+import ast
 import os
 import inspect
 import time
@@ -58,6 +59,7 @@ def singleton(cls):
             instances[cls] = cls(*args, **kw)
         return instances[cls]
     return _singleton
+
 
 class LazyImport(object):
     """Lazy import python module till use
@@ -145,23 +147,26 @@ def get_size(obj, seen=None):
 
     return size
 
-def compute_sparsity(tensor, eps = 1e-10):
+
+def compute_sparsity(tensor, eps=1e-10):
     mask = np.ones_like(tensor)
     tensor_size = tensor.size
     dense_mask = tensor != 0
     dense_size = dense_mask.sum()
     return tensor_size, tensor_size - dense_size, dense_size
 
+
 @contextmanager
 def fault_tolerant_file(name):
     dirpath, filename = osp.split(name)
-    with NamedTemporaryFile(dir=os.path.abspath(os.path.expanduser(dirpath)), \
+    with NamedTemporaryFile(dir=os.path.abspath(os.path.expanduser(dirpath)),
                             delete=False, suffix='.tmp') as f:
         yield f
         f.flush()
         os.fsync(f)
         f.close()
         os.replace(f.name, name)
+
 
 def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
     """Check whether two dicts are same except for those ignored keys.
@@ -170,11 +175,11 @@ def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
     if compare_keys == None and ignore_keys == None:
         return d1 == d2
     elif compare_keys == None and ignore_keys != None:
-        return {k: v for k,v in d1.items() if k not in ignore_keys} == \
-               {k: v for k,v in d2.items() if k not in ignore_keys}
+        return {k: v for k, v in d1.items() if k not in ignore_keys} == \
+               {k: v for k, v in d2.items() if k not in ignore_keys}
     elif compare_keys != None and ignore_keys == None:
-        return {k: v for k,v in d1.items() if k in compare_keys} == \
-            {k: v for k,v in d2.items() if k in compare_keys}
+        return {k: v for k, v in d1.items() if k in compare_keys} == \
+            {k: v for k, v in d2.items() if k in compare_keys}
     else:
         assert False
 
@@ -196,7 +201,7 @@ class CpuInfo(object):
             )
             self._vnni = bool(ecx & (1 << 11))
             eax = cpuid._run_asm(
-                b"\xB9\x01\x00\x00\x00", # mov ecx, 1
+                b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
                 b"\xB8\x07\x00\x00\x00"  # mov eax, 7
                 b"\x0f\xa2"              # cpuid
                 b"\xC3"                  # ret
@@ -211,6 +216,7 @@ class CpuInfo(object):
     def vnni(self):
         return self._vnni
 
+
 def dump_elapsed_time(customized_msg=""):
     """Get the elapsed time for decorated functions.
 
@@ -218,16 +224,17 @@ def dump_elapsed_time(customized_msg=""):
         customized_msg (string, optional): the parameter passed to decorator. Defaults to None.
     """
     def f(func):
-        def fi(*args,**kwargs):
+        def fi(*args, **kwargs):
             start = time.time()
-            res = func(*args,**kwargs)
+            res = func(*args, **kwargs)
             end = time.time()
             logging.getLogger().info('%s elapsed time: %s ms' %
-                                    (customized_msg if customized_msg else func.__qualname__,
-                                    round((end - start) * 1000, 2)))
+                                     (customized_msg if customized_msg else func.__qualname__,
+                                      round((end - start) * 1000, 2)))
             return res
         return fi
     return f
+
 
 def combine_histogram(old_hist, arr):
     """ Collect layer histogram for arr and combine it with old histogram.
@@ -255,6 +262,7 @@ def combine_histogram(old_hist, arr):
         return (hist, hist_edges, min(old_min, new_min), max(old_max,
                                                              new_max), new_th)
 
+
 def get_tensor_histogram(tensor_data, bins=2048):
     max_val = np.max(tensor_data)
     min_val = np.min(tensor_data)
@@ -264,5 +272,30 @@ def get_tensor_histogram(tensor_data, bins=2048):
 
     return (hist, hist_edeges, max_val, min_val, th)
 
+
 def get_all_fp32_data(data):
     return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip()]
+
+
+def str2array(s):
+    s = re.sub(r'\[ +', '[', s.strip())
+    s = re.sub(r'[,\s]+', ', ', s)
+    s = re.sub(r'\]\[', '], [', s)
+
+    return np.array(ast.literal_eval(s))
+
+
+class CaptureOutputToFile(object):
+    def __init__(self, tmp_file_path, stream=sys.stderr):
+        self.orig_stream_fileno = stream.fileno()
+        self.tmp_file = open(tmp_file_path, 'w')
+
+    def __enter__(self):
+        self.orig_stream_dup = os.dup(self.orig_stream_fileno)
+        os.dup2(self.tmp_file.fileno(), self.orig_stream_fileno)
+
+    def __exit__(self, type, value, traceback):
+        os.close(self.orig_stream_fileno)
+        os.dup2(self.orig_stream_dup, self.orig_stream_fileno)
+        os.close(self.orig_stream_dup)
+        self.tmp_file.close()

@@ -45,7 +45,8 @@ class Benchmark(object):
         framework = cfg.model.framework.lower()
         if framework == 'tensorflow':
             framework_specific_info.update({"inputs": cfg.model.inputs, \
-                                            "outputs": cfg.model.outputs})
+                                            "outputs": cfg.model.outputs, \
+                                            'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": b_dataloader})
 

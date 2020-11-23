@@ -48,6 +48,7 @@ class TensorFlowAdaptor(Adaptor):
         self.inputs = self.framework_specific_info['inputs']
         self.outputs = self.framework_specific_info['outputs']
         self.device = self.framework_specific_info['device']
+        self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.pre_optimized_graph = None
         self.pre_optimizer_handle = None
         self.bf16_ops = []
@@ -177,8 +178,9 @@ class TensorFlowAdaptor(Adaptor):
                     q_node_scale[node.name] = (node.op, q_out_min, q_out_max)
                     int8_inspect_node_name.append(node.name)
                 # Inspect weights, bias. Need further optimize
-                if node.op == "Const" and (graph_info[graph_info[node.name].outputs[0]].node.op in
-                    ["Conv2D", "DepthwiseConv2dNative", "MatMul", "FusedBatchNormV3", "BiasAdd"]):
+                if node.op == "Const" and graph_info[graph_info[node.name].outputs[0]].node.op \
+                    in ["Conv2D", "DepthwiseConv2dNative", "MatMul",
+                    "FusedBatchNormV3", "BiasAdd"]:
                     const_value = tensor_util.MakeNdarray(node.attr.get('value').tensor)
                     self.log_histogram(writer, node.name, const_value)
 
@@ -187,7 +189,7 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
         input_tensor = [
-            self.get_tensor_by_name_with_import(graph, x + ":0") for x in self.inputs \
+            self.get_tensor_by_name_with_import(graph, x + ":0") for x in self.inputs
         ]
         output_tensor = [
             self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
@@ -204,7 +206,7 @@ class TensorFlowAdaptor(Adaptor):
         for idx, (inputs, labels) in enumerate(dataloader):
             # dataloader should keep the order and len of inputs same with input_tensor
             if len(input_tensor) == 1:
-                feed_dict = {input_tensor[0]: inputs} # get raw tensor using index [0]
+                feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
             else:
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
@@ -228,6 +230,7 @@ class TensorFlowAdaptor(Adaptor):
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
                 metric.update(predictions, labels)
+
             if idx + 1 == iteration:
                 break
         acc = metric.result() if metric is not None else 0
@@ -350,7 +353,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         u8_type = self.query_handler.get_op_types_by_precision(precision='u8')
         s8_type = self.query_handler.get_op_types_by_precision(precision='s8')
-        tf_quantizable_op_type =  list(set(u8_type).union(set(s8_type)))
+        tf_quantizable_op_type = list(set(u8_type).union(set(s8_type)))
 
         invalid_precisions = [] if self._support_bf16() else ['bf16']
         valid_precision = self.query_handler.get_mixed_precision_combination(invalid_precisions)
@@ -366,7 +369,7 @@ class TensorFlowAdaptor(Adaptor):
             matmul_config['activation']['dtype'].append('bf16')
             other_config['activation']['dtype'].append('bf16')
 
-        self.quantizable_op_details = OrderedDict() 
+        self.quantizable_op_details = OrderedDict()
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
         for details in matched_nodes:
@@ -490,13 +493,13 @@ class TensorFlowAdaptor(Adaptor):
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         from .tf_utils.graph_converter import GraphConverter
 
-        converter = GraphConverter(model,
+        converter = GraphConverter(self.pre_optimized_graph if self.pre_optimized_graph else model,
                                    quantized_model,
                                    inputs=self.inputs,
                                    outputs=self.outputs,
                                    qt_config=self.quantize_config,
                                    data_loader=dataloader)
-        return converter.inspect_tensor(op_list, iteration_list)
+        return converter.inspect_tensor(op_list, iteration_list, self.work_dir)
 
     def quantize_input(self, model):
         ''' quantize the model to be able to take quantized input
@@ -592,6 +595,7 @@ class TensorFlowAdaptor(Adaptor):
 
     def save(self, model, path):
         pass
+
 
 @singleton
 class TensorflowQuery(QueryBackendCapability):
@@ -703,7 +707,5 @@ class TensorflowQuery(QueryBackendCapability):
         """
         if self.cur_config['precisions']['valid_mixed_precisions']:
             return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
-        
-        return list(self.get_precisions().split(','))
 
-        
+        return list(self.get_precisions().split(','))

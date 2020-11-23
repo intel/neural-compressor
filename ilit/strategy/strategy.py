@@ -136,7 +136,9 @@ class TuneStrategy(object):
         framework = self.cfg.model.framework.lower()
         if framework == 'tensorflow':
             framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+                {"inputs": self.cfg.model.inputs,
+                 "outputs": self.cfg.model.outputs,
+                 'workspace_path': self.cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
 

@@ -22,7 +22,7 @@ import sys
 import logging
 import threading
 import time
-import ast
+import copy
 import numpy as np
 import tensorflow as tf
 
@@ -34,6 +34,8 @@ from tensorflow.python.platform import gfile
 from ilit.utils.utility import get_all_fp32_data
 from ilit.utils.utility import get_tensor_histogram
 from ilit.utils.utility import combine_histogram
+from ilit.utils.utility import CaptureOutputToFile
+from ilit.utils.utility import str2array
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .util import write_graph
@@ -42,15 +44,11 @@ from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
 
-from .graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
-from .graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from .graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
-from .graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from .graph_rewriter.generic.update_enter import UpdateEnterOptimizer
 from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
+
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
@@ -62,7 +60,7 @@ TF_SUPPORTED_MAX_VERSION = '2.3.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 
-class OutputGrabber(object):
+class OutputGrabber():
     """
     Class used to grab standard output or another stream.
     """
@@ -189,6 +187,7 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
+        self._fp32_origin_graph = copy.deepcopy(self.input_graph)
 
     def _inference(self, input_graph):
         """Run the calibration on the input graph
@@ -215,7 +214,7 @@ class GraphConverter:
         self.logger.info("Sampling data...")
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
-                feed_dict = {input_tensor[0]: inputs} # get raw tensor using index [0]
+                feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
             else:
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
@@ -277,24 +276,6 @@ class GraphConverter:
             self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph.pb')
         # to keep temp graphDef
         self._tmp_graph_def = copy.deepcopy(self.input_graph)
-
-    def inspect_tensor(self, op_list, op_iteration_list):
-        """Inspect the tensor content
-
-        Args:
-            op_list (string list): op name's list
-            op_iteration_list (int list): dump the tensor on the specified iteration.
-
-        Returns:
-            dict: key is op name while value is the content saved in np.array format.
-        """
-        try:
-            self._optimize_frozen_fp32_graph()
-        except Exception as e:
-            self.logger.error('Failed to optimize fp32 graph due to: %s', str(e))
-            raise ValueError(e) from e
-        else:
-            return self.dump_tensor(op_list, op_iteration_list)
 
     def convert(self):
         """Do convert, including:
@@ -385,7 +366,7 @@ class GraphConverter:
         max_value = 255 if scale_info[0].find("Relu") != -1 else 127
         return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
-    def dump_tensor(self, original_op_list, iteration_list):
+    def inspect_tensor(self, original_op_list, iteration_list, work_dir):
         """dump the specified op's output tensor content
 
         Args:
@@ -452,46 +433,38 @@ class GraphConverter:
                                          node_name_list=q_node_name,
                                          message="__KL:",
                                          summarize=-1).do_transformation()
-        dump_tensor_data = []
 
-        with OutputGrabber(sys.stderr, True) as out:
+        tmp_dump_file = os.path.join(work_dir, 'kl.log')
+        with CaptureOutputToFile(tmp_dump_file):
             self._inference(sorted_graph)
 
-        sys.stdout = sys.__stdout__  # reset
-        # sys.stderr = sys.__stderr__
-        self._parse_output(out.capturedtext, dump_tensor_data)
+        with open(tmp_dump_file) as f:
+            disk_content = f.readlines()
 
-        target_iteration = iteration_list[0] - 1 if iteration_list else 0
-        start_index = target_iteration * len(original_op_list)
-        end_index = (target_iteration + 1) * len(original_op_list)
-        result = {}
-        quoto_index = 0
-        for i in dump_tensor_data[start_index:end_index]:
-            found_flag = False
-            key = i.split('__print__')[0][1:]
-            data = i.split(':')[1].strip()
-            data = data.replace(' ', "', '")
-            for index, value in enumerate(data):
-                if value != '[':
-                    quoto_index = index
-                    found_flag = True
-                    break
-            assert found_flag == True
-            data = data[:quoto_index] + "'" + data[quoto_index:-quoto_index] + "'" + data[
-                -quoto_index:]
-            data = data.replace("]][[", "']],[['")
-            data = data.replace("][", "'],['")
+        filter_content = (i for i in disk_content if i.startswith(';'))
 
-            if key in fp32_node_name_mapping:
-                key = fp32_node_name_mapping[key]
-                result[(key, op_name_type_dict[key])] = np.array(ast.literal_eval(data),
-                                                                 dtype=np.float)
+        dump_tensor_content = {}
+
+        for i in filter_content:
+            contents = i.split('__print__;__KL:')
+            node_name = contents[0][1:]
+            node_content = str2array(contents[1])
+
+            if node_name not in dump_tensor_content:
+                dump_tensor_content[node_name] = []
+            dump_tensor_content[node_name].append(node_content)
+
+        result_disk = {}
+        tensor_iter_idx = iteration_list[0] - 1 if iteration_list else 0
+        for k, v in dump_tensor_content.items():
+            if k in fp32_node_name_mapping:
+                key = fp32_node_name_mapping[k]
+                result_disk[(key, op_name_type_dict[key])] = v[tensor_iter_idx]
             else:
-                result_key = key.split(quantized_node_name_postfix)[0]
-                result[(result_key, op_name_type_dict[result_key])] = self._dequantize(
-                    np.array(ast.literal_eval(data), dtype=np.int), q_node_scale[key])
-
-        return result
+                result_key = k.split(quantized_node_name_postfix)[tensor_iter_idx]
+                result_disk[(result_key, op_name_type_dict[result_key])
+                            ] = self._dequantize(v[0], q_node_scale[k])
+        return result_disk
 
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:
@@ -544,26 +517,6 @@ class GraphConverter:
                 write_graph(self._tmp_graph_def, self._bf16_mixed_precision_graph)
             return graph
 
-    def _optimize_frozen_fp32_graph(self):
-        """Optimize fp32 frozen graph."""
-        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self.input_graph, protected_nodes=self.outputs).do_transformation()
-        self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
-                                                        self.outputs).do_transformation()
-        self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def, exclude_node_names = UpdateEnterOptimizer(
-            self._tmp_graph_def).do_transformation()
-        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
-
-        if self.debug:
-            write_graph(self._tmp_graph_def, self._fp32_optimized_graph)
-        self._fp32_origin_graph = self._tmp_graph_def
-        self._exclude_node_names = exclude_node_names
-
     def _quantize_graph(self):
         """quantize graph."""
 
@@ -591,8 +544,11 @@ class GraphConverter:
         int8_dynamic_range_graph_def.CopyFrom(self._tmp_graph_def)
         # TODO need to insert op-wise logging op.
         self._tmp_graph_def = InsertLoggingTransformer(self._tmp_graph_def,
-                      target_op_types=["RequantizationRange", "RequantizationRangePerChannel"],
-                      message="__requant_min_max:").do_transformation()
+                                                       target_op_types=[
+                                                        "RequantizationRange", 
+                                                        "RequantizationRangePerChannel"],
+                                                       message="__requant_min_max:"). \
+                                                       do_transformation()
 
         self._tmp_graph_def = InsertLoggingTransformer(
             self._tmp_graph_def, target_op_types=["Min"], message="__min:").do_transformation()
