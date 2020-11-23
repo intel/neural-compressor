@@ -8,8 +8,8 @@
     valid_mixed_precisions: []
   
   ops: &common_ops
-    int8: ['Conv2D']
-    uint8: ['Conv2D', 'MatMul', 'DepthwiseConv2dNative', 'MaxPool', 'AvgPool', 'ConcatV2', 'MatMul']
+    int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     bf16: ['Conv2D']  #TODO need to add more bf16 op types here
     fp32: ['*'] # '*' means all op types
   
@@ -167,16 +167,16 @@
   version:
     name: 'default'
 
-  precisions:
+  precisions: &default_precisions
     names: uint8, fp32
     valid_mixed_precisions: []
 
-  ops:
-    int8: []
-    uint8: ['Conv2D', 'MatMul', 'DepthwiseConv2dNative','MaxPool', 'AvgPool', 'ConcatV2', 'MatMul']
+  ops: &default_ops
+    int8: ['MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    uint8: ['Conv2D', 'DepthwiseConv2dNative','MatMul', 'ConcatV2','MaxPool', 'AvgPool']
     fp32: ['*']
 
-  capabilities:
+  capabilities: &default_capabilities
     uint8:  {
           'Conv2D': {
             'weight': {
@@ -217,7 +217,7 @@
           }
     int8: []
 
-  patterns:
+  patterns: &default_patterns
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
         'Conv2D + Add + Relu',
         'Conv2D + Add + Relu6',
@@ -225,7 +225,10 @@
         'Conv2D + Relu6',
         'Conv2D + BiasAdd'
         ]
-    int8: []
+    int8: [
+        'MatMul + BiasAdd + Relu',
+        'MatMul + BiasAdd'
+        ]
     uint8: [
         'Conv2D + BiasAdd + AddN + Relu',
         'Conv2D + BiasAdd + AddN + Relu6',
@@ -244,3 +247,83 @@
         'MatMul + BiasAdd + Relu',
         'MatMul + BiasAdd',
   ]
+
+-
+  version:
+    name: '2.0.0'
+
+  precisions:
+    <<: *default_precisions
+
+  ops:
+    <<: *default_ops
+
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    << : *default_patterns
+
+-
+  version:
+    name: '1.15.0-up1'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+-
+  version:
+    name: '1.15.2'
+
+  precisions:
+    <<: *default_precisions
+
+  ops:
+    <<: *default_ops
+
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    << : *default_patterns
+
+-
+  version:
+    name: '1.15.0'
+
+  precisions:
+    <<: *default_precisions
+
+  ops:
+    <<: *default_ops
+
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    << : *default_patterns
+
+-
+  version:
+    name: 'default'
+
+  precisions:
+    <<: *default_precisions
+
+  ops:
+    <<: *default_ops
+
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    << : *default_patterns

@@ -86,7 +86,6 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
                 pass
         # line 42 to line 83 should be removed once the tensorflow fix the inference shape issue.
 
-
         target_nodes = cur_graph.query_fusion_pattern_nodes(
             [["Pad"], ["Conv2D"], ('BiasAdd', 'Add')])
 
@@ -94,6 +93,10 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             pad_name = node_combination[0]
             conv_name = node_combination[1]
             pattern = node_combination[-1]
+
+            if conv_name not in self.cfg:
+                continue
+
             is_perchannel = self.cfg[conv_name][0]
 
             # Line 98 to line 105 should be removed once the TFDO enabling the single quantized

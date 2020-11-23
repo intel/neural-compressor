@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import itertools
 import os
 import copy
 from collections import OrderedDict
@@ -406,6 +405,7 @@ class TensorFlowAdaptor(Adaptor):
                     )] = copy.deepcopy(other_config)
 
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
+
         return self.quantizable_op_details
 
     def _support_bf16(self):
@@ -446,6 +446,23 @@ class TensorFlowAdaptor(Adaptor):
         tf_version = tf.version.VERSION
         patterns = TFLowbitPrecisionPatterns(tf_version).get_supported_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
+
+        def check_match(patterns, input_pattern):
+            for i in patterns:
+                if input_pattern == [i for i in i.replace('+', ' ').strip().split(' ') if i]:
+                    return True
+            return False
+
+        copied_matched_nodes = copy.deepcopy(matched_nodes)
+        for i in copied_matched_nodes:
+            if i[-1][0] in self.query_handler.get_op_types()['int8']:
+                continue
+
+            if not self.pre_optimizer_handle.has_positive_input(i[0]) and \
+                not check_match(self.query_handler.get_fuse_patterns()['int8'], i[-1]):
+                matched_nodes.remove(i)
+
+        del copied_matched_nodes
 
         activation_dtype = ['uint8', 'fp32']
         weight_dtype = ['int8', 'fp32']
