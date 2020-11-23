@@ -606,7 +606,7 @@ class TensorflowQuery(QueryBackendCapability):
         self._one_shot_query()
 
     def _get_specified_version_cfg(self, data):
-        """Get the configuration for the current runtime。
+        """Get the configuration for the current runtime.
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
 
