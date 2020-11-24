@@ -59,84 +59,6 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 TF_SUPPORTED_MAX_VERSION = '2.3.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
-
-class OutputGrabber():
-    """
-    Class used to grab standard output or another stream.
-    """
-    escape_char = "\b"
-
-    def __init__(self, stream=None, threaded=False):
-        self.origstream = stream
-        self.threaded = threaded
-        if self.origstream is None:
-            self.origstream = sys.stdout
-        self.origstreamfd = self.origstream.fileno()
-        self.capturedtext = ""
-        # Create a pipe so the stream can be captured:
-        self.pipe_out, self.pipe_in = os.pipe()
-
-        self.buffer_size = os.getenv('ILIT_BUFFER_SIZE') if os.getenv(
-            'ILIT_BUFFER_SIZE') and os.getenv('ILIT_BUFFER_SIZE').isdigit() else 2**20
-
-    def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.stop()
-
-    def start(self):
-        """
-        Start capturing the stream data.
-        """
-        self.capturedtext = ""
-        # Save a copy of the stream:
-        self.streamfd = os.dup(self.origstreamfd)
-        # Replace the original stream with our write pipe:
-        os.dup2(self.pipe_in, self.origstreamfd)
-        if self.threaded:
-            # Start thread that will read the stream:
-            self.workerThread = threading.Thread(target=self.readOutput)
-            self.workerThread.start()
-            # Make sure that the thread is running and os.read() has executed:
-            time.sleep(0.01)
-
-    def stop(self):
-        """
-        Stop capturing the stream data and save the text in `capturedtext`.
-        """
-        # Print the escape character to make the readOutput method stop:
-        self.origstream.write(self.escape_char)
-        # Flush the stream to make sure all our data goes in before
-        # the escape character:
-        self.origstream.flush()
-        if self.threaded:
-            # wait until the thread finishes so we are sure that
-            # we have until the last character:
-            self.workerThread.join()
-        else:
-            self.readOutput()
-        # Close the pipe:
-        os.close(self.pipe_in)
-        os.close(self.pipe_out)
-        # Restore the original stream:
-        os.dup2(self.streamfd, self.origstreamfd)
-        # Close the duplicate stream:
-        os.close(self.streamfd)
-
-    def readOutput(self):
-        """
-        Read the stream data (one byte at a time)
-        and save the text in `capturedtext`.
-        """
-        while True:
-            char = os.read(self.pipe_out, self.buffer_size).decode(self.origstream.encoding)
-            if not char or self.escape_char == char[-1]:
-                break
-            self.capturedtext += char
-
-
 class GraphConverter:
     def __init__(self,
                  input_graph,
@@ -481,8 +403,8 @@ class GraphConverter:
                 self._generate_calibration_data(self._fp32_logged_graph, self._fp32_print_data,
                                                 True)
             self._insert_logging()
-
             self._generate_calibration_data(self._int8_logged_graph, self._calibration_data)
+
             if len(self._calibration_data) > 0:
                 self._freeze_requantization_ranges(self._kl_op_dict, self._print_node_mapping)
                 self._fuse_requantize_with_fused_quantized_node()
@@ -574,12 +496,17 @@ class GraphConverter:
             self.logger.warning("No quantizable op, will return FP32 graph!")
 
     def _generate_calibration_data(self, graph, output_data, enable_kl_algo=False):
-        with OutputGrabber(sys.stderr, True) as out:
+
+        tmp_dump_file = os.path.join(os.path.dirname(self.output_graph), 'requant_min_max.log')
+
+        self.logger.debug("Generating calibration data and saving to {}".format(tmp_dump_file))
+
+        with CaptureOutputToFile(tmp_dump_file):
             self._inference(graph)
 
-        sys.stdout = sys.__stdout__  # reset
-        # sys.stderr = sys.__stderr__
-        self._parse_output(out.capturedtext, output_data)
+        with open(tmp_dump_file) as f:
+            output_data.extend(f.readlines())
+
         for line in output_data:
             if enable_kl_algo and line.rsplit(':')[0] in self._kl_keys:
                 fp32_data = get_all_fp32_data(line.rsplit(':')[-1])

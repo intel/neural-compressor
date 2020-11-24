@@ -6,6 +6,7 @@ import unittest
 import yaml
 import tensorflow as tf
 
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
@@ -38,6 +39,7 @@ def build_fake_yaml():
         yaml.dump(y, f)
     f.close()
 
+
 def build_fake_model():
     graph = tf.Graph()
     graph_def = tf.compat.v1.GraphDef()
@@ -45,19 +47,19 @@ def build_fake_model():
     with tf.compat.v1.Session() as sess:
         x = tf.compat.v1.placeholder(tf.float32, [1, 3, 3, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
-                                                initializer=tf.compat.v1.random_normal_initializer())
+                                                 initializer=tf.compat.v1.random_normal_initializer())
         conv_bias = tf.compat.v1.get_variable("bias", [1],
-                                            initializer=tf.compat.v1.random_normal_initializer())
+                                              initializer=tf.compat.v1.random_normal_initializer())
         beta = tf.compat.v1.get_variable(name='beta',
-                                        shape=[1],
-                                        initializer=tf.compat.v1.random_normal_initializer())
+                                         shape=[1],
+                                         initializer=tf.compat.v1.random_normal_initializer())
         gamma = tf.compat.v1.get_variable(name='gamma',
-                                        shape=[1],
-                                        initializer=tf.compat.v1.random_normal_initializer())
-        
-        if tf.version.VERSION < '2.1.0':
-            x = tf.nn.relu(x)
-        conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME", name='last')
+                                          shape=[1],
+                                          initializer=tf.compat.v1.random_normal_initializer())
+
+        x = tf.nn.relu(x)
+        pool = tf.nn.max_pool(x, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv1 = tf.nn.conv2d(pool, conv_weights, strides=[1, 1, 1, 1], padding="SAME", name='last')
         conv_bias = tf.nn.bias_add(conv1, conv_bias)
         x = tf.nn.relu(conv_bias)
         final_node = tf.nn.relu(x, name='op_to_store')
@@ -67,12 +69,12 @@ def build_fake_model():
             input_graph_def=sess.graph_def,
             output_node_names=[final_node.name.split(':')[0]])
 
-
     graph_def.ParseFromString(constant_graph.SerializeToString())
 
     with graph.as_default():
         tf.import_graph_def(graph_def, name='')
     return graph
+
 
 class TestGraphDumpToDisk(unittest.TestCase):
 
@@ -81,12 +83,14 @@ class TestGraphDumpToDisk(unittest.TestCase):
         self.constant_graph = build_fake_model()
 
         build_fake_yaml()
-        self.kl_log_path = os.path.join (os.getcwd(), 'saved/kl.log')
+        self.kl_log_path = os.path.join(os.getcwd(), 'saved/kl.log')
+        self.calibration_log_path = os.path.join(os.getcwd(), 'requant_min_max.log')
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove(self.kl_log_path)
+        os.remove(self.calibration_log_path)
 
     def test_dump_tensor_to_disk(self):
         import tensorflow.compat.v1 as tf
@@ -103,8 +107,24 @@ class TestGraphDumpToDisk(unittest.TestCase):
             eval_dataloader=dataloader
         )
 
-        self.assertEqual(os.path.exists(self.kl_log_path), True) 
+        self.assertEqual(os.path.exists(self.kl_log_path), True)
 
+        with open(self.calibration_log_path) as f:
+            data = f.readlines()
+        
+        found_min_str = False
+        found_max_str = False
+        for i in data:
+            if i.find('__print__;__max') != -1:
+                found_max_str = True
+            if i.find('__print__;__min') != -1:
+                found_min_str = True
+                break
+
+        self.assertEqual(os.path.exists(self.calibration_log_path), True)
+        self.assertGreater(len(data), 1)
+        self.assertEqual(found_min_str, True)
+        self.assertEqual(found_max_str, True)
 
 if __name__ == '__main__':
     unittest.main()
