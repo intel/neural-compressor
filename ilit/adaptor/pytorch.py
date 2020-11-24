@@ -476,6 +476,7 @@ class PyTorchAdaptor(Adaptor):
 
         self.approach = framework_specific_info['approach']
         self.device = framework_specific_info['device']
+        self.q_dataloader = framework_specific_info['q_dataloader']
         self.is_baseline = True
         self.tune_cfg = None
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
@@ -639,22 +640,7 @@ class PyTorchAdaptor(Adaptor):
         acc = metric.result() if metric is not None else 0
 
         if tensorboard:
-
-            for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict):
-                    if self.device == "gpu":
-                        for inp in input.keys():
-                            input[inp] = input[inp].to("dpcpp")
-                    self._post_eval_hook(model, accuracy=acc, input=input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    if self.device == "gpu":
-                        input = [inp.to("dpcpp") for inp in input]
-                    self._post_eval_hook(model, accuracy=acc, input=input)
-                else:
-                    if self.device == "gpu":
-                        input = input.to("dpcpp")
-                    self._post_eval_hook(model, accuracy=acc, input=input)
-                break
+            self._post_eval_hook(model, accuracy=acc)
         return acc
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
@@ -997,8 +983,20 @@ class PyTorchAdaptor(Adaptor):
                                    str(self.dump_times) +
                                    '_acc' + str(accuracy), model)
 
-        if args is not None and 'input' in args and self.dump_times == 0:
-           writer.add_graph(model, args['input'])
+        if self.dump_times == 0:
+            for (input, _) in self.q_dataloader:
+                if isinstance(input, dict):
+                    if self.device == "gpu":
+                        for inp in input.keys():
+                            input[inp] = input[inp].to("dpcpp")
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    if self.device == "gpu":
+                        input = [inp.to("dpcpp") for inp in input]
+                else:
+                    if self.device == "gpu":
+                        input = input.to("dpcpp")
+                writer.add_graph(model, input)
+                break
 
         summary = OrderedDict()
         observer_dict = {}

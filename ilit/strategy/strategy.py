@@ -139,7 +139,7 @@ class TuneStrategy(object):
                 {"inputs": self.cfg.model.inputs,
                  "outputs": self.cfg.model.outputs,
                  'workspace_path': self.cfg.tuning.workspace.path})
-        if framework == 'mxnet':
+        if framework == 'mxnet' or framework == 'pytorch':
             framework_specific_info.update({"q_dataloader": q_dataloader})
 
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
@@ -355,9 +355,9 @@ class TuneStrategy(object):
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
             val = self.objective.evaluate(self.eval_func, model)
-            if self.cfg.tensorboard:
+            if self.cfg.tuning.tensorboard:
                 # post_eval_hook to deal the tensor
-                self.adaptor._post_eval_hook(model)
+                self.adaptor._post_eval_hook(model, accuracy=val[0])
         else:
             assert self.cfg.evaluation.accuracy.metric is not None, \
                 'metric field of accuracy field of evaluation section should not be empty'

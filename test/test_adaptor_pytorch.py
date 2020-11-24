@@ -5,15 +5,141 @@ import torchvision
 import unittest
 import os
 from ilit.adaptor import FRAMEWORKS
+import shutil
+import yaml
+
+
+def build_ptq_yaml():
+    fake_yaml = '''
+        model:
+          name: imagenet
+          framework: pytorch
+
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('ptq_yaml.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
+
+def build_dump_tensors_yaml():
+    fake_yaml = '''
+        model:
+          name: imagenet
+          framework: pytorch
+
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+          workspace:
+            path: saved
+          tensorboard: true
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('dump_yaml.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
+
+def build_qat_yaml():
+    fake_yaml = '''
+        model:
+          name: imagenet
+          framework: pytorch
+
+        quantization:
+          approach: quant_aware_training
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('qat_yaml.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
+
+def eval_func(model):
+    # switch to evaluate mode
+    model.eval()
+
+    with torch.no_grad():
+        input = torch.randn(10, 3, 224, 224)
+        # compute output
+        output = model(input)
+
+    return 0.0
+
+
+def q_func(model):
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    # switch to evaluate mode
+    model.train()
+
+    input = torch.randn(1, 3, 224, 224)
+    # compute output
+    output = model(input)
+    loss = output.mean()
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    return
 
 
 class TestAdaptorPytorch(unittest.TestCase):
     framework_specific_info = {'device': "cpu",
                                'approach': "post_training_static_quant",
-                               'random_seed': 1234}
+                               'random_seed': 1234,
+                               'q_dataloader': None}
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
-    model = torchvision.models.resnet18()
+    model = torchvision.models.quantization.resnet18()
+
+    @classmethod
+    def setUpClass(self):
+        build_ptq_yaml()
+        build_qat_yaml()
+        build_dump_tensors_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('ptq_yaml.yaml')
+        os.remove('qat_yaml.yaml')
+        os.remove('dump_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
 
     def test_get_all_weight_name(self):
         assert len(list(self.adaptor.get_all_weight_names(self.model))) == 62
@@ -35,6 +161,42 @@ class TestAdaptorPytorch(unittest.TestCase):
     def test_update_weights(self):
         model = self.adaptor.update_weights(self.model, "fc.bias", torch.zeros([1000]))
         assert int(torch.sum(self.adaptor.get_weight(model, "fc.bias"))) == 0
+
+    def test_quantization_saved(self):
+        from ilit import Quantization
+        from ilit.utils.pytorch import load
+        for fake_yaml in ['ptq_yaml.yaml', 'qat_yaml.yaml']:
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+            dataloader = quantizer.dataloader(dataset)
+            q_model = quantizer(
+                self.model,
+                q_func=q_func if fake_yaml == 'qat_yaml.yaml' else None,
+                q_dataloader=dataloader,
+                eval_dataloader=dataloader
+            )
+            new_model = load(
+                os.path.join('./saved', 'best_configure.yaml'),
+                os.path.join('./saved', 'best_model_weights.pt'), self.model)
+            eval_func(new_model)
+
+    def test_tensor_dump(self):
+        from ilit import Quantization
+        quantizer = Quantization('dump_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        quantizer(
+            self.model,
+            eval_func=eval_func,
+            q_dataloader=dataloader,
+        )
+        self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
+        quantizer(
+            self.model,
+            eval_dataloader=dataloader,
+            q_dataloader=dataloader,
+        )
+        self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
 
 
 if __name__ == "__main__":
