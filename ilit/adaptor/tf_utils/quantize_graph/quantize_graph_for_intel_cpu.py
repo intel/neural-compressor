@@ -25,7 +25,6 @@ from .quantize_graph_conv import FuseNodeStartWithConv2d
 from .quantize_graph_concatv2 import FuseNodeStartWithConcatV2
 from .quantize_graph_matmul import FuseNodeStartWithMatmul
 from .quantize_graph_pooling import FuseNodeStartWithPooling
-from .quantize_graph_pad import FuseNodeStartWithPad
 
 
 class QuantizeGraphForIntel(QuantizeGraphBase):
@@ -66,7 +65,6 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                                   FuseNodeStartWithConv2d)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
-        self.register_transformer("Pad", FuseNodeStartWithPad)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
 
     def can_fused_ops(self, start_node):
