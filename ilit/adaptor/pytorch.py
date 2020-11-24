@@ -17,11 +17,12 @@
 
 import pandas as pd
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, AverageMeter, compute_sparsity, CpuInfo
+from ..utils.utility import LazyImport, AverageMeter, compute_sparsity, CpuInfo, singleton
 import copy
 from collections import OrderedDict
 from ..utils import logger
 from ilit.utils.utility import dump_elapsed_time
+from .query import QueryBackendCapability
 import random
 import numpy as np
 import os
@@ -477,6 +478,8 @@ class PyTorchAdaptor(Adaptor):
         self.device = framework_specific_info['device']
         self.is_baseline = True
         self.tune_cfg = None
+        self.query_handler = PyTorchQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "pytorch.yaml"))
 
         self.white_list = \
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
@@ -504,41 +507,9 @@ class PyTorchAdaptor(Adaptor):
             assert False, "Unsupport quantization approach: {}".format(self.approach)
 
         if self.device == "cpu":
-            self.capability = \
-                {
-                    'activation':
-                    {
-                        'granularity': ['per_tensor'],
-                        'scheme': ['asym', 'sym'],
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['kl', 'minmax'],
-                    },
-                    'weight':
-                    {
-                        'granularity': ['per_channel'],
-                        'scheme': ['asym', 'sym'],
-                        'dtype': ['int8', 'fp32'],
-                        'algorithm': ['minmax'],
-                    }
-                }
+            self.capability = self.query_handler.get_quantization_capability()["cpu"]
         elif self.device == "gpu":
-            self.capability = \
-                {
-                    'activation':
-                    {
-                        'granularity': ['per_tensor'],
-                        'scheme': ['sym'],
-                        'dtype': ['uint8', 'fp32', 'int8'],
-                        'algorithm': ['minmax'],
-                    },
-                    'weight':
-                    {
-                        'granularity': ['per_channel'],
-                        'scheme': ['sym'],
-                        'dtype': ['int8', 'fp32'],
-                        'algorithm': ['minmax'],
-                    }
-                }
+            self.capability = self.query_handler.get_quantization_capability()["gpu"]
         else:
             assert False, "Unsupport this device {}".format(self.device)
 
@@ -1207,3 +1178,117 @@ class PyTorchAdaptor(Adaptor):
             logger.error("Unable to save configure file. %s" % e)
 
         torch.save(model.state_dict(), os.path.join(path, "best_model_weights.pt"))
+
+
+@singleton
+class PyTorchQuery(QueryBackendCapability):
+
+    def __init__(self, local_config_file=None):
+        import torch
+
+        super().__init__()
+        self.version = torch.__version__.split('+')[0]
+        self.cfg = local_config_file
+        self.cur_config = None
+        self._one_shot_query()
+
+    def _get_specified_version_cfg(self, data):
+        """Get the configuration for the current runtime。
+        If there's no matched configuration in the input yaml, we'll
+        use the `default` field of yaml.
+
+        Args:
+            data (Yaml content): input yaml file.
+
+        Returns:
+            [dictionary]: the content for specific version.
+        """
+        # default_config = None
+        position = self.version.rfind('.')
+        version = float(self.version[:position])
+        for sub_data in data:
+            if version >= float(sub_data['version']['name']):
+                return sub_data
+
+            if sub_data['version']['name'] == 'default':
+                return sub_data
+
+    def _one_shot_query(self):
+        with open(self.cfg) as f:
+            content = yaml.safe_load(f)
+            try:
+                self.cur_config = self._get_specified_version_cfg(content)
+            except Exception as e:
+                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                self.cur_config = None
+                raise ValueError("Please check the {} format.".format(self.cfg))
+
+    def get_version(self):
+        """Get the current backend version infomation.
+
+        Returns:
+            [string]: version string.
+        """
+        return self.cur_config['version']['name']
+
+    def get_precisions(self):
+        """Get supported precisions for current backend.
+
+        Returns:
+            [string list]: the precisions' name.
+        """
+        return self.cur_config['precisions']['names']
+
+    def get_op_types(self):
+        """Get the supported op types by all precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the op types.
+        """
+        return self.cur_config['ops']
+
+    def get_fuse_patterns(self):
+        """Get supported patterns by low precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the supported patterns.
+        """
+        return self.cur_config['patterns']
+
+    def get_quantization_capability(self):
+        """Get the supported op types' quantization capability.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is a dict that describes all op types' quantization capability.
+        """
+        return self.cur_config['capabilities']
+
+    def get_op_types_by_precision(self, precision):
+        """Get op types per precision
+
+        Args:
+            precision (string): precision name
+
+        Returns:
+            [string list]: A list composed of op type.
+        """
+        assert precision in list(self.cur_config['ops'].keys())
+
+        return self.cur_config['ops'][precision]
+
+    def get_mixed_precision_combination(self, invalid_precisions):
+        """Get the valid mixed precisions.
+
+        Args:
+            unsupported_precisions (string list): unsupported precisions.
+
+        Returns:
+            [string list]: valid precision list.
+        """
+        if self.cur_config['precisions']['valid_mixed_precisions']:
+            return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
+
+        return list(self.get_precisions().split(','))
