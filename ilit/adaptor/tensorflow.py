@@ -351,16 +351,16 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             OrderDict: op-wise configuration.
         """
-        u8_type = self.query_handler.get_op_types_by_precision(precision='u8')
-        s8_type = self.query_handler.get_op_types_by_precision(precision='s8')
-        tf_quantizable_op_type = list(set(u8_type).union(set(s8_type)))
+        uint8_type = self.query_handler.get_op_types_by_precision(precision='uint8')
+        int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
+        tf_quantizable_op_type = list(set(uint8_type).union(set(int8_type)))
 
         invalid_precisions = [] if self._support_bf16() else ['bf16']
         valid_precision = self.query_handler.get_mixed_precision_combination(invalid_precisions)
 
-        conv_config = self.query_handler.get_quantization_capability()['u8']['Conv2D']
-        matmul_config = self.query_handler.get_quantization_capability()['u8']['MatMul']
-        other_config = self.query_handler.get_quantization_capability()['u8']['default']
+        conv_config = self.query_handler.get_quantization_capability()['uint8']['Conv2D']
+        matmul_config = self.query_handler.get_quantization_capability()['uint8']['MatMul']
+        other_config = self.query_handler.get_quantization_capability()['uint8']['default']
 
         if 'bf16' in valid_precision:
             conv_config['weights']['dtype'].append('bf16')
