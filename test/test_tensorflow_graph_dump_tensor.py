@@ -5,7 +5,9 @@ import os
 import unittest
 import yaml
 import tensorflow as tf
+import numpy as np
 
+np.random.seed(0)
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -45,6 +47,7 @@ def build_fake_model():
     graph_def = tf.compat.v1.GraphDef()
 
     with tf.compat.v1.Session() as sess:
+        tf.compat.v1.set_random_seed(0)
         x = tf.compat.v1.placeholder(tf.float32, [1, 3, 3, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -95,11 +98,11 @@ class TestGraphDumpToDisk(unittest.TestCase):
     def test_dump_tensor_to_disk(self):
         import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
-
         from ilit import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+
         dataloader = quantizer.dataloader(dataset)
         output_graph = quantizer(
             self.constant_graph,
@@ -119,7 +122,6 @@ class TestGraphDumpToDisk(unittest.TestCase):
                 found_max_str = True
             if i.find('__print__;__min') != -1:
                 found_min_str = True
-                break
 
         self.assertEqual(os.path.exists(self.calibration_log_path), True)
         self.assertGreater(len(data), 1)

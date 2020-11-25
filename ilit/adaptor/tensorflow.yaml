@@ -149,22 +149,6 @@
 
 -
   version:
-    name: '1.15.0-up1'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
--
-  version:
     name: 'default'
 
   precisions: &default_precisions
@@ -215,7 +199,7 @@
                         }
                     },
           }
-    int8: []
+    int8: {}
 
   patterns: &default_patterns
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
@@ -299,22 +283,6 @@
 -
   version:
     name: '1.15.0'
-
-  precisions:
-    <<: *default_precisions
-
-  ops:
-    <<: *default_ops
-
-  capabilities:
-    << : *default_capabilities
-
-  patterns:
-    << : *default_patterns
-
--
-  version:
-    name: 'default'
 
   precisions:
     <<: *default_precisions
