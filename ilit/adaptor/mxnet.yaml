@@ -1,0 +1,187 @@
+---
+-
+  version:
+    name: '1.6.0'
+  
+  precisions: &common_precisions
+    names: int8, uint8, bf16, fp32
+    valid_mixed_precisions: [['int8', 'fp32'], ['fp16', 'fp32']]
+  
+  ops: &common_ops
+    int8: ['_sg_mkldnn_conv', 'conv2d', '_sg_fully_connected', 'fully_connected']
+    uint8: ['_sg_mkldnn_conv', 'conv2d', '_sg_fully_connected', 'fully_connected', 'relu']
+    bf16: []  #TODO need to add more bf16 op types here
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &common_capabilities
+    'int8': &ref_1_6 {
+        '_sg_mkldnn_conv': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'granularity': ['per_tensor']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          'conv2d': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'granularity': ['per_tensor']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          '_sg_fully_connected': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'granularity': ['per_channle', 'per_tensor']},
+
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          'fully_connected': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'granularity': ['per_channle', 'per_tensor']},
+
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          'relu': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'granularity': ['per_tensor']}
+          },
+          'default': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', 'kl'],
+                'granularity': ['per_tensor']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          }
+        }
+
+    'uint8': *ref_1_6
+
+  patterns: &common_patterns
+    fp32: &fusion_patter [
+          # Fusion Patterns support in MXNet, hard code in FWK now.
+          # act include: relu, logistic, soft_relu, bounded_relu
+          # conv + bn
+          # conv + act + sum
+          # conv + add
+          # conv + bn + act
+          # conv + bn + add + act
+          # conv + bn + sum + act
+          # fc + relu
+          ]
+    int8: *fusion_patter
+    uint8: [
+          # conv + bn + relu/bounded_relu
+          # conv + bn + add + relu/bounded_relu
+          # conv + bn + sum + relu/bounded_relu
+          # fc + relu
+          ]
+
+
+-
+  version:
+    name: '1.7.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+
+-
+  version:
+    name: 'default'
+
+  precisions:
+    names: uint8, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    int8: ['_sg_mkldnn_conv', 'conv2d', '_sg_fully_connected', 'fully_connected']
+    uint8: ['_sg_mkldnn_conv', 'conv2d', '_sg_fully_connected', 'fully_connected', 'relu']
+    bf16: []  #TODO need to add more bf16 op types here
+    fp32: ['*'] # '*' means all op types
+
+  capabilities:
+    'int8': {
+        '_sg_mkldnn_conv': {
+            'activation': {
+                'dtype': ['int8', 'uint8', 'fp32'],
+                'algorithm': ['minmax', ],
+                'granularity': ['per_channel']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          'conv2d': {
+            'activation': {
+                'dtype': ['int8', 'uint8', 'fp32'],
+                'algorithm': ['minmax', ],
+                'granularity': ['per_channel']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          '_sg_fully_connected': {
+            'activation': {
+                'dtype': ['int8', 'uint8', 'fp32'],
+                'algorithm': ['minmax', ],
+                'granularity': ['per_channel']},
+
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          'fully_connected': {
+            'activation': {
+                'dtype': ['int8', 'uint8', 'fp32'],
+                'algorithm': ['minmax', ],
+                'granularity': ['per_tensor']},
+
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'granularity': ['per_channel']}
+          },
+          'relu': {
+            'activation': {
+                'dtype': ['uint8', 'fp32'],
+                'algorithm': ['minmax', ],
+                'granularity': ['per_tensor']}
+          },
+          'default': {
+            'activation': {
+                'dtype': ['int8', 'uint8', 'fp32'],
+                'algorithm': ['minmax', ],
+                'granularity': ['per_channel']},
+            'weight': {
+                'dtype': ['int8', 'uint8', 'fp32'],
+                'granularity': ['per_channel']}
+          }
+        }
+
+  patterns:
+    fp32: []
+    int8: []
+    uint8: []

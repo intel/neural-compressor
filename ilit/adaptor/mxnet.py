@@ -24,9 +24,11 @@ import json
 import re
 from tempfile import TemporaryDirectory
 import numpy as np
+import yaml
 
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport
+from .query import QueryBackendCapability
+from ..utils.utility import LazyImport, singleton
 from ..utils.kl_divergence import KL_Divergence
 from ..utils.collect_layer_histogram import LayerHistogramCollector
 from collections import OrderedDict
@@ -71,6 +73,8 @@ class MxNetAdaptor(Adaptor):
         self.quantizable_ops = []
         self.logger = logger
         self.qdataloader = framework_specific_info["q_dataloader"]
+        self.query_handler = MXNetQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "mxnet.yaml"))
 
         # MXNet version check
         if not _check_version(mx.__version__, '1.6.0'):
@@ -357,56 +361,25 @@ class MxNetAdaptor(Adaptor):
         # model_wise capability
         # TODO: weight granularity
         model_wise = {
-            'activation': {'dtype': ['uint8', 'fp32'],
+            'activation': {'dtype': ['int8', 'uint8', 'fp32'],
                            'granularity': ['per_channel'],
                            'algorithm': ['minmax', 'kl']},
-            'weight': {'dtype': ['uint8', 'fp32'],
+            'weight': {'dtype': ['int8', 'fp32'],
                        'granularity': ['per_channel'],
                        'algorithm': ['minmax', 'kl']}
         }
+
         # op_wise capability
         quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
         op_wise = OrderedDict()
+        quantizable_op_config = self.query_handler.get_quantization_capability()['int8']
+        mixed_quantization = self.query_handler.get_mixed_precision_combination()
         for _, opname_type in enumerate(quantizable_ops):
             optype = opname_type["type"]
-            if optype in ['_sg_mkldnn_conv', 'conv2d']:
-                op_capability = {
-                    'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['minmax', 'kl'],
-                        'granularity': ['per_channel']},
-                    'weight': {
-                        'dtype': ['uint8', 'fp32'],
-                        'granularity': ['per_channel']}
-                }
-            elif optype in ['_sg_fully_connected', 'fully_connected']:
-                op_capability = {
-                    'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['minmax', 'kl'],
-                        'granularity': ['per_channel']},
-
-                    'weight': {
-                        'dtype': ['uint8', 'fp32'],
-                        'granularity': ['per_channel']}
-                }
-            elif optype in ['relu']:
-                op_capability = {
-                    'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['minmax', 'kl'],
-                        'granularity': ['per_tensor']}
-                }
+            if optype in quantizable_op_config.keys():
+                op_capability = quantizable_op_config[optype]
             else:
-                op_capability = {
-                    'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['minmax', 'kl'],
-                        'granularity': ['per_channel']},
-                    'weight': {
-                        'dtype': ['uint8', 'fp32'],
-                        'granularity': ['per_channel']}
-                }
+                op_capability = quantizable_op_config['default']
 
             op_wise.update(
                 {(opname_type["name"], opname_type["type"]): op_capability})
@@ -424,7 +397,7 @@ class MxNetAdaptor(Adaptor):
 
         Args:
             model (object): The model to do calibration.
-            dataloader (object): The data to do forword.
+            dataloader (object): The data to do forward.
             op_list (list): list of inspect tensors.
             iteration_list (list): list of inspect iterations.
 
@@ -645,6 +618,8 @@ class MxNetAdaptor(Adaptor):
             "calib_kl_layers": calib_kl_layers,
             "calib_minmax_layers": calib_minmax_layers,
         })
+        self.logger.debug('tuning configs of python API:\n %s, '
+                          % (self.__config_dict))
 
     def _get_gluon_symbol(self, network, dataloader):
         """Convert symbol model and DataIter from gluon model HybridBlock/Dataloader.
@@ -886,3 +861,84 @@ class MxNetAdaptor(Adaptor):
 
     def save(self, model, path):
         pass
+
+@singleton
+class MXNetQuery(QueryBackendCapability):
+    def __init__(self, local_config_file):
+        super().__init__()
+        self.version = mx.__version__
+        self.cfg = local_config_file
+        self.cur_config = None
+        self._one_shot_query()
+
+    def _one_shot_query(self):
+        with open(self.cfg) as f:
+            content = yaml.safe_load(f)
+            try:
+                self.cur_config = self._get_specified_version_cfg(content)
+            except Exception as e:
+                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                self.cur_config = None
+                raise ValueError("Please check the {} format.".format(self.cfg))
+
+    def _get_specified_version_cfg(self, data):
+        """Get the configuration for the current runtime.
+        If there's no matched configuration in the input yaml, we'll
+        use the `default` field of yaml.
+
+        Args:
+            data (Yaml content): input yaml file.
+
+        Returns:
+            [dictionary]: the content for specific version.
+        """
+        default_config = None
+        for sub_data in data:
+            if sub_data['version']['name'] == self.version:
+                return sub_data
+
+            if sub_data['version']['name'] == 'default':
+                default_config = sub_data
+
+        return default_config
+
+    def get_version(self):
+        """Get the current backend's version string.
+        """
+        return self.cur_config['version']['name']
+
+    def get_precisions(self):
+        """Get the supported low precisions, e.g ['int8', 'bf16']
+        """
+        return self.cur_config['precisions']['names']
+
+    def get_op_types(self):
+        """Get the op types for specific backend per low precision.
+            e.g {'1.6.0': {'int8': ['Conv2D', 'fully_connected']}}
+        """
+        return self.cur_config['ops']
+
+    def get_fuse_patterns(self):
+        """Get the fusion patterns for specified op type for every specific precision
+
+        """
+        return self.cur_config['patterns']
+
+    def get_quantization_capability(self):
+        """Get the quantization capability of low precision op types.
+            e.g, granularity, scheme and etc.
+
+        """
+        return self.cur_config['capabilities']
+
+    def get_mixed_precision_combination(self, unsupported_precisions=None):
+        """Get the valid precision combination base on hardware and user' config.
+            e.g['fp32', 'bf16', 'int8']
+        """
+        self.valid_mixed_precision = []
+        if self.cur_config['precisions']['valid_mixed_precisions']:
+            for single in self.cur_config['precisions']['valid_mixed_precisions']:
+                if not unsupported_precisions in single:
+                    self.valid_mixed_precision.append(single)
+        return self.valid_mixed_precision if self.valid_mixed_precision \
+            else list(self.get_precisions().split(','))
