@@ -133,22 +133,6 @@
 
 -
   version:
-    name: '2.0.1'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
--
-  version:
     name: 'default'
 
   precisions: &default_precisions
@@ -231,6 +215,22 @@
         'MatMul + BiasAdd + Relu',
         'MatMul + BiasAdd',
   ]
+
+-
+  version:
+    name: '2.0.1'
+
+  precisions:
+    <<: *default_precisions
+
+  ops:
+    <<: *default_ops
+
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    << : *default_patterns
 
 -
   version:
