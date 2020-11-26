@@ -27,21 +27,24 @@ from ..graph_util import GraphRewriterHelper as Helper
 
 
 class FreezeValueTransformer(GraphRewriterBase):
-    def __init__(self, model, sampling_data, postfix, threshold=0.95, device='gpu'):
+    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=0.95, device='gpu'):
         """Free Max/Min value into QuantizeV2 op.
 
         Args:
             model (graphdef): input model
-            sampling_data (string list): the string context contains max/min values.
+            max_min_data (string list): the string context contains max/min values.
             postfix (string): the specified postfix to locate value.
-            threshold (float, optional): The percentage of overall data.Defaults to 0.95.
+            tensor_data(dict): key is the op name while the value is the max/min values
+                                which calculated by KL.
+            th (float, optional): The percentage of overall data.Defaults to 0.95.
             device (string, optional): The hardware device type, 'cpu' or 'gpu'.
         """
         super().__init__(model)
-        self.data = sampling_data
-        self.threshold = threshold
+        self.data = max_min_data
+        self.threshold = th
         self.postfix = postfix
         self.device = device
+        self.tensor_data = tensor_data
         self.cur_graph = GraphAnalyzer()
         self.cur_graph.graph = self.model
 
@@ -97,9 +100,10 @@ class FreezeValueTransformer(GraphRewriterBase):
         Parse the max_min log to get requantization values
         :return: dict saved the result
         """
+        res = {}
+
         print_suffix = "__print__"
         lines = self._get_valid_log()
-        res = {}
         temp_min = {}
         temp_max = {}
         for i in lines:
@@ -130,6 +134,11 @@ class FreezeValueTransformer(GraphRewriterBase):
                 target_max_index = len(temp_max[key]) - 1
             res[key].append(sorted(temp_max[key])[target_max_index])
 
+        if self.tensor_data:
+            for k, v in self.tensor_data.items():
+                if k in res:
+                    self.logger.debug('Update node {} min to {}, max to {}'.format(k, v[2], v[3]))
+                    res[k] = [v[2], v[3]]
         return res
 
     def generate_output_graph(self, max_name_value):
@@ -198,6 +207,6 @@ class FreezeValueTransformer(GraphRewriterBase):
         if self.postfix == '__requant_min_max':
             range_data = self._parse_requantization_ranges()
             return self.generate_output_graph_ranges(range_data)
-        else:
-            max_name_value = self._parse_max_min_log()
-            return self.generate_output_graph(max_name_value)
+
+        max_name_value = self._parse_max_min_log()
+        return self.generate_output_graph(max_name_value)

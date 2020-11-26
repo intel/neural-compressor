@@ -268,9 +268,9 @@ def get_tensor_histogram(tensor_data, bins=2048):
     min_val = np.min(tensor_data)
     th = max(abs(min_val), abs(max_val))
 
-    hist, hist_edeges = np.histogram(tensor_data, bins=2048, range=(-th, th))
+    hist, hist_edges = np.histogram(tensor_data, bins=2048, range=(-th, th))
 
-    return (hist, hist_edeges, max_val, min_val, th)
+    return (hist, hist_edges, min_val, max_val, th)
 
 
 def get_all_fp32_data(data):

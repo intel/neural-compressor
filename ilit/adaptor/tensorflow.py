@@ -470,22 +470,7 @@ class TensorFlowAdaptor(Adaptor):
             activation_dtype.append('bf16')
             weight_dtype.append('bf16')
         capability = {
-            'modelwise': {
-                'activation': {
-                    'dtype': activation_dtype,
-                    'scheme': ['asym', 'sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
-                },
-                'weight': {
-                    'dtype': weight_dtype,
-                    'scheme': [
-                        'sym',
-                    ],
-                    'granularity': ['per_channel', 'per_tensor'],
-                    'algorithm': ['minmax']
-                },
-            }
+            'modelwise': self.query_handler.get_model_wise_ability()
         }
         self._query_quantizable_ops(matched_nodes)
         capability['opwise'] = self.quantizable_op_details
@@ -726,3 +711,19 @@ class TensorflowQuery(QueryBackendCapability):
             return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
 
         return list(self.get_precisions().split(','))
+
+    def get_model_wise_ability(self):
+        """Get the model wise capability by generating the union value of each op.
+        Returns:
+            [string dict]: the key is category like activation and weight while the value is the
+                            detail configuration.
+        """
+        res = {'weight': {'dtype': [], 'scheme': [], 'granularity': [], 'algorithm': []},
+               'activation': {'dtype': [], 'scheme': [], 'granularity': [], 'algorithm': []}}
+        for _, op_cfg in self.get_quantization_capability()['uint8'].items():
+            for category_name, category_value in op_cfg.items():
+                for field_name, field_value in category_value.items():
+                    res[category_name][field_name].extend(field_value)
+                    res[category_name][field_name] = list(set(res[category_name][field_name]))
+
+        return res

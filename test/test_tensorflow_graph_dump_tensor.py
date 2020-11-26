@@ -9,6 +9,7 @@ import numpy as np
 
 np.random.seed(0)
 
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
@@ -23,7 +24,7 @@ def build_fake_yaml():
                 granularity: per_tensor
                 scheme: sym
                 dtype: int8
-                algorithm: kl
+                algorithm: minmax
         evaluation:
           accuracy:
             metric:
@@ -38,6 +39,41 @@ def build_fake_yaml():
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
+
+def build_fake_yaml_kl():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: input
+          outputs: op_to_store
+        device: cpu
+        quantization:
+          model_wise:
+            activation:
+                algorithm: kl
+            weight:
+                granularity: per_tensor
+                scheme: sym
+                dtype: int8
+                algorithm: minmax
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+            strategy:
+              name: basic
+            accuracy_criterion:
+              relative: 0.99
+            workspace:
+              path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_kl.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
 
@@ -86,14 +122,49 @@ class TestGraphDumpToDisk(unittest.TestCase):
         self.constant_graph = build_fake_model()
 
         build_fake_yaml()
+        build_fake_yaml_kl()
         self.kl_log_path = os.path.join(os.getcwd(), 'saved/kl.log')
         self.calibration_log_path = os.path.join(os.getcwd(), 'requant_min_max.log')
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+        os.remove('fake_yaml_kl.yaml')
         os.remove(self.kl_log_path)
         os.remove(self.calibration_log_path)
+
+    def test_kl(self):
+        import tensorflow.compat.v1 as tf
+        tf.disable_v2_behavior()
+
+        from ilit import Quantization
+
+        quantizer = Quantization('fake_yaml_kl.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        output_graph = quantizer(
+            self.constant_graph,
+            q_dataloader=dataloader,
+            eval_dataloader=dataloader
+        )
+
+        with open(self.calibration_log_path) as f:
+            data = f.readlines()
+
+        found_min_str = False
+        found_max_str = False
+        for i in data:
+            if i.find('__print__;__max') != -1:
+                found_max_str = True
+            if i.find('__print__;__min') != -1:
+                found_min_str = True
+
+        self.assertEqual(os.path.exists(self.kl_log_path), True)
+
+        self.assertEqual(os.path.exists(self.calibration_log_path), True)
+        self.assertGreater(len(data), 1)
+        self.assertEqual(found_min_str, True)
+        self.assertEqual(found_max_str, True)
 
     def test_dump_tensor_to_disk(self):
         import tensorflow.compat.v1 as tf
@@ -110,11 +181,9 @@ class TestGraphDumpToDisk(unittest.TestCase):
             eval_dataloader=dataloader
         )
 
-        self.assertEqual(os.path.exists(self.kl_log_path), True)
-
         with open(self.calibration_log_path) as f:
             data = f.readlines()
-        
+
         found_min_str = False
         found_max_str = False
         for i in data:
@@ -127,6 +196,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
         self.assertGreater(len(data), 1)
         self.assertEqual(found_min_str, True)
         self.assertEqual(found_max_str, True)
+
 
 if __name__ == '__main__':
     unittest.main()

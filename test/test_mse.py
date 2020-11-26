@@ -103,7 +103,6 @@ class TestQuantization(unittest.TestCase):
         os.remove('fake_yaml2.yaml')
         os.remove('saved/history.snapshot')
         os.remove('saved/deploy.yaml')
-        os.remove('saved/kl.log')
         os.rmdir('saved')
 
     def test_ru_mse_one_trial(self):

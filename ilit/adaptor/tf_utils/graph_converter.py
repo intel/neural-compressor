@@ -406,7 +406,7 @@ class GraphConverter:
             self._generate_calibration_data(self._int8_logged_graph, self._calibration_data)
 
             if len(self._calibration_data) > 0:
-                self._freeze_requantization_ranges(self._kl_op_dict, self._print_node_mapping)
+                self._freeze_requantization_ranges(self._kl_op_dict)
                 self._fuse_requantize_with_fused_quantized_node()
             graph = tf.Graph()
             with graph.as_default():
@@ -517,7 +517,7 @@ class GraphConverter:
                 else:
                     self._kl_op_dict[key] = combine_histogram(self._kl_op_dict[key], fp32_data)
 
-    def _freeze_requantization_ranges(self, additional_data=None, _print_node_mapping=None):
+    def _freeze_requantization_ranges(self, additional_data=None):
         self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def, self._calibration_data,
                                                      '__max:').do_transformation()
 
@@ -527,7 +527,9 @@ class GraphConverter:
         self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def,
                                                      self._calibration_data,
                                                      '__requant_min_max',
-                                                     device=self.device).do_transformation()
+                                                     tensor_data= additional_data,
+                                                     device=self.device,
+                                                     ).do_transformation()
         self._tmp_graph_def = ScaleProPagationTransformer(self._tmp_graph_def).do_transformation()
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
