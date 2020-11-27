@@ -85,10 +85,7 @@ class TestFoldPadConv(unittest.TestCase):
                 if i.op == 'Pad':
                     found_pad = True
                     break
-            if self.disable_s8:
-                self.assertEqual(found_pad, True)
-            else:
-                self.assertEqual(found_pad, False)
+            self.assertEqual(found_pad, True)
 
     def test_fold_pad_conv2(self):
         tf.compat.v1.disable_eager_execution()
@@ -133,10 +130,7 @@ class TestFoldPadConv(unittest.TestCase):
                 if i.op == 'Pad':
                     found_pad = True
                     break
-            if self.disable_s8:
-                self.assertEqual(found_pad, True)
-            else:
-                self.assertEqual(found_pad, False)
+            self.assertEqual(found_pad, True)
 
     def test_fold_pad_conv3(self):
         tf.compat.v1.disable_eager_execution()
