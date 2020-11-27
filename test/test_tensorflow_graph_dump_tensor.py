@@ -84,7 +84,7 @@ def build_fake_model():
 
     with tf.compat.v1.Session() as sess:
         tf.compat.v1.set_random_seed(0)
-        x = tf.compat.v1.placeholder(tf.float32, [1, 3, 3, 1], name="input")
+        x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
         conv_bias = tf.compat.v1.get_variable("bias", [1],
@@ -98,7 +98,7 @@ def build_fake_model():
 
         x = tf.nn.relu(x)
         pool = tf.nn.max_pool(x, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
-        conv1 = tf.nn.conv2d(pool, conv_weights, strides=[1, 1, 1, 1], padding="SAME", name='last')
+        conv1 = tf.nn.conv2d(pool, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name='last')
         conv_bias = tf.nn.bias_add(conv1, conv_bias)
         x = tf.nn.relu(conv_bias)
         final_node = tf.nn.relu(x, name='op_to_store')
@@ -140,7 +140,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
         from ilit import Quantization
 
         quantizer = Quantization('fake_yaml_kl.yaml')
-        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
         dataloader = quantizer.dataloader(dataset)
         output_graph = quantizer(
             self.constant_graph,
@@ -172,7 +172,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
         from ilit import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
 
         dataloader = quantizer.dataloader(dataset)
         output_graph = quantizer(
