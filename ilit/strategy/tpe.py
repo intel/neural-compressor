@@ -142,6 +142,8 @@ class TpeTuneStrategy(TuneStrategy):
         # Find minimum number of choices for params with more than one choice
         multichoice_params = [len(configs) for param, configs in search_space.items()
                               if len(configs) > 1]
+        if not multichoice_params:
+            return False
         min_param_size = min(multichoice_params) if len(multichoice_params) > 0 else 1
         self.tpe_params['n_EI_candidates'] = min_param_size
         self.tpe_params['prior_weight'] = 1 / min_param_size
@@ -150,6 +152,8 @@ class TpeTuneStrategy(TuneStrategy):
                             gamma=self.tpe_params['gamma'],
                             n_EI_candidates=self.tpe_params['n_EI_candidates'],
                             prior_weight=self.tpe_params['prior_weight'])
+        return True
+
     def traverse(self):
         """Tpe traverse logic.
 
@@ -162,7 +166,7 @@ class TpeTuneStrategy(TuneStrategy):
                     'best_result_file:{}'.format(best_result_file))
         if Path(trials_file).exists():
             os.remove(trials_file)
-        
+        status = True;
         tuning_history = self._find_self_tuning_history()
         if tuning_history and not self.warm_start:
             # prepare loss function scaling (best result from basic can be used)
@@ -198,41 +202,45 @@ class TpeTuneStrategy(TuneStrategy):
             new_tune_cfgs = self._prepare_final_searchspace(
                 first_run_cfg,
                 self.opwise_tune_cfgs)
-            self._configure_hpopt_search_space_and_params(new_tune_cfgs)
+            status = self._configure_hpopt_search_space_and_params(new_tune_cfgs)
         elif not self.warm_start:
             self._calculate_loss_function_scaling_components(0.01, 2, self.loss_function_config)
-            self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
+            status = self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
 
-        with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
-            trials_count = len(self.hpopt_trials.trials) + 1
-            # get fp32 model baseline
-            if self.baseline is None:
-                logger.info('Getting FP32 model baseline...')
-                self.baseline = self._evaluate(self.model)
-                self._add_tuning_history()
-            logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline)
-                                                if self.baseline else 'None'))
-            if not self.objective.relative:
-                self.loss_function_config['acc_th'] =\
-                    (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
-            # start trials
-            exit = False
-            while not exit:
-                self.cfg_evaluated = False
-                logger.info('Trial iteration start: {} / {}'.format(trials_count, self.max_trials))
-                fmin(partial(self.object_evaluation, model=self.model),
-                    space=self.hpopt_search_space,
-                    algo=self._algo,
-                    max_evals=trials_count,
-                    trials=self.hpopt_trials,
-                    show_progressbar=False)
-                trials_count += 1
-                if pd is not None:
-                    self._save_trials(trials_file)
-                    self._update_best_result(best_result_file)
-                self._save()
-                if self.stop(t, trials_count):
-                    exit = True
+        if status:
+            with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
+                trials_count = len(self.hpopt_trials.trials) + 1
+                # get fp32 model baseline
+                if self.baseline is None:
+                    logger.info('Getting FP32 model baseline...')
+                    self.baseline = self._evaluate(self.model)
+                    self._add_tuning_history()
+                logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline)
+                                                    if self.baseline else 'None'))
+                if not self.objective.relative:
+                    self.loss_function_config['acc_th'] =\
+                        (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
+                # start trials
+                exit = False
+                while not exit:
+                    self.cfg_evaluated = False
+                    logger.info('Trial iteration start: {} / {}'.format(
+                        trials_count, self.max_trials))
+                    fmin(partial(self.object_evaluation, model=self.model),
+                        space=self.hpopt_search_space,
+                        algo=self._algo,
+                        max_evals=trials_count,
+                        trials=self.hpopt_trials,
+                        show_progressbar=False)
+                    trials_count += 1
+                    if pd is not None:
+                        self._save_trials(trials_file)
+                        self._update_best_result(best_result_file)
+                    self._save()
+                    if self.stop(t, trials_count):
+                        exit = True
+        else:
+            logger.info('Can\'t create search space for input model!')
 
     def _prepare_final_searchspace(self, first, second):
         for key, cfgs in second.items():

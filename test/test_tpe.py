@@ -65,8 +65,6 @@ def build_fake_model():
         with tf.Session() as sess:
             x = tf.placeholder(tf.float32, shape=(1,3,3,1), name='x')
             y = tf.constant(np.random.random((2,2,1,1)), name='y', dtype=tf.float32)
-            if tf.version.VERSION < '2.1.0':
-              x = tf.nn.relu(x)
             op = tf.nn.conv2d(input=x, filter=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
 
             sess.run(tf.global_variables_initializer())
@@ -81,8 +79,6 @@ def build_fake_model():
         with tf.compat.v1.Session() as sess:
             x = tf.compat.v1.placeholder(tf.float32, shape=(1,3,3,1), name='x')
             y = tf.compat.v1.constant(np.random.random((2,2,1,1)), name='y', dtype=tf.float32)
-            if tf.version.VERSION < '2.1.0':
-              x = tf.nn.relu(x)
             op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
 
             sess.run(tf.compat.v1.global_variables_initializer())
@@ -103,13 +99,16 @@ class TestQuantization(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
-        os.remove('fake_yaml2.yaml')
-        os.remove('saved/history.snapshot')
-        os.remove('saved/tpe_best_result.csv')
-        os.remove('saved/tpe_trials.csv')
-        os.remove('saved/deploy.yaml')
-        os.rmdir('saved')
+        try:
+            os.remove('fake_yaml.yaml')
+            os.remove('fake_yaml2.yaml')
+            os.remove('saved/history.snapshot')
+            os.remove('saved/tpe_best_result.csv')
+            os.remove('saved/tpe_trials.csv')
+            os.remove('saved/deploy.yaml')
+            os.rmdir('saved')
+        except:
+            print("Error while deleting file ")
 
     def test_run_tpe_one_trial(self):
         from ilit.strategy import strategy
