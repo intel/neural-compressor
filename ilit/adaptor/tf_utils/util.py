@@ -328,6 +328,7 @@ def get_graph_def(model, outputs=[]):
         graph_def, _, _ = parse_kerasmodel_model(model)
     elif isinstance(model, str):
         graph_def = tf.compat.v1.GraphDef()
+        model = os.path.expanduser(model)
         if model.endswith('.pb') and os.path.isfile(model):
             with open(model, 'rb') as f:
                 graph_def.ParseFromString(f.read())

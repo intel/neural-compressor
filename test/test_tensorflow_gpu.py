@@ -9,12 +9,12 @@ from ilit.adaptor.tf_utils.util import read_graph
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 
 class TestTensorflowGpu(unittest.TestCase):
-    resnet50_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
+    mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
     pb_path = 'mobilenet_fp32.pb'
 
     @classmethod
     def setUpClass(self):
-        os.system("wget {} -O {} ".format(self.resnet50_model_url, self.pb_path))
+        os.system("wget {} -O {} ".format(self.mb_model_url, self.pb_path))
 
     @classmethod
     def tearDownClass(self):
