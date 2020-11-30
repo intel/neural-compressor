@@ -167,7 +167,7 @@ class BilinearImagenetTransform(Transform):
   # sample is (images, labels)
   def __call__(self, sample):
     image, label = sample
-    if image.dtype != tf.float32:
+    if image.dtype is not tf.float32:
       image = tf.image.convert_image_dtype(image, dtype=tf.float32)
     # Crop the central region of the image containing 87.5% area of the original image.
     if self.central_fraction:

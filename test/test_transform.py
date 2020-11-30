@@ -19,7 +19,56 @@ class TestMetrics(unittest.TestCase):
         image_result = compose(image)
         self.assertEqual(image_result.shape, (1, 128, 128, 1))
 
-class TestCOCOTransform(unittest.TestCase):
+class TestTensorflowImagenetTransform(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def testBilinearImagenetTransform(self):
+        import tensorflow as tf
+        transforms = TRANSFORMS('tensorflow', "preprocess")
+        transform = transforms['BilinearImagenet'](height=224, width=224)
+        rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
+        sample = (rand_input, 0)
+        result = transform(sample)
+        resized_input = result[0].eval(session=tf.compat.v1.Session())
+        self.assertEqual(len(resized_input), 224)
+        self.assertEqual(len(resized_input[0]), 224)
+        self.assertEqual(len(resized_input[0][0]), 3)
+
+    def testResizeCropImagenetTransform(self):
+        import tensorflow as tf
+        transforms = TRANSFORMS('tensorflow', "preprocess")
+        transform = transforms['ResizeCropImagenet'](height=224, width=224)
+        rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
+        sample = (rand_input, 0)
+        result = transform(sample)
+        resized_input = result[0].eval(session=tf.compat.v1.Session())
+        self.assertEqual(len(resized_input), 224)
+        self.assertEqual(len(resized_input[0]), 224)
+        self.assertEqual(len(resized_input[0][0]), 3)
+    
+    def testLabelShift(self):
+        import tensorflow as tf
+        transforms = TRANSFORMS('tensorflow', "postprocess")
+        transform = transforms['LabelShift'](label_shift=1)
+        rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
+        sample = (rand_input, 1001)
+        label = transform(sample)[1]
+        self.assertEqual(label, 1000)
+
+    def testQuantizedInput(self):
+        import tensorflow as tf
+        transforms = TRANSFORMS('tensorflow', "preprocess")
+        transform = transforms['QuantizedInput'](dtype='uint8', scale=100)
+        rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
+        sample = (rand_input, 1001)
+        result = transform(sample)
+        quantized_input = result[0].eval(session=tf.compat.v1.Session())
+        self.assertLessEqual(quantized_input.max(), 255)
+        self.assertGreaterEqual(quantized_input.min(), 0)
+
+
+class TestTensorflowCOCOTransform(unittest.TestCase):
     def setUp(self):
         pass
     def testPreds(self):

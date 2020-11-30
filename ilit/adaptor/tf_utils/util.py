@@ -279,6 +279,35 @@ def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names,
 
     builder.save()
 
+def get_slim_graph(model, model_func, arg_scope, images, outputs=None, **kwargs):  
+    assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
+    import tf_slim as slim
+    with tf.compat.v1.Session() as sess:
+        with slim.arg_scope(arg_scope) as scope: # pylint: disable=not-context-manager
+            model_func(images, is_training=False, **kwargs)
+        graph_def = sess.graph.as_graph_def()
+
+        if outputs is None:
+            outputs = graph_def.node[-1].name
+            
+        from tensorflow.python.tools.freeze_graph import freeze_graph_with_def_protos
+        graph_def = freeze_graph_with_def_protos(\
+            input_graph_def=graph_def,
+            input_saver_def=None,
+            input_checkpoint=model,
+            output_node_names=outputs,
+            restore_op_name='save/restore_all',
+            filename_tensor_name='save/Const:0',
+            output_graph='',
+            clear_devices=True,
+            initializer_nodes='')
+
+    graph = tf.Graph()
+    with graph.as_default():
+        tf.import_graph_def(graph_def, name='')
+    return graph
+    
+
 def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
 

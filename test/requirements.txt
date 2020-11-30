@@ -7,3 +7,4 @@ mxnet-mkl==1.6.0
 numpy
 ilit
 pandas
+tf_slim
