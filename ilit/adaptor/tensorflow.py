@@ -723,7 +723,11 @@ class TensorflowQuery(QueryBackendCapability):
         for _, op_cfg in self.get_quantization_capability()['uint8'].items():
             for category_name, category_value in op_cfg.items():
                 for field_name, field_value in category_value.items():
-                    res[category_name][field_name].extend(field_value)
-                    res[category_name][field_name] = list(set(res[category_name][field_name]))
+                    if not res[category_name][field_name]:
+                        res[category_name][field_name].extend(field_value)
+                    
+                    for each_value in field_value:
+                        if each_value not in res[category_name][field_name]:
+                            res[category_name][field_name].append(each_value)
 
         return res
