@@ -15,11 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
-from ilit.utils.utility import dump_elapsed_time
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
+from ilit.utils.utility import dump_elapsed_time
 
 from .quantize_graph_base import QuantizeGraphBase
 from .quantize_graph_common import QuantizeGraphHelper

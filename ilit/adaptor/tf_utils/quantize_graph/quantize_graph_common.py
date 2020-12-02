@@ -15,16 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import tensor_util
 
-import re
 
-
-class QuantizeGraphHelper(object):
+class QuantizeGraphHelper():
     """
     This class contains several staticmethod functions.
     """
@@ -313,8 +312,8 @@ class QuantizeGraphHelper(object):
                 node_name = m.group(1)
             QuantizeGraphHelper.node_name_cache[key] = node_name
             return node_name
-        else:
-            return QuantizeGraphHelper.node_name_cache[node_name]
+
+        return QuantizeGraphHelper.node_name_cache[node_name]
 
     @staticmethod
     def unique_node_name_from_input(node_name):
@@ -332,5 +331,5 @@ class QuantizeGraphHelper(object):
                 node_name = node_name + ":0"
             QuantizeGraphHelper.node_name_port_cache[key] = node_name
             return node_name
-        else:
-            return QuantizeGraphHelper.node_name_port_cache[node_name]
+
+        return QuantizeGraphHelper.node_name_port_cache[node_name]

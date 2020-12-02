@@ -16,8 +16,7 @@
 # limitations under the License.
 
 
-
-class TFLowbitPrecisionPatterns(object):
+class TFLowbitPrecisionPatterns():
     patterns = {
         "2.1.0": [[["ConcatV2"]], [["MaxPool", "AvgPool"]], [["MatMul"], ("BiasAdd")],
                   [["Conv2D", "DepthwiseConv2dNative"], ("BiasAdd",), ("Add", "AddN", "AddV2"),

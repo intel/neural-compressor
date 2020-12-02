@@ -158,7 +158,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node, [parent_node_name], quantized_node_name,
                 [self.graph_info[requantize_node_name].outputs[0]], requantize_node_name)
             self.graph_analyzer.remove_node(quantized_node_name)
-        
+
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.sum_pattern)
         while target_nodes:
             i = target_nodes[0]

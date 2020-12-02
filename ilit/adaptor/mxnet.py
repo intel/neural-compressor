@@ -16,10 +16,7 @@
 # limitations under the License.
 
 import os
-import time
 import logging
-import shutil
-import tempfile
 import json
 import re
 from tempfile import TemporaryDirectory
@@ -410,9 +407,8 @@ class MxNetAdaptor(Adaptor):
                     "iteration_2": {'op1': tensor, ...}}
         """
         import ctypes
-        from mxnet.base import _LIB, check_call, py_str
-        from mxnet.base import c_array, c_str, mx_uint, c_str_array
-        from mxnet.base import NDArrayHandle, SymbolHandle
+        from mxnet.base import _LIB, py_str
+        from mxnet.base import NDArrayHandle
 
         class _LayerTensorCollector(object):
             """Saves layer output min and max values in a dict with layer names as keys.

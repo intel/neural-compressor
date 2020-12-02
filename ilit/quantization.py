@@ -16,15 +16,13 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
-from datetime import datetime
 import pickle
 from .conf.config import Conf
 from .conf.dotdict import deep_set
 from .strategy import STRATEGIES
 from .metric import METRICS
 from .utils import logger
-from .utils.create_obj_from_config import create_dataset, create_dataloader
+from .utils.create_obj_from_config import create_dataloader
 from .data import DataLoader as DATALOADER
 from .data import DATASETS, TRANSFORMS
 

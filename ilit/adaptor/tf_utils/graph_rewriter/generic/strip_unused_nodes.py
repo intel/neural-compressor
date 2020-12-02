@@ -18,10 +18,10 @@
 
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
+from ilit.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
-from ilit.utils.utility import dump_elapsed_time
 
 
 class StripUnusedNodesOptimizer(GraphRewriterBase):
@@ -29,7 +29,7 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
         super().__init__(model)
         self.input_node_names = input_node_names
         self.output_node_names = output_node_names
-    
+
     @dump_elapsed_time("Pass StripUnusedNodesOptimizer")
     def do_transformation(self):
         cur_graph = GraphAnalyzer()

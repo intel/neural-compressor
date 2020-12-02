@@ -17,11 +17,11 @@
 
 
 import logging
-import tensorflow as tf
-import numpy as np
 import os
 from collections import OrderedDict
 from collections import namedtuple
+import numpy as np
+import tensorflow as tf
 
 from tensorflow.python.platform import gfile
 from tensorflow.core.framework import graph_pb2

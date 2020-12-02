@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+
 from tensorflow.python.framework import dtypes
 from tensorflow.core.framework import node_def_pb2
 from .quantize_graph_base import QuantizeNodeBase
 from .quantize_graph_common import QuantizeGraphHelper as helper
-
-import re
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):

@@ -16,7 +16,6 @@
 # limitations under the License.
 
 from abc import abstractmethod
-import functools
 
 from ilit.utils.utility import LazyImport, singleton
 torchvision = LazyImport('torchvision')

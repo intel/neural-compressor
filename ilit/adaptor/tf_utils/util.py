@@ -18,17 +18,17 @@
 
 import os
 
+from google.protobuf import text_format
 import tensorflow as tf
 
-from google.protobuf import text_format
 from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
 from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.framework.ops import Graph
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
+
 
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
@@ -67,6 +67,7 @@ def write_graph(out_graph_def, out_graph_file):
     f = gfile.GFile(out_graph_file, 'wb')
     f.write(out_graph_def.SerializeToString())
 
+
 def is_ckpt_format(model_path):
     """check the model_path format is ckpt or not.
 
@@ -79,8 +80,9 @@ def is_ckpt_format(model_path):
     file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
     if file_list.count('.meta') == 1 and file_list.count('.index') == 1:
         return [os.path.splitext(i)[0] for i in os.listdir(model_path) if i.endswith(".meta")][0]
-    else:
-        return None
+
+    return None
+
 
 def is_keras_savedmodel_format(model_path):
     """check the model_path format is keras saved model or not.
@@ -95,9 +97,7 @@ def is_keras_savedmodel_format(model_path):
         model = tf.keras.models.load_model(model_path)
         if isinstance(model, tf.keras.Model):
             return model
-        else:
-            return None
-
+    return None
 
 def parse_ckpt_model(ckpt_prefix, outputs):
     """Parse the ckpt model
@@ -119,6 +119,7 @@ def parse_ckpt_model(ckpt_prefix, outputs):
             output_node_names=outputs)
 
         return output_graph_def
+
 
 def _parse_ckpt_bn_input(graph_def):
     """parse ckpt batch norm inputs to match correct moving mean and variance
@@ -173,10 +174,7 @@ def is_saved_model_format(model_path):
         bool: return True if the model_path contains saved_model format else False.
     """
     file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
-    if file_list.count('.pb') == 1 and ('variables') in os.listdir(model_path):
-        return True
-    else:
-        return False
+    return bool(file_list.count('.pb') == 1 and ('variables') in os.listdir(model_path))
 
 
 def parse_kerasmodel_model(model):
@@ -190,7 +188,7 @@ def parse_kerasmodel_model(model):
         input_names: input node names
         output_names: output node name
     """
-    
+
     kwargs = dict(zip(model.input_names, model.inputs))
     full_model = tf.function(lambda **kwargs: model(kwargs.values()))
     concrete_function = full_model.get_concrete_function(**kwargs)
@@ -204,7 +202,7 @@ def parse_kerasmodel_model(model):
             if node.op == 'Identity' and output_name in node.input[0]:
                 node.name = output_name
                 break
-            
+
     return graph_def, input_names, output_names
 
 
@@ -243,6 +241,7 @@ def parse_savedmodel_model(model_path):
 
         return output_graph_def, input_names, output_names
 
+
 def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names, output_dir):
     """Convert the graphdef to SavedModel
 
@@ -279,19 +278,20 @@ def convert_pb_to_savedmodel(graph_def, input_tensor_names, output_tensor_names,
 
     builder.save()
 
-def get_slim_graph(model, model_func, arg_scope, images, outputs=None, **kwargs):  
+
+def get_slim_graph(model, model_func, arg_scope, images, outputs=None, **kwargs):
     assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
     import tf_slim as slim
     with tf.compat.v1.Session() as sess:
-        with slim.arg_scope(arg_scope) as scope: # pylint: disable=not-context-manager
+        with slim.arg_scope(arg_scope) as scope:  # pylint: disable=not-context-manager
             model_func(images, is_training=False, **kwargs)
         graph_def = sess.graph.as_graph_def()
 
         if outputs is None:
             outputs = graph_def.node[-1].name
-            
+
         from tensorflow.python.tools.freeze_graph import freeze_graph_with_def_protos
-        graph_def = freeze_graph_with_def_protos(\
+        graph_def = freeze_graph_with_def_protos(
             input_graph_def=graph_def,
             input_saver_def=None,
             input_checkpoint=model,
@@ -306,7 +306,7 @@ def get_slim_graph(model, model_func, arg_scope, images, outputs=None, **kwargs)
     with graph.as_default():
         tf.import_graph_def(graph_def, name='')
     return graph
-    
+
 
 def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
@@ -338,13 +338,13 @@ def get_graph_def(model, outputs=[]):
             # (TODO) support h5 saved model, notice there is also h5 weights
             raise ValueError('saved model h5 format not supported yet, soon')
         elif os.path.isdir(model):
-            # tf2.x checkpoint only save weight and do not contain any 
+            # tf2.x checkpoint only save weight and do not contain any
             # description of the computation, so we drop tf2.x checkpoint support
             ckpt_prefix = is_ckpt_format(model)
             if ckpt_prefix is not None:
                 graph_def = parse_ckpt_model(
                     os.path.join(model, ckpt_prefix), outputs)
-            # (TODO) support tf2.x saved model 
+            # (TODO) support tf2.x saved model
             # tf1.x saved model is out of date and few examples, drop
             if is_saved_model_format(model):
                 keras_model = is_keras_savedmodel_format(model)
@@ -354,7 +354,7 @@ def get_graph_def(model, outputs=[]):
                     raise ValueError('tf saved model format not supported yet, soon')
             if graph_def is None:
                 raise ValueError('only support tf1.x checkpoint or tf2.x keras saved model')
-        else: 
+        else:
             raise ValueError('only support frozen pb file or model path')
     else:
         raise ValueError(

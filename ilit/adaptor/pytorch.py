@@ -15,18 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pandas as pd
-from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, AverageMeter, compute_sparsity, CpuInfo, singleton
 import copy
-from collections import OrderedDict
-from ..utils import logger
-from ilit.utils.utility import dump_elapsed_time
-from .query import QueryBackendCapability
 import random
-import numpy as np
 import os
+from collections import OrderedDict
 import yaml
+import pandas as pd
+from ilit.utils.utility import dump_elapsed_time
+from .adaptor import adaptor_registry, Adaptor
+from ..utils.utility import LazyImport, compute_sparsity, CpuInfo, singleton
+from ..utils import logger
+from .query import QueryBackendCapability
 
 torch = LazyImport('torch')
 
@@ -488,15 +487,15 @@ class PyTorchAdaptor(Adaptor):
 
         # for tensorboard
         self.dump_times = 0
-        self.fused_op = ['nni.ConvReLU1d', 
-                         'nni.ConvReLU2d', 
-                         'nni.ConvReLU3d', 
-                         'nni.LinearReLU', 
-                         'nni.BNReLU2d', 
-                         'nni.BNReLU3d', 
-                         'nniqat.ConvReLU2d', 
-                         'nniqat.ConvBn2d', 
-                         'nniqat.ConvBnReLU2d', 
+        self.fused_op = ['nni.ConvReLU1d',
+                         'nni.ConvReLU2d',
+                         'nni.ConvReLU3d',
+                         'nni.LinearReLU',
+                         'nni.BNReLU2d',
+                         'nni.BNReLU3d',
+                         'nniqat.ConvReLU2d',
+                         'nniqat.ConvBn2d',
+                         'nniqat.ConvBnReLU2d',
                          'nni.LinearReLU']
         self.fused_dict = {}
 
@@ -853,10 +852,10 @@ class PyTorchAdaptor(Adaptor):
                    if prefix in self.fused_dict:
                       self.fused_dict[prefix] = [self.fused_dict[prefix], module_prefix]
                    else:
-                      self.fused_dict[prefix] = module_prefix 
+                      self.fused_dict[prefix] = module_prefix
                    _fused = True
                 else:
-                   _fused = False 
+                   _fused = False
 
                 _propagate_qconfig_helper(child, qconfig_dict, white_list,
                                           module_qconfig, module_prefix, fused=_fused)
@@ -971,7 +970,7 @@ class PyTorchAdaptor(Adaptor):
         from torch.quantization import get_observer_dict
 
         if args is not None and 'accuracy' in args:
-           accuracy = args['accuracy'] 
+           accuracy = args['accuracy']
         else:
            accuracy = ''
 
@@ -1035,7 +1034,7 @@ class PyTorchAdaptor(Adaptor):
             if not isinstance(state_dict[key], torch.Tensor):
                 continue
 
-            op = key[:key.rfind('.')] 
+            op = key[:key.rfind('.')]
             if self.is_fused_child(op) == True:
                # fused child tensorboard tag will be merge
                weight = key[key.rfind('.')+1:]

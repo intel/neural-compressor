@@ -18,11 +18,11 @@
 
 import numpy as np
 import tensorflow as tf
-
 from tensorflow.python.platform import tf_logging
+from ilit.utils.utility import dump_elapsed_time
+
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer, GraphRewriterHelper
-from ilit.utils.utility import dump_elapsed_time
 
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):
@@ -61,8 +61,8 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
                 s1a = np.asarray(s1.shape)
                 s2a = np.asarray(s2.shape)
                 return ((s1a == 1) | (s2a == 1) | (s2a == s1a)).all()
-            else:
-                return True
+
+            return True
 
         if self.graph_info[end_node_name].node.input:
             if end_node.op == "Mul":

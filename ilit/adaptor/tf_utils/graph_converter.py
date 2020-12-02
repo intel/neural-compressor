@@ -18,11 +18,7 @@
 
 import copy
 import os
-import sys
 import logging
-import threading
-import time
-import copy
 import numpy as np
 import tensorflow as tf
 
@@ -30,7 +26,6 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import importer
 from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
-# from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 from ilit.utils.utility import get_all_fp32_data
 from ilit.utils.utility import get_tensor_histogram
 from ilit.utils.utility import combine_histogram
@@ -83,7 +78,8 @@ class GraphConverter:
         """
         # Logger initial
         self.logger = logging.getLogger()
-        self.debug = True if self.logger.level == logging.DEBUG else False
+        self.debug = bool(self.logger.level == logging.DEBUG)
+
         # For ilit, the input_graph is not graph file path but Graph object.
         self.input_graph = get_graph_def(input_graph, outputs)
         self.output_graph = output_graph
@@ -472,7 +468,7 @@ class GraphConverter:
         # TODO need to insert op-wise logging op.
         self._tmp_graph_def = InsertLoggingTransformer(self._tmp_graph_def,
                                                        target_op_types=[
-                                                        "RequantizationRange", 
+                                                        "RequantizationRange",
                                                         "RequantizationRangePerChannel"],
                                                        message="__requant_min_max:"). \
                                                        do_transformation()
@@ -545,12 +541,7 @@ class GraphConverter:
 
         self._tmp_graph_def = FuseMatMulRequantizeTransformer(
             self._tmp_graph_def).do_transformation()
-        # strip_unused_nodes with optimize_for_inference
-        # self._tmp_graph_def = optimize_for_inference(self._tmp_graph_def,
-        #                                              self.inputs,
-        #                                              self.outputs,
-        #                                              dtypes,
-        #                                              False)
+
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
                                                         self.outputs).do_transformation()
 

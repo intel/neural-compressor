@@ -180,6 +180,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = self.remove_redundant_quantization(
                 self.output_graph)
             return self.output_graph
-        else:
-            self.logger.debug("No more match, exit...")
-            return self.input_graph
+
+        self.logger.debug("No more match, exit...")
+        return self.input_graph

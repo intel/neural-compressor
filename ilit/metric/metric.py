@@ -19,7 +19,7 @@ from abc import abstractmethod
 from collections import Counter
 from ilit.utils.utility import LazyImport, singleton
 from ..utils import logger
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score
 import numpy as np
 
 torch_ignite = LazyImport('ignite')

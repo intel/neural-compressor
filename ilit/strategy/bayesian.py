@@ -19,7 +19,6 @@ from .strategy import strategy_registry, TuneStrategy
 import warnings
 import numpy as np
 import copy
-from scipy.stats import norm
 from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor

@@ -15,18 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
+import numpy as np
 
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
 
+from ilit.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from ilit.utils.utility import dump_elapsed_time
-
-import numpy as np
-import math
 
 
 class FoldBatchNormNodesOptimizer(GraphRewriterBase):

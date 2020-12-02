@@ -15,15 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from .adaptor import FRAMEWORKS
 from .objective import OBJECTIVES
 from .conf.config import Conf
 from .utils import logger
-from .utils.create_obj_from_config import create_eval_func, create_dataset, create_dataloader
+from .utils.create_obj_from_config import create_eval_func, create_dataloader
 from .conf.dotdict import deep_get, deep_set
 from .data import DataLoader as DATALOADER
-from .data import DATASETS, TRANSFORMS
+from .data import TRANSFORMS
 from .metric import METRICS
 
 class Benchmark(object):
@@ -112,14 +111,13 @@ class Benchmark(object):
                           pin_memory=pin_memory)
 
     def metric(self, name, metric_cls, **kwargs):
-        metric_cfg = {name : {**kwargs}} 
+        metric_cfg = {name : {**kwargs}}
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         metrics = METRICS(self.framework)
         metrics.register(name, metric_cls)
-        
+
     def postprocess(self, name, postprocess_cls, **kwargs):
-        postprocess_cfg = {name : {**kwargs}} 
+        postprocess_cfg = {name : {**kwargs}}
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(name, postprocess_cls)
-

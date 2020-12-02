@@ -29,7 +29,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os
 from ilit.utils.utility import LazyImport
 from .dataset import dataset_registry, IterableDataset
 tf = LazyImport('tensorflow')

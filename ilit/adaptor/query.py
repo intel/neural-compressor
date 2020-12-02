@@ -17,7 +17,6 @@
 from abc import abstractmethod
 
 import logging
-import itertools
 
 class QueryBackendCapability():
     """Base class that defines Query Interface.

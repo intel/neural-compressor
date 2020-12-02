@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ilit.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
-from ilit.utils.utility import dump_elapsed_time
 
 
 class RemoveTrainingNodesOptimizer(GraphRewriterBase):
@@ -26,7 +26,7 @@ class RemoveTrainingNodesOptimizer(GraphRewriterBase):
         super().__init__(model)
         self.protected_nodes = protected_nodes
         self.types_to_splice = types_to_splice
-    
+
     @dump_elapsed_time("Pass RemoveTrainingNodesOptimizer")
     def do_transformation(self):
         graph_handle = GraphAnalyzer()

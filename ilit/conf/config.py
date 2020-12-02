@@ -19,7 +19,6 @@ import yaml
 from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
-from ..policy import POLICIES
 from ..objective import OBJECTIVES
 from ..utils import logger
 import re

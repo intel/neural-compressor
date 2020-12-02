@@ -20,9 +20,9 @@ import os
 import re
 import logging
 from collections import namedtuple
+from google.protobuf import text_format
 import tensorflow as tf
 
-from google.protobuf import text_format
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -30,12 +30,11 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
 from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
-from tensorflow.python.framework.ops import Graph
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import tensor_util
-
 from ilit.utils.utility import singleton
+
 
 
 @singleton
@@ -55,7 +54,7 @@ class GraphAnalyzer(object):
 
     @property
     def graph(self):
-        """Getter of the _graph object 
+        """Getter of the _graph object
 
         Returns:
             graph: current graphdef object
@@ -107,22 +106,22 @@ class GraphAnalyzer(object):
     def get_graph_input_output(self):
         """Get the graphdef input/output node names. Sometimes, the configuration doesn't
             specifies the input/output names of the graph, but tensorflow need to know them
-            clearly to run the graph.We implement this function has the similar feature like 
+            clearly to run the graph.We implement this function has the similar feature like
             summarize_graph.py which writtern by Google.
         Returns:
             tuple: (inputs' name list, outputs'name list)
         """
         input_node_names = []
         output_node_names = []
-        unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save', \
-            'global_step', 'read', 'switch', 'cond', 'train', 'init_ops']
+        unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
+                                 'global_step', 'read', 'switch', 'cond', 'train', 'init_ops']
 
         for _, i in self.node_name_details.items():
             if i.node.op == 'Const':
                 continue
             if not i.node.input and not i.outputs:
                 self.logger.debug("skip isolated node .. {}".format(i.node.name))
-            elif  i.node.op == 'Placeholder':
+            elif i.node.op == 'Placeholder':
                 input_node_names.append(i.node.name)
             elif not i.node.input:
                 input_node_names.append(i.node.name)
@@ -349,7 +348,7 @@ class GraphAnalyzer(object):
         for sub_node in target_node:
             for index, each_node_name in enumerate(self.node_name_details[sub_node].node.input):
                 if each_node_name + ':0' == old_constant_node_name \
-                    or each_node_name == old_constant_node_name:
+                        or each_node_name == old_constant_node_name:
                     new_input_name = self.node_name_details[sub_node].node.input[:index] + [
                         new_const_node_name
                     ] + self.node_name_details[sub_node].node.input[index + 1:]
@@ -404,7 +403,7 @@ class GraphAnalyzer(object):
             new_node (nodedef): new nodedef object
             old_output_node_names (string list):the node names that would be the top node of new
                                                 node.
-            old_output_name (string list): the names that need to be updated with new node name 
+            old_output_name (string list): the names that need to be updated with new node name
             old_input_node_names (string list): the node names that would be the bottom node of new
                                                 node.
             old_input_name (string list): the names that need to be updated with new node name
@@ -426,7 +425,7 @@ class GraphAnalyzer(object):
                     new_input_name = self.node_name_details[
                         each_input_node_name].node.input[:index] + [
                             new_node_name
-                        ] + self.node_name_details[each_input_node_name].node.input[index + 1:]
+                    ] + self.node_name_details[each_input_node_name].node.input[index + 1:]
                     self.node_name_details[each_input_node_name].node.ClearField('input')
                     self.node_name_details[each_input_node_name].node.input.extend(new_input_name)
 
@@ -619,7 +618,7 @@ class GraphRewriterHelper(object):
             [type]: [description]
         """
         node = GraphRewriterHelper.create_node("Const" if device == 'cpu' else "HostConst", name,
-                                                 [])
+                                               [])
         GraphRewriterHelper.set_attr_dtype(node, "dtype", dtype)
         GraphRewriterHelper.set_attr_tensor(node, "value", value, dtype, shape)
         return node
@@ -704,8 +703,8 @@ class GraphRewriterHelper(object):
                 node_name = node_name + ":0"
             GraphRewriterHelper.node_name_port_cache[key] = node_name
             return node_name
-        else:
-            return GraphRewriterHelper.node_name_port_cache[node_name]
+
+        return GraphRewriterHelper.node_name_port_cache[node_name]
 
     @staticmethod
     def node_name_from_input(node_name):
@@ -726,8 +725,8 @@ class GraphRewriterHelper(object):
                 node_name = m.group(1)
             GraphRewriterHelper.node_name_cache[key] = node_name
             return node_name
-        else:
-            return GraphRewriterHelper.node_name_cache[node_name]
+
+        return GraphRewriterHelper.node_name_cache[node_name]
 
     @staticmethod
     def unique_node_name_from_input(node_name):
@@ -805,8 +804,8 @@ def is_ckpt_format(model_path):
     file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
     if file_list.count('.meta') == 1 and file_list.count('.index') == 1:
         return [os.path.splitext(i)[0] for i in os.listdir(model_path) if i.endswith(".meta")][0]
-    else:
-        return None
+
+    return None
 
 
 def parse_ckpt_model(ckpt_prefix, outputs):
@@ -884,8 +883,8 @@ def is_saved_model_format(model_path):
     file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
     if file_list.count('.pb') == 1 and ('variables') in os.listdir(model_path):
         return True
-    else:
-        return False
+
+    return False
 
 
 def parse_kerasmodel_model(model):

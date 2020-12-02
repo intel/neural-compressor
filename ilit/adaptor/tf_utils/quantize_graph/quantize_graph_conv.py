@@ -351,6 +351,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.output_graph)
             # self.remove_dead_nodes(self.output_node_names)
             return self.output_graph
-        else:
-            self.logger.debug("No more match, exit...")
-            return self.input_graph
+
+        self.logger.debug("No more match, exit...")
+        return self.input_graph

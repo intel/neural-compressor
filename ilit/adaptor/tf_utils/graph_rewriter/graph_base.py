@@ -30,7 +30,7 @@ class GraphRewriterBase(object):
     def __init__(self, model):
         self.model = model
         self.logger = logging.getLogger()
-    
+
     @abstractmethod
     def do_transformation(self):
         """Base Interface that need to be implemented by each sub class.
