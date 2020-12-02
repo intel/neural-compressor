@@ -15,18 +15,31 @@ class TestTFQueryYaml(unittest.TestCase):
 
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)
+        self.query_handler = TensorflowQuery(local_config_file=self.tf_yaml_path)
 
     def test_unique_version(self):
         registered_version_name = [i['version']['name'] for i in self.content]
 
         self.assertEqual(len(registered_version_name), len(set(registered_version_name)))
-    
+
     def test_model_wise_cfg(self):
-        self.query_handler = TensorflowQuery(local_config_file=self.tf_yaml_path)
         model_wise_cfg = self.query_handler.get_model_wise_ability()
 
         conv2d_weigths_granularity = model_wise_cfg['weight']['granularity']
         self.assertEqual(conv2d_weigths_granularity, ['per_channel', 'per_tensor'])
+
+    def test_int8_sequences(self):
+        patterns = self.query_handler.get_eightbit_patterns()
+
+        has_conv2d = bool('Conv2D' in patterns)
+        has_matmul = bool('MatMul' in patterns)
+        self.assertEqual(has_conv2d, True)
+        self.assertEqual(has_matmul, True)
+        self.assertGreaterEqual( len(patterns['Conv2D']), 13)
+        self.assertGreaterEqual( len(patterns['MatMul']), 3)
+        self.assertEqual( len(patterns['ConcatV2']), 1)
+        self.assertEqual( len(patterns['MaxPool']), 1)
+        self.assertEqual( len(patterns['AvgPool']), 1)
 
 if __name__ == '__main__':
     unittest.main()

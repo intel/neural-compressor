@@ -10,6 +10,7 @@ from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import Qu
 from ilit.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from ilit.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
+from ilit.adaptor.tensorflow import TensorflowQuery
 
 
 def build_fake_yaml():
@@ -136,9 +137,10 @@ class TestGraphConvFusion(unittest.TestCase):
                                                         self.inputs, self.outputs).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-
+        op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
         output_graph = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
-                                             self.op_wise_config,
+                                             self.op_wise_config, op_wise_sequences,
                                              'cpu').do_transform()
 
         node_name_type_mapping = {}

@@ -24,25 +24,11 @@ from .quantize_graph_base import QuantizeNodeBase
 
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
-    patterns = [
-                ["Conv2D", "BiasAdd", "AddN", "Relu"],
-                ["Conv2D", "BiasAdd", "AddN", "Relu6"],
-                ["Conv2D", "BiasAdd", "AddV2", "Relu"],
-                ["Conv2D", "BiasAdd", "AddV2", "Relu6"],
-                ["Conv2D", "BiasAdd", "Add", "Relu"], ["Conv2D", "BiasAdd"],
-                ["Conv2D", "BiasAdd", "Relu6"], ["Conv2D", "Add", "Relu6"],
-                ["Conv2D", "Add", "Relu"],
-                ["DepthwiseConv2dNative", "BiasAdd", "Relu6"],
-                ["DepthwiseConv2dNative", "Add", "Relu6"],
-                ["Conv2D", "BiasAdd", "Relu"], ["Conv2D"],
-                ["DepthwiseConv2dNative"]]
 
-    def __init__(self, input_graph, output_node_names, perchannel,
+    def __init__(self, input_graph, output_node_names, patterns, perchannel,
                  start_node_name, device, _):
-        super(FuseNodeStartWithConv2d,
-              self).__init__(input_graph, output_node_names, perchannel,
+        super().__init__(input_graph, output_node_names, patterns, perchannel,
                              start_node_name, device)
-        # self.quantized_node_postfix = "_eightbit_quantized_conv"
 
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),

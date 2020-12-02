@@ -1,13 +1,9 @@
 
-from ilit.adaptor.tf_utils.util import write_graph
 import unittest
 import yaml
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
-from ilit.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from ilit.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+
 
 def build_fake_yaml():
     fake_yaml = '''

@@ -23,10 +23,9 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
-    def __init__(self, input_graph, output_node_names, perchannel,
+    def __init__(self, input_graph, output_node_names, patterns,perchannel,
                  start_node_name, device, _):
-        super(FuseNodeStartWithPooling,
-              self).__init__(input_graph, output_node_names, perchannel,
+        super().__init__(input_graph, output_node_names,  patterns, perchannel,
                              start_node_name, device)
 
     def _add_pool_function(self, original_node, quantized_op_node):

@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from ilit.adaptor.tf_utils.util import read_graph
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-
+from ilit.adaptor.tensorflow import TensorflowQuery
 class TestTensorflowGpu(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
     pb_path = 'mobilenet_fp32.pb'
@@ -15,7 +15,9 @@ class TestTensorflowGpu(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         os.system("wget {} -O {} ".format(self.mb_model_url, self.pb_path))
-
+        self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+    
     @classmethod
     def tearDownClass(self):
         os.system("rm -rf {}".format(self.pb_path))
@@ -28,7 +30,7 @@ class TestTensorflowGpu(unittest.TestCase):
         tf.compat.v1.disable_eager_execution()
 
         converter = QuantizeGraphForIntel(
-            input_graph_def, output_node_names, op_wise_config, 'gpu')
+            input_graph_def, output_node_names, op_wise_config, self.op_wise_sequences, 'gpu')
         converted_pb = converter.do_transform()
 
         target_node_name = 'MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D_eightbit_quantized_conv'

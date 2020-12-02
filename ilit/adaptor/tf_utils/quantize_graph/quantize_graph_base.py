@@ -73,6 +73,7 @@ class QuantizeNodeBase(object):
     def __init__(self,
                  input_graph,
                  output_node_names,
+                 patterns,
                  per_channel,
                  start_node_name,
                  device,
@@ -94,6 +95,7 @@ class QuantizeNodeBase(object):
         self.output_graph = graph_pb2.GraphDef()
         self.quantized_node_dict = {}
         self.intel_cpu_eightbitize = True
+        self.patterns = patterns
         self.per_channel = per_channel
         self.start_node_name = start_node_name
         self.is_asymmetric = is_asymmetric

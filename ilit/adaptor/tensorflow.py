@@ -55,6 +55,7 @@ class TensorFlowAdaptor(Adaptor):
         self.dump_times = 0   # for tensorboard
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "tensorflow.yaml"))
+        self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
 
     def get_tensor_by_name_with_import(self, graph, name, try_cnt=3):
         """Get the tensor by name considering the 'import' scope when model
@@ -339,6 +340,7 @@ class TensorFlowAdaptor(Adaptor):
                                    inputs=self.inputs,
                                    outputs=self.outputs,
                                    qt_config=self.quantize_config,
+                                   int8_sequences=self.op_wise_sequences,
                                    fp32_ops=self.fp32_ops,
                                    bf16_ops=self.bf16_ops,
                                    data_loader=data_loader)
@@ -500,6 +502,7 @@ class TensorFlowAdaptor(Adaptor):
                                    inputs=self.inputs,
                                    outputs=self.outputs,
                                    qt_config=self.quantize_config,
+                                   int8_sequences=self.op_wise_sequences,
                                    data_loader=dataloader)
         return converter.inspect_tensor(op_list, iteration_list, self.work_dir)
 
@@ -729,5 +732,29 @@ class TensorflowQuery(QueryBackendCapability):
                     for each_value in field_value:
                         if each_value not in res[category_name][field_name]:
                             res[category_name][field_name].append(each_value)
+
+        return res
+
+    def get_eightbit_patterns(self):
+        """Get eightbit op wise sequences information.
+
+        Returns:
+            [dictionary]: key is the op type while value is the list of sequences start
+                        with the op type same as key value.
+        """
+        quantizable_op_types = self.get_op_types_by_precision(
+            'int8') + self.get_op_types_by_precision('uint8')
+        int8_patterns = [i.replace(
+            '+', ' ').split() for i in list(set(self.get_fuse_patterns()['int8'] +
+                                                self.get_fuse_patterns()['uint8']))]
+
+        res = {}
+        for i in quantizable_op_types:
+            res[i] = [[i]]
+
+        for pattern in int8_patterns:
+            op_type = pattern[0]
+            if op_type in res:
+                res[op_type].append(pattern)
 
         return res

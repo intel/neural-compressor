@@ -67,8 +67,10 @@
     uint8: [
         'Conv2D + BiasAdd + AddN + Relu',
         'Conv2D + BiasAdd + AddN + Relu6',
-        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + AddV2 + Relu',
+        'Conv2D + BiasAdd + AddV2 + Relu6',
         'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Add + Relu6',
         'Conv2D + BiasAdd + Relu',
         'Conv2D + BiasAdd + Relu6',
         'Conv2D + Add + Relu',
@@ -200,8 +202,10 @@
     uint8: [
         'Conv2D + BiasAdd + AddN + Relu',
         'Conv2D + BiasAdd + AddN + Relu6',
-        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + AddV2 + Relu',
+        'Conv2D + BiasAdd + AddV2 + Relu6',
         'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Add + Relu6',
         'Conv2D + BiasAdd + Relu',
         'Conv2D + BiasAdd + Relu6',
         'Conv2D + Add + Relu',

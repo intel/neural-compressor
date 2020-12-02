@@ -10,6 +10,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_matmul import FuseNodeStartWithMatmul
+from ilit.adaptor.tensorflow import TensorflowQuery
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -42,7 +43,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-
+        self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
@@ -98,7 +100,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
         float_graph_def.node.extend([post_relu_node])
 
         worker = FuseNodeStartWithMatmul(
-            float_graph_def, mat_mul_name, False, mat_mul_name, 'cpu', False)
+            float_graph_def, mat_mul_name, self.op_wise_sequences['MatMul'],
+            False, mat_mul_name, 'cpu', False)
         output_graph = worker.apply_the_transform()
         found_quantized_matmul = False
         for i in output_graph.node:
@@ -108,7 +111,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
         self.assertEqual(found_quantized_matmul, True)
 
-    def test_matmul_biasadd_relu_fusion(self):
+    def test_matmul_biasadd_relu_requantize_fusion(self):
         import numpy as np
         import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
@@ -162,7 +165,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 float_graph_def, ['Placeholder'], ['Relu'])
 
             worker = FuseNodeStartWithMatmul(
-                float_graph_def, 'MatMul', False, 'MatMul', 'cpu', True)
+                float_graph_def, 'MatMul', self.op_wise_sequences['MatMul'], False, 'MatMul', 'cpu', True)
             output_graph = worker.apply_the_transform()
 
             found_quantized_matmul = False

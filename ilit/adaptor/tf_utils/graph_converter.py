@@ -66,6 +66,7 @@ class GraphConverter:
                  inputs=[],
                  outputs=[],
                  qt_config={},
+                 int8_sequences={},
                  fp32_ops=[],
                  bf16_ops=[],
                  data_loader=None):
@@ -83,7 +84,6 @@ class GraphConverter:
         # Logger initial
         self.logger = logging.getLogger()
         self.debug = True if self.logger.level == logging.DEBUG else False
-
         # For ilit, the input_graph is not graph file path but Graph object.
         self.input_graph = get_graph_def(input_graph, outputs)
         self.output_graph = output_graph
@@ -94,6 +94,7 @@ class GraphConverter:
         self.calib_iteration = qt_config['calib_iteration']
         self.op_wise_config = qt_config['op_wise_config']
         self.device = qt_config['device'] if 'device' in qt_config else 'cpu'
+        self.int8_sequences = int8_sequences
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
 
@@ -334,8 +335,11 @@ class GraphConverter:
                                                                        q_out_max)
             else:
                 fp32_node_name.append(op_name)
-                if graph_node_name_mapping[op_name].op in ("Conv2D", "DepthwiseConv2dNative"):
-                    _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.outputs, False,
+                node_op =  graph_node_name_mapping[op_name].op
+                if node_op in ("Conv2D", "DepthwiseConv2dNative"):
+                    _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.outputs,
+                                                               self.int8_sequences[node_op],
+                                                               False,
                                                                op_name, self.device,
                                                                False).get_longest_fuse()
 
@@ -453,7 +457,8 @@ class GraphConverter:
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
                                                                      self.inputs, self.outputs)
         intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
-                                                self.op_wise_config, self.device)
+                                                self.op_wise_config, self.int8_sequences,
+                                                self.device)
         self._tmp_graph_def = intel_quantizer.do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)

@@ -24,10 +24,9 @@ import re
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
-    def __init__(self, input_graph, output_node_names, perchannel,
+    def __init__(self, input_graph, output_node_names,  patterns, perchannel,
                  start_node_name, device, _):
-        super(FuseNodeStartWithConcatV2,
-              self).__init__(input_graph, output_node_names, perchannel,
+        super().__init__(input_graph, output_node_names, patterns, perchannel,
                              start_node_name, device)
 
     def _apply_concatv2_transform(self, original_node):
