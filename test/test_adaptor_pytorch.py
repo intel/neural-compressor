@@ -6,7 +6,6 @@ import unittest
 import os
 from ilit.adaptor import FRAMEWORKS
 import shutil
-import yaml
 
 
 def build_ptq_yaml():
@@ -14,6 +13,26 @@ def build_ptq_yaml():
         model:
           name: imagenet
           framework: pytorch
+
+        quantization:
+          op_wise: {
+                 'layer1.0.conv1': {
+                   'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                   'weight': {'dtype': ['int8'], 'algorithm': ['kl'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                 },
+                 'layer2.0.conv1': {
+                   'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
+                   'weight': {'dtype': ['int8'], 'algorithm': ['kl'], 'granularity': ['per_channel'], 'scheme':['asym']}
+                 },
+                 'layer3.0.conv1': {
+                   'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                   'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                 },
+                 'layer1.0.add_relu': {
+                   'activation':  {'dtype': ['fp32']},
+                   'weight': {'dtype': ['fp32']}
+                 }
+          }
 
         evaluation:
           accuracy:
@@ -29,10 +48,8 @@ def build_ptq_yaml():
           workspace:
             path: saved
         '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('ptq_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
+    with open('ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
 
 
 def build_dump_tensors_yaml():
@@ -56,10 +73,8 @@ def build_dump_tensors_yaml():
             path: saved
           tensorboard: true
         '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('dump_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
+    with open('dump_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
 
 
 def build_qat_yaml():
@@ -84,10 +99,8 @@ def build_qat_yaml():
           workspace:
             path: saved
         '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('qat_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
+    with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
 
 
 def eval_func(model):
@@ -165,6 +178,8 @@ class TestAdaptorPytorch(unittest.TestCase):
     def test_quantization_saved(self):
         from ilit import Quantization
         from ilit.utils.pytorch import load
+        self.model.eval()
+        self.model.fuse_model()
         for fake_yaml in ['ptq_yaml.yaml', 'qat_yaml.yaml']:
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
