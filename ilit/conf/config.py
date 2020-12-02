@@ -287,7 +287,7 @@ schema = Schema({
             Optional('resume'): str
         }
     },
-    Optional('evaluation', default=None): {
+    Optional('evaluation'): {
         Optional('accuracy'): {
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),

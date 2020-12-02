@@ -20,13 +20,13 @@ from pathlib import Path
 from datetime import datetime
 import pickle
 from .conf.config import Conf
+from .conf.dotdict import deep_set
 from .strategy import STRATEGIES
+from .metric import METRICS
 from .utils import logger
 from .utils.create_obj_from_config import create_dataset, create_dataloader
 from .data import DataLoader as DATALOADER
 from .data import DATASETS, TRANSFORMS
-from collections import OrderedDict
-
 
 class Quantization(object):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -241,6 +241,19 @@ class Quantization(object):
                           batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
                           sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
                           pin_memory=pin_memory)
+
+    def metric(self, name, metric_cls, **kwargs):
+        metric_cfg = {name : {**kwargs}} 
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
+        metrics = METRICS(self.framework)
+        metrics.register(name, metric_cls)
+        
+    def postprocess(self, name, postprocess_cls, **kwargs):
+        postprocess_cfg = {name : {**kwargs}} 
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
+        postprocesses = TRANSFORMS(self.framework, 'postprocess')
+        postprocesses.register(name, postprocess_cls)
+        logger.info("{} registered to postprocess".format(name))
 
     # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
     # fake eval func is created to do quantization once without tuning

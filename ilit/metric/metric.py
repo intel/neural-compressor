@@ -30,8 +30,7 @@ mx = LazyImport('mxnet')
 class TensorflowMetrics(object):
     def __init__(self):
         self.metrics = {}
-        self.metrics.update(TENSORFLOWMETRICS)
-
+        self.metrics.update(TENSORFLOW_METRICS)
 
 @singleton
 class PyTorchMetrics(object):
@@ -84,8 +83,7 @@ class PyTorchMetrics(object):
             "Frequency": WrapPyTorchMetric(
                 torch_ignite.metrics.Frequency, True),
         }
-        self.metrics.update(PYTORCHMETRICS)
-
+        self.metrics.update(PYTORCH_METRICS)
 
 @singleton
 class MXNetMetrics(object):
@@ -109,12 +107,21 @@ class MXNetMetrics(object):
             "PCC": WrapMXNetMetric(mx.metric.PCC),
             "Loss": WrapMXNetMetric(mx.metric.Loss),
         }
-        self.metrics.update(MXNETMETRICS)
+        self.metrics.update(MXNET_METRICS)
 
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
                      "pytorch": PyTorchMetrics, }
+
+# user/model specific metrics will be registered here
+TENSORFLOW_METRICS = {}
+MXNET_METRICS = {}
+PYTORCH_METRICS = {}
+
+registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
+                    "mxnet": MXNET_METRICS,
+                    "pytorch": PYTORCH_METRICS, }
 
 
 class METRICS(object):
@@ -129,15 +136,9 @@ class METRICS(object):
 
         return self.metrics[metric_type]
 
-
-# user/model specific metrics will be registered here
-TENSORFLOWMETRICS = {}
-MXNETMETRICS = {}
-PYTORCHMETRICS = {}
-
-registry_metrics = {"tensorflow": TENSORFLOWMETRICS,
-                    "mxnet": MXNETMETRICS,
-                    "pytorch": PYTORCHMETRICS, }
+    def register(self, name, metric_cls):
+        assert name not in self.metrics.keys(), 'registered metric name already exists.'
+        self.metrics.update({name: metric_cls})
 
 
 def metric_registry(metric_type, framework):

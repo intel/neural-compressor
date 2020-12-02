@@ -90,7 +90,7 @@ def create_eval_func(framework, dataloader, adaptor, \
     postprocess = None
     if postprocess_cfg is not None:
         postprocesses = TRANSFORMS(framework, "postprocess")
-        postprocess = get_postprocess(postprocesses, postprocess_cfg.transform)
+        postprocess = get_postprocess(postprocesses, postprocess_cfg['transform'])
 
     if metric_cfg is not None:
         assert len(metric_cfg) == 1, "Only one metric should be specified!"

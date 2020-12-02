@@ -21,8 +21,10 @@ from .objective import OBJECTIVES
 from .conf.config import Conf
 from .utils import logger
 from .utils.create_obj_from_config import create_eval_func, create_dataset, create_dataloader
-from .conf.dotdict import deep_get
+from .conf.dotdict import deep_get, deep_set
 from .data import DataLoader as DATALOADER
+from .data import DATASETS, TRANSFORMS
+from .metric import METRICS
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance, with the objective
@@ -36,6 +38,7 @@ class Benchmark(object):
 
     def __init__(self, conf_fname):
         self.conf = Conf(conf_fname)
+        self.framework = self.conf.usr_cfg.model.framework.lower()
 
     def __call__(self, model, b_dataloader=None, b_func=None):
         cfg = self.conf.usr_cfg
@@ -58,6 +61,7 @@ class Benchmark(object):
             iteration = -1 if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) is None \
                 else deep_get(cfg, 'evaluation.{}.iteration'.format(mode))
             metric =  deep_get(cfg, 'evaluation.{}.metric'.format(mode))
+            b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
 
             if b_dataloader is None:
                 assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
@@ -65,7 +69,6 @@ class Benchmark(object):
 
                 b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
                 b_dataloader = create_dataloader(framework, b_dataloader_cfg)
-                b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
                 b_func = create_eval_func(framework, \
                                           b_dataloader, \
                                           adaptor, \
@@ -77,6 +80,7 @@ class Benchmark(object):
                                           b_dataloader, \
                                           adaptor, \
                                           metric, \
+                                          b_postprocess_cfg,
                                           iteration=iteration)
 
             objective = cfg.tuning.objective.lower()
@@ -99,3 +103,23 @@ class Benchmark(object):
                             self.objective.measurer.result_list()[warmup:]
 
         return results
+
+    def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
+                   sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+        return DATALOADER(framework=self.framework, dataset=dataset,
+                          batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
+                          sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
+                          pin_memory=pin_memory)
+
+    def metric(self, name, metric_cls, **kwargs):
+        metric_cfg = {name : {**kwargs}} 
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
+        metrics = METRICS(self.framework)
+        metrics.register(name, metric_cls)
+        
+    def postprocess(self, name, postprocess_cls, **kwargs):
+        postprocess_cfg = {name : {**kwargs}} 
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
+        postprocesses = TRANSFORMS(self.framework, 'postprocess')
+        postprocesses.register(name, postprocess_cls)
+

@@ -94,7 +94,7 @@ class TensorflowTransforms(BaseTransforms):
             "encode_jpeg": WrapFunction(tf.io.encode_jpeg),
         }
         # update the registry transforms
-        preprocess.update(TENSORFLOWTRANSFORMS["preprocess"])
+        preprocess.update(TENSORFLOW_TRANSFORMS["preprocess"])
         return preprocess
 
     def _get_postprocess(self):
@@ -109,14 +109,14 @@ class TensorflowTransforms(BaseTransforms):
             "draw_bounding_boxes": WrapFunction(tf.image.draw_bounding_boxes),
             "combined_non_max_suppression": WrapFunction(tf.image.combined_non_max_suppression),
         }
-        postprocess.update(TENSORFLOWTRANSFORMS["postprocess"])
+        postprocess.update(TENSORFLOW_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
         general = {
             "transpose": WrapFunction(tf.image.transpose),
         }
-        general.update(TENSORFLOWTRANSFORMS["general"])
+        general.update(TENSORFLOW_TRANSFORMS["general"])
         return general
 
 class MXNetTransforms(BaseTransforms):
@@ -141,12 +141,12 @@ class MXNetTransforms(BaseTransforms):
             'RandomLighting': mx.gluon.data.vision.transforms.RandomLighting,
             'RandomGray': mx.gluon.data.vision.transforms.RandomGray
         }
-        preprocess.update(MXNETTRANSFORMS["preprocess"])
+        preprocess.update(MXNET_TRANSFORMS["preprocess"])
         return preprocess
 
     def _get_postprocess(self):
         postprocess = {}
-        postprocess.update(MXNETTRANSFORMS["postprocess"])
+        postprocess.update(MXNET_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
@@ -157,7 +157,7 @@ class MXNetTransforms(BaseTransforms):
             'RandomApply': mx.gluon.data.vision.transforms.RandomApply,
             'HybridRandomApply': mx.gluon.data.vision.transforms.HybridRandomApply,
         }
-        general.update(MXNETTRANSFORMS["general"])
+        general.update(MXNET_TRANSFORMS["general"])
         return general
 
 
@@ -188,12 +188,12 @@ class PyTorchTransforms(BaseTransforms):
             "RandomPerspective": torchvision.transforms.RandomPerspective,
             "RandomErasing": torchvision.transforms.RandomErasing
         }
-        preprocess.update(PYTORCHTRANSFORMS["preprocess"])
+        preprocess.update(PYTORCH_TRANSFORMS["preprocess"])
         return preprocess
 
     def _get_postprocess(self):
         postprocess = {}
-        postprocess.update(PYTORCHTRANSFORMS["postprocess"])
+        postprocess.update(PYTORCH_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
@@ -203,7 +203,7 @@ class PyTorchTransforms(BaseTransforms):
             "RandomApply": torchvision.transforms.RandomApply,
             "LinearTransformation": torchvision.transforms.LinearTransformation,
         }
-        general.update(PYTORCHTRANSFORMS["general"])
+        general.update(PYTORCH_TRANSFORMS["general"])
         return general
 
 
@@ -211,6 +211,14 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
                         "pytorch": PyTorchTransforms, }
 
+# transform registry will register transforms into these dicts
+TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+
+registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
+                       "mxnet": MXNET_TRANSFORMS,
+                       "pytorch": PYTORCH_TRANSFORMS, }
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
@@ -219,26 +227,21 @@ class TRANSFORMS(object):
         assert process in ("preprocess", "postprocess",
                            "general"), "process support preprocess postprocess, general"
         self.transforms = framework_transforms[framework](process).transforms
+        self.framework = framework
+        self.process = process
 
     def __getitem__(self, transform_type):
         assert transform_type in self.transforms.keys(), "transform support {}".\
             format(self.transforms.keys())
         return self.transforms[transform_type]
 
-
-# transform registry will register transforms into these dicts
-TENSORFLOWTRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-MXNETTRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-PYTORCHTRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-
-registry_transforms = {"tensorflow": TENSORFLOWTRANSFORMS,
-                       "mxnet": MXNETTRANSFORMS,
-                       "pytorch": PYTORCHTRANSFORMS, }
-
+    def register(self, name, transform_cls):
+        assert name not in registry_transforms[self.framework][self.process].keys(), \
+            'register transform name already exists.'
+        registry_transforms[self.framework][self.process].update({name: transform_cls})
 
 def transform_registry(transform_type, process, framework):
     """The class decorator used to register all transform subclasses.
-
 
     Args:
         transform_type (str): Transform registration name
