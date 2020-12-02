@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/dlrm
+  tuned_checkpoint=ilit_workspace/pytorch/dlrm/checkpoint
   for var in "$@"
   do
     case $var in
@@ -66,7 +66,7 @@ function run_benchmark {
     fi
 
     python -u dlrm_s_pytorch_tune.py \
-        --ilit_checkpoint ${ilit_checkpoint} \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --arch-sparse-feature-size=128 \
         --arch-mlp-bot="13-512-256-128" \
         --arch-mlp-top="1024-1024-512-256-1" \

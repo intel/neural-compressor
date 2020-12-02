@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/se_resnext
+  tuned_checkpoint=ilit_workspace/pytorch/se_resnext/checkpoint
   batch_size=30
   for var in "$@"
   do
@@ -65,7 +65,7 @@ function run_benchmark {
 
     python -u examples/imagenet_eval.py \
         --data ${dataset_location} \
-        --ilit_checkpoint ${ilit_checkpoint} \
+        --tuned_checkpoint ${tuned_checkpoint} \
         -a $topology \
         -b ${batch_size} \
         -j 1 \

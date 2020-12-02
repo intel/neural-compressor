@@ -1171,10 +1171,10 @@ class PyTorchAdaptor(Adaptor):
         try:
             with open(os.path.join(path, "best_configure.yaml"), 'w') as f:
                 yaml.dump(self.tune_cfg, f, default_flow_style=False)
+            torch.save(model.state_dict(), os.path.join(path, "best_model_weights.pt"))
+            logger.info("save config file and weights of quantized model to path %s" % path)
         except IOError as e:
-            logger.error("Unable to save configure file. %s" % e)
-
-        torch.save(model.state_dict(), os.path.join(path, "best_model_weights.pt"))
+            logger.error("Unable to save configure file and weights. %s" % e)
 
 
 @singleton

@@ -202,14 +202,13 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             print(model)
             eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
-            quantizer = ilit.Quantization(args.ilit_yaml)
+            quantizer = ilit.Quantization(args.tuned_yaml)
             q_model = quantizer(model, q_dataloader=eval_dataloader, eval_func=eval_func)
 
         elif args.int8:
             from ilit.utils.pytorch import load
             int8_model = load(
-                os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
-                os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
             print(int8_model)
             if args.accuracy_only:
                 eval_func(int8_model)
@@ -236,7 +235,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_model", default='', 
                         type=str, metavar='PATH', help='path to put tuned model')
     parser.add_argument("--tune", action='store_true',
-                        help="run iLiT to tune int8 acc.")
+                        help="run Intel® Low Precision Optimization Tool to tune int8 acc.")
     parser.add_argument("--warmup", type=int, default=10,
                         help="warmup for performance")
     parser.add_argument("--iter", default=0, type=int,
@@ -247,11 +246,11 @@ if __name__ == '__main__':
                         help='run benchmark')
     parser.add_argument("--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
-    parser.add_argument("--ilit_yaml", default='./blendcnn.yaml', type=str, metavar='PATH',
-                        help='path to ilit config file')
-    parser.add_argument("--ilit_checkpoint", default='./ilit_workspace/pytorch/blendcnn/', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by iLiT (default: ./ilit_workspace/pytorch/blendcnn/)')
+    parser.add_argument("--tuned_yaml", default='./blendcnn.yaml', type=str, metavar='PATH',
+                        help='path to Intel® Low Precision Optimization Tool config file')
+    parser.add_argument("--tuned_checkpoint", default='./ilit_workspace/pytorch/blendcnn/checkpoint', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by  (default: ./ilit_workspace/pytorch/blendcnn/checkpoint)')
     parser.add_argument('--int8', dest='int8', action='store_true',
-                        help='run ilit model benchmark')
+                        help='run Intel® Low Precision Optimization Tool model benchmark')
     args = parser.parse_args()
     main(args.model_config, args)

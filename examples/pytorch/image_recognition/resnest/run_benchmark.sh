@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/resnest
+  tuned_checkpoint=ilit_workspace/pytorch/resnest/checkpoint
   batch_size=30
   for var in "$@"
   do
@@ -66,7 +66,7 @@ function run_benchmark {
     fi
 
     python -u scripts/torch/verify.py \
-        --ilit_checkpoint ${ilit_checkpoint} \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --model ${topology} \
         --batch-size ${batch_size} \
         --workers 1 \

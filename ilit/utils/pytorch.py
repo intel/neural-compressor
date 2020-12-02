@@ -23,25 +23,32 @@ import yaml
 import os
 import copy
 
-def load(tune_cfg_file, weights_file, model):
+def load(checkpoint_dir, model):
     """Execute the quantize process on the specified model.
 
     Args:
-        tune_cfg_file (file): the tune configure file.
+        checkpoint_dir (dir): The folder of checkpoint.
+                              'best_configure.yaml' and 'best_model_weights.pt' are needed
+                              in This directory. 'checkpoint' dir is under workspace folder
+                              and workspace folder is define in configure yaml file.
         model (object): fp32 model need to do quantization.
 
     Returns:
         (object): quantized model
     """
 
-    assert os.path.exists(os.path.expanduser(tune_cfg_file)), \
-           "tune configure file %s didn't exist" % tune_cfg_file
-    assert os.path.exists(os.path.expanduser(weights_file)), \
-           "weight file %s didn't exist" % weights_file
+    tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                 'best_configure.yaml')
+    weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                'best_model_weights.pt')
+    assert os.path.exists(
+        tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
+    assert os.path.exists(
+        weights_file), "weight file %s didn't exist" % weights_file
 
     q_model = copy.deepcopy(model.eval())
 
-    with open(os.path.expanduser(tune_cfg_file), 'r') as f:
+    with open(tune_cfg_file, 'r') as f:
         tune_cfg = yaml.load(f, Loader=yaml.UnsafeLoader)
 
     op_cfgs = _cfg_to_qconfig(tune_cfg)
@@ -53,6 +60,6 @@ def load(tune_cfg_file, weights_file, model):
                     "by assigning the `.qconfig` attribute directly on submodules")
     add_observer_(q_model)
     q_model = convert(q_model, inplace=True)
-    weights = torch.load(os.path.expanduser(weights_file))
+    weights = torch.load(weights_file)
     q_model.load_state_dict(weights)
     return q_model

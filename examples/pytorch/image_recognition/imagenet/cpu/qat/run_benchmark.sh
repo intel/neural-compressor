@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet_qat
+  tuned_checkpoint=ilit_workspace/pytorch/imagenet_qat/checkpoint
   batch_size=30
   for var in "$@"
   do
@@ -66,7 +66,7 @@ function run_benchmark {
 
     python main.py \
             --pretrained \
-            --ilit_checkpoint ${ilit_checkpoint} \
+            --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
             -a $topology \
             ${mode_cmd} \

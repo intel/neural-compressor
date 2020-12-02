@@ -114,8 +114,8 @@ if __name__ == "__main__":
                         help='For benchmark measurement only.')
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
-    parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by iLiT (default: ./)')
+    parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark for int8')
     opt = parser.parse_args()
@@ -185,8 +185,7 @@ if __name__ == "__main__":
         if opt.int8:
             from ilit.utils.pytorch import load
             new_model = load(
-                os.path.join(opt.ilit_checkpoint, 'best_configure.yaml'),
-                os.path.join(opt.ilit_checkpoint, 'best_model_weights.pt'), model)
+                os.path.abspath(os.path.expanduser(opt.tuned_checkpoint)), model)
         else:
             new_model = model
         evaluate(

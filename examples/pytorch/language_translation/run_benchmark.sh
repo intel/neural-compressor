@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=16
-  ilit_checkpoint=ilit_workspace/pytorch/bert
+  tuned_checkpoint=ilit_workspace/pytorch/bert/checkpoint
   for var in "$@"
   do
     case $var in
@@ -108,7 +108,7 @@ function run_benchmark {
     echo $extra_cmd
 
     python -u $SCRIPTS \
-        --ilit_checkpoint ${ilit_checkpoint} \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --model_type ${model_type} \
         --model_name_or_path ${model_name_or_path} \
         --task_name ${TASK_NAME} \

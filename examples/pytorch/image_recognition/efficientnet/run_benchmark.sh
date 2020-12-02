@@ -12,9 +12,9 @@ function main {
 function init_params {
   iters=100
   if [ "${topology}" = "efficientnet_b0" ];then
-      ilit_checkpoint=ilit_workspace/pytorch/efficient_b0
+      tuned_checkpoint=ilit_workspace/pytorch/efficient_b0/checkpoint
   elif [ "${topology}" = "mobilenetv3_rw" ]; then
-      ilit_checkpoint=ilit_workspace/pytorch/mobilenetv3_rw
+      tuned_checkpoint=ilit_workspace/pytorch/mobilenetv3_rw/checkpoint
   fi
   batch_size=30
   for var in "$@"
@@ -69,8 +69,8 @@ function run_benchmark {
         extra_cmd="--pretrained ${dataset_location}"
     fi
 
-    python -u scripts/torch/verify.py \
-        --ilit_checkpoint ${ilit_checkpoint} \
+    python -u validate.py \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --model $topology \
         -b ${batch_size} \
         --no-cuda \

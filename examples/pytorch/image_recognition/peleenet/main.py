@@ -61,8 +61,10 @@ parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
                     help='url used to set up distributed training')
 parser.add_argument('--dist-backend', default='gloo', type=str,
                     help='distributed backend')
-parser.add_argument('--tune', action='store_true', help='int8 quantization tune with ilit')
-parser.add_argument('--weights', type=str, metavar='PATH', default='weights/peleenet_acc7208.pth.tar',
+parser.add_argument('--tune', action='store_true',
+                    help='int8 quantization tune with Low Precision Optimization Tool')
+parser.add_argument('--weights', type=str, metavar='PATH', 
+                    default='weights/peleenet_acc7208.pth.tar',
                     help='path to init checkpoint (default: none)')
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
@@ -70,8 +72,9 @@ parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                     help='For benchmark measurement only.')
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
-parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by iLiT (default: ./)')
+parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+                    help='path to checkpoint tuned by Low Precision Optimization Tool'
+                         ' (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark for int8')
 
@@ -171,8 +174,7 @@ def main():
         if args.int8:
             from ilit.utils.pytorch import load
             new_model = load(
-                os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
-                os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
             new_model = model
         validate(val_loader, new_model, criterion, args)

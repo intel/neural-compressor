@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/peleenet
+  tuned_checkpoint=ilit_workspace/pytorch/peleenet/checkpoint
   batch_size=30
   for var in "$@"
   do
@@ -65,7 +65,7 @@ function run_benchmark {
     fi
 
     python main.py \
-            --ilit_checkpoint ${ilit_checkpoint} \
+            --tuned_checkpoint ${tuned_checkpoint} \
             -j 1 \
             -b ${batch_size} \
             --weights ${input_model} \

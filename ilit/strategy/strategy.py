@@ -406,7 +406,8 @@ class TuneStrategy(object):
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
-            self.adaptor.save(self.best_qmodel, os.path.dirname(self.deploy_path))
+            self.adaptor.save(self.best_qmodel, os.path.join(
+                              os.path.dirname(self.deploy_path), 'checkpoint'))
         else:
             del self.last_qmodel
 

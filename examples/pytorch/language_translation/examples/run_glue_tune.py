@@ -499,7 +499,7 @@ def main():
     parser.add_argument("--do_bf16", action='store_true',
                         help="run bf16 evaluation / training.")
     parser.add_argument("--tune", action='store_true',
-                        help="run ilit to tune int8 acc.")
+                        help="run Low Precision Optimization Tool to tune int8 acc.")
     parser.add_argument("--warmup", type=int, default=2,
                         help="warmup for performance")
     parser.add_argument('-i', "--iter", default=0, type=int,
@@ -508,8 +508,8 @@ def main():
                         help='run benchmark')
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
-    parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by iLiT (default: ./)')
+    parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
 
@@ -681,8 +681,7 @@ def main():
                 if args.int8:
                     from ilit.utils.pytorch import load
                     new_model = load(
-                        os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
-                        os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+                        os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
                 else:
                     new_model = model
                 result, _ = evaluate(args, new_model, tokenizer, prefix=prefix)

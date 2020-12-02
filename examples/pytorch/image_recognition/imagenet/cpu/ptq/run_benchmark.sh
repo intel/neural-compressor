@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/imagenet
+  tuned_checkpoint=ilit_workspace/pytorch/imagenet/checkpoint
   for var in "$@"
   do
     case $var in
@@ -65,7 +65,7 @@ function run_benchmark {
 
     python main.py \
             --pretrained \
-            --ilit_checkpoint ${ilit_checkpoint} \
+            --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
             -a $topology \
             ${mode_cmd} \

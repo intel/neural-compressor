@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  ilit_checkpoint=ilit_workspace/pytorch/yolo_v3
+  tuned_checkpoint=ilit_workspace/pytorch/yolo_v3/checkpoint
   batch_size=8
   for var in "$@"
   do
@@ -69,7 +69,7 @@ function run_benchmark {
     fi
 
     python -u test.py \
-        --ilit_checkpoint ${ilit_checkpoint} \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --weights_path $input_model \
         --batch_size ${batch_size} \
         ${mode_cmd} \

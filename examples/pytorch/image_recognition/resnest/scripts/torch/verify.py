@@ -55,7 +55,7 @@ class Options():
         parser.add_argument('--verify', type=str, default=None,
                             help='put the path to resuming file if needed')
         parser.add_argument("--tune", action='store_true',
-                            help="run ilit to tune int8 acc.")
+                            help="run Low Precision Optimization Tool to tune int8 acc.")
         parser.add_argument('data', metavar='DIR',
                             help='path to dataset')
         parser.add_argument('-i', '--iterations', default=0, type=int, metavar='N',
@@ -64,8 +64,9 @@ class Options():
                             help='number of warmup iterations to run')
         parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                             help='run benchmark')
-        parser.add_argument("--ilit_checkpoint", default='./', type=str, metavar='PATH',
-                            help='path to checkpoint tuned by iLiT (default: ./)')
+        parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+                            help='path to checkpoint tuned by Low Precision Optimization Tool'
+                                 ' (default: ./)')
         parser.add_argument('--int8', dest='int8', action='store_true',
                             help='run benchmark for int8')
         self.parser = parser
@@ -141,8 +142,7 @@ def main():
     if args.int8:
         from ilit.utils.pytorch import load
         new_model = load(
-            os.path.join(args.ilit_checkpoint, 'best_configure.yaml'),
-            os.path.join(args.ilit_checkpoint, 'best_model_weights.pt'), model)
+            os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
     else:
         new_model = model
 

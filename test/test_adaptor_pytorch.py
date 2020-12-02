@@ -190,9 +190,7 @@ class TestAdaptorPytorch(unittest.TestCase):
                 q_dataloader=dataloader,
                 eval_dataloader=dataloader
             )
-            new_model = load(
-                os.path.join('./saved', 'best_configure.yaml'),
-                os.path.join('./saved', 'best_model_weights.pt'), self.model)
+            new_model = load('./saved/checkpoint', self.model)
             eval_func(new_model)
 
     def test_tensor_dump(self):
