@@ -333,8 +333,7 @@ def get_graph_def(model, outputs=[]):
             with open(model, 'rb') as f:
                 graph_def.ParseFromString(f.read())
         elif model.endswith('.ckpt') and os.path.isfile(model):
-            # (TODO) support slim ckpt
-            raise ValueError('slim ckpt not supported yet, soon')
+            raise ValueError('use get_slim_graph to get the graph first')
         elif model.endswith('.h5') and os.path.isfile(model):
             # (TODO) support h5 saved model, notice there is also h5 weights
             raise ValueError('saved model h5 format not supported yet, soon')

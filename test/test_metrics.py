@@ -3,14 +3,92 @@ import numpy as np
 import unittest
 import os
 from ilit.metric import METRICS
+from ilit.metric.f1 import evaluate
 
 class TestMetrics(unittest.TestCase):
     def setUp(self):
         pass
+    def test_tensorflow_F1(self):
+        metrics = METRICS('tensorflow')
+        F1 = metrics['F1']()
+        preds = [1, 1, 1, 1]
+        labels = [0, 1, 1, 0]
+
+        F1.update(preds, labels)
+        self.assertEqual(F1.result(), 0.5)
+
+    def test_squad_evaluate(self):
+        label = [{'paragraphs':\
+            [{'qas':[{'answers': [{'answer_start': 177, 'text': 'Denver Broncos'}, \
+                                  {'answer_start': 177, 'text': 'Denver Broncos'}, \
+                                  {'answer_start': 177, 'text': 'Denver Broncos'}], \
+                      'question': 'Which NFL team represented the AFC at Super Bowl 50?', \
+                      'id': '56be4db0acb8001400a502ec'}]}]}]
+        preds = {'56be4db0acb8001400a502ec': 'Denver Broncos'}
+        f1 = evaluate(preds, label)
+        self.assertEqual(f1, 100.)
+
+    def test_pytorch_F1(self):
+        metrics = METRICS('pytorch')
+        F1 = metrics['F1']()
+        F1.reset()
+        preds = [1, 1]
+        labels = [2, 1, 1]
+
+        F1.update(preds, labels)
+        self.assertEqual(F1.result(), 0.8)
+
+    def test_mxnet_F1(self):
+        metrics = METRICS('mxnet')
+        F1 = metrics['F1']()
+        preds = [0, 1, 1, 1, 1, 0]
+        labels = [0, 1, 1, 1]
+
+        F1.update(preds, labels)
+        self.assertEqual(F1.result(), 0.8)
+
+    def test_mxnet_topk(self):
+        metrics = METRICS('mxnet')
+        top1 = metrics['topk']()
+        top1.reset()
+        top2 = metrics['topk'](k=2)
+        top3 = metrics['topk'](k=3)
+
+        predicts = [[0, 0.2, 0.9, 0.3], [0, 0.9, 0.8, 0]]
+        single_predict = [0, 0.2, 0.9, 0.3]
+       
+        labels = [[0, 1, 0, 0], [0, 0, 1, 0]]
+        sparse_labels = [2, 2]
+        single_label = 2
+
+        # test functionality of one-hot label
+        top1.update(predicts, labels)
+        top2.update(predicts, labels)
+        top3.update(predicts, labels)
+        self.assertEqual(top1.result(), 0.0)
+        self.assertEqual(top2.result(), 0.5)
+        self.assertEqual(top3.result(), 1)
+
+        # test functionality of sparse label
+        top1.update(predicts, sparse_labels)
+        top2.update(predicts, sparse_labels)
+        top3.update(predicts, sparse_labels)
+        self.assertEqual(top1.result(), 0.25)
+        self.assertEqual(top2.result(), 0.75)
+        self.assertEqual(top3.result(), 1)
+
+        # test functionality of single label
+        top1.update(single_predict, single_label)
+        top2.update(single_predict, single_label)
+        top3.update(single_predict, single_label)
+        self.assertEqual(top1.result(), 0.4)
+        self.assertEqual(top2.result(), 0.8)
+        self.assertEqual(top3.result(), 1)
 
     def test_tensorflow_topk(self):
         metrics = METRICS('tensorflow')
         top1 = metrics['topk']()
+        top1.reset()
         top2 = metrics['topk'](k=2)
         top3 = metrics['topk'](k=3)
 

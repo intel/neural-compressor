@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from abc import abstractmethod
+from collections import Counter
 from ilit.utils.utility import LazyImport, singleton
 from ..utils import logger
 from sklearn.metrics import accuracy_score, f1_score
@@ -36,52 +37,18 @@ class TensorflowMetrics(object):
 class PyTorchMetrics(object):
     def __init__(self):
         self.metrics = {
+            "topk": WrapPyTorchMetric(
+                torch_ignite.metrics.TopKCategoricalAccuracy),
             "Accuracy": WrapPyTorchMetric(
                 torch_ignite.metrics.Accuracy),
             "Loss": WrapPyTorchMetric(
                 torch_ignite.metrics.Loss),
-            "MeanAbsoluteError": WrapPyTorchMetric(
+            "MAE": WrapPyTorchMetric(
                 torch_ignite.metrics.MeanAbsoluteError),
-            "MeanPairwiseDistance": WrapPyTorchMetric(
-                torch_ignite.metrics.MeanPairwiseDistance),
-            "MeanSquaredError": WrapPyTorchMetric(
-                torch_ignite.metrics.MeanSquaredError),
-            # "TopKCategoricalAccuracy":WrapPyTorchMetric(
-            #     torch_ignite.metrics.TopKCategoricalAccuracy),
-            "topk": WrapPyTorchMetric(
-                torch_ignite.metrics.TopKCategoricalAccuracy),
-            "Average": WrapPyTorchMetric(
-                torch_ignite.metrics.Average, True),
-            "GeometricAverage": WrapPyTorchMetric(
-                torch_ignite.metrics.GeometricAverage, True),
-            "ConfusionMatrix": WrapPyTorchMetric(
-                torch_ignite.metrics.ConfusionMatrix),
-            # IoU and mIoU are funtions, while call the function it return a MetricsLambda class
-            "IoU": WrapPyTorchMetric(
-                torch_ignite.metrics.IoU),
-            "mIoU": WrapPyTorchMetric(
-                torch_ignite.metrics.mIoU),
-            "DiceCoefficient": WrapPyTorchMetric(
-                torch_ignite.metrics.DiceCoefficient),
-
-            "MetricsLambda": WrapPyTorchMetric(
-                torch_ignite.metrics.MetricsLambda),
-            "EpochMetric": WrapPyTorchMetric(
-                torch_ignite.metrics.EpochMetric),
-            "Fbeta": WrapPyTorchMetric(
-                torch_ignite.metrics.Fbeta),
-            "Precision": WrapPyTorchMetric(
-                torch_ignite.metrics.Precision),
-            "Recall": WrapPyTorchMetric(
-                torch_ignite.metrics.Recall),
-            "RootMeanSquaredError": WrapPyTorchMetric(
+            "RMSE": WrapPyTorchMetric(
                 torch_ignite.metrics.RootMeanSquaredError),
-            "RunningAverage": WrapPyTorchMetric(
-                torch_ignite.metrics.RunningAverage),
-            "VariableAccumulation": WrapPyTorchMetric(
-                torch_ignite.metrics.VariableAccumulation),
-            "Frequency": WrapPyTorchMetric(
-                torch_ignite.metrics.Frequency, True),
+            "MSE": WrapPyTorchMetric(
+                torch_ignite.metrics.MeanSquaredError),
         }
         self.metrics.update(PYTORCH_METRICS)
 
@@ -90,25 +57,12 @@ class MXNetMetrics(object):
     def __init__(self):
         self.metrics = {
             "Accuracy": WrapMXNetMetric(mx.metric.Accuracy),
-            "TopKAccuracy": WrapMXNetMetric(mx.metric.TopKAccuracy),
-            "F1": WrapMXNetMetric(mx.metric.F1),
-            # "Fbeta":WrapMXNetMetric(mx.metric.Fbeta),
-            # "BinaryAccuracy":WrapMXNetMetric(mx.metric.BinaryAccuracy),
-            "MCC": WrapMXNetMetric(mx.metric.MCC),
             "MAE": WrapMXNetMetric(mx.metric.MAE),
             "MSE": WrapMXNetMetric(mx.metric.MSE),
             "RMSE": WrapMXNetMetric(mx.metric.RMSE),
-            # "MeanPairwiseDistance":WrapMXNetMetric(mx.metric.MeanPairwiseDistance),
-            # "MeanCosineSimilarity":WrapMXNetMetric(mx.metric.MeanCosineSimilarity),
-            "CrossEntropy": WrapMXNetMetric(mx.metric.CrossEntropy),
-            "Perplexity": WrapMXNetMetric(mx.metric.Perplexity),
-            "NegativeLogLikelihood": WrapMXNetMetric(mx.metric.NegativeLogLikelihood),
-            "PearsonCorrelation": WrapMXNetMetric(mx.metric.PearsonCorrelation),
-            "PCC": WrapMXNetMetric(mx.metric.PCC),
             "Loss": WrapMXNetMetric(mx.metric.Loss),
         }
         self.metrics.update(MXNET_METRICS)
-
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
@@ -292,6 +246,22 @@ class MxnetTopK(Metric):
             return 0
         else:
             return self.num_correct / self.num_sample
+
+@metric_registry('F1', 'tensorflow, pytorch, mxnet')
+class F1(Metric):
+    def __init__(self):
+        self._score_list = []
+
+    def update(self, preds, labels):
+        from .f1 import f1_score
+        result = f1_score(preds, labels)
+        self._score_list.append(result)
+
+    def reset(self):
+        self._score_list = []
+
+    def result(self):
+        return np.array(self._score_list).mean()
 
 @metric_registry('topk', 'tensorflow')
 class TensorflowTopK(Metric):
