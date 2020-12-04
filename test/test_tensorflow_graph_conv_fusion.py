@@ -55,6 +55,46 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
         self.disable_s8 = bool(tf.version.VERSION < '2.1.0' and
                                tf.version.VERSION != '1.15.0-up1')
 
+    def test_conv_relu_fusion(self):
+        tf.compat.v1.disable_eager_execution()
+        tf.compat.v1.reset_default_graph()
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        relu = tf.nn.relu(conv)
+
+        relu6 = tf.nn.relu6(relu, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from ilit import Quantization
+
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            dataloader = quantizer.dataloader(dataset)
+            output_graph = quantizer(
+                output_graph_def,
+                q_dataloader=dataloader,
+                eval_dataloader=dataloader
+            )
+            found_conv_fusion = True
+
+            for i in output_graph.as_graph_def().node:
+                if i.op == 'Relu':
+                    found_conv_fusion = False
+                    break
+
+            self.assertEqual(found_conv_fusion, False)
+
     def test_conv_biasadd_addv2_relu_fusion(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
