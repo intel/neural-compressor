@@ -24,6 +24,17 @@ class TestMetrics(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
+    def test_style_transfer_dataset(self):
+        jpg_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Doll_face_silver_Persian.jpg/1024px-Doll_face_silver_Persian.jpg"
+        os.system("wget {} -O test.jpg".format(jpg_url))
+        datasets = DATASETS('tensorflow')
+        dataset = datasets['style_transfer'](content_folder='./', style_folder='./')
+        length = len(dataset)
+        image, label = dataset[0]
+        self.assertEqual(image[0].shape, (256, 256, 3))
+        self.assertEqual(image[1].shape, (256, 256, 3))
+        os.remove('test.jpg')
+
     def test_tensorflow_list_dict(self):
         dataset = [{'a':1, 'b':2, 'c':3, 'd':4}, {'a':5, 'b':6, 'c':7, 'd':8}]
         data_loader = DataLoader('tensorflow', dataset)

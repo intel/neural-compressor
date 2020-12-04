@@ -307,6 +307,30 @@ def get_slim_graph(model, model_func, arg_scope, images, outputs=None, **kwargs)
         tf.import_graph_def(graph_def, name='')
     return graph
 
+def get_estimator_graph(estimator, input_fn, outputs=[]):
+    with tf.Graph().as_default() as g:
+      features, input_hooks = estimator._get_features_from_input_fn(
+          input_fn, tf.estimator.ModeKeys.PREDICT)
+      estimator_spec = estimator._call_model_fn(features, None,
+          tf.estimator.ModeKeys.PREDICT, estimator.config)
+      with tf.compat.v1.Session(graph=g) as sess:
+        sess.run(tf.compat.v1.global_variables_initializer())
+        # Freezing a graph requires output_node_names, which can be found in
+        # estimator_spec.predictions that contains prediction tensors as a
+        # dictionary
+        # When a model uses Iterator, we need to have 'MakeIterator' (default
+        # name used by TF) in the output_node_names as well.
+        output_nodes = list(set([output.split(':')[0] for output in outputs]))
+        if 'MakeIterator' in [node.op for node in g.as_graph_def().node]:
+            output_nodes.append('MakeIterator')
+                
+        graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess,
+          g.as_graph_def(), output_nodes)
+
+    graph = tf.Graph()
+    with graph.as_default():
+        tf.import_graph_def(graph_def, name='') 
+    return graph
 
 def get_graph_def(model, outputs=[]):
     """Get the input model graphdef
