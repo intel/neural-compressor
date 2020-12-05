@@ -31,11 +31,11 @@
 # ==============================================================================
 import os
 from ilit.utils.utility import LazyImport
-from .dataset import dataset_registry, IterableDataset
+from .dataset import dataset_registry, IterableDataset, Dataset
 tf = LazyImport('tensorflow')
 
 @dataset_registry(dataset_type="Imagenet", framework="tensorflow", dataset_format='')
-class ImagenetDataset(IterableDataset):
+class TensorflowImagenetDataset(IterableDataset):
     """Configuration for Imagenet dataset."""
 
     def __new__(cls, root, subset='validation', num_cores=28, transform=None):
@@ -64,7 +64,7 @@ class ImagenetDataset(IterableDataset):
         ds_iterator = tf.compat.v1.data.make_one_shot_iterator(self)
         iter_tensors = ds_iterator.get_next()
         from tensorflow.python.framework.errors_impl import OutOfRangeError
-        data_config = tf.compat.v1.ConfigProto() 
+        data_config = tf.compat.v1.ConfigProto()
         data_config.use_per_session_threads = 1
         data_config.intra_op_parallelism_threads = 1
         data_config.inter_op_parallelism_threads = 16
@@ -76,3 +76,32 @@ class ImagenetDataset(IterableDataset):
                 except OutOfRangeError:
                     return
 
+@dataset_registry(dataset_type="Imagenet", framework="onnx", dataset_format='')
+class OnnxImagenetDataset(Dataset):
+    """Configuration for Imagenet dataset."""
+
+    def __init__(self, root, subset='val', num_cores=28, transform=None):
+        self.val_dir = os.path.join(root, subset)
+        assert os.path.exists(self.val_dir), "find no val dir in dataset path, please \
+            makesure there are train/val subfolders"
+        import glob
+
+        self.transform = transform
+        self.image_list = []
+        files = glob.glob(os.path.join(self.val_dir, '*'))
+        files.sort()
+        for idx, file in enumerate(files):
+            imgs = glob.glob(os.path.join(file, '*'))
+            for img in imgs:
+                self.image_list.append((img, idx))
+
+    def __len__(self):
+        return len(self.image_list)
+
+    def __getitem__(self, index):
+        from PIL import Image
+        sample = self.image_list[index]
+        image = Image.open(sample[0])
+        if self.transform is not None:
+            image, label = self.transform((image, sample[1]))
+            return (image, label)

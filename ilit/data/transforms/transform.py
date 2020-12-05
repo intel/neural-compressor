@@ -206,23 +206,43 @@ class PyTorchTransforms(BaseTransforms):
         general.update(PYTORCH_TRANSFORMS["general"])
         return general
 
+class ONNXTransforms(BaseTransforms):
+    def _get_preprocess(self):
+        preprocess = {}
+        preprocess.update(ONNX_TRANSFORMS["preprocess"])
+        return preprocess
+
+    def _get_postprocess(self):
+        postprocess = {}
+        postprocess.update(ONNX_TRANSFORMS["postprocess"])
+        return postprocess
+
+    def _get_general(self):
+        general = {}
+        general.update(ONNX_TRANSFORMS["general"])
+        return general
+
+
 
 framework_transforms = {"tensorflow": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
-                        "pytorch": PyTorchTransforms, }
+                        "pytorch": PyTorchTransforms, 
+                        "onnx": ONNXTransforms, }
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+ONNX_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
-                       "pytorch": PYTORCH_TRANSFORMS, }
+                       "pytorch": PYTORCH_TRANSFORMS, 
+                       "onnx": ONNX_TRANSFORMS}
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "pytorch",
+        assert framework in ("tensorflow", "pytorch", "onnx",
                              "mxnet"), "framework support tensorflow pytorch mxnet"
         assert process in ("preprocess", "postprocess",
                            "general"), "process support preprocess postprocess, general"
@@ -256,7 +276,8 @@ def transform_registry(transform_type, process, framework):
         assert framework in (
             "tensorflow",
             "mxnet",
-            "pytorch"), "The framework support tensorflow, mxnet and pytorch"
+            "pytorch",
+            "onnx"), "The framework support tensorflow, mxnet and pytorch"
         if transform_type in registry_transforms[framework][process].keys():
             raise ValueError('Cannot have two transforms with the same name')
         registry_transforms[framework][process][transform_type] = cls
@@ -292,6 +313,16 @@ class WrapFunction(object):
 
 @transform_registry(transform_type="Compose", process="general", framework="tensorflow")
 class ComposeTFTransform(Transform):
+    def __init__(self, transform_list):
+        self.transform_list = transform_list
+
+    def __call__(self, sample):
+        for transform in self.transform_list:
+            sample = transform(sample)
+        return sample
+
+@transform_registry(transform_type="Compose", process="general", framework="onnx")
+class ComposeONNXTransform(Transform):
     def __init__(self, transform_list):
         self.transform_list = transform_list
 

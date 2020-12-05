@@ -94,6 +94,20 @@ class TestMetrics(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
+    def test_onnx_dummy(self):
+        datasets = DATASETS('onnx')
+        dataset = datasets['dummy'](shape=(4, 256, 256, 3))
+        
+        data_loader = DataLoader('onnx', dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (1, 256, 256, 3))
+        # dynamic batching
+        data_loader.batch(batch_size=2, last_batch='rollover')
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (2, 256, 256, 3))
+
 
 if __name__ == "__main__":
     unittest.main()

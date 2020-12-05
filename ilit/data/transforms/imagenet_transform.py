@@ -63,7 +63,7 @@ class ParseDecodeImagenetTransform(Transform):
 
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="tensorflow")
-class ResizeCropImagenetTransform(Transform):
+class TensorflowResizeCropImagenetTransform(Transform):
   def __init__(self, height, width, random_crop=False, resize_side=256, \
                random_flip_left_right=False, mean_value=[0.0,0.0,0.0], scale=1.0):
 
@@ -186,3 +186,43 @@ class BilinearImagenetTransform(Transform):
     image = (image - means) * self.scale
 
     return (image, label)
+
+@transform_registry(transform_type="ResizeCropImagenet", \
+                    process="preprocess", framework="onnx")
+class OnnxResizeCropImagenetTransform(Transform):
+  def __init__(self, height, width, random_crop=False, resize_side=256, \
+               mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225]):
+
+    self.height = height
+    self.width = width
+    self.mean_value = mean_value
+    self.std_value = std_value
+    self.random_crop = random_crop
+    self.resize_side = resize_side
+
+  # sample is (images, labels)
+  def __call__(self, sample):
+    image, label = sample
+    width, height = image.size
+    scale = self.resize_side / width if height > width else self.resize_side / height
+    new_height = int(height*scale)
+    new_width = int(width*scale)
+    image = np.asarray(image.resize((new_height, new_width)))
+    image = image / 255.
+    shape = image.shape
+
+    if self.random_crop:
+        y0 = np.random.uniform(low=0, high=(shape[0] - self.height +1))
+        x0 = np.random.uniform(low=0, high=(shape[1] - self.width +1))
+    else:
+        y0 = (shape[0] - self.height) // 2
+        x0 = (shape[1] - self.width) // 2
+    if len(image.shape) == 2:
+        image = np.array([image])
+        image = np.repeat(image, 3, axis=0)
+        image = image.transpose(1, 2, 0)
+    image = image[y0:y0+self.height, x0:x0+self.width, :]
+    image = ((image - self.mean_value)/self.std_value).astype(np.float32)
+    return (image.transpose(2, 0, 1), label)
+
+

@@ -51,6 +51,9 @@ class Benchmark(object):
                                             'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": b_dataloader})
+        if framework == 'onnx':
+            framework_specific_info.update({"mode": cfg.model.mode, \
+                                            'workspace_path': cfg.tuning.workspace.path})
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 

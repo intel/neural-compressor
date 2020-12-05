@@ -94,7 +94,7 @@ class BasicTuneStrategy(TuneStrategy):
         op_cfgs = {}
         best_cfg = None
         best_acc = 0
-
+        
         logger.debug('Start basic strategy by model-wise tuning')
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)

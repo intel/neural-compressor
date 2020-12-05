@@ -9,3 +9,6 @@ ilit
 pandas
 tf_slim
 pillow
+onnx
+onnxruntime
+transformers

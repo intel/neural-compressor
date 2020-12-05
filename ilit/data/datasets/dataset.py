@@ -98,10 +98,18 @@ class MXNetDatasets(object):
         }
         self.datasets.update(MXNETDATASETS)
 
+@singleton
+class ONNXDatasets(object):
+    def __init__(self):
+        self.datasets = {}
+        self.datasets.update(ONNXDATASETS)
+
+
 
 framework_datasets = {"tensorflow": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
-                      "pytorch": PyTorchDatasets, }
+                      "pytorch": PyTorchDatasets, 
+                      "onnx": ONNXDatasets, }
 
 """The datasets supported by ilit, it's model specific and can be configured by yaml file.
 
@@ -116,7 +124,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "mxnet",
+        assert framework in ["tensorflow", "mxnet", "onnx",
                              "pytorch"], "framework support tensorflow pytorch mxnet"
         self.datasets = framework_datasets[framework]().datasets
 
@@ -130,10 +138,12 @@ class DATASETS(object):
 TENSORFLOWDATASETS = {}
 MXNETDATASETS = {}
 PYTORCHDATASETS = {}
+ONNXDATASETS = {}
 
 registry_datasets = {"tensorflow": TENSORFLOWDATASETS,
                      "mxnet": MXNETDATASETS,
-                     "pytorch": PYTORCHDATASETS, }
+                     "pytorch": PYTORCHDATASETS, 
+                     "onnx": ONNXDATASETS, }
 
 
 def dataset_registry(dataset_type, framework, dataset_format=''):
@@ -154,7 +164,8 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
             assert single_framework in [
                 "tensorflow",
                 "mxnet",
-                "pytorch"
+                "pytorch",
+                "onnx"
             ], "The framework support tensorflow mxnet pytorch"
             dataset_name = dataset_type + dataset_format
             if dataset_name in registry_datasets[single_framework].keys():

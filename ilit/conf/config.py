@@ -201,7 +201,10 @@ schema = Schema({
         Hook('framework', handler=_valid_framework_field): object,
         'framework': And(str, lambda s: s in FRAMEWORKS),
         Optional('inputs', default=None): And(Or(str, list), Use(input_to_list)),
-        Optional('outputs', default=None): And(Or(str, list), Use(input_to_list))
+        Optional('outputs', default=None): And(Or(str, list), Use(input_to_list)),
+        Optional('mode', default='ONNXQLinearOps'): And(
+            str,
+            lambda s: s in ['ONNXQLinearOps', 'ONNXIntegerOps']),
     },
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \
@@ -209,7 +212,11 @@ schema = Schema({
                                       'model_wise': {'weight': {}, 'activation': {}}}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
-            lambda s: s in ['post_training_static_quant', 'quant_aware_training']),
+            # TODO check if framework support dynamic quantize
+            # Now only onnruntime and pytorch supoort
+            lambda s: s in ['post_training_static_quant', 
+                            'post_training_dynamic_quant',
+                            'quant_aware_training']),
         Optional('calibration', default={'sampling_size': [100]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema

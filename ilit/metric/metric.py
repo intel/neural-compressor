@@ -64,24 +64,34 @@ class MXNetMetrics(object):
         }
         self.metrics.update(MXNET_METRICS)
 
+@singleton
+class ONNXMetrics(object):
+    def __init__(self):
+        self.metrics = {}
+        self.metrics.update(ONNX_METRICS)
+
+
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
-                     "pytorch": PyTorchMetrics, }
+                     "pytorch": PyTorchMetrics,
+                     "onnx": ONNXMetrics, }
 
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
 MXNET_METRICS = {}
 PYTORCH_METRICS = {}
+ONNX_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "mxnet": MXNET_METRICS,
-                    "pytorch": PYTORCH_METRICS, }
+                    "pytorch": PYTORCH_METRICS, 
+                    "onnx": ONNX_METRICS}
 
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "pytorch",
-                             "mxnet"), "framework support tensorflow pytorch mxnet"
+        assert framework in ("tensorflow", "pytorch", "onnx",
+                             "mxnet"), "framework support tensorflow pytorch mxnet onnx"
         self.metrics = framework_metrics[framework]().metrics
 
     def __getitem__(self, metric_type):
@@ -110,7 +120,8 @@ def metric_registry(metric_type, framework):
             assert single_framework in [
                 "tensorflow",
                 "mxnet",
-                "pytorch"], "The framework support tensorflow mxnet pytorch"
+                "onnx",
+                "pytorch"], "The framework support tensorflow mxnet pytorch onnx"
 
             if metric_type in registry_metrics[single_framework].keys():
                 raise ValueError('Cannot have two metrics with the same name')
@@ -165,6 +176,20 @@ class WrapMXNetMetric(Metric):
     def update(self, preds, labels=None, sample_weight=None):
         preds = mx.nd.array(preds)
         labels = mx.nd.array(labels)
+        self._metric.update(labels=labels, preds=preds)
+
+    def reset(self):
+        self._metric.reset()
+
+    def result(self):
+        acc_name, acc = self._metric.get()
+        return acc
+
+class WrapONNXMetric(Metric):
+
+    def update(self, preds, labels=None, sample_weight=None):
+        preds = np.array(preds)
+        labels = np.array(labels)
         self._metric.update(labels=labels, preds=preds)
 
     def reset(self):
@@ -247,7 +272,7 @@ class MxnetTopK(Metric):
         else:
             return self.num_correct / self.num_sample
 
-@metric_registry('F1', 'tensorflow, pytorch, mxnet')
+@metric_registry('F1', 'tensorflow, pytorch, mxnet, onnx')
 class F1(Metric):
     def __init__(self):
         self._score_list = []
@@ -304,6 +329,50 @@ class TensorflowTopK(Metric):
             return 0
         else:
             return self.num_correct / self.num_sample
+
+@metric_registry('topk', 'onnx')
+class OnnxTopK(Metric):
+    """The class of calculating topk metric, which usually is used in classification.
+
+    Args:
+        topk (dict): The dict of topk for configuration.
+
+    """
+
+    def __init__(self, k=1):
+        self.k = k
+        self.num_correct = 0
+        self.num_sample = 0
+
+    def update(self, preds, labels, sample_weight=None):
+ 
+        preds, labels = _topk_shape_validate(preds, labels)
+        preds = preds.argsort()[..., -self.k:]
+        if self.k == 1:
+            correct = accuracy_score(preds, labels, normalize=False)
+            self.num_correct += correct
+
+        else:
+            for p, l in zip(preds, labels):
+                # get top-k labels with np.argpartition
+                # p = np.argpartition(p, -self.k)[-self.k:]
+                l = l.astype('int32')
+                if l in p:
+                    self.num_correct += 1
+
+        self.num_sample += len(labels) 
+
+    def reset(self):
+        self.num_correct = 0
+        self.num_sample = 0
+
+    def result(self):
+        if self.num_sample == 0:
+            logger.warning("sample num is 0 can't calculate topk")
+            return 0
+        else:
+            return self.num_correct / self.num_sample
+
 
 @metric_registry('COCOmAP', 'tensorflow')
 class TensorflowCOCOMAP(Metric):

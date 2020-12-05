@@ -115,7 +115,7 @@ class TuneStrategy(object):
                                                          './history.snapshot')
         self.deploy_path  = os.path.join(os.path.abspath(os.path.expanduser( \
                                                          self.cfg.tuning.workspace.path)),
-                                                         './deploy.yaml')
+                                                         'deploy.yaml')
 
         path = Path(os.path.dirname(self.history_path))
         path.mkdir(exist_ok=True, parents=True)
@@ -141,6 +141,10 @@ class TuneStrategy(object):
                  'workspace_path': self.cfg.tuning.workspace.path})
         if framework == 'mxnet' or framework == 'pytorch':
             framework_specific_info.update({"q_dataloader": q_dataloader})
+        if framework == 'onnx':
+            framework_specific_info.update({"mode": self.cfg.model.mode})
+            framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
+            framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
 
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
 
@@ -262,7 +266,6 @@ class TuneStrategy(object):
 
                 logger.debug('Dump current tuning configuration:')
                 logger.debug(tune_cfg)
-
                 self.last_qmodel = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 assert self.last_qmodel
@@ -406,8 +409,12 @@ class TuneStrategy(object):
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
-            self.adaptor.save(self.best_qmodel, os.path.join(
+            if self.cfg.model.framework.lower() == 'pytorch':
+                self.adaptor.save(self.best_qmodel, os.path.join(
                               os.path.dirname(self.deploy_path), 'checkpoint'))
+            else:
+                self.adaptor.save(self.best_qmodel, os.path.join(
+                              os.path.dirname(self.deploy_path)))
         else:
             del self.last_qmodel
 

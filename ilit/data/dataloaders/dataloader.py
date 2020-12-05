@@ -19,10 +19,12 @@ from .base_dataloader import BaseDataLoader
 from .tensorflow_dataloader import TensorflowDataLoader
 from .mxnet_dataloader import MXNetDataLoader
 from .pytorch_dataloader import PyTorchDataLoader
+from .onnx_dataloader import ONNXDataLoader
 
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
-               "pytorch": PyTorchDataLoader, }
+               "pytorch": PyTorchDataLoader, 
+               "onnx": ONNXDataLoader, }
 
 
 class DataLoader(BaseDataLoader):
@@ -35,7 +37,7 @@ class DataLoader(BaseDataLoader):
                  last_batch='rollover', sampler=None, batch_sampler=None,
                  num_workers=0, pin_memory=False):
 
-        assert framework in ('tensorflow', 'pytorch',
+        assert framework in ('tensorflow', 'pytorch', 'onnx',
                              'mxnet'), "framework support tensorflow pytorch mxnet"
         self.framework = framework
         super(DataLoader, self).__init__(

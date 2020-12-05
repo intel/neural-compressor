@@ -19,6 +19,25 @@ class TestMetrics(unittest.TestCase):
         image_result = compose(image)
         self.assertEqual(image_result.shape, (1, 128, 128, 1))
 
+
+class TestONNXImagenetTransform(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from PIL import Image
+        cls.img = np.random.random_sample([600,600,3])*255
+        cls.PIL_img = Image.fromarray(cls.img.astype(np.uint8))
+
+    def testResizeCropImagenetTransform(self):
+        transforms = TRANSFORMS('onnx', "preprocess")
+        transform = transforms['ResizeCropImagenet'](height=224, width=224)
+        sample = (self.PIL_img, 0)
+        result = transform(sample)
+        resized_input = result[0]
+        self.assertEqual(len(resized_input), 3)
+        self.assertEqual(len(resized_input[0]), 224)
+        self.assertEqual(len(resized_input[0][0]), 224)
+
+
 class TestTensorflowImagenetTransform(unittest.TestCase):
     def setUp(self):
         pass
