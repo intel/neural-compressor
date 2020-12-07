@@ -4,6 +4,8 @@
 import unittest
 import yaml
 import os
+import sys
+sys.path.append('..')
 
 import mxnet as mx
 import ilit
