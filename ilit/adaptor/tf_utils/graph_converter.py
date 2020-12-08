@@ -47,6 +47,7 @@ from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimize
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
+from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
 from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
@@ -540,6 +541,9 @@ class GraphConverter:
                                                             self.device).do_transformation()
 
         self._tmp_graph_def = FuseMatMulRequantizeTransformer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
