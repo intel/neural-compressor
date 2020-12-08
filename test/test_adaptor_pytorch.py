@@ -1,11 +1,11 @@
 
-import numpy as np
 import torch
 import torchvision
 import unittest
 import os
 from ilit.adaptor import FRAMEWORKS
 import shutil
+import copy
 
 
 def build_ptq_yaml():
@@ -16,13 +16,17 @@ def build_ptq_yaml():
 
         quantization:
           op_wise: {
+                 'quant': {
+                   'activation':  {'dtype': ['fp32']},
+                   'weight': {'dtype': ['fp32']}
+                 },
                  'layer1.0.conv1': {
-                   'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight': {'dtype': ['int8'], 'algorithm': ['kl'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
+                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
                  },
                  'layer2.0.conv1': {
-                   'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
-                   'weight': {'dtype': ['int8'], 'algorithm': ['kl'], 'granularity': ['per_channel'], 'scheme':['asym']}
+                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
                  },
                  'layer3.0.conv1': {
                    'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
@@ -33,7 +37,6 @@ def build_ptq_yaml():
                    'weight': {'dtype': ['fp32']}
                  }
           }
-
         evaluation:
           accuracy:
             metric:
@@ -85,6 +88,28 @@ def build_qat_yaml():
 
         quantization:
           approach: quant_aware_training
+          op_wise: {
+                 'quant': {
+                   'activation':  {'dtype': ['fp32']},
+                   'weight': {'dtype': ['fp32']}
+                 },
+                 'layer1.0.conv1': {
+                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
+                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
+                 },
+                 'layer2.0.conv1': {
+                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                 },
+                 'layer3.0.conv1': {
+                   'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                   'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                 },
+                 'layer1.0.add_relu': {
+                   'activation':  {'dtype': ['fp32']},
+                   'weight': {'dtype': ['fp32']}
+                 }
+          }
         evaluation:
           accuracy:
             metric:
@@ -175,37 +200,48 @@ class TestAdaptorPytorch(unittest.TestCase):
         model = self.adaptor.update_weights(self.model, "fc.bias", torch.zeros([1000]))
         assert int(torch.sum(self.adaptor.get_weight(model, "fc.bias"))) == 0
 
+    def test_report_sparsity(self):
+        df, total_sparsity = self.adaptor.report_sparsity(self.model)
+        self.assertTrue(total_sparsity > 0)
+        self.assertTrue(len(df) == 22)
+
     def test_quantization_saved(self):
         from ilit import Quantization
         from ilit.utils.pytorch import load
-        self.model.eval()
-        self.model.fuse_model()
-        for fake_yaml in ['ptq_yaml.yaml', 'qat_yaml.yaml']:
+        model = copy.deepcopy(self.model)
+        # for fake_yaml in ['ptq_yaml.yaml', 'qat_yaml.yaml']:
+        for fake_yaml in ['qat_yaml.yaml']:
+            if fake_yaml == 'ptq_yaml.yaml':
+                model.eval()
+                model.fuse_model()
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
             dataloader = quantizer.dataloader(dataset)
             q_model = quantizer(
-                self.model,
+                model,
                 q_func=q_func if fake_yaml == 'qat_yaml.yaml' else None,
                 q_dataloader=dataloader,
                 eval_dataloader=dataloader
             )
-            new_model = load('./saved/checkpoint', self.model)
+            new_model = load('./saved/checkpoint', model)
             eval_func(new_model)
 
     def test_tensor_dump(self):
         from ilit import Quantization
+        model = copy.deepcopy(self.model)
+        model.eval()
+        model.fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         dataloader = quantizer.dataloader(dataset)
         quantizer(
-            self.model,
+            model,
             eval_func=eval_func,
             q_dataloader=dataloader,
         )
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
         quantizer(
-            self.model,
+            model,
             eval_dataloader=dataloader,
             q_dataloader=dataloader,
         )

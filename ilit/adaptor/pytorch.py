@@ -152,19 +152,12 @@ def _observer(algorithm, scheme, granularity, dtype):
     else:
         assert algorithm == 'kl'
         observer = torch.quantization.HistogramObserver
-        if granularity == 'per_channel':
-            if scheme == 'sym':
-                qscheme = torch.per_channel_symmetric
-            else:
-                assert scheme == 'asym'
-                qscheme = torch.per_channel_affine
+        assert granularity == 'per_tensor'
+        if scheme == 'sym':
+            qscheme = torch.per_tensor_symmetric
         else:
-            assert granularity == 'per_tensor'
-            if scheme == 'sym':
-                qscheme = torch.per_tensor_symmetric
-            else:
-                assert scheme == 'asym'
-                qscheme = torch.per_tensor_affine
+            assert scheme == 'asym'
+            qscheme = torch.per_tensor_affine
 
     if dtype == 'int8':
         dtype = torch.qint8
@@ -212,19 +205,12 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
     else:
         assert algorithm == 'kl'
         observer = torch.quantization.HistogramObserver
-        if granularity == 'per_channel':
-            if scheme == 'sym':
-                qscheme = torch.per_channel_symmetric
-            else:
-                assert scheme == 'asym'
-                qscheme = torch.per_channel_affine
+        assert granularity == 'per_tensor'
+        if scheme == 'sym':
+            qscheme = torch.per_tensor_symmetric
         else:
-            assert granularity == 'per_tensor'
-            if scheme == 'sym':
-                qscheme = torch.per_tensor_symmetric
-            else:
-                assert scheme == 'asym'
-                qscheme = torch.per_tensor_affine
+            assert scheme == 'asym'
+            qscheme = torch.per_tensor_affine
 
     if dtype == 'int8':
         qmin = -128
@@ -662,17 +648,6 @@ class PyTorchAdaptor(Adaptor):
                 self._get_quantizable_ops_recursively(
                     child, op_name + '.', quantizable_ops)
 
-    def query_fused_patterns(self, model):
-        """This is a helper function.
-
-        Args:
-            model (object): input model
-
-        Returns:
-            None
-        """
-        pass
-
     @dump_elapsed_time("Pass query framework capability")
     def query_fw_capability(self, model):
         """This is a helper function to get all quantizable ops from model.
@@ -694,9 +669,6 @@ class PyTorchAdaptor(Adaptor):
             q_capability['opwise'][q_op] = copy.deepcopy(self.capability)
 
         return q_capability
-
-    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
-        pass
 
     def _pre_eval_hook(self, model):
         """The function is used to do some preprocession before evaluation phase.
@@ -734,12 +706,6 @@ class PyTorchAdaptor(Adaptor):
                         if x.device != "cpu" else x.clone()
                 self.current_iter += 1
                 return x
-
-            @torch.jit.export
-            def calculate_qparams(self):
-                raise Exception(
-                    "calculate_qparams should not be called for RecordingObserver"
-                )
 
             @torch.jit.export
             def get_tensor_value(self):
@@ -1220,40 +1186,6 @@ class PyTorchQuery(QueryBackendCapability):
                 self.cur_config = None
                 raise ValueError("Please check the {} format.".format(self.cfg))
 
-    def get_version(self):
-        """Get the current backend version infomation.
-
-        Returns:
-            [string]: version string.
-        """
-        return self.cur_config['version']['name']
-
-    def get_precisions(self):
-        """Get supported precisions for current backend.
-
-        Returns:
-            [string list]: the precisions' name.
-        """
-        return self.cur_config['precisions']['names']
-
-    def get_op_types(self):
-        """Get the supported op types by all precisions.
-
-        Returns:
-            [dictionary list]: A list composed of dictionary which key is precision
-            and value is the op types.
-        """
-        return self.cur_config['ops']
-
-    def get_fuse_patterns(self):
-        """Get supported patterns by low precisions.
-
-        Returns:
-            [dictionary list]: A list composed of dictionary which key is precision
-            and value is the supported patterns.
-        """
-        return self.cur_config['patterns']
-
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
 
@@ -1262,30 +1194,3 @@ class PyTorchQuery(QueryBackendCapability):
             and value is a dict that describes all op types' quantization capability.
         """
         return self.cur_config['capabilities']
-
-    def get_op_types_by_precision(self, precision):
-        """Get op types per precision
-
-        Args:
-            precision (string): precision name
-
-        Returns:
-            [string list]: A list composed of op type.
-        """
-        assert precision in list(self.cur_config['ops'].keys())
-
-        return self.cur_config['ops'][precision]
-
-    def get_mixed_precision_combination(self, invalid_precisions):
-        """Get the valid mixed precisions.
-
-        Args:
-            unsupported_precisions (string list): unsupported precisions.
-
-        Returns:
-            [string list]: valid precision list.
-        """
-        if self.cur_config['precisions']['valid_mixed_precisions']:
-            return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
-
-        return list(self.get_precisions().split(','))
