@@ -1,0 +1,4 @@
+torch
+transformers==3.2.0
+onnx>=1.7.0
+ort_nightly
