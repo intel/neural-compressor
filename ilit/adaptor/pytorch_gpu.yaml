@@ -1,0 +1,64 @@
+---
+-
+  version:
+    name: 'default'
+
+  precisions: &default_precisions
+    names: int8, uint8, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    int8: &ops_s8_default ['Conv2d', 'Linear', 'Add', 'QuantStub', 'ConvReLU2d',
+                           'LinearReLU', 'ConvBn2d', 'ConvBnReLU2d']
+    uint8: *ops_s8_default
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &default_capabilities
+    int8: &cap_s8_default {
+          'Conv2d': &cap_s8_default_Conv2d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32', 'int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'Linear': *cap_s8_default_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32', 'int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          }
+    uint8: *cap_s8_default
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv1d + BN1d',
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        ]
+    int8: &ref_default_s8 [
+        'Conv1d + BN1d',
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        'Conv1d + BN1d + Relu',
+        'Conv2d + BN2d + Relu',
+        'Conv3d + BN3d + Relu',
+        'Conv1d + Relu',
+        'Conv2d + Relu',
+        'Conv3d + Relu',
+        'Linear + Relu',
+        'BN2d + Relu',
+        'BN3d + Relu',
+        ]
+    uint8: *ref_default_s8

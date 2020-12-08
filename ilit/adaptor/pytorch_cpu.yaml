@@ -1,0 +1,122 @@
+---
+-
+  version:
+    name: '1.6'
+
+  precisions: &default_precisions
+    names: int8, uint8, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    # For PyTorch, quantizable op list is provided by torch/quantization/quantization_mappings.py
+    int8: ['BatchNorm2d', 'BatchNorm3d', 'ReLU', 'ReLU6', 'QuantStub', 'FloatFunctional',
+           'BNReLU2d', 'BNReLU3d']
+    uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
+            'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
+            'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &default_capabilities
+    int8: &cap_s8_1_6 {
+          'Conv2d': &cap_s8_1_6_Conv2d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl', 'minmax']
+                        },
+                    },
+          'Linear': *cap_s8_1_6_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl', 'minmax']
+                        }
+                    },
+          }
+    uint8: *cap_s8_1_6
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv1d + BN1d',
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        ]
+    int8: &ref_1_6_s8 [
+        'Conv1d + BN1d',
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        'Conv1d + BN1d + Relu',
+        'Conv2d + BN2d + Relu',
+        'Conv3d + BN3d + Relu',
+        'Conv1d + Relu',
+        'Conv2d + Relu',
+        'Conv3d + Relu',
+        'Linear + Relu',
+        'BN2d + Relu',
+        'BN3d + Relu',
+        ]
+    uint8: *ref_1_6_s8
+
+-
+  version:
+    name: '1.3'
+
+  precisions:
+    << : *default_precisions
+
+  ops:
+    # For PyTorch, quantizable op list is provided by torch/quantization/quantization_mappings.py
+    int8: ['ReLU', 'QuantStub', 'FloatFunctional']
+    uint8: ['Conv2d', 'Linear', 'ReLU', 'QuantStub', 'FloatFunctional', 'ConvReLU2d',
+            'LinearReLU', 'ConvBn2d', 'ConvBnReLU2d']
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2d + BN2d',
+        ]
+    int8: &ref_1_3_s8 [
+        'Conv2D + BN2d',
+        'Conv2D + BN2d + Relu',
+        'Conv2D + Relu',
+        'Linear + Relu',
+        ]
+    uint8: *ref_1_3_s8
+
+-
+  version:
+    name: 'default'
+
+  precisions:
+    << : *default_precisions
+
+  ops:
+    # For PyTorch, quantizable op list is provided by torch/quantization/quantization_mappings.py
+    int8: ['ReLU', 'QuantStub']
+    uint8: ['Conv2d', 'Linear', 'ReLU', 'QuantStub']
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities:
+    << : *default_capabilities
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2d + BN2d',
+        ]
+    int8: &ref_1_2_s8 [
+        'Conv2D + BN2d',
+        'Conv2D + BN2d + Relu',
+        ]
+    uint8: *ref_1_2_s8

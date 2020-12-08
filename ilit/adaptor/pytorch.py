@@ -464,8 +464,15 @@ class PyTorchAdaptor(Adaptor):
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.is_baseline = True
         self.tune_cfg = None
+        if self.device == "cpu":
+            query_config_file = "pytorch_cpu.yaml"
+        elif self.device == "gpu":
+            query_config_file = "pytorch_gpu.yaml"
+        else:
+            assert False, "Unsupport this device {}".format(self.device)
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "pytorch.yaml"))
+            os.path.dirname(__file__), query_config_file))
+        self.capability = self.query_handler.get_quantization_capability()["uint8"]["Conv2d"]
 
         self.white_list = \
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
@@ -491,13 +498,6 @@ class PyTorchAdaptor(Adaptor):
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
-
-        if self.device == "cpu":
-            self.capability = self.query_handler.get_quantization_capability()["cpu"]
-        elif self.device == "gpu":
-            self.capability = self.query_handler.get_quantization_capability()["gpu"]
-        else:
-            assert False, "Unsupport this device {}".format(self.device)
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
