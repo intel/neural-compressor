@@ -284,7 +284,7 @@ class TensorFlowAdaptor(Adaptor):
         int8_sum_count = 0
         bf16_sum_count = 0
         log_length = 50
-        print('|', 'Mixed Precision Statistics'.center(log_length, "*"), "|")
+        logger.info('|' + 'Mixed Precision Statistics'.center(log_length, "*") + '|')
         for i in self._init_op_stat:
             if len(self._init_op_stat[i]) == 0:
                 continue
@@ -293,27 +293,28 @@ class TensorFlowAdaptor(Adaptor):
                 if j in self._init_op_stat[i]:
                     count += 1
             int8_sum_count += count
-            print('|', 'INT8 {}: {} '.format(i, count).ljust(log_length), "|")
+            logger.info('|' + 'INT8 {}: {} '.format(i, count).ljust(log_length) + '|')
             bf16_count = 0
             for k in self.bf16_ops:
                 if k in self._init_op_stat[i]:
                     bf16_count += 1
                 if bf16_count > 0:
-                    print('|', 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length), "|")
+                    logger.info(('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) \
+                         + '|'))
             bf16_sum_count += bf16_count
         overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
         if overall_ops_count > 0:
             int8_percent = float(int8_sum_count / overall_ops_count)
             bf16_percent = float(bf16_sum_count / overall_ops_count)
-            print('|', 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(int8_percent,
-                                                                                 int8_sum_count,
-                                                                                 overall_ops_count,
-                                                                                 bf16_percent,
-                                                                                 bf16_sum_count,
-                                                                                 overall_ops_count)
-                  .ljust(log_length),
-                  "|")
-        print('|', '*' * log_length, "|")
+            logger.info(('|' + 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(
+                int8_percent,
+                int8_sum_count,
+                overall_ops_count,
+                bf16_percent,
+                bf16_sum_count,
+                overall_ops_count)
+                  .ljust(log_length) + '|'))
+        logger.info('|' +  '*' * log_length + '|')
 
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -728,7 +729,7 @@ class TensorflowQuery(QueryBackendCapability):
                 for field_name, field_value in category_value.items():
                     if not res[category_name][field_name]:
                         res[category_name][field_name].extend(field_value)
-                    
+
                     for each_value in field_value:
                         if each_value not in res[category_name][field_name]:
                             res[category_name][field_name].append(each_value)
