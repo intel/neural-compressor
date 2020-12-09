@@ -15,6 +15,9 @@ function init_params {
   for var in "$@"
   do
     case $var in
+      --topology=*)
+          topology=$(echo $var |cut -f2 -d=)
+      ;;
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -23,10 +26,6 @@ function init_params {
       ;;
       --output_model=*)
           output_model=$(echo "$var" |cut -f2 -d=)
-      ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
       ;;
     esac
   done
