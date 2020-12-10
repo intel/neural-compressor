@@ -49,7 +49,7 @@ def initialize_graph(model_details, disable_optimize_for_inference):
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             od_graph_def = delete_assign(od_graph_def)
- 
+
         # optimize for inference
         if not disable_optimize_for_inference:
             # optimize graph for inference
@@ -57,7 +57,8 @@ def initialize_graph(model_details, disable_optimize_for_inference):
                           val in model_details['input'].items()]
             output_list = [
                 out_name for out_name in model_details['output']]
-            input_data_type = [tf_v1.convert_to_tensor(item).dtype.as_datatype_enum for item in model_details['input'].values()]
+            input_data_type = [tf_v1.convert_to_tensor(item).dtype.as_datatype_enum
+                               for item in model_details['input'].values()]
 
             od_graph_def = optimize_for_inference_lib.optimize_for_inference(
                 od_graph_def,  # inputGraph,
@@ -84,7 +85,7 @@ def run_benchmark(model_details, max_reps, num_warmup,
     graph = initialize_graph(model_details, disable_optimize_for_inference)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
     run_metadata = tf_v1.RunMetadata()
-    
+
     with tf_v1.Session(config=tf_config, graph=graph) as sess:
         output_dict = {out_name: graph.get_tensor_by_name(out_name + ':0')
                        for out_name in model_details['output']}
@@ -117,7 +118,8 @@ def run_benchmark(model_details, max_reps, num_warmup,
                     timeline_path=timeline_dir+'/'+timeline_name
                     if not os.path.exists(timeline_path):
                         os.makedirs(timeline_path)
-                    with open(timeline_path+ '/' + timeline_name + '_' + str(rep) + '_' + str(os.getpid())+ '.json', 'w') as trace_file:
+                    with open(timeline_path+ '/' + timeline_name + '_' + str(rep)
+                              + '_' + str(os.getpid())+ '.json', 'w') as trace_file:
                         trace_file.write(
                             trace.generate_chrome_trace_format(show_memory=False))
         avg_time = total_time / reps_done
@@ -128,15 +130,13 @@ def run_benchmark(model_details, max_reps, num_warmup,
         print('Latency: %.3f ms' % (latency))
         print('Throughput: %.3f images/sec' % throughput)
 
-def _write_inputs_outputs_to_yaml(yaml_path, inputs, outputs):
+def _write_inputs_outputs_to_yaml(yaml_path, output_yaml_path, inputs, outputs):
     # deal with the inputs/outputs at yaml
     with open(yaml_path, 'r') as f:
         # content = f.read()
         # content = yaml.load(content, yaml.Loader)
         content = yaml.load(f)
 
-        print(type(content))
-        print(content)
         tmp_i = ''
         tmp_o = ''
         for item in inputs:
@@ -147,8 +147,9 @@ def _write_inputs_outputs_to_yaml(yaml_path, inputs, outputs):
         content['model'].update({'outputs': tmp_o[:-1]})
         print(content)
 
-    with open(yaml_path, 'w') as nf:
+    with open(output_yaml_path, 'w') as nf:
         yaml.dump(content, nf)
+
 def oob_collate_data_func(batch):
     """Puts each data field into a pd frame with outer dimension batch size"""
     elem = batch[0]
@@ -181,7 +182,7 @@ class DataLoader(object):
         print("batch size is " + str(self.batch_size) + "," + str(self.n) + " iteration")
 
     def __iter__(self):
-        for i in range(self.n):
+        for _ in range(self.n):
             if len(self.inputs_tensor.values()) > 1:
                 data = [list(self.inputs_tensor.values())]
             else:
@@ -234,7 +235,8 @@ if __name__ == "__main__":
             # deal with bool dtype input
             if model_input_output['inputs'][_input]['type'] == 'bool':
                 input_dic[_input] = model_input_output['inputs'][_input]['value']
-                logger.info("Find benchmark input name: {}, dtype: {}".format(_input, model_input_output['inputs'][_input]['type']))
+                logger.info("Find benchmark input name: {}, dtype: {}".format(
+                            _input, model_input_output['inputs'][_input]['type']))
             elif _input == 'dropout_keep_prob':
                 input_dic[_input] = np.array([0.5,], dtype='float32')
             else:
@@ -286,15 +288,18 @@ if __name__ == "__main__":
         from ilit.adaptor.tf_utils.util import write_graph
         inputs = model_detail['input']
         outputs = model_detail['output']
-        _write_inputs_outputs_to_yaml(args.yaml, list(inputs.keys()), outputs)
+        _write_inputs_outputs_to_yaml(args.yaml, "./config_tmp.yaml", list(inputs.keys()), outputs)
 
-        quantizer = Quantization(args.yaml)
+        quantizer = Quantization("./config_tmp.yaml")
         # generate dummy data
         dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
                                 low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        data_loader = quantizer.dataloader(dataset=dataset, batch_size=batch_size,collate_fn=oob_collate_data_func)
+        data_loader = quantizer.dataloader(dataset=dataset,
+                                           batch_size=batch_size,
+                                           collate_fn=oob_collate_data_func)
         q_model = quantizer(args.model_path, q_dataloader=data_loader)
         write_graph(q_model.as_graph_def(), args.output_path)
 
     else:
-        run_benchmark(model_detail, num_iter, num_warmup, disable_optimize, batch_size,args.timeline)
+        run_benchmark(model_detail, num_iter, num_warmup,
+                      disable_optimize, batch_size, args.timeline)
