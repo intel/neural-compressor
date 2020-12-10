@@ -29,7 +29,7 @@ from .graph_cse_optimizer import GraphCseOptimizer
 from .fold_constant import GraphFoldConstantOptimizer
 from .fold_batch_norm import FoldBatchNormNodesOptimizer
 from .update_enter import UpdateEnterOptimizer
-
+from .convert_layout import ConvertLayoutOptimizer
 
 class PreOptimization(object):
     def __init__(self, model, inputs_name, outputs_name):
@@ -71,9 +71,12 @@ class PreOptimization(object):
             [graphdef]: the optimized graphdef object.
         """
         self.logger.debug("Start to pre optimize input model...")
+        
+        self._tmp_graph_def = ConvertLayoutOptimizer(
+            self.input_graph, self.outputs).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self.input_graph, protected_nodes=self.outputs).do_transformation()
+            self._tmp_graph_def, protected_nodes=self.outputs).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
