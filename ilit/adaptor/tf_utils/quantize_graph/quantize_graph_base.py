@@ -18,7 +18,6 @@
 
 import logging
 import os
-from collections import OrderedDict
 from collections import namedtuple
 import numpy as np
 import tensorflow as tf
@@ -37,7 +36,7 @@ class QuantizeGraphBase(object):
 
     def __init__(self, output_node_names):
         self.output_node_names = output_node_names
-        self.transformers = OrderedDict()
+        self.transformers = {}
 
     def register_transformer(self, node_name, entry):
         if node_name not in self.transformers:
@@ -60,7 +59,6 @@ class QuantizeGraphBase(object):
     def get_supported_fusion_node(self):
         return self.transformers.keys()
 
-
 class QuantizeNodeBase(object):
     """This is the base class for nodes fusion
 
@@ -68,12 +66,13 @@ class QuantizeNodeBase(object):
     Arguments:
         object {[type]} -- [description]
     """
-    node_details = namedtuple('node_details', ['node', 'input_node', 'output'])
+    node_details = namedtuple('node_details', ['node', 'output'])
 
     def __init__(self,
                  input_graph,
                  output_node_names,
                  patterns,
+                 remove_redudant_quant_flag,
                  per_channel,
                  start_node_name,
                  device,
@@ -87,15 +86,14 @@ class QuantizeNodeBase(object):
             self.input_graph = graph_pb2.GraphDef()
             with gfile.Open(input_graph, 'rb') as f:
                 self.input_graph.ParseFromString(f.read())
-
+        
         self._parse_graph()
-
         self.output_node_names = output_node_names
         self.output_node_maps = {}
         self.output_graph = graph_pb2.GraphDef()
         self.quantized_node_dict = {}
-        self.intel_cpu_eightbitize = True
         self.patterns = patterns
+        self.remove_redudant_quant_flag = remove_redudant_quant_flag
         self.per_channel = per_channel
         self.start_node_name = start_node_name
         self.is_asymmetric = is_asymmetric
@@ -223,11 +221,8 @@ class QuantizeNodeBase(object):
             return False
 
     def _add_output_node(self, node_name, node):
-        if node_name not in self.output_node_maps:
-            self.output_node_maps[node_name] = node
-        else:
-            raise ValueError("Duplicate Node Found {} {} {}".format(
-                node_name, node.op, self.output_node_maps[node_name].op))
+        assert node_name not in self.output_node_maps
+        self.output_node_maps[node_name] = node
 
     def _reset_output_node_maps(self):
         self.output_node_maps = {}
@@ -306,11 +301,11 @@ class QuantizeNodeBase(object):
         input_names = []
         min_max_names = []
         for each_input_name in self.node_name_mapping[
-                original_node].node.input:
+                original_node].node.input[:1]:
             if each_input_name[0] == '^':
                 continue
             input_node_name = helper.node_name_from_input(each_input_name)
-            if self.intel_cpu_eightbitize and input_node_name in self.output_node_maps:
+            if input_node_name in self.output_node_maps:
                 # dtype = dtypes.DType(
                 #     self.output_node_maps[input_node_name].attr["T"].type
                 # ) if self.output_node_maps[
@@ -374,31 +369,30 @@ class QuantizeNodeBase(object):
 
     def add_output_graph_node(self, output_node):
         """Inserts one node into the new graph."""
+        assert output_node.name not in self.output_node_maps
+        self.output_node_maps[output_node.name] = output_node
         self.output_graph.node.extend([output_node])
-        self._add_output_node(output_node.name, output_node)
 
     def _parse_graph(self, input_graph=None):
         """
         Parse the graph and get the input node and output node name details.
         """
         self.logger.debug("start parsing graph")
-        self.node_name_mapping = OrderedDict()
 
         graph = self.input_graph if input_graph is None else input_graph
-        for node in graph.node:
-            each_node = self.node_details(node=node, input_node=[], output=[])
+        self.node_name_mapping = {}
 
+        for node in graph.node:
+            # each_node = self.node_details(node=node,  output=[])
             if node.name in self.node_name_mapping:
                 raise ValueError(
                     "Duplicate Node Found when _parse_graph, the node name is {}" .format(
                         node.name))
-
-            self.node_name_mapping[node.name] = each_node
-
-        for node in graph.node:
-            for input in node.input:
-                self.node_name_mapping[helper.node_name_from_input(
-                    input)].output.append(node.name)
+            self.node_name_mapping[node.name] = self.node_details(node=node, output=[])
+        for node_name in self.node_name_mapping:
+            for each_input in self.node_name_mapping[node_name].node.input:
+                self.node_name_mapping[helper.node_name_from_input(each_input)].output.\
+                    append(node_name)
 
     def remove_redundant_quantization(self, old_graph):
         old_nodes_map = self.create_nodes_map(old_graph)
@@ -597,6 +591,7 @@ class QuantizeNodeBase(object):
                                                        max_output_name)
         return quantize_input_name, min_output_name, max_output_name
 
+
     def _intel_cpu_quantize_weight_eightbit(self,
                                             parent,
                                             input_node,
@@ -683,13 +678,8 @@ class QuantizeNodeBase(object):
         max_node = helper.create_constant_node(max_name, max_value,
                                                dtypes.float32, device=self.device)
 
-        dequantize_node = helper.create_node(
-            "Dequantize", input_node.name,
-            [qint8_const_name, min_name, max_name])
-
-        helper.set_attr_dtype(dequantize_node, "T", dtypes.qint8)
-        helper.set_attr_string(dequantize_node, "mode", b"SCALED")
         self.add_output_graph_node(qint8_const_node)
         self.add_output_graph_node(min_node)
         self.add_output_graph_node(max_node)
-        self.add_output_graph_node(dequantize_node)
+
+        return   qint8_const_node.name, min_node.name, max_node.name

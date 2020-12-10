@@ -179,6 +179,7 @@ class TestGraphConvFusion(unittest.TestCase):
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
         op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+
         output_graph = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
                                              self.op_wise_config, op_wise_sequences,
                                              'cpu').do_transform()

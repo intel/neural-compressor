@@ -141,6 +141,7 @@ class GraphConverter:
                 feed_dict = dict(zip(input_tensor, inputs))
 
             _ = sess_graph.run(output_tensor, feed_dict)
+
             if idx + 1 == self.calib_iteration:
                 break
 
@@ -301,7 +302,8 @@ class GraphConverter:
         fp32_node_name = []
         fp32_node_name_mapping = {}
         q_node_scale = {}
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph, self.inputs,
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph,
+                                                              self.inputs,
                                                               self.outputs)
         graph_q_node_name = []
         op_name_type_dict = {}
@@ -317,7 +319,7 @@ class GraphConverter:
             op_name = op_info[0]
             op_type = op_info[1]
 
-            if op_type not in ("conv2d"):
+            if op_type not in ["conv2d"]:
                 continue
             op_name_type_dict[op_name] = op_type
 
@@ -336,6 +338,7 @@ class GraphConverter:
                 if node_op in ("Conv2D", "DepthwiseConv2dNative"):
                     _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.outputs,
                                                                self.int8_sequences[node_op],
+                                                               True,
                                                                False,
                                                                op_name, self.device,
                                                                False).get_longest_fuse()

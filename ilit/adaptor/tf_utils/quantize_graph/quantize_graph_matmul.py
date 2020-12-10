@@ -25,10 +25,10 @@ from .quantize_graph_base import QuantizeNodeBase
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
     patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
-    def __init__(self, input_graph, output_node_names, patterns, perchannel,
-                 start_node_name, device, is_asymmetric):
-        super().__init__(input_graph, output_node_names, patterns, perchannel,
-                             start_node_name, device, is_asymmetric)
+    def __init__(self, input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+                 perchannel, start_node_name, device, is_asymmetric):
+        super().__init__(input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+                         perchannel, start_node_name, device, is_asymmetric)
 
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -46,9 +46,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             matched_node.node.name)
         weight_name = normal_inputs[1]
 
-        self._intel_cpu_quantize_weight_eightbit(
-            matched_node.node.op, self.node_name_mapping[weight_name].node,
-            self.per_channel)
+        q_weights_name, q_weights_min_name, q_weights_max_name = \
+            self._intel_cpu_quantize_weight_eightbit(
+                matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
 
         skip_node_name.append(weight_name)
 
@@ -67,6 +67,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 relu_node_name = match_node_name[2]
                 all_input_names = self._add_eightbit_prologue_nodes(
                     matched_node.node.name)
+                all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
+                all_input_names.append(q_weights_min_name)
+                all_input_names.append(q_weights_max_name)
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
                 ] + all_input_names[2:] + control_inputs
@@ -104,9 +107,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             matched_node.node.name)
         weight_name = normal_inputs[1]
 
-        self._intel_cpu_quantize_weight_eightbit(
-            matched_node.node.op, self.node_name_mapping[weight_name].node,
-            self.per_channel)
+        q_weights_name, q_weights_min_name, q_weights_max_name = \
+            self._intel_cpu_quantize_weight_eightbit(
+                matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
 
         skip_node_name.append(weight_name)
 
@@ -124,6 +127,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     match_node_name[1]].node.input[1]
                 all_input_names = self._add_eightbit_prologue_nodes(
                     matched_node.node.name)
+                all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
+                all_input_names.append(q_weights_min_name)
+                all_input_names.append(q_weights_max_name)
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
                 ] + all_input_names[2:] + control_inputs
@@ -176,9 +182,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
-
-            self.output_graph = self.remove_redundant_quantization(
-                self.output_graph)
+            if self.remove_redudant_quant_flag:
+                self.output_graph = self.remove_redundant_quantization(self.output_graph)
             return self.output_graph
 
         self.logger.debug("No more match, exit...")

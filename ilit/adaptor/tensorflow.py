@@ -345,6 +345,7 @@ class TensorFlowAdaptor(Adaptor):
                                    fp32_ops=self.fp32_ops,
                                    bf16_ops=self.bf16_ops,
                                    data_loader=data_loader)
+
         return converter.convert()
 
     def _query_quantizable_ops(self, matched_nodes):

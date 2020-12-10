@@ -19,7 +19,7 @@ class TestConvAddRelu(unittest.TestCase):
                                               initializer=tf.compat.v1.random_normal_initializer())
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME")
         conv_bias = tf.math.add(conv1, conv_bias)
-        relu = tf.nn.relu(conv_bias)
+        relu = tf.nn.relu(conv_bias, name='Relu_1')
         op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:
@@ -35,6 +35,7 @@ class TestConvAddRelu(unittest.TestCase):
             op_wise_config = {
                 "Conv2D": (False, 'minmax', False),
             }
+
             fold_graph_def = QuantizeGraphForIntel(output_graph_def, outputs,
                                                    op_wise_config, op_wise_sequences,
                                                    'cpu').do_transform()

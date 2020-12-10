@@ -30,7 +30,7 @@ class TestTensorflowGpu(unittest.TestCase):
         tf.compat.v1.disable_eager_execution()
 
         converter = QuantizeGraphForIntel(
-            input_graph_def, output_node_names, op_wise_config, self.op_wise_sequences, 'gpu')
+            input_graph_def, output_node_names, op_wise_config, self.op_wise_sequences,  'gpu')
         converted_pb = converter.do_transform()
 
         target_node_name = 'MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D_eightbit_quantized_conv'

@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ilit.adaptor.tf_utils.util import write_graph
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
@@ -23,10 +24,10 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
-    def __init__(self, input_graph, output_node_names, patterns,perchannel,
-                 start_node_name, device, _):
-        super().__init__(input_graph, output_node_names,  patterns, perchannel,
-                             start_node_name, device)
+    def __init__(self, input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+                 perchannel, start_node_name, device, _):
+        super().__init__(input_graph, output_node_names,  patterns, remove_redudant_quant_flag,
+                         perchannel, start_node_name, device)
 
     def _add_pool_function(self, original_node, quantized_op_node):
         helper.set_attr_dtype(quantized_op_node, "T", dtypes.quint8)
@@ -54,8 +55,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
     def apply_the_transform(self):
         self._apply_pool_quantization()
         self._reset_output_node_maps()
-
-        self.output_graph = self.remove_redundant_quantization(
-            self.output_graph)
+        if self.remove_redudant_quant_flag:
+            self.output_graph = self.remove_redundant_quantization(self.output_graph)
         # self.remove_dead_nodes(self.output_node_names)
         return self.output_graph
