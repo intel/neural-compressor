@@ -232,6 +232,11 @@ class TensorFlowAdaptor(Adaptor):
                         tensor = self._dequantize(predictions[index], q_node_scale[node_name])
                     self.log_histogram(writer, node_name + output_postfix, tensor, idx)
                 writer.close()
+            if isinstance(predictions, list):
+                if len(self.outputs) == 1:
+                    predictions = predictions[0]
+                elif len(self.outputs) > 1:
+                    predictions = predictions[:len(self.outputs)]
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
