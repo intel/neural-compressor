@@ -77,11 +77,12 @@ class TestFoldPadConv(unittest.TestCase):
             )
             found_pad = False
 
-            for i in output_graph.as_graph_def().node:
-                if i.op == 'Pad':
-                    found_pad = True
-                    break
-            self.assertEqual(found_pad, True)
+            if tf.__version__ >= "2.0.0":
+                for i in output_graph.as_graph_def().node:
+                    if i.op == 'Pad':
+                        found_pad = True
+                        break
+                self.assertEqual(found_pad, True)
 
     def test_fold_pad_conv2(self):
         tf.compat.v1.disable_eager_execution()
@@ -122,11 +123,12 @@ class TestFoldPadConv(unittest.TestCase):
             )
             found_pad = False
 
-            for i in output_graph.as_graph_def().node:
-                if i.op == 'Pad':
-                    found_pad = True
-                    break
-            self.assertEqual(found_pad, True)
+            if tf.__version__ >= "2.0.0":
+                for i in output_graph.as_graph_def().node:
+                    if i.op == 'Pad':
+                        found_pad = True
+                        break
+                self.assertEqual(found_pad, True)
 
     def test_fold_pad_conv3(self):
         tf.compat.v1.disable_eager_execution()
@@ -165,12 +167,13 @@ class TestFoldPadConv(unittest.TestCase):
             )
             found_pad = False
 
-            for i in output_graph.as_graph_def().node:
-                if i.op == 'Pad':
-                    found_pad = True
-                    break
+            if tf.__version__ >= "2.0.0":
+                for i in output_graph.as_graph_def().node:
+                    if i.op == 'Pad':
+                        found_pad = True
+                        break
 
-            self.assertEqual(found_pad, True)
+                self.assertEqual(found_pad, True)
 
 if __name__ == "__main__":
     unittest.main()

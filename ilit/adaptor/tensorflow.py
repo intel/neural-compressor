@@ -473,10 +473,10 @@ class TensorFlowAdaptor(Adaptor):
         if self._support_bf16():
             activation_dtype.append('bf16')
             weight_dtype.append('bf16')
-        capability = {
-            'modelwise': self.query_handler.get_model_wise_ability()
-        }
         self._query_quantizable_ops(matched_nodes)
+        capability = {
+            'optypewise': self.get_optype_wise_ability(),
+        }
         capability['opwise'] = self.quantizable_op_details
         logger.debug('Dump framework quantization capability:')
         logger.debug(capability)
@@ -593,6 +593,21 @@ class TensorFlowAdaptor(Adaptor):
             # use name='' to avoid 'import/' to name scope
             tensorflow.import_graph_def(graph_def, name='')
         return graph, scale
+
+    def get_optype_wise_ability(self):
+        """Get the op type wise capability by generating the union value of each op type.
+        Returns:
+            [string dict]: the key is op type while the value is the
+                           detail configurations of activation and weight for this op type.
+        """
+        res = OrderedDict()
+        for op in self.quantizable_op_details.keys():
+            if op[1] not in res.keys():
+                res[op[1]] = {}
+                res[op[1]]['activation'] = self.quantizable_op_details[op]['activation']
+                if 'weight' in self.quantizable_op_details[op].keys():
+                    res[op[1]]['weight'] = self.quantizable_op_details[op]['weight']
+        return res
 
     def _pre_eval_hook(self, model):
         return model
@@ -716,26 +731,6 @@ class TensorflowQuery(QueryBackendCapability):
             return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
 
         return list(self.get_precisions().split(','))
-
-    def get_model_wise_ability(self):
-        """Get the model wise capability by generating the union value of each op.
-        Returns:
-            [string dict]: the key is category like activation and weight while the value is the
-                            detail configuration.
-        """
-        res = {'weight': {'dtype': [], 'scheme': [], 'granularity': [], 'algorithm': []},
-               'activation': {'dtype': [], 'scheme': [], 'granularity': [], 'algorithm': []}}
-        for _, op_cfg in self.get_quantization_capability()['uint8'].items():
-            for category_name, category_value in op_cfg.items():
-                for field_name, field_value in category_value.items():
-                    if not res[category_name][field_name]:
-                        res[category_name][field_name].extend(field_value)
-
-                    for each_value in field_value:
-                        if each_value not in res[category_name][field_name]:
-                            res[category_name][field_name].append(each_value)
-
-        return res
 
     def get_eightbit_patterns(self):
         """Get eightbit op wise sequences information.

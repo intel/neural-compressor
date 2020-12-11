@@ -355,19 +355,9 @@ class MxNetAdaptor(Adaptor):
         Returns:
             (dict): modelwise and opwise config.
         """
-        # model_wise capability
-        # TODO: weight granularity
-        model_wise = {
-            'activation': {'dtype': ['int8', 'uint8', 'fp32'],
-                           'granularity': ['per_channel'],
-                           'algorithm': ['minmax', 'kl']},
-            'weight': {'dtype': ['int8', 'fp32'],
-                       'granularity': ['per_channel'],
-                       'algorithm': ['minmax', 'kl']}
-        }
-
-        # op_wise capability
+        # op_type_wise and op_wise capability
         quantizable_ops = self._query_quantizable_ops(model, self.qdataloader)
+        op_type_wise = OrderedDict()
         op_wise = OrderedDict()
         quantizable_op_config = self.query_handler.get_quantization_capability()['int8']
         mixed_quantization = self.query_handler.get_mixed_precision_combination()
@@ -375,13 +365,17 @@ class MxNetAdaptor(Adaptor):
             optype = opname_type["type"]
             if optype in quantizable_op_config.keys():
                 op_capability = quantizable_op_config[optype]
+                if optype not in op_type_wise.keys():
+                    op_type_wise[optype] = quantizable_op_config[optype]
             else:
                 op_capability = quantizable_op_config['default']
+                if optype not in op_type_wise.keys():
+                    op_type_wise[optype] = quantizable_op_config['default']
 
             op_wise.update(
                 {(opname_type["name"], opname_type["type"]): op_capability})
 
-        return {'modelwise': model_wise, 'opwise': op_wise}
+        return {'optypewise': op_type_wise, 'opwise': op_wise}
 
     @dump_elapsed_time("Collect calibration statistics")
     def _inspect_tensor(

@@ -12,7 +12,7 @@ def build_fake_yaml():
           name: fake_yaml
           framework: tensorflow
           inputs: x
-          outputs: op_to_store
+          outputs: op2_to_store
         device: cpu
         evaluation:
           accuracy:
@@ -37,7 +37,7 @@ def build_fake_yaml2():
           name: fake_yaml
           framework: tensorflow
           inputs: x
-          outputs: op_to_store
+          outputs: op2_to_store
         device: cpu
         evaluation:
           accuracy:
@@ -47,7 +47,7 @@ def build_fake_yaml2():
           strategy:
             name: basic
           exit_policy:
-            max_trials: 5
+            max_trials: 10
           accuracy_criterion:
             relative: -0.01
           workspace:
@@ -65,10 +65,12 @@ def build_fake_model():
         with tf.Session() as sess:
             x = tf.placeholder(tf.float64, shape=(1,3,3,1), name='x')
             y = tf.constant(np.random.random((2,2,1,1)), name='y')
-            op = tf.nn.conv2d(input=x, filter=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+            z = tf.constant(np.random.random((1,1,1,1)), name='z')
+            op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+            op2 = tf.nn.conv2d(input=op, filters=z, strides=[1,1,1,1], padding='VALID', name='op2_to_store')
 
             sess.run(tf.global_variables_initializer())
-            constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
+            constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op2_to_store'])
 
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
@@ -79,10 +81,12 @@ def build_fake_model():
         with tf.compat.v1.Session() as sess:
             x = tf.compat.v1.placeholder(tf.float64, shape=(1,3,3,1), name='x')
             y = tf.compat.v1.constant(np.random.random((2,2,1,1)), name='y')
+            z = tf.constant(np.random.random((1,1,1,1)), name='z')
             op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+            op2 = tf.nn.conv2d(input=op, filters=z, strides=[1,1,1,1], padding='VALID', name='op2_to_store')
 
             sess.run(tf.compat.v1.global_variables_initializer())
-            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
+            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op2_to_store'])
 
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
@@ -130,24 +134,6 @@ class TestQuantization(unittest.TestCase):
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
-
-    def test_loss_calculation(self):
-        from ilit.strategy.tpe import TpeTuneStrategy
-        from ilit import Quantization
-
-        quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        testObject = TpeTuneStrategy(self.constant_graph, quantizer.conf, dataloader)
-        testObject._calculate_loss_function_scaling_components(0.01, 2, testObject.loss_function_config)
-        # check if latency difference between min and max corresponds to 10 points of loss function
-        tmp_val = testObject.calculate_loss(0.01, 2, testObject.loss_function_config)
-        tmp_val2 = testObject.calculate_loss(0.01, 1, testObject.loss_function_config)
-        self.assertTrue(True if int(tmp_val2 - tmp_val) == 10 else False)
-        # check if 1% of acc difference corresponds to 10 points of loss function
-        tmp_val = testObject.calculate_loss(0.02, 2, testObject.loss_function_config)
-        tmp_val2 = testObject.calculate_loss(0.03, 2, testObject.loss_function_config)
-        self.assertTrue(True if int(tmp_val2 - tmp_val) == 10 else False)
 
 if __name__ == "__main__":
     unittest.main()

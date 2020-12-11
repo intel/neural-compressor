@@ -121,16 +121,10 @@ class ONNXAdaptor(Adaptor):
         Returns:
             (dict): quantization capability
         """
-        model_wise = {
-            'activation': {'dtype': ['uint8', 'fp32'],
-                           'granularity': ['per_channel', 'per_tensor'],
-                           'algorithm': ['minmax']},
-            'weight': {'dtype': ['int8', 'fp32'],
-                       'algorithm': ['minmax']}
-        }
-        # op_wise capability
+        # optype_wise and op_wise capability
         self._pre_optimize(model)
         quantizable_ops = self._query_quantizable_ops(self.pre_optimized_model)
+        optype_wise = OrderedDict()
         op_wise = OrderedDict()
         for _, op in enumerate(quantizable_ops):
             optype = op.op_type
@@ -140,11 +134,13 @@ class ONNXAdaptor(Adaptor):
                 'weight': {
                     'dtype': ['int8', 'fp32']}
             }
+            if optype not in optype_wise.keys():
+                optype_wise[optype] = op_capability
 
             op_wise.update(
                 {(op.name, optype): op_capability})
 
-        return {'modelwise': model_wise, 'opwise': op_wise}
+        return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _cfg_to_qconfig(self, tune_cfg):
         nodes_exclude = []

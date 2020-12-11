@@ -123,13 +123,12 @@ class MSETuneStrategy(TuneStrategy):
 
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)
-            for tune_cfg in self.modelwise_quant_cfgs:
+            for combined_cfg in self.combined_model_wise_quant_cfgs:
                 op_cfgs['op'] = OrderedDict()
-
-                for op in self.opwise_quant_cfgs:
-                    op_cfg = copy.deepcopy(self.opwise_quant_cfgs[op])
-                    if len(op_cfg) > 0:
-                        op_cfgs['op'][op] = copy.deepcopy(self._get_common_cfg(tune_cfg, op_cfg))
+                for op, op_cfg in self.opwise_quant_cfgs.items():
+                    if op[1] in combined_cfg.keys() and len(op_cfg) > 0:
+                        op_cfgs['op'][op] = copy.deepcopy(
+                            self._get_common_cfg(combined_cfg[op[1]], op_cfg))
                     else:
                         op_cfgs['op'][op] = copy.deepcopy(
                             self.opwise_tune_cfgs[op][0])
@@ -140,48 +139,52 @@ class MSETuneStrategy(TuneStrategy):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
 
-        if best_cfg is None:
-            return
+        if best_cfg is not None:
+            # Inspect FP32 and dequantized tensor
+            if self.ordered_ops is None:
+                op_lists = self.opwise_quant_cfgs.keys()
+                fp32_tensor_dict = self.adaptor.inspect_tensor(
+                    self.model, self.calib_dataloader, op_lists, [1])
+                best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
+                dequantize_tensor_dict = self.adaptor.inspect_tensor(
+                    best_qmodel, self.calib_dataloader, op_lists, [1])
 
-        # Inspect FP32 and dequantized tensor
-        if self.ordered_ops is None:
-            op_lists = self.opwise_quant_cfgs.keys()
-            fp32_tensor_dict = self.adaptor.inspect_tensor(
-                self.model, self.calib_dataloader, op_lists, [1])
-            best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
-            dequantize_tensor_dict = self.adaptor.inspect_tensor(
-                best_qmodel, self.calib_dataloader, op_lists, [1])
+                ops_mse = {
+                    op: self.mse_metric_gap(
+                        fp32_tensor_dict[op],
+                        dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
+                self.ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key],
+                                          reverse=True)
 
-            ops_mse = {
-                op: self.mse_metric_gap(
-                    fp32_tensor_dict[op],
-                    dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
-            self.ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
+            if ops_mse is not None:
+                ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
+                op_cfgs = copy.deepcopy(best_cfg)
+                for op in ordered_ops:
+                    old_cfg = copy.deepcopy(op_cfgs['op'][op])
+                    op_cfgs['op'][op]['activation'].clear()
+                    op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
+                    if 'weight' in op_cfgs['op'][op]:
+                        op_cfgs['op'][op]['weight'].clear()
+                        op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
+                    yield op_cfgs
+                    acc, _ = self.last_tune_result
+                    if acc <= best_acc:
+                        op_cfgs['op'][op] = copy.deepcopy(old_cfg)
+                    else:
+                        best_acc = acc
 
-        if ops_mse is not None:
-            ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
-            op_cfgs = copy.deepcopy(best_cfg)
-            for op in ordered_ops:
-                old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                op_cfgs['op'][op]['activation'].clear()
-                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                if 'weight' in op_cfgs['op'][op]:
-                    op_cfgs['op'][op]['weight'].clear()
-                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
-                yield op_cfgs
-                acc, _ = self.last_tune_result
-                if acc <= best_acc:
-                    op_cfgs['op'][op] = copy.deepcopy(old_cfg)
-                else:
-                    best_acc = acc
-
-            op_cfgs = copy.deepcopy(best_cfg)
-            for op in ordered_ops:
-                op_cfgs['op'][op]['activation'].clear()
-                op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                if 'weight' in op_cfgs['op'][op]:
-                    op_cfgs['op'][op]['weight'].clear()
-                    op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
-                yield op_cfgs
+                op_cfgs = copy.deepcopy(best_cfg)
+                for op in ordered_ops:
+                    op_cfgs['op'][op]['activation'].clear()
+                    op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
+                    if 'weight' in op_cfgs['op'][op]:
+                        op_cfgs['op'][op]['weight'].clear()
+                        op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
+                    yield op_cfgs
+        else:
+            op_cfgs['op'] = OrderedDict()
+            for op in self.opwise_tune_cfgs.keys():
+                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
+            yield op_cfgs
 
         return

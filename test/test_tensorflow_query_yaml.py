@@ -22,12 +22,6 @@ class TestTFQueryYaml(unittest.TestCase):
 
         self.assertEqual(len(registered_version_name), len(set(registered_version_name)))
 
-    def test_model_wise_cfg(self):
-        model_wise_cfg = self.query_handler.get_model_wise_ability()
-
-        conv2d_weigths_granularity = model_wise_cfg['weight']['granularity']
-        self.assertEqual(conv2d_weigths_granularity, ['per_channel', 'per_tensor'])
-
     def test_int8_sequences(self):
         patterns = self.query_handler.get_eightbit_patterns()
 

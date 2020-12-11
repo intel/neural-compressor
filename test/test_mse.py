@@ -103,6 +103,8 @@ class TestQuantization(unittest.TestCase):
         os.remove('fake_yaml2.yaml')
         os.remove('saved/history.snapshot')
         os.remove('saved/deploy.yaml')
+        if os.path.exists('saved/kl.log'): 
+            os.remove('saved/kl.log')
         os.rmdir('saved')
 
     def test_ru_mse_one_trial(self):
@@ -130,24 +132,6 @@ class TestQuantization(unittest.TestCase):
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
-
-    def test_loss_calculation(self):
-        from ilit.strategy.tpe import TpeTuneStrategy
-        from ilit import Quantization
-
-        quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        testObject = TpeTuneStrategy(self.constant_graph, quantizer.conf, dataloader)
-        testObject._calculate_loss_function_scaling_components(0.01, 2, testObject.loss_function_config)
-        # check if latency difference between min and max corresponds to 10 points of loss function
-        tmp_val = testObject.calculate_loss(0.01, 2, testObject.loss_function_config)
-        tmp_val2 = testObject.calculate_loss(0.01, 1, testObject.loss_function_config)
-        self.assertTrue(True if int(tmp_val2 - tmp_val) == 10 else False)
-        # check if 1% of acc difference corresponds to 10 points of loss function
-        tmp_val = testObject.calculate_loss(0.02, 2, testObject.loss_function_config)
-        tmp_val2 = testObject.calculate_loss(0.03, 2, testObject.loss_function_config)
-        self.assertTrue(True if int(tmp_val2 - tmp_val) == 10 else False)
 
 if __name__ == "__main__":
     unittest.main()

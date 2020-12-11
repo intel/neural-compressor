@@ -662,11 +662,13 @@ class PyTorchAdaptor(Adaptor):
         self._get_quantizable_ops_recursively(model, '', quantizable_ops)
 
         q_capability = {}
-        q_capability['modelwise'] = self.capability
+        q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
 
         for q_op in quantizable_ops:
             q_capability['opwise'][q_op] = copy.deepcopy(self.capability)
+            if q_op[1] not in q_capability['optypewise'].keys():
+                q_capability['optypewise'][q_op[1]] = copy.deepcopy(self.capability)
 
         return q_capability
 

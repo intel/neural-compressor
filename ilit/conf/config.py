@@ -341,7 +341,7 @@ class Conf(object):
     def __init__(self, cfg_fname):
         assert cfg_fname is not None
         self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
-        self._modelwise_tune_space = None
+        self._model_wise_tune_space = None
         self._opwise_tune_space = None
         # set ilit workspace default path
         if self.usr_cfg.tuning.workspace.path is None:
@@ -400,17 +400,29 @@ class Conf(object):
 
         return dst
 
-    def modelwise_tune_space(self, modelwise_quant):
+    def modelwise_tune_space(self, model_wise_quant):
         cfg = self.usr_cfg
-        self._modelwise_tune_space = self._merge_dicts(cfg.quantization.model_wise,
-                                                       modelwise_quant)
+        self._model_wise_tune_space = OrderedDict()
+        for optype in model_wise_quant.keys():
+         self._model_wise_tune_space[optype] = self._merge_dicts(cfg.quantization.model_wise,
+                                                                    model_wise_quant[optype])
 
-        return self._modelwise_tune_space
+        return self._model_wise_tune_space
+
+    def _combine_optype_quant_cfgs(self, model_wise_quant_cfgs):
+        if len(model_wise_quant_cfgs) == 0:
+            return []
+        temp_cfgs = OrderedDict()
+        for optype, cfgs in model_wise_quant_cfgs.items():
+            if len(cfgs) > 0:
+                temp_cfgs[optype] = copy.deepcopy(cfgs)
+        keys, values = zip(*temp_cfgs.items())
+        return [dict(zip(keys, v)) for v in itertools.product(*values)]
 
     def opwise_tune_space(self, opwise_quant):
         opwise = copy.deepcopy(opwise_quant)
         for k, v in opwise.items():
-            opwise[k] = self._merge_dicts(self._modelwise_tune_space, opwise[k])
+            opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
 
         cfg = self.usr_cfg
         if cfg.quantization.op_wise:

@@ -310,24 +310,26 @@ class TestConf(unittest.TestCase):
         config = conf.Conf('fake_conf.yaml')
 
         framework_modelwise_capability = {
-            'activation': {
-                'dtype': ['uint8', 'fp32'],
-                'scheme': ['asym', 'sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']
-            },
-            'weight': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': [
-                    'sym',
-                ],
-                'granularity': ['per_channel', 'per_tensor'],
-                'algorithm': ['minmax']
+            'CONV2D': {
+                'activation': {
+                    'dtype': ['uint8', 'fp32'],
+                    'scheme': ['asym', 'sym'],
+                    'granularity': ['per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+                'weight': {
+                    'dtype': ['int8', 'fp32'],
+                    'scheme': [
+                        'sym',
+                    ],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax']
+                },
             },
         }
 
         tune_space = config.modelwise_tune_space(framework_modelwise_capability)
-        self.assertEqual(tune_space['activation']['algorithm'], ['minmax'])
+        self.assertEqual(tune_space['CONV2D']['activation']['algorithm'], ['minmax'])
 
     def test_ops_override(self):
         test = '''
@@ -355,19 +357,21 @@ class TestConf(unittest.TestCase):
         config = conf.Conf('fake_conf.yaml')
 
         framework_modelwise_capability = {
-            'activation': {
-                'dtype': ['uint8', 'fp32'],
-                'scheme': ['asym', 'sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']
-            },
-            'weight': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': [
-                    'sym',
-                ],
-                'granularity': ['per_channel', 'per_tensor'],
-                'algorithm': ['minmax']
+            'CONV2D': {
+                'activation': {
+                    'dtype': ['uint8', 'fp32'],
+                    'scheme': ['asym', 'sym'],
+                    'granularity': ['per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+                'weight': {
+                    'dtype': ['int8', 'fp32'],
+                    'scheme': [
+                        'sym',
+                    ],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax']
+                },
             },
         }
 

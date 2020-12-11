@@ -158,9 +158,11 @@ class TuneStrategy(object):
         self.objective = OBJECTIVES[objective](self.cfg.tuning.accuracy_criterion)
 
         self.capability = self.adaptor.query_fw_capability(model)
-        self.modelwise_tune_space = conf.modelwise_tune_space(self.capability['modelwise'])
+        self.modelwise_tune_space = conf.modelwise_tune_space(self.capability['optypewise'])
         self.opwise_tune_space = conf.opwise_tune_space(self.capability['opwise'])
-        self.modelwise_tune_cfgs = conf.expand_tune_cfgs(self.modelwise_tune_space)
+        self.model_wise_tune_cfgs = OrderedDict()
+        for optype, optype_cfgs in self.modelwise_tune_space.items():
+            self.model_wise_tune_cfgs[optype] = conf.expand_tune_cfgs(optype_cfgs)
         self.opwise_tune_cfgs = OrderedDict()
         for key in self.opwise_tune_space:
             self.opwise_tune_cfgs[key] = conf.expand_tune_cfgs(
@@ -172,10 +174,16 @@ class TuneStrategy(object):
         else: 
             self.calib_iter = [1]
 
-        self.modelwise_quant_cfgs = []
-        for cfg in self.modelwise_tune_cfgs:
-            if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
-                self.modelwise_quant_cfgs.append(cfg)
+        self.model_wise_quant_cfgs = OrderedDict()
+        for optype in self.model_wise_tune_cfgs.keys():
+            self.model_wise_quant_cfgs[optype] = []
+            for cfg in self.model_wise_tune_cfgs[optype]:
+                if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
+                    self.model_wise_quant_cfgs[optype].append(cfg)
+        self.combined_model_wise_quant_cfgs = conf._combine_optype_quant_cfgs(
+                                         self.model_wise_quant_cfgs)
+        if len(self.combined_model_wise_quant_cfgs) == 0:
+            logger.warning("There is no quantizable op type!!!")
 
         self.opwise_quant_cfgs = OrderedDict()
         for key in self.opwise_tune_cfgs:
@@ -525,4 +533,3 @@ class TuneStrategy(object):
             self.tuning_history.append(tuning_history)
 
         self._save()
-
