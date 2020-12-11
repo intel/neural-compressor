@@ -4,6 +4,7 @@ import sys
 import shutil
 import yaml
 import mxnet as mx
+import mxnet.gluon.nn as nn
 
 sys.path.append('..')
 import ilit
@@ -119,7 +120,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         """
         Use MLP model to test minmax calibration and built-in evaluate function.
         """
-        for shape in [(500, 1000), (500, 100)]:
+        for shape in [(500, 1000),]:
             arg_shapes, label_shape, _ = self.mlp_model.infer_shape(data=shape)
 
             mod = mx.mod.Module(symbol=self.mlp_model, context=mx.current_context())
@@ -144,7 +145,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         """
         Use Conv model to test KL calibration and user specific evaluate function.
         """
-        for shape in [(500, 3, 224, 224), (10, 3, 600, 600)]:
+        for shape in [(500, 3, 224, 224),]:
             arg_shapes, _, _ = self.conv_model.infer_shape(data=shape)
 
             mod = mx.mod.Module(symbol=self.conv_model, context=mx.current_context())
@@ -162,6 +163,33 @@ class TestAdaptorMXNet(unittest.TestCase):
                                       eval_dataloader=calib_data, eval_func=eval_func)
             self.assertIsInstance(qmodel[0], mx.symbol.Symbol)
 
+    def test_gluon_model(self):
+        """
+        Use gluon model to test gluon related functions in mxnet adaptor.
+        """
+        # create gluon model
+        net = nn.HybridSequential()
+        net.add(nn.Dense(128, activation="relu"))
+        net.add(nn.Dense(64, activation="relu"))
+        net.add(nn.Dense(10))
+        net.initialize()
+
+        class Quant_dataloader():
+            def __init__(self, dataset, batch_size=1):
+                self.dataset=dataset
+                self.batch_size=batch_size
+
+            def __iter__(self):
+                for data, label in self.dataset:
+                    yield data, label
+
+            def __getitem__(self):
+                pass
+
+        valid_dataset = mx.gluon.data.vision.datasets.FashionMNIST(train=False)
+        q_dataloader = Quant_dataloader(valid_dataset)
+        qmodel = self.quantizer_1(net, q_dataloader=q_dataloader, eval_func=eval_func)
+        self.assertIsInstance(qmodel, mx.gluon.HybridBlock)
 
 if __name__ == "__main__":
     unittest.main()
