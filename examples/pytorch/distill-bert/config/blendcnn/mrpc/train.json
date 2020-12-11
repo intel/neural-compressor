@@ -5,8 +5,8 @@
     "cfg_model": "config/bert_base.json",
     "cfg_optim": "config/blendcnn/mrpc/optim.json",
     "model_file": "",
-    "pretrain_file": "../uncased_L-12_H-768_A-12/bert_model.ckpt",
-    "save_dir": "../exp/bert/blendcnn/mrpc",
+    "pretrain_file": "models/uncased_L-12_H-768_A-12/bert_model.ckpt",
+    "save_dir": "./models",
     "comments": [
         " "
     ]

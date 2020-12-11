@@ -2,7 +2,7 @@
 set -x
 
 function main {
-
+  output_model="./ilit_workspace/pytorch/blendcnn/"
   init_params "$@"
   run_tuning
 
@@ -26,21 +26,37 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
-      ;;
     esac
   done
+  
+  if  [ ! "$input_model" ] ;then
+    echo "input_model valid, please give right input_model!"
+    exit 1
+  fi
 
+  if  [ ! "$dataset_location" ] ;then
+    echo "dataset_location valid, please give right dataset_location!"
+    exit 1
+  fi
+
+  if [ ! -x "./models" ]; then
+    mkdir "./models"
+  fi
+
+  if [ ! -x "./MRPC" ]; then
+    mkdir "./MRPC"
+  fi
+
+  cp -r ${input_model}/* ./models
+  cp -r ${dataset_location}/* ./MRPC
 }
 
 # run_tuning
 function run_tuning {
 
     python classify.py --tune \
-                       --input_model=${input_model} \
-                       --dataset_location=${dataset_location}
+                       --input_model=${input_model}/model_final.pt \
+                       --dataset_location=${dataset_location}/dev.tsv
 }
 
 main "$@"

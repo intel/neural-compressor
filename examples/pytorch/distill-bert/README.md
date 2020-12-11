@@ -12,29 +12,46 @@ This document describes the step-by-step instructions for reproducing PyTorch Bl
 
 # Prerequisite
 
-### 1. Installation
+## 1. Installation
 
   ```Shell
   cd examples/pytorch/image_recognition/resnest
   pip install -r requirements.txt
+  pip install torch==1.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
   python setup.py install
 
   ```
 
-### 2. Prepare model and Dataset
+## 2. Prepare model and Dataset
 
   Download [BERT-Base, Uncased](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip) and
   [GLUE MRPC Benchmark Datasets]( https://github.com/nyu-mll/GLUE-baselines) 
   
+### model
+  ```Shell
+  mkdir models/ && mv uncased_L-12_H-768_A-12.zip models/
+  cd models/ && unzip uncased_L-12_H-768_A-12.zip
 
-# Run
+  # train blend CNN from scratch
+  python classify.py --model_config config/blendcnn/mrpc/train.json
+  ```
+  After below steps, you can find the pre-trained model weights ***model_final.pt*** at `./models/`
+### dataset
+  After downloads dataset, you need to put dataset at `./MRPC/`, list this:
+  ```Shell
+  ls MRPC/
+  dev_ids.tsv  dev.tsv  test.tsv  train.tsv
+  ```
+## Run
 
 ### blendcnn
 
   ```Shell
-  ./run_tuning.sh --input_model=/PATH/TO/fp32_model --dataset_location=/PATH/TO/MRPC/dev.tsv
-
+  ./run_tuning.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
+ 
   ./run_benchmark.sh --int8=true --mode=benchmark --batch_size=32
+  ./run_benchmark.sh --int8=False --mode=benchmark --batch_size=32 --input_model=/PATH/TO/FP32_MODEL
+
   ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNest
@@ -42,7 +59,7 @@ Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTo
 
 This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
 
-# User Code Analysis
+## User Code Analysis
 
 Intel® Low Precision Optimization Tool supports three usages:
 

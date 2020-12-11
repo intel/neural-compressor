@@ -71,7 +71,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
                            cfg_data.max_len)
     ], n_data=None)
     dataset = TensorDataset(*dataset.get_tensors()) # To Tensors
-    data_iter = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    data_iter = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
     model = models.BlendCNN(cfg_model, len(TaskDataset.labels))
     checkpoint.load_embedding(model.embed, cfg.pretrain_file)
@@ -160,7 +160,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
         total_samples = 0
         total_time = 0
         index = 0
-
+        model.eval()
         eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
         for batch, label in eval_dataloader:
             index += 1
@@ -177,7 +177,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
                 total_samples += batch[0].size()[0]
                 total_time += time.time() - tic
         total_accuracy = torch.cat(results).mean().item()
-        throughput = total_samples / total_time 
+        throughput = total_samples / total_time
         print('Latency: %.3f ms' % (1 / throughput * 1000))
         print('Throughput: %.3f samples/sec' % (throughput))
         print('Accuracy: %.3f ' % (total_accuracy))
@@ -199,7 +199,6 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             import ilit
             # ilit tune
             model.load_state_dict(torch.load(args.input_model))
-            print(model)
             eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
             quantizer = ilit.Quantization(args.tuned_yaml)
