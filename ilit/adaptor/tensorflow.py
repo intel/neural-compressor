@@ -165,14 +165,16 @@ class TensorFlowAdaptor(Adaptor):
             for node in graph_def.node:
                 if node.op in inspect_node_types:
                     fp32_inspect_node_name.append(node.name)
-                # Tensor dump supported quantized op including, 
-                # Requantize, QuantizedConv2DAndRequantize, QuantizedConv2DAndReluAndRequantize,
-                # QuantizedConv2DWithBiasAndRequantize, 
+                # Tensor dump supported quantized op including,
+                # Requantize, QuantizedConv2DAndRequantize,
+                # QuantizedConv2DAndReluAndRequantize,
+                # QuantizedConv2DWithBiasAndRequantize,
                 # QuantizedConv2DWithBiasAndReluAndRequantize,
-                # QuantizedConv2DWithBiasSignedSumAndReluAndRequantize, 
+                # QuantizedConv2DWithBiasSignedSumAndReluAndRequantize,
                 # QuantizedConv2DWithBiasSumAndReluAndRequantize,
-                # QuantizedDepthwiseConv2DWithBiasAndReluAndRequantize, 
-                # QuantizedMatMulWithBiasAndReluAndRequantize, QuantizedMatMulWithBiasAndRequantize
+                # QuantizedDepthwiseConv2DWithBiasAndReluAndRequantize,
+                # QuantizedMatMulWithBiasAndReluAndRequantize,
+                # QuantizedMatMulWithBiasAndRequantize
                 elif node.op.find("Requantize") != -1:
                     out_min = -2
                     out_max = -1
