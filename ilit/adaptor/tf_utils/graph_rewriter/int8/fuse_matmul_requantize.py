@@ -126,11 +126,22 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
 
             new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
-            self.graph_analyzer.replace_single_node(
-                new_node, [top_node_name], quantized_node_name,
-                self.graph_info[deq_node_name].outputs, deq_node_name)
+            self.graph_analyzer.remove_node(requantize_node_name)
+
+            if self.graph_info[deq_node_name].outputs:
+                self.graph_analyzer.replace_single_node(
+                    new_node, [top_node_name], quantized_node_name,
+                    self.graph_info[deq_node_name].outputs, deq_node_name)
+                self.graph_analyzer.remove_node(deq_node_name)
+            else:
+                self.graph_analyzer.remove_node(deq_node_name)
+
+                new_node.name = deq_node_name
+                self.graph_analyzer.replace_single_node(
+                    new_node, [top_node_name], quantized_node_name,
+                    [], deq_node_name)
+
             self.graph_analyzer.remove_node(quantized_node_name)
-            self.graph_analyzer.remove_node(deq_node_name)
 
         return self.graph_analyzer.dump_graph()
 class FuseMatMulRequantizeTransformer(GraphRewriterBase):

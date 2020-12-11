@@ -148,5 +148,77 @@ class TestGraphMatMulFusion(unittest.TestCase):
                             break
             self.assertEqual(found_quantized_matmul, True)
 
+    def test_matmul_biasadd_requantize_dequantize_last_fusion(self):
+        tf.disable_v2_behavior()
+
+        g = tf.Graph()
+        with g.as_default():
+            from ilit import Quantization
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2],name='op_to_store')
+            found_quantized_matmul = False
+            if tf.version.VERSION < "2.2.0":
+                found_quantized_matmul = True
+            else:
+                with tf.Session() as sess:
+                    sess.run(z, feed_dict={x: x_data, y: y_data})
+                    float_graph_def = sess.graph.as_graph_def()
+
+                    quantizer = Quantization('fake_yaml.yaml')
+                    dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                    dataloader = quantizer.dataloader(dataset, batch_size=2)
+                    output_graph = quantizer(
+                        float_graph_def,
+                        q_dataloader=dataloader,
+                        eval_dataloader=dataloader
+                    )
+
+                    for i in output_graph.as_graph_def().node:
+                        if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
+                            found_quantized_matmul = True
+                            break
+            self.assertEqual(found_quantized_matmul, True)
+
+    def test_matmul_biasadd_requantize_dequantize_fusion_with_softmax(self):
+        tf.disable_v2_behavior()
+
+        g = tf.Graph()
+        with g.as_default():
+            from ilit import Quantization
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.nn.softmax(z, name='op_to_store')
+            found_quantized_matmul = False
+            if tf.version.VERSION < "2.2.0":
+                found_quantized_matmul = False
+            else:
+                with tf.Session() as sess:
+                    sess.run(z, feed_dict={x: x_data, y: y_data})
+                    float_graph_def = sess.graph.as_graph_def()
+
+                    quantizer = Quantization('fake_yaml.yaml')
+                    dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                    dataloader = quantizer.dataloader(dataset, batch_size=2)
+                    output_graph = quantizer(
+                        float_graph_def,
+                        q_dataloader=dataloader,
+                        eval_dataloader=dataloader
+                    )
+
+                    for i in output_graph.as_graph_def().node:
+                        if i.op == 'QuantizedMatMulWithBiasAndDequantize':
+                            found_quantized_matmul = True
+                            break
+            self.assertEqual(found_quantized_matmul, False)
 if __name__ == '__main__':
     unittest.main()
