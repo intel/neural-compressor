@@ -36,6 +36,7 @@ for Microsoft Research Paraphrase Corpus (MRPC) task.
 from __future__ import absolute_import, division, print_function
 
 import os
+import time
 import logging
 import argparse
 
@@ -81,8 +82,7 @@ def parse_dummy_input(model, benchmark_nums, max_seq_length):
         highs.append(high)
     return shapes, lows, highs
 
-def evaluate_onnx(args, model, tokenizer, eval_dataloader):
-    onnx.save_model(model, "temp.onnx")
+def evaluate_onnxrt(args, model, tokenizer, eval_dataloader, benchmark=False):
     session = onnxruntime.InferenceSession(model.SerializeToString(), None)
     output_mode = output_modes[args.task_name]
 
@@ -99,28 +99,38 @@ def evaluate_onnx(args, model, tokenizer, eval_dataloader):
     #nb_eval_steps = 0
     preds = None
     out_label_ids = None
+    latencies = []
     for batch in tqdm(eval_dataloader, desc="Evaluating"):
-        batch = tuple(t.detach().cpu().numpy() for t in batch)
+        batch = tuple(t.detach().cpu().numpy()  \
+                            if not isinstance(t, np.ndarray) else t \
+                            for t in batch)
         ort_inputs = {
                             session.get_inputs()[0].name:  batch[0],
                             session.get_inputs()[1].name: batch[1],
                             session.get_inputs()[2].name: batch[2]
                         }
-        logits = np.reshape(session.run(None, ort_inputs)[0], (-1,2))
-        if preds is None:
-            preds = logits
-            out_label_ids = batch[3]
+        if benchmark:
+            start = time.time()
+            _ = session.run(None, ort_inputs)
+            latencies.append(time.time() - start)
         else:
-            preds = np.append(preds, logits, axis=0)
-            out_label_ids = np.append(out_label_ids, batch[3], axis=0)
-
-    if output_mode == "classification":
-        preds = np.argmax(preds, axis=1)
-    elif output_mode == "regression":
-        preds = np.squeeze(preds)
-    result = compute_metrics(eval_task, preds, out_label_ids)
-    results.update(result)
-    return results["acc"]
+            logits = np.reshape(session.run(None, ort_inputs)[0], (-1,2))
+            if preds is None:
+                preds = logits
+                out_label_ids = batch[3]
+            else:
+                preds = np.append(preds, logits, axis=0)
+                out_label_ids = np.append(out_label_ids, batch[3], axis=0)
+    if not benchmark:
+        if output_mode == "classification":
+            preds = np.argmax(preds, axis=1)
+        elif output_mode == "regression":
+            preds = np.squeeze(preds)
+        result = compute_metrics(eval_task, preds, out_label_ids)
+        results.update(result)
+        return results["acc"]
+    else:
+        return latencies
 
 def load_and_cache_examples(args, task, tokenizer, evaluate=False):
 
@@ -236,21 +246,10 @@ if __name__ == "__main__":
                         help='Get benchmark performance of quantized model.')
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
+    parser.add_argument('--accuracy_only', action='store_true', default=False,
+                        help="Mode of benchmark")
     args = parser.parse_args()
     tokenizer = BertTokenizer.from_pretrained(args.input_dir, do_lower_case=True)
-    model = onnx.load(args.model_path)
-    from onnxruntime.transformers import optimizer
-    from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-    opt_options = BertOptimizationOptions('bert')
-    opt_options.enable_embed_layer_norm = False
-
-    model_optimizer = optimizer.optimize_model(
-        args.model_path,
-        'bert',
-        num_heads=12,
-        hidden_size=768,
-        optimization_options=opt_options)
-    model = model_optimizer.model
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=True)
 
@@ -258,47 +257,46 @@ if __name__ == "__main__":
     eval_sampler = SequentialSampler(eval_dataset)
     eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, \
         batch_size=args.eval_batch_size)
-    shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, args.max_seq_length)
-
-    if args.benchmark:
-        from ilit.data.datasets.dummy_dataset import DummyDataset
-        from ilit.data.dataloaders.onnx_dataloader import ONNXDataLoader
-        dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
-        dummy_dataloader = ONNXDataLoader(dummy_dataset)
 
     def eval_func(model):
-        return evaluate_onnx(args, model, tokenizer, eval_dataloader)
+        return evaluate_onnxrt(args, model, tokenizer, eval_dataloader)
 
     if args.benchmark:
-        from ilit.benchmark import Benchmark
-        benchmark = Benchmark(args.config)
-        results = benchmark(model, b_dataloader=dummy_dataloader, b_func=eval_func)
+        model = onnx.load(args.model_path)
+        
+        from ilit.data.datasets.dummy_dataset import DummyDataset
+        from ilit.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
+        shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, args.max_seq_length)
+        dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
+        dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
+        
+        print('---------------------------------------------------------------')
+        if args.accuracy_only:
+            results = evaluate_onnxrt(args, model, tokenizer, eval_dataloader)
+            print("Accuracy: %.5f" % results)
+        else:
+            results = evaluate_onnxrt(args, model, tokenizer, dummy_dataloader, benchmark=True)
+            latency = np.array(results).mean() / args.eval_batch_size
 
-        for mode, result in results.items():
-            acc, batch_size, result_list = result
-            latency = np.array(result_list).mean() / batch_size
-
-            print('\n{} mode benchmark result:'.format(mode))
-            print('Accuracy is {:.3f}'.format(acc))
-            print('Batch size = {}'.format(batch_size))
             print('Latency: {:.3f} ms'.format(latency * 1000))
-            print('Throughput: {:.3f} items/sec'.format(batch_size * 1./ latency))
+            print('Throughput: {:.3f} items/sec'.format(args.eval_batch_size * 1./ latency))
+        print('--------------------------------------------------------------')
 
     if args.tune:
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
+        opt_options = BertOptimizationOptions('bert')
+        opt_options.enable_embed_layer_norm = False
+
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            'bert',
+            num_heads=12,
+            hidden_size=768,
+            optimization_options=opt_options)
+        model = model_optimizer.model
+
         from ilit.quantization import Quantization
         quantize = Quantization(args.config)
         q_model = quantize(model, q_dataloader=eval_dataloader, eval_func=eval_func)
         onnx.save(q_model, args.output_model)
-        if args.benchmark:
-            from ilit import Benchmark
-            benchmark = Benchmark(args.config)
-            results = benchmark(model=q_model, b_dataloader=dummy_dataloader, b_func=eval_func)
-            for mode, result in results.items():
-                acc, batch_size, result_list = result
-                latency = np.array(result_list).mean() / batch_size
-
-                print('\n quantized model {} mode benchmark result:'.format(mode))
-                print('Accuracy is {:.3f}'.format(acc))
-                print('Batch size = {}'.format(batch_size))
-                print('Latency: {:.3f} ms'.format(latency * 1000))
-                print('Throughput: {:.3f} items/sec'.format(batch_size * 1./ latency))

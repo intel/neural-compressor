@@ -188,8 +188,8 @@ class BilinearImagenetTransform(Transform):
     return (image, label)
 
 @transform_registry(transform_type="ResizeCropImagenet", \
-                    process="preprocess", framework="onnx")
-class OnnxResizeCropImagenetTransform(Transform):
+                    process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops")
+class ONNXResizeCropImagenetTransform(Transform):
   def __init__(self, height, width, random_crop=False, resize_side=256, \
                mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225]):
 

@@ -16,8 +16,7 @@ def build_static_yaml():
     fake_yaml = """
         model:
           name: imagenet
-          framework: onnx
-          mode: ONNXQLinearOps  
+          framework: onnxrt_qlinearops
 
         quantization:                                        
           approach: post_training_static_quant  
@@ -45,8 +44,7 @@ def build_dynamic_yaml():
     fake_yaml = """
         model:
           name: imagenet
-          framework: onnx
-          mode: ONNXIntegerOps 
+          framework: onnxrt_integerops
 
         quantization:                                        
           approach: post_training_dynamic_quant 
@@ -89,7 +87,7 @@ def export_onnx_model(model, path):
                     dynamic_axes={"input" : {0 : "batch_size"},    # variable lenght axes
                                   "output" : {0 : "batch_size"}})
 
-class TestAdaptorONNX(unittest.TestCase):
+class TestAdaptorONNXRT(unittest.TestCase):
 
     cnn_export_path = "cnn.onnx"
     cnn_model = torchvision.models.quantization.resnet18()
@@ -114,9 +112,9 @@ class TestAdaptorONNX(unittest.TestCase):
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,
                                "q_dataloader": None,
-                               "mode": "ONNXQLinearOps",
+                               "backend": "qlinearops",
                                "workspace_path": None}
-        framework = "onnx"
+        framework = "onnxrt_qlinearops"
         _ = FRAMEWORKS[framework](framework_specific_info)
 
     def test_quantizate(self):

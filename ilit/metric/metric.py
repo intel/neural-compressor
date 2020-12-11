@@ -65,33 +65,42 @@ class MXNetMetrics(object):
         self.metrics.update(MXNET_METRICS)
 
 @singleton
-class ONNXMetrics(object):
+class ONNXRTQLMetrics(object):
     def __init__(self):
         self.metrics = {}
-        self.metrics.update(ONNX_METRICS)
+        self.metrics.update(ONNXRT_QL_METRICS)
+
+@singleton
+class ONNXRTITMetrics(object):
+    def __init__(self):
+        self.metrics = {}
+        self.metrics.update(ONNXRT_IT_METRICS)
 
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
                      "pytorch": PyTorchMetrics,
-                     "onnx": ONNXMetrics, }
+                     "onnxrt_qlinearops": ONNXRTQLMetrics,
+                     "onnxrt_integerops": ONNXRTITMetrics }
 
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
 MXNET_METRICS = {}
 PYTORCH_METRICS = {}
-ONNX_METRICS = {}
+ONNXRT_QL_METRICS = {}
+ONNXRT_IT_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "mxnet": MXNET_METRICS,
                     "pytorch": PYTORCH_METRICS, 
-                    "onnx": ONNX_METRICS}
+                    "onnxrt_qlinearops": ONNXRT_QL_METRICS,
+                    "onnxrt_integerops": ONNXRT_IT_METRICS}
 
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "pytorch", "onnx",
-                             "mxnet"), "framework support tensorflow pytorch mxnet onnx"
+        assert framework in ("tensorflow", "pytorch", "onnxrt_qlinearops", "onnxrt_integerops",
+                             "mxnet"), "framework support tensorflow pytorch mxnet onnxrt"
         self.metrics = framework_metrics[framework]().metrics
 
     def __getitem__(self, metric_type):
@@ -107,7 +116,8 @@ class METRICS(object):
 
 def metric_registry(metric_type, framework):
     """The class decorator used to register all Metric subclasses.
-       cross framework metric is supported by add param as framework='tensorflow, pytorch, mxnet'
+       cross framework metric is supported by add param as framework='tensorflow, \
+                       pytorch, mxnet, onnxrt'
 
     Args:
         cls (class): The class of register.
@@ -120,8 +130,9 @@ def metric_registry(metric_type, framework):
             assert single_framework in [
                 "tensorflow",
                 "mxnet",
-                "onnx",
-                "pytorch"], "The framework support tensorflow mxnet pytorch onnx"
+                "onnxrt_qlinearops",
+                "onnxrt_integerops",
+                "pytorch"], "The framework support tensorflow mxnet pytorch onnxrt"
 
             if metric_type in registry_metrics[single_framework].keys():
                 raise ValueError('Cannot have two metrics with the same name')
@@ -185,7 +196,7 @@ class WrapMXNetMetric(Metric):
         acc_name, acc = self._metric.get()
         return acc
 
-class WrapONNXMetric(Metric):
+class WrapONNXRTMetric(Metric):
 
     def update(self, preds, labels=None, sample_weight=None):
         preds = np.array(preds)
@@ -272,7 +283,7 @@ class MxnetTopK(Metric):
         else:
             return self.num_correct / self.num_sample
 
-@metric_registry('F1', 'tensorflow, pytorch, mxnet, onnx')
+@metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class F1(Metric):
     def __init__(self):
         self._score_list = []
@@ -330,8 +341,8 @@ class TensorflowTopK(Metric):
         else:
             return self.num_correct / self.num_sample
 
-@metric_registry('topk', 'onnx')
-class OnnxTopK(Metric):
+@metric_registry('topk', 'onnxrt_qlinearops, onnxrt_integerops')
+class ONNXRTTopK(Metric):
     """The class of calculating topk metric, which usually is used in classification.
 
     Args:

@@ -19,7 +19,7 @@ from ilit.utils.utility import LazyImport
 from .base_dataloader import BaseDataLoader
 from .default_dataloader import DefaultDataLoader
 
-class ONNXDataLoader(BaseDataLoader):
+class ONNXRTDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory):
         return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,

@@ -21,6 +21,7 @@ import copy
 import logging
 from collections import OrderedDict
 
+import numpy as np
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport
 
@@ -29,21 +30,20 @@ ort = LazyImport("onnxruntime")
 
 logger = logging.getLogger()
 
-@adaptor_registry
-class ONNXAdaptor(Adaptor):
-    """The ONNX adaptor layer, do onnx quantization, calibration, inspect layer tensors.
+class ONNXRTAdaptor(Adaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
     Args:
         framework_specific_info (dict): framework specific configuration for quantization.
     """
 
     def __init__(self, framework_specific_info):
-        super(ONNXAdaptor, self).__init__(framework_specific_info)
+        super(ONNXRTAdaptor, self).__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []
         self.logger = logger
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
-        self.mode = framework_specific_info["mode"]
+        self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
         self.pre_optimized_model = None
         self.quantizable_op_types = self._query_quantizable_op_types()
@@ -72,8 +72,8 @@ class ONNXAdaptor(Adaptor):
         
         from onnxruntime.quantization.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
-        mode = QuantizationMode.QLinearOps if self.mode == \
-            "ONNXQLinearOps" else QuantizationMode.IntegerOps
+        backend = QuantizationMode.QLinearOps if self.backend == \
+            "qlinearops" else QuantizationMode.IntegerOps
         model = copy.deepcopy(model)
         iterations = tune_cfg.get('calib_iteration', 1)
         self.quantizable_ops = self._query_quantizable_ops(model)
@@ -85,7 +85,7 @@ class ONNXAdaptor(Adaptor):
         quantizer = ONNXQuantizer(model,
             q_config["per_channel"],
             q_config["reduce_range"],
-            mode,
+            backend,
             self.static,
             q_config["weight_dtype"],
             q_config["input_dtype"],
@@ -194,7 +194,7 @@ class ONNXAdaptor(Adaptor):
     def _query_quantizable_op_types(self):
         # TBD, we exclude "gather" for static quantize
         # will be replaced with FWK query api
-        if self.mode == "ONNXQLinearOps":
+        if self.backend == "qlinearops":
             quantizable_op_types = ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip', \
                 'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization']
         else:
@@ -227,7 +227,11 @@ class ONNXAdaptor(Adaptor):
             labels = batch[-1]
             if measurer is not None:
                 for i in range(len_inputs):
-                    ort_inputs.update({inputs_names[i]: batch[i]})
+                    # in case dataloader contains non-array input
+                    if not isinstance(batch[i], np.ndarray):
+                        ort_inputs.update({inputs_names[i]: np.array(batch[i])})
+                    else:
+                        ort_inputs.update({inputs_names[i]: batch[i]})
                 measurer.start()
                 predictions = session.run([], ort_inputs)
                 measurer.end()
@@ -248,4 +252,28 @@ class ONNXAdaptor(Adaptor):
 
     def save(self, model, path):
         onnx.save_model(model, os.path.join(path, "best_model.onnx"))
+
+
+@adaptor_registry
+class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        super(ONNXRT_QLinearOpsAdaptor, self).__init__(framework_specific_info)
+
+
+@adaptor_registry
+class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        super(ONNXRT_IntegerOpsAdaptor, self).__init__(framework_specific_info)
 

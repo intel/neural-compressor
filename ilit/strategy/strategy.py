@@ -141,8 +141,8 @@ class TuneStrategy(object):
                  'workspace_path': self.cfg.tuning.workspace.path})
         if framework == 'mxnet' or framework == 'pytorch':
             framework_specific_info.update({"q_dataloader": q_dataloader})
-        if framework == 'onnx':
-            framework_specific_info.update({"mode": self.cfg.model.mode})
+        if 'onnxrt' in framework.lower():
+            framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
 

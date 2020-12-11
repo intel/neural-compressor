@@ -76,8 +76,9 @@ class TensorflowImagenetDataset(IterableDataset):
                 except OutOfRangeError:
                     return
 
-@dataset_registry(dataset_type="Imagenet", framework="onnx", dataset_format='')
-class OnnxImagenetDataset(Dataset):
+@dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
+                   onnxrt_integerops", dataset_format='')
+class ONNXRTImagenetDataset(Dataset):
     """Configuration for Imagenet dataset."""
 
     def __init__(self, root, subset='val', num_cores=28, transform=None):

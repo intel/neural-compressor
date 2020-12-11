@@ -167,8 +167,10 @@ class TensorFlowAdaptor(Adaptor):
                     fp32_inspect_node_name.append(node.name)
                 # Tensor dump supported quantized op including, 
                 # Requantize, QuantizedConv2DAndRequantize, QuantizedConv2DAndReluAndRequantize,
-                # QuantizedConv2DWithBiasAndRequantize, QuantizedConv2DWithBiasAndReluAndRequantize,
-                # QuantizedConv2DWithBiasSignedSumAndReluAndRequantize, QuantizedConv2DWithBiasSumAndReluAndRequantize,
+                # QuantizedConv2DWithBiasAndRequantize, 
+                # QuantizedConv2DWithBiasAndReluAndRequantize,
+                # QuantizedConv2DWithBiasSignedSumAndReluAndRequantize, 
+                # QuantizedConv2DWithBiasSumAndReluAndRequantize,
                 # QuantizedDepthwiseConv2DWithBiasAndReluAndRequantize, 
                 # QuantizedMatMulWithBiasAndReluAndRequantize, QuantizedMatMulWithBiasAndRequantize
                 elif node.op.find("Requantize") != -1:

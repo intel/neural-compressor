@@ -19,7 +19,7 @@ from .dataset import dataset_registry, Dataset
 import numpy as np
 
 @dataset_registry(dataset_type="dummy", 
-    framework="tensorflow, pytorch, mxnet, onnx", dataset_format='')
+   framework="tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops", dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.
        This Dataset is to construct a dataset from a specific shape.

@@ -99,17 +99,24 @@ class MXNetDatasets(object):
         self.datasets.update(MXNETDATASETS)
 
 @singleton
-class ONNXDatasets(object):
+class ONNXRTQLDatasets(object):
     def __init__(self):
         self.datasets = {}
-        self.datasets.update(ONNXDATASETS)
+        self.datasets.update(ONNXRTQLDATASETS)
+
+@singleton
+class ONNXRTITDatasets(object):
+    def __init__(self):
+        self.datasets = {}
+        self.datasets.update(ONNXRTITDATASETS)
 
 
 
 framework_datasets = {"tensorflow": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
                       "pytorch": PyTorchDatasets, 
-                      "onnx": ONNXDatasets, }
+                      "onnxrt_qlinearops": ONNXRTQLDatasets,
+                      "onnxrt_integerops": ONNXRTITDatasets}
 
 """The datasets supported by ilit, it's model specific and can be configured by yaml file.
 
@@ -124,8 +131,8 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "mxnet", "onnx",
-                             "pytorch"], "framework support tensorflow pytorch mxnet"
+        assert framework in ["tensorflow", "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
+                             "pytorch"], "framework support tensorflow pytorch mxnet onnxrt"
         self.datasets = framework_datasets[framework]().datasets
 
     def __getitem__(self, dataset_type):
@@ -138,12 +145,14 @@ class DATASETS(object):
 TENSORFLOWDATASETS = {}
 MXNETDATASETS = {}
 PYTORCHDATASETS = {}
-ONNXDATASETS = {}
+ONNXRTQLDATASETS = {}
+ONNXRTITDATASETS = {}
 
 registry_datasets = {"tensorflow": TENSORFLOWDATASETS,
                      "mxnet": MXNETDATASETS,
                      "pytorch": PYTORCHDATASETS, 
-                     "onnx": ONNXDATASETS, }
+                     "onnxrt_integerops": ONNXRTQLDATASETS,
+                     "onnxrt_qlinearops": ONNXRTITDATASETS }
 
 
 def dataset_registry(dataset_type, framework, dataset_format=''):
@@ -165,8 +174,9 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
                 "tensorflow",
                 "mxnet",
                 "pytorch",
-                "onnx"
-            ], "The framework support tensorflow mxnet pytorch"
+                "onnxrt_qlinearops",
+                "onnxrt_integerops"
+            ], "The framework support tensorflow mxnet pytorch onnxrt"
             dataset_name = dataset_type + dataset_format
             if dataset_name in registry_datasets[single_framework].keys():
                 raise ValueError('Cannot have two datasets with the same name')

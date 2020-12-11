@@ -202,9 +202,6 @@ schema = Schema({
         'framework': And(str, lambda s: s in FRAMEWORKS),
         Optional('inputs', default=None): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=None): And(Or(str, list), Use(input_to_list)),
-        Optional('mode', default='ONNXQLinearOps'): And(
-            str,
-            lambda s: s in ['ONNXQLinearOps', 'ONNXIntegerOps']),
     },
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \

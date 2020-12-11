@@ -1,4 +1,0 @@
-onnx>=1.7
-ort_nightly
-torch
-torchvision

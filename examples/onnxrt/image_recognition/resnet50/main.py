@@ -83,6 +83,7 @@ if __name__ == "__main__":
         from ilit.quantization import Quantization
         quantize = Quantization(args.config)
         q_model = quantize(model)
+        onnx.save(q_model, args.output_model)
         if args.benchmark:
             from ilit import Benchmark
             evaluator = Benchmark(args.config)

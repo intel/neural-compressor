@@ -3,12 +3,12 @@ set -x
 
 function main {
   init_params "$@"
-  run_benchmark
+  run_tuning
 }
 
 # init params
 function init_params {
-
+  bert_yaml="./bert.yaml"
   for var in "$@"
   do
     case $var in
@@ -21,9 +21,6 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-      --config=*)
-          bert_yaml=$(echo $var |cut -f2 -d=)
-      ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -32,14 +29,16 @@ function init_params {
 
 }
 
-# run_benchmark
-function run_benchmark {
+# run_tuning
+function run_tuning {
     if [ "${topology}" = "bert_base_MRPC" ];then
       task_name='mrpc'
       model_name_or_path='bert-base-uncased'
-    fi
-    python bert_base.py --model_path ${input_model} --data_dir ${data_dir} --task_name ${task_name} --input_dir ${model_name_or_path} --benchmark --config ${bert_yaml} --output_model ${output_model}
+    fi 
+    python bert_base.py --model_path ${input_model} --data_dir ${data_dir} --task_name ${task_name} --input_dir ${model_name_or_path} --tune --config ${bert_yaml} --output_model ${output_model}
 }
 
 main "$@"
+
+
 

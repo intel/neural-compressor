@@ -1,7 +1,6 @@
 model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50_v1_5
-  framework: onnx                                    # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
-  mode: ONNXQLinearOps                               # optional. default value is ONNXQLinearOps.
+  framework: onnxrt_qlinearops                       # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.                          

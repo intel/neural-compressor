@@ -206,44 +206,62 @@ class PyTorchTransforms(BaseTransforms):
         general.update(PYTORCH_TRANSFORMS["general"])
         return general
 
-class ONNXTransforms(BaseTransforms):
+class ONNXRTQLTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {}
-        preprocess.update(ONNX_TRANSFORMS["preprocess"])
+        preprocess.update(ONNXRT_QL_TRANSFORMS["preprocess"])
         return preprocess
 
     def _get_postprocess(self):
         postprocess = {}
-        postprocess.update(ONNX_TRANSFORMS["postprocess"])
+        postprocess.update(ONNXRT_QL_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
         general = {}
-        general.update(ONNX_TRANSFORMS["general"])
+        general.update(ONNXRT_QL_TRANSFORMS["general"])
         return general
 
+class ONNXRTITTransforms(BaseTransforms):
+    def _get_preprocess(self):
+        preprocess = {}
+        preprocess.update(ONNXRT_IT_TRANSFORMS["preprocess"])
+        return preprocess
+
+    def _get_postprocess(self):
+        postprocess = {}
+        postprocess.update(ONNXRT_IT_TRANSFORMS["postprocess"])
+        return postprocess
+
+    def _get_general(self):
+        general = {}
+        general.update(ONNXRT_IT_TRANSFORMS["general"])
+        return general
 
 
 framework_transforms = {"tensorflow": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
                         "pytorch": PyTorchTransforms, 
-                        "onnx": ONNXTransforms, }
+                        "onnxrt_qlinearops": ONNXRTQLTransforms,
+                        "onnxrt_integerops": ONNXRTITTransforms }
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-ONNX_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
                        "pytorch": PYTORCH_TRANSFORMS, 
-                       "onnx": ONNX_TRANSFORMS}
+                       "onnxrt_qlinearops": ONNXRT_QL_TRANSFORMS,
+                       "onnxrt_integerops": ONNXRT_IT_TRANSFORMS}
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "pytorch", "onnx",
-                             "mxnet"), "framework support tensorflow pytorch mxnet"
+        assert framework in ("tensorflow", "pytorch", "onnxrt_qlinearops", "onnxrt_integerops",
+                             "mxnet"), "framework support tensorflow pytorch mxnet onnxrt"
         assert process in ("preprocess", "postprocess",
                            "general"), "process support preprocess postprocess, general"
         self.transforms = framework_transforms[framework](process).transforms
@@ -266,21 +284,24 @@ def transform_registry(transform_type, process, framework):
     Args:
         transform_type (str): Transform registration name
         process (str): support 3 process including 'preprocess', 'postprocess', 'general'
-        framework (str): support 3 framework including 'tensorflow', 'pytorch', 'mxnet'
+        framework (str): support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'
         cls (class): The class of register.
 
     Returns:
         cls: The class of register.
     """
     def decorator_transform(cls):
-        assert framework in (
-            "tensorflow",
-            "mxnet",
-            "pytorch",
-            "onnx"), "The framework support tensorflow, mxnet and pytorch"
-        if transform_type in registry_transforms[framework][process].keys():
-            raise ValueError('Cannot have two transforms with the same name')
-        registry_transforms[framework][process][transform_type] = cls
+        for single_framework in [fwk.strip() for fwk in framework.split(',')]:
+            assert single_framework in [
+                "tensorflow",
+                "mxnet",
+                "pytorch",
+                "onnxrt_qlinearops",
+                "onnxrt_integerops"
+            ], "The framework support tensorflow mxnet pytorch onnxrt"
+            if transform_type in registry_transforms[single_framework][process].keys():
+                raise ValueError('Cannot have two transforms with the same name')
+            registry_transforms[single_framework][process][transform_type] = cls
         return cls
     return decorator_transform
 
@@ -321,8 +342,9 @@ class ComposeTFTransform(Transform):
             sample = transform(sample)
         return sample
 
-@transform_registry(transform_type="Compose", process="general", framework="onnx")
-class ComposeONNXTransform(Transform):
+@transform_registry(transform_type="Compose", process="general", \
+                 framework="onnxrt_qlinearops, onnxrt_integerops")
+class ComposeONNXRTTransform(Transform):
     def __init__(self, transform_list):
         self.transform_list = transform_list
 

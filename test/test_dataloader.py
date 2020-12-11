@@ -94,11 +94,25 @@ class TestMetrics(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
-    def test_onnx_dummy(self):
-        datasets = DATASETS('onnx')
+    def test_onnxrt_qlinear_dummy(self):
+        datasets = DATASETS('onnxrt_qlinearops')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
         
-        data_loader = DataLoader('onnx', dataset)
+        data_loader = DataLoader('onnxrt_qlinearops', dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (1, 256, 256, 3))
+        # dynamic batching
+        data_loader.batch(batch_size=2, last_batch='rollover')
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (2, 256, 256, 3))
+
+    def test_onnx_integer_dummy(self):
+        datasets = DATASETS('onnxrt_integerops')
+        dataset = datasets['dummy'](shape=(4, 256, 256, 3))
+
+        data_loader = DataLoader('onnxrt_integerops', dataset)
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
