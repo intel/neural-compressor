@@ -6,8 +6,6 @@ from ilit.metric import METRICS
 from ilit.metric.f1 import evaluate
 
 class TestMetrics(unittest.TestCase):
-    def setUp(self):
-        pass
     def test_tensorflow_F1(self):
         metrics = METRICS('tensorflow')
         F1 = metrics['F1']()
@@ -203,14 +201,63 @@ class TestMetrics(unittest.TestCase):
                             '0.14149')
 
 
-    def test_pytorch_accuracy(self):
+    def test__accuracy(self):
+        predicts1 = [1, 0, 1, 1]
+        labels1 = [0, 1, 1, 1]
+
+        predicts2 = [[0, 0], [0, 0]]
+        labels2 = [[0, 1], [1, 1]]
+        
+        predicts3 = [[[0, 1], [0, 0], [0, 1]], [[0, 1], [0, 1], [0, 1]]]
+        labels3 = [[[0, 1], [0, 1], [1, 0]], [[1, 0], [1, 0], [1, 0]]]
+
+        predicts4 = [[0.2, 0.8], [0.1, 0.9], [0.3, 0.7], [0.4, 0.6]] #1,1,1,1
+        labels4 = [0, 1, 0, 0]
+
         metrics = METRICS('pytorch')
         acc = metrics['Accuracy']()
-        predicts = [1, 0, 1, 1]
-        labels = [0, 1, 1, 1]
-        acc.update(predicts, labels)
+        acc.update(predicts1, labels1)
         acc_result = acc.result()
         self.assertEqual(acc_result, 0.5)
+        acc.reset()
+        acc.update(predicts2, labels2)
+        self.assertEqual(acc.result(), 0.25)
+        acc.reset()
+        acc.update(predicts3, labels3)
+        self.assertEqual(acc.result(), 0.25)
+        acc.reset()
+        acc.update(predicts4, labels4)
+        self.assertEqual(acc.result(), 0.25)
+
+        metrics = METRICS('mxnet')
+        acc = metrics['Accuracy']()
+        acc.update(predicts1, labels1)
+        acc_result = acc.result()
+        self.assertEqual(acc_result, 0.5)
+        acc.reset()
+        acc.update(predicts2, labels2)
+        self.assertEqual(acc.result(), 0.25)
+        acc.reset()
+        acc.update(predicts3, labels3)
+        self.assertEqual(acc.result(), 0.25)
+        acc.reset()
+        acc.update(predicts4, labels4)
+        self.assertEqual(acc.result(), 0.25)
+
+        metrics = METRICS('onnxrt_qlinearops')
+        acc = metrics['Accuracy']()
+        acc.update(predicts1, labels1)
+        acc_result = acc.result()
+        self.assertEqual(acc_result, 0.5)
+        acc.reset()
+        acc.update(predicts2, labels2)
+        self.assertEqual(acc.result(), 0.25)
+        acc.reset()
+        acc.update(predicts3, labels3)
+        self.assertEqual(acc.result(), 0.25)
+        acc.reset()
+        acc.update(predicts4, labels4)
+        self.assertEqual(acc.result(), 0.25)
 
     def test_mxnet_accuracy(self):
         metrics = METRICS('mxnet')
@@ -220,6 +267,151 @@ class TestMetrics(unittest.TestCase):
         acc.update(predicts, labels)
         acc_result = acc.result()
         self.assertEqual(acc_result, 0.5)
+
+    def test_mse(self):
+        predicts1 = [1, 0, 0, 1]
+        labels1 = [0, 1, 0, 0]
+        predicts2 = [1, 1, 1, 1]
+        labels2 = [0, 1, 1, 0]
+
+        metrics = METRICS('onnxrt_qlinearops')
+        mse = metrics['MSE']()
+        mse.update(predicts1, labels1)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.75)
+        mse.update(predicts2, labels2)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.625)
+
+        metrics = METRICS('tensorflow')
+        mse = metrics['MSE']()
+        mse.update(predicts1, labels1)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.75)
+        mse.update(predicts2, labels2)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.625)
+
+        metrics = METRICS('mxnet')
+        mse = metrics['MSE']()
+        mse.update(predicts1, labels1)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.75)
+        mse.update(predicts2, labels2)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.625)
+
+        metrics = METRICS('pytorch')
+        mse = metrics['MSE']()
+        mse.update(predicts1, labels1)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.75)
+        mse.update(predicts2, labels2)
+        mse_result = mse.result()
+        self.assertEqual(mse_result, 0.625)
+
+    def test_mae(self):
+        predicts1 = [1, 0, 0, 1]
+        labels1 = [0, 1, 0, 0]
+        predicts2 = [1, 1, 1, 1]
+        labels2 = [1, 1, 1, 0]
+
+        metrics = METRICS('tensorflow')
+        mae = metrics['MAE']()
+        mae.update(predicts1, labels1)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.75)
+        mae.update(0, 1)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.8)
+        mae.reset()
+        mae.update(predicts2, labels2)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.25)
+        
+        metrics = METRICS('pytorch')
+        mae = metrics['MAE']()
+        mae.update(predicts1, labels1)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.75)
+        mae.update(predicts2, labels2)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.5)
+
+        metrics = METRICS('mxnet')
+        mae = metrics['MAE']()
+        mae.update(predicts1, labels1)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.75)
+        mae.update(predicts2, labels2)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.5)
+
+        metrics = METRICS('onnxrt_qlinearops')
+        mae = metrics['MAE']()
+        mae.update(predicts1, labels1)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.75)
+        mae.update(predicts2, labels2)
+        mae_result = mae.result()
+        self.assertEqual(mae_result, 0.5)
+
+    def test_rmse(self):
+        predicts1 = [1, 0, 0, 1]
+        labels1 = [1, 0, 0, 0]
+        predicts2 = [1, 1, 1, 1]
+        labels2 = [1, 0, 0, 0]
+
+        metrics = METRICS('tensorflow')
+        rmse = metrics['RMSE']()
+        rmse.update(predicts1, labels1)
+        rmse_result = rmse.result()
+        self.assertEqual(rmse_result, 0.5)
+        rmse.reset()
+        rmse.update(predicts2, labels2)
+        rmse_result = rmse.result()
+        self.assertAlmostEqual(rmse_result, np.sqrt(0.75))
+
+        metrics = METRICS('pytorch')
+        rmse = metrics['RMSE']()
+        rmse.update(predicts1, labels1)
+        rmse_result = rmse.result()
+        self.assertEqual(rmse_result, 0.5)
+        rmse.update(predicts2, labels2)
+        rmse_result = rmse.result()
+        self.assertAlmostEqual(rmse_result, np.sqrt(0.5))
+
+        metrics = METRICS('mxnet')
+        rmse = metrics['RMSE']()
+        rmse.update(predicts1, labels1)
+        rmse_result = rmse.result()
+        self.assertEqual(rmse_result, 0.5)
+        rmse.update(predicts2, labels2)
+        rmse_result = rmse.result()
+        self.assertAlmostEqual(rmse_result, np.sqrt(0.5))
+
+        metrics = METRICS('onnxrt_qlinearops')
+        rmse = metrics['RMSE']()
+        rmse.update(predicts1, labels1)
+        rmse_result = rmse.result()
+        self.assertEqual(rmse_result, 0.5)
+        rmse.update(predicts2, labels2)
+        rmse_result = rmse.result()
+        self.assertAlmostEqual(rmse_result, np.sqrt(0.5))
+
+    def test_loss(self):
+        metrics = METRICS('onnxrt_qlinearops')
+        loss = metrics['Loss']()
+        predicts = [1, 0, 0, 1]
+        labels = [0, 1, 0, 0]
+        loss.update(predicts, labels)
+        loss_result = loss.result()
+        self.assertEqual(loss_result, 0.5)
+        predicts = [1, 1, 0, 1]
+        labels = [0, 1, 0, 0]
+        loss.update(predicts, labels)
+        loss_result = loss.result()
+        self.assertEqual(loss_result, 0.625)
 
 if __name__ == "__main__":
     unittest.main()

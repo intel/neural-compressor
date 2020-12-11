@@ -27,88 +27,47 @@ mx = LazyImport('mxnet')
 class TensorflowDatasets(object):
     def __init__(self):
         self.datasets = {
-            "cifar10": tf.keras.datasets.cifar10,
-            "cifar100": tf.keras.datasets.cifar100,
-            "fashion_mnist": tf.keras.datasets.fashion_mnist,
-            "imdb": tf.keras.datasets.imdb,
-            "mnist": tf.keras.datasets.mnist,
-            "reuters": tf.keras.datasets.reuters,
-            "list_files": tf.data.Dataset.list_files,
             "TFRecordDataset": tf.data.TFRecordDataset,
-            "FixedLengthRecordDataset": tf.data.FixedLengthRecordDataset,
-            "TextLineDataset": tf.data.TextLineDataset,
         }
-        self.datasets.update(TENSORFLOWDATASETS)
+        self.datasets.update(TENSORFLOW_DATASETS)
 
 
 @singleton
 class PyTorchDatasets(object):
     def __init__(self):
         self.datasets = {
-            'LSUN': torchvision.datasets.LSUN,
-            'LSUNClass': torchvision.datasets.LSUNClass,
-            'ImageFolder': torchvision.datasets.ImageFolder,
-            'DatasetFolder': torchvision.datasets.DatasetFolder,
-            'FakeData': torchvision.datasets.FakeData,
-            'CocoCaptions': torchvision.datasets.CocoCaptions,
-            'CocoDetection': torchvision.datasets.CocoDetection,
-            'CIFAR10': torchvision.datasets.CIFAR10,
-            'CIFAR100': torchvision.datasets.CIFAR100,
-            'EMNIST': torchvision.datasets.EMNIST,
-            'FashionMNIST': torchvision.datasets.FashionMNIST,
-            'QMNIST': torchvision.datasets.QMNIST,
-            'MNIST': torchvision.datasets.MNIST,
-            'KMNIST': torchvision.datasets.KMNIST,
-            'STL10': torchvision.datasets.STL10,
-            'SVHN': torchvision.datasets.SVHN,
-            'PhotoTour': torchvision.datasets.PhotoTour,
-            'SEMEION': torchvision.datasets.SEMEION,
-            'Omniglot': torchvision.datasets.Omniglot,
-            'SBU': torchvision.datasets.SBU,
-            'Flickr8k': torchvision.datasets.Flickr8k,
-            'Flickr30k': torchvision.datasets.Flickr30k,
-            'VOCSegmentation': torchvision.datasets.VOCSegmentation,
-            'VOCDetection': torchvision.datasets.VOCDetection,
-            'Cityscapes': torchvision.datasets.Cityscapes,
-            'ImageNet': torchvision.datasets.ImageNet,
-            'Caltech101': torchvision.datasets.Caltech101,
-            'Caltech256': torchvision.datasets.Caltech256,
-            'CelebA': torchvision.datasets.CelebA,
-            'SBDataset': torchvision.datasets.SBDataset,
-            'VisionDataset': torchvision.datasets.VisionDataset,
-            'USPS': torchvision.datasets.USPS,
-            'Kinetics400': torchvision.datasets.Kinetics400,
-            'HMDB51': torchvision.datasets.HMDB51,
-            'UCF101': torchvision.datasets.UCF101
+            'ImageFolder': PytorchMxnetWrapDataset(
+                                torchvision.datasets.ImageFolder),
+            'DatasetFolder': PytorchMxnetWrapDataset(
+                                torchvision.datasets.DatasetFolder),
+            'ImageNet': PytorchMxnetWrapDataset(
+                                torchvision.datasets.ImageNet),
         }
-        self.datasets.update(PYTORCHDATASETS)
+        self.datasets.update(PYTORCH_DATASETS)
 
 
 @singleton
 class MXNetDatasets(object):
     def __init__(self):
         self.datasets = {
-            "MNIST": mx.gluon.data.vision.datasets.MNIST,
-            "FashionMNIST": mx.gluon.data.vision.datasets.FashionMNIST,
-            "CIFAR10": mx.gluon.data.vision.datasets.CIFAR10,
-            "CIFAR100": mx.gluon.data.vision.datasets.CIFAR100,
-            "ImageRecordDataset": mx.gluon.data.vision.datasets.ImageRecordDataset,
-            "ImageFolderDataset": mx.gluon.data.vision.datasets.ImageFolderDataset,
-            # "ImageListDataset": mx.gluon.data.vision.datasets.ImageListDataset,
+            "ImageRecordDataset": PytorchMxnetWrapDataset(
+                                    mx.gluon.data.vision.datasets.ImageRecordDataset),
+            "ImageFolderDataset": PytorchMxnetWrapDataset(
+                                    mx.gluon.data.vision.datasets.ImageFolderDataset),
         }
-        self.datasets.update(MXNETDATASETS)
+        self.datasets.update(MXNET_DATASETS)
 
 @singleton
 class ONNXRTQLDatasets(object):
     def __init__(self):
         self.datasets = {}
-        self.datasets.update(ONNXRTQLDATASETS)
+        self.datasets.update(ONNXRTQL_DATASETS)
 
 @singleton
 class ONNXRTITDatasets(object):
     def __init__(self):
         self.datasets = {}
-        self.datasets.update(ONNXRTITDATASETS)
+        self.datasets.update(ONNXRTIT_DATASETS)
 
 
 
@@ -140,19 +99,39 @@ class DATASETS(object):
             format(self.datasets.keys())
         return self.datasets[dataset_type]
 
+class PytorchMxnetWrapDataset():
+    def __init__(self, datafunc):
+        self.datafunc = datafunc
+
+    def __call__(self, transform=None, *args, **kwargs):
+        return PytorchMxnetWrapFunction(self.datafunc, transform=transform, *args, **kwargs)
+
+class PytorchMxnetWrapFunction():
+    def __init__(self, dataset, transform, *args, **kwargs):
+        self.dataset = dataset(*args, **kwargs)
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        sample = self.dataset[index]
+        if self.transform is not None:
+            sample = self.transform(sample)
+        return sample
 
 # user/model specific datasets will be registered here
-TENSORFLOWDATASETS = {}
-MXNETDATASETS = {}
-PYTORCHDATASETS = {}
-ONNXRTQLDATASETS = {}
-ONNXRTITDATASETS = {}
+TENSORFLOW_DATASETS = {}
+MXNET_DATASETS = {}
+PYTORCH_DATASETS = {}
+ONNXRTQL_DATASETS = {}
+ONNXRTIT_DATASETS = {}
 
-registry_datasets = {"tensorflow": TENSORFLOWDATASETS,
-                     "mxnet": MXNETDATASETS,
-                     "pytorch": PYTORCHDATASETS, 
-                     "onnxrt_integerops": ONNXRTQLDATASETS,
-                     "onnxrt_qlinearops": ONNXRTITDATASETS }
+registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
+                     "mxnet": MXNET_DATASETS,
+                     "pytorch": PYTORCH_DATASETS, 
+                     "onnxrt_integerops": ONNXRTQL_DATASETS,
+                     "onnxrt_qlinearops": ONNXRTIT_DATASETS }
 
 
 def dataset_registry(dataset_type, framework, dataset_format=''):

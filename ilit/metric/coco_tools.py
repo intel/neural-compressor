@@ -264,6 +264,7 @@ class COCOEvalWrapper(cocoeval.COCOeval):
         for category_index, category_id in enumerate(self.GetCategoryIdList()):
             category = self.GetCategory(category_id)['name']
             # Kept for backward compatilbility
+            # pylint: disable=no-member
             per_category_ap['PerformanceByCategory/mAP/{}'.format(
                 category)] = self.category_stats[0][category_index]
             if all_metrics_per_category:

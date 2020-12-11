@@ -5,11 +5,7 @@ import os
 from ilit.data import TRANSFORMS, Dataset, DATASETS, DataLoader, dataset_registry
 import sys
 
-
 class TestMetrics(unittest.TestCase):
-    def setUp(self):
-        pass
-
     def test_tensorflow_dummy(self):
         datasets = DATASETS('tensorflow')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
