@@ -314,6 +314,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 new_model = load(
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
+            model.fuse_model()
             new_model = model
         validate(val_loader, new_model, criterion, args, ipex_config_path)
         return
