@@ -28,6 +28,8 @@ from ..utils import logger
 from .query import QueryBackendCapability
 
 torch = LazyImport('torch')
+ipex = LazyImport('intel_pytorch_extension')
+json = LazyImport('json')
 
 REDUCE_RANGE = False if CpuInfo().vnni else True
 logger.debug("reduce range:")
@@ -419,7 +421,175 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
 
 
 @adaptor_registry
-class PyTorchAdaptor(Adaptor):
+class TamplateAdaptor(Adaptor):
+    """Tample adaptor of PyTorch framework.
+
+    Args:
+        framework_specific_info (dict): dictionary of tuning configure from yaml file.
+    """
+    def __init__(self, framework_specific_info):
+        super(TamplateAdaptor, self).__init__(framework_specific_info)
+
+        # set torch random seed
+        random_seed = framework_specific_info['random_seed']
+        random.seed(random_seed)
+        torch.manual_seed(random_seed)
+
+        self.approach = framework_specific_info['approach']
+        self.device = framework_specific_info['device']
+        self.q_dataloader = framework_specific_info['q_dataloader']
+        self.benchmark = framework_specific_info['benchmark'] \
+            if 'benchmark' in framework_specific_info else False
+        self.is_baseline = True if not self.benchmark else False
+        self.capability = None
+
+        if framework_specific_info['approach'] == "post_training_static_quant":
+            self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+        elif framework_specific_info['approach'] == "quant_aware_training":
+            self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+        else:
+            assert False, "Unsupport quantization approach: {}".format(self.approach)
+
+    def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            quantizable_ops (list): list of quantizable ops from model include op name and type.
+
+        Returns:
+            None
+        """
+
+        raise NotImplementedError
+
+    @dump_elapsed_time("Pass query framework capability")
+    def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
+        quantizable_ops = []
+        self._get_quantizable_ops_recursively(model, '', quantizable_ops)
+
+        q_capability = {}
+        q_capability['optypewise'] = OrderedDict()
+        q_capability['opwise'] = OrderedDict()
+
+        for q_op in quantizable_ops:
+            q_capability['opwise'][q_op] = copy.deepcopy(self.capability)
+            if q_op[1] not in q_capability['optypewise'].keys():
+                q_capability['optypewise'][q_op[1]] = copy.deepcopy(self.capability)
+
+        return q_capability
+
+
+    def get_all_weight_names(self, model):
+        """Get weight names
+
+        Args:
+            model (object): input model
+
+        Returns:
+            names (list): list of weight names
+
+        """
+        names = []
+        for name, param in model.named_parameters():
+            names.append(name)
+        return names
+
+    def get_weight(self, model, tensor_name):
+        """Get weight value
+
+        Args:
+            model (object): input model
+            tensor_name (string): weight name
+
+        Returns:
+            (object): weight tensor
+
+        """
+        for name, param in model.named_parameters():
+            if tensor_name == name:
+                return param.data
+
+    def update_weights(self, model, tensor_name, new_tensor):
+        """Update weight value
+
+        Args:
+            model (object): input model
+            tensor_name (string): weight name
+            new_tensor (ndarray): weight value
+
+        Returns:
+            model (object): model with new weight
+
+        """
+        new_tensor = torch.Tensor(new_tensor)
+        for name, param in model.named_parameters():
+            if name == tensor_name:
+                param.data.copy_(new_tensor.data)
+        return model
+
+    def report_sparsity(self, model):
+        """Get sparsity of the model
+
+        Args:
+            model (object): input model
+
+        Returns:
+            df (DataFrame): DataFrame of sparsity of each weight
+            total_sparsity (float): total sparsity of model
+
+        """
+        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
+                                   'Std', 'Mean', 'Abs-Mean'])
+        pd.set_option('precision', 2)
+        param_dims = [2, 4]
+        params_size = 0
+        sparse_params_size = 0
+        for name, param in model.named_parameters():
+            # Extract just the actual parameter's name, which in this context we treat
+            # as its "type"
+            if param.dim() in param_dims and any(type in name for type in ['weight', 'bias']):
+                param_size, sparse_param_size, dense_param_size = compute_sparsity(
+                    param.detach().numpy())
+                density = dense_param_size / param_size
+                params_size += param_size
+                sparse_params_size += sparse_param_size
+                df.loc[len(df.index)] = ([
+                    name,
+                    list(param.shape),
+                    dense_param_size,
+                    sparse_param_size,
+                    (1 - density) * 100,
+                    param.std().item(),
+                    param.mean().item(),
+                    param.abs().mean().item()
+                ])
+
+        total_sparsity = sparse_params_size / params_size * 100
+
+        df.loc[len(df.index)] = ([
+            'Total sparsity:',
+            params_size,
+            "-",
+            int(sparse_params_size),
+            total_sparsity,
+            0, 0, 0])
+
+        return df, total_sparsity
+
+    
+@adaptor_registry
+class PyTorchAdaptor(TamplateAdaptor):
     """Adaptor of PyTorch framework, all PyTorch API is in this class.
 
     Args:
@@ -454,15 +624,12 @@ class PyTorchAdaptor(Adaptor):
         }
         """
 
-        # set torch random seed
-        random_seed = framework_specific_info['random_seed']
-        random.seed(random_seed)
-        torch.manual_seed(random_seed)
-
-        self.approach = framework_specific_info['approach']
-        self.device = framework_specific_info['device']
-        self.q_dataloader = framework_specific_info['q_dataloader']
-        self.is_baseline = True
+        if framework_specific_info['approach'] == "post_training_static_quant":
+            self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+        elif framework_specific_info['approach'] == "quant_aware_training":
+            self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+        else:
+            assert False, "Unsupport quantization approach: {}".format(self.approach)
         self.tune_cfg = None
         if self.device == "cpu":
             query_config_file = "pytorch_cpu.yaml"
@@ -499,6 +666,26 @@ class PyTorchAdaptor(Adaptor):
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
 
+    def model_calibration(self, q_model, dataloader, iterations=1):
+        assert iterations > 0
+        with torch.no_grad():
+            for idx, (input, label) in enumerate(dataloader):
+                if isinstance(input, dict):
+                    if self.device == "gpu":
+                        for inp in input.keys():
+                            input[inp] = input[inp].to("dpcpp")
+                    output = q_model(**input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    if self.device == "gpu":
+                        input = [inp.to("dpcpp") for inp in input]
+                    output = q_model(*input)
+                else:
+                    if self.device == "gpu":
+                        input = input.to("dpcpp")
+                    output = q_model(input)
+                if idx >= iterations - 1:
+                    break
+
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -512,19 +699,17 @@ class PyTorchAdaptor(Adaptor):
         Returns:
             (dict): quantized model
         """
-        assert isinstance(
-            model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
 
+        assert isinstance(model, torch.nn.Module), \
+               "The model passed in is not the instance of torch.nn.Module"
         q_model = copy.deepcopy(model.eval())
         if self.approach == 'quant_aware_training':
             q_model.train()
-        elif self.approach == 'post_training_static_quant':
-            q_model.eval()
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
-
-        op_cfgs = _cfg_to_qconfig(tune_cfg, (self.approach == 'quant_aware_training'))
+        op_cfgs = _cfg_to_qconfig(
+            tune_cfg, (self.approach == 'quant_aware_training'))
         _propagate_qconfig(q_model, op_cfgs)
         # sanity check common API misusage
         if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
@@ -535,26 +720,7 @@ class PyTorchAdaptor(Adaptor):
 
         if self.approach == 'post_training_static_quant':
             iterations = tune_cfg.get('calib_iteration', 1)
-            assert iterations >= 1
-            with torch.no_grad():
-                for _, (input, label) in enumerate(dataloader):
-                    if isinstance(input, dict):
-                        if self.device == "gpu":
-                            for inp in input.keys():
-                                input[inp] = input[inp].to("dpcpp")
-                        output = q_model(**input)
-                    elif isinstance(input, list) or isinstance(input, tuple):
-                        if self.device == "gpu":
-                            input = [inp.to("dpcpp") for inp in input]
-                        output = q_model(*input)
-                    else:
-                        if self.device == "gpu":
-                            input = input.to("dpcpp")
-                        output = q_model(input)
-
-                    iterations -= 1
-                    if iterations == 0:
-                        break
+            self.model_calibration(q_model, dataloader, iterations)
         elif self.approach == 'quant_aware_training':
             torch.quantization.convert(q_model, self.q_mapping, inplace=True)
             if q_func is None:
@@ -573,8 +739,12 @@ class PyTorchAdaptor(Adaptor):
 
         Args:
             model (object): model to run evaluation.
-            dataloader (object): calibration dataset.
-            q_func (object, optional): training function for quantization aware training mode.
+            dataloader (object): evaluation dataset.
+            postprocess (object, optional): process function after evaluation.
+            metric (object, optional): metric function.
+            measurer (object, optional): measurer function.
+            iteration (int, optional): number of iterations to evaluate.
+            tensorboard (bool, optional): dump output tensor to tensorboard summary files.
 
         Returns:
             (dict): quantized model
@@ -590,9 +760,6 @@ class PyTorchAdaptor(Adaptor):
 
         if tensorboard:
             model = self._pre_eval_hook(model)
-
-        if self.is_baseline:
-            self.is_baseline = False
 
         with torch.no_grad():
             for idx, (input, label) in enumerate(dataloader):
@@ -624,6 +791,9 @@ class PyTorchAdaptor(Adaptor):
                     break
         acc = metric.result() if metric is not None else 0
 
+        if self.is_baseline:
+            self.is_baseline = False
+
         if tensorboard:
             self._post_eval_hook(model, accuracy=acc)
         return acc
@@ -640,6 +810,7 @@ class PyTorchAdaptor(Adaptor):
         Returns:
             None
         """
+
         for name, child in model.named_children():
             op_name = prefix + name
             if type(child) in self.white_list:
@@ -647,30 +818,6 @@ class PyTorchAdaptor(Adaptor):
             else:
                 self._get_quantizable_ops_recursively(
                     child, op_name + '.', quantizable_ops)
-
-    @dump_elapsed_time("Pass query framework capability")
-    def query_fw_capability(self, model):
-        """This is a helper function to get all quantizable ops from model.
-
-        Args:
-            model (object): input model
-
-        Returns:
-            q_capability (dictionary): tuning capability for each op from model.
-        """
-        quantizable_ops = []
-        self._get_quantizable_ops_recursively(model, '', quantizable_ops)
-
-        q_capability = {}
-        q_capability['optypewise'] = OrderedDict()
-        q_capability['opwise'] = OrderedDict()
-
-        for q_op in quantizable_ops:
-            q_capability['opwise'][q_op] = copy.deepcopy(self.capability)
-            if q_op[1] not in q_capability['optypewise'].keys():
-                q_capability['optypewise'][q_op[1]] = copy.deepcopy(self.capability)
-
-        return q_capability
 
     def _pre_eval_hook(self, model):
         """The function is used to do some preprocession before evaluation phase.
@@ -1025,103 +1172,6 @@ class PyTorchAdaptor(Adaptor):
 
         return summary
 
-    def get_all_weight_names(self, model):
-        """Get weight names
-
-        Args:
-            model (object): input model
-
-        Returns:
-            names (list): list of weight names
-
-        """
-        names = []
-        for name, param in model.named_parameters():
-            names.append(name)
-        return names
-
-    def get_weight(self, model, tensor_name):
-        """Get weight value
-
-        Args:
-            model (object): input model
-            tensor_name (string): weight name
-
-        Returns:
-            (object): weight tensor
-
-        """
-        for name, param in model.named_parameters():
-            if tensor_name == name:
-                return param.data
-
-    def update_weights(self, model, tensor_name, new_tensor):
-        """Update weight value
-
-        Args:
-            model (object): input model
-            tensor_name (string): weight name
-            new_tensor (ndarray): weight value
-
-        Returns:
-            model (object): model with new weight
-
-        """
-        new_tensor = torch.Tensor(new_tensor)
-        for name, param in model.named_parameters():
-            if name == tensor_name:
-                param.data.copy_(new_tensor.data)
-        return model
-
-    def report_sparsity(self, model):
-        """Get sparsity of the model
-
-        Args:
-            model (object): input model
-
-        Returns:
-            df (DataFrame): DataFrame of sparsity of each weight
-            total_sparsity (float): total sparsity of model
-
-        """
-        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
-                                   'Std', 'Mean', 'Abs-Mean'])
-        pd.set_option('precision', 2)
-        param_dims = [2, 4]
-        params_size = 0
-        sparse_params_size = 0
-        for name, param in model.named_parameters():
-            # Extract just the actual parameter's name, which in this context we treat
-            # as its "type"
-            if param.dim() in param_dims and any(type in name for type in ['weight', 'bias']):
-                param_size, sparse_param_size, dense_param_size = compute_sparsity(
-                    param.detach().numpy())
-                density = dense_param_size / param_size
-                params_size += param_size
-                sparse_params_size += sparse_param_size
-                df.loc[len(df.index)] = ([
-                    name,
-                    list(param.shape),
-                    dense_param_size,
-                    sparse_param_size,
-                    (1 - density) * 100,
-                    param.std().item(),
-                    param.mean().item(),
-                    param.abs().mean().item()
-                ])
-
-        total_sparsity = sparse_params_size / params_size * 100
-
-        df.loc[len(df.index)] = ([
-            'Total sparsity:',
-            params_size,
-            "-",
-            int(sparse_params_size),
-            total_sparsity,
-            0, 0, 0])
-
-        return df, total_sparsity
-
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path):
         """The function is used by tune strategy class for saving model.
@@ -1143,6 +1193,264 @@ class PyTorchAdaptor(Adaptor):
             logger.info("save config file and weights of quantized model to path %s" % path)
         except IOError as e:
             logger.error("Unable to save configure file and weights. %s" % e)
+
+
+@adaptor_registry
+class PyTorch_IPEXAdaptor(TamplateAdaptor):
+    """Adaptor of PyTorch framework with Intel PyTorch Extension,
+       all PyTorch IPEX API is in this class.
+
+    Args:
+        framework_specific_info (dict): dictionary of tuning configure from yaml file.
+    """
+    def __init__(self, framework_specific_info):
+        super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
+
+        self.workspace_path = framework_specific_info['workspace_path']
+        query_config_file = "pytorch_ipex.yaml"
+        self.script_model = None
+        self.query_handler = PyTorchQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), query_config_file))
+        self.capability = self.query_handler.get_quantization_capability()["uint8"]["Conv2d"]
+
+        self.ipex_config_path = \
+            os.path.join(self.workspace_path, 'ipex_config_tmp.json')
+
+        if os.path.exists(self.ipex_config_path):
+            os.remove(self.ipex_config_path)
+
+    def model_calibration(self, q_model, dataloader, iterations=1, conf=None):
+        assert iterations > 0
+        with torch.no_grad():
+            for idx, (input, label) in enumerate(dataloader):
+                if isinstance(input, dict):
+                    for inp in input.keys():
+                        input[inp] = input[inp].to(ipex.DEVICE)
+                    with ipex.AutoMixPrecision(conf, running_mode='calibration'):
+                        output = q_model(**input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    input = [inp.to(ipex.DEVICE) for inp in input]
+                    with ipex.AutoMixPrecision(conf, running_mode='calibration'):
+                        output = q_model(*input)
+                else:
+                    input = input.to(ipex.DEVICE)  # pylint: disable=no-member
+                    with ipex.AutoMixPrecision(conf, running_mode='calibration'):
+                        output = q_model(input)
+                if idx >= iterations - 1:
+                    break
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization config.
+            model (object): model need to do quantization.
+            dataloader (object): calibration dataset.
+            q_func (objext, optional): training function for quantization aware training mode.
+
+        Returns:
+            (dict): quantized model
+        """
+
+        if self.script_model is not None:
+            q_model = self.script_model
+        else:
+            assert isinstance(model, torch.jit.RecursiveScriptModule), \
+                   "The model passed in is not the instance of torch.jit.RecursiveScriptModule"
+            q_model = model
+
+        self._cfg_to_qconfig(
+            tune_cfg, self.ipex_config_path)
+
+        if self.approach == 'post_training_static_quant':
+            iterations = tune_cfg.get('calib_iteration', 1)
+            ipex_conf = ipex.AmpConf(torch.int8, configure_file=self.ipex_config_path)
+            self.model_calibration(q_model, dataloader, iterations, conf=ipex_conf)
+            ipex_conf.save(self.ipex_config_path)
+        elif self.approach == 'quant_aware_training':
+                assert False, "Intel PyTorch Extension didn't support \
+                               quantization aware training mode"
+        return q_model
+
+    def _cfg_to_qconfig(self, tune_cfg, ipex_config_path=None):
+        """Convert tune configure to quantization config for each op.
+
+            Args:
+                tune_cfg (dict): dictionary of tune configure for each op
+                ipex_config_path: configure file of Intel PyTorch Extension
+
+            tune_cfg should be a format like below:
+            {
+              'calib_iteration': 10,
+              'op': {
+                 ('op1', 'CONV2D'): {
+                   'activation':  {'dtype': 'uint8',
+                                   'algorithm': 'minmax',
+                                   'scheme':'sym',
+                                   'granularity': 'per_tensor'},
+                   'weight': {'dtype': 'int8',
+                              'algorithm': 'kl',
+                              'scheme':'asym',
+                              'granularity': 'per_channel'}
+                 },
+                 ('op2', 'RELU): {
+                   'activation': {'dtype': 'int8',
+                   'scheme': 'asym',
+                   'granularity': 'per_tensor',
+                   'algorithm': 'minmax'}
+                 },
+                 ('op3', 'CONV2D'): {
+                   'activation':  {'dtype': 'fp32'},
+                   'weight': {'dtype': 'fp32'}
+                 },
+                 ...
+              }
+            }
+        """
+        with open(ipex_config_path, 'r') as f:
+            cfgs = json.load(f)
+            for key in tune_cfg['op']:
+                value = tune_cfg['op'][key]
+                assert isinstance(value, dict)
+                assert 'weight' in value
+                assert 'activation' in value
+                if value['activation']['dtype'] == 'fp32':
+                    assert value['weight']['dtype'] == 'fp32'
+                    for op_cfg in cfgs:
+                        if op_cfg["id"] == key[0]:
+                            op_cfg["quantized"] = False
+                else:
+                    for op_cfg in cfgs:
+                        if op_cfg["id"] == key[0]:
+                            op_cfg["quantized"] = True
+        with open(ipex_config_path, 'w') as write_f:
+            json.dump(cfgs, write_f)
+
+    def evaluate(self, model, dataloader, postprocess=None,
+                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+        """Execute the evaluate process on the specified model.
+
+        Args:
+            model (object): model to run evaluation.
+            dataloader (object): evaluation dataset.
+            postprocess (object, optional): process function after evaluation.
+            metric (object, optional): metric function.
+            measurer (object, optional): measurer function.
+            iteration (int, optional): number of iterations to evaluate.
+            tensorboard (bool, optional): dump output tensor to tensorboard summary
+                                          files(IPEX unspport).
+
+        Returns:
+            (dict): quantized model
+        """
+        assert not tensorboard, "Intel PyTorch Extension didn't tensor dump"
+
+        if self.script_model is not None:
+            model = self.script_model
+        else:
+            assert isinstance(model, torch.jit.RecursiveScriptModule), \
+                   "The model passed in is not the instance of torch.jit.RecursiveScriptModule"
+
+        model.eval()
+
+        ipex_config = self.ipex_config_path if not self.benchmark else \
+                      os.path.join(self.workspace_path, 'checkpoint/best_configure.json')
+        conf = ipex.AmpConf(torch.int8, configure_file=ipex_config) \
+            if not self.is_baseline else ipex.AmpConf(None)
+
+        with torch.no_grad():
+            for idx, (input, label) in enumerate(dataloader):
+                if measurer is not None:
+                    measurer.start()
+
+                if isinstance(input, dict):
+                    for inp in input.keys():
+                        input[inp] = input[inp].to(ipex.DEVICE)
+                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                        output = model(**input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    input = [inp.to(ipex.DEVICE) for inp in input]
+                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                        output = model(*input)
+                else:
+                    input = input.to(ipex.DEVICE) # pylint: disable=no-member
+                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                        output = model(input)
+                label = label.to(ipex.DEVICE)
+                if measurer is not None:
+                    measurer.end()
+                if postprocess is not None:
+                    output, label = postprocess((output, label))
+                if metric is not None:
+                    metric.update(output, label)
+                if idx + 1 == iteration:
+                    break
+        acc = metric.result() if metric is not None else 0
+
+        if self.is_baseline:
+            self.is_baseline = False
+
+        return acc
+
+    def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            quantizable_ops (list): list of quantizable ops from model include op name and type.
+
+        Returns:
+            None
+        """
+
+        if not os.path.exists(self.ipex_config_path):
+            if isinstance(model, torch.jit.RecursiveScriptModule):
+                self.script_model = model
+            else:
+                new_model = copy.deepcopy(model)
+                new_model.to(ipex.DEVICE).eval()
+                try:
+                    self.script_model = torch.jit.script(new_model)
+                except:
+                    for input, _ in self.q_dataloader:
+                        self.script_model = torch.jit.trace(new_model, input)
+                        break
+
+            # create a quantization config file for intel pytorch extension model
+            os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
+            ipex_conf = ipex.AmpConf(torch.int8)
+            self.model_calibration(self.script_model, self.q_dataloader, conf=ipex_conf)
+            ipex_conf.save(self.ipex_config_path)
+
+        with open(self.ipex_config_path, 'r') as f:
+            cfgs = json.load(f)
+            for op_cfg in cfgs:
+                quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
+
+    @dump_elapsed_time("Pass save quantized model")
+    def save(self, model, path):
+        """The function is used by tune strategy class for saving model.
+
+           Args:
+               model (object): The model to saved.
+               path (string): The path where to save.
+
+        Returns:
+            None
+        """
+
+        path = os.path.expanduser(path)
+        os.makedirs(path, exist_ok=True)
+        import shutil
+        try:
+            shutil.copy(self.ipex_config_path,
+                        os.path.join(path, "best_configure.json"))
+            # TODO: Now Intel PyTorch Extension don't support save jit model.
+        except IOError as e:
+            logger.error("Unable to save configure file. %s" % e)
 
 
 @singleton
@@ -1172,10 +1480,9 @@ class PyTorchQuery(QueryBackendCapability):
         position = self.version.rfind('.')
         version = float(self.version[:position])
         for sub_data in data:
-            if version >= float(sub_data['version']['name']):
-                return sub_data
-
             if sub_data['version']['name'] == 'default':
+                return sub_data
+            if version >= float(sub_data['version']['name']):
                 return sub_data
 
     def _one_shot_query(self):

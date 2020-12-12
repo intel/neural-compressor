@@ -79,8 +79,9 @@ class ONNXRTITMetrics(object):
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
                      "pytorch": PyTorchMetrics,
+                     "pytorch_ipex": PyTorchMetrics,
                      "onnxrt_qlinearops": ONNXRTQLMetrics,
-                     "onnxrt_integerops": ONNXRTITMetrics }
+                     "onnxrt_integerops": ONNXRTITMetrics}
 
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
@@ -91,15 +92,17 @@ ONNXRT_IT_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "mxnet": MXNET_METRICS,
-                    "pytorch": PYTORCH_METRICS, 
+                    "pytorch": PYTORCH_METRICS,
+                    "pytorch_ipex": PYTORCH_METRICS,
                     "onnxrt_qlinearops": ONNXRT_QL_METRICS,
                     "onnxrt_integerops": ONNXRT_IT_METRICS}
 
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "pytorch", "onnxrt_qlinearops", "onnxrt_integerops",
-                             "mxnet"), "framework support tensorflow pytorch mxnet onnxrt"
+        assert framework in ("tensorflow", "pytorch", "pytorch_ipex", "onnxrt_qlinearops",
+                             "onnxrt_integerops", "mxnet"), \
+                             "framework support tensorflow pytorch mxnet onnxrt"
         self.metrics = framework_metrics[framework]().metrics
 
     def __getitem__(self, metric_type):
@@ -131,7 +134,8 @@ def metric_registry(metric_type, framework):
                 "mxnet",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
-                "pytorch"], "The framework support tensorflow mxnet pytorch onnxrt"
+                "pytorch",
+                "pytorch_ipex"], "The framework support tensorflow mxnet pytorch onnxrt"
 
             if metric_type in registry_metrics[single_framework].keys():
                 raise ValueError('Cannot have two metrics with the same name')

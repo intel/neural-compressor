@@ -177,6 +177,7 @@ class ONNXRTQLTransforms(BaseTransforms):
         general.update(ONNXRT_QL_TRANSFORMS["general"])
         return general
 
+
 class ONNXRTITTransforms(BaseTransforms):
     def _get_preprocess(self):
         preprocess = {}
@@ -195,9 +196,10 @@ class ONNXRTITTransforms(BaseTransforms):
 
 framework_transforms = {"tensorflow": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
-                        "pytorch": PyTorchTransforms, 
+                        "pytorch": PyTorchTransforms,
+                        "pytorch_ipex": PyTorchTransforms,
                         "onnxrt_qlinearops": ONNXRTQLTransforms,
-                        "onnxrt_integerops": ONNXRTITTransforms }
+                        "onnxrt_integerops": ONNXRTITTransforms}
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
@@ -208,14 +210,16 @@ ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
-                       "pytorch": PYTORCH_TRANSFORMS, 
+                       "pytorch": PYTORCH_TRANSFORMS,
+                       "pytorch_ipex": PYTORCH_TRANSFORMS,
                        "onnxrt_qlinearops": ONNXRT_QL_TRANSFORMS,
                        "onnxrt_integerops": ONNXRT_IT_TRANSFORMS}
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "pytorch", "onnxrt_qlinearops", "onnxrt_integerops",
-                             "mxnet"), "framework support tensorflow pytorch mxnet onnxrt"
+        assert framework in ("tensorflow", "pytorch", "pytorch_ipex", "onnxrt_qlinearops",
+                             "onnxrt_integerops", "mxnet"), \
+                             "framework support tensorflow pytorch mxnet onnxrt"
         assert process in ("preprocess", "postprocess",
                            "general"), "process support preprocess postprocess, general"
         self.transforms = framework_transforms[framework](process).transforms
@@ -252,6 +256,7 @@ def transform_registry(transform_type, process, framework):
                 "tensorflow",
                 "mxnet",
                 "pytorch",
+                "pytorch_ipex",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops"
             ], "The framework support tensorflow mxnet pytorch onnxrt"

@@ -1,0 +1,58 @@
+---
+-
+  version:
+    name: 'default'
+
+  precisions: &default_precisions
+    names: int8, uint8, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    int8: &ops_default_s8 ['Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ConvReLU2d',
+           'ConvReLU3d', 'LinearReLU', 'ConvBn2d', 'ConvBnReLU2d', 'ConvSumReLU2d', 'ConvSumReLU3d']
+    uint8: *ops_default_s8
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &default_capabilities
+    int8: &cap_default_s8 {
+          'Conv2d': &cap_s8_1_6_Conv2d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Linear': *cap_s8_1_6_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          }
+    uint8: *cap_default_s8
+
+  patterns:
+    fp32: &ref_default_fp32 [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        'Conv2d + BN2d + ReLU',
+        'Conv3d + BN3d + ReLU',
+        'Conv2d + Relu',
+        'Conv3d + Relu',
+        'Conv2d + Sum + ReLU',
+        'Conv3d + Sum + ReLU',
+        'Linear + ReLU',
+        ]
+    int8: *ref_default_fp32
+    uint8: *ref_default_fp32
+

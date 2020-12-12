@@ -54,6 +54,13 @@ class Benchmark(object):
         if 'onnxrt' in framework.lower():
             framework_specific_info.update({"backend": framework.lower().split('_')[-1], \
                                             'workspace_path': cfg.tuning.workspace.path})
+        if framework == 'pytorch':
+            framework_specific_info.update({"q_dataloader": None,
+                                            "benchmark": True})
+        if framework == 'pytorch_ipex':
+            framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
+                                            "q_dataloader": None,
+                                            "benchmark": True})
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
@@ -70,15 +77,15 @@ class Benchmark(object):
                     'dataloader field of yaml file is missing'
 
                 b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
-                b_dataloader = create_dataloader(framework, b_dataloader_cfg)
-                b_func = create_eval_func(framework, \
+                b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
+                b_func = create_eval_func(self.framework, \
                                           b_dataloader, \
                                           adaptor, \
                                           metric, \
                                           b_postprocess_cfg,
                                           iteration=iteration)
             else:
-                b_func = create_eval_func(framework, \
+                b_func = create_eval_func(self.framework, \
                                           b_dataloader, \
                                           adaptor, \
                                           metric, \

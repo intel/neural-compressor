@@ -23,9 +23,10 @@ from .onnxrt_dataloader import ONNXRTDataLoader
 
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
-               "pytorch": PyTorchDataLoader, 
+               "pytorch": PyTorchDataLoader,
+               "pytorch_ipex": PyTorchDataLoader,
                "onnxrt_qlinearops": ONNXRTDataLoader,
-               "onnxrt_integerops": ONNXRTDataLoader, }
+               "onnxrt_integerops": ONNXRTDataLoader}
 
 
 class DataLoader(BaseDataLoader):
@@ -38,8 +39,9 @@ class DataLoader(BaseDataLoader):
                  last_batch='rollover', sampler=None, batch_sampler=None,
                  num_workers=0, pin_memory=False):
 
-        assert framework in ('tensorflow', 'pytorch', 'onnxrt_qlinearops', 'onnxrt_integerops',
-                             'mxnet'), "framework support tensorflow pytorch mxnet onnxruntime"
+        assert framework in ('tensorflow', 'pytorch', 'pytorch_ipex', 'onnxrt_qlinearops', \
+                             'onnxrt_integerops', 'mxnet'), \
+                             "framework support tensorflow pytorch mxnet onnxruntime"
         self.framework = framework
         super(DataLoader, self).__init__(
             dataset,

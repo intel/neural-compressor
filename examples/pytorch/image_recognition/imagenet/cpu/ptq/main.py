@@ -20,13 +20,22 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import torchvision.models.quantization as models
+import torchvision.models.quantization as quantize_models
+import torchvision.models as models
 
 import subprocess
 
-model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+try:
+    import intel_pytorch_extension as ipex
+    TEST_IPEX = True
+    model_names = sorted(name for name in models.__dict__
+        if name.islower() and not name.startswith("__")
+        and callable(models.__dict__[name]))
+except:
+    TEST_IPEX = False
+    model_names = sorted(name for name in quantize_models.__dict__
+        if name.islower() and not name.startswith("__")
+        and callable(quantize_models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
@@ -95,6 +104,8 @@ parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH'
                     help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
+parser.add_argument('--ipex', dest='ipex', action='store_true',
+                    help='tuning or benchmark with Intel PyTorch Extension')
 
 best_acc1 = 0
 
@@ -102,6 +113,9 @@ best_acc1 = 0
 def main():
     args = parser.parse_args()
     print(args)
+
+    if args.ipex:
+        assert TEST_IPEX, 'Please import intel_pytorch_extension'
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -164,12 +178,20 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     if args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True, quantize=False)
+        if args.ipex:
+            model = models.__dict__[args.arch](pretrained=True)
+        else:
+            model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
     else:
         print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch]()
+        if args.ipex:
+            model = models.__dict__[args.arch]()
+        else:
+            model = quantize_models.__dict__[args.arch]()
 
-    if args.distributed:
+    if not torch.cuda.is_available():
+        print('using CPU...')
+    elif args.distributed:
         # For multiprocessing distributed, DistributedDataParallel constructor
         # should always set the single device scope, otherwise,
         # DistributedDataParallel will use all available devices.
@@ -263,23 +285,37 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
 
     if args.tune:
-        model.eval()
-        model.module.fuse_model()
         from ilit import Quantization
-        quantizer = Quantization("./conf.yaml")
+        if args.ipex:
+            quantizer = Quantization("./conf_ipex.yaml")
+        else:
+            model.eval()
+            model.fuse_model()
+            quantizer = Quantization("./conf.yaml")
         q_model = quantizer(model)
         return
 
     if args.benchmark or args.accuracy_only:
         model.eval()
-        model.module.fuse_model()
+        ipex_config_path = None
         if args.int8:
-            from ilit.utils.pytorch import load
-            new_model = load(
-                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
+            if args.ipex:
+                # TODO: It will remove when IPEX spport to save script model.
+                model.to(ipex.DEVICE)
+                try:
+                    new_model = torch.jit.script(model)
+                except:
+                    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+                ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
+                                                "best_configure.json")
+            else:
+                model.fuse_model()
+                from ilit.utils.pytorch import load
+                new_model = load(
+                    os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
             new_model = model
-        validate(val_loader, new_model, criterion, args)
+        validate(val_loader, new_model, criterion, args, ipex_config_path)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -352,7 +388,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             progress.print(i)
 
 
-def validate(val_loader, model, criterion, args):
+def validate(val_loader, model, criterion, args, ipex_config_path=None):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -362,6 +398,11 @@ def validate(val_loader, model, criterion, args):
 
     # switch to evaluate mode
     model.eval()
+    if args.ipex:
+        if ipex_config_path is not None:
+            conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
+        else:
+            conf = ipex.AmpConf(None)
 
     with torch.no_grad():
         for i, (input, target) in enumerate(val_loader):
@@ -372,7 +413,12 @@ def validate(val_loader, model, criterion, args):
                 target = target.cuda(args.gpu, non_blocking=True)
 
             # compute output
-            output = model(input)
+            if args.ipex:
+                with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                    output = model(input.to(ipex.DEVICE))
+                target = target.to(ipex.DEVICE)
+            else:
+                output = model(input)
             loss = criterion(output, target)
 
             # measure accuracy and record loss

@@ -1,13 +1,13 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool.
+This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool(LPOT).
 
 > **Note**
 >
 > PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
+> LPOT has no capability to solve this framework limitation. LPOT supposes user have done these two steps before invoking LPOT interface.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
@@ -67,32 +67,57 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
   python main_dump_tensors.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
 
+### 7. ResNet50 With Intel PyTorch Extension
+
+```Shell
+  cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
+  python main.py -t -a resnet50 -j 0 --pretrained --ipex /path/to/imagenet
+```
+
 # Saving and loading model:
 * Saving model:  
-Intel® Low Precision Optimization Tool will automatically save tuning configure and weights of model which meet target goal when tuning process.
+LPOT will automatically save tuning configure and weights of model which meet target goal when tuning process.
+For Intel PyTorch Extension model(IPEX), LPOT only save IPEX configure file.
 * loading model:  
 ```python
+# Without IPEX
 model                 # fp32 model
 from ilit.utils.pytorch import load
 quantized_model = load(
     os.path.join(Path, 'best_configure.yaml'),
     os.path.join(Path, 'best_model_weights.pt'), model)
+
+# With IPEX
+import intel_pytorch_extension as ipex 
+model                 # fp32 model
+model.to(ipex.DEVICE)
+try:
+    new_model = torch.jit.script(model)
+except:
+    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
+                                "best_configure.json")
+conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
+with torch.no_grad():
+    for i, (input, target) in enumerate(val_loader):
+        with ipex.AutoMixPrecision(conf, running_mode='inference'):
+            output = new_model(input.to(ipex.DEVICE))
 ```
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
+Examples of enabling LPOT auto tuning on PyTorch ResNet
 =======================================================
 
-This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a PyTorch classification model with LPOT.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports three usages:
+LPOT supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch ResNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
+As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by LPOT. So here we integrate PyTorch ResNet with LPOT by the first use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -195,7 +220,7 @@ The quantizer() function will return a best quantized model during timeout const
 
 ### Dump tensors for debug
 
-Intel® Low Precision Optimization Tool can dump every layer output tensor which you specify in evaluation. You just need to add some setting to yaml configure file as below:
+LPOT can dump every layer output tensor which you specify in evaluation. You just need to add some setting to yaml configure file as below:
 
 ```
 tensorboard: true
@@ -217,3 +242,41 @@ tune_0_acc0.73  tune_1_acc0.71 tune_2_acc0.72
 tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.72
 ```
 
+### Tuning With Intel PyTorch Extension
+1. Write Yaml Config File
+
+Add 'backend' field to Yaml Configure and the same for other fields.
+```python
+  model:
+  name: imagenet
+  framework: pytorch
+  backend: IPEX 
+```
+
+2. Tuning With LPOT
+
+```python
+  from ilit import Quantization
+  quantizer = Quantization("./conf_ipex.yaml")
+```
+
+3. Saving and Run ipex model
+* Saving model: 
+LPOT will automatically save tuning configure which meet target goal when tuning process.
+* Run ipex model:
+```python
+import intel_pytorch_extension as ipex 
+model                 # fp32 model
+model.to(ipex.DEVICE)
+try:
+    new_model = torch.jit.script(model)
+except:
+    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
+                                "best_configure.json")
+conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
+with torch.no_grad():
+    for i, (input, target) in enumerate(val_loader):
+        with ipex.AutoMixPrecision(conf, running_mode='inference'):
+            output = new_model(input.to(ipex.DEVICE))
+```

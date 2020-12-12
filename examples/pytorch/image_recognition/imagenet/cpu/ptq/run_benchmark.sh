@@ -11,6 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
+  batch_size=32
   tuned_checkpoint=ilit_workspace/pytorch/imagenet/checkpoint
   for var in "$@"
   do
@@ -57,11 +58,25 @@ function run_benchmark {
         exit 1
     fi
 
-    if [[ ${int8} == "true" ]]; then
-        extra_cmd="--int8 ${dataset_location}"
+    extra_cmd=""
+    result=$(echo $topology | grep "ipex")
+    if [[ "$result" != "" ]];then
+        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml
+        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_ipex.yaml
+        if [[ ${int8} == "true" ]]; then
+            extra_cmd=$extra_cmd" --int8"
+        fi
+        extra_cmd=$extra_cmd" --ipex"
+        topology=${topology%*${topology:(-5)}}
     else
-        extra_cmd="${dataset_location}"
+        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
+        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf.yaml
+        if [[ ${int8} == "true" ]]; then
+            extra_cmd=$extra_cmd" --int8"
+        fi
     fi
+    extra_cmd=$extra_cmd" ${dataset_location}"
+    echo $extra_cmd
 
     python main.py \
             --pretrained \

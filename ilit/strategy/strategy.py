@@ -145,8 +145,12 @@ class TuneStrategy(object):
             framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
-
+        if framework == 'pytorch_ipex':
+            framework_specific_info.update({"q_dataloader": q_dataloader})
+            framework_specific_info.update(
+                {"workspace_path": os.path.dirname(self.deploy_path)})
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
+        self.framework = framework
 
         self.baseline = None
         self.last_tune_result = None
@@ -374,7 +378,7 @@ class TuneStrategy(object):
                 'metric field of accuracy field of evaluation section should not be empty'
 
             postprocess_cfg = self.cfg.evaluation.accuracy.postprocess
-            eval_func = create_eval_func(self.cfg.model.framework.lower(), \
+            eval_func = create_eval_func(self.framework, \
                                          self.eval_dataloader, \
                                          self.adaptor, \
                                          self.cfg.evaluation.accuracy.metric, \
@@ -417,7 +421,7 @@ class TuneStrategy(object):
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
-            if self.cfg.model.framework.lower() == 'pytorch':
+            if 'pytorch' in self.framework:
                 self.adaptor.save(self.best_qmodel, os.path.join(
                               os.path.dirname(self.deploy_path), 'checkpoint'))
             else:

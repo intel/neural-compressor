@@ -37,8 +37,8 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    sed -i "/Path to imagenet train data/s|root:.*|root: $dataset_location/train|g" conf_dump_tensors.yaml
-    sed -i "/Path to imagenet val data/s|root:.*|root: $dataset_location/val|g" conf_dump_tensors.yaml
+    sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_dump_tensors.yaml
+    sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_dump_tensors.yaml
     if [ "mobilenet_v2" = "$topology" ];then
         sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf_dump_tensors.yaml
     fi

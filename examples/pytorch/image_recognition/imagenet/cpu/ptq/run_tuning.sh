@@ -37,13 +37,21 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
-    sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf.yaml
     if [ "mobilenet_v2" = "$topology" ];then
         sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf.yaml
     fi
-
-    extra_cmd="${dataset_location}"
+    extra_cmd=""
+    result=$(echo $topology | grep "ipex")
+    if [[ "$result" != "" ]];then
+        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml
+        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_ipex.yaml
+        extra_cmd=$extra_cmd" --ipex"
+        topology=${topology%*${topology:(-5)}}
+    else
+        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
+        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf.yaml
+    fi
+    extra_cmd=$extra_cmd" ${dataset_location}"
 
     python main.py \
             --pretrained \

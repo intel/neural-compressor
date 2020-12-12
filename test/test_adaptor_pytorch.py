@@ -7,6 +7,12 @@ from ilit.adaptor import FRAMEWORKS
 import shutil
 import copy
 
+try:
+    import intel_pytorch_extension as ipex
+    TEST_IPEX = True
+except:
+    TEST_IPEX = False
+
 
 def build_ptq_yaml():
     fake_yaml = '''
@@ -41,6 +47,9 @@ def build_ptq_yaml():
           accuracy:
             metric:
               topk: 1
+          performance:
+            warmup: 5
+            iteration: 10
 
         tuning:
           accuracy_criterion:
@@ -52,6 +61,33 @@ def build_ptq_yaml():
             path: saved
         '''
     with open('ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
+
+
+def build_ipex_yaml():
+    fake_yaml = '''
+        model:
+          name: imagenet
+          framework: pytorch_ipex
+
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+          performance:
+            warmup: 5
+            iteration: 10
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+          workspace:
+            path: saved
+        '''
+    with open('ipex_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
@@ -156,11 +192,11 @@ def q_func(model):
     return
 
 
-class TestAdaptorPytorch(unittest.TestCase):
-    framework_specific_info = {'device': "cpu",
-                               'approach': "post_training_static_quant",
-                               'random_seed': 1234,
-                               'q_dataloader': None}
+class TestPytorchAdaptor(unittest.TestCase):
+    framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None}
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
@@ -209,8 +245,7 @@ class TestAdaptorPytorch(unittest.TestCase):
         from ilit import Quantization
         from ilit.utils.pytorch import load
         model = copy.deepcopy(self.model)
-        # for fake_yaml in ['ptq_yaml.yaml', 'qat_yaml.yaml']:
-        for fake_yaml in ['qat_yaml.yaml']:
+        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             if fake_yaml == 'ptq_yaml.yaml':
                 model.eval()
                 model.fuse_model()
@@ -225,6 +260,9 @@ class TestAdaptorPytorch(unittest.TestCase):
             )
             new_model = load('./saved/checkpoint', model)
             eval_func(new_model)
+        from ilit import Benchmark
+        evaluator = Benchmark('ptq_yaml.yaml')
+        results = evaluator(model=new_model, b_dataloader=dataloader)
 
     def test_tensor_dump(self):
         from ilit import Quantization
@@ -246,6 +284,38 @@ class TestAdaptorPytorch(unittest.TestCase):
             q_dataloader=dataloader,
         )
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
+
+
+@unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
+class TestPytorchIPEXAdaptor(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        build_ipex_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('ipex_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
+    def test_tuning_ipex(self):
+        from ilit import Quantization
+        model = torchvision.models.resnet18()
+        quantizer = Quantization('ipex_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        quantizer(
+            model,
+            eval_dataloader=dataloader,
+            q_dataloader=dataloader,
+        )
+        model.to(ipex.DEVICE)
+        try:
+            script_model = torch.jit.script(model)
+        except:
+            script_model = torch.jit.trace(model, torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
+        from ilit import Benchmark
+        evaluator = Benchmark('ipex_yaml.yaml')
+        results = evaluator(model=script_model, b_dataloader=dataloader)
 
 
 if __name__ == "__main__":
