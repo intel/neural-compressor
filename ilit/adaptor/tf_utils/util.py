@@ -331,6 +331,53 @@ def get_estimator_graph(estimator, input_fn, outputs=[]):
     with graph.as_default():
         tf.import_graph_def(graph_def, name='') 
     return graph
+    
+def get_tensor_by_name(graph, name, try_cnt=3):
+    """Get the tensor by name considering the 'import' scope when model
+       may be imported more then once, handle naming format like both name:0 and name
+    
+    Args:
+        graph (tf.compat.v1.GraphDef): the model to get name from
+        name (string): tensor of tensor_name:0 or tensor_name without suffixes
+        try_cnt: the times to add 'import/' to find  tensor
+    
+    Returns:
+        tensor: tensor got by name.
+    """
+    if name.find(':') == -1:
+        name = name + ':0'
+    for _ in range(try_cnt):
+        try:
+            return graph.get_tensor_by_name(name)
+        except BaseException:
+            name = 'import/' + name
+    raise ValueError('can not find tensor by name')
+
+def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
+    """Run the graph that have iterator integrated in the graph
+    
+    Args:
+        sess (tf.compat.v1.Session): the model sess to run the graph
+        iter_op (Operator): the MakeIterator op
+        feed_dict(dict): the feeds to initialize a new iterator
+        output_tensor(list): the output tensors 
+        iteration(int): iterations to run, when -1 set, run to end of iterator
+    
+    Returns:
+        preds: the results of the predictions
+    """
+    sess.run(iter_op, feed_dict)
+    preds = []
+    idx = 0 
+    while idx < iteration or iteration == -1:
+        try:
+            prediction = sess.run(output_tensor)
+            preds.append(prediction)
+            idx += 1
+        except tf.errors.OutOfRangeError:
+            break
+    preds = list(zip(*preds))
+    return preds
 
 def get_graph_def(model, outputs=[]):
     """Get the input model graphdef

@@ -35,6 +35,7 @@ from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .util import write_graph
 from .util import get_graph_def
+from .util import get_tensor_by_name, iterator_sess_run
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -81,8 +82,12 @@ class GraphConverter:
         self.logger = logging.getLogger()
         self.debug = bool(self.logger.level == logging.DEBUG)
 
+        # as we may have outputs with suffix, strip to get raw name
+        self.output_names = list(set([output.split(":")[0] for output in outputs]))
         # For ilit, the input_graph is not graph file path but Graph object.
-        self.input_graph = get_graph_def(input_graph, outputs)
+        self.input_graph = get_graph_def(input_graph, self.output_names)
+        if 'MakeIterator' in [node.op for node in self.input_graph.node]:
+            self.output_names.append('MakeIterator')
         self.output_graph = output_graph
         self.inputs = inputs
         self.outputs = outputs
@@ -123,13 +128,18 @@ class GraphConverter:
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
 
-        input_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.inputs]
-        output_tensor = [graph.get_tensor_by_name(x + ":0") for x in self.outputs]
+        iter_op = None
+        if 'MakeIterator' in self.output_names:
+            iter_op = graph.get_operation_by_name('MakeIterator')
+
+        input_tensor = [get_tensor_by_name(graph, x) for x in self.inputs]
+        output_tensor = [get_tensor_by_name(graph, x) for x in self.outputs] if \
+            len(self.outputs) > 1 else get_tensor_by_name(graph, self.outputs[0])
 
         config = tf.compat.v1.ConfigProto()
         # config.use_per_session_threads = 1
         config.inter_op_parallelism_threads = 1
-        sess_graph = tf.compat.v1.Session(graph=graph, config=config)
+        sess = tf.compat.v1.Session(graph=graph, config=config)
 
         self.logger.info("Sampling data...")
         for idx, (inputs, labels) in enumerate(self.data_loader):
@@ -140,12 +150,13 @@ class GraphConverter:
                     'inputs len must equal with input_tensor'
                 feed_dict = dict(zip(input_tensor, inputs))
 
-            _ = sess_graph.run(output_tensor, feed_dict)
+            _ = sess.run(output_tensor, feed_dict) if iter_op is None else \
+                iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.calib_iteration)
 
             if idx + 1 == self.calib_iteration:
                 break
 
-        sess_graph.close()
+        sess.close()
 
     def _check_tf_version(self):
         is_supported_version = False
@@ -230,7 +241,7 @@ class GraphConverter:
         }
         target_conv_op = []
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph, self.inputs,
-                                                              self.outputs)
+                                                              self.output_names)
 
         node_name_mapping = {
             node.name: node
@@ -304,7 +315,7 @@ class GraphConverter:
         q_node_scale = {}
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph,
                                                               self.inputs,
-                                                              self.outputs)
+                                                              self.output_names)
         graph_q_node_name = []
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
@@ -336,7 +347,7 @@ class GraphConverter:
                 fp32_node_name.append(op_name)
                 node_op =  graph_node_name_mapping[op_name].op
                 if node_op in ("Conv2D", "DepthwiseConv2dNative"):
-                    _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.outputs,
+                    _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.output_names,
                                                                self.int8_sequences[node_op],
                                                                True,
                                                                False,
@@ -456,7 +467,7 @@ class GraphConverter:
 
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
                                                                      self.inputs, self.outputs)
-        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
+        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.output_names,
                                                 self.op_wise_config, self.int8_sequences,
                                                 self.device)
         self._tmp_graph_def = intel_quantizer.do_transform()
@@ -550,10 +561,10 @@ class GraphConverter:
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
-                                                        self.outputs).do_transformation()
+                                                        self.output_names).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=self.outputs).do_transformation()
+            self._tmp_graph_def, protected_nodes=self.output_names).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
         RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()

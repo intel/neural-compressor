@@ -57,24 +57,6 @@ class TensorFlowAdaptor(Adaptor):
             os.path.dirname(__file__), "tensorflow.yaml"))
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
 
-    def get_tensor_by_name_with_import(self, graph, name, try_cnt=3):
-        """Get the tensor by name considering the 'import' scope when model
-           may be imported more then once
-
-        Args:
-            graph (tf.compat.v1.GraphDef): the model to get name from
-            name (string): tensor name do not have 'import'
-
-        Returns:
-            tensor: evaluation result, the larger is better.
-        """
-        for _ in range(try_cnt):
-            try:
-                return graph.get_tensor_by_name(name)
-            except BaseException:
-                name = 'import/' + name
-        raise ValueError('can not find tensor by name')
-
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
         # Convert to a numpy array
@@ -129,15 +111,19 @@ class TensorFlowAdaptor(Adaptor):
         """
         import tensorflow as tf
         from .tf_utils.util import get_graph_def
+        from .tf_utils.util import get_tensor_by_name, iterator_sess_run
 
         graph = tf.Graph()
         graph_def = get_graph_def(input_graph, self.outputs)
+        outputs = copy.deepcopy(self.outputs)
+        iter_op = None
+        if 'MakeIterator' in [node.op for node in graph_def.node]:
+            iter_op = graph.get_operation_by_name('MakeIterator')
 
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
 
-        outputs = copy.deepcopy(self.outputs)
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
             from tensorflow.python.framework import tensor_util
@@ -198,19 +184,17 @@ class TensorFlowAdaptor(Adaptor):
             if len(int8_inspect_node_name) > 0:
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
-        input_tensor = [
-            self.get_tensor_by_name_with_import(graph, x + ":0") for x in self.inputs
-        ]
-        output_tensor = [
-            self.get_tensor_by_name_with_import(graph, x + ":0") for x in outputs
-        ]
 
-        output_tensor = output_tensor[0] if len(output_tensor) == 1 else output_tensor
+
+        input_tensor = [get_tensor_by_name(graph, x) for x in self.inputs]
+        output_tensor = [get_tensor_by_name(graph, x) for x in outputs] if \
+            len(outputs) > 1 else get_tensor_by_name(graph, outputs[0])
+
         config = tf.compat.v1.ConfigProto()
         config.use_per_session_threads = 1
         # config.intra_op_parallelism_threads = 28
         config.inter_op_parallelism_threads = 1
-        sess_graph = tf.compat.v1.Session(graph=graph, config=config)
+        sess = tf.compat.v1.Session(graph=graph, config=config)
 
         logger.info("Start to evaluate Tensorflow model...")
         for idx, (inputs, labels) in enumerate(dataloader):
@@ -224,10 +208,13 @@ class TensorFlowAdaptor(Adaptor):
 
             if measurer is not None:
                 measurer.start()
-                predictions = sess_graph.run(output_tensor, feed_dict)
+                predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
+                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration) 
                 measurer.end()
             else:
-                predictions = sess_graph.run(output_tensor, feed_dict)
+                predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
+                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration) 
+
             # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):
@@ -257,7 +244,7 @@ class TensorFlowAdaptor(Adaptor):
                 shutil.rmtree(new_dir, ignore_errors=True)
             os.rename(temp_dir, new_dir)
             self.dump_times += 1
-        sess_graph.close()
+        sess.close()
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
@@ -424,7 +411,6 @@ class TensorFlowAdaptor(Adaptor):
                     )] = copy.deepcopy(other_config)
 
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
-
         return self.quantizable_op_details
 
     def _support_bf16(self):
@@ -458,7 +444,6 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
         from .tf_utils.graph_rewriter.graph_info import TFLowbitPrecisionPatterns
-
         self.pre_optimizer_handle = PreOptimization(model, self.inputs, self.outputs)
         self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
