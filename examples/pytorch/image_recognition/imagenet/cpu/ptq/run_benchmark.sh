@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=32
-  tuned_checkpoint=ilit_workspace/pytorch/imagenet/checkpoint
+  tuned_checkpoint=lpot_workspace/pytorch/imagenet/checkpoint
   for var in "$@"
   do
     case $var in

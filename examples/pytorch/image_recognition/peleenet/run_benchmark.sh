@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  tuned_checkpoint=ilit_workspace/pytorch/peleenet/checkpoint
+  tuned_checkpoint=lpot_workspace/pytorch/peleenet/checkpoint
   batch_size=30
   for var in "$@"
   do

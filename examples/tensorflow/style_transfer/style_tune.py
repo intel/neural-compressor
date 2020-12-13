@@ -25,9 +25,9 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
-from ilit import Quantization
-from ilit.data import DataLoader, DATASETS
-from ilit.adaptor.tf_utils.util import _parse_ckpt_bn_input
+from lpot import Quantization
+from lpot.data import DataLoader, DATASETS
+from lpot.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
 flags.DEFINE_string('style_images_paths', None, 'Paths to the style images'

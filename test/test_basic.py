@@ -110,8 +110,8 @@ class TestQuantization(unittest.TestCase):
         os.rmdir('saved')
 
     def test_run_basic_one_trial(self):
-        from ilit.strategy import strategy
-        from ilit import Quantization
+        from lpot.strategy import strategy
+        from lpot import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
@@ -123,8 +123,8 @@ class TestQuantization(unittest.TestCase):
         )
 
     def test_run_basic_max_trials(self):
-        from ilit.strategy import strategy
-        from ilit import Quantization
+        from lpot.strategy import strategy
+        from lpot import Quantization
 
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)

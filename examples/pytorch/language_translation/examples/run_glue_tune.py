@@ -638,7 +638,7 @@ def main():
                results.update(result)
 
             if args.tune:
-                def eval_func_for_ilit(model):
+                def eval_func_for_lpot(model):
                     result, perf = evaluate(args, model, tokenizer, prefix=prefix)
                     bert_task_acc_keys = ['acc_and_f1', 'f1', 'mcc', 'spearmanr', 'acc']
                     for key in bert_task_acc_keys:
@@ -664,14 +664,14 @@ def main():
                         from torch.utils import mkldnn as mkldnn_utils
                         model = mkldnn_utils.to_mkldnn(model)
                         print(model)
-                    from ilit import Quantization
+                    from lpot import Quantization
                     quantizer = Quantization("./conf.yaml")
                     if eval_task != "squad":
                         eval_task = 'classifier'
                     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                                      task=eval_task, model_type=args.model_type)
                     test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-                    quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
+                    quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
                 exit(0)
 
             if args.benchmark or args.accuracy_only:
@@ -679,7 +679,7 @@ def main():
                 model.to(args.device)
 
                 if args.int8:
-                    from ilit.utils.pytorch import load
+                    from lpot.utils.pytorch import load
                     new_model = load(
                         os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
                 else:

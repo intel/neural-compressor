@@ -9,7 +9,7 @@ import yaml
 import onnx
 from transformers import BertForSequenceClassification
 
-from ilit.adaptor import FRAMEWORKS
+from lpot.adaptor import FRAMEWORKS
 
 
 def build_static_yaml():
@@ -118,7 +118,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         _ = FRAMEWORKS[framework](framework_specific_info)
 
     def test_quantizate(self):
-        from ilit import Quantization
+        from lpot import Quantization
         for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset("dummy", (100, 3, 224, 224), label=True)

@@ -70,7 +70,7 @@ def parse_args():
                              ' inference dataset.')
     parser.add_argument('--dataset-location', type=str, default='~/.mxnet/datasets/voc/', help='eval dataset.')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with ilit.')
+                        help='Get bert tuning quantization model with lpot.')
     parser.add_argument("--output-graph",
                          help='Specify tune result model save dir',
                          dest='output_graph')
@@ -102,7 +102,7 @@ def get_dataloader(val_dataset, data_shape, batch_size, num_workers):
     # val_loader = gluon.data.DataLoader(
     #     val_dataset.transform(SSDDefaultValTransform(width, height)), batchify_fn=batchify_fn,
     #     batch_size=batch_size, shuffle=False, last_batch='rollover', num_workers=num_workers)
-    from ilit import data
+    from lpot import data
     val_loader = data.DataLoader('mxnet',
         val_dataset.transform(SSDDefaultValTransform(width, height)),
         collate_fn=batchify_fn, batch_size=batch_size, last_batch='rollover', num_workers=num_workers)
@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
     if args.tune:
         # Doing auto-tuning here
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization("./ssd.yaml")
         q_model = quantizer(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
         save(q_model, args.output_graph)

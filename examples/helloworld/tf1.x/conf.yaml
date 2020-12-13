@@ -1,4 +1,4 @@
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
   name: hello_world
   framework: tensorflow                              # possible values are tensorflow, mxnet and pytorch.
   inputs: x                                          # optional. inputs and outputs fields are only required for tensorflow backend.

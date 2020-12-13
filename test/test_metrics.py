@@ -2,8 +2,8 @@
 import numpy as np
 import unittest
 import os
-from ilit.metric import METRICS
-from ilit.metric.f1 import evaluate
+from lpot.metric import METRICS
+from lpot.metric.f1 import evaluate
 
 class TestMetrics(unittest.TestCase):
     def test_tensorflow_F1(self):

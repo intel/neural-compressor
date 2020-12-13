@@ -159,7 +159,7 @@ class eval_classifier_optimized_graph:
         arg_parser.add_argument('--tune',
                                 dest='tune',
                                 action='store_true',
-                                help='use ilit to tune.')
+                                help='use lpot to tune.')
         arg_parser.add_argument("--warmup-steps",
                                 type=int, default=50,
                                 help="number of warmup steps")
@@ -176,11 +176,11 @@ class eval_classifier_optimized_graph:
         self.args = arg_parser.parse_args()
 
     def auto_tune(self):
-        """This is ilit tuning part to generate a quantized pb
+        """This is lpot tuning part to generate a quantized pb
         Returns:
             graph: it will return a quantized pb
         """
-        from ilit import Quantization
+        from lpot import Quantization
 
         fp32_graph = load_graph(self.args.input_graph)
         quantizer = Quantization(self.args.config)
@@ -290,7 +290,7 @@ class eval_classifier_optimized_graph:
             return accuracy
 
     def run(self):
-        """ This is ilit function include tuning and benchmark option """
+        """ This is lpot function include tuning and benchmark option """
 
         if self.args.tune:
             q_model = evaluate_opt_graph.auto_tune()

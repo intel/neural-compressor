@@ -1,4 +1,4 @@
-ilit
+lpot
 pytorch-ignite
 tqdm
 --find-links https://download.pytorch.org/whl/torch_stable.html

@@ -9,7 +9,7 @@ This document is used to list steps of reproducing TensorFlow style transfer Int
 ### 1. Installation
 ```Shell
 # Install Intel® Low Precision Optimization Tool
-pip instal ilit
+pip instal lpot
 ```
 ### 2. Install Intel Tensorflow 1.15/2.0/2.1
 ```shell
@@ -60,7 +60,7 @@ This is a tutorial of how to enable style_transfer model with Intel® Low Precis
 
 2. User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
 
-For style_transfer, we applied the latter one because we don't have metric for style transfer model.The first one is to implement the q_dataloader and implement a fake *eval_func*. As ilit have implement a style_transfer dataset, so only eval_func should be prepared after load the graph
+For style_transfer, we applied the latter one because we don't have metric for style transfer model.The first one is to implement the q_dataloader and implement a fake *eval_func*. As lpot have implement a style_transfer dataset, so only eval_func should be prepared after load the graph
 
 ### Evaluation Part Adaption
 As style transfer don't have a metric to measure the accuracy, we only implement a fake eval_func
@@ -110,7 +110,7 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need add 2 lines to get the quantized model.
 ```python
-from ilit import Quantization
+from lpot import Quantization
 
 quantizer = Quantization(args.config)
 q_model = quantizer(graph, eval_func=eval_func)

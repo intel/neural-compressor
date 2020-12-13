@@ -7,8 +7,8 @@ import unittest
 import numpy as np
 
 sys.path.append('..')
-from ilit.adaptor.ox_utils.onnx_model import ONNXModel
-from ilit.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader
+from lpot.adaptor.ox_utils.onnx_model import ONNXModel
+from lpot.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader
 
 def get_onnx_model():
     model = torchvision.models.resnet18()

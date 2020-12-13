@@ -8,14 +8,14 @@ import sys
 sys.path.append('..')
 
 import mxnet as mx
-import ilit
+import lpot
 
 class TestMXNetQuery(unittest.TestCase):
    
     @classmethod
     def setUpClass(self):
-        self.yaml_path = os.path.join(os.getcwd() + "/../ilit/adaptor/mxnet.yaml")
-        self.Queryhandler = ilit.adaptor.mxnet.MXNetQuery(self.yaml_path)
+        self.yaml_path = os.path.join(os.getcwd() + "/../lpot/adaptor/mxnet.yaml")
+        self.Queryhandler = lpot.adaptor.mxnet.MXNetQuery(self.yaml_path)
         self.version = mx.__version__
 
     def test_get_specified_version_cfg(self):

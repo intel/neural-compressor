@@ -64,7 +64,7 @@ parser.add_argument('--tf-preprocessing', dest='tf_preprocessing', action='store
                     help='use tensorflow mnasnet preporcessing')
 parser.add_argument('--no-cuda', dest='no_cuda', action='store_true',
                     help='')
-parser.add_argument('--tune', action='store_true', help='int8 quantization tune with ilit')
+parser.add_argument('--tune', action='store_true', help='int8 quantization tune with lpot')
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
@@ -121,7 +121,7 @@ def main():
         model.eval()
         model.fuse_model()
         conf_yaml = "conf_" + args.model + ".yaml"
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization(conf_yaml)
         q_model = quantizer(model)
         exit(0)
@@ -147,7 +147,7 @@ def main():
     model.eval()
     model.fuse_model()
     if args.int8:
-        from ilit.utils.pytorch import load
+        from lpot.utils.pytorch import load
         new_model = load(
             os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
     else:

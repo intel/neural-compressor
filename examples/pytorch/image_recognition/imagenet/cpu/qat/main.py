@@ -247,7 +247,7 @@ def main_worker(gpu, ngpus_per_node, args):
         return
 
     if args.tune:
-        def training_func_for_ilit(model):
+        def training_func_for_lpot(model):
             epochs = 8
             iters = 30
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -274,9 +274,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
             return
         model.module.fuse_model()
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization(args.config)
-        q_model = quantizer(model, q_dataloader=None, q_func=training_func_for_ilit,
+        q_model = quantizer(model, q_dataloader=None, q_func=training_func_for_lpot,
                              eval_dataloader=val_loader)
         return
 
@@ -284,7 +284,7 @@ def main_worker(gpu, ngpus_per_node, args):
         model.eval()
         model.module.fuse_model()
         if args.int8:
-            from ilit.utils.pytorch import load
+            from lpot.utils.pytorch import load
             new_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:

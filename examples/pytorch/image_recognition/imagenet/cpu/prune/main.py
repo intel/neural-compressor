@@ -171,10 +171,10 @@ def main_worker(gpu, args):
         return
 
     if args.prune:
-        from ilit import Pruning
+        from lpot import Pruning
         prune = Pruning(args.config)
 
-        def training_func_for_ilit(model):
+        def training_func_for_lpot(model):
             prune.model = model
             epochs = 16
             iters = 30
@@ -205,7 +205,7 @@ def main_worker(gpu, args):
             validate(val_loader, model, criterion, args)
 
             return
-        q_model = prune(model, q_dataloader=None, q_func=training_func_for_ilit,
+        q_model = prune(model, q_dataloader=None, q_func=training_func_for_lpot,
                         eval_dataloader=val_loader)
         return
 

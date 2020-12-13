@@ -201,7 +201,7 @@ parser.add_argument('--calib_mode', type=str, default='customize',
                     help='calibration mode used for generating calibration table '
                          'for the quantized symbol.')
 parser.add_argument('--tune',action='store_true', default=False,
-                    help='Get bert tuning quantization model with ilit.')
+                    help='Get bert tuning quantization model with lpot.')
 
 args = parser.parse_args()
 
@@ -749,10 +749,10 @@ if __name__ == '__main__':
             nlp.utils.version.check_version('1.7.0', warning_only=True, library=mx)
             warnings.warn('INT8 Quantization for BERT need mxnet-mkl >= 1.6.0b20200115')
     elif args.tune:
-        # ilit auto-tuning
+        # lpot auto-tuning
         if only_inference:
             calib_data = dev_data_list[0][1]
-            from ilit import Quantization
+            from lpot import Quantization
             quantizer = Quantization("./bert.yaml")
             quantizer(model, q_dataloader=calib_data, eval_dataloader=calib_data, eval_func=test_func)
     else:

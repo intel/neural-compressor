@@ -4,7 +4,7 @@
 import unittest
 import os
 import tensorflow as tf
-from ilit.adaptor.tf_utils.util import parse_ckpt_model, is_ckpt_format, get_graph_def
+from lpot.adaptor.tf_utils.util import parse_ckpt_model, is_ckpt_format, get_graph_def
 
 
 class TestCkptConvert(unittest.TestCase):

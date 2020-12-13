@@ -65,7 +65,7 @@ class TestFoldPadConv(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-            from ilit import Quantization
+            from lpot import Quantization
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
@@ -111,7 +111,7 @@ class TestFoldPadConv(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from ilit import Quantization
+            from lpot import Quantization
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
@@ -155,7 +155,7 @@ class TestFoldPadConv(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from ilit import Quantization
+            from lpot import Quantization
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)

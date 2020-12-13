@@ -235,7 +235,7 @@ if __name__ == '__main__':
                         choices=['', 'float16', 'bfloat16'],
                         help='enable low precision')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get tuning quantization model with ilit.')
+                        help='Get tuning quantization model with lpot.')
     parser.add_argument('--accuracy-only', action='store_true', help='accuracy only benchmark')
     parser.add_argument("--output-graph",
                          help='Specify tune result model save dir',
@@ -313,7 +313,7 @@ if __name__ == '__main__':
         if args.tune:
             # loading model
             fp32_model = load_model(symbol_file, param_file, logger)
-            from ilit import Quantization
+            from lpot import Quantization
             calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
             quantizer = Quantization("./cnn.yaml")
             q_model = quantizer(fp32_model, q_dataloader=calib_data, eval_dataloader=data)

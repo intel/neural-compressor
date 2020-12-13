@@ -6,11 +6,11 @@ import os
 import yaml
 import tensorflow as tf
 
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from ilit.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from ilit.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from lpot.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
+from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
-from ilit.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tensorflow import TensorflowQuery
 
 
 def build_fake_yaml():
@@ -76,7 +76,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from ilit import Quantization
+            from lpot import Quantization
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
@@ -124,7 +124,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from ilit import Quantization
+            from lpot import Quantization
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
@@ -178,7 +178,7 @@ class TestGraphConvFusion(unittest.TestCase):
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
         op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+            os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
 
         output_graph = QuantizeGraphForIntel(self._tmp_graph_def, self.outputs,
                                              self.op_wise_config, op_wise_sequences,

@@ -21,7 +21,7 @@ from __future__ import division
 import time
 import numpy as np
 import tensorflow as tf
-from ilit.adaptor.tf_utils.util import write_graph, get_graph_def
+from lpot.adaptor.tf_utils.util import write_graph, get_graph_def
 from argparse import ArgumentParser
 tf.compat.v1.disable_eager_execution()
 
@@ -43,7 +43,7 @@ class eval_object_detection_optimized_graph(object):
         
     def run(self):
         if self.args.tune:
-            from ilit import Quantization
+            from lpot import Quantization
             quantizer = Quantization(self.args.config)
             q_model = quantizer(self.args.input_graph)
             try:
@@ -52,7 +52,7 @@ class eval_object_detection_optimized_graph(object):
                 print("Failed to save model due to {}".format(str(e)))
                 
         if self.args.benchmark:
-            from ilit import Benchmark
+            from lpot import Benchmark
             evaluator = Benchmark(self.args.config)
             results = evaluator(model=self.args.input_graph)
             for mode, result in results.items():

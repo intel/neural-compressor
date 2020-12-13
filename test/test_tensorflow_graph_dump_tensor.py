@@ -137,7 +137,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
         import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
 
-        from ilit import Quantization
+        from lpot import Quantization
 
         quantizer = Quantization('fake_yaml_kl.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
@@ -169,7 +169,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
     def test_dump_tensor_to_disk(self):
         import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
-        from ilit import Quantization
+        from lpot import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)

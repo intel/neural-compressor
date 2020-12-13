@@ -57,7 +57,7 @@ The `conf_fname` parameter used in the above class initialization is the path to
 
 # YAML Syntax
 
-Intel® Low Precision Optimization Tool provides template yaml files for the [PTQ](../ilit/template/ptq.yaml), [QAT](../ilit/template/qat.yaml), and [Pruning](../ilit/template/pruning.yaml) scenarios. Refer to the complete template to understand the meaning of each field.
+Intel® Low Precision Optimization Tool provides template yaml files for the [PTQ](../lpot/template/ptq.yaml), [QAT](../lpot/template/qat.yaml), and [Pruning](../lpot/template/pruning.yaml) scenarios. Refer to the complete template to understand the meaning of each field.
 
 Note that most fields in the yaml templates are optional. Additionally, a typical yaml file must be very concise. View the [HelloWorld Yaml](../examples/helloworld/tf2.x/conf.yaml) example for reference.
 
@@ -73,9 +73,9 @@ View examples of this usage at [TensorFlow Classification Models](../examples/te
 
 ### Concise template-based yaml + few lines of code changes
 
-The second usage is designed for a concise yaml configuration by moving the calibration and evaluation dataloader construction from yaml to code. If the user model is using **ilit**-supported evaluation metrics (such as TOPK and MAP), this usage is a good choice.
+The second usage is designed for a concise yaml configuration by moving the calibration and evaluation dataloader construction from yaml to code. If the user model is using **lpot**-supported evaluation metrics (such as TOPK and MAP), this usage is a good choice.
 
-The user must provide a **dataloader**-implemented `iter` or `getitem` method and `batch_size` attribute, which usually already exists or can be easily developed in the user code. ilit also provides built-in dataloaders to support dynamic batching; the user can set up a **dataset**-implemented `iter` or `getitem` method to yield one single batch. The `quantization().dataloader()` takes this dataset as an input parameter to construct the ilit dataloader.
+The user must provide a **dataloader**-implemented `iter` or `getitem` method and `batch_size` attribute, which usually already exists or can be easily developed in the user code. lpot also provides built-in dataloaders to support dynamic batching; the user can set up a **dataset**-implemented `iter` or `getitem` method to yield one single batch. The `quantization().dataloader()` takes this dataset as an input parameter to construct the lpot dataloader.
 
 After that, the user specifies the fp32 `model`, the `q_dataloader` calibration dataset, and the `eval_dataloader` evaluation dataset. The `eval_dataloader` parameter evaluates the calibrated and quantized model; the evaluation metrics are specified in the yaml configuration file. The evaluation tells the tuner if the quantized model meets accuracy criteria. If it does not, the tuner starts a new calibration and tuning flow. For this usage, the `model`, `q_dataloader`, and `eval_dataloader` parameters are mandatory.
 

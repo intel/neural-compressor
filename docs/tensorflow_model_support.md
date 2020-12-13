@@ -23,7 +23,7 @@ Intel® Low Precision Optimization Tool supports diffrent model formats of Tenso
 
 You can directly pass the directory or object to quantizer, for example:
 ```python
-from ilit import Quantization
+from lpot import Quantization
 quantizer = Quantization('./conf.yaml')
 dataset = mnist_dataset(mnist.test.images, mnist.test.labels)
 data_loader = quantizer.dataloader(dataset=dataset, batch_size=1)

@@ -5,9 +5,9 @@ import unittest
 import os
 import tensorflow as tf
 
-from ilit.adaptor.tf_utils.util import read_graph
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from ilit.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tf_utils.util import read_graph
+from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from lpot.adaptor.tensorflow import TensorflowQuery
 class TestTensorflowGpu(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
     pb_path = 'mobilenet_fp32.pb'
@@ -16,7 +16,7 @@ class TestTensorflowGpu(unittest.TestCase):
     def setUpClass(self):
         os.system("wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+            os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
     
     @classmethod
     def tearDownClass(self):

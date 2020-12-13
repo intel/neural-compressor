@@ -7,7 +7,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from ilit.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
+from lpot.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
 
 class TestBF16Convert(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'

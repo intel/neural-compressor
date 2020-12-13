@@ -9,7 +9,7 @@ This is Hello World to demonstrate how to quick start with Intel® Low Precision
 ### 1. Installation
 ```Shell
 # Install Intel® Low Precision Optimization Tool
-pip install ilit
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -31,12 +31,12 @@ Add inputs and outputs information into conf.yaml
       inputs: 'x'                               
       outputs: 'Identity'
 ```
-### 2. Run ilit to get the quantized Graph. 
+### 2. Run lpot to get the quantized Graph. 
 ```PyThon
     model_file = "../frozen_models/simple_frozen_graph.pb"
     graph = load_graph(model_file)
 
-    # Run ilit to get the quantized pb, eval_func is a model self defined evaluator.
+    # Run lpot to get the quantized pb, eval_func is a model self defined evaluator.
     quantizer = Quantization('./conf.yaml')
     dataloader = quantizer.dataloader(dataset=list(zip(test_images, test_labels)))
     quantized_model = quantizer(graph, q_dataloader=dataloader, eval_func=eval_func)

@@ -1,12 +1,12 @@
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: imagenet_qat
   framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. required for QAT and PTQ.
   approach: quant_aware_training                     # mandatory. supported values are quant_aware_training and post_training_static_quant.
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
 

@@ -4,14 +4,14 @@ import re
 import sys
 
 try:
-    filepath = './ilit/version.py'
+    filepath = './lpot/version.py'
     with open( filepath ) as version_file:
         __version__ ,= re.findall( '__version__ = "(.*)"', version_file.read() )
 except Exception as error:
     assert False,  "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 setup(
-    name="ilit",
+    name="lpot",
     version=__version__,
     author="Intel MLP/MLPC Team",
     author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com, xi2.chen@intel.com",
@@ -20,7 +20,7 @@ setup(
     long_description_content_type="text/markdown",
     keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training, tuning strategy',
     license='',
-    url="https://github.com/intel/lp-opt-tool",
+    url="https://github.com/intel/lpot",
     packages = find_packages(),
     package_dir = {'':'.'},
     package_data={'': ['*.py', '*.yaml']},

@@ -1,6 +1,6 @@
 # Contributing guidelines
 If you have improvements to Intel® Low Precision Optimization Tool, send us your pull requests for
-[review](https://github.com/intel/lp-opt-tool/pulls)! For those
+[review](https://github.com/intel/lpot/pulls)! For those
 just getting started, Github has a
 [how to](https://help.github.com/articles/using-pull-requests/).
 
@@ -12,8 +12,8 @@ list.
 - Changes are consistent with the Python [Coding Style](https://github.com/google/styleguide/blob/gh-pages/pyguide.md).
 - Use pylint to check your Python code
 - Use flake8 and autopep8 to make Python code clean 
-- Add unit tests in [Unit Tests](https://github.com/intel/lp-opt-tool/tree/master/tests) to cover the code you would like to contribute.
-- Run [Unit Tests](https://github.com/intel/lp-opt-tool/tree/master/tests).
+- Add unit tests in [Unit Tests](https://github.com/intel/lpot/tree/master/test) to cover the code you would like to contribute.
+- Run [Unit Tests](https://github.com/intel/lpot/tree/master/test).
 
 ## Pull Request Template
 ### Change Summary

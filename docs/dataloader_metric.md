@@ -51,8 +51,8 @@ quantization:                                        # optional. tuning constrai
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -89,11 +89,11 @@ evaluation:                                          # optional. required if use
           std: [0.229, 0.224, 0.225]
 
 ## create Intel® Low Precision Optimization Tool internal dataloader and metric and pass to quantizer
-from ilit import Quantization
+from lpot import Quantization
 quantizer = Quantization('conf.yaml')
 eval_dataset = quantizer.dataset('bert', dataset=eval_dataset, task=eval_task)
 test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
+quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
 
 ## use user specific dataloader and metric
 

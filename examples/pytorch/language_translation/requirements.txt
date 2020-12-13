@@ -10,7 +10,7 @@ regex
 sentencepiece
 # For XLM
 sacremoses
-ilit
+lpot
 tensorboard
 scikit-learn
 pytorch-ignite

@@ -243,7 +243,7 @@ parser.add_argument('--calib_mode', type=str, default='customize',
                     help='calibration mode used for generating calibration table '
                          'for the quantized symbol.')
 parser.add_argument('--tune',action='store_true', default=False,
-                    help='Get bert tuning quantization model with ilit.')
+                    help='Get bert tuning quantization model with lpot.')
 
 args = parser.parse_args()
 
@@ -848,7 +848,7 @@ def preprocess_dataset(tokenizer,
 
 
 def gen_dataset():
-    """generate dataset for ilit."""
+    """generate dataset for lpot."""
     log.info('Loading dev data...')
     if version_2:
         dev_data = SQuAD('dev', version='2.0')
@@ -882,7 +882,7 @@ def gen_dataset():
     return dev_dataloader
 
 def eval_func(model):
-    """evaluation function for ilit."""
+    """evaluation function for lpot."""
     EM_acc = evaluate(model)
     return EM_acc
 
@@ -900,9 +900,9 @@ if __name__ == '__main__':
         train()
         evaluate()
     elif args.tune:
-        # ilit auto-tuning
+        # lpot auto-tuning
         dev_dataloader = gen_dataset()
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization("./bert.yaml")
         quantizer(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
     elif model_parameters or deploy:

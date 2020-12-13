@@ -154,7 +154,7 @@ Training with these hyper-parameters gave us the following results:
 
 please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tuning-on-squad-for-question-answering)
 
-  * After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by ilit tuning as below.
+  * After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
 
 # Run
 
@@ -235,7 +235,7 @@ tuning:
     random_seed: 9527
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
-> **Note** : ilit does NOT support "mse" tuning strategy for pytorch framework
+> **Note** : lpot does NOT support "mse" tuning strategy for pytorch framework
 
 ### prepare
 PyTorch quantization requires two manual steps:
@@ -250,7 +250,7 @@ The related code changes please refer to examples/pytorch/bert/transformers/mode
 After prepare step is done, we just need update run_squad_tune.py and run_glue_tune.py like below
 ```
 if args.tune:
-    def eval_func_for_ilit(model):
+    def eval_func_for_lpot(model):
         result, _ = evaluate(args, model, tokenizer)
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
@@ -263,14 +263,14 @@ if args.tune:
         return acc
     eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    from ilit import Quantization
+    from lpot import Quantization
     quantizer = Quantization("./conf.yaml")
     if eval_task != "squad":
         eval_task = 'classifier'
     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                      task=eval_task, model_type=args.model_type)
     test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-    quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
+    quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
     exit(0)
 ```
 

@@ -11,7 +11,7 @@ Strategies need to generate the next quantization configuration according to its
 Strategies need two sides information. One side comes from adator layer, user pass the framework specific model to initial the quantizator, then strategies will call the `self.adaptor.query_fw_capability(model)` to get the framework and model specific quantization capabilities. On the other hand, strategy will merge the model specific configurations in `yaml` configuration file to filter some capability in first step to generate the tuning space. And then, each strategy will generate the quantiztion config according to itself location and logic with tuning strategy configurations in `yaml` configuration file. All of strategies will finish the tuning processing if the `timeout` or `max_trails` has been reached. The default value of `timeout` is 0, if so, the tuning phase will early stop when the `accuracy` has met the criteria.
 
 # Configurations
-The detail configuration templates can be found in [`here`](ilit/template).
+The detail configuration templates can be found in [`here`](lpot/template).
 ### Model specific configurations
 For model specific configurations, users can set the quantization approach, and for post training static quantization, we also can set calibration and quantization related parameters for model-wise and op-wise.
 ```yaml
@@ -19,7 +19,7 @@ quantization:                                        # optional. tuning constrai
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       dataset:
         TFRecordDataset:
           root: /path/to/tf_record

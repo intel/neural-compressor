@@ -1,4 +1,4 @@
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: style_transfer
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: style_input,content_input                  # optional. inputs and outputs fields are only required for tensorflow backend.
@@ -6,7 +6,7 @@ model:                                               # mandatory. ilit uses this
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       batch_size: 2
       dataset:
         style_transfer:
@@ -15,7 +15,7 @@ quantization:                                        # optional. tuning constrai
 
 evaluation:
   accuracy:
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       batch_size: 2
       dataset:
         style_transfer:

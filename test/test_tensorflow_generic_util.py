@@ -4,7 +4,7 @@
 import unittest
 import os
 import tensorflow as tf
-from ilit.adaptor.tf_utils.util import get_graph_def
+from lpot.adaptor.tf_utils.util import get_graph_def
 
 
 class TestTFGenericUtil(unittest.TestCase):

@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  tuned_checkpoint=ilit_workspace/pytorch/yolo_v3/checkpoint
+  tuned_checkpoint=lpot_workspace/pytorch/yolo_v3/checkpoint
   batch_size=8
   for var in "$@"
   do

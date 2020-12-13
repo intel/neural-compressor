@@ -12,7 +12,7 @@ Intel® Low Precision Optimization Tool supports three usages:
 
 2. Partial yaml configuration: User specifies dataloaders used in calibration and evaluation phase by code.
    The tool provides built-in dataloaders and evaluators, user just need provide a dataset implemented __iter__ or
-   __getitem__ methods and invoke dataloader() with dataset as input parameter to create ilit dataloader before calling quantizer().
+   __getitem__ methods and invoke dataloader() with dataset as input parameter to create lpot dataloader before calling quantizer().
 
    After that, User specifies fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader".
    The calibrated and quantized model is evaluated with "eval_dataloader" with evaluation metrics specified
@@ -36,16 +36,16 @@ Intel® Low Precision Optimization Tool supports three usages:
 
 User need choose corresponding usage according to code. For example, if user wants to minmal code changes, then the first usage
 is recommended. If user wants to leverage existing evaluation function, then the third usage is recommended. If user has no existing
-evaluation function and the metric used is supported by ilit, then the second usage is recommended.
+evaluation function and the metric used is supported by lpot, then the second usage is recommended.
 
 ### 2. Write yaml config file
 
-Copy [ptq.yaml](../ilit/template/ptq.yaml) or [qat.yaml](../ilit/template/qat.yaml) or [pruning.yaml](../ilit/template/pruning.yaml) to work directory and modify correspondingly.
+Copy [ptq.yaml](../lpot/template/ptq.yaml) or [qat.yaml](../lpot/template/qat.yaml) or [pruning.yaml](../lpot/template/pruning.yaml) to work directory and modify correspondingly.
 
 Below is an example for beginner.
 
 ```yaml
-model:                  # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                  # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: ssd_mobilenet_v1
   framework: tensorflow
   inputs: image_tensor

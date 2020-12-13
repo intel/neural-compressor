@@ -42,15 +42,15 @@ class eval_classifier_optimized_graph:
 
     arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 
-    arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ilit to tune.')
+    arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
 
     self.args = arg_parser.parse_args()
 
   def run(self):
-      """ This is ilit function include tuning and benchmark option """
+      """ This is lpot function include tuning and benchmark option """
 
       if self.args.tune:
-          from ilit import Quantization
+          from lpot import Quantization
           quantizer = Quantization(self.args.config)
           q_model = quantizer(self.args.input_graph)
 
@@ -68,7 +68,7 @@ class eval_classifier_optimized_graph:
               print("Unexpected error while saving the model: {0}".format(exc))
 
       if self.args.benchmark:
-          from ilit import Benchmark
+          from lpot import Benchmark
           evaluator = Benchmark(self.args.config)
           results = evaluator(model=self.args.input_graph)
           for mode, result in results.items():

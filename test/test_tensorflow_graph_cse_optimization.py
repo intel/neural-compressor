@@ -6,9 +6,9 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 
-from ilit.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
+from lpot.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 class TestGraphCommonSequenceElimated(unittest.TestCase):
 
     def test_graph_cse(self):

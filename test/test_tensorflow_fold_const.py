@@ -5,7 +5,7 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
-from ilit.adaptor.tf_utils.graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
+from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
 
 
 class TestFoldConstant(unittest.TestCase):

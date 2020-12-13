@@ -52,32 +52,32 @@ This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1
 # Run
 ### ResNet18_v1
 ```bash
-bash run_tuning.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet18
+bash run_tuning.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_resnet18
 ```
 
 ### ResNet50_v1
 ```bash
-bash run_tuning.sh --topology=resnet50_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet50_v1
+bash run_tuning.sh --topology=resnet50_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_resnet50_v1
 ```
 ### ResNet152_v1
 ```bash
-bash run_tuning.sh --topology=resnet152_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_resnet152_v1
+bash run_tuning.sh --topology=resnet152_v1 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_resnet152_v1
 ```
 ### SqueezeNet1
 ```bash
-bash run_tuning.sh --topology=squeezenet1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_squeezenet
+bash run_tuning.sh --topology=squeezenet1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_squeezenet
 ```
 ### MobileNet1.0
 ```bash
-bash run_tuning.sh --topology=mobilenet1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_mobilenet1.0
+bash run_tuning.sh --topology=mobilenet1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_mobilenet1.0
 ```
 ### MobileNetv2_1.0
 ```bash
-bash run_tuning.sh --topology=mobilenetv2_1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_mobilenetv2_1.0
+bash run_tuning.sh --topology=mobilenetv2_1.0 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_mobilenetv2_1.0
 ```
 ### Inception_v3
 ```bash
-bash run_tuning.sh --topology=inceptionv3 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./ilit_inception_v3
+bash run_tuning.sh --topology=inceptionv3 --dataset_location=./data/val_256_q90.rec --input_model=/PATH/TO/MODEL --output_model=./lpot_inception_v3
 ```
 
 # Benchmark
@@ -115,12 +115,12 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 # conf.yaml
 
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: cnn
   framework: mxnet                                   # possible values are tensorflow, mxnet and pytorch
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
 
@@ -141,7 +141,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 After prepare step is done, we just need update imagenet_inference.py like below.
 
 ```python
-    from ilit import Quantization
+    from lpot import Quantization
     fp32_model = load_model(symbol_file, param_file, logger)
     quantizer = Quantization("./cnn.yaml")
     q_model = quantizer(fp32_model, q_dataloader=data, eval_dataloader=data)

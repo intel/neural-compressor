@@ -9,7 +9,7 @@ This document is used to list steps of reproducing TensorFlow ssd_resnet50_v1 tu
 ### 1. Installation
 ```Shell
 # Install Intel® Low Precision Optimization Tool
-pip instal ilit
+pip instal lpot
 ```
 ### 2. Install Intel Tensorflow 1.15/2.0/2.1
 ```shell
@@ -175,7 +175,7 @@ if input_graph:
 In examples directory, there is a ssd_resnet50_v1.yaml. We could remove most of items and only keep mandatory item for tuning.
 
 ```yaml
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: ssd_resnet50_v1
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: image_tensor
@@ -212,7 +212,7 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need update infer_detections.py like below.
 ```python
-from ilit import Quantization
+from lpot import Quantization
 
 quantizer = Quantization(args.config)
 q_model = quantizer(args.input_graph,

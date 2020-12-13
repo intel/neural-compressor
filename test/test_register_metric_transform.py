@@ -1,4 +1,4 @@
-"""Tests for ilit register metric and postprocess """
+"""Tests for lpot register metric and postprocess """
 import numpy as np
 import unittest
 import os
@@ -46,9 +46,9 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from ilit import Benchmark, Quantization
-        from ilit.data.transforms.imagenet_transform import LabelShift
-        from ilit.metric.metric import TensorflowTopK
+        from lpot import Benchmark, Quantization
+        from lpot.data.transforms.imagenet_transform import LabelShift
+        from lpot.metric.metric import TensorflowTopK
         evaluator = Benchmark('fake_yaml.yaml')
         evaluator.postprocess('label_benchmark', LabelShift, label_shift=1) 
         evaluator.metric('topk_benchmark', TensorflowTopK)

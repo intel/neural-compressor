@@ -8,7 +8,7 @@ torchvision==0.6.0+cpu
 pytorch-ignite
 mxnet-mkl==1.6.0
 numpy
-ilit
+lpot
 pandas
 tf_slim
 pillow

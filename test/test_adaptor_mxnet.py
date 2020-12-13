@@ -7,7 +7,7 @@ import mxnet as mx
 import mxnet.gluon.nn as nn
 
 sys.path.append('..')
-import ilit
+import lpot
 
 def get_mlp_sym():
     data = mx.symbol.Variable('data')
@@ -101,11 +101,11 @@ class TestAdaptorMXNet(unittest.TestCase):
         build_mxnet_kl()
         self.mlp_model = get_mlp_sym()
         self.conv_model = get_conv_sym()
-        self.quantizer_1 = ilit.Quantization("./mxnet.yaml")
-        self.quantizer_2 = ilit.Quantization("./mxnet_kl.yaml")
+        self.quantizer_1 = lpot.Quantization("./mxnet.yaml")
+        self.quantizer_2 = lpot.Quantization("./mxnet_kl.yaml")
         framework_specific_info = dict()
         framework_specific_info['q_dataloader'] = None
-        self.adaptor = ilit.adaptor.mxnet.MxNetAdaptor(framework_specific_info)
+        self.adaptor = lpot.adaptor.mxnet.MxNetAdaptor(framework_specific_info)
         self.data_low = -1000
         self.data_high = 1000
 

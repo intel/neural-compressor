@@ -75,7 +75,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 
 ```
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: blendcnn
   framework: pytorch         
 
@@ -105,9 +105,9 @@ It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to dev
 After prepare step is done, we just need update classify.py like below.
 
 ```
-import ilit
+import lpot
 eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
-quantizer = ilit.Quantization(args.ilit_yaml)
+quantizer = lpot.Quantization(args.lpot_yaml)
 q_model = quantizer(model, q_dataloader=eval_dataloader, eval_func=eval_func)
 ```
 

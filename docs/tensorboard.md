@@ -129,7 +129,7 @@ The implementation of TensorFlow TensorBoard basically have 4 steps:
 3. Run session.run() to predict and get the inference result of the output tensor list collected in 2.
 4. Enumerate the output tensor and write histogram.   
 
-See ilit/adaptor/tensorflow.py evaluate() function for details. 
+See lpot/adaptor/tensorflow.py evaluate() function for details. 
 
 # Usage
 
@@ -159,7 +159,7 @@ See ilit/adaptor/tensorflow.py evaluate() function for details.
 2. Run tuning:
 ```
 bash run_tuning.sh --topology=inception_v3 --dataset_location=<imagenet> \
-          --input_model=./inceptionv3_fp32_pretrained_model.pb --output_model=./ilit_inceptionv3.pb --config=./inceptionv3_dump_tensor.yaml 
+          --input_model=./inceptionv3_fp32_pretrained_model.pb --output_model=./lpot_inceptionv3.pb --config=./inceptionv3_dump_tensor.yaml 
 ```
 3. Start TensorBoard
 ```

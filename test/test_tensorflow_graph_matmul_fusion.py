@@ -7,7 +7,7 @@ import yaml
 import numpy as np
 import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import dtypes
-from ilit.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tensorflow import TensorflowQuery
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -41,7 +41,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+            os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
@@ -50,7 +50,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         tf.disable_v2_behavior()
         g = tf.Graph()
         with g.as_default():
-            from ilit import Quantization
+            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -90,7 +90,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         z = tf.nn.relu(z,  name='op_to_store')
 
         with tf.Session() as sess:
-            from ilit import Quantization
+            from lpot import Quantization
 
             sess.run(z, feed_dict={x: x_data, y: y_data})
             float_graph_def = sess.graph.as_graph_def()
@@ -116,7 +116,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
         g = tf.Graph()
         with g.as_default():
-            from ilit import Quantization
+            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -153,7 +153,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
         g = tf.Graph()
         with g.as_default():
-            from ilit import Quantization
+            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -189,7 +189,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
         g = tf.Graph()
         with g.as_default():
-            from ilit import Quantization
+            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)

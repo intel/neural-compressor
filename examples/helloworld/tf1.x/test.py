@@ -2,7 +2,7 @@ import tensorflow as tf
 import time
 from tensorflow import keras
 import numpy as np
-from ilit import Quantization
+from lpot import Quantization
 
 def eval_func(model):
     (train_images, train_labels), (test_images,
@@ -62,7 +62,7 @@ def main():
     model_file = "../frozen_models/simple_frozen_graph.pb"
     graph = load_graph(model_file)
 
-    # Run ilit to get the quantized pb
+    # Run lpot to get the quantized pb
     quantizer = Quantization('./conf.yaml')
     dataloader = quantizer.dataloader(dataset=list(zip(test_images, test_labels)))
     quantized_model = quantizer(graph, q_dataloader=dataloader, eval_func=eval_func)

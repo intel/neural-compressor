@@ -1,4 +1,4 @@
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: wide_deep_large_ds
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: new_numeric_placeholder,new_categorical_placeholder

@@ -5,13 +5,13 @@ import unittest
 import yaml
 import os
 
-from ilit.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tensorflow import TensorflowQuery
 
 class TestTFQueryYaml(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.tf_yaml_path = os.path.join(os.getcwd() + "/../ilit/adaptor/tensorflow.yaml")
+        self.tf_yaml_path = os.path.join(os.getcwd() + "/../lpot/adaptor/tensorflow.yaml")
 
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)

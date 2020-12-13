@@ -39,22 +39,22 @@ This document describes the step-by-step instructions for reproducing MXNet SSD-
 
 ### SSD-ResNet50_v1-VOC
 ```bash
-bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_resnet50_voc
+bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_resnet50_voc
 ```
 
 ### SSD-Mobilenet1.0-VOC
 ```bash
-bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_mobilenet1.0_voc
+bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_mobilenet1.0_voc
 ```
 
 ### SSD-ResNet50_v1-COCO
 ```bash
-bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_resnet50_coco
+bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_resnet50_coco
 ```
 
 ### SSD-Mobilenet1.0-COCO
 ```bash
-bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./ilit_ssd_mobilenet1.0_coco
+bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_mobilenet1.0_coco
 ```
 
 # benchmark 
@@ -72,7 +72,7 @@ For more detail, see:
 ```bash
   bash run_tuning.sh -h
 
-   Desc: Run ilit MXNet Object Detection example.
+   Desc: Run lpot MXNet Object Detection example.
 
    -h --help              help info
 
@@ -84,7 +84,7 @@ For more detail, see:
 
    --input_model          prefix of fp32 model (eg: ./model/ssd-mobilenet )
 
-   --output_model         Best tuning model by ilit will saved in this name prefix. default is './ilit_ssd_model'
+   --output_model         Best tuning model by lpot will saved in this name prefix. default is './lpot_ssd_model'
 ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on MXNet Object detection
@@ -151,7 +151,7 @@ After preparation is done, we just need update main.py like below.
 ```python
 
     # Doing auto-tuning here
-    from ilit import Quantization
+    from lpot import Quantization
     quantizer = Quantization("./ssd.yaml")
     quantizer(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
 ```

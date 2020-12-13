@@ -2,9 +2,9 @@ import os
 import unittest
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
-from ilit.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from ilit.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from lpot.adaptor.tensorflow import TensorflowQuery
 
 class TestConvAddRelu(unittest.TestCase):
     def test_conv_add_relu(self):
@@ -21,7 +21,7 @@ class TestConvAddRelu(unittest.TestCase):
         conv_bias = tf.math.add(conv1, conv_bias)
         relu = tf.nn.relu(conv_bias, name='Relu_1')
         op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../ilit/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+            os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(

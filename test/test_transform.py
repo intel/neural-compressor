@@ -2,9 +2,9 @@
 import numpy as np
 import unittest
 import os
-from ilit.data import TRANSFORMS, DataLoader
-from ilit.utils.create_obj_from_config import get_postprocess, create_dataset
-from ilit.utils.utility import LazyImport
+from lpot.data import TRANSFORMS, DataLoader
+from lpot.utils.create_obj_from_config import get_postprocess, create_dataset
+from lpot.utils.utility import LazyImport
 mx = LazyImport('mxnet')
 tf = LazyImport('tensorflow')
 

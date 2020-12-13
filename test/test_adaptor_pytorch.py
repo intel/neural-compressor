@@ -3,7 +3,7 @@ import torch
 import torchvision
 import unittest
 import os
-from ilit.adaptor import FRAMEWORKS
+from lpot.adaptor import FRAMEWORKS
 import shutil
 import copy
 
@@ -242,8 +242,8 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(len(df) == 22)
 
     def test_quantization_saved(self):
-        from ilit import Quantization
-        from ilit.utils.pytorch import load
+        from lpot import Quantization
+        from lpot.utils.pytorch import load
         model = copy.deepcopy(self.model)
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             if fake_yaml == 'ptq_yaml.yaml':
@@ -260,12 +260,12 @@ class TestPytorchAdaptor(unittest.TestCase):
             )
             new_model = load('./saved/checkpoint', model)
             eval_func(new_model)
-        from ilit import Benchmark
+        from lpot import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
         results = evaluator(model=new_model, b_dataloader=dataloader)
 
     def test_tensor_dump(self):
-        from ilit import Quantization
+        from lpot import Quantization
         model = copy.deepcopy(self.model)
         model.eval()
         model.fuse_model()
@@ -298,7 +298,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
     def test_tuning_ipex(self):
-        from ilit import Quantization
+        from lpot import Quantization
         model = torchvision.models.resnet18()
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
@@ -313,7 +313,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
             script_model = torch.jit.script(model)
         except:
             script_model = torch.jit.trace(model, torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from ilit import Benchmark
+        from lpot import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         results = evaluator(model=script_model, b_dataloader=dataloader)
 

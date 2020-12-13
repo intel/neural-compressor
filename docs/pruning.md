@@ -37,7 +37,7 @@ pruning:
 Users must pass a modified training function to Intel® Low Precision Optimization Tool. Take a typical pytorch training function as example.
 ```python
 def p_func(model):
-    # from ilit.pruning import Pruner
+    # from lpot.pruning import Pruner
     # prune = Pruner(*args, **kwargs)
     for epoch in range(epochs)
         # pruner.on_epoch_begin(epoch=epoch)

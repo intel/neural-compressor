@@ -2,6 +2,6 @@ tensorboardX
 tensorboard
 scikit-learn
 seqeval
-ilit
+lpot
 pytorch-ignite
 torchvision==0.6.1

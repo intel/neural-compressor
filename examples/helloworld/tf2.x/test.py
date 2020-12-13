@@ -32,9 +32,9 @@ def main():
     print('input', model.input_names)
     print('output', model.output_names)
 
-    # Run ilit to get the quantized graph 
-    import ilit
-    quantizer = ilit.Quantization('./conf.yaml')
+    # Run lpot to get the quantized graph 
+    import lpot
+    quantizer = lpot.Quantization('./conf.yaml')
     dataloader = quantizer.dataloader(dataset=list(zip(test_images, test_labels)))
     quantized_model = quantizer(model, q_dataloader=dataloader, eval_dataloader=dataloader)
 

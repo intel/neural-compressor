@@ -1,4 +1,4 @@
-"""Tests for ilit quantization"""
+"""Tests for lpot quantization"""
 import numpy as np
 import unittest
 import os
@@ -90,7 +90,7 @@ def build_fake_model():
     return graph
 
 def build_fake_strategy():
-    with open(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
@@ -143,11 +143,11 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')    
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('ilit').origin), 'strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)
@@ -158,7 +158,7 @@ class TestQuantization(unittest.TestCase):
         )
 
     def test_resume(self):
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)

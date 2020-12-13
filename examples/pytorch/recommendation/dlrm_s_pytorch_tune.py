@@ -902,7 +902,7 @@ if __name__ == "__main__":
         dlrm.bot_l.append(DeQuantStub())
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
         q_model = quantizer(dlrm, eval_dataloader, eval_func=eval_func)
         exit(0)
@@ -921,7 +921,7 @@ if __name__ == "__main__":
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         if args.do_int8_inference:
-            from ilit.utils.pytorch import load
+            from lpot.utils.pytorch import load
             import os
             new_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), dlrm)

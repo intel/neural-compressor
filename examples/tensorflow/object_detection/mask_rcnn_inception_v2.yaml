@@ -1,4 +1,4 @@
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: mask_rcnn_inception_v2
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: image_tensor
@@ -7,7 +7,7 @@ model:                                               # mandatory. ilit uses this
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 10, 50, 100, 200                  # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       batch_size: 1
       dataset:
         COCORecord:
@@ -22,14 +22,14 @@ quantization:                                        # optional. tuning constrai
       algorithm: minmax
 
 evaluation:                                          # optional. used to config evaluation process.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric: 
       COCOmAP:
     configs:                                         # optional. if not specified, use all cores in 1 socket.
       cores_per_instance: 28
       num_of_instance: 1
       kmp_blocktime: 1
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       batch_size: 1
       dataset:
         COCORecord:

@@ -11,7 +11,7 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad tu
 
   ```Shell
   # Install Intel® Low Precision Optimization Tool
-  pip install ilit
+  pip install lpot
 
   # Install MXNet
   pip install mxnet-mkl==1.6.0
@@ -106,7 +106,7 @@ Because we use the second use case which need user to provide a custom "eval_fun
 
 
 ### code update
-First, we need to construct evaluate function for ilit. At eval_func, we get the dev_data_list for the origin script, and return acc metric to ilit.
+First, we need to construct evaluate function for lpot. At eval_func, we get the dev_data_list for the origin script, and return acc metric to lpot.
 
 ```python
     # define test_func
@@ -129,7 +129,7 @@ After prepare step is done, we just need update main.py like below.
 ```python
     # Intel® Low Precision Optimization Tool auto-tuning
     calib_data = dev_data_list[0][1]
-    from ilit import Quantization
+    from lpot import Quantization
     quantizer = Quantization("./bert.yaml")
     quantizer(model, q_dataloader=calib_data, val_dataloader=calib_data, eval_func=test_func)
 

@@ -20,7 +20,7 @@
 import numpy as np
 from argparse import ArgumentParser
 import tensorflow as tf
-# from ilit.adaptor.tf_utils.util import write_graph
+# from lpot.adaptor.tf_utils.util import write_graph
 from nets_factory import TFSlimNetsFactory
 import copy
 
@@ -54,7 +54,7 @@ def main(_):
 
   arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 
-  arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ilit to tune.')
+  arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
 
   args = arg_parser.parse_args()
 
@@ -75,20 +75,20 @@ def main(_):
       kwargs = net
       images = tf.compat.v1.placeholder(name='input', dtype=tf.float32, \
                                     shape=inputs_shape)
-      from ilit.adaptor.tf_utils.util import get_slim_graph
+      from lpot.adaptor.tf_utils.util import get_slim_graph
       model = get_slim_graph(args.input_graph, model_func, arg_scope, images, **kwargs)
   else:
       model = args.input_graph
 
   if args.tune:
 
-      from ilit import Quantization
+      from lpot import Quantization
       quantizer = Quantization(args.config)
       q_model = quantizer(model)
       save(q_model, args.output_graph)
 
   if args.benchmark:
-      from ilit import Benchmark
+      from lpot import Benchmark
       evaluator = Benchmark(args.config)
       results = evaluator(model=model)
       for mode, result in results.items():

@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_dir', type=str,
                         help='datseset path')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with ilit.')
+                        help='Get bert tuning quantization model with lpot.')
     parser.add_argument('--config',type=str, default=None,
                         help='Tuning config file path')
     parser.add_argument('--output_model',type=str, default=None,
@@ -163,8 +163,8 @@ if __name__ == "__main__":
 
     shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, args.max_seq_length)
 
-    from ilit.data.datasets.dummy_dataset import DummyDataset
-    from ilit.data.dataloaders.onnx_dataloader import ONNXDataLoader
+    from lpot.data.datasets.dummy_dataset import DummyDataset
+    from lpot.data.dataloaders.onnx_dataloader import ONNXDataLoader
     dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
     dummy_dataloader = ONNXDataLoader(dummy_dataset)
 
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         return evaluate_onnx(model, dummy_dataloader)
 
     if args.benchmark:
-        from ilit.benchmark import Benchmark
+        from lpot.benchmark import Benchmark
         benchmark = Benchmark(args.config)
         results = benchmark(model, b_dataloader=dummy_dataloader, b_func=eval_func)
 
@@ -187,12 +187,12 @@ if __name__ == "__main__":
             print('Throughput: {:.3f} items/sec'.format(batch_size * 1./ latency))
 
     if args.tune:
-        from ilit.quantization import Quantization
+        from lpot.quantization import Quantization
         quantize = Quantization(args.config)
         q_model = quantize(model, q_dataloader=dummy_dataloader, eval_func=eval_func)
         onnx.save(q_model, args.output_model)
         if args.benchmark:
-            from ilit import Benchmark
+            from lpot import Benchmark
             benchmark = Benchmark(args.config)
             results = benchmark(model=q_model, b_dataloader=dummy_dataloader, b_func=eval_func)
             for mode, result in results.items():

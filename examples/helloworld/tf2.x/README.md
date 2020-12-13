@@ -9,7 +9,7 @@ This is Hello World to demonstrate how to quick start with Intel® Low Precision
 ### 1. Installation
 ```Shell
 # Install Intel® Low Precision Optimization Tool
-pip install ilit
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -50,9 +50,9 @@ conf.yaml:
     # Load saved model
     model = tf.keras.models.load_model("../models/simple_model")
 
-    # Run ilit to get the quantized graph 
-    import ilit
-    quantizer = ilit.Quantization('./conf.yaml')
+    # Run lpot to get the quantized graph 
+    import lpot
+    quantizer = lpot.Quantization('./conf.yaml')
     dataloader = quantizer.dataloader(dataset=list(zip(test_images, test_labels)))
     quantized_model = quantizer(model, q_dataloader=dataloader, eval_dataloader=dataloader)
 

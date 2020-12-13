@@ -1,0 +1,97 @@
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
+  name: ssd_mobilenet_v1
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+device: cpu                                          # optional. default value is cpu. other value is gpu.
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  approach: post_training_static_quant               # optional. default value is post_training_static_quant.
+  calibration:
+    sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+      dataset:
+        TFRecordDataset:
+          root: /path/to/tf_record
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    weight:
+      granularity: per_channel
+      scheme: asym
+      dtype: int8
+      algorithm: minmax
+    activation:
+      granularity: per_tensor
+      scheme: asym
+      dtype: int8, fp32
+      algorithm: minmax, kl
+  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
+         'conv1': {
+           'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
+           'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
+         },
+         'pool1': {
+           'activation': {'dtype': ['int8'], 'scheme': ['sym'], 'granularity': ['per_tensor'], 'algorithm': ['minmax', 'kl']},
+         },
+         'conv2': {
+           'activation':  {'dtype': ['fp32']},
+           'weight': {'dtype': ['fp32']}
+         }
+       }
+
+evaluation:                                          # optional. used to config evaluation process.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+    metric:                                          # optional. used to evaluate accuracy of passing model.
+      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    configs:                                         # optional. if not specified, use all cores in 1 socket.
+      cores_per_instance: 28
+      num_of_instance: 1
+      inter_num_of_threads: 4
+      intra_num_of_threads: 28
+      kmp_blocktime: 1
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+      batch_size: 256
+      dataset:
+        TFRecordDataset:
+          root: /path/to/tf_record
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+  performance:                                       # optional. used to benchmark performance of passing model.
+    warmup: 10
+    iteration: 100
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+      inter_num_of_threads: 1
+      intra_num_of_threads: 4
+      kmp_blocktime: 1
+    dataloader:
+      dataset:
+        dummy:
+          shape: [[128, 3, 224, 224], [128, 1, 1, 1]]
+
+tuning:
+  strategy:
+    name: basic                                      # optional. default value is basic. other values are bayesian, mse.
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
+
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
+
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+  tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
+
+  workspace:
+    path: /path/to/saving/directory                  # optional. default workspace is ./lpot_workspace/$framework/$module_name/, saving tuning history and deploy yaml.
+    resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.

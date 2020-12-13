@@ -62,7 +62,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 
 
 ```
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: efficientnet_b0
   framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
 
@@ -83,8 +83,8 @@ quantization:                                        # optional. tuning constrai
             mean: [0.485, 0.456, 0.406]
             std: [0.229, 0.224, 0.225]
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -146,7 +146,7 @@ After prepare step is done, we just need update main.py like below.
 ```
 model.eval()
 model.fuse_model()
-from ilit import Quantization
+from lpot import Quantization
 quantizer = Quantization("./conf_efficientnet_b0.yaml")
 q_model = quantizer(model)
 ```

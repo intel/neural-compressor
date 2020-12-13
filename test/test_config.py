@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import yaml
 import os
-from ilit.conf import config as conf
+from lpot.conf import config as conf
 
 
 def helper(content):

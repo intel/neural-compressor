@@ -285,7 +285,7 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
 
     if args.tune:
-        from ilit import Quantization
+        from lpot import Quantization
         if args.ipex:
             quantizer = Quantization("./conf_ipex.yaml")
         else:
@@ -310,7 +310,7 @@ def main_worker(gpu, ngpus_per_node, args):
                                                 "best_configure.json")
             else:
                 model.fuse_model()
-                from ilit.utils.pytorch import load
+                from lpot.utils.pytorch import load
                 new_model = load(
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:

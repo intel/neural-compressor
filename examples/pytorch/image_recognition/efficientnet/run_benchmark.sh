@@ -12,9 +12,9 @@ function main {
 function init_params {
   iters=100
   if [ "${topology}" = "efficientnet_b0" ];then
-      tuned_checkpoint=ilit_workspace/pytorch/efficient_b0/checkpoint
+      tuned_checkpoint=lpot_workspace/pytorch/efficient_b0/checkpoint
   elif [ "${topology}" = "mobilenetv3_rw" ]; then
-      tuned_checkpoint=ilit_workspace/pytorch/mobilenetv3_rw/checkpoint
+      tuned_checkpoint=lpot_workspace/pytorch/mobilenetv3_rw/checkpoint
   fi
   batch_size=30
   for var in "$@"

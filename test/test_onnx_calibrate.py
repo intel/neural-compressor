@@ -7,11 +7,11 @@ from onnx import helper, TensorProto, numpy_helper
 
 
 sys.path.append('..')
-# from ilit.data.dataloaders.onnx_dataloader import ONNXDataLoader
-# from ilit.data.datasets.imagenet_dataset import ImagenetDataset
-# from ilit.data.transforms.imagenet_transform import ResizeCropImagenetTransform
-from ilit.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader
-from ilit.data.datasets.dataset import Dataset
+# from lpot.data.dataloaders.onnx_dataloader import ONNXDataLoader
+# from lpot.data.datasets.imagenet_dataset import ImagenetDataset
+# from lpot.data.transforms.imagenet_transform import ResizeCropImagenetTransform
+from lpot.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader
+from lpot.data.datasets.dataset import Dataset
 
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):

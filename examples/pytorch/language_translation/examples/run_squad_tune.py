@@ -669,7 +669,7 @@ def main():
                results.update(result)
 
             if args.tune:
-                def eval_func_for_ilit(model):
+                def eval_func_for_lpot(model):
                     result, _ = evaluate(args, model, tokenizer)
                     for key in sorted(result.keys()):
                         logger.info("  %s = %s", key, str(result[key]))
@@ -686,19 +686,19 @@ def main():
                 dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 eval_task = "squad"
-                from ilit import Quantization
+                from lpot import Quantization
                 quantizer = Quantization("./conf.yaml")
                 dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task,
                                             model_type=args.model_type)
                 test_dataloader = quantizer.dataloader(dataset, batch_size=args.eval_batch_size)
-                quantizer(model, test_dataloader, eval_func=eval_func_for_ilit)
+                quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
                 exit(0)
 
             if args.benchmark or args.accuracy_only:
                 model = model_class.from_pretrained(checkpoint, mix_qkv=True)
                 model.to(args.device)
                 if args.int8:
-                    from ilit.utils.pytorch import load
+                    from lpot.utils.pytorch import load
                     new_model = load(
                         os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
                 else:

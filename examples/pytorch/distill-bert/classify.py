@@ -196,16 +196,16 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
         # print(f"Accuracy: {total_accuracy}")
 
         if args.tune:
-            import ilit
-            # ilit tune
+            import lpot
+            # lpot tune
             model.load_state_dict(torch.load(args.input_model))
             eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
-            quantizer = ilit.Quantization(args.tuned_yaml)
+            quantizer = lpot.Quantization(args.tuned_yaml)
             q_model = quantizer(model, q_dataloader=eval_dataloader, eval_func=eval_func)
 
         elif args.int8:
-            from ilit.utils.pytorch import load
+            from lpot.utils.pytorch import load
             int8_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
             print(int8_model)
@@ -247,8 +247,8 @@ if __name__ == '__main__':
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_yaml", default='./blendcnn.yaml', type=str, metavar='PATH',
                         help='path to Intel® Low Precision Optimization Tool config file')
-    parser.add_argument("--tuned_checkpoint", default='./ilit_workspace/pytorch/blendcnn/checkpoint', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by  (default: ./ilit_workspace/pytorch/blendcnn/checkpoint)')
+    parser.add_argument("--tuned_checkpoint", default='./lpot_workspace/pytorch/blendcnn/checkpoint', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by  (default: ./lpot_workspace/pytorch/blendcnn/checkpoint)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run Intel® Low Precision Optimization Tool model benchmark')
     args = parser.parse_args()

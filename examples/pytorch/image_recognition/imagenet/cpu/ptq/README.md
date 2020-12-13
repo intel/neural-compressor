@@ -82,7 +82,7 @@ For Intel PyTorch Extension model(IPEX), LPOT only save IPEX configure file.
 ```python
 # Without IPEX
 model                 # fp32 model
-from ilit.utils.pytorch import load
+from lpot.utils.pytorch import load
 quantized_model = load(
     os.path.join(Path, 'best_configure.yaml'),
     os.path.join(Path, 'best_model_weights.pt'), model)
@@ -211,7 +211,7 @@ After prepare step is done, we just need update main.py like below.
 ```
 model.eval()
 model.module.fuse_model()
-from ilit import Quantization
+from lpot import Quantization
 quantizer = Quantization("./conf.yaml")
 q_model = quantizer(model)
 ```
@@ -256,7 +256,7 @@ Add 'backend' field to Yaml Configure and the same for other fields.
 2. Tuning With LPOT
 
 ```python
-  from ilit import Quantization
+  from lpot import Quantization
   quantizer = Quantization("./conf_ipex.yaml")
 ```
 

@@ -84,7 +84,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet50v1.0.yaml \
       --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
-      --output_model=./ilit_resnet50_v1.pb
+      --output_model=./lpot_resnet50_v1.pb
   ```
 
 ### 2. ResNet50 V1.5
@@ -97,7 +97,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet50v1.5.yaml \
-          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./ilit_resnet50_v15.pb
+          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./lpot_resnet50_v15.pb
   ```
 
 ### 3. ResNet101
@@ -111,7 +111,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet101.yaml \
       --input_model=/PATH/TO/resnet101_fp32_pretrained_model.pb \
-      --output_model=./ilit_resnet101.pb
+      --output_model=./lpot_resnet101.pb
   ```
 
 ### 4. MobileNet V1
@@ -125,7 +125,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=mobilenetv1.yaml \
       --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb \
-      --output_model=./ilit_mobilenetv1.pb
+      --output_model=./lpot_mobilenetv1.pb
   ```
 
 ### 5. MobileNet V2*
@@ -134,7 +134,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=mobilenetv2.yaml \
       --input_model=/PATH/TO/frozen_mobilenet_v2.pb \
-      --output_model=./ilit_mobilenetv2.pb
+      --output_model=./lpot_mobilenetv2.pb
   ```
 
 ### 6. Inception V1*
@@ -143,7 +143,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v1.yaml \
       --input_model=/PATH/TO/frozen_inception_v1.pb \
-      --output_model=./ilit_inceptionv1.pb
+      --output_model=./lpot_inceptionv1.pb
   ```
 
 ### 7. Inception V2*
@@ -152,7 +152,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v2.yaml \
       --input_model=/PATH/TO/frozen_inception_v2.pb \
-      --output_model=./ilit_inceptionv2.pb
+      --output_model=./lpot_inceptionv2.pb
   ```
 
 ### 8. Inception V3
@@ -166,7 +166,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v3.yaml \
       --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb \
-      --output_model=./ilit_inceptionv3.pb
+      --output_model=./lpot_inceptionv3.pb
   ```
 
 ### 9. Inception V4
@@ -180,7 +180,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v4.yaml \
       --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb \
-      --output_model=./ilit_inceptionv4.pb
+      --output_model=./lpot_inceptionv4.pb
   ```
 
 ### 10. Inception ResNet V2*
@@ -189,7 +189,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_resnet_v2.yaml \
       --input_model=/PATH/TO/frozen_inception_resnet_v2.pb \
-      --output_model=./ilit_irv2.pb
+      --output_model=./lpot_irv2.pb
   ```
 
 ### 11. VGG 16*
@@ -197,7 +197,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=vgg16.yaml \
-          --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./ilit_vgg16.pb
+          --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./lpot_vgg16.pb
   ```
 
 ### 12. VGG 19*
@@ -205,7 +205,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=vgg19.yaml \
-          --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./ilit_vgg19.pb
+          --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./lpot_vgg19.pb
   ```
 
 ### 13. ResNet v2 50
@@ -213,7 +213,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnetv2_50.yaml \
-          --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./ilit_resnetv2_50.pb
+          --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./lpot_resnetv2_50.pb
   ```
 
 ### 14. ResNet v2 101
@@ -221,7 +221,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnetv2_101.yaml \
-          --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./ilit_resnetv2_101.pb
+          --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./lpot_resnetv2_101.pb
   ```
 
 ### 15. ResNet v2 152
@@ -230,7 +230,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnetv2_152.yaml \
       --input_model=/PATH/TO/frozen_resnetv2_152.pb \
-      --output_model=./ilit_resnetv2_152.pb
+      --output_model=./lpot_resnetv2_152.pb
   ```
 
 ### 16. Densenet-121
@@ -238,7 +238,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet121.yaml \
-          --input_model=/PATH/TO/densenet121.pb --output_model=./ilit_densenet121
+          --input_model=/PATH/TO/densenet121.pb --output_model=./lpot_densenet121
   ```
 
 ### 17. Densenet-161
@@ -246,7 +246,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet161.yaml \
-          --input_model=/PATH/TO/densenet161.pb --output_model=./ilit_densenet161
+          --input_model=/PATH/TO/densenet161.pb --output_model=./lpot_densenet161
   ```
 
 ### 18. Densenet-169
@@ -254,7 +254,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
   ```Shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet169.yaml \
-          --input_model=/PATH/TO/densenet169.pb --output_model=./ilit_densenet169
+          --input_model=/PATH/TO/densenet169.pb --output_model=./lpot_densenet169
   ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
@@ -283,7 +283,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 # resnet50_v1_5.yaml
 
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50_v1_5
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: input_tensor
@@ -306,8 +306,8 @@ quantization:                                        # optional. tuning constrai
     activation:
       algorithm: minmax
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -353,7 +353,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 There are three preparation steps in here:
 1. Prepare environment
 ```shell
-pip install intel-tensorflow==1.15.2 ilit
+pip install intel-tensorflow==1.15.2 lpot
 ```
 2. Get the model source code
 ```shell
@@ -375,7 +375,7 @@ After completed preparation steps, we just need add a tuning part in `eval_class
     Returns:
         graph: it will return a quantized pb
     """
-    from ilit import Quantization
+    from lpot import Quantization
     quantizer = Quantization(self.args.config)
     q_model = quantizer(self.args.input_graph)
     return q_model

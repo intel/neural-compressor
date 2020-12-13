@@ -69,7 +69,7 @@ As SE_ResNext series are typical classification models, use Top-K as metric whic
 ### Write Yaml Config File
 In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
 ```
-model:                                               # mandatory. ilit uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: se_resnext
   framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
 
@@ -90,8 +90,8 @@ quantization:                                        # optional. tuning constrai
             mean: [0.485, 0.456, 0.406]
             std: [0.229, 0.224, 0.225]
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in ilit.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -136,7 +136,7 @@ tuning:
 
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited time for a tuning config meet accuracy target.
-> **Note** : ilit does NOT support "mse" tuning strategy for pytorch framework
+> **Note** : lpot does NOT support "mse" tuning strategy for pytorch framework
 
 ### Prepare
 PyTorch quantization requires two manual steps:
@@ -153,7 +153,7 @@ After prepare step is done, we just need update imagenet_eval.py like below
 if args.tune:
         model.eval()
         model.module.fuse_model()
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
         q_model = quantizer(model)
         return

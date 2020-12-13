@@ -2,7 +2,7 @@
 import numpy as np
 import unittest
 import os
-from ilit.data import TRANSFORMS, Dataset, DATASETS, DataLoader, dataset_registry
+from lpot.data import TRANSFORMS, Dataset, DATASETS, DataLoader, dataset_registry
 import sys
 
 class TestMetrics(unittest.TestCase):

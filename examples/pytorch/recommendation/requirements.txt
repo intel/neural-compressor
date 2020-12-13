@@ -2,7 +2,7 @@ future
 numpy
 onnx
 pydot
-ilit
+lpot
 scikit-learn
 pytorch-ignite
 tqdm

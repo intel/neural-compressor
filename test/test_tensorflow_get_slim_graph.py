@@ -4,7 +4,7 @@
 import unittest
 import os
 import tensorflow as tf
-from ilit.adaptor.tf_utils.util import get_slim_graph
+from lpot.adaptor.tf_utils.util import get_slim_graph
 
 class TestSlimCkptConvert(unittest.TestCase):
     inception_ckpt_url = 'http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz'

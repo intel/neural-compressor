@@ -205,14 +205,14 @@ if __name__ == "__main__":
                         help="use this to disable optimize_for_inference")
     parser.add_argument("--is_meta", action='store_true',
                         help="input a meta file")
-    parser.add_argument("--tune", action='store_true', help="Do ilit optimize.")
-    parser.add_argument("--benchmark", action='store_true', help="Do ilit optimize.")
-    parser.add_argument("--yaml", type=str, help="config yaml file of iLiT.",
+    parser.add_argument("--tune", action='store_true', help="Do lpot optimize.")
+    parser.add_argument("--benchmark", action='store_true', help="Do lpot optimize.")
+    parser.add_argument("--yaml", type=str, help="config yaml file of lpot.",
                         default='./config.yaml')
-    parser.add_argument("--timeline", type=str, help="timeline of ilit convert model",
+    parser.add_argument("--timeline", type=str, help="timeline of lpot convert model",
                         default='./timeline_json')
     parser.add_argument("--topology", type=str, help="topology")
-    parser.add_argument("--output_path", help="path of ilit convert model")
+    parser.add_argument("--output_path", help="path of lpot convert model")
 
     args = parser.parse_args()
 
@@ -284,8 +284,8 @@ if __name__ == "__main__":
 
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from ilit import Quantization
-        from ilit.adaptor.tf_utils.util import write_graph
+        from lpot import Quantization
+        from lpot.adaptor.tf_utils.util import write_graph
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.yaml, "./config_tmp.yaml", list(inputs.keys()), outputs)

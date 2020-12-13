@@ -237,7 +237,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_dir', type=str,
                         help='datseset path')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with ilit.')
+                        help='Get bert tuning quantization model with lpot.')
     parser.add_argument('--config',type=str, default=None,
                         help='Tuning config file path')
     parser.add_argument('--output_model',type=str, default=None,
@@ -264,8 +264,8 @@ if __name__ == "__main__":
     if args.benchmark:
         model = onnx.load(args.model_path)
         
-        from ilit.data.datasets.dummy_dataset import DummyDataset
-        from ilit.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
+        from lpot.data.datasets.dummy_dataset import DummyDataset
+        from lpot.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
         shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, args.max_seq_length)
         dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
         dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
@@ -296,7 +296,7 @@ if __name__ == "__main__":
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from ilit.quantization import Quantization
+        from lpot.quantization import Quantization
         quantize = Quantization(args.config)
         q_model = quantize(model, q_dataloader=eval_dataloader, eval_func=eval_func)
         onnx.save(q_model, args.output_model)

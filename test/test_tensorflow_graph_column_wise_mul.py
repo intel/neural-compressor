@@ -5,7 +5,7 @@ import unittest
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import graph_util
-from ilit.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
+from lpot.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 
 
 class TestColumnWiseMulFusion(unittest.TestCase):

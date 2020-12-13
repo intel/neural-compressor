@@ -149,7 +149,7 @@ def main():
     if args.tune:
         model.eval()
         model.module.fuse_model()
-        from ilit import Quantization
+        from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
         q_model = quantizer(model)
         return
@@ -158,7 +158,7 @@ def main():
         model.eval()
         model.module.fuse_model()
         if args.int8:
-            from ilit.utils.pytorch import load
+            from lpot.utils.pytorch import load
             new_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
