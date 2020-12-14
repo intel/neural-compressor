@@ -56,7 +56,7 @@ class MagnitudePrunePolicy(PrunePolicy):
                     self.masks[weight] = threshold < tensor
                 else:
                     tensor_flat = sorted(np.abs(tensor.flatten()))
-                    threshold = float(tensor_flat[int(tensor_flat.size * self.sparsity)])
+                    threshold = float(tensor_flat[int(len(tensor_flat) * self.sparsity)])
                     self.masks[weight] = threshold < np.abs(tensor)
 
     def on_epoch_end(self):

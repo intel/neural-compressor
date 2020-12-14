@@ -156,7 +156,8 @@ class Pruning(object):
 
         framework_specific_info = {'device': self.cfg.device,
                                    'approach': self.cfg.quantization.approach,
-                                   'random_seed': self.cfg.tuning.random_seed}
+                                   'random_seed': self.cfg.tuning.random_seed,
+                                   'q_dataloader': None}
         framework = self.cfg.model.framework.lower()
         if framework == 'tensorflow':
             framework_specific_info.update(
