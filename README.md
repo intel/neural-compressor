@@ -23,28 +23,9 @@ Supported Intel optimized DL frameworks are:
 * [PyTorch\*](https://pytorch.org/), including 1.5.0+cpu, 1.6.0+cpu
 * [Apache\* MXNet](https://mxnet.apache.org), including 1.6.0, 1.7.0
 
-Supported tuning strategies are:
-* [Basic](docs/tuning_strategies.md#basic)
-* [Bayesian](docs/tuning_strategies.md#bayesian)
-* [MSE](docs/tuning_strategies.md#mse)
-* [Exhaustive](docs/tuning_strategies.md#exhaustive)
-* [Random](docs/tuning_strategies.md#random)
-* [TPE - experimental](docs/tuning_strategies.md#TPE)
+# Installation
 
-# Documents
-
-* [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool's API.
-* [Hello World](examples/helloworld/README.md) demonstrates the simple steps to utilize Intel® Low Precision Optimization Tool for quantization to help you quickly use the tool.
-* [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features. Many [examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in TensorFlow, PyTorch, and MxNet for different categories.
-* [Strategies](docs/tuning_strategies.md) provides comprehensive configuration and usage information for every available tuning strategy.
-* [PTQ and QAT](docs/ptq_qat.md) explains how Intel® Low Precision Optimization Tool works with post-training quantization and quantization-ware training.
-* [Pruning on PyTorch](docs/pruning.md) explains how Intel® Low Precision Optimization Tool works with magnitude pruning on PyTorch.
-* [Tensorboard](docs/tensorboard.md) explains how Intel® Low Precision Optimization Tool helps developers analyze tensor distribution and its impact on final accuracy during the tuning process.
-* [Quantized Model Deployment on PyTorch](docs/pytorch_model_saving.md) explains how Intel® Low Precision Optimization Tool quantizes an FP32 PyTorch model, which includes saving and deploying the quantized model through "lpot utils".
-* [BF16 Mix-Precision on TensorFlow](docs/bf16_convert.md) explains how Intel® Low Precision Optimization Tool supports INT8/BF16/FP32 mix precision model tuning on the TensorFlow backend.
-* [Supported Model Types on TensorFlow](docs/tensorflow_model_support.md) describes the TensorFlow model types supported by Intel® Low Precision Optimization Tool.
-
-# Install from source
+*   Install from source
 
   ```Shell
   git clone https://github.com/intel/lpot.git
@@ -52,7 +33,7 @@ Supported tuning strategies are:
   python setup.py install
   ```
 
-# Install from binary
+*  Install from binary
 
   ```Shell
   # install from pip
@@ -61,6 +42,29 @@ Supported tuning strategies are:
   # install from conda
   conda install lpot -c intel -c conda-forge
   ```
+
+# Getting started
+
+* [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool's API.
+* [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples. 
+* [Examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: [TensorFlow](examples/tensorflow), [PyTorch](examples/pytorch), [MxNet](examples/mxnet) and [ONNX Runtime](examples/onnxrt).
+
+
+# Deep Dive
+* [Quantization](Quantization.md) is the processes that enable lower precision inference and training by performing computations at fixed point integers that are lower than floating points. LPOT support [PTQ (static and dynamic)](PTQ.md) and [QAT](QAT.md)
+* [Pruning](pruning.md) provides a common method for introducing sparsity in weights and activations.
+* Benchmarking
+* LPOT supports [Mixed precision](bf16_convert.md) including BFP16, int8 and FP32 on Intel platforms.
+* [Transform](transform.md) introduces the LPOT buildin preprocessing and how to utilize a custom preprocessing method. 
+* [Dataset](dataset.md) introudces how to utilize LPOT buildin [dataset](dataset.md) or integrate a custom [dataset](dataset.md).
+* [Metric](metric.md) introduces how to utilize LPOT buildin [metric](metric.md) or integrate with a custom [metric](metric.md) fuction.
+* [TensorBoard](tensorboard.md) provides histogram and graph for tuning debugging.
+
+
+# Advanced Topics
+* [Adaptor](docs/adaptor.md) is the interface between LPOT and framework. The method to develop adaptor extension is introduced with ONNX Runtime as example. 
+* [Strategy](docs/tuning_strategies.md) can automatically optimized low-precision recipes for deep learning models to achieve optimal product objectives like inference performance and memory usage with expected accuracy criteria. The method to develop a new strategy is introduced.
+
 
 # System Requirements
 
@@ -479,3 +483,4 @@ If you use Intel® Low Precision Optimization Tool in your research or you wish 
   year =         {2020}
 }
 ```
+
