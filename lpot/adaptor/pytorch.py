@@ -421,14 +421,14 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
 
 
 @adaptor_registry
-class TamplateAdaptor(Adaptor):
+class TemplateAdaptor(Adaptor):
     """Tample adaptor of PyTorch framework.
 
     Args:
         framework_specific_info (dict): dictionary of tuning configure from yaml file.
     """
     def __init__(self, framework_specific_info):
-        super(TamplateAdaptor, self).__init__(framework_specific_info)
+        super(TemplateAdaptor, self).__init__(framework_specific_info)
 
         # set torch random seed
         random_seed = framework_specific_info['random_seed']
@@ -589,7 +589,7 @@ class TamplateAdaptor(Adaptor):
 
     
 @adaptor_registry
-class PyTorchAdaptor(TamplateAdaptor):
+class PyTorchAdaptor(TemplateAdaptor):
     """Adaptor of PyTorch framework, all PyTorch API is in this class.
 
     Args:
@@ -1196,7 +1196,7 @@ class PyTorchAdaptor(TamplateAdaptor):
 
 
 @adaptor_registry
-class PyTorch_IPEXAdaptor(TamplateAdaptor):
+class PyTorch_IPEXAdaptor(TemplateAdaptor):
     """Adaptor of PyTorch framework with Intel PyTorch Extension,
        all PyTorch IPEX API is in this class.
 
