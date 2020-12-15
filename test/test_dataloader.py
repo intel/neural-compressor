@@ -1,9 +1,8 @@
 """Tests for the dataloader module."""
-import numpy as np
 import unittest
 import os
-from lpot.data import TRANSFORMS, Dataset, DATASETS, DataLoader, dataset_registry
-import sys
+import numpy as np
+from lpot.data import DATASETS, DataLoader
 
 class TestDataloader(unittest.TestCase):
     def test_iterable_dataset(self):

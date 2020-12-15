@@ -2,7 +2,6 @@ import sys
 import unittest
 import numpy as np
 import onnx
-import onnxruntime
 from onnx import helper, TensorProto, numpy_helper
 
 

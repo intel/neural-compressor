@@ -6,7 +6,6 @@ import os
 import tensorflow as tf
 
 from lpot.adaptor.tf_utils.util import read_graph
-from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from lpot.adaptor.tf_utils.graph_converter import GraphConverter
 from lpot.adaptor.tensorflow import TensorflowQuery
 class TestGraphLibraryDetection(unittest.TestCase):

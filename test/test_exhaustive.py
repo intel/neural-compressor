@@ -4,7 +4,6 @@ import unittest
 import os
 import yaml
 import tensorflow as tf
-import importlib
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -106,7 +105,6 @@ class TestQuantization(unittest.TestCase):
         os.rmdir('saved')
 
     def test_ru_exhaustive_one_trial(self):
-        from lpot.strategy import strategy
         from lpot import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')
@@ -119,7 +117,6 @@ class TestQuantization(unittest.TestCase):
         )
 
     def test_ru_exhaustive_max_trials(self):
-        from lpot.strategy import strategy
         from lpot import Quantization
 
         quantizer = Quantization('fake_yaml2.yaml')

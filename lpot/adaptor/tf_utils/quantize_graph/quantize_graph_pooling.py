@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from lpot.adaptor.tf_utils.util import write_graph
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 

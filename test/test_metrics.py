@@ -1,7 +1,6 @@
 """Tests for the metrics module."""
 import numpy as np
 import unittest
-import os
 from lpot.metric import METRICS
 from lpot.metric.f1 import evaluate
 

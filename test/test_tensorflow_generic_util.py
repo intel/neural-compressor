@@ -3,7 +3,6 @@
 #
 import unittest
 import os
-import tensorflow as tf
 from lpot.adaptor.tf_utils.util import get_graph_def
 
 

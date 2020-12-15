@@ -4,7 +4,7 @@
 import unittest
 import os
 import tensorflow as tf
-from lpot.adaptor.tf_utils.util import parse_savedmodel_model, is_saved_model_format, get_graph_def
+from lpot.adaptor.tf_utils.util import parse_savedmodel_model, is_saved_model_format
 
 
 class TestSavedModelToPbConvert(unittest.TestCase):

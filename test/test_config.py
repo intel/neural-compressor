@@ -1,7 +1,5 @@
 """Tests for config file"""
 import unittest
-import numpy as np
-import yaml
 import os
 from lpot.conf import config as conf
 

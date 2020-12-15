@@ -66,17 +66,6 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
 
-    def can_fused_ops(self, start_node):
-        registered_transformer = self.transformers[start_node.op][0]
-        worker = registered_transformer(
-            self.input_graph, self.output_node_names,
-            False, start_node.name, self.device, False)
-        can_fused_nodes = worker.get_longest_fuse()
-        if isinstance(can_fused_nodes, tuple):
-            return can_fused_nodes[1]
-
-        return []
-
     @dump_elapsed_time("Pass Quantization")
     def do_transform(self):
         count = 0
@@ -113,5 +102,5 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                             node.name, self.device,
                             self.op_wise_config[node.name][2])
                         self.input_graph = worker.apply_the_transform()
-        
+
         return self.remove_dead_nodes(self.input_graph, self.output_node_names)

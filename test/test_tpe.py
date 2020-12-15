@@ -111,7 +111,6 @@ class TestQuantization(unittest.TestCase):
             print("Error while deleting file ")
 
     def test_run_tpe_one_trial(self):
-        from lpot.strategy import strategy
         from lpot import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')
@@ -124,7 +123,6 @@ class TestQuantization(unittest.TestCase):
         )
 
     def test_run_tpe_max_trials(self):
-        from lpot.strategy import strategy
         from lpot import Quantization
 
         quantizer = Quantization('fake_yaml2.yaml')

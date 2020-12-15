@@ -3,9 +3,6 @@ import numpy as np
 import unittest
 import os
 import yaml
-import tensorflow as tf
-import importlib
-import shutil
      
 def build_fake_yaml():
     fake_yaml = '''

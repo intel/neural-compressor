@@ -4,7 +4,6 @@ import unittest
 import os
 import yaml
 import tensorflow as tf
-import importlib
 import shutil
 tf.compat.v1.disable_eager_execution()
 
@@ -81,7 +80,6 @@ class TestTensorboard(unittest.TestCase):
         shutil.rmtree("runs/")
 
     def test_run_basic_one_trial(self):
-        from lpot.strategy import strategy
         from lpot import Quantization
 
         quantizer = Quantization('fake_yaml.yaml')

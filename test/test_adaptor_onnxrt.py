@@ -2,12 +2,10 @@ import os
 import shutil
 import unittest
 
-import numpy as np
 import torch
 import torchvision
 import yaml
 import onnx
-from transformers import BertForSequenceClassification
 
 from lpot.adaptor import FRAMEWORKS
 

@@ -1,14 +1,12 @@
-import os
 import sys
 import onnx
-import onnxruntime
 from onnx import helper, TensorProto, numpy_helper
 import unittest
 import numpy as np
 
 sys.path.append('..')
 from lpot.adaptor.ox_utils.onnx_model import ONNXModel
-from lpot.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader
+from lpot.adaptor.ox_utils.onnx_calibrate import CalibrationDataReader
 
 def get_onnx_model():
     model = torchvision.models.resnet18()
