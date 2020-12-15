@@ -78,6 +78,9 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
             if node_name in not_found:
                 not_found.remove(node_name)
                 node = graph_info[node_name].node
+                # skip the convertion to Placeholder that with type list
+                if 'component_types' in node.attr:
+                    continue
                 original_output = graph_info[node_name].outputs
                 placeholder_node = node_def_pb2.NodeDef()
                 placeholder_node.op = "Placeholder"

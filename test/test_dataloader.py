@@ -5,7 +5,18 @@ import os
 from lpot.data import TRANSFORMS, Dataset, DATASETS, DataLoader, dataset_registry
 import sys
 
-class TestMetrics(unittest.TestCase):
+class TestDataloader(unittest.TestCase):
+    def test_iterable_dataset(self):
+        class iter_dataset(object):
+            def __iter__(self):
+                for i in range(100):
+                    yield np.zeros([256, 256, 3])
+        dataset = iter_dataset()
+        data_loader = DataLoader('tensorflow', dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (1, 256, 256, 3))
+        
     def test_tensorflow_dummy(self):
         datasets = DATASETS('tensorflow')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
