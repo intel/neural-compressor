@@ -1,7 +1,7 @@
 Cython
 contextlib2
 pillow>=7.1.0
-lxml
+lxml>=4.6.2
 jupyter
 matplotlib
 numpy==1.17.4
