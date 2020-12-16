@@ -11,7 +11,7 @@ from lpot.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import Stri
 from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
 from lpot.adaptor.tensorflow import TensorflowQuery
-
+from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -167,6 +167,14 @@ class TestGraphConvFusion(unittest.TestCase):
     def tearDownClass(self):
         os.system(
             'rm -rf {}'.format(self.pb_path))
+
+    def test_identify_input_output(self):
+        g = GraphAnalyzer()
+        g.graph = self.input_graph
+        g.parse_graph()
+        input, output = g.get_graph_input_output()
+        self.assertEqual(input, self.inputs)
+        self.assertEqual(output, self.outputs)
 
     def test_conv_biasadd_relu_fusion(self):
         tf.compat.v1.disable_eager_execution()
