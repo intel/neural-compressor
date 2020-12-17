@@ -32,14 +32,17 @@ from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 
 class PreOptimization(object):
-    def __init__(self, model, inputs_name, outputs_name):
-        self.input_graph = get_graph_def(model, outputs_name)
+    def __init__(self, model, inputs, outputs):
+        self.output_names = list(set([output.split(":")[0] for output in outputs]))
+        self.input_graph = get_graph_def(model, self.output_names)
+        if 'MakeIterator' in [node.op for node in self.input_graph.node]:
+            self.output_names.append('MakeIterator')
 
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = self.input_graph
         self.analyzer.parse_graph()
-        self.inputs = inputs_name
-        self.outputs = outputs_name
+        self.inputs = inputs
+        self.outputs = outputs
         self.logger = logging.getLogger()
         self._tmp_graph_def = None
         # self.tf_version = tf.version.VERSION
@@ -73,10 +76,10 @@ class PreOptimization(object):
         self.logger.debug("Start to pre optimize input model...")
         
         self._tmp_graph_def = ConvertLayoutOptimizer(
-            self.input_graph, self.outputs).do_transformation()
+            self.input_graph, self.output_names).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=self.outputs).do_transformation()
+            self._tmp_graph_def, protected_nodes=self.output_names).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -85,7 +88,7 @@ class PreOptimization(object):
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
-                                                        self.outputs).do_transformation()
+                                                        self.output_names).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
 

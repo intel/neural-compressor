@@ -42,11 +42,13 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
     def do_transformation(self):
         convert = False
         for node in self.model.node:
-            if 'data_format' in node.attr and node.attr['data_format'].s == b'NCHW':
+            if 'Conv' in node.op and \
+               'data_format' in node.attr and \
+               node.attr['data_format'].s == b'NCHW':
                 convert = True
                 break
         if convert:
-            assert tf.version.VERSION >= '2.4.0', 'layout convert is only supportde by \
+            assert tf.version.VERSION >= '2.4.0', 'layout convert is only supported by \
                                                             tensorflow 2.4.0 and above'
 
             g = tf.Graph()

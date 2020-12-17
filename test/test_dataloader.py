@@ -2,6 +2,7 @@
 import unittest
 import os
 import numpy as np
+from lpot.utils.create_obj_from_config import create_dataset
 from lpot.data import DATASETS, DataLoader
 
 class TestDataloader(unittest.TestCase):
@@ -15,6 +16,36 @@ class TestDataloader(unittest.TestCase):
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
+    def test_tensorflow_imagenet_dataset(self):
+        import tensorflow as tf
+        from PIL import Image
+        tf.compat.v1.disable_eager_execution() 
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test.jpeg')
+
+        image = tf.compat.v1.gfile.FastGFile('test.jpeg','rb').read()
+
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'image/encoded':tf.train.Feature(
+                    bytes_list=tf.train.BytesList(value=[image])),
+            'image/class/label':tf.train.Feature(
+                    int64_list=tf.train.Int64List(value=[1])),
+        }))
+
+        with tf.io.TFRecordWriter('validation-00000-of-00000') as writer:
+            writer.write(example.SerializeToString())
+
+        eval_dataset = create_dataset(
+            'tensorflow', {'Imagenet':{'root':'./'}}, {'ParseDecodeImagenet':{}})
+        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1) 
+        for (inputs, labels) in dataloader:
+            self.assertEqual(inputs.shape, (1,100,100,3))
+            self.assertEqual(labels.shape, (1, 1))
+
+        os.remove('validation-00000-of-00000')
+        os.remove('test.jpeg')
         
     def test_tensorflow_dummy(self):
         datasets = DATASETS('tensorflow')

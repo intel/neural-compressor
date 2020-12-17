@@ -466,7 +466,8 @@ class GraphConverter:
             self._tmp_graph_def, non_pad_ops, self.inputs, self.op_wise_config).do_transformation()
 
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
-                                                                     self.inputs, self.outputs)
+                                                                     self.inputs,
+                                                                     self.output_names)
         intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.output_names,
                                                 self.op_wise_config, self.int8_sequences,
                                                 self.device)
