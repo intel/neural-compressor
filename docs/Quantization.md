@@ -10,6 +10,8 @@ Quantization methods include the following three classes:
 
 Intel® Low Precision Optimization Tool currently supports PTQ and QAT. Using MobileNetV2 as an example, this document provides tutorials for both. It also provides helper functions for evaluation.
 
+Dynamic Quantization currently is only supported with onnxruntime backend, please refer to [dynamic quantization](./dynamic_quantization.md) for details.
+
 >Note: These quantization tutorials use [PyTorch examples](https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html#model-architecture) as allowed by PyTorch's [License](https://github.com/pytorch/pytorch/blob/master/LICENSE). Refer to [PyTorch](https://github.com/pytorch/tutorials/blob/master/advanced_source/static_quantization_tutorial.py) for updates.
 
 

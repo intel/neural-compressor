@@ -1,10 +1,11 @@
 # Evaluate performance of ONNX Runtime(ResNet 50) 
+>ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
 
 This example load an image classification model exported from PyTorch and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads). You need to download this dataset yourself.
 
 ### Environment
 onnx: 1.7.0
-onnxruntime: 1.5.2
+onnxruntime: 1.6.0+
 
 ### Prepare model
 Please refer to [pytorch official guide](https://pytorch.org/docs/stable/onnx.html) for detailed model export. The following is a simple example:
@@ -32,11 +33,10 @@ torch.onnx.export(model,               # model being run
 ### Evaluating
 To evaluate the model, run `main.py` with the path to the model:
 
-```cmd
-python main.py --model_path path/to/model  # model pat as *.onnx
-               --benchmark                 # (Optional) whether to get benchmark results
-               --tune                      # (Optional) whether to tune a model meeting requirements
-               --config resnet50_v1_5.yaml # (Needed if tune or benchmark)
+```bash
+bash run_tuning.sh --input_model path/to/model  # model path as *.onnx
+                   --config resnet50_v1_5.yaml 
+                   --output_model path/to/save
 ```
 ### Advanced 
 Usually we need to bind the program to specific cores like 4 cores to get performance under real production environments.   
@@ -47,11 +47,4 @@ export OMP_NUM_THREADS=4
 numactl --physcpubind=0-3 --membind=0 python main.py --model_path path/to/model --benchmark
 --tune  --config resnet50_v1_5.yaml 
 ```
-
-**for windows**
-```cmd
-start /wait  /b /node /affinity f python main.py --model_path path/to/model --benchmark
---tune  --config resnet50_v1_5.yaml 
-```
-You can refer to [windows doc](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/start) for detailed instruction.
 
