@@ -15,7 +15,7 @@
   
   capabilities: &default_capabilities
     int8: &cap_default_s8 {
-          'Conv2d': &cap_s8_1_6_Conv2d {
+          'Convolution': &cap_s8_default_Conv2d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -29,7 +29,7 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'Linear': *cap_s8_1_6_Conv2d,
+          'Linear': *cap_s8_default_Conv2d,
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],

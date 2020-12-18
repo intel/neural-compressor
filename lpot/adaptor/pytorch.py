@@ -81,24 +81,26 @@ def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
     for key in tune_cfg['op']:
         value = tune_cfg['op'][key]
         assert isinstance(value, dict)
-        assert 'weight' in value
         assert 'activation' in value
         if value['activation']['dtype'] == 'fp32':
-            assert value['weight']['dtype'] == 'fp32'
+            if 'weight' in value:
+                assert (value['weight']['dtype'] == 'fp32')
             op_qcfgs[key] = None
         else:
-            weight = value['weight']
+            weights_fake_quantize = None
+            weights_observer = None
+            if 'weight' in value:
+                weight = value['weight']
+                scheme = weight['scheme']
+                granularity = weight['granularity']
+                algorithm = weight['algorithm']
+                dtype = weight['dtype']
+                if is_insert_fakequant:
+                    weights_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
+                else:
+                    weights_observer = _observer(algorithm, scheme, granularity, dtype)
+
             activation = value['activation']
-
-            scheme = weight['scheme']
-            granularity = weight['granularity']
-            algorithm = weight['algorithm']
-            dtype = weight['dtype']
-            if is_insert_fakequant:
-                weights_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
-            else:
-                weights_observer = _observer(algorithm, scheme, granularity, dtype)
-
             scheme = activation['scheme']
             granularity = activation['granularity']
             algorithm = activation['algorithm']
@@ -246,8 +248,8 @@ def _propagate_qconfig(model, op_qcfgs):
     WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
         - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
     for k, v in op_qcfgs.items():
-        if v is None and k[1] != str(torch.quantization.QuantStub) \
-                and k[1] != str(torch.quantization.DeQuantStub):
+        if v is None and k[1] != 'QuantStub' \
+                and k[1] != 'DeQuantStub':
             fallback_ops.append(k[0])
         else:
             if v is None:
@@ -422,6 +424,7 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
 
 @adaptor_registry
 class TemplateAdaptor(Adaptor):
+    unify_op_type_mapping = None
     """Tample adaptor of PyTorch framework.
 
     Args:
@@ -441,7 +444,7 @@ class TemplateAdaptor(Adaptor):
         self.benchmark = framework_specific_info['benchmark'] \
             if 'benchmark' in framework_specific_info else False
         self.is_baseline = True if not self.benchmark else False
-        self.capability = None
+        self.query_handler = None
 
         if framework_specific_info['approach'] == "post_training_static_quant":
             self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
@@ -477,15 +480,18 @@ class TemplateAdaptor(Adaptor):
         """
         quantizable_ops = []
         self._get_quantizable_ops_recursively(model, '', quantizable_ops)
+        capability = self.query_handler.get_quantization_capability()['int8']
 
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
 
         for q_op in quantizable_ops:
-            q_capability['opwise'][q_op] = copy.deepcopy(self.capability)
+            q_capability['opwise'][q_op] = copy.deepcopy(capability[q_op[1]]) \
+                if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
             if q_op[1] not in q_capability['optypewise'].keys():
-                q_capability['optypewise'][q_op[1]] = copy.deepcopy(self.capability)
+                q_capability['optypewise'][q_op[1]] = copy.deepcopy(capability[q_op[1]]) \
+                    if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
 
         return q_capability
 
@@ -590,6 +596,13 @@ class TemplateAdaptor(Adaptor):
     
 @adaptor_registry
 class PyTorchAdaptor(TemplateAdaptor):
+    unify_op_type_mapping = {
+        "ConvReLU2d": "Conv2d",
+        "ConvReLU3d": "Conv3d",
+        "LinearReLU": "Linear",
+        "ConvBn2d": "Conv2d",
+        "ConvBnReLU2d": "Conv2d"
+    }
     """Adaptor of PyTorch framework, all PyTorch API is in this class.
 
     Args:
@@ -639,7 +652,6 @@ class PyTorchAdaptor(TemplateAdaptor):
             assert False, "Unsupport this device {}".format(self.device)
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
-        self.capability = self.query_handler.get_quantization_capability()["uint8"]["Conv2d"]
 
         self.white_list = \
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
@@ -814,7 +826,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         for name, child in model.named_children():
             op_name = prefix + name
             if type(child) in self.white_list:
-                quantizable_ops.append((op_name, str(type(child))))
+                quantizable_ops.append((
+                    op_name, self.unify_op_type_mapping[str(child.__class__.__name__)]
+                    if str(child.__class__.__name__) in self.unify_op_type_mapping else
+                    str(child.__class__.__name__)))
             else:
                 self._get_quantizable_ops_recursively(
                     child, op_name + '.', quantizable_ops)
@@ -1197,6 +1212,12 @@ class PyTorchAdaptor(TemplateAdaptor):
 
 @adaptor_registry
 class PyTorch_IPEXAdaptor(TemplateAdaptor):
+    unify_op_type_mapping = {
+        "Convolution_Relu": "Convolution",
+        "Convolution_Sum_Relu": "Convolution",
+        "Convolution_BatchNorm": "Convolution",
+        "Linear_Relu": "Linear"
+    }
     """Adaptor of PyTorch framework with Intel PyTorch Extension,
        all PyTorch IPEX API is in this class.
 
@@ -1211,7 +1232,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         self.script_model = None
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
-        self.capability = self.query_handler.get_quantization_capability()["uint8"]["Conv2d"]
 
         self.ipex_config_path = \
             os.path.join(self.workspace_path, 'ipex_config_tmp.json')
@@ -1268,8 +1288,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             ipex_conf = ipex.AmpConf(torch.int8, configure_file=self.ipex_config_path)
             self.model_calibration(q_model, dataloader, iterations, conf=ipex_conf)
             ipex_conf.save(self.ipex_config_path)
-        elif self.approach == 'quant_aware_training':
-                assert False, "Intel PyTorch Extension didn't support \
+
+        assert self.approach != 'quant_aware_training', "Intel PyTorch Extension didn't support \
                                quantization aware training mode"
         return q_model
 
@@ -1313,10 +1333,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             for key in tune_cfg['op']:
                 value = tune_cfg['op'][key]
                 assert isinstance(value, dict)
-                assert 'weight' in value
                 assert 'activation' in value
                 if value['activation']['dtype'] == 'fp32':
-                    assert value['weight']['dtype'] == 'fp32'
+                    if 'weight' in value:
+                        assert value['weight']['dtype'] == 'fp32'
                     for op_cfg in cfgs:
                         if op_cfg["id"] == key[0]:
                             op_cfg["quantized"] = False
@@ -1428,7 +1448,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         with open(self.ipex_config_path, 'r') as f:
             cfgs = json.load(f)
             for op_cfg in cfgs:
-                quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
+                quantizable_ops.append((op_cfg["id"],
+                                       self.unify_op_type_mapping[op_cfg["name"]]
+                                       if op_cfg["name"] in self.unify_op_type_mapping else
+                                       op_cfg["name"]))
 
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path):
@@ -1453,7 +1476,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             logger.error("Unable to save configure file. %s" % e)
 
 
-@singleton
 class PyTorchQuery(QueryBackendCapability):
 
     def __init__(self, local_config_file=None):

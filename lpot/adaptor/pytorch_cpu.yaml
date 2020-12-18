@@ -18,7 +18,7 @@
   
   capabilities: &default_capabilities
     int8: &cap_s8_1_6 {
-          'Conv2d': &cap_s8_1_6_Conv2d {
+          'Conv1d': &cap_s8_1_6_Conv1d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['asym', 'sym'],
@@ -32,13 +32,15 @@
                         'algorithm': ['kl', 'minmax']
                         },
                     },
-          'Linear': *cap_s8_1_6_Conv2d,
+          'Linear': *cap_s8_1_6_Conv1d,
+          'Conv2d': *cap_s8_1_6_Conv1d,
+          'Conv3d': *cap_s8_1_6_Conv1d,
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['kl', 'minmax']
+                        'algorithm': ['kl']
                         }
                     },
           }

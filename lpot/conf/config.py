@@ -406,6 +406,30 @@ class Conf(object):
 
         return self._model_wise_tune_space
 
+    def _weight_compute(self, combined_cfg):
+        temp_set = set()
+        for _, config in combined_cfg.items():
+            temp_str = ''
+            for part, params in config.items():
+                temp_str = temp_str + part
+                for _, param in params.items():
+                    temp_str += param
+                temp_str += '_'
+            temp_set.add(temp_str)
+        return len(temp_set)
+
+    def _sort_cfgs(self, combined_cfgs):
+        cfgs_num = len(combined_cfgs)
+        for i in range(cfgs_num):
+            for j in range(cfgs_num-i-1):
+                weight_a = self._weight_compute(combined_cfgs[j])
+                weight_b = self._weight_compute(combined_cfgs[j+1])
+                if weight_a > weight_b:
+                    temp = combined_cfgs[j]
+                    combined_cfgs[j] = combined_cfgs[j+1]
+                    combined_cfgs[j+1] = temp
+        return combined_cfgs
+
     def _combine_optype_quant_cfgs(self, model_wise_quant_cfgs):
         if len(model_wise_quant_cfgs) == 0:
             return []
@@ -414,7 +438,7 @@ class Conf(object):
             if len(cfgs) > 0:
                 temp_cfgs[optype] = copy.deepcopy(cfgs)
         keys, values = zip(*temp_cfgs.items())
-        return [dict(zip(keys, v)) for v in itertools.product(*values)]
+        return self._sort_cfgs([dict(zip(keys, v)) for v in itertools.product(*values)])
 
     def opwise_tune_space(self, opwise_quant):
         opwise = copy.deepcopy(opwise_quant)
