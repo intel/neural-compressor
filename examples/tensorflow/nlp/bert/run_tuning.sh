@@ -39,6 +39,7 @@ function run_tuning {
       --vocab_file=${dataset_location}/vocab.txt \
       --bert_config_file=${dataset_location}/bert_config.json \
       --predict_file=${dataset_location}/dev-v1.1.json \
+      --label_file=${dataset_location}/dev-v1.1.json \
       --max_seq_length=384 \
       --doc_stride=128 \
       --output_model=${output_model} \

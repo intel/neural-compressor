@@ -11,10 +11,11 @@ This document is used to list steps of reproducing TensorFlow Intel® Low Precis
 # Install Intel® Low Precision Optimization Tool
 pip instal lpot
 ```
-### 2. Install Intel Tensorflow 1.15up2
-```shell
-pip intel-tensorflow==1.15up2
-```
+### 2. Install Intel Tensorflow 1.15 up2
+Check your python version and use pip install 1.15.0 up2 from links below:
+https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl                
+https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
+https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
 
 ### 3. Prepare Dataset
 wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip

@@ -78,7 +78,7 @@ flags.DEFINE_string(
     "SQuAD json for predictions. E.g., dev-v1.1.json or test-v1.1.json")
 
 flags.DEFINE_string(
-    "label_file", './dataset/squad_v1/dev-v1.1.json',
+    "label_file", None,
     "SQuAD json for predictions. E.g., dev-v1.1.json or test-v1.1.json")
 
 flags.DEFINE_string(
@@ -1321,10 +1321,17 @@ class FeatureWriter(object):
   """Writes InputFeature to TF example file."""
 
   def __init__(self, filename, is_training):
-    self.filename = filename
+    self._filename = filename
     self.is_training = is_training
     self.num_features = 0
     self._writer = tf.io.TFRecordWriter(filename)
+
+  @property
+  def filename(self):
+    from shutil import copyfile
+    self.tmp_file_name = 'tmp_{}.record'.format(time.time())
+    copyfile(self._filename, self.tmp_file_name)
+    return self.tmp_file_name
 
   def process_feature(self, feature):
     """Write a InputFeature to the TFRecordWriter as a tf.train.Example."""
@@ -1354,6 +1361,7 @@ class FeatureWriter(object):
 
   def close(self):
     self._writer.close()
+    os.remove(self.tmp_file_name)
 
 
 def validate_flags_or_throw(bert_config):
@@ -1522,7 +1530,6 @@ def main(_):
         is_training=False,
         output_fn=append_feature)
 
-    eval_writer.close()
 
     tf.compat.v1.logging.info("***** Running predictions *****")
     tf.compat.v1.logging.info("  Num orig examples = %d", len(eval_examples))
@@ -1669,6 +1676,7 @@ def main(_):
         from lpot.adaptor.tf_utils.util import write_graph
         write_graph(q_model.as_graph_def(), FLAGS.output_model)
         tf.logging.info("lpot tune done.....")
+    eval_writer.close()
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("vocab_file")
