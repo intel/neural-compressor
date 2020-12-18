@@ -116,10 +116,12 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                     self.graph_info[new_node.input[2]].node.attr['value'].tensor)
                 bias_length = bias_tensor.shape[0]
                 scales = []
+                activation_range = 127.0 if new_node.attr["Tinput"].type == dtypes.qint8 else 255.0
+                weights_range = 127.0
                 for i in range(channel_size):
-                    scales.append(255.0 * 127.0 /
-                                  (max(abs(max_input), abs(min_input)) *
-                                   max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
+                    scales.append(activation_range * weights_range/
+                                   (max(abs(max_input), abs(min_input)) *
+                                    max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
 
                 int32_bias = []
                 if channel_size > 1:
