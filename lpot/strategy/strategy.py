@@ -268,6 +268,8 @@ class TuneStrategy(object):
 
             trials_count = 0
             for tune_cfg in self.next_tune_cfg():
+                # add tune_cfg here as quantize use tune_cfg
+                tune_cfg['advance'] = self.cfg.quantization.advance
                 trials_count += 1
                 tuning_history = self._find_tuning_history(tune_cfg)
                 if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:

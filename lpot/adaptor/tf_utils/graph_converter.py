@@ -31,8 +31,10 @@ from lpot.utils.utility import get_tensor_histogram
 from lpot.utils.utility import combine_histogram
 from lpot.utils.utility import CaptureOutputToFile
 from lpot.utils.utility import str2array
+from lpot.conf.dotdict import deep_get
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
+from .transform_graph.bias_correction import BiasCorrection
 from .util import write_graph
 from .util import get_graph_def
 from .util import get_tensor_by_name, iterator_sess_run
@@ -95,6 +97,7 @@ class GraphConverter:
         # quantize specific config
         self.calib_iteration = qt_config['calib_iteration']
         self.op_wise_config = qt_config['op_wise_config']
+        self.advance_config = deep_get(qt_config, 'advance')
         self.device = qt_config['device'] if 'device' in qt_config else 'cpu'
         self.int8_sequences = int8_sequences
         self.fp32_ops = fp32_ops
@@ -568,7 +571,14 @@ class GraphConverter:
             self._tmp_graph_def, protected_nodes=self.output_names).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-        RerangeQuantizedConcat(self._tmp_graph_def, self.device).do_transformation()
+
+        self._tmp_graph_def = RerangeQuantizedConcat(
+            self._tmp_graph_def, self.device).do_transformation()
+
+        if self.advance_config is not None and \
+           deep_get(self.advance_config, 'bias_correction') is not None:
+            self._tmp_graph_def = BiasCorrection(
+                self._tmp_graph_def, self.input_graph).do_transformation()
 
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
 

@@ -24,6 +24,7 @@ from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton
 from ..utils import logger
+from ..conf.dotdict import deep_get
 tensorflow = LazyImport('tensorflow')
 
 
@@ -255,6 +256,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         self.quantize_config['device'] = self.device
+        self.quantize_config['advance'] = deep_get(tuning_cfg, 'advance')
         fp32_ops = []
         bf16_ops = []
         for each_op_info in tuning_cfg['op']:

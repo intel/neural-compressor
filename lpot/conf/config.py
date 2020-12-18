@@ -214,6 +214,9 @@ schema = Schema({
             lambda s: s in ['post_training_static_quant', 
                             'post_training_dynamic_quant',
                             'quant_aware_training']),
+        Optional('advance', default=None): {
+            Optional('bias_correction'): And(str, lambda s: s in ['weight_empirical']),
+        },
         Optional('calibration', default={'sampling_size': [100]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema
