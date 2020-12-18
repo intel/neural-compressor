@@ -1,0 +1,13 @@
+Cython
+numpy
+pandas
+pyyaml
+scikit-learn
+scikit-image
+matplotlib
+schema
+py-cpuinfo
+hyperopt
+contextlib2
+pycocotools-windows; sys_platform != 'linux'
+pycocotools; sys_platform == 'linux'

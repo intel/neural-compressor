@@ -23,9 +23,20 @@ Supported Intel optimized DL frameworks are:
 * [PyTorch\*](https://pytorch.org/), including 1.5.0+cpu, 1.6.0+cpu
 * [Apache\* MXNet](https://mxnet.apache.org), including 1.6.0, 1.7.0
 
-# Installation
 
-*   Install from source
+# Installation
+## Install for Linux
+### Install from binary
+
+  ```Shell
+  # install from pip
+  pip install lpot
+
+  # install from conda
+  conda install lpot -c conda-forge -c intel 
+  ```
+
+### Install from source
 
   ```Shell
   git clone https://github.com/intel/lpot.git
@@ -33,15 +44,44 @@ Supported Intel optimized DL frameworks are:
   python setup.py install
   ```
 
-*  Install from binary
-
+## Install for Windows
+### Install from binary
   ```Shell
   # install from pip
   pip install lpot
 
   # install from conda
-  conda install lpot -c intel -c conda-forge
+  conda install lpot -c conda-forge -c intel 
   ```
+### Install from source
+
+#### **Prerequisites**
+
+The following prerequisites and requirements must be satisfied in order for the to install successfully：
+
+- Python version: 3.6 or 3.7 or 3.8
+
+- Download and install anaconda: [anaconda](https://anaconda.org/)
+
+- Download [Visual C++ >= 2015](https://visualstudio.microsoft.com/zh-hans/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15#) and then install Visual C++ in default settings.
+
+- Create a virtual environment named lpot in anaconda:
+    ```shell
+    # Here we install python 3.7 for instance. You can also choose python 3.6 & 3.8.
+    conda create -n lpot python=3.7
+    conda activate lpot
+    ```
+
+#### **Installation Procedure**
+
+Install lpot from source:
+
+```shell
+git clone https://github.com/intel/lpot.git
+cd lpot
+pip install -r requirements.txt
+python setup.py install
+```
 
 # Getting started
 
