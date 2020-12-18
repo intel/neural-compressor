@@ -67,6 +67,7 @@ function run_benchmark {
             extra_cmd=$extra_cmd" --int8"
         fi
         extra_cmd=$extra_cmd" --ipex"
+        tuned_checkpoint=lpot_workspace/pytorch_ipex/imagenet/checkpoint
         topology=${topology%*${topology:(-5)}}
     else
         sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
