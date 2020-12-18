@@ -412,6 +412,7 @@ def get_graph_def(model, outputs=[]):
             # tf2.x checkpoint only save weight and do not contain any
             # description of the computation, so we drop tf2.x checkpoint support
             ckpt_prefix = is_ckpt_format(model)
+            assert outputs
             if ckpt_prefix is not None:
                 graph_def = parse_ckpt_model(
                     os.path.join(model, ckpt_prefix), outputs)

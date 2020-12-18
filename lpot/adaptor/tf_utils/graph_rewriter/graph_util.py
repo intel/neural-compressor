@@ -110,7 +110,8 @@ class GraphAnalyzer(object):
         input_node_names = []
         output_node_names = []
         unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
-                                 'global_step', 'read', 'switch', 'cond', 'train', 'init_ops']
+                                'global_step', 'read', 'switch', 'cond', 'train',
+                                'init_ops', 'Identity']
 
         for _, i in self.node_name_details.items():
             if i.node.op == 'Const':

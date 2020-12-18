@@ -45,12 +45,14 @@ class TensorFlowAdaptor(Adaptor):
 
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
-        self.inputs = self.framework_specific_info['inputs']
-        self.outputs = self.framework_specific_info['outputs']
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.pre_optimized_graph = None
         self.pre_optimizer_handle = None
+        self.inputs = self.framework_specific_info['inputs'] if 'inputs' in \
+            self.framework_specific_info else []
+        self.outputs = self.framework_specific_info['outputs'] if 'outputs' in \
+            self.framework_specific_info else []
         self.bf16_ops = []
         self.fp32_ops = []
         self.dump_times = 0   # for tensorboard
@@ -115,8 +117,11 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.util import get_tensor_by_name, iterator_sess_run
 
         graph = tf.Graph()
+
         graph_def = get_graph_def(input_graph, self.outputs)
+
         outputs = copy.deepcopy(self.outputs)
+
         iter_op = None
         if 'MakeIterator' in [node.op for node in graph_def.node]:
             iter_op = graph.get_operation_by_name('MakeIterator')
@@ -185,7 +190,6 @@ class TensorFlowAdaptor(Adaptor):
             if len(int8_inspect_node_name) > 0:
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
-
 
         input_tensor = [get_tensor_by_name(graph, x) for x in self.inputs]
         output_tensor = [get_tensor_by_name(graph, x) for x in outputs] if \
@@ -446,6 +450,31 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
         from .tf_utils.graph_rewriter.graph_info import TFLowbitPrecisionPatterns
+        from .tf_utils.util import get_graph_def
+
+        graph_def = get_graph_def(model, self.outputs)
+        if self.inputs and self.outputs:
+            all_node_name = [node.name for node in graph_def.node]
+            for user_input_name in self.inputs:
+                assert user_input_name in all_node_name, \
+                    "Input node name {} doesn't exist in the model, please check the yaml.".\
+                        format(user_input_name)
+            for user_output_name in self.outputs:
+                assert user_output_name in all_node_name,\
+                     "Output node name {} doesn't exist in the model, please check the yaml.".\
+                         format(user_output_name)
+        else:
+            from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+            g = GraphAnalyzer()
+            g.graph = graph_def
+            g.parse_graph()
+            parsed_inputs, parsed_outputs = g.get_graph_input_output()
+            self.inputs = self.inputs if self.inputs else parsed_inputs
+            self.outputs = self.outputs if self.outputs else parsed_outputs
+
+        assert self.inputs
+        assert self.outputs
+
         self.pre_optimizer_handle = PreOptimization(model, self.inputs, self.outputs)
         self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()

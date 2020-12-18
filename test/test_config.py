@@ -52,15 +52,6 @@ class TestConf(unittest.TestCase):
         test = '''
         model:
           name: device_yaml 
-          framework: tensorflow
-        device: cpu
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
-        model:
-          name: device_yaml 
           framework: mxnet
         device: cpu, gpu
         '''
