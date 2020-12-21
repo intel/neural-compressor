@@ -33,22 +33,20 @@ from .convert_layout import ConvertLayoutOptimizer
 
 class PreOptimization(object):
     def __init__(self, model, inputs, outputs):
-        self.output_names = list(set([output.split(":")[0] for output in outputs]))
-        self.input_graph = get_graph_def(model, self.output_names)
+        self.output_node_names = list(set([output.split(":")[0] for output in outputs]))
+        self.input_graph = get_graph_def(model, self.output_node_names)
         if 'MakeIterator' in [node.op for node in self.input_graph.node]:
-            self.output_names.append('MakeIterator')
+            self.output_node_names.append('MakeIterator')
 
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = self.input_graph
         self.analyzer.parse_graph()
-        self.inputs = inputs
-        self.outputs = outputs
+        self.input_node_names = inputs
         self.logger = logging.getLogger()
         self._tmp_graph_def = None
-        # self.tf_version = tf.version.VERSION
         self._excluded_node_names = []
-        if not self.inputs or not self.outputs:
-            self.inputs, self.outputs = self.analyzer.get_graph_input_output()
+        if not self.input_node_names or not self.output_node_names:
+            self.input_node_names, self.output_node_names = self.analyzer.get_graph_input_output()
 
     def get_excluded_node_names(self):
         """Get the excluded node name
@@ -76,10 +74,10 @@ class PreOptimization(object):
         self.logger.debug("Start to pre optimize input model...")
         
         self._tmp_graph_def = ConvertLayoutOptimizer(
-            self.input_graph, self.output_names).do_transformation()
+            self.input_graph, self.output_node_names).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=self.output_names).do_transformation()
+            self._tmp_graph_def, protected_nodes=self.output_node_names).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -87,8 +85,8 @@ class PreOptimization(object):
 
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
-                                                        self.output_names).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.input_node_names,
+                                                        self.output_node_names).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -106,8 +104,8 @@ class PreOptimization(object):
         """Searche the matched nodes with the specified patterns
 
         Args:
-            patterns ([string list]): The patterns shouid be illustrated as below.
-                [['MatMul'], ("BiasAdd"), ("Relu")]
+            patterns ([string list]): The patterns should be illustrated as below.
+                [['MatMul'], ("BiasAdd"), ("Relu",)]
         Returns:
             [string list]: It will return the list that contains the matched nodes name
                 and pattern. ['matched_node_a_name', 'matched_node_a_name',['MatMul','BiasAdd']]
