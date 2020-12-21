@@ -314,8 +314,16 @@ def main_worker(gpu, ngpus_per_node, args):
                 new_model = load(
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
-            model.fuse_model()
-            new_model = model
+            if args.ipex:
+                # TODO: It will remove when IPEX spport to save script model.
+                model.to(ipex.DEVICE)
+                try:
+                    new_model = torch.jit.script(model)
+                except:
+                    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+            else:
+                model.fuse_model()
+                new_model = model
         validate(val_loader, new_model, criterion, args, ipex_config_path)
         return
 
