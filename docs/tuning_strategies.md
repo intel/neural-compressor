@@ -1,25 +1,52 @@
-# Introduction
-Intel® Low Precision Optimization Tool aims to help users to fast deploy low-precision inference solution on popular DL frameworks including TensorFlow, Pytorch, MxNet etc. With built-in strategies, it will automatically optimized low-precision recipes for deep learning models to achieve optimal product objectives like inference performance and memory usage with expected accuracy criteria. For now, it support `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random` and `TPE` strategies. And the `Basic` strategy is default one.
+# Tuning Strategies
 
-# Strategy Design
-Strategies need to generate the next quantization configuration according to itself logic and last time quantization result. So the function of strategies can be shown in below graph.
+## Introduction
+
+Intel® Low Precision Optimization Tool aims to help users quickly deploy
+the low-precision inference solution on popular Deep Learning frameworks
+such as TensorFlow, PyTorch, and MxNet. Using built-in strategies, it
+automatically optimizes low-precision recipes for deep learning models to
+achieve optimal product objectives, such as inference performance and memory
+usage, with expected accuracy criteria. Currently, it supports `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random`, and `TPE` strategies. `Basic` is
+the default strategy.
+
+## Strategy Design
+
+Each strategy generates the next quantization configuration according to its
+logic and the last quantization result. The function of strategies is shown
+below:
 
 <div align="left">
   <img src="imgs/strategy.png" width="700px" />
 </div>
 
-Strategies need two sides information. One side comes from adator layer, user pass the framework specific model to initial the quantizator, then strategies will call the `self.adaptor.query_fw_capability(model)` to get the framework and model specific quantization capabilities. On the other hand, strategy will merge the model specific configurations in `yaml` configuration file to filter some capability in first step to generate the tuning space. And then, each strategy will generate the quantiztion config according to itself location and logic with tuning strategy configurations in `yaml` configuration file. All of strategies will finish the tuning processing if the `timeout` or `max_trails` has been reached. The default value of `timeout` is 0, if so, the tuning phase will early stop when the `accuracy` has met the criteria.
+Strategies begin with an adaptor layer (Framework Adaptor) where the user
+passes a framework-specific model to initialize an instance of the
+`lpot.Quantization() class`; strategies call the `self.adaptor.query_fw_capability(model)` to get the framework and
+model-specific quantization capabilities. From there, each strategy merges
+model-specific configurations in a `yaml` configuration file to filter some
+capability from the first step in order to generate the tuning space. Each
+strategy then generates the quantization config according to its location
+and logic with tuning strategy configurations from the `yaml` configuration
+file. All strategies finish the tuning processing when the `timeout` or `max_trails` is reached. The default value of `timeout` is 0; if reached, the
+tuning phase stops when the `accuracy` criteria is met.
 
-# Configurations
-The detail configuration templates can be found in [`here`](lpot/template).
-### Model specific configurations
-For model specific configurations, users can set the quantization approach, and for post training static quantization, we also can set calibration and quantization related parameters for model-wise and op-wise.
+## Configurations
+
+Detailed configuration templates can be found in [`here`](ilit/template).
+
+### Model-specific configurations
+
+For model-specific configurations, users can set the quantization approach.
+For post-training static quantization, users can also set calibration and
+quantization-related parameters for model-wise and op-wise:
+
 ```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
       dataset:
         TFRecordDataset:
           root: /path/to/tf_record
@@ -54,8 +81,13 @@ quantization:                                        # optional. tuning constrai
        }
 ```
 
-### Strategy tuning part related configurations
-In strategy tuning tuning part related configurations, user can choose the the specific tuning strategy and set the accuracy criterion and optimization objective for the tuning. And also can set the stop condition for the tuning by change the `exit_policy`.
+### Strategy tuning part-related configurations
+
+In strategy tuning part-related configurations, users can choose a specific
+tuning strategy and then set the accuracy criterion and optimization
+objective for tuning. Users can also set the `stop` condition for the tuning
+by changing the `exit_policy`:
+
 ```yaml
 tuning:
   strategy:
@@ -71,143 +103,196 @@ tuning:
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 ```
-# How to customize a new strategy
-USers can based on the basic `TuneStrategy` class to enable a new strategy with a new `self.next_tune_cfg()` function implement. If the new strategy need more information, user can try to override the `self.traverse()` in the new strategy, such as `TPE` strategy. 
+## Customize a new strategy
 
-Basic
-=============================================
-## Design
-Basic strategy is design for most of models to do the quantization. It can be divided to three steps. Firstly, `Basic` strategy will try all of model wise tuning configs and get the best quantized model. If all of the model wise tuning configs can't meet the accuracy loss criteria, then it will go to second step. In this step, do `OP` high precision (`FP32`, `BF16` ...) fallback one-by-one based on the best model-wise tuning config, and record the impact of each `OP` on accuracy and sort accordingly. In the finnal step, strategy will try to incrementally  fallback multipul `OP` to high-precision according to the sorted `OP` list generated in step two till achieving the accuracy goal. 
+Users can use the basic `TuneStrategy` class to enable a new strategy with a
+new `self.next_tune_cfg()` function implementation. If the new strategy
+needs additional information, users can override the `self.traverse()` in
+the new strategy, such as `TPE` strategy.
 
-## Usage
-`Basic` strategy is the default strategy, so we can use it by default if we don't add the `strategy` filed in our `yaml` configuration file. For example, the classical setting in congiguration file as below.
+### Basic
+
+#### Design
+
+`Basic` strategy is designed for most models to do quantization. It includes
+three steps. First, `Basic` strategy tries all model-wise tuning configs to
+get the best quantized model. If none of the model-wise tuning configs meet
+the accuracy loss criteria, Basic applies the second step. In this step, it
+performs high-precision `OP` (`FP32`, `BF16` ...) fallbacks one-by-one based
+on the best model-wise tuning config, and records the impact of each `OP` on
+accuracy and then sorts accordingly. In the final step, Basic tries to
+incrementally fallback multiple `OPs` to high precision according to the
+sorted `OP` list that is generated in the second step until the accuracy
+goal is achieved.
+
+#### Usage
+
+`Basic` is the default strategy. It can be used by default if you don't add
+the `strategy` field in your `yaml` configuration file. Classical settings in the configuration file are shown below:
+
 ```yaml
 tuning:
   accuracy_criterion:
-    relative:  0.01                                  
+    relative:  0.01
   exit_policy:
-    timeout: 0                                       
-  random_seed: 9527  
+    timeout: 0
+  random_seed: 9527
 ```
 
-Bayesian
-=============================================
-## Design
-Bayesian optimization is a sequential design strategy for global optimization of black-box functions. The strategy refers to the [Bayesian optimization](https://github.com/fmfn/BayesianOptimization) package bayesian-optimization and changes it to a discrete version that complies with the strategy standard of Intel® Low Precision Optimization Tool. It uses Gaussian Processes to define the prior/posterior distribution over the black-box function with the tuning history, and then finds the tuning configuration that maximizes the expected improvement. For now bayesian strategy just tune op-wise quantize configs, it don't included fallback datatype config. If it add fallback datatype config into the param space of bayesian, it will generate a full FP32 model finally, because in generally, fallback datatype has better acc.  At the end `[DEBUG] Tuning config was evaluated, skip!` will be printed endlessly. Because the param space very small for this tuning and can't get good acc result. If we change the timeout from 0 to a integrate, it can be ended after reach the timeout.
+### Bayesian
 
-## Usage
-If we want to use `Bayesian` strategy, we need to set the `timeout` or `max_trials` as non-zore value as below example. Because sometimes the param space for `baysian` are very small and can't reach the accuracy goal. In this case, the tuning part will hang on. If we set the log level to `debug` by `LOGLEVEL=DEBUG` in the enviroment, `[DEBUG] Tuning config was evaluated, skip!` will be printed endlessly. 
+#### Design
+
+`Bayesian` optimization is a sequential design strategy for the global
+optimization of black-box functions. This strategy takes the [Bayesian
+optimization](https://github.com/fmfn/BayesianOptimization) package and
+changes it to a discrete version that complies with the strategy standard of
+Intel® Low Precision Optimization Tool. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
+the prior/posterior distribution over the black-box function with the tuning
+history, and then finds the tuning configuration that maximizes the expected
+improvement. For now, the Bayesian strategy just tunes op-wise quantize
+configs; it does not include fallback-datatype configs.
+
+#### Usage
+
+For the `Bayesian` strategy, set the `timeout` or `max_trials` to a non-zero
+value as shown in the below example. This is because the param space for `bayesian` can be very small so the accuracy goal might not be reached which
+can make the tuning never end. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the timeout is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
+
 
 ```yaml
 tuning:
   strategy:
-    name: bayesian                                     
+    name: bayesian
   accuracy_criterion:
-    relative:  0.01                                 
-  objective: performance                             
+    relative:  0.01
+  objective: performance
 
   exit_policy:
-    timeout: 0                                       
-    max_trials: 100                                  
+    timeout: 0
+    max_trials: 100
 ```
 
-MSE
-=============================================
-## Design
-`MSE` and `Basic` has similar ideas. The mainly defierence of those two strategies is in the step 2, which to generate a sorted op lists. In `MSE` strategy step 2, it needs to get the tensors for each Operator of raw FP32 models and the quantized model based on best model-wise tuning configuration. And then calculate the MSE (Mean Squared Error) for each operator, sort those operators according to the MSE value, finally do the op-wise fallback in this order.
+### MSE
 
-## Usage
-Similar with `Basic` but need specific the strategy name to `mse`.
+#### Design
+
+`MSE` and `Basic` strategies share similar ideas. The primary difference
+between the two strategies is the way sorted op lists are generated in step
+2. The `MSE` strategy needs to get the tensors for each operator of raw FP32
+models and the quantized model based on the best model-wise tuning
+configuration. It then calculates the MSE (Mean Squared Error) for each
+operator, sorts those operators according to the MSE value, and performs
+the op-wise fallback in this order.
+
+#### Usage
+
+`MSE` is similar to `Basic` but the specific strategy name of `mse` must be
+included.
+
 ```yaml
 tuning:
   strategy:
     name: mse
   accuracy_criterion:
-    relative:  0.01                                  
+    relative:  0.01
   exit_policy:
-    timeout: 0                                       
-  random_seed: 9527  
+    timeout: 0
+  random_seed: 9527
 ```
 
-TPE
-=============================================
-## Design
-Sequential model-based optimization methods (SMBO) are a formalization of Bayesian optimization. The sequential refers to running trials one after another, each time trying better hyperparameters by applying Bayesian reasoning and updating a surrogate model. There are five main aspects of SMBO:
+### TPE
 
-1. Domain: A domain of hyperparameters or search space
-2. Objective function: An objective function which takes hyperparameters as input and outputs a score that needs to minimize (or maximize)
-4. Surrogate function: The representative surrogate model of the objective function
-5. Selection function: A selection criterion to evaluate which hyperparameters to choose next trial from the surrogate model
-6. History: A history consisting of (score, hyperparameter) pairs used by the algorithm to update the surrogate model
+#### Design
 
-There are several variants of SMBO, which differ in how to build a surrogate and
-the selection criteria (steps 3–4). The TPE builds a surrogate model by
-applying Bayes's rule.
+`TPE` uses sequential model-based optimization methods (SMBOs). **Sequential
+** refers to running trials one after another and selecting a better
+**hyperparameter** to evaluate based on previous trials. A hyperparameter is
+a parameter whose value is set before the learning process begins; it
+controls the learning process. SMBO apples Bayesian reasoning in that it
+updates a **surrogate** model that represents an **objective** function
+(objective functions are more expensive to compute). Specifically, it finds
+hyperparameters that perform best on the surrogate and then applies them to
+the objective function. The process is repeated and the surrogate is updated
+with incorporated new results until the timeout or max trials is reached.
 
->NOTE: TPE requires many iterations to converge to an optimal solution, and
-it is recommended to run it for at least 200 iterations. Because every iteration
-requires evaluation of a generated model, which means accuracy measurements on a
-dataset and latency measurements using a benchmark, this process may take from
-24 hours up to few days to complete, depending on a model.
+A surrogate model and selection criteria can be built in a variety of ways.
+`TPE` builds a surrogate model by applying Bayesian reasoning. The TPE
+algorithm consists of the following steps:
 
-TPE algorithm consists of multiple (the following) steps:
+1. Define a domain of hyperparameter search space.
+2. Create an objective function which takes in hyperparameters and outputs a
+score (e.g., loss, RMSE, cross-entropy) that we want to minimize.
+3. Collect a few observations (score) using a randomly selected set of
+hyperparameters.
+4. Sort the collected observations by score and divide them into two groups
+based on some quantile. The first group (x1) contains observations that
+gives the best scores and the second one (x2) contains all other
+observations.
+5. Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators) which are a simple average of kernels centered on existing data points.
+6. Draw sample hyperparameters from l(x1). Evaluate them in terms of l(x1)/g(x2), and return the set that yields the minimum value under l(x1)/g(x1) that
+corresponds to the greatest expected improvement. Evaluate these
+hyperparameters on the objective function.
+7. Update the observation list in step 3.
+8. Repeat steps 4-7 with a fixed number of trials.
 
-1. Define a domain of hyperparameter search space,
-2. Create an objective function which takes in hyperparameters and outputs a score (e.g., loss, RMSE, cross-entropy) that we want to minimize,
-3. Get a couple of observations (score) using randomly selected set of hyperparameters,
-4. Sort the collected observations by score and divide them into two groups based on some quantile. The first group (x1) contains observations that gave the best scores and the second one (x2)  - all other observations,
-5. Two densities l(x1) and g(x2) are modeled using Parzen Estimators (also known as kernel density estimators) which are a simple average of kernels centered on existing data points,
-6. Draw sample hyperparameters from l(x1), evaluating them in terms of l(x1)/g(x2), and returning the set that yields the minimum value under l(x1)/g(x1) corresponding to the greatest expected improvement. These hyperparameters are then evaluated on the objective function.
-7. Update the observation list in step 3
-8. Repeat step 4-7 with a fixed number of trials
+>Note: TPE requires many iterations in order to reach an optimal solution;
+we recommend running at least 200 iterations. Because every iteration
+requires evaluation of a generated model--which means accuracy measurements
+on a dataset and latency measurements using a benchmark--this process can
+take from 24 hours to few days to complete, depending on the model.
 
-## Usage
-`TPE`'s usage is similar with `Bayesian`.
+#### Usage
+
+`TPE` usage is similar to `Bayesian`:
+
 ```yaml
 tuning:
   strategy:
-    name: bayesian                                     
+    name: bayesian
   accuracy_criterion:
-    relative:  0.01                                 
-  objective: performance                             
+    relative:  0.01
+  objective: performance
 
   exit_policy:
-    timeout: 0                                       
-    max_trials: 100                                  
+    timeout: 0
+    max_trials: 100
 ```
 
-Exhaustive
-=============================================
-## Design
-This strategy is used to sequentially traverse all the possible tuning configurations in tuning space. For now, from the perspective of the impact on performance, we only traverse all possible quantize tuning configs, don't included fall back data type. 
+### Exhaustive
 
-## Usage
-The usage is also similar with `Basic`.
+#### Design
+
+`Exhaustive` strategy is used to sequentially traverse all possible tuning
+configurations in a tuning space. From the perspective of the impact on
+performance, we currently only traverse all possible quantize tuning
+configs. Fallback datatypes are not included.
+
+#### Usage
+
+`Exhaustive` usage is similar to `Basic`:
+
 ```yaml
 tuning:
   strategy:
     name: exhaustive
   accuracy_criterion:
-    relative:  0.01                                  
+    relative:  0.01
   exit_policy:
-    timeout: 0                                       
-  random_seed: 9527  
+    timeout: 0
+  random_seed: 9527
 ```
 
-Random
-=============================================
-## Design
-This strategy is used to randomly choose tuning configuration from the tuning space. Same with `Exhaustive` strategy, it also just consider quantize tuning configs to generate a better performance quantized model.
+### Random
 
-## Usage
-The usage is also similar with `Basic`.
+#### Design
+
+`Random` strategy is used to randomly choose tuning configurations from the
+tuning space. As with `Exhaustive` strategy, it also only considers quantize
+tuning configs to generate a better-performance quantized model.
+
+#### Usage
+
+`Random` usage is similar to `Basic`:
+
 ```yaml
-tuning:
-  strategy:
-    name: random
-  accuracy_criterion:
-    relative:  0.01                                  
-  exit_policy:
-    timeout: 0                                       
-  random_seed: 9527  
-```
