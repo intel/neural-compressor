@@ -1229,9 +1229,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
 
         self.workspace_path = framework_specific_info['workspace_path']
         query_config_file = "pytorch_ipex.yaml"
-        self.script_model = None
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
+        self.cfgs = None
 
         self.ipex_config_path = \
             os.path.join(self.workspace_path, 'ipex_config_tmp.json')
@@ -1273,15 +1273,19 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             (dict): quantized model
         """
 
-        if self.script_model is not None:
-            q_model = self.script_model
-        else:
-            assert isinstance(model, torch.jit.RecursiveScriptModule), \
-                   "The model passed in is not the instance of torch.jit.RecursiveScriptModule"
-            q_model = model
+        model_ = copy.deepcopy(model)
+        q_model = model_.eval().to(ipex.DEVICE)
+        try:
+            q_model = torch.jit.script(model_)
+        except:
+            try:
+                for input, _ in dataloader:
+                    q_model = torch.jit.trace(model_, input)
+                    break
+            except:
+                logger.info("This model can't convert to Script model")
 
-        self._cfg_to_qconfig(
-            tune_cfg, self.ipex_config_path)
+        self._cfg_to_qconfig(tune_cfg)
 
         if self.approach == 'post_training_static_quant':
             iterations = tune_cfg.get('calib_iteration', 1)
@@ -1293,7 +1297,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
                                quantization aware training mode"
         return q_model
 
-    def _cfg_to_qconfig(self, tune_cfg, ipex_config_path=None):
+    def _cfg_to_qconfig(self, tune_cfg):
         """Convert tune configure to quantization config for each op.
 
             Args:
@@ -1328,24 +1332,23 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
               }
             }
         """
-        with open(ipex_config_path, 'r') as f:
-            cfgs = json.load(f)
-            for key in tune_cfg['op']:
-                value = tune_cfg['op'][key]
-                assert isinstance(value, dict)
-                assert 'activation' in value
-                if value['activation']['dtype'] == 'fp32':
-                    if 'weight' in value:
-                        assert value['weight']['dtype'] == 'fp32'
-                    for op_cfg in cfgs:
-                        if op_cfg["id"] == key[0]:
-                            op_cfg["quantized"] = False
-                else:
-                    for op_cfg in cfgs:
-                        if op_cfg["id"] == key[0]:
-                            op_cfg["quantized"] = True
-        with open(ipex_config_path, 'w') as write_f:
-            json.dump(cfgs, write_f)
+        assert self.cfgs is not None, "No configure for IPEX int8 model..."
+        for key in tune_cfg['op']:
+            value = tune_cfg['op'][key]
+            assert isinstance(value, dict)
+            assert 'activation' in value
+            if value['activation']['dtype'] == 'fp32':
+                if 'weight' in value:
+                    assert value['weight']['dtype'] == 'fp32'
+                for op_cfg in self.cfgs:
+                    if op_cfg["id"] == key[0]:
+                        op_cfg["quantized"] = False
+            else:
+                for op_cfg in self.cfgs:
+                    if op_cfg["id"] == key[0]:
+                        op_cfg["quantized"] = True
+        with open(self.ipex_config_path, 'w') as write_f:
+            json.dump(self.cfgs, write_f)
 
     def evaluate(self, model, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1, tensorboard=False):
@@ -1366,13 +1369,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         """
         assert not tensorboard, "Intel PyTorch Extension didn't tensor dump"
 
-        if self.script_model is not None:
-            model = self.script_model
-        else:
-            assert isinstance(model, torch.jit.RecursiveScriptModule), \
-                   "The model passed in is not the instance of torch.jit.RecursiveScriptModule"
-
         model.eval()
+        if self.is_baseline:
+            model.to(ipex.DEVICE)
 
         ipex_config = self.ipex_config_path if not self.benchmark else \
                       os.path.join(self.workspace_path, 'checkpoint/best_configure.json')
@@ -1427,31 +1426,36 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
         """
 
         if not os.path.exists(self.ipex_config_path):
-            if isinstance(model, torch.jit.RecursiveScriptModule):
-                self.script_model = model
-            else:
-                new_model = copy.deepcopy(model)
-                new_model.to(ipex.DEVICE).eval()
+            assert isinstance(model, torch.nn.Module), \
+                    "The model passed in is not the instance of torch.nn.Module"
+
+            model_ = copy.deepcopy(model)
+            model_.eval().to(ipex.DEVICE)
+            init_model = model_
+            try:
+                init_model = torch.jit.script(model_)
+            except:
                 try:
-                    self.script_model = torch.jit.script(new_model)
-                except:
                     for input, _ in self.q_dataloader:
-                        self.script_model = torch.jit.trace(new_model, input)
+                        init_model = torch.jit.trace(model_, input)
                         break
+                except:
+                    logger.info("This model can't convert to Script model")
 
             # create a quantization config file for intel pytorch extension model
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
             ipex_conf = ipex.AmpConf(torch.int8)
-            self.model_calibration(self.script_model, self.q_dataloader, conf=ipex_conf)
+            self.model_calibration(init_model, self.q_dataloader, conf=ipex_conf)
             ipex_conf.save(self.ipex_config_path)
 
         with open(self.ipex_config_path, 'r') as f:
-            cfgs = json.load(f)
-            for op_cfg in cfgs:
+            self.cfgs = json.load(f)
+            for op_cfg in self.cfgs:
                 quantizable_ops.append((op_cfg["id"],
                                        self.unify_op_type_mapping[op_cfg["name"]]
                                        if op_cfg["name"] in self.unify_op_type_mapping else
                                        op_cfg["name"]))
+        os.remove(self.ipex_config_path)
 
     @dump_elapsed_time("Pass save quantized model")
     def save(self, model, path):

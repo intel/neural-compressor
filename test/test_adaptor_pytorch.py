@@ -192,6 +192,7 @@ def q_func(model):
     return
 
 
+@unittest.skipIf(TEST_IPEX, "TODO: Please wait to IPEX + PyTorch1.7 release")
 class TestPytorchAdaptor(unittest.TestCase):
     framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
