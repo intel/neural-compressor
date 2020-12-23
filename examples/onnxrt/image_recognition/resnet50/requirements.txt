@@ -1,5 +1,5 @@
 onnx>=1.7
-ort-nightly
+ort-nightly==1.5.2.dev202012081
 torch
 torchvision
 --find-links https://test.pypi.org/simple/ort_nightly

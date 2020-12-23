@@ -1,7 +1,7 @@
 intel-tensorflow==2.1.0
 onnx
 --find-links https://test.pypi.org/simple/ort_nightly
-ort-nightly
+ort-nightly==1.5.2.dev202012081
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==1.5.0+cpu
 torchvision==0.6.0+cpu
