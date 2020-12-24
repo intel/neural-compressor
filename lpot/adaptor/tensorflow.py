@@ -366,16 +366,15 @@ class TensorFlowAdaptor(Adaptor):
         int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
         tf_quantizable_op_type = list(set(uint8_type).union(set(int8_type)))
 
-        invalid_precisions = [] if self._support_bf16() else ['bf16']
-        valid_precision = self.query_handler.get_mixed_precision_combination(invalid_precisions)
+        valid_precision = self.query_handler.get_mixed_precision_combination()
 
         conv_config = self.query_handler.get_quantization_capability()['uint8']['Conv2D']
         matmul_config = self.query_handler.get_quantization_capability()['uint8']['MatMul']
         other_config = self.query_handler.get_quantization_capability()['uint8']['default']
 
-        if 'bf16' in valid_precision:
-            conv_config['weights']['dtype'].append('bf16')
-            matmul_config['weights']['dtype'].append('bf16')
+        if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
+            conv_config['weight']['dtype'].append('bf16')
+            matmul_config['weight']['dtype'].append('bf16')
             conv_config['activation']['dtype'].append('bf16')
             matmul_config['activation']['dtype'].append('bf16')
             other_config['activation']['dtype'].append('bf16')
@@ -418,25 +417,6 @@ class TensorFlowAdaptor(Adaptor):
 
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
         return self.quantizable_op_details
-
-    def _support_bf16(self):
-        """Query Software and Hardware BF16 support cabability
-
-        """
-        import tensorflow as tf
-        is_supported_version = False
-        from tensorflow import python
-        if (hasattr(python, "pywrap_tensorflow")
-                and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):
-            from tensorflow.python.pywrap_tensorflow import IsMklEnabled
-        else:
-            from tensorflow.python._pywrap_util_port import IsMklEnabled
-        if IsMklEnabled() and (tf.version.VERSION >= "2.3.0"):
-            is_supported_version = True
-        if ((is_supported_version and CpuInfo().bf16)
-                or os.getenv('FORCE_BF16') == '1'):
-            return True
-        return False
 
     def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
@@ -499,11 +479,6 @@ class TensorFlowAdaptor(Adaptor):
 
         del copied_matched_nodes
 
-        activation_dtype = ['uint8', 'fp32']
-        weight_dtype = ['int8', 'fp32']
-        if self._support_bf16():
-            activation_dtype.append('bf16')
-            weight_dtype.append('bf16')
         self._query_quantizable_ops(matched_nodes)
         capability = {
             'optypewise': self.get_optype_wise_ability(),
@@ -749,19 +724,16 @@ class TensorflowQuery(QueryBackendCapability):
 
         return self.cur_config['ops'][precision]
 
-    def get_mixed_precision_combination(self, invalid_precisions):
+    def get_mixed_precision_combination(self):
         """Get the valid mixed precisions.
-
-        Args:
-            unsupported_precisions (string list): unsupported precisions.
 
         Returns:
             [string list]: valid precision list.
         """
         if self.cur_config['precisions']['valid_mixed_precisions']:
-            return list(self.cur_config['precisions']['valid_mixed_precisions'].split(','))
+            return [i.strip() for i in self.cur_config['precisions']['valid_mixed_precisions']]
 
-        return list(self.get_precisions().split(','))
+        return [i.strip() for i in self.get_precisions().split(',')]
 
     def get_eightbit_patterns(self):
         """Get eightbit op wise sequences information.

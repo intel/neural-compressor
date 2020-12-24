@@ -173,9 +173,9 @@ class BF16Convert(GraphRewriterBase):
                     self.cur_graph.node_name_details[cast_input_name].outputs.remove(each_input)
             elif (each_input not in self.fp32_ops + self.converted_ops and
                     each_input_node.op in BF16Convert.WHITE_LIST + \
-                    BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
-                if len(each_input_detail.outputs) == 1:
-                    self._bf16_convert(each_input)
+                    BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST and 
+                    len(each_input_detail.outputs) == 1):
+                self._bf16_convert(each_input)
                 # TODO: Consider multi-output case
             elif each_input in self.converted_ops:
                 pass
