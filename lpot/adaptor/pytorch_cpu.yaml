@@ -21,7 +21,7 @@
           'Conv1d': &cap_s8_1_6_Conv1d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
+                        'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
@@ -35,6 +35,14 @@
           'Linear': *cap_s8_1_6_Conv1d,
           'Conv2d': *cap_s8_1_6_Conv1d,
           'Conv3d': *cap_s8_1_6_Conv1d,
+          'QuantStub': {
+            'activation': {
+                        'dtype': ['uint8'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
