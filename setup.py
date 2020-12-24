@@ -24,7 +24,7 @@ setup(
     packages = find_packages(),
     package_dir = {'':'.'},
     package_data={'': ['*.py', '*.yaml']},
-    install_requires=['numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'scikit-image'],
+    install_requires=['numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas==1.1.5', 'pycocotools', 'scikit-image==0.17.2'],
     entry_points={
       'console_scripts':  [""]
     },
