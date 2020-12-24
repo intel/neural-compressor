@@ -74,7 +74,6 @@ def input_to_list(data):
         assert isinstance(data, list)
         return data
 
-
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
         data = float(data.strip('%')) / 100
@@ -126,22 +125,32 @@ ops_schema = Schema({
 
 transform_schema = Schema({
     Optional('RandomResizedCrop'): {
-        'size': And(int, lambda s: s > 0)
+        'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
+                    And(int, lambda s: s > 0))
+    },
+    Optional('CropResize'): {
+        'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
+                    And(int, lambda s: s > 0))
     },
     Optional('RandomHorizontalFlip'): Or({}, None),
     Optional('ToTensor'): Or({}, None),
+    Optional('ToPILImage'): Or({}, None),
     Optional('Normalize'): {
         'mean': And(list, lambda s: all(isinstance(i, float) for i in s)),
         'std': And(list, lambda s: all(isinstance(i, float) for i in s))
     },
     Optional('Resize'): {
-        'size': And(int, lambda s: s > 0)
+        'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
+                    And(int, lambda s: s > 0))
     },
+    Optional('RandomCrop'): {
+        'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
+                    And(int, lambda s: s > 0))
+    },
+    Optional('Rescale'): Or({}, None),
     Optional('CenterCrop'): {
-        'size': And(int, lambda s: s > 0)
-    },
-    Optional('Reshape'): {
-        'shape': And(list, lambda s: all(isinstance(i, int) for i in s)),
+        'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
+                    And(int, lambda s: s > 0))
     },
     Optional('BilinearImagenet'): {
         'height': And(int, lambda s: s > 0),
@@ -162,15 +171,18 @@ transform_schema = Schema({
     },
     Optional('ParseDecodeImagenet'): Or({}, None),
     Optional('ParseDecodeCoco'): Or({}, None),
+    Optional('ImageTypeParse'): Or({}, None),
     Optional('QuantizedInput'): {
         Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
         Optional('scale'): And(float, lambda s: s > 0),
+    },
+    Optional('Transpose'): {
+        'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
     },
 })
 
 postprocess_schema = Schema({
     Optional('LabelShift'):  And(int, lambda s: s > 0),
-    Optional('COCOPreds'): Or({}, None),
 })
 
 dataset_schema = Schema({
@@ -292,7 +304,9 @@ schema = Schema({
         Optional('accuracy'): {
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
-                Optional('COCOmAP'): {}
+                Optional('COCOmAP'): {
+                    Optional('anno_path'): str
+                }
             },
             Optional('configs'): configs_schema,
             Optional('dataloader'): dataloader_schema,

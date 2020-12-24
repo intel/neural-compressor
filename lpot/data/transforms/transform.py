@@ -52,12 +52,8 @@ class TensorflowTransforms(BaseTransforms):
 
     def _get_preprocess(self):
         preprocess = {
-            "Resize": TensorflowWrapFunction(tf.image.resize),
             "ConvertImageDtype": TensorflowWrapFunction(tf.image.convert_image_dtype),
-            "CenterCrop": TensorflowWrapFunction(tf.image.central_crop),
-            "CropAndResize": TensorflowWrapFunction(tf.image.crop_and_resize),
             "CropToBoundingBox": TensorflowWrapFunction(tf.image.crop_to_bounding_box),
-            "RandomCrop": TensorflowWrapFunction(tf.image.random_crop),
             "RandomHorizontalFlip": TensorflowWrapFunction(tf.image.random_flip_left_right),
             "RandomVerticalFlip": TensorflowWrapFunction(tf.image.random_flip_up_down),
             "DecodeImage": TensorflowWrapFunction(tf.io.decode_image),
@@ -74,7 +70,7 @@ class TensorflowTransforms(BaseTransforms):
 
     def _get_general(self):
         general = {
-            "Transpose": TensorflowWrapFunction(tf.image.transpose),
+            "Transpose": TensorflowWrapFunction(tf.transpose),
         }
         general.update(TENSORFLOW_TRANSFORMS["general"])
         return general
@@ -87,14 +83,8 @@ class MXNetTransforms(BaseTransforms):
                 mx.gluon.data.vision.transforms.ToTensor),
             'Normalize': PytorchMxnetWrapFunction(
                 mx.gluon.data.vision.transforms.Normalize),
-            'RandomResizedCrop': PytorchMxnetWrapFunction(
-                mx.gluon.data.vision.transforms.RandomResizedCrop),
-            'CropResize': PytorchMxnetWrapFunction(
-                mx.gluon.data.vision.transforms.CropResize),
             'CenterCrop': PytorchMxnetWrapFunction(
                 mx.gluon.data.vision.transforms.CenterCrop),
-            'Resize': PytorchMxnetWrapFunction(
-                mx.gluon.data.vision.transforms.Resize),
             'RandomHorizontalFlip': PytorchMxnetWrapFunction(
                 mx.gluon.data.vision.transforms.RandomFlipLeftRight),
             'RandomVerticalFlip': PytorchMxnetWrapFunction(
@@ -127,8 +117,6 @@ class PyTorchTransforms(BaseTransforms):
                 torchvision.transforms.ToPILImage),
             "Normalize": PytorchMxnetWrapFunction(
                 torchvision.transforms.Normalize),
-            "Resize": PytorchMxnetWrapFunction(
-                torchvision.transforms.Resize),
             "CenterCrop": PytorchMxnetWrapFunction(
                 torchvision.transforms.CenterCrop),
             "Pad": PytorchMxnetWrapFunction(
@@ -139,10 +127,6 @@ class PyTorchTransforms(BaseTransforms):
                 torchvision.transforms.RandomHorizontalFlip),
             "RandomVerticalFlip": PytorchMxnetWrapFunction(
                 torchvision.transforms.RandomVerticalFlip),
-            "RandomResizedCrop": PytorchMxnetWrapFunction(
-                torchvision.transforms.RandomResizedCrop),
-            "RandomSizedCrop": PytorchMxnetWrapFunction(
-                torchvision.transforms.RandomSizedCrop),
             "ColorJitter": PytorchMxnetWrapFunction(
                 torchvision.transforms.ColorJitter),
         }
@@ -310,6 +294,23 @@ class PytorchMxnetTransform(Transform):
         image = self.transform_func(image)
         return (image, label)
 
+interpolation_onnx_map = {
+    'nearest': 0,
+    'bilinear': 1,
+    'bicubic': 3,
+}
+
+interpolation_mxnet_map = {
+     'nearest': 0,
+     'bilinear': 1,
+     'bicubic': 2,
+}
+
+interpolation_pytorch_map = {
+     'nearest': 0,
+     'bilinear': 2,
+     'bicubic': 3,
+}
 
 @transform_registry(transform_type="Compose", process="general", \
                  framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow")
@@ -323,40 +324,102 @@ class ComposeONNXRTTransform(Transform):
         return sample
 
 @transform_registry(transform_type="ImageTypeParse", process="preprocess", \
-                framework="onnxrt_qlinearops, onnxrt_integerops")
+                framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow")
 class ImageTypeParse(Transform):
-    def __init__(self):
-        pass
-
     def __call__(self, sample):
         # TODO: need to add more image type
         image, label = sample
-        if type(image).__name__ is 'Image':
-            
+        try:
             image = np.array(image)
-        else:
+        except:
             raise ValueError("Unknown image type!")
         return (image, label)
 
+@transform_registry(transform_type="CenterCrop",
+                    process="preprocess", framework="tensorflow")
+class CenterCropTFTransform(Transform):
+    def __init__(self, size):
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
+    
+    def __call__(self, sample):
+        image, label = sample
+        if len(image.shape) == 3:
+            height, width = image.shape[0:2]
+        elif len(image.shape) == 4:
+            height, width = image.shape[1:3]
+        else:
+            raise ValueError("Unknown image shape")
+        if height < self.size[0] or width < self.size[1]:
+            raise ValueError("Target size shouldn't be lager than image size")
+        y0 = (height - self.size[0]) // 2
+        x0 = (width - self.size[1]) // 2
+        image = tf.image.crop_to_bounding_box(image, y0, x0, self.size[0], self.size[1])
+        return (image, label)
+
+@transform_registry(transform_type="Resize",
+                    process="preprocess", framework="tensorflow")
+class ResizeTFTransform(Transform):
+    def __init__(self, size, interpolation='bilinear'):
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
+        self.interpolation = interpolation
+
+        if self.interpolation not in ['bilinear', 'nearest', 'bicubic']:
+            raise ValueError('Unsupported interpolation type!')
+ 
+    def __call__(self, sample):
+        image, label = sample
+        image = tf.image.resize(image, self.size, method=self.interpolation)
+        return (image, label)
+
+@transform_registry(transform_type="RandomCrop",
+                    process="preprocess", framework="tensorflow")
+class RandomCropTFTransform(Transform):
+    def __init__(self, size):
+        self.size = size
+    
+    def __call__(self, sample):
+        image, label = sample
+        if len(self.size) != len(image.shape):
+            raise ValueError('Shape rank is {} but input shape \
+                rank is {}'.format(len(self.size), len(image.shape)))
+        image = tf.image.random_crop(image, self.size)
+        return (image, label)
 
 @transform_registry(transform_type="RandomResizedCrop",
                     process="preprocess", framework="tensorflow")
 class RandomResizedCropTFTransform(Transform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
-        if len(size) == 1:
-            self.size = size[0], size[0]
-        elif len(size) == 2:
-            self.size = size[0], size[1]
-
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
+ 
         self.scale = scale
         self.ratio = ratio
         self.interpolation = interpolation
+        if self.interpolation not in ['bilinear', 'nearest']:
+            raise ValueError('Unsupported interpolation type!')
         if scale[0] > scale[1] or ratio[0] > ratio[1]:
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def get_params(self, image, scale, ratio):
-        shape = tf.shape(input=image)
+        shape = image.shape
         height = tf.cast(shape[0], dtype=tf.float32)
         width = tf.cast(shape[1], dtype=tf.float32)
         src_area = height * width
@@ -390,22 +453,27 @@ class RandomResizedCropTFTransform(Transform):
                                  lambda: (height, tf.math.round(height * max(ratio))))],
                                default=lambda: (width, height))
 
-        y0 = (height - new_h) // 2
-        x0 = (width - new_w) // 2
+        y0 = (height - new_h) / 2
+        x0 = (width - new_w) / 2
         return y0, x0, new_h, new_w
 
     def __call__(self, sample):
         image, label = sample
         y0, x0, h, w = self.get_params(image, self.scale, self.ratio)
-        shape = tf.shape(input=image)
-        height = tf.cast(shape[0], dtype=tf.float32)
-        width = tf.cast(shape[1], dtype=tf.float32)
-        bbox = [a/b for a,b in zip([y0, x0, y0+h, x0+w], 
-                                        [height, width, height, width])]
+        squeeze = False
         if len(image.shape) == 3:
-            image = tf.expand_dims(image, 0)
-        image = tf.image.crop_and_resize(image, [bbox], [0], self.size, self.interpolation)
-        image = tf.squeeze(image)
+            squeeze = True
+            image = tf.expand_dims(image, axis=0)
+        height, width = image.shape[1:3]
+        height = tf.cast(height, dtype=tf.float32)
+        width = tf.cast(width, dtype=tf.float32)
+        box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
+        boxes = [y0/height, x0/width, (y0+h)/height, (x0+w)/width]
+        boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
+        image = tf.image.crop_and_resize(image, boxes, box_indices, 
+                        self.size, self.interpolation)
+        if squeeze:
+            image = tf.squeeze(image, axis=0)
         return (image, label)
 
 
@@ -429,24 +497,60 @@ class NormalizeTFTransform(Transform):
         image = tf.cast(image, dtype=orig_dtype)
         return (image, label)
 
+@transform_registry(transform_type='Rescale', process="preprocess", \
+                framework='tensorflow')
+class RescaleTFTransform(Transform):
+    def __call__(self, sample):
+        image, label = sample
+        image = tf.cast(image, tf.float32) / 255.
+        return (image, label)
+
+@transform_registry(transform_type="Resize", process="preprocess", \
+                framework="mxnet")
+class ResizeMxnetTransform(Transform):
+    def __init__(self, size, interpolation='bilinear'):
+        self.size = size
+        if interpolation in interpolation_mxnet_map.keys():
+            self.interpolation = interpolation_mxnet_map[interpolation]
+        else:
+            raise ValueError("Undefined interpolation type")
+
+    def __call__(self, sample):
+        image, label = sample
+        transformer = mx.gluon.data.vision.transforms.Resize(size=self.size,
+                        interpolation=self.interpolation)
+        return (transformer(image), label)
+
+@transform_registry(transform_type="Resize", process="preprocess", \
+                framework="pytorch")
+class ResizePytorchTransform(Transform):
+    def __init__(self, size, interpolation='bilinear'):
+        self.size = size
+        if interpolation in interpolation_pytorch_map.keys():
+            self.interpolation = interpolation_pytorch_map[interpolation]
+        else:
+            raise ValueError("Undefined interpolation type")
+
+    def __call__(self, sample):
+        image, label = sample
+        transformer = torchvision.transforms.Resize(size=self.size,
+                        interpolation=self.interpolation)
+        return (transformer(image), label)
 
 @transform_registry(transform_type="Resize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
 class ResizeONNXTransform(Transform):
     def __init__(self, size, interpolation='bilinear'):
-        if len(size) == 1:
-            self.size = size[0], size[0]
-        elif len(size) == 2:
-            self.size = size[0], size[1]
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
 
-        if interpolation == 'bilinear':
-            self.interpolation = 1
-        elif interpolation == 'nearest':
-            self.interpolation = 0
-        elif interpolation == 'cubic':
-            self.interpolation = 3
-        elif interpolation == 'quadratic':
-            self.interpolation = 2
+        if interpolation in interpolation_onnx_map.keys():
+            self.interpolation = interpolation_onnx_map[interpolation]
         else:
             raise ValueError("Undefined interpolation type")
 
@@ -456,15 +560,103 @@ class ResizeONNXTransform(Transform):
         image = resize(image, self.size, order=self.interpolation)
         return (image, label)
 
+@transform_registry(transform_type="CropResize", process="preprocess", \
+                framework="mxnet")
+class CropResizeMxnetTransform(Transform):
+    def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        if interpolation in interpolation_mxnet_map.keys():
+            self.interpolation = interpolation_mxnet_map[interpolation]
+        else:
+            raise ValueError("Undefined interpolation type")
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.size = size
+
+    def __call__(self, sample):
+        image, label = sample
+        transformer = mx.gluon.data.vision.transforms.CropResize(self.x, self.y, self.width, 
+                        self.height, self.size, self.interpolation)
+        return (transformer(image), label)
+
+@transform_registry(transform_type="CropResize", process="preprocess", \
+                framework="tensorflow")
+class CropResizeTFTransform(Transform):
+    def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        if interpolation not in ['bilinear', 'nearest']:
+            raise ValueError('Unsupported interpolation type!')
+        self.interpolation = interpolation
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
+
+    def __call__(self, sample):
+        image, label = sample
+        squeeze = False
+        if len(image.shape) == 3:
+            squeeze = True
+            image = tf.expand_dims(image, axis=0)
+        h, w = image.shape[1:3]
+        h = tf.cast(h, dtype=tf.float32)
+        w = tf.cast(w, dtype=tf.float32)
+        self.y = tf.cast(self.y, dtype=tf.float32)
+        self.x = tf.cast(self.x, dtype=tf.float32)
+        box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
+        boxes = [self.y/h, self.x/w, (self.y+self.height)/h, (self.x+self.width)/w]
+        boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
+        image = tf.image.crop_and_resize(image, boxes, box_indices, 
+                        self.size, self.interpolation)
+        if squeeze:
+            image = tf.squeeze(image, axis=0)
+        return (image, label)
+
+@transform_registry(transform_type="CropResize", process="preprocess", \
+                framework="onnxrt_qlinearops, onnxrt_integerops")
+class CropResizeTransform(Transform):
+    def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        if interpolation in interpolation_onnx_map.keys():
+            self.interpolation = interpolation_onnx_map[interpolation]
+        else:
+            raise ValueError("Undefined interpolation type")
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
+
+    def __call__(self, sample):
+        from skimage.transform import resize
+        image, label = sample
+        image = image[self.y:self.y+self.height, self.x:self.x+self.width, :]
+        image = resize(image, self.size, order=self.interpolation)
+        return (image, label)
 
 @transform_registry(transform_type="CenterCrop", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
 class CenterCropONNXTransform(Transform):
     def __init__(self, size):
-        if len(size) == 1:
-            self.height, self.width = size[0], size[0]
-        elif len(size) == 2:
-            self.height, self.width = size[0], size[1]
+        if isinstance(size, int):
+            self.height, self.width = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.height, self.width = size[0], size[0]
+            elif len(size) == 2:
+                self.height, self.width = size[0], size[1]
 
     def __call__(self, sample):
         image, label = sample
@@ -504,10 +696,13 @@ class NormalizeONNXTransform(Transform):
                 framework="mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class RandomCropONNXTransform(Transform):
     def __init__(self, size):
-        if len(size) == 1:
-            self.height, self.width = size[0], size[0]
-        elif len(size) == 2:
-            self.height, self.width = size[0], size[1]
+        if isinstance(size, int):
+            self.height, self.width = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.height, self.width = size[0], size[0]
+            elif len(size) == 2:
+                self.height, self.width = size[0], size[1]
 
     def __call__(self, sample):
         image, label = sample
@@ -525,28 +720,70 @@ class RandomCropONNXTransform(Transform):
         image = image[rand_h:rand_h + self.height, rand_w:rand_w + self.width, :]
         return (image, label)
 
+@transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
+                framework="pytorch")
+class RandomResizedCropPytorchTransform(Transform):
+    def __init__(self, size, scale=(0.08, 1.0), ratio=(
+            3. / 4., 4. / 3.), interpolation='bilinear'):
+        self.size = size
+        self.scale = scale
+        self.ratio = ratio
+
+        if interpolation in interpolation_pytorch_map.keys():
+            self.interpolation = interpolation_pytorch_map[interpolation]
+        else:
+            raise ValueError("Undefined interpolation type")
+
+        if scale[0] > scale[1] or ratio[0] > ratio[1]:
+            raise ValueError("Scale and ratio should be of kind (min, max)")
+
+    def __call__(self, sample):
+        image, label = sample
+        transformer = torchvision.transforms.RandomResizedCrop(size=self.size,
+            scale=self.scale, ratio=self.ratio, interpolation=self.interpolation)
+        return (transformer(image), label)
+
+@transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
+                framework="mxnet")
+class RandomResizedCropMxnetTransform(Transform):
+    def __init__(self, size, scale=(0.08, 1.0), ratio=(
+            3. / 4., 4. / 3.), interpolation='bilinear'):
+        self.size = size
+        self.scale = scale
+        self.ratio = ratio
+
+        if interpolation in interpolation_mxnet_map.keys():
+            self.interpolation = interpolation_mxnet_map[interpolation]
+        else:
+            raise ValueError("Undefined interpolation type")
+
+        if scale[0] > scale[1] or ratio[0] > ratio[1]:
+            raise ValueError("Scale and ratio should be of kind (min, max)")
+
+    def __call__(self, sample):
+        image, label = sample
+        transformer = mx.gluon.data.vision.transforms.RandomResizedCrop(size=self.size,
+            scale=self.scale, ratio=self.ratio, interpolation=self.interpolation)
+        return (transformer(image), label)
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
 class RandomResizedCropONNXTransform(Transform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
-        if len(size) == 1:
-            self.size = size[0], size[0]
-        elif len(size) == 2:
-            self.size = size[0], size[1]
+        if isinstance(size, int):
+            self.size = size, size  
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.size = size[0], size[0]
+            elif len(size) == 2:
+                self.size = size[0], size[1]
 
         self.scale = scale
         self.ratio = ratio
 
-        if interpolation == 'bilinear':
-            self.interpolation = 1
-        elif interpolation == 'nearest':
-            self.interpolation = 0
-        elif interpolation == 'cubic':
-            self.interpolation = 3
-        elif interpolation == 'quadratic':
-            self.interpolation = 2
+        if interpolation in interpolation_onnx_map.keys():
+            self.interpolation = interpolation_onnx_map[interpolation]
         else:
             raise ValueError("Undefined interpolation type")
 

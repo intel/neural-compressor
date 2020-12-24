@@ -546,21 +546,62 @@ class TensorflowCOCOMAP(Metric):
     """The class of calculating mAP metric
 
     """
-    def __init__(self):
-        import lpot.metric.coco_label_map as coco_label_map
+    def __init__(self, anno_path=None):
+        from lpot.metric.coco_label_map import category_map
+        if anno_path:
+            import os
+            import json
+            assert os.path.exists(anno_path), 'Annotation path does not exists!'
+            label_map = {}
+            with open(anno_path) as fin:
+                annotations = json.load(fin)
+            for cnt, cat in enumerate(annotations["categories"]):
+                label_map[cat["name"]] = cnt + 1
+            self.category_map_reverse = {k:v for k,v in label_map.items()}
+        else:
+            # label: index
+            self.category_map_reverse = {v: k for k, v in category_map.items()}
         self.image_ids = []
         self.ground_truth_list = []
         self.detection_list = []
         self.annotation_id = 1
-        self.category_map = coco_label_map.category_map
+        self.category_map = category_map
         self.category_id_set = set(
-            [cat for cat in self.category_map])
+            [cat for cat in self.category_map]) #index
 
-    def update(self, detection, labels, sample_weight=None):
+    def update(self, predicts, labels, sample_weight=None):
         from lpot.metric.coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
-        image_id = labels[1]
-        ground_truth = labels[0]
+        bbox, str_label,int_label, image_id = labels
+        detection = {}
+        if len(predicts) == 3:
+            detection['boxes'] = np.asarray(predicts[0][0])
+            detection['scores'] = np.asarray(predicts[1][0])
+            detection['classes'] = np.asarray(predicts[2][0])
+        elif len(predicts) == 4:
+            num = int(predicts[0][0])
+            detection['boxes'] = np.asarray(predicts[1][0])[0:num]
+            detection['scores'] = np.asarray(predicts[2][0])[0:num]
+            detection['classes'] = np.asarray(predicts[3][0])[0:num]
+        else:
+            raise ValueError("Unsupported prediction format!")
+        
+        ground_truth = {}
+        ground_truth['boxes'] = np.asarray(bbox[0])
+        if len(int_label[0]) == 0:
+            # convert string label to int index
+            str_label = [
+                x if type(x) == 'str' else x.decode('utf-8')
+                for x in str_label[0]
+            ]
+            ground_truth['classes'] = np.asarray(
+                [self.category_map_reverse[x] for x in str_label])
+        elif len(str_label[0]) == 0:
+            ground_truth['classes'] = np.asarray(
+                [x for x in int_label[0]])
+        image_id = image_id[0] if type(
+            image_id[0]) == 'str' else image_id[0].decode('utf-8')
+
         if image_id in self.image_ids:
             return
         self.image_ids.append(image_id)

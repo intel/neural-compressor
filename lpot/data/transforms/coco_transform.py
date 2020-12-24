@@ -45,6 +45,8 @@ class ParseDecodeCocoTransform(Transform):
             tf.compat.v1.FixedLenFeature([], dtype=tf.string, default_value=''),
             'image/object/class/text':
             tf.compat.v1.VarLenFeature(dtype=tf.string),
+            'image/object/class/label':
+            tf.compat.v1.VarLenFeature(dtype=tf.int64),
             'image/source_id':tf.compat.v1.FixedLenFeature([], dtype=tf.string, default_value=''),
         }
         sparse_float32 = tf.compat.v1.VarLenFeature(dtype=tf.float32)
@@ -74,39 +76,8 @@ class ParseDecodeCocoTransform(Transform):
         image_tensor = tf.image.decode_image(encoded_image, channels=3)
         image_tensor.set_shape([None, None, 3])
 
-        label = features['image/object/class/text'].values
+        str_label = features['image/object/class/text'].values
+        int_label = features['image/object/class/label'].values
         image_id = features['image/source_id']
 
-        return image_tensor, (bbox[0], label, image_id)
-
-@transform_registry(transform_type="COCOPreds",\
-                    process="postprocess", framework="tensorflow")
-class COCOPreds(Transform):
-    def __call__(self, sample):
-        from lpot.metric.coco_label_map import category_map
-        category_map_reverse = {v: k for k, v in category_map.items()}
-        
-        preds = sample[0]
-        bbox = sample[1][0]
-        label = sample[1][1]
-        image_id = sample[1][2]
-
-        detection = {}
-        num = int(preds[0][0])
-        detection['boxes'] = np.asarray(preds[1][0])[0:num]
-        detection['scores'] = np.asarray(preds[2][0])[0:num]
-        detection['classes'] = np.asarray(preds[3][0])[0:num]
-
-        ground_truth = {}
-        ground_truth['boxes'] = np.asarray(bbox[0])
-        label = [
-            x if type(x) == 'str' else x.decode('utf-8')
-            for x in label[0]
-        ]
-        ground_truth['classes'] = np.asarray(
-            [category_map_reverse[x] for x in label])
-        image_id = image_id[0] if type(
-            image_id[0]) == 'str' else image_id[0].decode('utf-8')
-
-
-        return detection, (ground_truth, image_id)
+        return image_tensor, (bbox[0], str_label, int_label, image_id)

@@ -35,9 +35,6 @@ evaluation:                                          # optional. used to config 
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
         ParseDecodeCoco: 
-    postprocess:
-      transform:
-        COCOPreds:
   performance:
     iteration: 100
     configs:
@@ -51,9 +48,6 @@ evaluation:                                          # optional. used to config 
           root: /path/to/evaluation/dataset
       transform:
         ParseDecodeCoco:
-    postprocess:
-      transform:
-        COCOPreds:
 tuning:
   accuracy_criterion:
     relative:  0.02                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
