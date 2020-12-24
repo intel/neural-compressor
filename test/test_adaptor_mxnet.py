@@ -161,6 +161,18 @@ class TestAdaptorMXNet(unittest.TestCase):
             fp32_model = (self.conv_model, arg_params, aux_params)
             qmodel = self.quantizer_2(fp32_model, q_dataloader=calib_data, \
                                       eval_dataloader=calib_data, eval_func=eval_func)
+            # test inspected_tensor
+            inspect_tensor = self.quantizer_2.strategy.adaptor.inspect_tensor
+            inspected_tensor = inspect_tensor(fp32_model, calib_data,
+                                              op_list=[('sg_mkldnn_conv_bn_act_0_output', 'CONV'),
+                                                       ('data', 'input')],
+                                              iteration_list=[0, 2, 4])
+            inspected_qtensor = inspect_tensor(qmodel, calib_data,
+                                               op_list=[('quantized_sg_mkldnn_conv_bn_act_0_output', 'CONV')],
+                                               iteration_list=[0])
+
+            self.assertNotEqual(len(inspected_tensor), 0)
+            self.assertNotEqual(len(inspected_qtensor), 0)
             self.assertIsInstance(qmodel[0], mx.symbol.Symbol)
 
     def test_gluon_model(self):
@@ -176,8 +188,8 @@ class TestAdaptorMXNet(unittest.TestCase):
 
         class Quant_dataloader():
             def __init__(self, dataset, batch_size=1):
-                self.dataset=dataset
-                self.batch_size=batch_size
+                self.dataset = dataset
+                self.batch_size = batch_size
 
             def __iter__(self):
                 for data, label in self.dataset:

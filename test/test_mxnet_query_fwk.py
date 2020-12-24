@@ -1,17 +1,17 @@
 #
 #  -*- coding: utf-8 -*-
 #
-import unittest
-import yaml
 import os
 import sys
+import unittest
+import yaml
 sys.path.append('..')
 
 import mxnet as mx
 import lpot
 
 class TestMXNetQuery(unittest.TestCase):
-   
+
     @classmethod
     def setUpClass(self):
         self.yaml_path = os.path.join(os.getcwd() + "/../lpot/adaptor/mxnet.yaml")
@@ -23,7 +23,7 @@ class TestMXNetQuery(unittest.TestCase):
             content = yaml.safe_load(f)
             default_config = self.Queryhandler._get_specified_version_cfg(content)
             self.assertIsNotNone(default_config)
-    
+
     def test_one_shot_query(self):
         self.Queryhandler._one_shot_query()
         self.assertIsNotNone(self.Queryhandler.cur_config)
