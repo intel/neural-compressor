@@ -2,7 +2,6 @@ import os
 import unittest
 import tensorflow as tf
 import numpy as np
-import yaml
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -18,6 +17,12 @@ def build_fake_yaml():
           inputs: input 
           outputs: conv3 
         device: cpu
+        quantization: 
+          op_wise: {
+                     \"conv1\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                   }
         evaluation:
           accuracy:
             metric:
@@ -32,9 +37,8 @@ def build_fake_yaml():
             workspace:
               path: saved
         '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
+        f.write(fake_yaml)
     f.close()
 
 def create_test_graph():
@@ -80,13 +84,27 @@ def create_test_graph():
     bias_add_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
     bias_add_node.input.extend([conv1_node.name, bias_node.name])
     bias_add_node.attr['data_format'].CopyFrom(attr_value_pb2.AttrValue(s=b'NHWC'))
+
+    cast_node = node_def_pb2.NodeDef()
+    cast_node.op = "Cast"
+    cast_node.name = "cast"
+    cast_node.attr['SrcT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+    cast_node.attr['DstT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+    cast_node.input.extend([bias_add_node.name])
     
     relu_node = node_def_pb2.NodeDef()
     relu_node.op = "Relu"
     relu_node.name = "relu"
-    relu_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
-    relu_node.input.extend([bias_add_node.name])
+    relu_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+    relu_node.input.extend([cast_node.name])
     
+    cast2_node = node_def_pb2.NodeDef()
+    cast2_node.op = "Cast"
+    cast2_node.name = "cast2"
+    cast2_node.attr['SrcT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+    cast2_node.attr['DstT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+    cast2_node.input.extend([relu_node.name])
+
     conv2_weight_node = node_def_pb2.NodeDef()
     conv2_weight_node.name = "conv2_weights"
     conv2_weight_node.op = "Const"
@@ -101,7 +119,7 @@ def create_test_graph():
     conv2_node.op = "Conv2D"
     conv2_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(
         type=dtypes.float32.as_datatype_enum))
-    conv2_node.input.extend([relu_node.name, conv2_weight_node.name])
+    conv2_node.input.extend([cast2_node.name, conv2_weight_node.name])
     conv2_node.attr['strides'].CopyFrom(attr_value_pb2.AttrValue(
         list=attr_value_pb2.AttrValue.ListValue(i=[1,1,1,1])))
     conv2_node.attr['dilations'].CopyFrom(attr_value_pb2.AttrValue(
@@ -159,7 +177,9 @@ def create_test_graph():
                                  conv1_node, 
                                  bias_node, 
                                  bias_add_node, 
+                                 cast_node,
                                  relu_node,
+                                 cast2_node,
                                  conv2_weight_node, 
                                  conv2_node, 
                                  bias_node2, 
@@ -209,9 +229,7 @@ class TestBF16Convert(unittest.TestCase):
         new_conv1 = bf16_converter.cur_graph.node_name_details["conv1"].node
         new_relu2 = bf16_converter.cur_graph.node_name_details["relu2"].node
         new_conv3 = bf16_converter.cur_graph.node_name_details["conv3"].node
-        self.assertEqual(new_conv1.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
-        self.assertTrue("input_FP32toBF16" in new_conv1.input)
         self.assertTrue("relu2_BF16toFP32" in new_conv3.input)
 
     def test_bf16_fallback(self):
@@ -221,12 +239,16 @@ class TestBF16Convert(unittest.TestCase):
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (1, 224, 224, 3), label=True)
         dataloader = quantizer.dataloader(dataset)
-        quantizer(
+        quant_model = quantizer(
             self.test_graph,
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
-
+        cast_op_count = 0
+        for node in quant_model.as_graph_def().node:
+            if node.op == 'Cast':
+                cast_op_count += 1
+        self.assertTrue(cast_op_count > 1)
 
 if __name__ == "__main__":
     unittest.main()

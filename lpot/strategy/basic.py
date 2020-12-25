@@ -150,11 +150,14 @@ class BasicTuneStrategy(TuneStrategy):
                                          reverse=True)
                     for op in ordered_ops:
                         old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                        op_cfgs['op'][op]['activation'].clear()
-                        op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                        if 'weight' in op_cfgs['op'][op]:
-                            op_cfgs['op'][op]['weight'].clear()
-                            op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                        for cfg in self.opwise_tune_cfgs[op]:
+                            if fallback_dtype == cfg['activation']['dtype']:
+                                op_cfgs['op'][op]['activation'].clear()
+                                op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
+                                if 'weight' in cfg:
+                                    assert cfg['weight']['dtype'] == fallback_dtype
+                                    op_cfgs['op'][op]['weight'].clear()
+                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
                         acc, _ = self.last_tune_result
                         if acc <= best_acc:
@@ -164,11 +167,13 @@ class BasicTuneStrategy(TuneStrategy):
 
                     op_cfgs = copy.deepcopy(best_cfg)
                     for op in ordered_ops:
-                        op_cfgs['op'][op]['activation'].clear()
-                        op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                        if 'weight' in op_cfgs['op'][op]:
-                            op_cfgs['op'][op]['weight'].clear()
-                            op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                        for cfg in self.opwise_tune_cfgs[op]:
+                            if fallback_dtype == cfg['activation']['dtype']:
+                                op_cfgs['op'][op]['activation'].clear()
+                                op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
+                                if 'weight' in op_cfgs['op'][op]:
+                                    op_cfgs['op'][op]['weight'].clear()
+                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
         else:
             logger.info(self.opwise_tune_cfgs)
