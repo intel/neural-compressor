@@ -1437,7 +1437,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):
             except:
                 try:
                     for input, _ in self.q_dataloader:
-                        init_model = torch.jit.trace(model_, input)
+                        init_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
                         break
                 except:
                     logger.info("This model can't convert to Script model")
