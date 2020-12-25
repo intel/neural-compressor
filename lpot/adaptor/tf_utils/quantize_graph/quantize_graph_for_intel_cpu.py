@@ -69,38 +69,21 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     @dump_elapsed_time("Pass Quantization")
     def do_transform(self):
         count = 0
-        remove_redudant_quant_flag = False
+        remove_redundant_quant_flag = False
         all_node_length = len(self.op_wise_config)
         for _, node in enumerate(self.input_graph.node):
             if node in self.input_graph.node and node.op in self.transformers.keys(
             ) and node.name in self.op_wise_config:
-                if len(self.transformers[node.op]) > 1:
-                    last_fuse_ops_count = 0
-                    last_longest_fuse_worker = None
-                    for registered_transformer in self.transformers[node.op]:
-                        worker = registered_transformer(
-                            self.input_graph, self.output_node_names,
-                            self.op_wise_config[node.name][0], node.name, self.device,
-                            self.op_wise_config[node.name][2])
-                        cur_fuse_op_count = worker.get_longest_fuse()
-
-                        if cur_fuse_op_count > last_fuse_ops_count:
-                            last_fuse_ops_count = cur_fuse_op_count
-                            last_longest_fuse_worker = worker
-                    self.input_graph = last_longest_fuse_worker.apply_the_transform()
-                else:
-                    for registered_transformer in self.transformers[node.op]:
-                        count += 1
-                        if count == all_node_length:
-                            remove_redudant_quant_flag = True
-
-                        worker = registered_transformer(
-                            self.input_graph, self.output_node_names,
-                            self.op_wise_seq[node.op],
-                            remove_redudant_quant_flag,
-                            self.op_wise_config[node.name][0],
-                            node.name, self.device,
-                            self.op_wise_config[node.name][2])
-                        self.input_graph = worker.apply_the_transform()
+                count += 1
+                if count == all_node_length:
+                    remove_redundant_quant_flag = True
+                worker = self.transformers[node.op](
+                    self.input_graph, self.output_node_names,
+                    self.op_wise_seq[node.op],
+                    remove_redundant_quant_flag,
+                    self.op_wise_config[node.name][0],
+                    node.name, self.device,
+                    self.op_wise_config[node.name][2])
+                self.input_graph = worker.apply_the_transform()
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names)

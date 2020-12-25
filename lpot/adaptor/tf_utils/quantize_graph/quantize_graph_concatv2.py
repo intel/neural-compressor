@@ -24,9 +24,9 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
-    def __init__(self, input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+    def __init__(self, input_graph, output_node_names, patterns, remove_redundant_quant_flag,
                  perchannel, start_node_name, device, _):
-        super().__init__(input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+        super().__init__(input_graph, output_node_names, patterns, remove_redundant_quant_flag,
                          perchannel, start_node_name, device)
 
     def _apply_concatv2_transform(self, original_node):
@@ -87,7 +87,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
     def apply_the_transform(self):
         self._apply_concatv2_quantization()
         self._reset_output_node_maps()
-        if self.remove_redudant_quant_flag:
+        if self.remove_redundant_quant_flag:
             self.output_graph = self.remove_redundant_quantization(self.output_graph)
         # self.remove_dead_nodes(self.output_node_names)
         return self.output_graph

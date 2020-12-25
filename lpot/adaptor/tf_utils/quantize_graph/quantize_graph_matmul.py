@@ -25,9 +25,9 @@ from .quantize_graph_base import QuantizeNodeBase
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
     patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
-    def __init__(self, input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+    def __init__(self, input_graph, output_node_names, patterns, remove_redundant_quant_flag,
                  perchannel, start_node_name, device, is_asymmetric):
-        super().__init__(input_graph, output_node_names, patterns, remove_redudant_quant_flag,
+        super().__init__(input_graph, output_node_names, patterns, remove_redundant_quant_flag,
                          perchannel, start_node_name, device, is_asymmetric)
 
         self.sorted_patterns = sorted(self.patterns,
@@ -182,7 +182,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
-            if self.remove_redudant_quant_flag:
+            if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
             return self.output_graph
 

@@ -40,9 +40,9 @@ class QuantizeGraphBase(object):
 
     def register_transformer(self, node_name, entry):
         if node_name not in self.transformers:
-            self.transformers[node_name] = []
+            self.transformers[node_name] = {}
 
-        self.transformers[node_name].append(entry)
+        self.transformers[node_name] = entry
 
     def do_transform(self):
         """
@@ -72,7 +72,7 @@ class QuantizeNodeBase(object):
                  input_graph,
                  output_node_names,
                  patterns,
-                 remove_redudant_quant_flag,
+                 remove_redundant_quant_flag,
                  per_channel,
                  start_node_name,
                  device,
@@ -93,7 +93,7 @@ class QuantizeNodeBase(object):
         self.output_graph = graph_pb2.GraphDef()
         self.quantized_node_dict = {}
         self.patterns = patterns
-        self.remove_redudant_quant_flag = remove_redudant_quant_flag
+        self.remove_redundant_quant_flag = remove_redundant_quant_flag
         self.per_channel = per_channel
         self.start_node_name = start_node_name
         self.is_asymmetric = is_asymmetric
