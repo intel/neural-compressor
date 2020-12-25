@@ -501,20 +501,6 @@ class GraphConverter:
         write_graph(self._tmp_graph_def, self._int8_logged_graph)
         self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
 
-    def _parse_output(self, input_data, output_data):
-        assert input_data.count(';') % 2 == 0
-        if input_data.count(';') > 0:
-            semicolon_index = [index for index, value in enumerate(input_data)
-                               if value == ';'][::2]
-
-            for index, value in enumerate(semicolon_index[:-1]):
-                output_data.append(''.join(input_data[value:semicolon_index[index + 1]]).strip() +
-                                   '\n')
-
-            output_data.append(''.join(input_data[semicolon_index[-1]:]).strip() + '\n')
-        else:
-            self.logger.warning("No quantizable op, will return FP32 graph!")
-
     def _generate_calibration_data(self, graph, output_data, enable_kl_algo=False):
 
         tmp_dump_file = os.path.join(os.path.dirname(self.output_graph), 'requant_min_max.log')
