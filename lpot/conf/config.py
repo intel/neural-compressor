@@ -214,8 +214,8 @@ schema = Schema({
     'model': {
         'name': str,
         'framework': And(str, lambda s: s in FRAMEWORKS),
-        Optional('inputs', default=None): And(Or(str, list), Use(input_to_list)),
-        Optional('outputs', default=None): And(Or(str, list), Use(input_to_list)),
+        Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
+        Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
     },
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \

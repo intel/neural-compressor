@@ -20,7 +20,7 @@ def build_fake_yaml():
         quantization: 
           op_wise: {
                      \"conv1\": {
-                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                       \"activation\":  {\"dtype\": [\"fp32\"]},
                      },
                    }
         evaluation:
@@ -248,7 +248,7 @@ class TestBF16Convert(unittest.TestCase):
         for node in quant_model.as_graph_def().node:
             if node.op == 'Cast':
                 cast_op_count += 1
-        self.assertTrue(cast_op_count > 1)
+        self.assertTrue(cast_op_count >= 1)
 
 if __name__ == "__main__":
     unittest.main()

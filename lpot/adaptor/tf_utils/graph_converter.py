@@ -85,14 +85,15 @@ class GraphConverter:
         self.debug = bool(self.logger.level == logging.DEBUG)
 
         # as we may have outputs with suffix, strip to get raw name
-        self.output_names = list(set([output.split(":")[0] for output in outputs]))
+        self.output_node_names = list(set([x.split(":")[0] for x in outputs]))
+        self.input_node_names = list(set([x.split(":")[0] for x in inputs]))
         # For lpot, the input_graph is not graph file path but Graph object.
-        self.input_graph = get_graph_def(input_graph, self.output_names)
+        self.input_graph = get_graph_def(input_graph, self.output_node_names)
         if 'MakeIterator' in [node.op for node in self.input_graph.node]:
-            self.output_names.append('MakeIterator')
+            self.output_node_names.append('MakeIterator')
         self.output_graph = output_graph
-        self.inputs = inputs
-        self.outputs = outputs
+        self.input_tensor_names = inputs
+        self.output_tensor_names = outputs
 
         # quantize specific config
         self.calib_iteration = qt_config['calib_iteration']
@@ -132,12 +133,14 @@ class GraphConverter:
             tf.import_graph_def(graph_def, name='')
 
         iter_op = None
-        if 'MakeIterator' in self.output_names:
+        if 'MakeIterator' in self.output_node_names:
             iter_op = graph.get_operation_by_name('MakeIterator')
 
-        input_tensor = [get_tensor_by_name(graph, x) for x in self.inputs]
-        output_tensor = [get_tensor_by_name(graph, x) for x in self.outputs] if \
-            len(self.outputs) > 1 else get_tensor_by_name(graph, self.outputs[0])
+        input_tensor = [get_tensor_by_name(graph, x) for x in self.input_tensor_names]
+        output_tensor = [
+            get_tensor_by_name(graph, x) for x in self.output_tensor_names \
+            ] if len(self.output_tensor_names) > 1 else \
+            get_tensor_by_name(graph, self.output_tensor_names[0])
 
         config = tf.compat.v1.ConfigProto()
         # config.use_per_session_threads = 1
@@ -243,8 +246,9 @@ class GraphConverter:
             "QuantizedConv2DWithBias": 1,
         }
         target_conv_op = []
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph, self.inputs,
-                                                              self.output_names)
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph,
+                                                              self.input_node_names,
+                                                              self.output_node_names)
 
         node_name_mapping = {
             node.name: node
@@ -317,8 +321,8 @@ class GraphConverter:
         fp32_node_name_mapping = {}
         q_node_scale = {}
         sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph,
-                                                              self.inputs,
-                                                              self.output_names)
+                                                              self.input_node_names,
+                                                              self.output_node_names)
         graph_q_node_name = []
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
@@ -466,15 +470,20 @@ class GraphConverter:
             importer.import_graph_def(self._tmp_graph_def)
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
 
-        self._tmp_graph_def = FusePadWithConv2DOptimizer(
-            self._tmp_graph_def, non_pad_ops, self.inputs, self.op_wise_config).do_transformation()
+        self._tmp_graph_def = FusePadWithConv2DOptimizer(self._tmp_graph_def,
+                                                         non_pad_ops,
+                                                         self.input_node_names,
+                                                         self.op_wise_config).do_transformation()
 
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
-                                                                     self.inputs,
-                                                                     self.output_names)
-        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def, self.output_names,
-                                                self.op_wise_config, self.int8_sequences,
+                                                                     self.input_node_names,
+                                                                     self.output_node_names)
+        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def,
+                                                self.output_node_names,
+                                                self.op_wise_config,
+                                                self.int8_sequences,
                                                 self.device)
+
         self._tmp_graph_def = intel_quantizer.do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
@@ -551,16 +560,18 @@ class GraphConverter:
         self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
             self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.inputs,
-                                                        self.output_names).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
+                                                        self.input_node_names,
+                                                        self.output_node_names).do_transformation()
 
-        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=self.output_names).do_transformation()
+        self._tmp_graph_def = RemoveTrainingNodesOptimizer(self._tmp_graph_def,
+                                                           protected_nodes=self.output_node_names
+                                                          ).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = RerangeQuantizedConcat(
-            self._tmp_graph_def, self.device).do_transformation()
+        self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
+                                                     self.device).do_transformation()
 
         self._tmp_graph_def = PostCseOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -579,7 +590,7 @@ class GraphConverter:
         # TODO: keep dtypes list order as input list?
         dtypes = []
         for n in in_graph_def.node:
-            if n.name in self.inputs:
+            if n.name in self.input_node_names:
                 dtypes.append(n.attr["dtype"].type)
 
         return dtypes

@@ -28,6 +28,7 @@ from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.framework.ops import Graph
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
+from lpot.utils import logger
 
 
 def read_graph(in_graph, in_graph_is_binary=True):
@@ -307,12 +308,17 @@ def get_slim_graph(model, model_func, arg_scope, images, outputs=None, **kwargs)
         tf.import_graph_def(graph_def, name='')
     return graph
 
-def get_estimator_graph(estimator, input_fn, outputs=[]):
+def get_estimator_graph(estimator, input_fn):
     with tf.Graph().as_default() as g:
       features, input_hooks = estimator._get_features_from_input_fn(
           input_fn, tf.estimator.ModeKeys.PREDICT)
       estimator_spec = estimator._call_model_fn(features, None,
           tf.estimator.ModeKeys.PREDICT, estimator.config)
+
+      outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
+          isinstance(estimator_spec.predictions, dict) else \
+              [estimator_spec.predictions.name]
+      logger.info('estimator output tensor names is {}'.format(outputs))
       with tf.compat.v1.Session(graph=g) as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
         # Freezing a graph requires output_node_names, which can be found in
@@ -376,10 +382,71 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
             idx += 1
         except tf.errors.OutOfRangeError:
             break
+        except:
+            logger.warning('not run out of the preds...')
+            break
     preds = list(zip(*preds))
     return preds
 
-def get_graph_def(model, outputs=[]):
+def validate_graph_input(graph_def, input_node_names):
+    """Check input node existence, have 3 conditions:
+       1. input node names empty, return False
+       2. input node names in the graph node list, return True
+       3. input node names not in the graph node list, raise Error
+
+    Args:
+        graph_def (GraphDef):GraphDef
+        input_node_namess ([String]): input node names list.
+
+    Returns:
+        status (bool): the validation status
+    """
+    if len(input_node_names) == 0:
+        return False
+    all_node_name = [node.name for node in graph_def.node]
+    for user_input_name in input_node_names:
+        assert user_input_name in all_node_name, \
+            "Input node name {} doesn't exist in the model, please check the yaml.".\
+                format(user_input_name)
+    return True
+
+def validate_graph_output(graph_def, output_node_names):
+    """Check output node existence, have 3 conditions:
+       1. output node names empty, return False
+       2. output node names in the graph node list, return True
+       3. output node names not in the graph node list, raise Error
+
+    Args:
+        graph_def (GraphDef):GraphDef
+        output_node_namess ([String]): output node names list.
+
+    Returns:
+        status (bool): the validation status
+    """
+    if len(output_node_names) == 0:
+        return False
+    all_node_name = [node.name for node in graph_def.node]
+    for user_output_name in output_node_names:
+        assert user_output_name in all_node_name,\
+             "Output node name {} doesn't exist in the model, please check the yaml.".\
+                 format(user_output_name)
+    return True
+
+def get_input_node_names(graph_def):
+    from .graph_rewriter.graph_util import GraphAnalyzer
+    g = GraphAnalyzer()
+    g.graph = graph_def
+    g.parse_graph()
+    return g.get_graph_input_output()[0]
+
+def get_output_node_names(graph_def):
+    from .graph_rewriter.graph_util import GraphAnalyzer
+    g = GraphAnalyzer()
+    g.graph = graph_def
+    g.parse_graph()
+    return g.get_graph_input_output()[1]
+
+def get_graph_def(model, outputs=[], auto_input_output=False):
     """Get the input model graphdef
 
     Args:

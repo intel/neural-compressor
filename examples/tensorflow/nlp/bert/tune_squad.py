@@ -1316,23 +1316,15 @@ def _compute_softmax(scores):
     probs.append(score / total_sum)
   return probs
 
-
 class FeatureWriter(object):
   """Writes InputFeature to TF example file."""
 
   def __init__(self, filename, is_training):
-    self._filename = filename
     self.is_training = is_training
     self.num_features = 0
-    self._writer = tf.io.TFRecordWriter(filename)
-
-  @property
-  def filename(self):
-    from shutil import copyfile
-    self.tmp_file_name = 'tmp_{}.record'.format(time.time())
-    copyfile(self._filename, self.tmp_file_name)
-    return self.tmp_file_name
-
+    self.filename = filename
+    self._writer = tf.io.TFRecordWriter(self.filename)
+ 
   def process_feature(self, feature):
     """Write a InputFeature to the TFRecordWriter as a tf.train.Example."""
     self.num_features += 1
@@ -1361,12 +1353,13 @@ class FeatureWriter(object):
 
   def close(self):
     self._writer.close()
-    os.remove(self.tmp_file_name)
+
+  def rm_tmp_file(self):
+    os.remove(self.filename)
 
 
 def validate_flags_or_throw(bert_config):
   """Validate the input FLAGS or throw an exception."""
-  
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
                                                 FLAGS.init_checkpoint)
 
@@ -1514,7 +1507,7 @@ def main(_):
         input_file=FLAGS.predict_file, is_training=False)
 
     eval_writer = FeatureWriter(
-        filename=os.path.join(FLAGS.output_dir, "eval.tf_record"),
+        filename=os.path.join(FLAGS.output_dir, "eval_{}.tf_record".format(time.time())),
         is_training=False)
 
     eval_features = []
@@ -1530,6 +1523,7 @@ def main(_):
         is_training=False,
         output_fn=append_feature)
 
+    eval_writer.close() 
 
     tf.compat.v1.logging.info("***** Running predictions *****")
     tf.compat.v1.logging.info("  Num orig examples = %d", len(eval_examples))
@@ -1566,10 +1560,9 @@ def main(_):
 
     def eval_func(graph, iteration=-1):
         print("gonna eval the model....")
-        from lpot.adaptor.tf_utils.util import iterator_sess_run
         iter_op = graph.get_operation_by_name('MakeIterator')
         feed_dict = {'input_file:0': eval_writer.filename, \
-            'batch_size:0': FLAGS.predict_batch_size}
+                     'batch_size:0': FLAGS.predict_batch_size}
 
         all_results = []
         output_tensor = {
@@ -1580,9 +1573,7 @@ def main(_):
         config = tf.compat.v1.ConfigProto()
         config.use_per_session_threads = 1
         config.inter_op_parallelism_threads = 1
-        config.intra_op_parallelism_threads = 28
         sess = tf.compat.v1.Session(graph=graph, config=config)
-        # sess = tf.compat.v1.Session(graph=graph)
         sess.run(iter_op, feed_dict)
         def result_producer(results):
           num_examples = results['unique_ids'].shape[0]
@@ -1617,8 +1608,12 @@ def main(_):
         # all_predictions is the preds here, can caculate the accuracy
         label = parse_label_file(FLAGS.label_file)
         warmup = 5
-        print('Latency is {}'.format(np.array(time_list[warmup:]).mean() / FLAGS.predict_batch_size))
-        print('Batch size is {}'.format(FLAGS.predict_batch_size))
+        latency = np.array(time_list[warmup: ]).mean() / FLAGS.predict_batch_size
+
+        print('Batch size = {}'.format(FLAGS.predict_batch_size))
+        print('Latency: {:.3f} ms'.format(latency * 1000))
+        print('Throughput: {:.3f} images/sec'.format(1./ latency))
+
         # only calculate accuracy when running out all predictions
         if iteration == -1:
             squad_transform = SquadV1PostTransform(eval_examples, eval_features,
@@ -1628,7 +1623,7 @@ def main(_):
             preds, label = squad_transform((all_results, label))
             f1 = SquadF1()
             f1.update(preds, label)
-            print('accuracy is F1: {}'.format(f1.result()))
+            print('Accuracy is {:.3f}'.format(f1.result()))
             return f1.result()
 
     from lpot.adaptor.tf_utils.util import is_ckpt_format
@@ -1655,8 +1650,7 @@ def main(_):
             predict_batch_size=FLAGS.predict_batch_size)
 
         from lpot.adaptor.tf_utils.util import get_estimator_graph
-        outputs = ['IteratorGetNext:3', 'unstack:0', 'unstack:1']
-        graph = get_estimator_graph(estimator, predict_input_fn, outputs=outputs)
+        graph = get_estimator_graph(estimator, predict_input_fn)
     else:
         graph = load_graph(FLAGS.input_graph)
 
@@ -1676,7 +1670,7 @@ def main(_):
         from lpot.adaptor.tf_utils.util import write_graph
         write_graph(q_model.as_graph_def(), FLAGS.output_model)
         tf.logging.info("lpot tune done.....")
-    eval_writer.close()
+    eval_writer.rm_tmp_file()
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("vocab_file")

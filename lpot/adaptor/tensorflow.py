@@ -49,10 +49,15 @@ class TensorFlowAdaptor(Adaptor):
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.pre_optimized_graph = None
         self.pre_optimizer_handle = None
-        self.inputs = self.framework_specific_info['inputs'] if 'inputs' in \
-            self.framework_specific_info else []
-        self.outputs = self.framework_specific_info['outputs'] if 'outputs' in \
-            self.framework_specific_info else []
+        self.input_tensor_names = self.framework_specific_info['inputs'] \
+            if 'inputs' in self.framework_specific_info else []
+        self.output_tensor_names = self.framework_specific_info['outputs'] \
+            if 'outputs' in self.framework_specific_info else []
+        self.output_node_names = list(
+            set([x.split(":")[0] for x in self.output_tensor_names]))
+        self.input_node_names = list(
+            set([x.split(":")[0] for x in self.input_tensor_names]))
+
         self.bf16_ops = []
         self.fp32_ops = []
         self.dump_times = 0   # for tensorboard
@@ -117,10 +122,9 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.util import get_tensor_by_name, iterator_sess_run
 
         graph = tf.Graph()
-
-        graph_def = get_graph_def(input_graph, self.outputs)
-
-        outputs = copy.deepcopy(self.outputs)
+        graph_def = get_graph_def(input_graph, self.output_node_names)
+        self._validate_and_inference_input_output(graph_def)
+        outputs = copy.deepcopy(self.output_tensor_names)
 
         iter_op = None
         if 'MakeIterator' in [node.op for node in graph_def.node]:
@@ -191,7 +195,7 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
 
-        input_tensor = [get_tensor_by_name(graph, x) for x in self.inputs]
+        input_tensor = [get_tensor_by_name(graph, x) for x in self.input_tensor_names]
         output_tensor = [get_tensor_by_name(graph, x) for x in outputs] if \
             len(outputs) > 1 else get_tensor_by_name(graph, outputs[0])
 
@@ -229,10 +233,10 @@ class TensorFlowAdaptor(Adaptor):
                     self.log_histogram(writer, node_name + output_postfix, tensor, idx)
                 writer.close()
             if isinstance(predictions, list):
-                if len(self.outputs) == 1:
+                if len(self.output_tensor_names) == 1:
                     predictions = predictions[0]
-                elif len(self.outputs) > 1:
-                    predictions = predictions[:len(self.outputs)]
+                elif len(self.output_tensor_names) > 1:
+                    predictions = predictions[:len(self.output_tensor_names)]
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
@@ -346,8 +350,8 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(self.pre_optimized_graph if self.pre_optimized_graph else model,
                                    quantized_model,
-                                   inputs=self.inputs,
-                                   outputs=self.outputs,
+                                   inputs=self.input_tensor_names,
+                                   outputs=self.output_tensor_names,
                                    qt_config=self.quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    fp32_ops=self.fp32_ops,
@@ -418,6 +422,35 @@ class TensorFlowAdaptor(Adaptor):
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
         return self.quantizable_op_details
 
+    def _validate_and_inference_input_output(self, graph_def):
+        """ As node name is part of tensor name and deterministic tensor name is needed
+        for session inference during evaluation and calibration, lpot has an assumption
+        that tensor name equal to node's first tensor if ':idx' not in tensor name.
+        this means inputs/outputs from user or auto detected will be treated as tensor names 
+        and add ':0' when ':idx' not in inputs/outputs.
+
+        Args:
+            graph_def (tf.compat.v1.GraphDef): model graph definition.
+        """
+        from .tf_utils.util import validate_graph_input, validate_graph_output
+        from .tf_utils.util import get_input_node_names, get_output_node_names
+
+        self.output_tensor_names = self.output_tensor_names \
+            if validate_graph_output(graph_def, self.output_node_names) else \
+            get_output_node_names(graph_def)
+
+        self.input_tensor_names = self.input_tensor_names \
+            if validate_graph_input(graph_def, self.input_node_names) else \
+            get_input_node_names(graph_def)
+
+        self.output_node_names = list(
+            set([x.split(":")[0] for x in self.output_tensor_names]))
+        self.input_node_names = list(
+            set([x.split(":")[0] for x in self.input_tensor_names]))
+
+        assert self.input_tensor_names
+        assert self.output_tensor_names
+
     def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
@@ -432,30 +465,12 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.graph_rewriter.graph_info import TFLowbitPrecisionPatterns
         from .tf_utils.util import get_graph_def
 
-        graph_def = get_graph_def(model, self.outputs)
-        if self.inputs and self.outputs:
-            all_node_name = [node.name for node in graph_def.node]
-            for user_input_name in self.inputs:
-                assert user_input_name in all_node_name, \
-                    "Input node name {} doesn't exist in the model, please check the yaml.".\
-                        format(user_input_name)
-            for user_output_name in self.outputs:
-                assert user_output_name in all_node_name,\
-                     "Output node name {} doesn't exist in the model, please check the yaml.".\
-                         format(user_output_name)
-        else:
-            from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
-            g = GraphAnalyzer()
-            g.graph = graph_def
-            g.parse_graph()
-            parsed_inputs, parsed_outputs = g.get_graph_input_output()
-            self.inputs = self.inputs if self.inputs else parsed_inputs
-            self.outputs = self.outputs if self.outputs else parsed_outputs
+        graph_def = get_graph_def(model, self.output_node_names)
+        self._validate_and_inference_input_output(graph_def)
+        self.pre_optimizer_handle = PreOptimization(model,
+                                                    self.input_tensor_names,
+                                                    self.output_tensor_names)
 
-        assert self.inputs
-        assert self.outputs
-
-        self.pre_optimizer_handle = PreOptimization(model, self.inputs, self.outputs)
         self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         tf_version = tf.version.VERSION
@@ -507,8 +522,8 @@ class TensorFlowAdaptor(Adaptor):
 
         converter = GraphConverter(self.pre_optimized_graph if self.pre_optimized_graph else model,
                                    quantized_model,
-                                   inputs=self.inputs,
-                                   outputs=self.outputs,
+                                   inputs=self.input_tensor_names,
+                                   outputs=self.output_tensor_names,
                                    qt_config=self.quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    data_loader=dataloader)
