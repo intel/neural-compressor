@@ -23,11 +23,6 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
-    def __init__(self, input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                 perchannel, start_node_name, device, _):
-        super().__init__(input_graph, output_node_names,  patterns, remove_redundant_quant_flag,
-                         perchannel, start_node_name, device)
-
     def _add_pool_function(self, original_node, quantized_op_node):
         helper.set_attr_dtype(quantized_op_node, "T", dtypes.quint8)
         helper.copy_attr(quantized_op_node, "ksize",
@@ -56,5 +51,4 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
         self._reset_output_node_maps()
         if self.remove_redundant_quant_flag:
             self.output_graph = self.remove_redundant_quantization(self.output_graph)
-        # self.remove_dead_nodes(self.output_node_names)
         return self.output_graph

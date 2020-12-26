@@ -350,12 +350,13 @@ class GraphConverter:
                 fp32_node_name.append(op_name)
                 node_op =  graph_node_name_mapping[op_name].op
                 if node_op in ("Conv2D", "DepthwiseConv2dNative"):
-                    _, matched_nodes = FuseNodeStartWithConv2d(sorted_graph, self.output_names,
-                                                               self.int8_sequences[node_op],
-                                                               True,
-                                                               False,
-                                                               op_name, self.device,
-                                                               False).get_longest_fuse()
+                    _, matched_nodes = FuseNodeStartWithConv2d(
+                        input_graph=sorted_graph,
+                        patterns=self.int8_sequences[node_op],
+                        remove_redundant_quant_flag=True,
+                        op_wise_cfg=(False, "minmax", False),
+                        start_node_name=op_name,
+                        device=self.device).get_longest_fuse()
 
                     if matched_nodes:
                         fp32_node_name_mapping[matched_nodes[-1]] = op_name

@@ -693,19 +693,6 @@ class GraphRewriterHelper():
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
 
     @staticmethod
-    def ensure_tensor_name_has_port(node_name):
-        """Makes sure that a tensor name has :0 if no explicit port exists."""
-        if node_name not in GraphRewriterHelper.node_name_port_cache:
-            key = node_name
-            m = re.search(r"(.*):\d+$", node_name)
-            if not m:
-                node_name = node_name + ":0"
-            GraphRewriterHelper.node_name_port_cache[key] = node_name
-            return node_name
-
-        return GraphRewriterHelper.node_name_port_cache[node_name]
-
-    @staticmethod
     def node_name_from_input(node_name):
         """Static method that get the valid node name from input name.
 

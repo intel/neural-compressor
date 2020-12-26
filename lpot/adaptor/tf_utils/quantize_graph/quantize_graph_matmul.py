@@ -25,10 +25,8 @@ from .quantize_graph_base import QuantizeNodeBase
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
     patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
-    def __init__(self, input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                 perchannel, start_node_name, device, is_asymmetric):
-        super().__init__(input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                         perchannel, start_node_name, device, is_asymmetric)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -120,7 +118,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("matched node {} with input {}".format(
                     node.name, node.input))
 
-                self.logger.debug("apply_conv_biasadd_fusion")
+                self.logger.debug("apply_matmul_biasadd_fusion")
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
                 bias_node_name = self.node_name_mapping[

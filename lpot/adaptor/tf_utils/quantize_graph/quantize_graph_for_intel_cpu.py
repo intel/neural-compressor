@@ -54,14 +54,14 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
         self.input_graph = QuantizeGraphHelper().remove_training_nodes(
             self.input_graph, protected_nodes=output_node_names)
+
         self.op_wise_seq = op_wise_sequences
+
         self.device = device
-        # self.excluded_ops = excluded_ops
-        # self.excluded_nodes = excluded_nodes
+
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
-        self.register_transformer("DepthwiseConv2dNative",
-                                  FuseNodeStartWithConv2d)
+        self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
@@ -72,18 +72,17 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         remove_redundant_quant_flag = False
         all_node_length = len(self.op_wise_config)
         for _, node in enumerate(self.input_graph.node):
-            if node in self.input_graph.node and node.op in self.transformers.keys(
-            ) and node.name in self.op_wise_config:
+            if node in self.input_graph.node and node.op in self.transformers \
+                and node.name in self.op_wise_config:
                 count += 1
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
-                worker = self.transformers[node.op](
-                    self.input_graph, self.output_node_names,
-                    self.op_wise_seq[node.op],
-                    remove_redundant_quant_flag,
-                    self.op_wise_config[node.name][0],
-                    node.name, self.device,
-                    self.op_wise_config[node.name][2])
-                self.input_graph = worker.apply_the_transform()
+
+                self.input_graph = self.transformers[node.op](
+                    input_graph=self.input_graph,
+                    patterns=self.op_wise_seq[node.op],
+                    remove_redundant_quant_flag=remove_redundant_quant_flag,
+                    op_wise_cfg=self.op_wise_config[node.name],
+                    start_node_name=node.name, device=self.device).apply_the_transform()
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names)

@@ -24,11 +24,6 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
-    def __init__(self, input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                 perchannel, start_node_name, device, _):
-        super().__init__(input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                         perchannel, start_node_name, device)
-
     def _apply_concatv2_transform(self, original_node):
         namespace_prefix = original_node.name + "_eightbit"
         quantized_concat_name = namespace_prefix + "_quantized_concatv2"
@@ -60,8 +55,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         helper.set_attr_int(quantized_concat_node, "N", len(original_inputs))
         helper.set_attr_dtype(quantized_concat_node, "T", dtypes.quint8)
         self.add_output_graph_node(quantized_concat_node)
-        self._intel_cpu_add_dequantize_result_node(quantized_concat_name,
-                                                   original_node.name)
+        self._intel_cpu_add_dequantize_result_node(quantized_concat_name, original_node.name)
 
     def _quantizable_concat(self, node):
         for input_node_name in node.input[:node.attr['N'].i]:
@@ -89,5 +83,4 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         self._reset_output_node_maps()
         if self.remove_redundant_quant_flag:
             self.output_graph = self.remove_redundant_quantization(self.output_graph)
-        # self.remove_dead_nodes(self.output_node_names)
         return self.output_graph

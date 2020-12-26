@@ -25,10 +25,8 @@ from .quantize_graph_base import QuantizeNodeBase
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
-    def __init__(self, input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                 perchannel, start_node_name, device, _):
-        super().__init__(input_graph, output_node_names, patterns, remove_redundant_quant_flag,
-                         perchannel, start_node_name, device)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
@@ -61,7 +59,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         weight_name = normal_inputs[1]
         # TODO this is workaround as the tf 2.1 doesn't support depthwise/conv s8
         # feature.
-        if self.enable_s8 and not self._find_relu_node(matched_node.node):
+        if not self.disable_s8 and not self._find_relu_node(matched_node.node):
             self.output_graph = self.input_graph
             return
 

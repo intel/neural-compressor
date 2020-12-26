@@ -29,7 +29,7 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.ops import array_ops
 from .quantize_graph_common import QuantizeGraphHelper as helper
 
-class QuantizeGraphBase(object):
+class QuantizeGraphBase():
     """
     This is the base class for quantize graph.
     """
@@ -59,7 +59,7 @@ class QuantizeGraphBase(object):
     def get_supported_fusion_node(self):
         return self.transformers.keys()
 
-class QuantizeNodeBase(object):
+class QuantizeNodeBase():
     """This is the base class for nodes fusion
 
 
@@ -68,17 +68,10 @@ class QuantizeNodeBase(object):
     """
     node_details = namedtuple('node_details', ['node', 'output'])
 
-    def __init__(self,
-                 input_graph,
-                 output_node_names,
-                 patterns,
-                 remove_redundant_quant_flag,
-                 per_channel,
-                 start_node_name,
-                 device,
-                 is_asymmetric=False,
-                 enable_s8=True):
+    def __init__(self, **kwargs):
         self.logger = logging.getLogger()
+
+        input_graph = kwargs['input_graph']
 
         if isinstance(input_graph, graph_pb2.GraphDef):
             self.input_graph = input_graph
@@ -86,20 +79,18 @@ class QuantizeNodeBase(object):
             self.input_graph = graph_pb2.GraphDef()
             with gfile.Open(input_graph, 'rb') as f:
                 self.input_graph.ParseFromString(f.read())
-        
+
         self._parse_graph()
-        self.output_node_names = output_node_names
         self.output_node_maps = {}
         self.output_graph = graph_pb2.GraphDef()
         self.quantized_node_dict = {}
-        self.patterns = patterns
-        self.remove_redundant_quant_flag = remove_redundant_quant_flag
-        self.per_channel = per_channel
-        self.start_node_name = start_node_name
-        self.is_asymmetric = is_asymmetric
-        self.device = device
-        self.enable_s8 = False if tf.version.VERSION < '2.1.0' and \
-            tf.version.VERSION != '1.15.0-up1' else enable_s8
+        self.patterns =  kwargs['patterns']
+        self.remove_redundant_quant_flag = kwargs['remove_redundant_quant_flag']
+        self.per_channel, self.is_asymmetric = kwargs['op_wise_cfg'][0], kwargs['op_wise_cfg'][2]
+        self.start_node_name = kwargs['start_node_name']
+        self.device = kwargs['device']
+        self.disable_s8 = bool(tf.version.VERSION < '2.1.0' and \
+            tf.version.VERSION != '1.15.0-up1')
 
     def apply_the_transform(self):
         """
@@ -130,7 +121,7 @@ class QuantizeNodeBase(object):
                     continue
 
                 if ((v in ("Conv2D", "DepthwiseConv2dNative")
-                     and not self.enable_s8)
+                     and self.disable_s8)
                     ) and not self._find_relu_node(cur_node):
                     continue
 
