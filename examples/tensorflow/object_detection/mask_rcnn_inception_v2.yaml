@@ -12,6 +12,9 @@ quantization:                                        # optional. tuning constrai
       dataset:
         COCORecord:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
+      filter:
+        LabelBalance: 
+          size: 1
       transform:
         ParseDecodeCoco:
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.

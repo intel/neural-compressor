@@ -38,7 +38,7 @@ tf = LazyImport('tensorflow')
 class TensorflowImagenetDataset(IterableDataset):
     """Configuration for Imagenet dataset."""
 
-    def __new__(cls, root, subset='validation', num_cores=28, transform=None):
+    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
 
         assert subset in ('validation', 'train'), \
             'only support subset (validation, train)'
@@ -81,7 +81,7 @@ class TensorflowImagenetDataset(IterableDataset):
 class ONNXRTImagenetDataset(Dataset):
     """Configuration for Imagenet dataset."""
 
-    def __init__(self, root, subset='val', num_cores=28, transform=None):
+    def __init__(self, root, subset='val', num_cores=28, transform=None, filter=None):
         self.val_dir = os.path.join(root, subset)
         assert os.path.exists(self.val_dir), "find no val dir in dataset path, please \
             makesure there are train/val subfolders"

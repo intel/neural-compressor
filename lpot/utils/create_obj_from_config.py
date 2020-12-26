@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from ..metric import METRICS
-from ..data import DATASETS, TRANSFORMS, DataLoader
+from ..data import DATASETS, TRANSFORMS, FILTERS, DataLoader
 from collections import OrderedDict
 import copy
 
@@ -47,7 +47,7 @@ def get_metrics(metrics, cfg, compose=True):
 def get_postprocess(postprocesses, cfg, compose=True):
     return get_func_from_config(postprocesses, cfg, compose)
 
-def create_dataset(framework, data_source, cfg_preprocess):
+def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
     transform_list = []
     # generate framework specific transforms
     preprocess = None
@@ -57,8 +57,16 @@ def create_dataset(framework, data_source, cfg_preprocess):
     # even we can unify transform, how can we handle the IO, or we do the transform here
     datasets = DATASETS(framework)
     dataset_type = list(data_source.keys())[0]
+    # generate framework and dataset specific filters
+    filter = None
+    if cfg_filter is not None:
+        filters = FILTERS(framework)
+        filter_type = list(cfg_filter.keys())[0]
+        filter_dataset_type = filter_type + dataset_type
+        filter = filters[filter_dataset_type](list(cfg_filter[filter_type].values())[0])
     # in this case we should prepare eval_data and calib_data sperately
-    dataset = datasets[dataset_type](**data_source[dataset_type], transform=preprocess)
+    dataset = datasets[dataset_type](**data_source[dataset_type], \
+            transform=preprocess, filter=filter)
     return dataset
 
 def create_dataloader(framework, dataloader_cfg):
@@ -68,7 +76,8 @@ def create_dataloader(framework, dataloader_cfg):
 
     eval_dataset = create_dataset(framework,
                                   copy.deepcopy(dataloader_cfg['dataset']),
-                                  copy.deepcopy(dataloader_cfg['transform']))
+                                  copy.deepcopy(dataloader_cfg['transform']),
+                                  copy.deepcopy(dataloader_cfg['filter']),)
 
     return DataLoader(dataset=eval_dataset, framework=framework, batch_size=batch_size)
 
@@ -99,7 +108,6 @@ def create_eval_func(framework, dataloader, adaptor, \
         metric = get_metrics(metrics, metric_cfg, compose=False)
     else:
         metric = None
-    
     def eval_func(model, measurer=None):
         return adaptor.evaluate(model, dataloader, postprocess, \
                                 metric, measurer, iteration, tensorboard)

@@ -440,7 +440,7 @@ class TestCOCOTransform(unittest.TestCase):
         with tf.io.TFRecordWriter('test.record') as writer:
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
-            'tensorflow', {'COCORecord':{'root':'test.record'}}, {'ParseDecodeCoco':{}})
+            'tensorflow', {'COCORecord':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, None)
         dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
@@ -468,7 +468,7 @@ class TestCOCOTransform(unittest.TestCase):
         with tf.io.TFRecordWriter('test2.record') as writer:
             writer.write(example.SerializeToString())
         self.assertRaises(ValueError, create_dataset,
-            'tensorflow', {'COCORecord':{'root':'test2.record'}}, None)
+            'tensorflow', {'COCORecord':{'root':'test2.record'}}, None, None)
 
         os.remove('test2.record')
         os.remove('test.record')

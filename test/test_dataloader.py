@@ -28,7 +28,7 @@ class TestDataloader(unittest.TestCase):
         im = Image.fromarray(random_array)
         im.save('val/0000000397133.jpg')
         args = {'Imagenet': {'root': './'}}
-        ds = create_dataset('onnxrt_qlinearops', args, None)
+        ds = create_dataset('onnxrt_qlinearops', args, None, None)
         dataloader = DataLoader('onnxrt_qlinearops', ds)
         for image, label in dataloader:
             self.assertEqual(image[0].size, (100,100))
@@ -104,13 +104,13 @@ class TestDataloader(unittest.TestCase):
             f.write(fake_json)
 
         args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
-        ds = create_dataset('tensorflow', args, None)
+        ds = create_dataset('tensorflow', args, None, None)
         dataloader = DataLoader('tensorflow', ds)
         for image, label in dataloader:
             self.assertEqual(image[0].size, (100,100))
 
         trans_args = {'Rescale': {}}
-        ds = create_dataset('tensorflow', args, trans_args)
+        ds = create_dataset('tensorflow', args, trans_args, None)
         dataloader = DataLoader('tensorflow', ds)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
@@ -141,7 +141,7 @@ class TestDataloader(unittest.TestCase):
             writer.write(example.SerializeToString())
 
         eval_dataset = create_dataset(
-            'tensorflow', {'Imagenet':{'root':'./'}}, {'ParseDecodeImagenet':{}})
+            'tensorflow', {'Imagenet':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
         dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1) 
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))

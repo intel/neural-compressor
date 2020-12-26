@@ -105,13 +105,15 @@ class PytorchMxnetWrapDataset():
     def __init__(self, datafunc):
         self.datafunc = datafunc
 
-    def __call__(self, transform=None, *args, **kwargs):
-        return PytorchMxnetWrapFunction(self.datafunc, transform=transform, *args, **kwargs)
+    def __call__(self, transform=None, filter=None, *args, **kwargs):
+        return PytorchMxnetWrapFunction(self.datafunc, transform=transform, \
+            filter=filter, *args, **kwargs)
 
 class PytorchMxnetWrapFunction():
-    def __init__(self, dataset, transform, *args, **kwargs):
+    def __init__(self, dataset, transform, filter, *args, **kwargs):
         self.dataset = dataset(*args, **kwargs)
         self.transform = transform
+        self.filter = filter
 
     def __len__(self):
         return len(self.dataset)

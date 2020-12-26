@@ -43,7 +43,8 @@ class DummyDataset(Dataset):
                                  'float16', 'uint8', 'int8', 'int32', 'int64', 'bool')
 
     """
-    def __init__(self, shape, low=-128., high=127., dtype='float32', label=False, transform=None):
+    def __init__(self, shape, low=-128., high=127., dtype='float32', label=False, \
+        transform=None, filter=None):
 
         dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
                      'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool}

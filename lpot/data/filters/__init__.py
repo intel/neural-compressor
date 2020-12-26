@@ -15,21 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .filter import FILTERS, Filter, filter_registry
+from os.path import dirname, basename, isfile, join
+import glob
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
-from .transforms import TRANSFORMS, Transform, transform_registry
-from .dataloaders import DataLoader
-from .filters import FILTERS, Filter, filter_registry
+modules = glob.glob(join(dirname(__file__), "*.py"))
 
-__all__ = [
-    "DataLoader",
-    "DATASETS",
-    "Dataset",
-    "IterableDataset",
-    "dataset_registry",
-    "TRANSFORMS",
-    "Transform",
-    "transform_registry",
-    "FILTERS",
-    "Filter",
-    "filter_registry",]
+for f in modules:
+    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
+        __import__(basename(f)[:-3], globals(), locals(), level=1)
+
+
+__all__ = ["FILTERS", "Filter", "filter_registry"]

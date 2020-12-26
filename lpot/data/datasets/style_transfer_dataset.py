@@ -30,7 +30,7 @@ class StyleTransferDataset(Dataset):
     """
 
     def __init__(self, content_folder, style_folder, crop_ratio=0.1,
-                 resize_shape=(256, 256), image_format='jpg', transform=None):
+                 resize_shape=(256, 256), image_format='jpg', transform=None, filter=None):
 
         self.transform = transform
         self.content_folder = content_folder

@@ -37,7 +37,7 @@ tf = LazyImport('tensorflow')
 class COCORecordDataset(IterableDataset):
     """Configuration for Coco dataset."""
 
-    def __new__(cls, root, num_cores=28, transform=None):
+    def __new__(cls, root, num_cores=28, transform=None, filter=filter):
         record_iterator = tf.compat.v1.python_io.tf_record_iterator(root)
         example = tf.train.SequenceExample()
         for element in record_iterator:
@@ -62,6 +62,8 @@ class COCORecordDataset(IterableDataset):
                                 buffer_output_elements=10000,
                                 prefetch_input_elements=10000))
         ds = ds.map(transform, num_parallel_calls=None)
+        if filter is not None:
+            ds = ds.filter(filter)
         ds = ds.prefetch(buffer_size=1000)
         ds.batch(1)
         return ds
@@ -87,7 +89,8 @@ class COCORawDataset(Dataset):
     """Configuration for Coco raw dataset."""
 
     def __init__(self, root, img_dir='val2017', \
-            anno_dir='annotations/instances_val2017.json', num_cores=28, transform=None):
+            anno_dir='annotations/instances_val2017.json', num_cores=28, \
+                transform=None, filter=filter):
         import json
         import os
         import numpy as np
@@ -100,6 +103,7 @@ class COCORawDataset(Dataset):
         self.sess = tf.compat.v1.Session(config=data_config)
         self.image_list = []
         self.transform = transform
+        self.filter = filter
         img_path = os.path.join(root, img_dir)
         anno_path = os.path.join(root, anno_dir)
         coco = COCO(anno_path)

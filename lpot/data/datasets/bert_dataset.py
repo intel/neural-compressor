@@ -29,7 +29,7 @@ class BertDataset(Dataset):
 
     """
 
-    def __init__(self, dataset, task, model_type='bert', transform=None):
+    def __init__(self, dataset, task, model_type='bert', transform=None, filter=None):
         self.dataset = dataset
         assert task in ("classifier", "squad"), "Bert task support only classifier squad"
         self.task = task

@@ -123,6 +123,12 @@ ops_schema = Schema({
     }
 })
 
+filter_schema = Schema({
+    Optional('LabelBalance'): {
+        'size': And(int, lambda s: s > 0)
+    },
+})
+
 transform_schema = Schema({
     Optional('RandomResizedCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
@@ -192,6 +198,7 @@ dataset_schema = Schema({
 dataloader_schema = Schema({
     Optional('batch_size', default=1): And(int, lambda s: s > 0),
     'dataset': dataset_schema,
+    Optional('filter'): filter_schema,
     Optional('transform'): transform_schema,
 })
 
