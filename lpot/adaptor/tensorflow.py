@@ -126,13 +126,13 @@ class TensorFlowAdaptor(Adaptor):
         self._validate_and_inference_input_output(graph_def)
         outputs = copy.deepcopy(self.output_tensor_names)
 
-        iter_op = None
-        if 'MakeIterator' in [node.op for node in graph_def.node]:
-            iter_op = graph.get_operation_by_name('MakeIterator')
-
         assert graph_def
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
+
+        iter_op = None
+        if 'MakeIterator' in [node.op for node in graph_def.node]:
+            iter_op = graph.get_operation_by_name('MakeIterator')
 
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
