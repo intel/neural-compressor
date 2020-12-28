@@ -1211,7 +1211,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
 
 @adaptor_registry
-class PyTorch_IPEXAdaptor(TemplateAdaptor):
+class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
     unify_op_type_mapping = {
         "Convolution_Relu": "Convolution",
         "Convolution_Sum_Relu": "Convolution",
