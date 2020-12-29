@@ -98,6 +98,15 @@ wget http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_
 tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 ```
 
+##### ssd_resnet34
+```shell
+wget --no-check-certificate https://zenodo.org/record/3345892/files/tf_ssd_resnet34_22.1.zip?download=1 -0 ssd_resnet34.zip
+unzip ssd_resnet34.zip
+```
+You need to install intel-tensoeflow==2.4.0 to enable ssd_resnet34 model.   
+
+Please refer `https://software.intel.com/content/www/us/en/develop/articles/intel-optimization-for-tensorflow-installation-guide.html#build_from_source` to build intel-tensorflow==2.4.0 from source.
+
 ## Run Command
 
 Now we support both pb and ckpt formats.
