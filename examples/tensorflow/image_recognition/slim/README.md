@@ -117,7 +117,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
   ```Shell
   cd examples/tensorflow/image_recognition/slim
-  bash run_tuning.sh --config=../inceptionv1.yaml \
+  bash run_tuning.sh --config=../inception_v1.yaml \
           --input_model=/PATH/TO/inception_v1.ckpt \
           --output_model=./lpot_inception_v1.pb
 
@@ -127,7 +127,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
   ```Shell
   cd examples/tensorflow/image_recognition/slim
-  bash run_tuning.sh --config=../inceptionv2.yaml \
+  bash run_tuning.sh --config=../inception_v2.yaml \
       --input_model=/PATH/TO/inception_v2.ckpt \
       --output_model=./lpot_inception_v2.pb
   ```
@@ -136,7 +136,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
   ```Shell
   cd examples/tensorflow/image_recognition/slim
-  bash run_tuning.sh --config=inceptionv3.yaml \
+  bash run_tuning.sh --config=inception_v3.yaml \
       --input_model=/PATH/TO/inception_v3.ckpt \
       --output_model=./lpot_inception_v3.pb
   ```
@@ -145,7 +145,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
   ```Shell
   cd examples/tensorflow/image_recognition/slim
-  bash run_tuning.sh --config=../inceptionv4.yaml \
+  bash run_tuning.sh --config=../inception_v4.yaml \
       --input_model=/PATH/TO/inception_v4.ckpt \
       --output_model=./lpot_inception_v4.pb
   ```

@@ -82,7 +82,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=resnet50v1.0.yaml \
+  bash run_tuning.sh --config=resnet50_v1.yaml \
       --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
       --output_model=./lpot_resnet50_v1.pb
   ```
@@ -123,7 +123,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=mobilenetv1.yaml \
+  bash run_tuning.sh --config=mobilenet_v1.yaml \
       --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb \
       --output_model=./lpot_mobilenetv1.pb
   ```
@@ -132,7 +132,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=mobilenetv2.yaml \
+  bash run_tuning.sh --config=mobilenet_v2.yaml \
       --input_model=/PATH/TO/frozen_mobilenet_v2.pb \
       --output_model=./lpot_mobilenetv2.pb
   ```
@@ -212,7 +212,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=resnetv2_50.yaml \
+  bash run_tuning.sh --config=resnet_v2_50.yaml \
           --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./lpot_resnetv2_50.pb
   ```
 
@@ -220,7 +220,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=resnetv2_101.yaml \
+  bash run_tuning.sh --config=resnet_v2_101.yaml \
           --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./lpot_resnetv2_101.pb
   ```
 
@@ -228,7 +228,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=resnetv2_152.yaml \
+  bash run_tuning.sh --config=resnet_v2_152.yaml \
       --input_model=/PATH/TO/frozen_resnetv2_152.pb \
       --output_model=./lpot_resnetv2_152.pb
   ```
