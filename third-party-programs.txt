@@ -43,6 +43,7 @@ terms are listed below.
    examples-PyTorch-imagenet_recognition-efficientnet
    Copyright 2020 Ross Wightman
 
+   blendcnn
 
 
                                 Apache License
