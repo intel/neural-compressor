@@ -96,7 +96,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   cd examples/tensorflow/image_recognition
-  bash run_tuning.sh --config=resnet50v1.5.yaml \
+  bash run_tuning.sh --config=resnet50_v1_5.yaml \
           --input_model=/PATH/TO/resnet50_v1.pb --output_model=./lpot_resnet50_v15.pb
   ```
 

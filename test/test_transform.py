@@ -58,6 +58,7 @@ class TestONNXITImagenetTransform(unittest.TestCase):
 
 
 class TestTensorflowImagenetTransform(unittest.TestCase):
+    tf.compat.v1.disable_v2_behavior()
     def testBilinearImagenetTransform(self):
         transforms = TRANSFORMS('tensorflow', "preprocess")
         transform = transforms['BilinearImagenet'](height=224, width=224)

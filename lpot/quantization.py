@@ -18,7 +18,7 @@
 import os
 import pickle
 from .conf.config import Conf
-from .conf.dotdict import deep_set
+from .conf.dotdict import deep_set, DotDict
 from .strategy import STRATEGIES
 from .metric import METRICS
 from .utils import logger
@@ -243,6 +243,7 @@ class Quantization(object):
     def metric(self, name, metric_cls, **kwargs):
         metric_cfg = {name : {**kwargs}} 
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
+        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         metrics = METRICS(self.framework)
         metrics.register(name, metric_cls)
         
