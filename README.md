@@ -89,7 +89,7 @@ python setup.py install
 
 # Deep Dive
 
-* [Quantization](docs/Quantization.md) is the processes that enable inference and training by performing computations at low precision data type, such as fixed point integers. LPOT supports [Post-Training Quantization (static and dynamic)](docs/PTQ.md) and [Quantization-Aware Training](docs/QAT.md)
+* [Quantization](docs/Quantization.md) is the processes that enable inference and training by performing computations at low precision data type, such as fixed point integers. LPOT supports [Post-Training Quantization](docs/PTQ.md) and [Quantization-Aware Training](docs/QAT.md)
 * [Pruning](docs/pruning.md) provides a common method for introducing sparsity in weights and activations.
 * [Benchmarking](docs/benchmark.md) introduces how to utilize the benchmark interface of LPOT.
 * [Mixed precision](docs/mixed_precision.md) introduces how to enable mixed precision, including BFP16 and int8 and FP32, on Intel platforms during tuning.
@@ -97,6 +97,7 @@ python setup.py install
 * [Dataset](docs/dataset.md) introudces how to utilize LPOT buildin dataset and how to develop a custom dataset.
 * [Metric](docs/metric.md) introduces how to utilize LPOT buildin metric and how to develop a custom metric.
 * [TensorBoard](docs/tensorboard.md) provides tensor histogram and execution graph for tuning debugging purpose.
+* [PyTorch Deploy](docs/pytorch_model_saving.md) introduces how LPOT saves and loads quantized PyTorch model.
 
 
 # Advanced Topics

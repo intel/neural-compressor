@@ -33,7 +33,7 @@ tuning phase stops when the `accuracy` criteria is met.
 
 ## Configurations
 
-Detailed configuration templates can be found in [`here`](ilit/template).
+Detailed configuration templates can be found in [`here`](lpot/template).
 
 ### Model-specific configurations
 
@@ -46,7 +46,7 @@ quantization:                                        # optional. tuning constrai
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for ilit.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       dataset:
         TFRecordDataset:
           root: /path/to/tf_record
@@ -103,12 +103,6 @@ tuning:
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 ```
-## Customize a new strategy
-
-Users can use the basic `TuneStrategy` class to enable a new strategy with a
-new `self.next_tune_cfg()` function implementation. If the new strategy
-needs additional information, users can override the `self.traverse()` in
-the new strategy, such as `TPE` strategy.
 
 ### Basic
 
@@ -296,3 +290,39 @@ tuning configs to generate a better-performance quantized model.
 `Random` usage is similar to `Basic`:
 
 ```yaml
+tuning:
+  strategy:
+    name: random 
+  accuracy_criterion:
+    relative:  0.01
+  exit_policy:
+    timeout: 0
+  random_seed: 9527
+
+```
+
+Customize a New Tuning Strategy
+======================
+
+Intel® Low Precision Optimization Tool supports new strategy extension by implementing a subclass of `TuneStrategy` class in lpot.strategy package
+ and registering this strategy by `strategy_registry` decorator.
+
+for example, user can implement a `Abc` strategy like below:
+
+```
+@strategy_registry
+class AbcTuneStrategy(TuneStrategy):
+    def __init__(self, model, conf, q_dataloader, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
+        ...
+
+    def next_tune_cfg(self):
+        ...
+
+```
+
+The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse
+ all the tuning space till a quantization configuration meets pre-defined accuray criterion.
+
+If the traverse behavior of `TuneStrategy` base class does not meet new strategy requirement, it could re-implement `traverse` function with self own logic.
+An example like this is under [TPE Strategy](../lpot/strategy/tpe.py).

@@ -1,13 +1,44 @@
 Adaptor
 =================
-1. query fw capbility
-2. parse tune config ( lpot config -> fwk capbility)
-3. (optianal) pre optimize 
-4. do the quantization
 
+## Introduction
 
+Intel® Low Precision Optimization Tool built the low-precision inference solution upon popular Deep Learning frameworks
+such as TensorFlow, PyTorch, MXNet and ONNX Runtime. The adaptor layer is the bridge between LPOT tuning strategy and
+framework vanilla quantizaton APIs.
 
-Extension
+## Adaptor Design
+
+Intel® Low Precision Optimization Tool supports new adaptor extension by implementing a subclass of `Adaptor` class in lpot.adaptor package
+ and registering this strategy by `adaptor_registry` decorator.
+
+for example, user can implement a `Abc` strategy like below:
+```
+@adaptor_registry
+class AbcAdaptor(Adaptor):
+    def __init__(self, framework_specific_info):
+        ...
+
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
+        ...
+
+    def evaluate(self, model, dataloader, postprocess=None,
+                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+        ...
+
+    def query_fw_capability(self, model):
+        ...
+
+    def query_fused_patterns(self, model):
+        ...
+```
+
+`quantize` function is used to do calibration and quanitization in post-training quantization.
+`evaluate` function is used to run evaluation on validation dataset.
+`query_fw_capability` function is used to run query framework quantization capability and intersects with user yaml configuration setting to
+`query_fused_patterns` function is used to run query framework graph fusion capability and decide the fusion tuning space.
+
+Customize a New Framework Backend
 =================
 Let us take onnxruntime as en example. Onnxruntime is a backend proposed by microsoft, and it's based on MLAS kernel defaultly. 
 Onnxruntime already has  [quantization tools](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/python/tools/quantization), so the question becomes how to intergrate onnxruntime quantization tools into LPOT. 

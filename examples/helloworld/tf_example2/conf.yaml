@@ -4,14 +4,11 @@ model:
   inputs: input                                  # optional. inputs and outputs fields are only required for tensorflow backend.
   outputs: output
 
-#evaluation:
-#  accuracy:
-
 tuning:
   accuracy_criterion:
-    relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
+    relative: 0.01                               # the tuning target of accuracy loss percentage: 1%
   exit_policy:
-    timeout: 100                                   # tuning timeout (seconds)
+    timeout: 100                                 # tuning timeout (seconds)
   random_seed: 100                               # random seed
 
 

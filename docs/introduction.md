@@ -26,7 +26,7 @@ The `conf_fname` parameter used in the class initialization is the path to user 
 >
 > Intel® Low Precision Optimization Tool provides template yaml files for the [Post-Training Quantization](../lpot/template/ptq.yaml), [Quantization-Aware Traing](../lpot/template/qat.yaml), and [Pruning](../lpot/template/pruning.yaml) scenarios. Refer to these template files to understand the meaning of each field.
 
-> Note that most fields in the yaml templates are optional. View the [HelloWorld Yaml](../examples/helloworld/tf2.x/conf.yaml) example for reference.
+> Note that most fields in the yaml templates are optional. View the [HelloWorld Yaml](../examples/helloworld/tf_example2/conf.yaml) example for reference.
 
 For TensorFlow backend, LPOT supports passing the path of keras model, frozen pb, checkpoint, saved model as the input of `model` parameter of `Quantization()`.
 
