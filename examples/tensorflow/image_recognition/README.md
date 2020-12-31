@@ -257,6 +257,14 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
           --input_model=/PATH/TO/densenet169.pb --output_model=./lpot_densenet169
   ```
 
+### 19. Nasnet-mobile
+
+  ```Shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --config=nasnet_mobile.yaml \
+          --input_model=/PATH/TO/frozen_nasnet_mobile.pb --output_model=./lpot_nasnet_mobile
+  ```
+
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
 =======================================================
 
