@@ -84,12 +84,12 @@ python setup.py install
 
 * [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool's API.
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples. 
-* [Examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: [TensorFlow](examples/tensorflow), [PyTorch](examples/pytorch), [MxNet](examples/mxnet) and [ONNX Runtime](examples/onnxrt).
+* [Examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: [TensorFlow](examples/tensorflow), [PyTorch](examples/pytorch), [MXNet](examples/mxnet) and [ONNX Runtime](examples/onnxrt).
 
 
 # Deep Dive
 
-* [Quantization](docs/Quantization.md) is the processes that enable inference and training by performing computations at low precision data type, such as fixed point integers. LPOT supports [Post-Training Quantization (static and dynamic)](docs/PTQ.md) and [Quantization-Aware Training](docs/QAT.md)
+* [Quantization](docs/Quantization.md) is the processes that enable inference and training by performing computations at low precision data type, such as fixed point integers. LPOT supports [Post-Training Quantization](docs/PTQ.md) and [Quantization-Aware Training](docs/QAT.md)
 * [Pruning](docs/pruning.md) provides a common method for introducing sparsity in weights and activations.
 * [Benchmarking](docs/benchmark.md) introduces how to utilize the benchmark interface of LPOT.
 * [Mixed precision](docs/mixed_precision.md) introduces how to enable mixed precision, including BFP16 and int8 and FP32, on Intel platforms during tuning.
@@ -97,6 +97,7 @@ python setup.py install
 * [Dataset](docs/dataset.md) introudces how to utilize LPOT buildin dataset and how to develop a custom dataset.
 * [Metric](docs/metric.md) introduces how to utilize LPOT buildin metric and how to develop a custom metric.
 * [TensorBoard](docs/tensorboard.md) provides tensor histogram and execution graph for tuning debugging purpose.
+* [PyTorch Deploy](docs/pytorch_model_saving.md) introduces how LPOT saves and loads quantized PyTorch model.
 
 
 # Advanced Topics
@@ -128,14 +129,17 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
 </thead>
 <tbody>
   <tr>
-    <td class="tg-nrix" rowspan="8">Cascade Lake<br><br>Cooper Lake<br><br>Skylake</td>
-    <td class="tg-nrix" rowspan="8">CentOS 7.8<br><br>Ubuntu 18.04</td>
-    <td class="tg-nrix" rowspan="8">3.6<br><br>3.7</td>
-    <td class="tg-cly1" rowspan="5">TensorFlow</td>
+    <td class="tg-nrix" rowspan="10">Cascade Lake<br><br>Cooper Lake<br><br>Skylake</td>
+    <td class="tg-nrix" rowspan="10">CentOS 7.8<br><br>Ubuntu 18.04</td>
+    <td class="tg-nrix" rowspan="10">3.6<br><br>3.7</td>
+    <td class="tg-cly1" rowspan="6">TensorFlow</td>
     <td class="tg-7zrl">2.2.0</td>
   </tr>
   <tr>
-    <td class="tg-7zrl">1.15UP1</td>
+    <td class="tg-7zrl">1.15.0 UP1</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">1.15.0 UP2</td>
   </tr>
   <tr>
     <td class="tg-7zrl">2.3.0</td>
@@ -155,6 +159,10 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
     <td class="tg-7zrl">1.7.0</td>
   </tr>
   <tr>
+    <td class="tg-7zrl">1.6.0</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">ONNX Runtime</td>
     <td class="tg-7zrl">1.6.0</td>
   </tr>
 </tbody>
@@ -512,7 +520,7 @@ View [Legal Information](legal_information.md).
 
 ## Citation
 
-If you use Intel® Low Precision Optimization Tool in your research or you wish to refer to the tuning results published in the [Tuning Zoo](#tuning-zoo), use the following BibTeX entry.
+If you use Intel® Low Precision Optimization Tool in your research or you wish to refer to the tuning results published in the [Model Zoo](#model-zoo), use the following BibTeX entry.
 
 ```
 @misc{Intel® Low Precision Optimization Tool,
