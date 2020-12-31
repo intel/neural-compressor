@@ -4,10 +4,8 @@ model:
   inputs: input                                  # optional. inputs and outputs fields are only required for tensorflow backend.
   outputs: output
 
-evaluation:
-  accuracy:
-    metric:
-      topk: 1
+#evaluation:
+#  accuracy:
 
 tuning:
   accuracy_criterion:

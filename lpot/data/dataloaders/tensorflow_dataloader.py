@@ -69,7 +69,7 @@ class TFDataDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size=1, last_batch='rollover', \
                              collate_fn=None, sampler=None, batch_sampler=None, \
                              num_workers=None, pin_memory=None):
-
+        assert not tf.executing_eagerly(), 'tf dataloader not allowed executed in eager mode...'
         drop_last = False if last_batch == 'rollover' else True
         dataset = dataset.batch(batch_size, drop_last)
         ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
