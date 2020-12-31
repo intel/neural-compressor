@@ -93,8 +93,8 @@ python setup.py install
 # Deep Dive
 * [Quantization](Quantization.md) is the processes that enable lower precision inference and training by performing computations at fixed point integers that are lower than floating points. LPOT support [PTQ (static and dynamic)](PTQ.md) and [QAT](QAT.md)
 * [Pruning](pruning.md) provides a common method for introducing sparsity in weights and activations.
-* Benchmarking
-* LPOT supports [Mixed precision](bf16_convert.md) including BFP16, int8 and FP32 on Intel platforms.
+* Benchmarking 
+* LPOT supports [Mixed precision](mixed_precision.md) including BFP16, int8 and FP32 on Intel platforms.
 * [Transform](transform.md) introduces the LPOT buildin preprocessing and how to utilize a custom preprocessing method. 
 * [Dataset](dataset.md) introudces how to utilize LPOT buildin [dataset](dataset.md) or integrate a custom [dataset](dataset.md).
 * [Metric](metric.md) introduces how to utilize LPOT buildin [metric](metric.md) or integrate with a custom [metric](metric.md) fuction.

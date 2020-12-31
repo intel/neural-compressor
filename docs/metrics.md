@@ -1,5 +1,6 @@
 Metrics
 ========================
+LPOT supports some builtin metrics that polularly used in industry. Pleaes refer to 'examples/helloworld/tf_example1' about how to config a builtin metric.
 
 ## Metric support list
 

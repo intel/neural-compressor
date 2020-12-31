@@ -1,5 +1,6 @@
 Transform
 ====================
+LPOT supports builtin preprocessing methods on diffrent framework backend. Pleaes refer to 'examples/helloworld/tf_example1' about how to config a transform in dataloader.
 
 ## Transform support list
 

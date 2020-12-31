@@ -1,5 +1,6 @@
 Dataset
 ==================
+LPOT supports builtin dataloader on popular industry dataset. Pleaes refer to 'examples/helloworld/tf_example1' about how to config a builtin dataloader.
 
 ## Dataset support list
 
