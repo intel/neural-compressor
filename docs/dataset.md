@@ -1,10 +1,13 @@
 Dataset
 ==================
+
+User can use LPOT builtin datasets as well as register their own datasets.
+
+## Builtin dataset support list
+
 LPOT supports builtin dataloader on popular industry dataset. Pleaes refer to 'examples/helloworld/tf_example1' about how to config a builtin dataloader.
 
-## Dataset support list
-
-### Tensorflow
+#### TensorFlow
 
 | Type                  | Parameters                                    |
 | :------               | :------                                       |
@@ -15,7 +18,7 @@ LPOT supports builtin dataloader on popular industry dataset. Pleaes refer to 'e
 | style_transfer        | content_path (str)<br>style_path (str)        |
 
 
-### Pytorch
+#### PyTorch
 
 | Type                  | Parameters                                      |
 | :------               | :------                                         |
@@ -26,7 +29,7 @@ LPOT supports builtin dataloader on popular industry dataset. Pleaes refer to 'e
 | Bert                  | dataset (list)<br>task ('classifier' or 'squad')|
 
 
-### Mxnet
+#### MXNet
 
 | Type                  | Parameters                                     |
 | :------               | :------                                        |
@@ -34,9 +37,39 @@ LPOT supports builtin dataloader on popular industry dataset. Pleaes refer to 'e
 | ImageRecordDataset    | root (str)                                     |
 | ImageFolderDataset    | root (str)                                     |
 
-### Onnxrt
+#### ONNX Runtime
 
-| Type                  | Parameter                                      |
+| Type                  | Parameters                                     |
 | :------               | :------                                        |
 | dummy                 | shape (list or tuple)                          |
 | Imagenet              | root (str)                                     |
+
+## User specific dataset
+
+User can register their own dataset as follows:
+
+```python
+class Dataset(object):
+    def __init__(self, args):
+        # init code here
+
+    def __getitem__(self, idx):
+        # use idx to get data and label
+        return data, label
+
+    def __len__(self):
+        return len
+
+```
+
+After defining the dataset class, user can pass it to quantizer.
+
+```python
+from lpot.quantization import Quantization
+quantizer = Quantization(yaml_file)
+dataloader = quantizer.dataloader(dataset) # user can pass more optional args to dataloader such as batch_size and collate_fn
+q_model = quantizer(graph, 
+                    q_dataloader=dataloader, 
+                    eval_func=eval_func)
+
+```
