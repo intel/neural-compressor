@@ -211,28 +211,8 @@ class QuantizeNodeBase():
         else:
             return False
 
-    def _add_output_node(self, node_name, node):
-        assert node_name not in self.output_node_maps
-        self.output_node_maps[node_name] = node
-
     def _reset_output_node_maps(self):
         self.output_node_maps = {}
-
-    def write_graph(self, out_graph_def, out_graph_file):
-        """Write output graphDef to file.
-
-        :param out_graph_def: output graphDef.
-        :param out_graph_file: path to output graph file.
-        :return: None.
-        """
-        if not isinstance(out_graph_def, tf.compat.v1.GraphDef):
-            raise ValueError(
-                'out_graph_def is not instance of TensorFlow GraphDef.')
-        if out_graph_file and not os.path.exists(
-                os.path.dirname(out_graph_file)):
-            raise ValueError('"output_graph" directory does not exists.')
-        f = gfile.GFile(out_graph_file, 'wb')
-        f.write(out_graph_def.SerializeToString())
 
     def _get_op_list(self):
         self.op_list = []

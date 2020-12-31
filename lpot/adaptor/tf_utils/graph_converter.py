@@ -586,15 +586,6 @@ class GraphConverter:
             write_graph(self._tmp_graph_def, self.output_graph)
             self.logger.info('Converted graph file is saved to: %s', self.output_graph)
 
-    def _get_dtypes(self, in_graph_def):
-        # TODO: keep dtypes list order as input list?
-        dtypes = []
-        for n in in_graph_def.node:
-            if n.name in self.input_node_names:
-                dtypes.append(n.attr["dtype"].type)
-
-        return dtypes
-
     def _post_clean(self):
         """Delete the temporarily files generated during the quantization process.
 
