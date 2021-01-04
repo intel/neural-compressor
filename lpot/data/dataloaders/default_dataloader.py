@@ -72,9 +72,9 @@ FETCHERS = {"index": IndexFetcher, "iter": IterableFetcher, }
 
 class DefaultDataLoader(BaseDataLoader):
     """DefaultDataLoader
-    
+
     """
-    
+
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
                   sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
         self.dataset = dataset
@@ -119,7 +119,7 @@ class DefaultDataLoader(BaseDataLoader):
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory):
-        
+
         drop_last = False if last_batch == 'rollover' else True
         sampler = self._generate_sampler(dataset)
         self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)

@@ -329,24 +329,24 @@ def get_estimator_graph(estimator, input_fn):
         output_nodes = list(set([output.split(':')[0] for output in outputs]))
         if 'MakeIterator' in [node.op for node in g.as_graph_def().node]:
             output_nodes.append('MakeIterator')
-                
+
         graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess,
           g.as_graph_def(), output_nodes)
 
     graph = tf.Graph()
     with graph.as_default():
-        tf.import_graph_def(graph_def, name='') 
+        tf.import_graph_def(graph_def, name='')
     return graph
-    
+
 def get_tensor_by_name(graph, name, try_cnt=3):
     """Get the tensor by name considering the 'import' scope when model
        may be imported more then once, handle naming format like both name:0 and name
-    
+
     Args:
         graph (tf.compat.v1.GraphDef): the model to get name from
         name (string): tensor of tensor_name:0 or tensor_name without suffixes
         try_cnt: the times to add 'import/' to find  tensor
-    
+
     Returns:
         tensor: tensor got by name.
     """
@@ -361,20 +361,20 @@ def get_tensor_by_name(graph, name, try_cnt=3):
 
 def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
     """Run the graph that have iterator integrated in the graph
-    
+
     Args:
         sess (tf.compat.v1.Session): the model sess to run the graph
         iter_op (Operator): the MakeIterator op
         feed_dict(dict): the feeds to initialize a new iterator
-        output_tensor(list): the output tensors 
+        output_tensor(list): the output tensors
         iteration(int): iterations to run, when -1 set, run to end of iterator
-    
+
     Returns:
         preds: the results of the predictions
     """
     sess.run(iter_op, feed_dict)
     preds = []
-    idx = 0 
+    idx = 0
     while idx < iteration or iteration == -1:
         try:
             prediction = sess.run(output_tensor)

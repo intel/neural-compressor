@@ -72,7 +72,7 @@ class PreOptimization(object):
             [graphdef]: the optimized graphdef object.
         """
         self.logger.debug("Start to pre optimize input model...")
-        
+
         self._tmp_graph_def = ConvertLayoutOptimizer(
             self.input_graph, self.output_node_names).do_transformation()
 

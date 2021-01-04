@@ -340,13 +340,13 @@ class ImageTypeParse(Transform):
 class CenterCropTFTransform(Transform):
     def __init__(self, size):
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]
             elif len(size) == 2:
                 self.size = size[0], size[1]
-    
+
     def __call__(self, sample):
         image, label = sample
         if len(image.shape) == 3:
@@ -367,7 +367,7 @@ class CenterCropTFTransform(Transform):
 class ResizeTFTransform(Transform):
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]
@@ -377,7 +377,7 @@ class ResizeTFTransform(Transform):
 
         if self.interpolation not in ['bilinear', 'nearest', 'bicubic']:
             raise ValueError('Unsupported interpolation type!')
- 
+
     def __call__(self, sample):
         image, label = sample
         image = tf.image.resize(image, self.size, method=self.interpolation)
@@ -388,7 +388,7 @@ class ResizeTFTransform(Transform):
 class RandomCropTFTransform(Transform):
     def __init__(self, size):
         self.size = size
-    
+
     def __call__(self, sample):
         image, label = sample
         if len(self.size) != len(image.shape):
@@ -403,13 +403,13 @@ class RandomResizedCropTFTransform(Transform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]
             elif len(size) == 2:
                 self.size = size[0], size[1]
- 
+
         self.scale = scale
         self.ratio = ratio
         self.interpolation = interpolation
@@ -470,7 +470,7 @@ class RandomResizedCropTFTransform(Transform):
         box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
         boxes = [y0/height, x0/width, (y0+h)/height, (x0+w)/width]
         boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
-        image = tf.image.crop_and_resize(image, boxes, box_indices, 
+        image = tf.image.crop_and_resize(image, boxes, box_indices,
                         self.size, self.interpolation)
         if squeeze:
             image = tf.squeeze(image, axis=0)
@@ -542,7 +542,7 @@ class ResizePytorchTransform(Transform):
 class ResizeONNXTransform(Transform):
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]
@@ -576,7 +576,7 @@ class CropResizeMxnetTransform(Transform):
 
     def __call__(self, sample):
         image, label = sample
-        transformer = mx.gluon.data.vision.transforms.CropResize(self.x, self.y, self.width, 
+        transformer = mx.gluon.data.vision.transforms.CropResize(self.x, self.y, self.width,
                         self.height, self.size, self.interpolation)
         return (transformer(image), label)
 
@@ -592,7 +592,7 @@ class CropResizeTFTransform(Transform):
         self.width = width
         self.height = height
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]
@@ -613,7 +613,7 @@ class CropResizeTFTransform(Transform):
         box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
         boxes = [self.y/h, self.x/w, (self.y+self.height)/h, (self.x+self.width)/w]
         boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
-        image = tf.image.crop_and_resize(image, boxes, box_indices, 
+        image = tf.image.crop_and_resize(image, boxes, box_indices,
                         self.size, self.interpolation)
         if squeeze:
             image = tf.squeeze(image, axis=0)
@@ -632,7 +632,7 @@ class CropResizeTransform(Transform):
         self.width = width
         self.height = height
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]
@@ -651,7 +651,7 @@ class CropResizeTransform(Transform):
 class CenterCropONNXTransform(Transform):
     def __init__(self, size):
         if isinstance(size, int):
-            self.height, self.width = size, size  
+            self.height, self.width = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.height, self.width = size[0], size[0]
@@ -697,7 +697,7 @@ class NormalizeONNXTransform(Transform):
 class RandomCropONNXTransform(Transform):
     def __init__(self, size):
         if isinstance(size, int):
-            self.height, self.width = size, size  
+            self.height, self.width = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.height, self.width = size[0], size[0]
@@ -772,7 +772,7 @@ class RandomResizedCropONNXTransform(Transform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
-            self.size = size, size  
+            self.size = size, size
         elif isinstance(size, list):
             if len(size) == 1:
                 self.size = size[0], size[0]

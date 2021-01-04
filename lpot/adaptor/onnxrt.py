@@ -69,7 +69,7 @@ class ONNXRTAdaptor(Adaptor):
             return model
         if model.opset_import[0].version < 11:
             logger.warning('quantize input need model opset >= 11')
-        
+
         from onnxruntime.quantization.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \

@@ -62,11 +62,11 @@ class QueryBackendCapability():
     @abstractmethod
     def get_quantization_capability(self):
         """Get the quantization capability of low precision op types.
-            e.g, granularity, scheme and etc. 
+            e.g, granularity, scheme and etc.
 
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def get_mixed_precision_combination(self, unsupported_precisions):
         """Get the valid precision combination base on hardware and user' config.

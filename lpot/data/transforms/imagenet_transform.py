@@ -38,7 +38,7 @@ tf = LazyImport('tensorflow')
 @transform_registry(transform_type="ParseDecodeImagenet", \
                     process="preprocess", framework="tensorflow")
 class ParseDecodeImagenetTransform(Transform):
-               
+
   def __call__(self, sample):
     # Dense features in Example proto.
     feature_map = {
@@ -149,7 +149,7 @@ class LabelShift(Transform):
 
   def __call__(self, sample):
     images, labels = sample
-    labels = np.array(labels) - self.label_shift 
+    labels = np.array(labels) - self.label_shift
     return images, labels
 
 @transform_registry(transform_type="BilinearImagenet", \

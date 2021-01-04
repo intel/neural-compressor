@@ -22,11 +22,11 @@ def deep_get(dictionary, keys, default=None):
     """get the dot key's item in nested dict
        eg person = {'person':{'name':{'first':'John'}}}
        deep_get(person, "person.name.first") will output 'John'
-       
+
        Args:
            dictionary (dict): The dict object to get keys
            keys (dict): The deep keys
-           default (object): The return item if key not exists 
+           default (object): The return item if key not exists
        Returns:
            item: the item of the deep dot keys
     """
@@ -38,8 +38,8 @@ def deep_set(dictionary, keys, value):
     """set the dot key's item in nested dict
        eg person = {'person':{'name':{'first':'John'}}}
        deep_set(person, "person.sex", 'male') will output
-       {'person': {'name': {'first': 'John'}, 'sex': 'male'}} 
-       
+       {'person': {'name': {'first': 'John'}, 'sex': 'male'}}
+
        Args:
            dictionary (dict): The dict object to get keys
            keys (dict): The deep keys

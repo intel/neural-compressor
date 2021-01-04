@@ -236,7 +236,7 @@ def _topk_shape_validate(preds, labels):
         N = preds.shape[0]
         preds = preds.reshape([N, -1])
         class_num = preds.shape[1]
-    
+
     label_N = labels.shape[0]
     assert label_N == N, 'labels batch size should same with preds'
     labels = labels.reshape([N, -1])
@@ -271,7 +271,7 @@ class MxnetTopK(Metric):
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
- 
+
         preds, labels = _topk_shape_validate(preds, labels)
         preds = preds.argsort()[..., -self.k:]
         if self.k == 1:
@@ -286,7 +286,7 @@ class MxnetTopK(Metric):
                 if l in p:
                     self.num_correct += 1
 
-        self.num_sample += len(labels) 
+        self.num_sample += len(labels)
 
     def reset(self):
         self.num_correct = 0
@@ -342,7 +342,7 @@ def _accuracy_type_check(preds, labels):
        else:
            update_type = 'multilabel'
    return update_type
-        
+
 @metric_registry('Accuracy', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class Accuracy(Metric):
     def __init__(self):
@@ -374,7 +374,7 @@ class Accuracy(Metric):
             self.sample += preds.shape[0]*preds.shape[1]
             self.pred_list.append(preds)
             self.label_list.append(labels)
-            
+
     def reset(self):
         self.pred_list = []
         self.label_list = []
@@ -428,7 +428,7 @@ class RMSE(Metric):
         self.mse = MSE()
 
     def update(self, preds, labels, sample_weight=None):
-        self.mse.update(preds, labels, sample_weight) 
+        self.mse.update(preds, labels, sample_weight)
 
     def reset(self):
         self.mse.reset()
@@ -470,7 +470,7 @@ class TensorflowTopK(Metric):
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
- 
+
         preds, labels = _topk_shape_validate(preds, labels)
 
         labels = labels.reshape([len(labels)])
@@ -512,7 +512,7 @@ class ONNXRTTopK(Metric):
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
- 
+
         preds, labels = _topk_shape_validate(preds, labels)
         preds = preds.argsort()[..., -self.k:]
         if self.k == 1:
@@ -527,7 +527,7 @@ class ONNXRTTopK(Metric):
                 if l in p:
                     self.num_correct += 1
 
-        self.num_sample += len(labels) 
+        self.num_sample += len(labels)
 
     def reset(self):
         self.num_correct = 0
@@ -585,7 +585,7 @@ class TensorflowCOCOMAP(Metric):
             detection['classes'] = np.asarray(predicts[3][0])[0:num]
         else:
             raise ValueError("Unsupported prediction format!")
-        
+
         ground_truth = {}
         ground_truth['boxes'] = np.asarray(bbox[0])
         if len(int_label[0]) == 0:
@@ -613,7 +613,7 @@ class TensorflowCOCOMAP(Metric):
                 groundtruth_boxes=ground_truth['boxes'],
                 groundtruth_classes=ground_truth['classes']))
         self.annotation_id += ground_truth['boxes'].shape[0]
-        
+
         self.detection_list.extend(
             ExportSingleImageDetectionBoxesToCoco(
                 image_id=image_id,
@@ -631,7 +631,7 @@ class TensorflowCOCOMAP(Metric):
     def result(self):
         from lpot.metric.coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
-            logger.warning("sample num is 0 can't calculate mAP") 
+            logger.warning("sample num is 0 can't calculate mAP")
             return 0
         else:
             groundtruth_dict = {

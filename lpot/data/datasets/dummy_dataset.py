@@ -34,8 +34,8 @@ class DummyDataset(Dataset):
                                  if list, length should be same with shape list and multiply
                                  each member of low list with coresponding shape of tensor.
                                  if float, will implement all tensors with same low value.
-          high(list or float):  high the tensor value by add all tensor element value high 
-                                 if list, length of list should be same with shape list,  
+          high(list or float):  high the tensor value by add all tensor element value high
+                                 if list, length of list should be same with shape list,
           dtype(list or str):    support multi tensor dtype setting, eg, we may assign value
                                  tensor with dtype fp32 and label from 1 to 1000(means classes)
                                  if list, length of list should be same with shape list,
@@ -77,7 +77,7 @@ class DummyDataset(Dataset):
                 dtype = [dtype for i in range(0, len(shape))]
 
         elif isinstance(shape, tuple):
-            shape = [shape] 
+            shape = [shape]
             if isinstance(low, float):
                 low = [low]
             else:
@@ -108,7 +108,7 @@ class DummyDataset(Dataset):
             self.dataset = self.dataset[0]
         else:
             self.dataset = [elem for elem in zip(*self.dataset)]
-        
+
 
     def __len__(self):
         return len(self.dataset)
@@ -123,4 +123,4 @@ class DummyDataset(Dataset):
             return sample, 0
         else:
             return sample
-        
+

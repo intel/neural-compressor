@@ -593,7 +593,7 @@ class TemplateAdaptor(Adaptor):
 
         return df, total_sparsity
 
-    
+
 @adaptor_registry
 class PyTorchAdaptor(TemplateAdaptor):
     unify_op_type_mapping = {

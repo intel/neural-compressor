@@ -54,7 +54,7 @@ class TFDataDataLoader(BaseDataLoader):
         self.last_batch = last_batch
         self._batch_size = batch_size
         dataset = dataset.batch(batch_size)
-        
+
     def batch(self, batch_size, last_batch='rollover'):
         drop_last = False if last_batch == 'rollover' else True
         self._batch_size = batch_size
@@ -74,7 +74,7 @@ class TFDataDataLoader(BaseDataLoader):
         dataset = dataset.batch(batch_size, drop_last)
         ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
         iter_tensors = ds_iterator.get_next()
-        data_config = tf.compat.v1.ConfigProto() 
+        data_config = tf.compat.v1.ConfigProto()
         data_config.use_per_session_threads = 1
         data_config.intra_op_parallelism_threads = 1
         data_config.inter_op_parallelism_threads = 16
@@ -87,4 +87,4 @@ class TFDataDataLoader(BaseDataLoader):
             except OutOfRangeError:
                 data_sess.close()
                 return
-        
+

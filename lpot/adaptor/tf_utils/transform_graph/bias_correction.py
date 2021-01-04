@@ -46,13 +46,13 @@ class BiasCorrection(GraphTransformBase):
 
     def __init__(self, input_graph, fp32_graph, method='weight_empirical'):
         # only support weight_empirical now
-        self.bias_correct_map = {'weight_empirical': self._weight_empirical} 
+        self.bias_correct_map = {'weight_empirical': self._weight_empirical}
         assert method in self.bias_correct_map, \
             'only support weight empirical correction method'
 
         super(BiasCorrection, self).__init__(input_graph)
-        self.fp32_graph = get_graph_def(fp32_graph) 
-        self.input_graph = input_graph 
+        self.fp32_graph = get_graph_def(fp32_graph)
+        self.input_graph = input_graph
         self.method = method
         self.fp32_node_mapping = {}
         self.parse_input_pb()
@@ -73,7 +73,7 @@ class BiasCorrection(GraphTransformBase):
 
             int8_filter = self.node_mapping[self.get_node_name_from_input(
                 node.input[1])]
-      
+
             int8_value = tensor_util.MakeNdarray(
                 int8_filter.attr['value'].tensor)
             tr_int8_value = int8_value.transpose([3, 0, 1, 2])
@@ -117,7 +117,7 @@ class BiasCorrection(GraphTransformBase):
                 scale = max(abs(max_filter_tensor[i]),
                             abs(min_filter_tensor[i])) / 127
                 tr_quantized_fp32_value[i] = tr_int8_value[i].astype(np.float64) * scale
-                delta_mean = np.mean((tr_fp32_value[i] - tr_quantized_fp32_value[i]).flatten()) 
+                delta_mean = np.mean((tr_fp32_value[i] - tr_quantized_fp32_value[i]).flatten())
                 var_ratio = np.std(tr_fp32_value[i].flatten()) / \
                     np.std(tr_quantized_fp32_value[i].flatten()) if \
                     np.std(tr_quantized_fp32_value[i].flatten()) != 0 else 1

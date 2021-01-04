@@ -93,7 +93,7 @@ class BasicTuneStrategy(TuneStrategy):
         op_cfgs = {}
         best_cfg = None
         best_acc = 0
-        
+
         logger.debug('Start basic strategy by model-wise tuning')
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)
@@ -118,7 +118,7 @@ class BasicTuneStrategy(TuneStrategy):
             fallback_dtypes = []
             for data_type in ["bf16", "fp32"]:
                 for op_type, tune_space in self.modelwise_tune_space.items():
-                    if (data_type in tune_space["activation"]["dtype"] and 
+                    if (data_type in tune_space["activation"]["dtype"] and
                         data_type not in fallback_dtypes):
                         fallback_dtypes.append(data_type)
 

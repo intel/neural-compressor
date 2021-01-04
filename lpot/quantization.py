@@ -241,14 +241,14 @@ class Quantization(object):
                           pin_memory=pin_memory)
 
     def metric(self, name, metric_cls, **kwargs):
-        metric_cfg = {name : {**kwargs}} 
+        metric_cfg = {name : {**kwargs}}
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         metrics = METRICS(self.framework)
         metrics.register(name, metric_cls)
-        
+
     def postprocess(self, name, postprocess_cls, **kwargs):
-        postprocess_cfg = {name : {**kwargs}} 
+        postprocess_cfg = {name : {**kwargs}}
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(name, postprocess_cls)

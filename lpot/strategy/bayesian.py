@@ -356,7 +356,7 @@ class TargetSpace(object):
         data = np.empty((1, self.dim))
         for col, (lower, upper) in enumerate(self._bounds):
             data.T[col] = np.random.uniform(  # pylint: disable=unsupported-assignment-operation
-                lower, upper, size=1)  
+                lower, upper, size=1)
         return data.ravel()
 
     def max(self):

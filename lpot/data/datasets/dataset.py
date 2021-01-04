@@ -73,8 +73,8 @@ class ONNXRTITDatasets(object):
 
 framework_datasets = {"tensorflow": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
-                      "pytorch": PyTorchDatasets, 
-                      "pytorch_ipex": PyTorchDatasets, 
+                      "pytorch": PyTorchDatasets,
+                      "pytorch_ipex": PyTorchDatasets,
                       "onnxrt_qlinearops": ONNXRTQLDatasets,
                       "onnxrt_integerops": ONNXRTITDatasets}
 

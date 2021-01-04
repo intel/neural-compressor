@@ -218,11 +218,11 @@ class TensorFlowAdaptor(Adaptor):
             if measurer is not None:
                 measurer.start()
                 predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
-                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration) 
+                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration)
                 measurer.end()
             else:
                 predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
-                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration) 
+                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration)
 
             # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
@@ -426,7 +426,7 @@ class TensorFlowAdaptor(Adaptor):
         """ As node name is part of tensor name and deterministic tensor name is needed
         for session inference during evaluation and calibration, lpot has an assumption
         that tensor name equal to node's first tensor if ':idx' not in tensor name.
-        this means inputs/outputs from user or auto detected will be treated as tensor names 
+        this means inputs/outputs from user or auto detected will be treated as tensor names
         and add ':0' when ':idx' not in inputs/outputs.
 
         Args:

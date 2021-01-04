@@ -75,7 +75,7 @@ def evaluate(predictions, dataset):
                               ' will receive score 0.'
                     logger.warning(message)
                     continue
-                
+
                 ground_truths = list(map(lambda x: x['text'], qa['answers']))
                 prediction = predictions[qa['id']]
 

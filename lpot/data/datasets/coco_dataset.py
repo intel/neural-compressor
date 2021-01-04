@@ -135,7 +135,7 @@ class COCORawDataset(Dataset):
             self.image_list.append(
                 (img_file, [np.array(bboxes), np.array(labels), np.array([]),\
                  np.array(img_detail['file_name'].encode('utf-8'))]))
-            
+
     def __len__(self):
         return len(self.image_list)
 

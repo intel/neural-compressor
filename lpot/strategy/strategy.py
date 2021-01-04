@@ -175,7 +175,7 @@ class TuneStrategy(object):
         if self.calib_dataloader:
             self.calib_iter = [math.ceil(int(x) / self.calib_dataloader.batch_size) \
                                for x in self.cfg.quantization.calibration.sampling_size]
-        else: 
+        else:
             self.calib_iter = [1]
 
         self.model_wise_quant_cfgs = OrderedDict()
@@ -201,12 +201,12 @@ class TuneStrategy(object):
         # The tuning history ever made, structured like below:
         # [
         #   {
-        #     'version': __version__, 
+        #     'version': __version__,
         #     'cfg': cfg1,
         #     'baseline': baseline1,
         #     'last_tune_result': last_tune_result1,
         #     'best_tune_result': best_tune_result1,
-        #     'history': [ 
+        #     'history': [
         #                  # tuning history under same yaml config
         #                  {'tune_cfg': tune_cfg1, 'tune_result': tune_result1, ...},
         #                   ...,
@@ -324,12 +324,12 @@ class TuneStrategy(object):
         def setup_yaml():
             represent_dict_order = lambda self, \
                 data: self.represent_mapping('tag:yaml.org,2002:map', data.items())
-            yaml.add_representer(OrderedDict, represent_dict_order)    
-            yaml.add_representer(DotDict, represent_dict_order)    
+            yaml.add_representer(OrderedDict, represent_dict_order)
+            yaml.add_representer(DotDict, represent_dict_order)
         setup_yaml()
         with open(self.deploy_path, 'w+') as f:
             yaml.dump(self.deploy_cfg, f)
-            logger.info('save deploy yaml to path {}'.format(self.deploy_path)) 
+            logger.info('save deploy yaml to path {}'.format(self.deploy_path))
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.
@@ -368,7 +368,7 @@ class TuneStrategy(object):
         """
         if self.eval_func:
             if self.cfg.tuning.tensorboard:
-                # Pytorch can insert observer to model in this hook. 
+                # Pytorch can insert observer to model in this hook.
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
             val = self.objective.evaluate(self.eval_func, model)
@@ -524,7 +524,7 @@ class TuneStrategy(object):
                 tuning_history['cfg'] = self.cfg
                 found = True
                 break
-            
+
         if not found:
             tuning_history = {}
             tuning_history['version']  = __version__

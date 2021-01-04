@@ -226,7 +226,7 @@ schema = Schema({
             str,
             # TODO check if framework support dynamic quantize
             # Now only onnruntime and pytorch supoort
-            lambda s: s in ['post_training_static_quant', 
+            lambda s: s in ['post_training_static_quant',
                             'post_training_dynamic_quant',
                             'quant_aware_training']),
         Optional('advance', default=None): {

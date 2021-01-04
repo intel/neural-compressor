@@ -42,7 +42,7 @@ class PrunePolicy:
             model (object):                        The original model (currently torhc.nn.module
                                                    instance).
             local_config (Conf):                   configs specific for this pruning instance
-            global_config (Conf):                  global configs which may be overwritten by 
+            global_config (Conf):                  global configs which may be overwritten by
                                                    local_config
             adaptor (Adaptor):                     Correspond adaptor for current framework
 

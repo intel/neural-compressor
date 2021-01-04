@@ -163,7 +163,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
                 if node.op != 'DepthwiseConv2dNative' and "padding_list" in node.attr:
-                    helper.copy_attr(quantized_conv_node, "padding_list", 
+                    helper.copy_attr(quantized_conv_node, "padding_list",
                     node.attr["padding_list"])
                 helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
                 input_data_type = dtypes.quint8 if self._find_relu_node(

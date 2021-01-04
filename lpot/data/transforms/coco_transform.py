@@ -41,7 +41,7 @@ class ParseDecodeCocoTransform(Transform):
     def __call__(self, sample):
         # Dense features in Example proto.
         feature_map = {
-            'image/encoded': 
+            'image/encoded':
             tf.compat.v1.FixedLenFeature([], dtype=tf.string, default_value=''),
             'image/object/class/text':
             tf.compat.v1.VarLenFeature(dtype=tf.string),

@@ -46,8 +46,8 @@ class Measurer(object):
     """
 
     def __init__(self):
-        self._result_list = [] 
-    
+        self._result_list = []
+
     @abstractmethod
     def reset(self):
         """The interface reset benchmark measuring
@@ -64,7 +64,7 @@ class Measurer(object):
            **kargs: params for start the measuring
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def end(self, *args, **kwargs):
         """The interface end benchmark measuring
@@ -79,11 +79,11 @@ class Measurer(object):
            measurer may sart and end many times, result will
            return the total mean of the result, can set the start
            and end index of the result list to calculate
-        
+
         Args:
             start (int): start point to calculate result from result list
                          used to skip steps for warm up
-            end (int): end point to calculate result from result list 
+            end (int): end point to calculate result from result list
         """
         start_idx = 0
         end_idx = len(self._result_list)
@@ -153,7 +153,7 @@ class Objective(object):
         self.measurer = None
 
     def compare(self, last, baseline):
-        """The interface of comparing if metric reaches 
+        """The interface of comparing if metric reaches
            the goal with acceptable accuracy loss.
 
         Args:
@@ -210,7 +210,7 @@ class Performance(Objective):
 
 @objective_registry
 class Footprint(Objective):
-    """The objective class of calculating peak memory footprint 
+    """The objective class of calculating peak memory footprint
        when running quantize model.
 
     Args:
