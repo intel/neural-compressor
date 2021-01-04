@@ -23,7 +23,6 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
-    patterns = [["MatMul", "BiasAdd"], ["MatMul", "BiasAdd", "Relu"]]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -40,8 +39,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
     def apply_matmul_biasadd_relu_fusion(self, match_node_name):
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
-        control_inputs, normal_inputs = self._get_node_input(
-            matched_node.node.name)
+        control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
         weight_name = normal_inputs[1]
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
@@ -76,23 +74,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     "QuantizedMatMulWithBiasAndRelu", quantized_node_name,
                     quantized_node_input_names)
 
-                helper.copy_attr(quantized_matmul_node, "transpose_a",
-                                 node.attr["transpose_a"])
-                helper.copy_attr(quantized_matmul_node, "transpose_b",
-                                 node.attr["transpose_b"])
-                helper.set_attr_dtype(quantized_matmul_node, "T1",
-                                      dtypes.quint8)
-                helper.set_attr_dtype(quantized_matmul_node, "T2",
-                                      dtypes.qint8)
-                helper.set_attr_dtype(quantized_matmul_node, "Toutput",
-                                      dtypes.qint32)
+                helper.copy_attr(quantized_matmul_node, "transpose_a", node.attr["transpose_a"])
+                helper.copy_attr(quantized_matmul_node, "transpose_b", node.attr["transpose_b"])
+                helper.set_attr_dtype(quantized_matmul_node, "T1", dtypes.quint8)
+                helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
+                helper.set_attr_dtype(quantized_matmul_node, "Toutput", dtypes.qint32)
 
                 self.add_output_graph_node(quantized_matmul_node)
 
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.quint8, False)
-                self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, relu_node_name)
+                self._intel_cpu_add_dequantize_result_node(quantize_down_name, relu_node_name)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -121,10 +113,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("apply_matmul_biasadd_fusion")
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
-                bias_node_name = self.node_name_mapping[
-                    match_node_name[1]].node.input[1]
-                all_input_names = self._add_eightbit_prologue_nodes(
-                    matched_node.node.name)
+                bias_node_name = self.node_name_mapping[match_node_name[1]].node.input[1]
+                all_input_names = self._add_eightbit_prologue_nodes(matched_node.node.name)
                 all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
                 all_input_names.append(q_weights_min_name)
                 all_input_names.append(q_weights_max_name)
@@ -136,18 +126,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     "QuantizedMatMulWithBias", quantized_node_name,
                     quantized_node_input_names)
 
-                helper.copy_attr(quantized_matmul_node, "transpose_a",
-                                 node.attr["transpose_a"])
-                helper.copy_attr(quantized_matmul_node, "transpose_b",
-                                 node.attr["transpose_b"])
-                helper.set_attr_dtype(quantized_matmul_node, "T1",
-                                      dtypes.quint8)
-                helper.set_attr_dtype(quantized_matmul_node, "T2",
-                                      dtypes.qint8)
-                helper.set_attr_dtype(quantized_matmul_node, "Toutput",
-                                      dtypes.qint32)
-                helper.set_attr_dtype(quantized_matmul_node, "Tbias",
-                                      dtypes.float32)
+                helper.copy_attr(quantized_matmul_node, "transpose_a", node.attr["transpose_a"])
+                helper.copy_attr(quantized_matmul_node, "transpose_b", node.attr["transpose_b"])
+                helper.set_attr_dtype(quantized_matmul_node, "T1", dtypes.quint8)
+                helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
+                helper.set_attr_dtype(quantized_matmul_node, "Toutput", dtypes.qint32)
+                helper.set_attr_dtype(quantized_matmul_node, "Tbias", dtypes.float32)
 
                 self.add_output_graph_node(quantized_matmul_node)
                 requantize_type = dtypes.qint8
