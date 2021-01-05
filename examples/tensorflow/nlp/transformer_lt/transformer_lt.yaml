@@ -1,0 +1,20 @@
+model:
+  name: transformer_lt
+  framework: tensorflow
+  inputs: input_tensor
+  outputs: model/Transformer/strided_slice_19
+
+quantization:
+  calibration:
+    sampling_size: 500
+  model_wise:
+    weight:
+      granularity: per_channel
+
+tuning:
+  accuracy_criterion:
+    relative: 0.01
+  exit_policy:
+    timeout: 0
+    max_trials: 100
+  random_seed: 9527
