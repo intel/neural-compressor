@@ -227,6 +227,22 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertEqual(pt_result.size, (4,4))
         self.assertEqual(mx_result.shape, (4,4,3))
 
+        args = {'size': 4, 'scale':(0.8, 0.2)}
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.tf_trans['RandomResizedCrop'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.pt_trans['RandomResizedCrop'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.mx_trans['RandomResizedCrop'](**args)
+        
+        args = {'size': 4, 'interpolation':'test'}
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.tf_trans['RandomResizedCrop'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.pt_trans['RandomResizedCrop'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.mx_trans['RandomResizedCrop'](**args)
+
     def testCropResize(self):
         args = {'x':0, 'y':0, 'width':10, 'height':10, 'size':[5,5]}
         tf_func = TestSameTransfoms.tf_trans['CropResize'](**args)
@@ -253,6 +269,41 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertEqual(tf_result.shape, (5,5,3))
         self.assertEqual(mx_result.shape, (5,5,3))
         self.assertEqual(ox_result.shape, (5,5,3))
+
+        args = {'x':0, 'y':0, 'width':10, 'height':10, 'size':[5]}
+        tf_func = TestSameTransfoms.tf_trans['CropResize'](**args)
+        tf_result = tf_func((TestSameTransfoms.img, None))
+        tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
+        mx_func = TestSameTransfoms.mx_trans['CropResize'](**args)
+        mx_result = mx_func((TestSameTransfoms.mx_img, None))
+        mx_result = mx_result[0].asnumpy()
+        ox_func = TestSameTransfoms.ox_trans['CropResize'](**args)
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
+        self.assertEqual(tf_result.shape, (5,5,3))
+        self.assertEqual(mx_result.shape, (5,5,3))
+        self.assertEqual(ox_result.shape, (5,5,3))
+
+        args = {'x':0, 'y':0, 'width':10, 'height':10, 'size':[5,5]}
+        tf_func = TestSameTransfoms.tf_trans['CropResize'](**args)
+        tf_result = tf_func((TestSameTransfoms.img, None))
+        tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
+        mx_func = TestSameTransfoms.mx_trans['CropResize'](**args)
+        mx_result = mx_func((TestSameTransfoms.mx_img, None))
+        mx_result = mx_result[0].asnumpy()
+        ox_func = TestSameTransfoms.ox_trans['CropResize'](**args)
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
+        self.assertEqual(tf_result.shape, (5,5,3))
+        self.assertEqual(mx_result.shape, (5,5,3))
+        self.assertEqual(ox_result.shape, (5,5,3))
+
+
+        args = {'x':0, 'y':0, 'width':10, 'height':10, 'size':5, 'interpolation':'test'}
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.ox_trans['CropResize'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.mx_trans['CropResize'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.tf_trans['CropResize'](**args)
 
     def testRandomHorizontalFlip(self):
         tf_func = TestSameTransfoms.tf_trans['RandomHorizontalFlip'](**{'seed':1})
@@ -310,6 +361,11 @@ class TestTFTransorm(unittest.TestCase):
         self.assertAlmostEqual(img_result[0][0][0], comp_result[0][0][0], places=5)
         self.assertAlmostEqual(img_result[0][0][1], comp_result[0][0][1], places=5)
         self.assertAlmostEqual(img_result[0][0][2], comp_result[0][0][2], places=5)
+        
+        args = {'mean':[0.0,0.0,0.0], 'std':[0, 0, 0]}
+        with self.assertRaises(ValueError):
+            TestTFTransorm.transforms["Normalize"](**args)
+
 
     def testRandomResizedCrop(self):
         args = {'size':[50]}
@@ -371,6 +427,18 @@ class TestONNXTransfrom(unittest.TestCase):
         with self.assertRaises(ValueError):
             TestONNXTransfrom.transforms['Resize'](**args)
 
+        args = {'size':224}
+        resize = TestONNXTransfrom.transforms['Resize'](**args)
+        compose = TestONNXTransfrom.transforms['Compose']([resize])
+        image_result = compose((self.img, None))
+        self.assertEqual(image_result[0].shape, (224,224,3))
+        
+        args = {'size':[224,224]}
+        resize = TestONNXTransfrom.transforms['Resize'](**args)
+        compose = TestONNXTransfrom.transforms['Compose']([resize])
+        image_result = compose((self.img, None))
+        self.assertEqual(image_result[0].shape, (224,224,3))
+        
     def testNormalize(self):
         args = {'mean':[0.0,0.0,0.0], 'std':[0.29, 0.24, 0.25]}
         normalize = TestONNXTransfrom.transforms['Normalize'](**args)
@@ -378,6 +446,11 @@ class TestONNXTransfrom(unittest.TestCase):
         image_result = compose((TestONNXTransfrom.img, None))
         self.assertTrue(
             (image_result[0] == np.array(TestONNXTransfrom.img)/[0.29, 0.24, 0.25]).all())
+
+        args = {'mean':[0.0,0.0,0.0], 'std':[0,0,0]}
+        with self.assertRaises(ValueError):
+            TestONNXTransfrom.transforms["Normalize"](**args)
+
 
     def testRandomCrop(self):
         args = {'size':[50]}
@@ -390,12 +463,36 @@ class TestONNXTransfrom(unittest.TestCase):
             trans = TestONNXTransfrom.transforms["RandomCrop"](**args)
             trans((TestONNXTransfrom.img, None))
 
+        args = {'size':50}
+        randomcrop = TestONNXTransfrom.transforms["RandomCrop"](**args)
+        compose = TestONNXTransfrom.transforms['Compose']([randomcrop])
+        image_result = compose((TestONNXTransfrom.img, None))
+        self.assertEqual(image_result[0].shape, (50,50,3))
+        
+        args = {'size':[100,100]}
+        randomcrop = TestONNXTransfrom.transforms["RandomCrop"](**args)
+        compose = TestONNXTransfrom.transforms['Compose']([randomcrop])
+        image_result = compose((TestONNXTransfrom.img, None))
+        self.assertEqual(image_result[0].shape, (100,100,3))
+        
     def testCenterCrop(self):
-        args = {'size':[50]}
+        args = {'size':[100]}
         centercrop = TestONNXTransfrom.transforms["CenterCrop"](**args)
         compose = TestONNXTransfrom.transforms['Compose']([centercrop])
         image_result = compose((TestONNXTransfrom.img, None))
-        self.assertEqual(image_result[0].shape, (50,50,3))
+        self.assertEqual(image_result[0].shape, (100,100,3))
+        args = {'size': 5}
+        centercrop = TestONNXTransfrom.transforms["CenterCrop"](**args)
+        image_result = centercrop((TestONNXTransfrom.img, None))
+        self.assertEqual(image_result[0].shape, (5,5,3))
+        args = {'size': [5, 6]}
+        centercrop = TestONNXTransfrom.transforms["CenterCrop"](**args)
+        image_result = centercrop((TestONNXTransfrom.img, None))
+        self.assertEqual(image_result[0].shape, (5,6,3))
+        args = {'size':[150]}
+        centercrop = TestONNXTransfrom.transforms["CenterCrop"](**args)
+        with self.assertRaises(ValueError):
+            centercrop((TestONNXTransfrom.img, None))
 
     def testRandomResizedCrop(self):
         args = {'size':[150]}
@@ -403,7 +500,11 @@ class TestONNXTransfrom(unittest.TestCase):
         compose = TestONNXTransfrom.transforms['Compose']([randomresizedcrop])
         image_result = compose((TestONNXTransfrom.img, None))
         self.assertEqual(image_result[0].shape, (150,150,3))
-        args = {'size':[150, 150], 'scale':(0.9, 0.3), 'interpolation': 'quadratic'}
+        args = {'size':[150, 150], 'scale':(0.9, 0.3)}
+        with self.assertRaises(ValueError):
+            TestONNXTransfrom.transforms["RandomResizedCrop"](**args)
+
+        args = {'size':150, 'interpolation':'test'}
         with self.assertRaises(ValueError):
             TestONNXTransfrom.transforms["RandomResizedCrop"](**args)
 

@@ -50,11 +50,16 @@ flags.DEFINE_string("reference_file", None,
 flags.DEFINE_string("vocab_file", None,
                     "Path to subtoken vocabulary file.")
 
-flags.DEFINE_string('config', None,
+flags.DEFINE_string("config", None,
                     "Config json file")
 
-flags.DEFINE_string('output_model', None,
+flags.DEFINE_string("output_model", None,
                     "The output model of the quantized model.")
+
+flags.DEFINE_enum("bleu_variant", "uncased",
+                   enum_values=["uncased", "cased"], case_sensitive=False,
+                   help="Specify BLEU variant to calculate. "
+                   "Variants: \"cased\" or \"uncased\".")
 
 flags.DEFINE_bool('tune', True,
                   "Whether to tune model")
@@ -79,14 +84,12 @@ def bleu_tokenize(string):
     return string.split()
 
 class bleu(object):
-    def __init__(self, case_sensitive=False):
-        self.score = []
+    def __init__(self, case_sensitive):
         self.case_sensitive = case_sensitive
         self.translations = []
         self.labels = []
 
     def reset(self):
-        self.score = []
         self.translations = []
         self.labels = []
 
@@ -95,14 +98,14 @@ class bleu(object):
             raise ValueError("Reference and translation files have different number "
                              "of lines. If training only a few steps (100-200), the "
                              "translation may be empty.")
-        if not self.case_sensitive:
+        if self.case_sensitive is "uncased":
             label = [x.lower() for x in label]
             pred = [x.lower() for x in pred]
         label = [bleu_tokenize(x) for x in label]
         pred = [bleu_tokenize(x) for x in pred]
         self.labels.extend(label)
         self.translations.extend(pred)
-        
+
     def result(self):
         return metrics.compute_bleu(self.labels, self.translations) * 100
 
@@ -140,7 +143,7 @@ def eval_func(graph):
     config.inter_op_parallelism_threads = 1
     sess = tf.compat.v1.Session(graph=graph, config=config)
     time_list = []
-    bleu_eval = bleu()
+    bleu_eval = bleu(FLAGS.bleu_variant)
     for inputs, labels in dataloader:
         time_start = time.time()
         results = sess.run([output_tensor], {input_tensor: inputs})
@@ -159,7 +162,10 @@ def eval_func(graph):
     print('Batch size = {}'.format(FLAGS.batch_size))
     print('Latency: {:.3f} ms'.format(latency * 1000))
     print('Throughput: {:.3f} items/sec'.format(1./ latency))
-    print('BLEU score is = {:.3f}'.format(bleu_eval.result()))
+    if FLAGS.bleu_variant is "uncased":
+        print('Case-insensitive results: {:.3f}'.format(bleu_eval.result()))
+    else:
+        print('Case-sensitive results: {:.3f}'.format(bleu_eval.result()))
     return bleu_eval.result()
  
 class Dataset(object):
