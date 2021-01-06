@@ -26,13 +26,7 @@ quantization:                                        # optional. tuning constrai
              'densenet121/MaxPool2D/MaxPool': {
                'activation':  {'dtype': ['fp32']}
              },
-             'densenet121/transition_block1/AvgPool2D/AvgPool': {
-               'activation':  {'dtype': ['fp32']},
-             },
-             'densenet121/transition_block2/AvgPool2D/AvgPool': {
-               'activation':  {'dtype': ['fp32']},
-             },
-             'densenet121/transition_block3/AvgPool2D/AvgPool': {
+             'densenet121/transition_block[1-3]/AvgPool2D/AvgPool': {
                'activation':  {'dtype': ['fp32']},
              }
            }

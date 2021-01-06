@@ -469,9 +469,9 @@ class Conf(object):
         if cfg.quantization.op_wise:
             for k, v in cfg.quantization.op_wise.items():
                 for k_op, _ in opwise.items():
-                    if k == k_op[0]:
+                    if re.match(k, k_op[0]):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
-
+                        
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
 
