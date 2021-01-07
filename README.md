@@ -83,6 +83,7 @@ python setup.py install
 # Getting started
 
 * [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool's API.
+* [Quantization](docs/backend_quant.md) explains quantization support matrix on multiple frameworks.
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples. 
 * [Examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: [TensorFlow](examples/tensorflow), [PyTorch](examples/pytorch), [MXNet](examples/mxnet) and [ONNX Runtime](examples/onnxrt).
 
