@@ -74,10 +74,9 @@ class TestTensorboard(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-        os.remove('saved/history.snapshot')
-        os.remove('saved/deploy.yaml')
-        os.rmdir('saved')
-        shutil.rmtree("runs/")
+
+        shutil.rmtree("saved", ignore_errors=True)
+        shutil.rmtree("runs/", ignore_errors=True)
 
     def test_run_basic_one_trial(self):
         from lpot import Quantization

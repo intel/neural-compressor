@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 import tensorflow as tf
 import numpy as np
@@ -209,7 +210,7 @@ class TestBF16Convert(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('saved/history.snapshot')
         os.remove('saved/deploy.yaml')
-        os.rmdir('saved')
+        shutil.rmtree("saved", ignore_errors=True)
 
     def test_rn50_convert(self):
         bf16_nodes = [node.name for node in self.input_graph.node if node.op in ["Conv2D", "AvgPool", "MatMul"]]

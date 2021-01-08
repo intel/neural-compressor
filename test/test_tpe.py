@@ -2,6 +2,7 @@
 import numpy as np
 import unittest
 import os
+import shutil
 import yaml
 import tensorflow as tf
 
@@ -102,11 +103,8 @@ class TestQuantization(unittest.TestCase):
         try:
             os.remove('fake_yaml.yaml')
             os.remove('fake_yaml2.yaml')
-            os.remove('saved/history.snapshot')
-            os.remove('saved/tpe_best_result.csv')
-            os.remove('saved/tpe_trials.csv')
-            os.remove('saved/deploy.yaml')
-            os.rmdir('saved')
+
+            shutil.rmtree("saved", ignore_errors=True)
         except:
             print("Error while deleting file ")
 

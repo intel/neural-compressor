@@ -2,8 +2,10 @@
 import numpy as np
 import unittest
 import os
+import shutil
 import yaml
 import tensorflow as tf
+
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -26,9 +28,10 @@ def build_fake_yaml():
               path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
+    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
     f.close()
+
 
 def build_fake_yaml2():
     fake_yaml = '''
@@ -53,21 +56,24 @@ def build_fake_yaml2():
             path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
+    with open('fake_yaml2.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
     f.close()
+
 
 def build_fake_model():
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
         with tf.Session() as sess:
-            x = tf.placeholder(tf.float64, shape=(1,3,3,1), name='x')
-            y = tf.constant(np.random.random((2,2,1,1)), name='y')
-            op = tf.nn.conv2d(input=x, filter=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+            x = tf.placeholder(tf.float64, shape=(1, 3, 3, 1), name='x')
+            y = tf.constant(np.random.random((2, 2, 1, 1)), name='y')
+            op = tf.nn.conv2d(input=x, filter=y, strides=[
+                              1, 1, 1, 1], padding='VALID', name='op_to_store')
 
             sess.run(tf.global_variables_initializer())
-            constant_graph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
+            constant_graph = tf.graph_util.convert_variables_to_constants(
+                sess, sess.graph_def, ['op_to_store'])
 
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
@@ -76,17 +82,20 @@ def build_fake_model():
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()
         with tf.compat.v1.Session() as sess:
-            x = tf.compat.v1.placeholder(tf.float64, shape=(1,3,3,1), name='x')
-            y = tf.compat.v1.constant(np.random.random((2,2,1,1)), name='y')
-            op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
+            x = tf.compat.v1.placeholder(tf.float64, shape=(1, 3, 3, 1), name='x')
+            y = tf.compat.v1.constant(np.random.random((2, 2, 1, 1)), name='y')
+            op = tf.nn.conv2d(input=x, filters=y, strides=[
+                              1, 1, 1, 1], padding='VALID', name='op_to_store')
 
             sess.run(tf.compat.v1.global_variables_initializer())
-            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op_to_store'])
+            constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, [
+                                                                                    'op_to_store'])
 
         graph_def.ParseFromString(constant_graph.SerializeToString())
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
     return graph
+
 
 class TestQuantization(unittest.TestCase):
 
@@ -100,9 +109,8 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
-        os.remove('saved/history.snapshot')
-        os.remove('saved/deploy.yaml')
-        os.rmdir('saved')
+
+        shutil.rmtree("saved", ignore_errors=True)
 
     def test_ru_random_one_trial(self):
         from lpot import Quantization
@@ -127,6 +135,7 @@ class TestQuantization(unittest.TestCase):
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,6 +2,7 @@
 import numpy as np
 import unittest
 import os
+import shutil
 import yaml
 import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
@@ -242,9 +243,8 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
-        os.remove('saved/history.snapshot')
-        os.remove('saved/deploy.yaml')
-        os.rmdir('saved')
+
+        shutil.rmtree("saved", ignore_errors=True)
 
     def test_run_bayesian_one_trial(self):
         from lpot import Quantization
