@@ -254,6 +254,22 @@
 
 -
   version:
+    name: '1.15.0-up2'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+-
+  version:
     name: '1.15.0-up1'
 
   precisions:

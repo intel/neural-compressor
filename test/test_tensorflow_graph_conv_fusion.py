@@ -50,10 +50,6 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
 
-        import tensorflow as tf
-        self.disable_s8 = bool(tf.version.VERSION < '2.1.0' and
-                               tf.version.VERSION != '1.15.0-up1')
-
     def test_conv_relu_fusion(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()

@@ -45,17 +45,18 @@ class TestPostCSEOptimizer(unittest.TestCase):
         build_fake_yaml()
 
         import tensorflow as tf
-        self.disable_s8 = bool(tf.version.VERSION < '2.1.0' and \
-            tf.version.VERSION != '1.15.0-up1')  
-    def test_fold_pad_conv3(self):
+        self.enable_s8 = bool(
+            tf.version.VERSION.find('1.15.0-up') != -1 or tf.version.VERSION >= '2.1.0')
+
+    def test_post_cse(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         x = tf.nn.relu(x)
-        xw = tf.constant(np.random.random((2,2,16,16)),dtype=tf.float32,  name='y')
-        x = tf.nn.conv2d(input=x, filters=xw,  strides=[1,1,1,1], padding='VALID')
-        
-        y = tf.constant(np.random.random((1,55,55,16)),dtype=tf.float32, name='y')
+        xw = tf.constant(np.random.random((2, 2, 16, 16)), dtype=tf.float32,  name='y')
+        x = tf.nn.conv2d(input=x, filters=xw,  strides=[1, 1, 1, 1], padding='VALID')
+
+        y = tf.constant(np.random.random((1, 55, 55, 16)), dtype=tf.float32, name='y')
 
         z = tf.math.add(x, y, name='add')
 
@@ -93,10 +94,12 @@ class TestPostCSEOptimizer(unittest.TestCase):
             for i in output_graph.as_graph_def().node:
               if i.op == 'QuantizeV2':
                 quantize_v2_count += 1
-            if self.disable_s8:
-              self.assertEqual(quantize_v2_count, 1)
-            else:
+
+            if self.enable_s8:
               self.assertEqual(quantize_v2_count, 2)
+            else:
+              self.assertEqual(quantize_v2_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

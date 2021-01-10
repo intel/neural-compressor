@@ -89,8 +89,8 @@ class QuantizeNodeBase():
         self.per_channel, self.is_asymmetric = kwargs['op_wise_cfg'][0], kwargs['op_wise_cfg'][2]
         self.start_node_name = kwargs['start_node_name']
         self.device = kwargs['device']
-        self.disable_s8 = bool(tf.version.VERSION < '2.1.0' and \
-            tf.version.VERSION != '1.15.0-up1')
+        self.enable_s8 = bool(tf.version.VERSION >= '2.1.0' or \
+            tf.version.VERSION.find('1.15.0-up') != -1)
 
     def apply_the_transform(self):
         """
@@ -121,7 +121,7 @@ class QuantizeNodeBase():
                     continue
 
                 if ((v in ("Conv2D", "DepthwiseConv2dNative")
-                     and self.disable_s8)
+                     and not self.enable_s8)
                     ) and not self._find_relu_node(cur_node):
                     continue
 

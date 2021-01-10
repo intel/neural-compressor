@@ -42,10 +42,6 @@ class TestFoldPadConv(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-
-        import tensorflow as tf
-        self.disable_s8 = bool(tf.version.VERSION < '2.1.0' and \
-            tf.version.VERSION != '1.15.0-up1')   
     
     def test_fold_pad_conv(self):
         tf.compat.v1.disable_eager_execution()
