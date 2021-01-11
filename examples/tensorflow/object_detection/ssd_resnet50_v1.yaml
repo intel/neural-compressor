@@ -19,14 +19,6 @@ quantization:                                        # optional. tuning constrai
       algorithm: minmax
     weight:
       algorithm: minmax
-  op_wise: {
-             'FeatureExtractor/resnet_v1_50/fpn/bottom_up_block5/Conv2D': {
-               'activation':  {'dtype': ['fp32']},
-             },
-             'WeightSharedConvolutionalBoxPredictor_2/ClassPredictionTower/conv2d_0/Conv2D': {
-               'activation':  {'dtype': ['fp32']},
-             }
-           }
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
