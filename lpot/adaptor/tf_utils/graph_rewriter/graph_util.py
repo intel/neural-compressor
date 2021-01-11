@@ -32,7 +32,6 @@ from tensorflow.python.framework import tensor_util
 from lpot.utils.utility import singleton
 
 
-
 @singleton
 class GraphAnalyzer(object):
     """Tensorflow Graph Analyzer class which implemented under singleton mode.
@@ -110,8 +109,8 @@ class GraphAnalyzer(object):
         input_node_names = []
         output_node_names = []
         unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
-                                'global_step', 'read', 'switch', 'cond', 'train',
-                                'init_ops', 'Identity']
+                                 'global_step', 'read', 'switch', 'cond', 'train',
+                                 'init_ops', 'Identity']
 
         for _, i in self.node_name_details.items():
             if i.node.op == 'Const':
@@ -188,6 +187,7 @@ class GraphAnalyzer(object):
 
         output_result = []
         minimal_match_count = len([i for i in input_pattern if isinstance(i, (str, list))])
+
         for _, v in self.node_name_details.items():
             start_index = len(input_pattern) - 1
             while start_index >= 0:
@@ -212,9 +212,33 @@ class GraphAnalyzer(object):
             single_set_res.append(cur_node.name)
             matched_op_type.append(cur_node.op)
             while continue_search_flag and pattern_index >= 0:
-                cur_node_name = GraphRewriterHelper.node_name_from_input(cur_node.input[0])
-                if validate_input(self.node_name_details[cur_node_name].node.op,
-                                  input_pattern[pattern_index]):
+                for input_index, input_name in enumerate(cur_node.input):
+                    cur_node_name = GraphRewriterHelper.node_name_from_input(input_name)
+                    node_op = self.node_name_details[cur_node_name].node.op
+                    if validate_input(node_op, input_pattern[pattern_index]):
+                        break
+
+                    if input_index == len(cur_node.input) - 1:
+                        continue_search_flag = False
+                        break
+
+                    if pattern_index == 0:
+                        continue
+
+                    next_op_index = pattern_index
+                    edge_search_flag = True
+                    while edge_search_flag and next_op_index > 0:
+
+                        next_op_index -= 1
+                        if isinstance(input_pattern[next_op_index], tuple):
+                            continue
+
+                        edge_search_flag = validate_input(node_op, input_pattern[next_op_index])
+
+                    if edge_search_flag:
+                        break
+
+                if continue_search_flag and validate_input(node_op, input_pattern[pattern_index]):
                     cur_node = self.node_name_details[cur_node_name].node
                     if cur_node.op in input_pattern[pattern_index]:
                         single_set_res.append(cur_node.name)

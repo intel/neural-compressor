@@ -30,7 +30,7 @@ from .fold_constant import GraphFoldConstantOptimizer
 from .fold_batch_norm import FoldBatchNormNodesOptimizer
 from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
-
+from .fuse_gelu import FuseGeluOptimizer
 class PreOptimization(object):
     def __init__(self, model, inputs, outputs):
         self.output_node_names = list(set([output.split(":")[0] for output in outputs]))
@@ -87,6 +87,8 @@ class PreOptimization(object):
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.input_node_names,
                                                         self.output_node_names).do_transformation()
+
+        self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
 
