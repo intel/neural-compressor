@@ -120,12 +120,13 @@ class TestGeluFusion(unittest.TestCase):
         conv_bias = tf.math.add(conv1, conv_bias)
 
         gelu = self.gelu(conv_bias)
+        relu = tf.nn.relu(gelu)
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
                 sess=sess,
                 input_graph_def=sess.graph_def,
-                output_node_names=[gelu.name.split(':')[0]])
+                output_node_names=[relu.name.split(':')[0]])
 
             output_graph_def = FuseGeluOptimizer(output_graph_def).do_transformation()
 

@@ -91,9 +91,9 @@ class FuseGeluOptimizer(GraphRewriterBase):
             cur_graph.remove_node(sqrt_input_name)
             cur_graph.remove_node(mul1_const_name)
 
-            gelu_node = Helper.create_node("Gelu", sqrt_node.name, [gelu_input_name])
-
-            cur_graph.add_node(gelu_node, gelu_input_name, graph_info[mul2_node.name].outputs)
+            original_last = graph_info[mul2_node.name].outputs
             cur_graph.remove_node(mul2_node.name)
+            gelu_node = Helper.create_node("Gelu", mul2_node.name, [gelu_input_name])
+            cur_graph.add_node(gelu_node, gelu_input_name, original_last)
 
         return cur_graph.dump_graph()
