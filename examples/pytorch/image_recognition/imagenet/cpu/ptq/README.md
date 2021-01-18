@@ -249,8 +249,7 @@ Add 'backend' field to Yaml Configure and the same for other fields.
 ```python
   model:
   name: imagenet
-  framework: pytorch
-  backend: IPEX 
+  framework: pytorch_ipex 
 ```
 
 2. Tuning With LPOT

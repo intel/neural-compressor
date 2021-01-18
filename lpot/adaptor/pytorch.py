@@ -1280,7 +1280,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         except:
             try:
                 for input, _ in dataloader:
-                    q_model = torch.jit.trace(model_, input)
+                    q_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
                     break
             except:
                 logger.info("This model can't convert to Script model")
