@@ -74,7 +74,7 @@ class StripUnusedNodesOptimizer(GraphRewriterBase):
         type_attr = {"Sub": "T"}
 
         not_found = {name for name in self.input_node_names}
-        for node_name, _ in graph_info.items():
+        for node_name in list(graph_info.keys()):
             if node_name in not_found:
                 not_found.remove(node_name)
                 node = graph_info[node_name].node
