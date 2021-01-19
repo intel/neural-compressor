@@ -45,18 +45,18 @@ def build_fake_yaml():
 
 class TestTensorflowConcat(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/inceptionv3_fp32_pretrained_model.pb'
-    pb_path = 'mobilenet_fp32.pb'
+    pb_path = '/tmp/.lpot/inceptionv3_fp32.pb'
 
     @classmethod
     def setUpClass(self):
-        os.system("wget {} -O {} ".format(self.mb_model_url, self.pb_path))
+        if not os.path.exists(self.pb_path):
+            os.system("mkdir -p /tmp/.lpot && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
         build_fake_yaml()
 
     @classmethod
     def tearDownClass(self):
-        os.system("rm -rf {}".format(self.pb_path))
         os.remove('fake_yaml.yaml')
     
     def test_tensorflow_concat_quantization(self):

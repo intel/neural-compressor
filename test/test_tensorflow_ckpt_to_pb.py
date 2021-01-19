@@ -9,13 +9,16 @@ from lpot.adaptor.tf_utils.util import parse_ckpt_model, is_ckpt_format, get_gra
 
 class TestCkptConvert(unittest.TestCase):
     mobilenet_ckpt_url = 'http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz'
-    dst_path = '/tmp/mobilenet_v1_1.0_224.tgz'
+    dst_path = '/tmp/.lpot/mobilenet_v1_1.0_224.tgz'
 
     @classmethod
     def setUpClass(self):
-        os.system(
-            "wget {} -O {} && mkdir -p ckpt && tar xvf {} -C ckpt".format(
-                self.mobilenet_ckpt_url, self.dst_path, self.dst_path))
+        if not os.path.exists(self.dst_path):
+          os.system(
+              "mkdir -p /tmp/.lpot && wget {} -O {}".format(
+                  self.mobilenet_ckpt_url, self.dst_path))
+
+        os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(self.dst_path))
 
     @classmethod
     def tearDownClass(self):

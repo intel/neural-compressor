@@ -10,17 +10,14 @@ from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import Qu
 from lpot.adaptor.tensorflow import TensorflowQuery
 class TestTensorflowGpu(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
-    pb_path = 'mobilenet_fp32.pb'
+    pb_path = '/tmp/.lpot/mobilenet_fp32.pb'
 
     @classmethod
     def setUpClass(self):
-        os.system("wget {} -O {} ".format(self.mb_model_url, self.pb_path))
+        if not os.path.exists(self.pb_path):
+            os.system("mkdir -p /tmp/.lpot && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
-    
-    @classmethod
-    def tearDownClass(self):
-        os.system("rm -rf {}".format(self.pb_path))
 
     def test_tensorflow_gpu_conversion(self):
         input_graph_def = read_graph(self.pb_path)

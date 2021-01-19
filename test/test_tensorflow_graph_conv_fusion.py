@@ -141,7 +141,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
 class TestGraphConvFusion(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
-    pb_path = '/tmp/resnet50_fp32_pretrained_model.pb'
+    pb_path = '/tmp/.lpot/resnet50_fp32_pretrained_model.pb'
     inputs = ['input']
     outputs = ['predict']
 
@@ -153,15 +153,11 @@ class TestGraphConvFusion(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        os.system('wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+        if not os.path.exists(self.pb_path):
+            os.system('mkdir -p /tmp/.lpot && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())
-
-    @classmethod
-    def tearDownClass(self):
-        os.system(
-            'rm -rf {}'.format(self.pb_path))
 
     def test_conv_biasadd_relu_fusion(self):
         tf.compat.v1.disable_eager_execution()

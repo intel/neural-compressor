@@ -66,8 +66,8 @@ def build_fake_yaml_2():
         yaml.dump(y, f)
     f.close()
 class TestGraphInputOutputDetection(unittest.TestCase):
-    rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
-    pb_path = '/tmp/mobilenetv1_fp32_pretrained_model.pb'
+    mb_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
+    pb_path = '/tmp/.lpot/mobilenet_fp32.pb'
     inputs = ['input']
     outputs = ['MobilenetV1/Predictions/Reshape_1']
 
@@ -75,15 +75,14 @@ class TestGraphInputOutputDetection(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
         build_fake_yaml_2()
-        os.system('wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+        if not os.path.exists(self.pb_path):
+            os.system('mkdir -p /tmp/.lpot && wget {} -O {} '.format(self.mb_fp32_pb_url, self.pb_path))
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())
 
     @classmethod
     def tearDownClass(self):
-        os.system(
-            'rm -rf {}'.format(self.pb_path))
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_2.yaml')
 

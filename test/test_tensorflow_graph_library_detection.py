@@ -10,15 +10,12 @@ from lpot.adaptor.tf_utils.graph_converter import GraphConverter
 from lpot.adaptor.tensorflow import TensorflowQuery
 class TestGraphLibraryDetection(unittest.TestCase):
     efficientnet_b0_model_url = 'https://raw.githubusercontent.com/SkyAI/inference_benchmark/435c7ca2577830025ca5f6cbce8480db16f76a61/efficientnet-b0.pb'
-    pb_path = 'efficientnet-b0.pb'
+    pb_path = '/tmp/.lpot/efficientnet-b0.pb'
 
     @classmethod
     def setUpClass(self):
-        os.system("wget {} -O {} ".format(self.efficientnet_b0_model_url, self.pb_path))
-
-    @classmethod
-    def tearDownClass(self):
-        os.system("rm -rf {}".format(self.pb_path))
+        if not os.path.exists(self.pb_path):
+            os.system("mkdir -p /tmp/.lpot && wget {} -O {} ".format(self.efficientnet_b0_model_url, self.pb_path))
 
     def test_tensorflow_graph_library_detection(self):
 

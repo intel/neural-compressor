@@ -9,13 +9,16 @@ from lpot.adaptor.tf_utils.util import parse_savedmodel_model, is_saved_model_fo
 
 class TestSavedModelToPbConvert(unittest.TestCase):
     mobilenet_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
-    dst_path = '/tmp/ssd_resnet50_v1.tgz'
+    dst_path = '/tmp/.lpot/ssd_resnet50_v1.tgz'
 
     @classmethod
     def setUpClass(self):
-        os.system(
-            "wget {} -O {} && tar xvf {}".format(
-                self.mobilenet_ckpt_url, self.dst_path, self.dst_path))
+        if not os.path.exists(self.dst_path):
+          os.system(
+              "mkdir -p /tmp/.lpot && wget {} -O {}".format(
+                  self.mobilenet_ckpt_url, self.dst_path))
+        
+        os.system("tar xvf {}".format(self.dst_path))
 
     @classmethod
     def tearDownClass(self):

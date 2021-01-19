@@ -9,15 +9,18 @@ from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeG
 from lpot.adaptor.tf_utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
     ssd_resnet50_model = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
-    dst_path = '/tmp/ssd_resnet50_v1.tgz'
+    dst_path = '/tmp/.lpot/ssd_resnet50_v1.tgz'
     unzipped_folder_name = 'ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03'
 
     @classmethod
     def setUpClass(self):
-        os.system(
-            "wget {} -O {} && tar xvf {}".format(
-                self.ssd_resnet50_model, self.dst_path, self.dst_path))
-    
+        if not os.path.exists(self.dst_path):
+          os.system(
+              "mkdir -p /tmp/.lpot && wget {} -O {}".format(
+                  self.ssd_resnet50_model, self.dst_path, self.dst_path))
+
+        os.system("tar xvf {}".format(self.dst_path))
+
     @classmethod
     def tearDownClass(self):
         os.system(

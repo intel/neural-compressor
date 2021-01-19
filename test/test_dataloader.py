@@ -165,8 +165,11 @@ class TestDataloader(unittest.TestCase):
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
     def test_style_transfer_dataset(self):
-        jpg_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Doll_face_silver_Persian.jpg/1024px-Doll_face_silver_Persian.jpg"
-        os.system("wget {} -O test.jpg".format(jpg_url))
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test.jpg')
+
         datasets = DATASETS('tensorflow')
         dataset = datasets['style_transfer'](content_folder='./', style_folder='./')
         length = len(dataset)

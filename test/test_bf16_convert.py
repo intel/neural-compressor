@@ -193,11 +193,12 @@ def create_test_graph():
 
 class TestBF16Convert(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
-    pb_path = '/tmp/resnet50_fp32_pretrained_model.pb'
+    pb_path = '/tmp/.lpot/resnet50_fp32_pretrained_model.pb'
 
     @classmethod
     def setUpClass(self):
-        os.system('wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+        if not os.path.exists(self.pb_path):
+            os.system('mkdir -p /tmp/.lpot && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())
@@ -206,7 +207,6 @@ class TestBF16Convert(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove(self.pb_path)
         os.remove('fake_yaml.yaml')
         os.remove('saved/history.snapshot')
         os.remove('saved/deploy.yaml')

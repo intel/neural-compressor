@@ -8,13 +8,15 @@ from lpot.adaptor.tf_utils.util import get_slim_graph
 
 class TestSlimCkptConvert(unittest.TestCase):
     inception_ckpt_url = 'http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz'
-    dst_path = '/tmp/inception_v1_2016_08_28.tar.gz'
+    dst_path = '/tmp/.lpot/inception_v1_2016_08_28.tar.gz'
 
     @classmethod
     def setUpClass(self):
-        os.system(
-            "wget {} -O {} && mkdir -p ckpt && tar xvf {} -C ckpt".format(
-                self.inception_ckpt_url, self.dst_path, self.dst_path))
+        if not os.path.exists(self.dst_path):
+          os.system(
+              "mkdir -p /tmp/.lpot && wget {} -O {}".format(
+                  self.inception_ckpt_url, self.dst_path))
+         os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(self.dst_path))
 
     @classmethod
     def tearDownClass(self):
