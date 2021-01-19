@@ -73,13 +73,16 @@ def create_dataloader(framework, dataloader_cfg):
 
     batch_size = int(dataloader_cfg['batch_size']) \
         if dataloader_cfg.get('batch_size') is not None else 1
+    last_batch = dataloader_cfg['last_batch'] \
+        if dataloader_cfg.get('last_batch') is not None else 'rollover'
 
     eval_dataset = create_dataset(framework,
                                   copy.deepcopy(dataloader_cfg['dataset']),
                                   copy.deepcopy(dataloader_cfg['transform']),
                                   copy.deepcopy(dataloader_cfg['filter']),)
 
-    return DataLoader(dataset=eval_dataset, framework=framework, batch_size=batch_size)
+    return DataLoader(dataset=eval_dataset, framework=framework, 
+                batch_size=batch_size, last_batch=last_batch)
 
 def create_eval_func(framework, dataloader, adaptor, \
                      metric_cfg, postprocess_cfg=None, \
