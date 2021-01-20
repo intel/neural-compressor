@@ -3,8 +3,25 @@ import numpy as np
 import unittest
 from lpot.metric import METRICS
 from lpot.metric.f1 import evaluate
+from lpot.metric import bleu
 
 class TestMetrics(unittest.TestCase):
+    def testBLEU(self):
+        metrics = METRICS('tensorflow')
+        bleu = metrics['BLEU']()
+        preds = ['Gutach: Mehr Sicherheit für Fußgänger']
+        labels = ('Gutach: Noch mehr Sicherheit für Fußgänger',)
+        bleu.update(preds, labels)
+        self.assertAlmostEqual(bleu.result(), 51.1507809)
+        bleu.reset()
+
+        preds = ['Dies wurde auch von Peter Arnold vom Offenburg District Office bestätigt.']
+        labels = ('Dies bestätigt auch Peter Arnold vom Landratsamt Offenburg.',)
+        bleu.update(preds, labels)
+        self.assertAlmostEqual(bleu.result(), 16.108992695)
+        with self.assertRaises(ValueError):
+            bleu.update(['a','b'], ('c',))
+
     def test_tensorflow_F1(self):
         metrics = METRICS('tensorflow')
         F1 = metrics['F1']()

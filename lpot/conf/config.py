@@ -134,6 +134,10 @@ transform_schema = Schema({
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0))
     },
+    Optional('AlignImageChannel'): {
+        Optional('dim'): int
+    },
+    Optional('ToNDArray'): Or({}, None),
     Optional('CropResize'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0))
@@ -177,7 +181,7 @@ transform_schema = Schema({
     },
     Optional('ParseDecodeImagenet'): Or({}, None),
     Optional('ParseDecodeCoco'): Or({}, None),
-    Optional('ImageTypeParse'): Or({}, None),
+    Optional('ToArray'): Or({}, None),
     Optional('QuantizedInput'): {
         Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
         Optional('scale'): And(float, lambda s: s > 0),

@@ -17,10 +17,12 @@
 
 from .dataset import dataset_registry, Dataset
 import numpy as np
+from lpot.utils.utility import LazyImport
+mx = LazyImport('mxnet')
+torch = LazyImport('torch')
 
-@dataset_registry(dataset_type="dummy",
-                  framework="tensorflow, pytorch, pytorch_ipex, mxnet, onnxrt_qlinearops, \
-                  onnxrt_integerops", dataset_format='')
+@dataset_registry(dataset_type="dummy", framework="tensorflow, onnxrt_qlinearops, \
+                        onnxrt_integerops", dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.
        This Dataset is to construct a dataset from a specific shape.
@@ -124,4 +126,30 @@ class DummyDataset(Dataset):
             return sample, 0
         else:
             return sample
+
+@dataset_registry(dataset_type="dummy", framework="mxnet", dataset_format='')
+class MXNetDummyDataset(DummyDataset):
+    def __getitem__(self, index):
+        sample = self.dataset[index]
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.label:
+            return mx.nd.array(sample), 0
+        if isinstance(sample, tuple):
+            return [mx.nd.array(elem) for elem in sample]
+        else:
+            return mx.nd.array(sample)
+
+@dataset_registry(dataset_type="dummy", framework="pytorch, pytorch_ipex", 
+                    dataset_format='')
+class PyTorchDummyDataset(DummyDataset):
+    def __getitem__(self, index):
+        sample = self.dataset[index]
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.label:
+            return sample, 0
+        else:
+            return sample
+
 

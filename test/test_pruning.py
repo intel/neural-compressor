@@ -6,7 +6,7 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data.datasets.dummy_dataset import DummyDataset
+from lpot.data.datasets.dummy_dataset import PyTorchDummyDataset
 from lpot.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
@@ -55,7 +55,7 @@ class TestPruning(unittest.TestCase):
         from lpot import Pruning
         prune = Pruning('fake.yaml')
  
-        dummy_dataset = DummyDataset([tuple([100, 3, 256, 256])])
+        dummy_dataset = PyTorchDummyDataset([tuple([100, 3, 256, 256])])
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
  
         def training_func_for_lpot(model):
@@ -81,7 +81,7 @@ class TestPruning(unittest.TestCase):
                     if cnt >= iters:
                         break
                 prune.on_epoch_end()
-        dummy_dataset = DummyDataset(tuple([100, 3, 256, 256]), label=True)
+        dummy_dataset = PyTorchDummyDataset(tuple([100, 3, 256, 256]), label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         _ = prune(self.model, q_func=training_func_for_lpot, eval_dataloader=dummy_dataloader)
 

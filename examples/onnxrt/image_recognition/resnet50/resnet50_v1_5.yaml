@@ -9,7 +9,7 @@ quantization:                                        # optional. tuning constrai
     dataloader:
       batch_size: 1
       dataset:
-        Imagenet:
+        ImageFolder:
           root: /path/to/calibration/dataset/        # NOTE: modify to calibration dataset location if needed
       transform:
         ResizeCropImagenet: 
@@ -24,7 +24,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 32
       dataset:
-        Imagenet:
+        ImageFolder:
           root: /path/to/evaluation/dataset/          # NOTE: modify to evaluation dataset location if needed
       transform:
         ResizeCropImagenet: 
@@ -40,7 +40,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 1 
       dataset:
-        Imagenet:
+        ImageFolder:
           root: /path/to/evaluation/dataset/          # NOTE: modify to evaluation dataset location if needed
       transform:
         ResizeCropImagenet: 

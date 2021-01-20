@@ -14,7 +14,7 @@ quantization:                                        # optional. tuning constrai
     dataloader:
       batch_size: 1
       dataset:
-        Imagenet:
+        ImageRecord:
           root: <DATASET>/TF_imagenet/val/         # NOTE: modify to calibration dataset location if needed
       transform:
         ParseDecodeImagenet:
@@ -34,7 +34,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 32
       dataset:
-        Imagenet:
+        ImageRecord:
           root: <DATASET>/TF_imagenet/val/          # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet:

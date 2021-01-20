@@ -69,22 +69,26 @@ class TFDataDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size=1, last_batch='rollover', \
                              collate_fn=None, sampler=None, batch_sampler=None, \
                              num_workers=None, pin_memory=None):
-        assert not tf.executing_eagerly(), 'tf dataloader not allowed executed in eager mode...'
         drop_last = False if last_batch == 'rollover' else True
         dataset = dataset.batch(batch_size, drop_last)
-        ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
-        iter_tensors = ds_iterator.get_next()
-        data_config = tf.compat.v1.ConfigProto()
-        data_config.use_per_session_threads = 1
-        data_config.intra_op_parallelism_threads = 1
-        data_config.inter_op_parallelism_threads = 16
-        data_sess = tf.compat.v1.Session(config=data_config)
-        from tensorflow.python.framework.errors_impl import OutOfRangeError
-        while True:
-            try:
-                outputs = data_sess.run(iter_tensors)
-                yield outputs
-            except OutOfRangeError:
-                data_sess.close()
-                return
+        if tf.executing_eagerly():
+            for iter_tensors in dataset:
+                yield [elem.numpy() for elem in iter_tensors]
+        else:
+            ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
+            iter_tensors = ds_iterator.get_next()
+            data_config = tf.compat.v1.ConfigProto()
+            data_config.use_per_session_threads = 1
+            data_config.intra_op_parallelism_threads = 1
+            data_config.inter_op_parallelism_threads = 16
+            data_sess = tf.compat.v1.Session(config=data_config)
+            # pylint: disable=no-name-in-module
+            from tensorflow.python.framework.errors_impl import OutOfRangeError
+            while True:
+                try:
+                    outputs = data_sess.run(iter_tensors)
+                    yield outputs
+                except OutOfRangeError:
+                    data_sess.close()
+                    return
 

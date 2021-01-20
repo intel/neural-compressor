@@ -205,7 +205,7 @@ quantization:                                        # optional. tuning constrai
     sampling_size: 5, 10                             # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:
       dataset:
-        Imagenet:
+        ImageRecord:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
       transform:
         ParseDecodeImagenet:
@@ -224,7 +224,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 10
       dataset:
-        Imagenet:
+        ImageRecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet:
@@ -239,7 +239,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 1 
       dataset:
-        Imagenet:
+        ImageRecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet:

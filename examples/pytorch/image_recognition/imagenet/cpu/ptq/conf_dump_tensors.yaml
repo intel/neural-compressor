@@ -18,7 +18,7 @@ quantization:                                        # optional. tuning constrai
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
-
+ 
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
@@ -37,6 +37,7 @@ evaluation:                                          # optional. required if use
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
+ 
   performance:                                       # optional. used to benchmark performance of passing model.
     configs:
       cores_per_instance: 4

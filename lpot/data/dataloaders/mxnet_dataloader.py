@@ -15,26 +15,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
+import numpy as np
 from lpot.utils.utility import LazyImport
-from .base_dataloader import BaseDataLoader
+from lpot.data.dataloaders.base_dataloader import BaseDataLoader
+from lpot.data.dataloaders.default_dataloader import DefaultDataLoader
 mx = LazyImport('mxnet')
 
+def collate(batch):
+    elem = batch[0]
+    if isinstance(elem, collections.abc.Mapping):
+        return {key: collate([d[key] for d in batch]) for key in elem}
+    elif isinstance(elem, collections.abc.Sequence):
+        batch = zip(*batch)
+        return [collate(samples) for samples in batch]
+    elif isinstance(elem, np.ndarray):
+        try:
+            batch = [mx.nd.array(e) for e in batch]
+            return mx.nd.stack(*batch)
+        except:
+            return np.stack(batch)
+    elif isinstance(elem, mx.ndarray.NDArray): # pylint: disable=no-member
+        return mx.nd.stack(*batch)
+    else:
+        return batch
 
 class MXNetDataLoader(BaseDataLoader):
-    """DataLoader for frameework MXNet, we use the gluon.data.DataLoader
-       (TODO) implement the DataIter dataloader while some models use it
-
-    """
-
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory):
-
-        return mx.gluon.data.DataLoader(
-            dataset,
-            batch_size=batch_size,
-            batchify_fn=collate_fn,
-            last_batch=last_batch,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            sampler=sampler,
-            batch_sampler=batch_sampler)
+        drop_last = False if last_batch == 'rollover' else True
+        if collate_fn is None:
+            collate_fn = collate
+        return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
+                                 sampler, batch_sampler, num_workers, pin_memory)

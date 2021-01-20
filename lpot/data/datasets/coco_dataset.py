@@ -29,9 +29,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
+from PIL import Image
 from lpot.utils.utility import LazyImport
 from .dataset import dataset_registry, IterableDataset, Dataset
+
 tf = LazyImport('tensorflow')
+mx = LazyImport('mxnet')
+torch = LazyImport('torch')
 
 @dataset_registry(dataset_type="COCORecord", framework="tensorflow", dataset_format='')
 class COCORecordDataset(IterableDataset):
@@ -50,7 +55,7 @@ class COCORecordDataset(IterableDataset):
                 'https://github.com/tensorflow/models/blob/master/research/\
                 object_detection/dataset_tools/create_coco_tf_record.py' to\
                 create correct tfrecord")
-
+        # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
         tfrecord_paths = [root]
         ds = tf.data.TFRecordDataset.list_files(tfrecord_paths)
@@ -61,46 +66,25 @@ class COCORecordDataset(IterableDataset):
                                 sloppy=True,
                                 buffer_output_elements=10000,
                                 prefetch_input_elements=10000))
-        ds = ds.map(transform, num_parallel_calls=None)
+        if transform is not None:
+            ds = ds.map(transform, num_parallel_calls=None)
         if filter is not None:
             ds = ds.filter(filter)
         ds = ds.prefetch(buffer_size=1000)
         ds.batch(1)
         return ds
 
-    def __iter__(self):
-        ds_iterator = tf.compat.v1.data.make_one_shot_iterator(self)
-        iter_tensors = ds_iterator.get_next()
-        from tensorflow.python.framework.errors_impl import OutOfRangeError
-        data_config = tf.compat.v1.ConfigProto()
-        data_config.use_per_session_threads = 1
-        data_config.intra_op_parallelism_threads = 1
-        data_config.inter_op_parallelism_threads = 16
-        with tf.compat.v1.Session(config=data_config) as sess:
-            while True:
-                try:
-                    outputs = sess.run(iter_tensors)
-                    yield outputs[0]
-                except OutOfRangeError:
-                    return
-
-@dataset_registry(dataset_type="COCORaw", framework="tensorflow", dataset_format='')
-class COCORawDataset(Dataset):
+@dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, \
+                    onnxrt_integerops", dataset_format='')
+class COCORaw(Dataset):
     """Configuration for Coco raw dataset."""
-
     def __init__(self, root, img_dir='val2017', \
-            anno_dir='annotations/instances_val2017.json', num_cores=28, \
-                transform=None, filter=filter):
+            anno_dir='annotations/instances_val2017.json', transform=None, filter=filter):
         import json
         import os
         import numpy as np
         from pycocotools.coco import COCO
         from lpot.metric.coco_label_map import category_map
-        data_config = tf.compat.v1.ConfigProto()
-        data_config.use_per_session_threads = 1
-        data_config.intra_op_parallelism_threads = 1
-        data_config.inter_op_parallelism_threads = 16
-        self.sess = tf.compat.v1.Session(config=data_config)
         self.image_list = []
         self.transform = transform
         self.filter = filter
@@ -140,12 +124,50 @@ class COCORawDataset(Dataset):
         return len(self.image_list)
 
     def __getitem__(self, index):
-        from PIL import Image
         sample = self.image_list[index]
         label = sample[1]
         with Image.open(sample[0]) as image:
+            image = np.array(image)
             if self.transform is not None:
                 image, label = self.transform((image, label))
-                image = self.sess.run(image)
+            return (image, label)
+
+@dataset_registry(dataset_type="COCORaw", framework="pytorch", dataset_format='')
+class PytorchCOCORaw(COCORaw):
+    def __getitem__(self, index):
+        sample = self.image_list[index]
+        label = sample[1]
+        with Image.open(sample[0]) as image:
+            image = image.convert('RGB')
+            if self.transform is not None:
+                image, label = self.transform((image, label))
+            return (image, label)
+
+@dataset_registry(dataset_type="COCORaw", framework="mxnet", dataset_format='')
+class MXNetCOCORaw(COCORaw):
+    def __getitem__(self, index):
+        sample = self.image_list[index]
+        label = sample[1]
+        with Image.open(sample[0]) as image:
+            image = np.array(image)
+            if self.transform is not None:
+                image, label = self.transform((image, label))
+            image = mx.nd.array(image)
+            return (image, label)
+
+@dataset_registry(dataset_type="COCORaw", framework="tensorflow", dataset_format='')
+class TensorflowCOCORaw(COCORaw):
+    def __getitem__(self, index):
+        sample = self.image_list[index]
+        label = sample[1]
+        with Image.open(sample[0]) as image:
+            image = np.array(image)
+            if self.transform is not None:
+                image, label = self.transform((image, label))
+            if type(image).__name__ == 'Tensor':
+                with tf.compat.v1.Session() as sess:
+                    image = sess.run(image)
+            elif type(image).__name__ == 'EagerTensor':
+                image = image.numpy()
             return (image, label)
 

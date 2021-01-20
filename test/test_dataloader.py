@@ -2,9 +2,386 @@
 import unittest
 import os
 import numpy as np
-from lpot.utils.create_obj_from_config import create_dataset
+import shutil
+from lpot.utils.create_obj_from_config import create_dataset, create_dataloader
 from lpot.data import DATASETS, DataLoader
 from PIL import Image
+
+class TestBuiltinDataloader(unittest.TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.exists('MNIST'):
+            shutil.rmtree('MNIST')
+        if os.path.exists('FashionMNIST'):
+            shutil.rmtree('FashionMNIST')
+
+    def test_pytorch_dataset(self):
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR10": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'pytorch', dataloader_args)
+ 
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR100": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'pytorch', dataloader_args)
+ 
+        dataloader_args = {
+            'dataset': {"MNIST": {'root': './test', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'pytorch', dataloader_args)
+ 
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].size, (24,24))
+            break
+            
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].size, (24,24))
+            break
+ 
+    def test_mxnet_dataset(self):
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR10": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'mxnet', dataloader_args)
+
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR100": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'mxnet', dataloader_args)
+
+        dataloader_args = {
+            'dataset': {"MNIST": {'root': './test', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'mxnet', dataloader_args)
+ 
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('mxnet', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24,1))
+            break
+
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('mxnet', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24,1))
+            break
+
+
+    def test_tf_dataset(self):
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR10": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'tensorflow', dataloader_args)
+
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR100": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'tensorflow', dataloader_args)
+
+        dataloader_args = {
+            'dataset': {"MNIST": {'root': './test', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 'tensorflow', dataloader_args)
+ 
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('tensorflow', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24,1))
+            break
+
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('tensorflow', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24,1))
+            break
+
+    def test_onnx_dataset(self):
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR10": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 
+                            'onnxrt_qlinearops', dataloader_args)
+
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"CIFAR100": {'root': './', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 
+                            'onnxrt_qlinearops', dataloader_args)
+
+        dataloader_args = {
+            'dataset': {"MNIST": {'root': './test', 'train':False, 'download':False}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        self.assertRaises(RuntimeError, create_dataloader, 
+                                'onnxrt_qlinearops', dataloader_args)
+ 
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('onnxrt_qlinearops', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24,1))
+            break
+
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('onnxrt_qlinearops', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24,1))
+            break
+
+class TestImagenetRaw(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        os.makedirs('val', exist_ok=True)
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('val/test.jpg')
+        with open('val/val_map.txt', 'w') as f:
+            f.write('test.jpg   0')
+    
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.exists('val'):
+            shutil.rmtree('val')
+       
+    def test_tensorflow(self):
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path': './val', 'image_list':None}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('tensorflow', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('tensorflow', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+    def test_pytorch(self):
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path': 'val', 'image_list':None}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].size, (24,24))
+            break
+
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].size, (24,24))
+            break
+
+    def test_mxnet(self):
+        import mxnet as mx
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path': 'val', 'image_list':None}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('mxnet', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('mxnet', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+    def test_onnx(self):
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path': 'val', 'image_list':None}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+class TestImageFolder(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        os.makedirs('val', exist_ok=True)
+        os.makedirs('val/0', exist_ok=True)
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('val/0/test.jpg')
+    
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.exists('val'):
+            shutil.rmtree('val')
+       
+    def test_tensorflow(self):
+        dataloader_args = {
+            'dataset': {"ImageFolder": {'root': './val'}},
+            'transform': {'RandomResizedCrop': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('tensorflow', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+    def test_pytorch(self):
+        dataloader_args = {
+            'dataset': {"ImageFolder": {'root': './val'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(data[0][0].size, (24,24))
+            break
+
+    def test_mxnet(self):
+        dataloader_args = {
+            'dataset': {"ImageFolder": {'root': './val'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('mxnet', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+    def test_onnx(self):
+        dataloader_args = {
+            'dataset': {"ImageFolder": {'root': './val'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
+        
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
 
 class TestDataloader(unittest.TestCase):
     def test_iterable_dataset(self):
@@ -19,15 +396,14 @@ class TestDataloader(unittest.TestCase):
         self.assertEqual(data.shape, (1, 256, 256, 3))
 
     def test_onnx_imagenet(self):
-        import shutil
-        os.makedirs('val')
-        os.makedirs('val/0')
+        os.makedirs('val', exist_ok=True)
+        os.makedirs('val/0', exist_ok=True)
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
-        im.save('val/0000000397133.jpg')
-        args = {'Imagenet': {'root': './'}}
+        im.save('val/test.jpg')
+        args = {'ImageFolder': {'root': './val'}}
         ds = create_dataset('onnxrt_qlinearops', args, None, None)
         dataloader = DataLoader('onnxrt_qlinearops', ds)
         for image, label in dataloader:
@@ -40,8 +416,8 @@ class TestDataloader(unittest.TestCase):
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
-        im.save('000000397133.jpg')
-        im.save('000000397134.jpg')
+        im.save('test_0.jpg')
+        im.save('test_1.jpg')
         fake_dict = {
             'info': {
                 'description': 'COCO 2017 Dataset', 
@@ -55,42 +431,42 @@ class TestDataloader(unittest.TestCase):
                     
             },
             'images':[{
-                'file_name': '000000397133.jpg',
+                'file_name': 'test_0.jpg',
                 'height': 100,
                 'width': 100,
-                'id': 397133
+                'id': 0
             },
             {
-                'file_name': '000000397134.jpg',
+                'file_name': 'test_1.jpg',
                 'height': 100,
                 'width': 100,
-                'id': 397134
+                'id': 1
             },
             {
-                'file_name': '000000397135.jpg',
+                'file_name': 'test_2.jpg',
                 'height': 100,
                 'width': 100,
-                'id': 397135
+                'id': 2
             }],
             'annotations':[{
                 'category_id': 18,
-                'id': 1768,
+                'id': 1767,
                 'iscrowd': 0,
-                'image_id': 397133,
+                'image_id': 0,
                 'bbox': [473.07, 395.93, 38.65, 28.67],
             },
             {
                 'category_id': 18,
                 'id': 1768,
                 'iscrowd': 0,
-                'image_id': 397134,
+                'image_id': 1,
                 'bbox': [473.07, 395.93, 38.65, 28.67],
             },
             {
                 'category_id': 18,
-                'id': 1768,
+                'id': 1769,
                 'iscrowd': 0,
-                'image_id': 397135,
+                'image_id': 2,
                 'bbox': [],
             }],
             'categories':[{
@@ -107,18 +483,35 @@ class TestDataloader(unittest.TestCase):
         ds = create_dataset('tensorflow', args, None, None)
         dataloader = DataLoader('tensorflow', ds)
         for image, label in dataloader:
-            self.assertEqual(image[0].size, (100,100))
+            self.assertEqual(image[0].shape, (100,100,3))
 
-        trans_args = {'Rescale': {}}
+        trans_args = {'Transpose': {'perm': [2, 0, 1]}}
         ds = create_dataset('tensorflow', args, trans_args, None)
         dataloader = DataLoader('tensorflow', ds)
         for image, label in dataloader:
+            self.assertEqual(image[0].shape, (3,100,100))
+
+        args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('onnxrt_qlinearops', args, None, None)
+        dataloader = DataLoader('onnxrt_qlinearops', ds)
+        for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
 
-        os.remove('000000397133.jpg')
-        os.remove('000000397134.jpg')
-        os.remove('anno.json')
+        args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('mxnet', args, None, None)
+        dataloader = DataLoader('mxnet', ds)
+        for image, label in dataloader:
+            self.assertEqual(image[0].shape, (100,100,3))
 
+        args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('pytorch', args, None, None)
+        dataloader = DataLoader('pytorch', ds)
+        for image, label in dataloader:
+            self.assertEqual(image[0].size, (100,100))
+
+        os.remove('test_0.jpg')
+        os.remove('test_1.jpg')
+        os.remove('anno.json')
 
     def test_tensorflow_imagenet_dataset(self):
         import tensorflow as tf
@@ -128,8 +521,14 @@ class TestDataloader(unittest.TestCase):
         im = Image.fromarray(random_array)
         im.save('test.jpeg')
 
-        image = tf.compat.v1.gfile.FastGFile('test.jpeg','rb').read()
+        dataloader_args = {
+            'dataset': {"ImageRecord": {'root': './'}},
+            'transform': None,
+            'filter': None
+        }
+        self.assertRaises(ValueError, create_dataloader, 'tensorflow', dataloader_args)
 
+        image = tf.compat.v1.gfile.FastGFile('test.jpeg','rb').read()
         example = tf.train.Example(features=tf.train.Features(feature={
             'image/encoded':tf.train.Feature(
                     bytes_list=tf.train.BytesList(value=[image])),
@@ -141,7 +540,7 @@ class TestDataloader(unittest.TestCase):
             writer.write(example.SerializeToString())
 
         eval_dataset = create_dataset(
-            'tensorflow', {'Imagenet':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
+            'tensorflow', {'ImageRecord':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
         dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1) 
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
