@@ -13,7 +13,7 @@ from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import \
 
 
 class TestGraphFoldBNWithInvalidParameter(unittest.TestCase):
-    def test_graph_cse(self):
+    def test_graph_fold_bn(self):
         tf.compat.v1.disable_eager_execution()
 
         input_constant_name = "input_constant"

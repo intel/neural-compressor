@@ -15,25 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 
-import os
 import re
 import logging
 from collections import namedtuple
-from google.protobuf import text_format
-import tensorflow as tf
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.platform import gfile
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import tensor_util
 from lpot.utils.utility import singleton
 
-
 @singleton
-class GraphAnalyzer(object):
+class GraphAnalyzer():
     """Tensorflow Graph Analyzer class which implemented under singleton mode.
     This class provides the following API:
     * Analyze the graph
@@ -177,21 +173,82 @@ class GraphAnalyzer(object):
                         ['Conv2D', 'BiasAdd', 'AddN', 'Relu6']]
                     ]
         """
-        def validate_input(data, creteria):
+        def _validate_input(data, creteria):
             if isinstance(creteria, str) and data == creteria:
                 return True
-            elif isinstance(creteria, (list, tuple)) and data in creteria:
+
+            if isinstance(creteria, (list, tuple)) and data in creteria:
                 return True
-            else:
-                return False
+
+            return False
+
+        def _compare_list(list_a, list_b):
+            """Check list a is a subset of list b.
+            e.g, list a is ['a', 'b', 'c'] while list b is ['a', 'b', 'c', 'd'],
+            then list a is subset of list b.
+
+            Args:
+                list_a ([Any]): list A
+                list_b ([Any]): list B
+
+            Returns:
+                [bool]: list a is a subset of list b or not.
+            """
+            assert isinstance(list_a, list)
+            assert isinstance(list_b, list)
+            is_subset = True
+
+            for index, value in enumerate(list_a):
+                is_subset &= value == list_b[index]
+
+            return is_subset
+
+        def _dfs(op_names, op_types, graph_info, node, pattern):
+            if pattern == []:
+                return
+            start_index = 0
+            end_index = len(pattern) - 1
+            matched_flag = False
+            while start_index <= end_index:
+                matched_flag = _validate_input(node.op, pattern[end_index])
+
+                if not matched_flag and isinstance(pattern[end_index], tuple):
+                    end_index -= 1
+                    continue
+                if matched_flag:
+                    op_names.append(node.name)
+                    op_types.append(node.op)
+                    break
+
+                return
+
+            if start_index == end_index:
+                if matched_flag:
+                    matched_res = copy.deepcopy(op_names)
+                    matched_res.reverse()
+                    op_types_copy = copy.deepcopy(op_types)
+                    op_types_copy.reverse()
+                    matched_res.append(op_types_copy)
+                    if matched_res not in output_result:
+                        output_result.append(matched_res)
+
+                    op_names.pop()
+                    op_types.pop()
+                return
+
+            for index, value in enumerate(node.input):
+                cur_node = graph_info[GraphRewriterHelper.node_name_from_input(value)].node
+                _dfs(op_names, op_types, graph_info, cur_node, pattern[:end_index])
+                if index == len(node.input) - 1:
+                    op_names.pop()
+                    op_types.pop()
 
         output_result = []
-        minimal_match_count = len([i for i in input_pattern if isinstance(i, (str, list))])
 
         for _, v in self.node_name_details.items():
             start_index = len(input_pattern) - 1
             while start_index >= 0:
-                find_first_match = validate_input(v.node.op, input_pattern[start_index])
+                find_first_match = _validate_input(v.node.op, input_pattern[start_index])
                 if find_first_match:
                     break
 
@@ -204,73 +261,29 @@ class GraphAnalyzer(object):
             if start_index < 0:
                 continue
 
-            pattern_index = start_index - 1
-            single_set_res = []
-            matched_op_type = []
-            cur_node = v.node
-            continue_search_flag = True
-            single_set_res.append(cur_node.name)
-            matched_op_type.append(cur_node.op)
-            while continue_search_flag and pattern_index >= 0:
-                for input_index, input_name in enumerate(cur_node.input):
-                    cur_node_name = GraphRewriterHelper.node_name_from_input(input_name)
-                    node_op = self.node_name_details[cur_node_name].node.op
-                    if validate_input(node_op, input_pattern[pattern_index]):
-                        break
+            visited_op_name = []
+            visited_op_types = []
 
-                    if input_index == len(cur_node.input) - 1:
-                        continue_search_flag = False
-                        break
+            _dfs(visited_op_name, visited_op_types, self.node_name_details, v.node, input_pattern)
 
-                    if pattern_index == 0:
-                        continue
+        sorted_output = sorted(output_result, key=lambda i: i[-1])
 
-                    next_op_index = pattern_index
-                    edge_search_flag = True
-                    while edge_search_flag and next_op_index > 0:
+        useless_match_list = []
+        for index, value in enumerate(sorted_output):
 
-                        next_op_index -= 1
-                        if isinstance(input_pattern[next_op_index], tuple):
-                            continue
+            if index == len(sorted_output) - 1:
+                break
 
-                        edge_search_flag = validate_input(node_op, input_pattern[next_op_index])
+            # cur_matched_op_names = value[: -1]
+            next_matched_op_names = sorted_output[index+1][:-1]
+            if len(value[:-1]) < len(next_matched_op_names) and \
+                _compare_list(value[:-1], next_matched_op_names):
+                useless_match_list.append(value)
 
-                    if edge_search_flag:
-                        break
+        for i in useless_match_list:
+            sorted_output.remove(i)
 
-                if continue_search_flag and validate_input(node_op, input_pattern[pattern_index]):
-                    cur_node = self.node_name_details[cur_node_name].node
-                    if cur_node.op in input_pattern[pattern_index]:
-                        single_set_res.append(cur_node.name)
-                        matched_op_type.append(cur_node.op)
-                    pattern_index -= 1
-                elif isinstance(input_pattern[pattern_index], tuple):
-                    pattern_index -= 1
-                else:
-                    continue_search_flag = False
-
-            if len(matched_op_type) >= minimal_match_count and validate_input(
-                    matched_op_type[-1], input_pattern[0]):
-                single_set_res.reverse()
-                matched_op_type.reverse()
-                single_set_res.append(matched_op_type)
-                output_result.append(single_set_res)
-
-        longest_match = {}
-        final_output = []
-        for i in output_result:
-            key = i[0]
-            if key not in longest_match:
-                longest_match[key] = i[-1]
-
-            if len(longest_match[key]) < len(i[-1]):
-                longest_match[key] = i[-1]
-
-        for i in output_result:
-            if i[0] in longest_match and i[-1] == longest_match[i[0]]:
-                final_output.append(i)
-
-        return final_output
+        return sorted_output
 
     def remove_node_with_single_input_output(self, node_name):
         """Remove node with one input and rebuild internal graph data structure.
