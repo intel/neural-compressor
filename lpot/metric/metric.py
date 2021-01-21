@@ -246,14 +246,22 @@ def _topk_shape_validate(preds, labels):
     return preds, labels
 
 def _shape_validate(preds, labels):
+    assert type(preds) in [int, list], 'preds must be in int or list'
+    assert type(labels) in [int, list], 'labels must be in int or list'
     if isinstance(preds, int):
-        preds = [preds]
-    preds = np.array(preds)
+        preds = [np.array([preds])]
+    elif isinstance(preds[0], int):
+        preds = [np.array(preds)]
+    else:
+        preds = [np.array(pred) for pred in preds]
     if isinstance(labels, int):
-        labels = [labels]
-    labels = np.array(labels)
-    assert preds.shape == labels.shape, 'shape of labels {} does not match \
-                    shape of predictions {}'.format(labels.shape, preds.shape)
+        labels = [np.array([labels])]
+    elif isinstance(labels[0], int):
+        labels = [np.array(labels)]
+    else:
+        labels = [np.array(label) for label in labels]
+    assert all([pred.shape == label.shape for (pred, label) in zip(preds, labels)]), 'shape \
+           of labels {} does not match shape of predictions {}'.format(labels.shape, preds.shape)
     return preds, labels
 
 @metric_registry('topk', 'mxnet')
@@ -393,8 +401,8 @@ class Loss(Metric):
 
     def update(self, preds, labels, sample_weight=None):
         preds, labels = _shape_validate(preds, labels)
-        self.sample += labels.shape[0]
-        self.sum += sum(preds)
+        self.sample += labels[0].shape[0]
+        self.sum += sum([np.sum(pred) for pred in preds])
 
     def reset(self):
         self.sample = 0
@@ -405,9 +413,10 @@ class Loss(Metric):
 
 @metric_registry('MAE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class MAE(Metric):
-    def __init__(self):
+    def __init__(self, compare_label=True):
         self.label_list = []
         self.pred_list = []
+        self.compare_label = compare_label
 
     def update(self, preds, labels, sample_weight=None):
         preds, labels = _shape_validate(preds, labels)
@@ -419,13 +428,19 @@ class MAE(Metric):
         self.pred_list = []
 
     def result(self):
-        ae = [abs(a-b) for (a,b) in zip(self.label_list, self.pred_list)]
-        return np.mean(ae)
+        aes = [abs(a-b) for (a,b) in zip(self.label_list, self.pred_list)]
+        aes_sum = sum([np.sum(ae) for ae in aes])
+        aes_size = sum([ae.size for ae in aes])
+        assert aes_size, "predictions shouldn't be none"
+        if self.compare_label:
+            return aes_sum / aes_size
+        else:
+            return 1 / (aes_sum / aes_size + 0.001)
 
 @metric_registry('RMSE', 'tensorflow, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(Metric):
-    def __init__(self):
-        self.mse = MSE()
+    def __init__(self, compare_label=True):
+        self.mse = MSE(compare_label)
 
     def update(self, preds, labels, sample_weight=None):
         self.mse.update(preds, labels, sample_weight)
@@ -438,9 +453,10 @@ class RMSE(Metric):
 
 @metric_registry('MSE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class MSE(Metric):
-    def __init__(self):
+    def __init__(self, compare_label=True):
         self.label_list = []
         self.pred_list = []
+        self.compare_label = compare_label
 
     def update(self, preds, labels, sample_weight=None):
         preds, labels = _shape_validate(preds, labels)
@@ -452,8 +468,14 @@ class MSE(Metric):
         self.pred_list = []
 
     def result(self):
-        square = [(a-b)**2.0 for (a,b) in zip(self.label_list, self.pred_list)]
-        return np.mean(square)
+        squares = [(a-b)**2.0 for (a,b) in zip(self.label_list, self.pred_list)]
+        squares_sum = sum([np.sum(square) for square in squares])
+        squares_size = sum([square.size for square in squares])
+        assert squares_size, "predictions should't be None"
+        if self.compare_label:
+            return squares_sum / squares_size
+        else:
+            return 1 / (squares_sum / squares_size + 0.001)
 
 @metric_registry('topk', 'tensorflow')
 class TensorflowTopK(Metric):

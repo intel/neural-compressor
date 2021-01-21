@@ -66,6 +66,35 @@ def build_dynamic_yaml():
         yaml.dump(y, f)
     f.close()
 
+def build_non_MSE_yaml():
+    fake_yaml = """
+        model:
+          name: imagenet
+          framework: onnxrt_qlinearops
+
+        quantization:
+          approach: post_training_static_quant
+          calibration:
+              sampling_size: 50
+
+        evaluation:
+          accuracy:
+            metric:
+              MSE: 
+               compare_label: False
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.1
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+        """
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open("non_MSE_yaml.yaml", "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
 def eval_func(model):
     return 1.0
 
@@ -94,6 +123,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def setUpClass(self):
         build_static_yaml()
         build_dynamic_yaml()
+        build_non_MSE_yaml()
         export_onnx_model(self.cnn_model, self.cnn_export_path)
         self.cnn_model = onnx.load(self.cnn_export_path)
 
@@ -101,6 +131,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def tearDownClass(self):
         os.remove("static_yaml.yaml")
         os.remove("dynamic_yaml.yaml")
+        os.remove("non_MSE_yaml.yaml")
         os.remove(self.cnn_export_path)
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
@@ -111,15 +142,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                "random_seed": 1234,
                                "q_dataloader": None,
                                "backend": "qlinearops",
-                               "workspace_path": None}
+                               "workspace_path": './lpot_workspace/{}/{}/'.format(
+                                                       'onnxrt',
+                                                       'imagenet')}
         framework = "onnxrt_qlinearops"
         _ = FRAMEWORKS[framework](framework_specific_info)
 
     def test_quantizate(self):
         from lpot import Quantization
-        for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
+        for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml", "non_MSE_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), label=True)
+            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
             dataloader = quantizer.dataloader(dataset)
             q_model = quantizer(
                 self.cnn_model,

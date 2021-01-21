@@ -746,7 +746,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         return q_model
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+                 metric=None, measurer=None, iteration=-1, 
+                 tensorboard=False, fp32_baseline=False):
         """Execute the evaluate process on the specified model.
 
         Args:
@@ -757,6 +758,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             measurer (object, optional): measurer function.
             iteration (int, optional): number of iterations to evaluate.
             tensorboard (bool, optional): dump output tensor to tensorboard summary files.
+            fp32_baseline (boolen, optional): only for compare_label=False pipeline
 
         Returns:
             (dict): quantized model

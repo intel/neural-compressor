@@ -86,7 +86,8 @@ def create_dataloader(framework, dataloader_cfg):
 
 def create_eval_func(framework, dataloader, adaptor, \
                      metric_cfg, postprocess_cfg=None, \
-                     iteration=-1, tensorboard=False):
+                     iteration=-1, tensorboard=False,
+                     fp32_baseline=False):
     """The interface to create evaluate function from config.
 
     Args:
@@ -103,7 +104,6 @@ def create_eval_func(framework, dataloader, adaptor, \
     if postprocess_cfg is not None:
         postprocesses = TRANSFORMS(framework, "postprocess")
         postprocess = get_postprocess(postprocesses, postprocess_cfg['transform'])
-
     if metric_cfg is not None:
         assert len(metric_cfg) == 1, "Only one metric should be specified!"
         metrics = METRICS(framework)
@@ -113,7 +113,8 @@ def create_eval_func(framework, dataloader, adaptor, \
         metric = None
     def eval_func(model, measurer=None):
         return adaptor.evaluate(model, dataloader, postprocess, \
-                                metric, measurer, iteration, tensorboard)
+                                metric, measurer, iteration, \
+                                tensorboard, fp32_baseline)
 
     return eval_func
 

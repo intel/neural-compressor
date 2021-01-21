@@ -58,6 +58,32 @@ def build_fake_yaml2():
         yaml.dump(y,f)
     f.close()
 
+def build_fake_yaml3():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              MSE: 
+                compare_label: False
+        tuning:
+          strategy:
+            name: fake
+          accuracy_criterion:
+            relative: 0.01
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml3.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
 def build_fake_model():
     try:
         graph = tf.Graph()
@@ -137,12 +163,14 @@ class TestQuantization(unittest.TestCase):
         self.constant_graph = build_fake_model()
         build_fake_yaml()
         build_fake_yaml2()
+        build_fake_yaml3()
         build_fake_strategy()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')    
+        os.remove('fake_yaml3.yaml')
         os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
@@ -160,6 +188,17 @@ class TestQuantization(unittest.TestCase):
     def test_resume(self):
         from lpot import Quantization
         quantizer = Quantization('fake_yaml2.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        dataloader = quantizer.dataloader(dataset)
+        q_model = quantizer(
+                      self.constant_graph,
+                      q_dataloader=dataloader,
+                      eval_dataloader=dataloader
+                      )
+
+    def test_autodump(self):
+        from lpot import Quantization
+        quantizer = Quantization('fake_yaml3.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)
         q_model = quantizer(

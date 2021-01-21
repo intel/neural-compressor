@@ -385,7 +385,8 @@ class TuneStrategy(object):
                                          self.adaptor, \
                                          self.cfg.evaluation.accuracy.metric, \
                                          postprocess_cfg, \
-                                         tensorboard = self.cfg.tuning.tensorboard)
+                                         tensorboard = self.cfg.tuning.tensorboard, \
+                                         fp32_baseline = self.baseline == None)
 
             val = self.objective.evaluate(eval_func, model)
         return val

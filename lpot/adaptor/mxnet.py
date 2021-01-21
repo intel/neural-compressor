@@ -180,14 +180,19 @@ class MxNetAdaptor(Adaptor):
         raise NotImplementedError
 
     def evaluate(self, model, dataloader, postprocess=None, \
-                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+                 metric=None, measurer=None, iteration=-1, \
+                 tensorboard=False, fp32_baseline=False):
         """The function is used to run evaluation on validation dataset.
 
         Args:
             model (object): model to do evaluate.
             dataloader (object): dataset to do evaluate.
+            postprocess (object, optional): process the result from the model
             metric (metric object): evaluate metric.
             measurer (object, optional): for precise benchmark measurement.
+            iteration(int, optional): control steps of mini-batch
+            tensorboard (boolean, optional): for tensorboard inspect tensor.
+            fp32_baseline (boolen, optional): only for compare_label=False pipeline
 
         Returns:
             acc: evaluate result.

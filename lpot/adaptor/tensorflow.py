@@ -47,6 +47,9 @@ class TensorFlowAdaptor(Adaptor):
         self.framework_specific_info = framework_specific_info
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
+        if not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+        
         self.pre_optimized_graph = None
         self.pre_optimizer_handle = None
         self.input_tensor_names = self.framework_specific_info['inputs'] \
@@ -64,7 +67,7 @@ class TensorFlowAdaptor(Adaptor):
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "tensorflow.yaml"))
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
-
+          
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
         # Convert to a numpy array
@@ -101,7 +104,8 @@ class TensorFlowAdaptor(Adaptor):
         return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+                 metric=None, measurer=None, iteration=-1, 
+                 tensorboard=False, fp32_baseline=False):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
@@ -113,6 +117,7 @@ class TensorFlowAdaptor(Adaptor):
             measurer (object, optional): for precise benchmark measurement.
             iteration(int, optional): control steps of mini-batch
             tensorboard (boolean, optional): for tensorboard inspect tensor.
+            fp32_baseline (boolen, optional): only for compare_label=False pipeline
 
         Returns:
             [float]: evaluation result, the larger is better.
@@ -204,6 +209,13 @@ class TensorFlowAdaptor(Adaptor):
         # config.intra_op_parallelism_threads = 28
         config.inter_op_parallelism_threads = 1
         sess = tf.compat.v1.Session(graph=graph, config=config)
+       
+        if metric: 
+            if hasattr(metric, "compare_label"):
+                if not metric.compare_label:
+                    results = [[] for _ in range(len(outputs))]
+                    if not os.path.exists(os.path.join(self.work_dir, "output_tensors")):
+                        os.makedirs(os.path.join(self.work_dir, "output_tensors")) 
 
         logger.info("Start to evaluate Tensorflow model...")
         for idx, (inputs, labels) in enumerate(dataloader):
@@ -223,7 +235,15 @@ class TensorFlowAdaptor(Adaptor):
             else:
                 predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
                     else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration)
-
+            if metric:
+                if hasattr(metric, "compare_label"):
+                    if not metric.compare_label:
+                        if isinstance(predictions, list):
+                            result = [np.array(value) for value in predictions.values()]
+                        else:
+                            result = [predictions]
+                        for i in range(len(outputs)):
+                            results[i].append(result[i])
             # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):
@@ -238,12 +258,30 @@ class TensorFlowAdaptor(Adaptor):
                 elif len(self.output_tensor_names) > 1:
                     predictions = predictions[:len(self.output_tensor_names)]
             if postprocess is not None:
-                predictions, labels = postprocess((predictions, labels))
+                predictions, labels = postprocess((predictions, labels)) 
             if metric is not None:
-                metric.update(predictions, labels)
-
+                if (not hasattr(metric, "compare_label")):
+                    metric.update(predictions, labels)
+                elif hasattr(metric, "compare_label") and metric.compare_label:
+                    metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
+        if metric:
+            if hasattr(metric, "compare_label"):
+                if not metric.compare_label:
+                    results = [np.array(result) for result in results]
+                    metric.reset()
+                    if fp32_baseline:
+                        np.savez(os.path.join(self.work_dir, "output_tensors", "fp32.npz"), 
+                            *results)
+                        metric.update(results, results)
+                    else:
+                        np.savez(os.path.join(self.work_dir, "output_tensors", "int8.npz"), 
+                            *results)
+                        reference_file = np.load(os.path.join(self.work_dir, "output_tensors", \
+                                     "fp32.npz"), allow_pickle=True)
+                        reference = [reference_file[key] for key in reference_file]
+                        metric.update(reference, results)
         acc = metric.result() if metric is not None else 0
         if tensorboard:
             new_dir = temp_dir + "_acc_" + str(acc)

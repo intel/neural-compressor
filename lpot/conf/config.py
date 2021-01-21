@@ -318,7 +318,16 @@ schema = Schema({
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
                 Optional('COCOmAP'): {
                     Optional('anno_path'): str
-                }
+                },
+                Optional('MSE'): {
+                    Optional('compare_label'): bool
+                }, 
+                Optional('RMSE'): {
+                    Optional('compare_label'): bool
+                },
+                Optional('MAE'): {
+                    Optional('compare_label'): bool
+                },
             },
             Optional('configs'): configs_schema,
             Optional('dataloader'): dataloader_schema,

@@ -45,8 +45,11 @@ class ONNXRTAdaptor(Adaptor):
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
+        if not os.path.exists(self.work_space):
+            os.makedirs(self.work_space)
         self.pre_optimized_model = None
         self.quantizable_op_types = self._query_quantizable_op_types()
+        self.evaluate_nums = 0
 
     def quantize(self, tune_cfg, model, dataLoader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
@@ -203,7 +206,8 @@ class ONNXRTAdaptor(Adaptor):
         return quantizable_op_types
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+                 metric=None, measurer=None, iteration=-1, 
+                 tensorboard=False, fp32_baseline=False):
         """The function is for evaluation if no given eval func
 
         Args:
@@ -214,17 +218,24 @@ class ONNXRTAdaptor(Adaptor):
             measurer         : lpot.objective.Measurer
             iteration(int)   : max iterations of evaluaton.
             tensorboard(bool): whether to use tensorboard for visualizaton
+            fp32_baseline (boolen, optional): only for compare_label=False pipeline
 
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
         session = ort.InferenceSession(input_graph.SerializeToString(), None)
-
+        len_outputs = len(session.get_outputs())
+        if metric:
+            if hasattr(metric, "compare_label"):
+                if not metric.compare_label:
+                    results = [[] for _ in range(len_outputs)]
+                    if not os.path.exists(os.path.join(self.work_space, "output_tensors")):
+                        os.makedirs(os.path.join(self.work_space, "output_tensors"))
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
         for idx, batch in enumerate(dataloader):
-            labels = batch[-1]
+            labels = batch[-len_outputs:]
             if measurer is not None:
                 for i in range(len_inputs):
                     # in case dataloader contains non-array input
@@ -233,20 +244,43 @@ class ONNXRTAdaptor(Adaptor):
                     else:
                         ort_inputs.update({inputs_names[i]: batch[i]})
                 measurer.start()
-                predictions = session.run([], ort_inputs)
+                predictions = session.run(None, ort_inputs)
                 measurer.end()
             else:
                 for i in range(len_inputs):
                     ort_inputs.update({inputs_names[i]: batch[i]})
-                predictions = session.run([], ort_inputs)
-            predictions = predictions[0] if len(predictions) == 1 else predictions
+                predictions = session.run(None, ort_inputs)
+            if metric:
+                if hasattr(metric, "compare_label"):
+                    if not metric.compare_label:
+                        for i in range(len_outputs):
+                            results[i].append(predictions[i])
 
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
-                metric.update(predictions, labels)
+                if not hasattr(metric, "compare_label"):
+                    metric.update(predictions, labels)
+                elif hasattr(metric, "compare_label") and metric.compare_label:
+                    metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
+        if metric:
+            if hasattr(metric, "compare_label"):
+                if not metric.compare_label:
+                    metric.reset()
+                    results = [np.array(result) for result in results]
+                    if fp32_baseline:
+                        np.savez(os.path.join(self.work_space,"output_tensors", "fp32.npz"), 
+                            *results)
+                        metric.update(results, results)
+                    else:
+                        np.savez(os.path.join(self.work_space,"output_tensors", "int8.npz"),
+                            *results)
+                        reference_file = np.load(os.path.join(self.work_space, "output_tensors", \
+                                     "fp32.npz"), allow_pickle=True)
+                        reference = [reference_file[key] for key in reference_file]
+                        metric.update(reference, results)
         acc = metric.result() if metric is not None else 0
         return acc
 
