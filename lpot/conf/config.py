@@ -474,6 +474,11 @@ class Conf(object):
         return self._sort_cfgs([dict(zip(keys, v)) for v in itertools.product(*values)])
 
     def opwise_tune_space(self, opwise_quant):
+        def _is_regex(pattern):
+            if re.match("^[A-Za-z0-9.][A-Za-z0-9_.\\-/]*$", pattern):
+                return False
+            return True
+
         opwise = copy.deepcopy(opwise_quant)
         for k, v in opwise.items():
             opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
@@ -481,8 +486,12 @@ class Conf(object):
         cfg = self.usr_cfg
         if cfg.quantization.op_wise:
             for k, v in cfg.quantization.op_wise.items():
+                is_regex = _is_regex(k)
                 for k_op, _ in opwise.items():
-                    if re.match(k, k_op[0]):
+                    if not is_regex and k == k_op[0]:
+                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])
+
+                    if is_regex and re.match(k, k_op[0]):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
                         
         self._opwise_tune_space = opwise
