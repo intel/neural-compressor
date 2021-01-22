@@ -46,6 +46,14 @@ def build_fake_yaml2():
           inputs: input
           outputs: conv3
         device: cpu
+        quantization:
+          calibration:
+            sampling_size: 10, 20
+          op_wise: {
+                     \"conv1\": {
+                       \"activation\":  {\"dtype\": [\"fp32\"]},
+                     },
+                   }
         evaluation:
           accuracy:
             metric:
@@ -54,15 +62,14 @@ def build_fake_yaml2():
           strategy:
             name: bayesian
           exit_policy:
-            max_trials: 10
+            timeout: 60
           accuracy_criterion:
             relative: -0.01
           workspace:
             path: saved
         '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
+        f.write(fake_yaml)
     f.close()
 
 def build_fake_model():
@@ -229,6 +236,8 @@ def create_test_graph():
                                 ])
     return test_graph
 
+def objective_func(params):
+    return params['x1']**2 + params['x2']
 
 class TestQuantization(unittest.TestCase):
 
@@ -269,6 +278,22 @@ class TestQuantization(unittest.TestCase):
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
+
+    def test_bayesian_opt_class(self):
+        from lpot.strategy.bayesian import BayesianOptimization
+        pbounds = {}
+        pbounds['x1'] = (0, 1)
+        pbounds['x2'] = (0, 1)
+        bayes_opt = BayesianOptimization(pbounds=pbounds,
+                                         random_seed=9527)
+        for i in range(10):
+            params = bayes_opt.gen_next_params()
+            try:
+                bayes_opt._space.register(params, objective_func(params))
+            except KeyError:
+                pass
+        self.assertTrue(bayes_opt._space.max()['target'] == 2.0)
+        self.assertTrue(len(bayes_opt._space.res()) == 8)
 
 if __name__ == "__main__":
     unittest.main()
