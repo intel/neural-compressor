@@ -513,16 +513,15 @@ class GraphAnalyzer():
 
         for end_node_name in end_node_names:
             # Update start node's output info
-            if start_node_name and end_node_name in \
-                    self.node_name_details[start_node_name].outputs:
-                self.node_name_details[start_node_name].outputs.remove(end_node_name)
+            if start_node_name and end_node_name in self.node_name_details[GraphRewriterHelper. \
+                node_name_from_input(start_node_name)].outputs:
+                self.node_name_details[GraphRewriterHelper.node_name_from_input(
+                    start_node_name)].outputs.remove(end_node_name)
 
             # reset output node's input
             for index, each_node_name in enumerate(
                     self.node_name_details[end_node_name].node.input):
-                if self.node_name_details[
-                        end_node_name].node.input and GraphRewriterHelper.node_name_from_input(
-                            each_node_name) == start_node_name:
+                if each_node_name == start_node_name:
                     new_input_name = self.node_name_details[end_node_name].node.input[:index] + [
                         new_node_name
                     ] + self.node_name_details[end_node_name].node.input[index + 1:]
@@ -531,7 +530,8 @@ class GraphAnalyzer():
 
         # add the inserted node into the start node's output.
         if start_node_name:
-            self.node_name_details[start_node_name].outputs.append(new_node_name)
+            self.node_name_details[GraphRewriterHelper.node_name_from_input(
+                start_node_name)].outputs.append(new_node_name)
 
     def dump_graph(self):
         """Dump the current model's graphdef
