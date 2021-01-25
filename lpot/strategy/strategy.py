@@ -18,11 +18,11 @@
 from abc import abstractmethod
 import os
 import math
-import yaml
 import copy
 import pickle
 from collections import OrderedDict
 from pathlib import Path
+import yaml
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils.utility import Timeout, fault_tolerant_file, equal_dicts
@@ -37,7 +37,7 @@ from ..conf.dotdict import DotDict, deep_get, deep_set
    The naming convention of new strategy subclass should be something like ABCTuneStrategy, user
    could choose this strategy by setting "abc" string in tuning.strategy field of yaml.
 
-   STRATEGIES variable is used to store all implelmented TuneStrategy subclasses to support
+   STRATEGIES variable is used to store all implemented TuneStrategy subclasses to support
    different tuning strategies.
 """
 STRATEGIES = {}
@@ -85,7 +85,7 @@ class TuneStrategy(object):
                                                to take as input of supported metrics. If this
                                                parameter is not None, user needs to specify
                                                pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" paramter as None.
+                                               file and should set "eval_func" parameter as None.
                                                Tuner will combine model, eval_dataloader and
                                                pre-defined metrics to run evaluation process.
         eval_func (function, optional):        The evaluation function provided by user.
@@ -239,8 +239,8 @@ class TuneStrategy(object):
                                                                        'random_seed',
                                                                        'exit_policy']):
             return True
-        else:
-            return False
+
+        return False
 
     @abstractmethod
     def next_tune_cfg(self):

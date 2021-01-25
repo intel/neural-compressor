@@ -15,14 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .strategy import strategy_registry, TuneStrategy
+import copy
 import warnings
 import numpy as np
-import copy
 from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 from ..utils import logger
+from .strategy import strategy_registry, TuneStrategy
 
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
@@ -49,7 +49,7 @@ class BayesianTuneStrategy(TuneStrategy):
                                                to take as input of supported metrics. If this
                                                parameter is not None, user needs to specify
                                                pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" paramter as None.
+                                               file and should set "eval_func" parameter as None.
                                                Tuner will combine model, eval_dataloader and
                                                pre-defined metrics to run evaluation process.
         eval_func (function, optional):        The evaluation function provided by user.
@@ -73,9 +73,7 @@ class BayesianTuneStrategy(TuneStrategy):
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
         self.bayes_opt = None
-        super(
-            BayesianTuneStrategy,
-            self).__init__(
+        super().__init__(
             model,
             conf,
             q_dataloader,
@@ -88,7 +86,7 @@ class BayesianTuneStrategy(TuneStrategy):
         for history in self.tuning_history:
             if self._same_yaml(history['cfg'], self.cfg):
                 history['bayes_opt'] = self.bayes_opt
-        save_dict = super(BayesianTuneStrategy, self).__getstate__()
+        save_dict = super().__getstate__()
         return save_dict
 
     def params_to_tune_configs(self, params):
@@ -155,7 +153,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     y_max: The current maximum known value of the target function.
     bounds: The variables bounds to limit the search of the acq max.
     random_state: instance of np.RandomState random number generator
-    n_warmup: number of times to randomly sample the aquisition function
+    n_warmup: number of times to randomly sample the acquisition function
     n_iter: number of times to run scipy.minimize
     Returns
     -------
@@ -169,7 +167,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
     x_max = x_tries[ys.argmax()]
     max_acq = ys.max()
 
-    # Explore the parameter space more throughly
+    # Explore the parameter space more thoroughly
     x_seeds = np.random.uniform(bounds[:, 0], bounds[:, 1],
                                 size=(n_iter, bounds.shape[0]))
     for x_try in x_seeds:
@@ -317,7 +315,7 @@ class TargetSpace(object):
             if the point is not unique
         Notes
         -----
-        runs in ammortized constant time
+        runs in amortized constant time
         """
         x = self._as_array(params)
         if x in self:

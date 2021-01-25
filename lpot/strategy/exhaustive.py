@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .strategy import strategy_registry, TuneStrategy
-from collections import OrderedDict
-import itertools
 import copy
+import itertools
+from collections import OrderedDict
+from .strategy import strategy_registry, TuneStrategy
 
 
 @strategy_registry
@@ -46,7 +46,7 @@ class ExhaustiveTuneStrategy(TuneStrategy):
                                                to take as input of supported metrics. If this
                                                parameter is not None, user needs to specify
                                                pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" paramter as None.
+                                               file and should set "eval_func" parameter as None.
                                                Tuner will combine model, eval_dataloader and
                                                pre-defined metrics to run evaluation process.
         eval_func (function, optional):        The evaluation function provided by user.
@@ -69,9 +69,7 @@ class ExhaustiveTuneStrategy(TuneStrategy):
 
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
-        super(
-            ExhaustiveTuneStrategy,
-            self).__init__(
+        super().__init__(
             model,
             conf,
             q_dataloader,

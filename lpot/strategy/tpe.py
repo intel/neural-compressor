@@ -15,16 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .strategy import strategy_registry, TuneStrategy
-import numpy as np
-import os
 import copy
+import os
 from pathlib import Path
-from ..utils.utility import Timeout
-from ..utils import logger
+from functools import partial
+import numpy as np
 import hyperopt as hpo
 from hyperopt import fmin, hp, STATUS_OK, Trials
-from functools import partial
+from ..utils.utility import Timeout
+from ..utils import logger
+from .strategy import strategy_registry, TuneStrategy
 
 try:
     import pandas as pd
@@ -58,7 +58,7 @@ class TpeTuneStrategy(TuneStrategy):
                                                to take as input of supported metrics. If this
                                                parameter is not None, user needs to specify
                                                pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" paramter as None.
+                                               file and should set "eval_func" parameter as None.
                                                Tuner will combine model, eval_dataloader and
                                                pre-defined metrics to run evaluation process.
         eval_func (function, optional):        The evaluation function provided by user.
@@ -107,9 +107,7 @@ class TpeTuneStrategy(TuneStrategy):
         }
         self._algo = None
 
-        super(
-            TpeTuneStrategy,
-            self).__init__(
+        super().__init__(
             model,
             conf,
             q_dataloader,
@@ -132,7 +130,7 @@ class TpeTuneStrategy(TuneStrategy):
                 history['tpe_params'] = self.tpe_params
                 history['hpopt_search_space'] = self.hpopt_search_space
                 history['_algo'] = self._algo
-        save_dict = super(TpeTuneStrategy, self).__getstate__()
+        save_dict = super().__getstate__()
         return save_dict
 
     def _configure_hpopt_search_space_and_params(self, search_space):

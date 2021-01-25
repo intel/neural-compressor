@@ -50,7 +50,7 @@ class BasicTuneStrategy(TuneStrategy):
                                                to take as input of supported metrics. If this
                                                parameter is not None, user needs to specify
                                                pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" paramter as None.
+                                               file and should set "eval_func" parameter as None.
                                                Tuner will combine model, eval_dataloader and
                                                pre-defined metrics to run evaluation process.
         eval_func (function, optional):        The evaluation function provided by user.

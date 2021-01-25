@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .strategy import strategy_registry, TuneStrategy
-from collections import OrderedDict
 import copy
+from collections import OrderedDict
 import numpy as np
+from .strategy import strategy_registry, TuneStrategy
 
 
 @strategy_registry
@@ -51,7 +51,7 @@ class MSETuneStrategy(TuneStrategy):
                                                to take as input of supported metrics. If this
                                                parameter is not None, user needs to specify
                                                pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" paramter as None.
+                                               file and should set "eval_func" parameter as None.
                                                Tuner will combine model, eval_dataloader and
                                                pre-defined metrics to run evaluation process.
         eval_func (function, optional):        The evaluation function provided by user.
@@ -75,9 +75,7 @@ class MSETuneStrategy(TuneStrategy):
     def __init__(self, model, conf, dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None):
         self.ordered_ops = None
-        super(
-            MSETuneStrategy,
-            self).__init__(
+        super().__init__(
             model,
             conf,
             dataloader,
@@ -90,7 +88,7 @@ class MSETuneStrategy(TuneStrategy):
         for history in self.tuning_history:
             if self._same_yaml(history['cfg'], self.cfg):
                 history['ordered_ops'] = self.ordered_ops
-        save_dict = super(MSETuneStrategy, self).__getstate__()
+        save_dict = super().__getstate__()
         return save_dict
 
     def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
