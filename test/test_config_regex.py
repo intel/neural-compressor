@@ -1,6 +1,7 @@
 #
 #  -*- coding: utf-8 -*-
 #
+import os
 import unittest
 import tensorflow as tf
 
@@ -49,6 +50,10 @@ class TestConfigRegex(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fake_yaml.yaml')
 
     def test_config_regex(self):
         tf.compat.v1.disable_eager_execution()

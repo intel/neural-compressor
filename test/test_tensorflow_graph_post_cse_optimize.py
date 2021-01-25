@@ -1,5 +1,6 @@
 
 import unittest
+import os
 import yaml
 import tensorflow as tf
 import numpy as np
@@ -47,6 +48,10 @@ class TestPostCSEOptimizer(unittest.TestCase):
         import tensorflow as tf
         self.enable_s8 = bool(
             tf.version.VERSION.find('1.15.0-up') != -1 or tf.version.VERSION >= '2.1.0')
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fake_yaml.yaml')
 
     def test_post_cse(self):
         tf.compat.v1.disable_eager_execution()

@@ -1,5 +1,6 @@
 
 import unittest
+import os
 import yaml
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
@@ -42,7 +43,11 @@ class TestFoldPadConv(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-    
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fake_yaml.yaml')
+
     def test_fold_pad_conv(self):
         tf.compat.v1.disable_eager_execution()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")

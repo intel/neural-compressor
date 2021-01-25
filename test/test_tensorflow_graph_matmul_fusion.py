@@ -42,6 +42,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         build_fake_yaml()
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')

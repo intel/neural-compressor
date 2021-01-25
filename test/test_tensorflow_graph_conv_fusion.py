@@ -50,6 +50,10 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
 
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fake_yaml.yaml')
+
     def test_conv_relu_fusion(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
