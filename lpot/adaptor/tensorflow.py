@@ -506,7 +506,6 @@ class TensorFlowAdaptor(Adaptor):
         """
         import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-        from .tf_utils.graph_rewriter.graph_info import TFLowbitPrecisionPatterns
         from .tf_utils.util import get_graph_def
 
         graph_def = get_graph_def(model, self.output_node_names)
@@ -517,8 +516,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
-        tf_version = tf.version.VERSION
-        patterns = TFLowbitPrecisionPatterns(tf_version).get_supported_patterns()
+        patterns = self.query_handler.generate_internal_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
         original_graph_node_name = [i.name for i in self.pre_optimized_graph.node]
         matched_nodes = sorted(matched_nodes, key=lambda i: original_graph_node_name.index(i[0]))
@@ -819,3 +817,49 @@ class TensorflowQuery(QueryBackendCapability):
                 res[op_type].append(pattern)
 
         return res
+
+    def generate_internal_patterns(self):
+        """Translate the patterns defined in the yaml to internal pattern expression.
+        """
+        def _generate_pattern(data):
+            length = [len(i) for i in data]
+            res=[]
+            for index in range(max(length)):
+                if index <= min(length) - 1:
+                    tmp = [i[index] for i in data]
+                    if len(set(tmp)) == 1:
+                        res.append([tmp[0]])
+                    else:
+                        res.append(tuple(set(tmp)))
+                else:
+                    tmp1 = [i[index] for i in data if len(i) > index]
+                    res.append(tuple(set(tmp1)))
+
+            return res
+
+        op_level_sequences = {}
+
+        for k, op_level_all_sequences in self.get_eightbit_patterns().items():
+            op_level_sequences[k] = []
+            sorted_sequences = sorted(op_level_all_sequences)
+            last_len = 1
+            each_combination = []
+            for index, value in enumerate(sorted_sequences):
+                if  len(value) >= last_len:
+                    last_len = len(value)
+                    each_combination.append(value)
+                else:
+                    op_level_sequences[k].append(copy.deepcopy(each_combination))
+                    each_combination.clear()
+                    each_combination.append(value)
+                    last_len = len(value)
+
+                if index == len(sorted_sequences) - 1:
+                    op_level_sequences[k].append(copy.deepcopy(each_combination))
+
+        final_out = []
+        for _ , op_level_sequences in op_level_sequences.items():
+            for similar_sequences in op_level_sequences:
+                final_out.append(_generate_pattern(similar_sequences))
+
+        return final_out
