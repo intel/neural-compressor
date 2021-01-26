@@ -435,7 +435,6 @@ class TemplateAdaptor(Adaptor):
 
         # set torch random seed
         random_seed = framework_specific_info['random_seed']
-        random.seed(random_seed)
         torch.manual_seed(random_seed)
 
         self.approach = framework_specific_info['approach']

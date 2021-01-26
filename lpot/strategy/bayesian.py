@@ -217,7 +217,6 @@ class TargetSpace(object):
             optionally specify a seed for a random number generator
         """
         self.random_seed = random_seed
-        np.random.seed(random_seed)
         # Get the name of the parameters
         self._keys = sorted(pbounds)
         # Create an array with parameters bounds
@@ -385,7 +384,6 @@ class TargetSpace(object):
 class BayesianOptimization():
     def __init__(self, pbounds, random_seed=9527, verbose=2):
         self._random_seed = random_seed
-        np.random.seed(self._random_seed)
         # Data structure containing the bounds of its domain,
         # and a record of the points we have evaluated.
         self._space = TargetSpace(pbounds, random_seed)

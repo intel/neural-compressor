@@ -17,6 +17,8 @@
 
 import os
 import pickle
+import random
+import numpy as np
 from .conf.config import Conf
 from .conf.dotdict import deep_set, DotDict
 from .strategy import STRATEGIES
@@ -48,7 +50,11 @@ class Quantization(object):
 
     def __init__(self, conf_fname):
         self.conf = Conf(conf_fname)
-        self.framework = self.conf.usr_cfg.model.framework.lower()
+        cfg = self.conf.usr_cfg
+        self.framework = cfg.model.framework.lower()
+        seed = cfg.tuning.random_seed
+        random.seed(seed)
+        np.random.seed(seed)
 
     def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
                  eval_func=None):

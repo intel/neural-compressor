@@ -1,5 +1,6 @@
 """Tests for the transform module."""
 import numpy as np
+import random
 import unittest
 import os
 from lpot.data import TRANSFORMS, DataLoader
@@ -10,6 +11,9 @@ mx = LazyImport('mxnet')
 tf = LazyImport('tensorflow')
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
+
+random.seed(1)
+np.random.seed(1)
 
 class TestMetrics(unittest.TestCase):
     def test_tensorflow_2(self):

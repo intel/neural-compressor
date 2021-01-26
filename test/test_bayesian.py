@@ -284,6 +284,7 @@ class TestQuantization(unittest.TestCase):
         pbounds = {}
         pbounds['x1'] = (0, 1)
         pbounds['x2'] = (0, 1)
+        np.random.seed(9527)
         bayes_opt = BayesianOptimization(pbounds=pbounds,
                                          random_seed=9527)
         for i in range(10):
