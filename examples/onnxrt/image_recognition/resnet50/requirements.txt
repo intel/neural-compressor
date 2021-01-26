@@ -1,7 +1,6 @@
 onnx>=1.7
-ort-nightly==1.5.2.dev202012081
+onnxruntime==1.6.0
 torch
 torchvision
---find-links https://test.pypi.org/simple/ort_nightly
 
 pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
