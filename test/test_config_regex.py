@@ -37,7 +37,7 @@ def build_fake_yaml():
             exit_policy:
               timeout: 200
             accuracy_criterion:
-              relative: 0.01
+              relative: 0.05
             workspace:
               path: saved
         '''
@@ -58,6 +58,7 @@ class TestConfigRegex(unittest.TestCase):
     def test_config_regex(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
