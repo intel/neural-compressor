@@ -12,21 +12,15 @@ def build_fake_yaml():
         model:
           name: fake_yaml
           framework: tensorflow
-          inputs: input 
-          outputs: op_to_store 
+          inputs: input
+          outputs: op_to_store
         device: cpu
-        quantization: 
+        quantization:
           op_wise: {
                      \"conv1_[1-2]\": {
-                       \"activation\":  {\"dtype\": [\"uint8\"]},
+                       \"activation\":  {\"dtype\": [\"fp32\"]},
                      },
                    }
-          model_wise:
-            weight:
-                granularity: per_tensor
-                scheme: sym
-                dtype: int8
-                algorithm: minmax
         evaluation:
           accuracy:
             metric:
@@ -35,7 +29,7 @@ def build_fake_yaml():
             strategy:
               name: basic
             exit_policy:
-              timeout: 200
+              timeout: 0
             accuracy_criterion:
               relative: 0.05
             workspace:
@@ -65,12 +59,18 @@ class TestConfigRegex(unittest.TestCase):
         x_pad = tf.pad(top_relu, paddings, "CONSTANT")
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
+                                          initializer=tf.compat.v1.random_normal_initializer())
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID", name='conv1_1')
-        normed2 = tf.compat.v1.layers.batch_normalization(conv)
+        normed1 = tf.compat.v1.layers.batch_normalization(conv)
 
-        relu = tf.nn.relu(normed2)
-
-        relu6 = tf.nn.relu6(relu, name='op_to_store')
+        relu = tf.nn.relu(normed1)
+        max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.math.add(conv_1, conv_bias)
+        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
 
         out_name = relu6.name.split(':')[0]
         with tf.compat.v1.Session() as sess:
@@ -89,14 +89,17 @@ class TestConfigRegex(unittest.TestCase):
                 q_dataloader=dataloader,
                 eval_dataloader=dataloader
             )
-            found_conv_fusion = True
-
+            found_fp32_conv = False
+            found_quantized_conv = False
             for i in output_graph.as_graph_def().node:
-                if i.op == 'Conv':
-                    found_conv_fusion = False
-                    break
+                if i.op == 'Conv2D' and i.name == 'conv1_1':
+                    found_fp32_conv = True
 
-            self.assertEqual(found_conv_fusion, True)
+                if i.op.find("QuantizedConv2D") != -1 and i.name == 'conv1_3_eightbit_requantize':
+                    found_quantized_conv = True
+
+            self.assertEqual(found_fp32_conv, True)
+            self.assertEqual(found_quantized_conv, True)
 
 if __name__ == '__main__':
     unittest.main()
