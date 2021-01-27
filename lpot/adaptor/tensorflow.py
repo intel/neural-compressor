@@ -300,6 +300,15 @@ class TensorFlowAdaptor(Adaptor):
         self.quantize_config['advance'] = deep_get(tuning_cfg, 'advance')
         fp32_ops = []
         bf16_ops = []
+
+        dispatched_op_names = [j[0] for j in tuning_cfg['op']]
+
+        invalid_op_names = [i for i in self.quantize_config['op_wise_config']
+                            if i not in dispatched_op_names]
+
+        for op_name in invalid_op_names:
+            self.quantize_config['op_wise_config'].pop(op_name)
+
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
 
@@ -542,7 +551,7 @@ class TensorFlowAdaptor(Adaptor):
         capability = {
             'optypewise': self.get_optype_wise_ability(),
         }
-        capability['opwise'] = self.quantizable_op_details
+        capability['opwise'] = copy.deepcopy(self.quantizable_op_details)
         logger.debug('Dump framework quantization capability:')
         logger.debug(capability)
 

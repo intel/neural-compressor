@@ -170,8 +170,9 @@ class TuneStrategy(object):
             self.model_wise_tune_cfgs[optype] = conf.expand_tune_cfgs(optype_cfgs)
         self.opwise_tune_cfgs = OrderedDict()
         for key in self.opwise_tune_space:
-            self.opwise_tune_cfgs[key] = conf.expand_tune_cfgs(
-                self.opwise_tune_space[key])
+            expanded_cfg = conf.expand_tune_cfgs(self.opwise_tune_space[key])
+            if expanded_cfg:
+                self.opwise_tune_cfgs[key] = expanded_cfg
 
         if self.calib_dataloader:
             self.calib_iter = [math.ceil(int(x) / self.calib_dataloader.batch_size) \
