@@ -23,6 +23,10 @@ device: cpu                                          # optional. default value i
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
+  recipes:
+    scale_propagation_max_pooling: True                          # optional. default value is True.
+    scale_propagation_concat: True                          # optional. default value is True.
+    first_conv_or_matmul_quantization: True                         # optional. default value is True.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.

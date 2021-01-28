@@ -59,20 +59,22 @@ def _valid_prune_sparsity(key, scope, error):
 def input_to_list_float(data):
     if isinstance(data, str):
         return [float(s.strip()) for s in data.split()]
+
     if isinstance(data, float):
         return [data]
-    else:
-        assert isinstance(data, list)
-        return [float(d) for d in data]
+
+    assert isinstance(data, list)
+    return [float(d) for d in data]
 
 def input_to_list(data):
     if isinstance(data, str):
         return [s.strip() for s in data.split(',')]
+
     if isinstance(data, int):
         return [data]
-    else:
-        assert isinstance(data, list)
-        return data
+
+    assert isinstance(data, list)
+    return data
 
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
@@ -225,6 +227,9 @@ schema = Schema({
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \
                                       'calibration': {'sampling_size': [100]}, \
+                                      'recipes': {'scale_propagation_max_pooling': True,
+                                                      'scale_propagation_concat': True,
+                                                      'first_conv_or_matmul_quantization': True},
                                       'model_wise': {'weight': {}, 'activation': {}}}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -239,6 +244,17 @@ schema = Schema({
         Optional('calibration', default={'sampling_size': [100]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema
+        },
+        Optional('recipes', default={'scale_propagation_max_pooling': True,
+                                         'scale_propagation_concat': True,
+                                         'first_conv_or_matmul_quantization': True}): {
+            Optional('scale_propagation_max_pooling', default=True):
+                    And(bool, lambda s: s in [True, False]),
+            Optional('scale_propagation_concat', default=True):
+                    And(bool, lambda s: s in [True, False]),
+            Optional('first_conv_or_matmul_quantization', default=True):
+                    And(bool, lambda s: s in [True, False]),
+
         },
         Optional('model_wise', default={'weight': {}, 'activation': {}}): {
             Optional('weight', default=None): {
@@ -321,7 +337,7 @@ schema = Schema({
                 },
                 Optional('MSE'): {
                     Optional('compare_label'): bool
-                }, 
+                },
                 Optional('RMSE'): {
                     Optional('compare_label'): bool
                 },
@@ -434,7 +450,7 @@ class Conf(object):
         cfg = self.usr_cfg
         self._model_wise_tune_space = OrderedDict()
         for optype in model_wise_quant.keys():
-         self._model_wise_tune_space[optype] = self._merge_dicts(cfg.quantization.model_wise,
+            self._model_wise_tune_space[optype] = self._merge_dicts(cfg.quantization.model_wise,
                                                                     model_wise_quant[optype])
 
         return self._model_wise_tune_space
@@ -493,7 +509,7 @@ class Conf(object):
 
                     if is_regex and re.match(k, k_op[0]):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
-                        
+
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
 

@@ -65,6 +65,7 @@ class GraphConverter:
                  inputs=[],
                  outputs=[],
                  qt_config={},
+                 recipes={},
                  int8_sequences={},
                  fp32_ops=[],
                  bf16_ops=[],
@@ -103,6 +104,7 @@ class GraphConverter:
         self.int8_sequences = int8_sequences
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
+        self.recipes = recipes
 
         self._calibration_data = []
         self._fp32_print_data = []
@@ -546,7 +548,11 @@ class GraphConverter:
                                                      tensor_data= additional_data,
                                                      device=self.device,
                                                      ).do_transformation()
-        self._tmp_graph_def = ScaleProPagationTransformer(self._tmp_graph_def).do_transformation()
+
+        if self.recipes['scale_propagation_max_pooling']:
+            self._tmp_graph_def = ScaleProPagationTransformer(
+                self._tmp_graph_def).do_transformation()
+
         if self.debug:
             write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
 
@@ -569,9 +575,9 @@ class GraphConverter:
                                                           ).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-
-        self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
-                                                     self.device).do_transformation()
+        if self.recipes['scale_propagation_concat']:
+            self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
+                                                        self.device).do_transformation()
 
         self._tmp_graph_def = PostCseOptimizer(self._tmp_graph_def).do_transformation()
 

@@ -138,7 +138,8 @@ class TuneStrategy(object):
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
                  "outputs": self.cfg.model.outputs,
-                 'workspace_path': self.cfg.tuning.workspace.path})
+                 'workspace_path': self.cfg.tuning.workspace.path,
+                 'recipes': self.cfg.quantization.recipes})
         if framework == 'mxnet' or framework == 'pytorch':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnxrt' in framework.lower():

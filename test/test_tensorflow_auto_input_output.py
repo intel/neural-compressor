@@ -32,8 +32,9 @@ class TestTFAutoDetectInputOutput(unittest.TestCase):
 
             input_validate = validate_graph_input(graph_def, inputs)
             self.assertTrue(input_validate)
-            framework_specific_info = {'device': 'cpu', 'workspace_path': './'}
-            adaptor = TensorFlowAdaptor(framework_specific_info)  
+            framework_specific_info = {'device': 'cpu', 'workspace_path': './', 'recipes': {
+                'scale_propagation_max_pooling': True, 'scale_propagation_concat': True, 'first_conv_or_matmul_quantization': True}}
+            adaptor = TensorFlowAdaptor(framework_specific_info)
             adaptor._validate_and_inference_input_output(graph_def)
             self.assertTrue(len(adaptor.input_node_names) > 0)
             self.assertTrue(len(adaptor.output_node_names) > 0)

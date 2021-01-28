@@ -41,7 +41,7 @@ class TensorFlowAdaptor(Adaptor):
     }
 
     def __init__(self, framework_specific_info):
-        super(TensorFlowAdaptor, self).__init__(framework_specific_info)
+        super().__init__(framework_specific_info)
 
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
@@ -49,13 +49,15 @@ class TensorFlowAdaptor(Adaptor):
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
-        
+
         self.pre_optimized_graph = None
         self.pre_optimizer_handle = None
         self.input_tensor_names = self.framework_specific_info['inputs'] \
             if 'inputs' in self.framework_specific_info else []
         self.output_tensor_names = self.framework_specific_info['outputs'] \
             if 'outputs' in self.framework_specific_info else []
+        self.recipes = self.framework_specific_info['recipes']
+
         self.output_node_names = list(
             set([x.split(":")[0] for x in self.output_tensor_names]))
         self.input_node_names = list(
@@ -67,7 +69,7 @@ class TensorFlowAdaptor(Adaptor):
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "tensorflow.yaml"))
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
-          
+
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
         # Convert to a numpy array
@@ -104,7 +106,7 @@ class TensorFlowAdaptor(Adaptor):
         return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, 
+                 metric=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Evaluate the model for specified metric on validation dataset.
 
@@ -209,13 +211,13 @@ class TensorFlowAdaptor(Adaptor):
         # config.intra_op_parallelism_threads = 28
         config.inter_op_parallelism_threads = 1
         sess = tf.compat.v1.Session(graph=graph, config=config)
-       
-        if metric: 
+
+        if metric:
             if hasattr(metric, "compare_label"):
                 if not metric.compare_label:
                     results = [[] for _ in range(len(outputs))]
                     if not os.path.exists(os.path.join(self.work_dir, "output_tensors")):
-                        os.makedirs(os.path.join(self.work_dir, "output_tensors")) 
+                        os.makedirs(os.path.join(self.work_dir, "output_tensors"))
 
         logger.info("Start to evaluate Tensorflow model...")
         for idx, (inputs, labels) in enumerate(dataloader):
@@ -258,7 +260,7 @@ class TensorFlowAdaptor(Adaptor):
                 elif len(self.output_tensor_names) > 1:
                     predictions = predictions[:len(self.output_tensor_names)]
             if postprocess is not None:
-                predictions, labels = postprocess((predictions, labels)) 
+                predictions, labels = postprocess((predictions, labels))
             if metric is not None:
                 if (not hasattr(metric, "compare_label")):
                     metric.update(predictions, labels)
@@ -272,11 +274,11 @@ class TensorFlowAdaptor(Adaptor):
                     results = [np.array(result) for result in results]
                     metric.reset()
                     if fp32_baseline:
-                        np.savez(os.path.join(self.work_dir, "output_tensors", "fp32.npz"), 
+                        np.savez(os.path.join(self.work_dir, "output_tensors", "fp32.npz"),
                             *results)
                         metric.update(results, results)
                     else:
-                        np.savez(os.path.join(self.work_dir, "output_tensors", "int8.npz"), 
+                        np.savez(os.path.join(self.work_dir, "output_tensors", "int8.npz"),
                             *results)
                         reference_file = np.load(os.path.join(self.work_dir, "output_tensors", \
                                      "fp32.npz"), allow_pickle=True)
@@ -391,6 +393,7 @@ class TensorFlowAdaptor(Adaptor):
                                    inputs=self.input_tensor_names,
                                    outputs=self.output_tensor_names,
                                    qt_config=self.quantize_config,
+                                   recipes=self.recipes,
                                    int8_sequences=self.op_wise_sequences,
                                    fp32_ops=self.fp32_ops,
                                    bf16_ops=self.bf16_ops,
@@ -424,6 +427,8 @@ class TensorFlowAdaptor(Adaptor):
         self.quantizable_op_details = OrderedDict()
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
+
+        exclude_first_quantizable_op = self.recipes['first_conv_or_matmul_quantization']
         for details in matched_nodes:
             node_op = details[-1][0]
             node_name = details[0]
@@ -433,7 +438,14 @@ class TensorFlowAdaptor(Adaptor):
                 'sequence': [[','.join(patterns[:pat_length - i]) for i in range(pat_length)][0]],
                 'precision': ['int8']
             }
-            if node_op in tf_quantizable_op_type and node_name not in self.exclude_node_names:
+            if node_op in tf_quantizable_op_type and node_name not in self.exclude_node_names and (
+                node_name, self.unify_op_type_mapping[node_op]) not in self.quantizable_op_details:
+                if not exclude_first_quantizable_op and \
+                    (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
+                    self.unify_op_type_mapping[node_op].find("matmul") != -1):
+                    exclude_first_quantizable_op = True
+                    self.exclude_node_names.append(node_name)
+                    continue
                 self._init_op_stat[node_op].append(node_name)
                 if self.unify_op_type_mapping[node_op].find("conv2d") != -1:
                     conv2d_int8_config = copy.deepcopy(conv_config)
@@ -442,6 +454,7 @@ class TensorFlowAdaptor(Adaptor):
                         node_name, self.unify_op_type_mapping[node_op]
                     )] = conv2d_int8_config
                 elif self.unify_op_type_mapping[node_op].find("matmul") != -1:
+
                     matmul_int8_config = copy.deepcopy(matmul_config)
                     matmul_int8_config['pattern'] = pattern_info
                     # TODO enable the sym mode once the tf fixed the mkldequantize_op.cc bug.
@@ -514,6 +527,8 @@ class TensorFlowAdaptor(Adaptor):
         tf_version = tf.version.VERSION
         patterns = TFLowbitPrecisionPatterns(tf_version).get_supported_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
+        original_graph_node_name = [i.name for i in self.pre_optimized_graph.node]
+        matched_nodes = sorted(matched_nodes, key=lambda i: original_graph_node_name.index(i[0]))
 
         def check_match(patterns, input_pattern):
             for i in patterns:
