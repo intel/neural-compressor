@@ -8,6 +8,7 @@ import tensorflow as tf
 
 from tensorflow.python.framework import graph_util
 
+
 def build_fake_yaml_disable_first_quantization():
     fake_yaml = '''
         model:
@@ -41,6 +42,7 @@ def build_fake_yaml_disable_first_quantization():
     with open('fake_yaml_disable_first_quantization.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
+
 
 def build_fake_yaml_enable_first_quantization():
     fake_yaml = '''
@@ -76,6 +78,7 @@ def build_fake_yaml_enable_first_quantization():
         yaml.dump(y, f)
     f.close()
 
+
 def build_fake_yaml_disable_scale_propagation():
     fake_yaml = '''
         model:
@@ -109,6 +112,7 @@ def build_fake_yaml_disable_scale_propagation():
     with open('fake_yaml_disable_scale_propagation.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
+
 
 def build_fake_yaml_enable_scale_propagation():
     fake_yaml = '''
@@ -144,6 +148,7 @@ def build_fake_yaml_enable_scale_propagation():
         yaml.dump(y, f)
     f.close()
 
+
 def build_fake_yaml_enable_scale_unification():
     fake_yaml = '''
         model:
@@ -178,6 +183,7 @@ def build_fake_yaml_enable_scale_unification():
         yaml.dump(y, f)
     f.close()
 
+
 def build_fake_yaml_disable_scale_unification():
     fake_yaml = '''
         model:
@@ -211,10 +217,11 @@ def build_fake_yaml_disable_scale_unification():
     with open('fake_yaml_disable_scale_unification.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
+
+
 class TestTensorflowInt8Recipe(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        tf.compat.v1.set_random_seed(1)
 
         build_fake_yaml_disable_first_quantization()
         build_fake_yaml_enable_first_quantization()
@@ -235,6 +242,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
     def test_disable_first_quantization(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
+
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -277,6 +286,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
     def test_enable_first_quantization(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -319,6 +329,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
     def test_enable_scale_propagation(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -353,7 +364,6 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 q_dataloader=dataloader,
                 eval_dataloader=dataloader
             )
-
             max_freezed_out = []
             for i in output_graph.as_graph_def().node:
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
@@ -364,6 +374,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
     def test_disable_scale_propagation(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -408,6 +419,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
     def test_enable_scale_unification(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 128, 16], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -417,7 +429,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
         x = tf.nn.relu(x)
         sqrt = tf.math.sqrt(x)
         relu_sqrt = tf.nn.relu(sqrt)
-        conv = tf.nn.conv2d(relu_sqrt, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name='last')
+        conv = tf.nn.conv2d(relu_sqrt, conv_weights, strides=[
+                            1, 2, 2, 1], padding="SAME", name='last')
         normed = tf.compat.v1.layers.batch_normalization(conv)
 
         relu = tf.nn.relu(normed)
@@ -453,6 +466,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
     def test_disable_scale_unification(self):
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
+        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -462,7 +476,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
         x = tf.nn.relu(x)
         sqrt = tf.math.sqrt(x)
         relu_sqrt = tf.nn.relu(sqrt)
-        conv = tf.nn.conv2d(relu_sqrt, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name='last')
+        conv = tf.nn.conv2d(relu_sqrt, conv_weights, strides=[
+                            1, 2, 2, 1], padding="SAME", name='last')
         normed = tf.compat.v1.layers.batch_normalization(conv)
 
         relu = tf.nn.relu(normed)
@@ -494,5 +509,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
                   max_freezed_out.append(i.input[-1])
             self.assertEqual(2, len(set(max_freezed_out)))
+
+
 if __name__ == '__main__':
     unittest.main()
