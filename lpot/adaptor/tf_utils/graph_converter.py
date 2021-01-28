@@ -31,6 +31,7 @@ from lpot.utils.utility import get_tensor_histogram
 from lpot.utils.utility import combine_histogram
 from lpot.utils.utility import CaptureOutputToFile
 from lpot.utils.utility import str2array
+from lpot.utils.utility import Dequantize
 from lpot.conf.dotdict import deep_get
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
@@ -300,13 +301,6 @@ class GraphConverter:
         write_graph(self._fp32_origin_graph, self._fp32_logged_graph)
         return self._fp32_origin_graph
 
-    def _dequantize(self, data, scale_info):
-        original_shape = data.shape
-        size = data.size
-        new_data = data.reshape(size, )
-        max_value = 255 if scale_info[0].find("Relu") != -1 else 127
-        return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
-
     def inspect_tensor(self, original_op_list, iteration_list, work_dir):
         """dump the specified op's output tensor content
 
@@ -410,7 +404,7 @@ class GraphConverter:
             else:
                 result_key = k.split(quantized_node_name_postfix)[tensor_iter_idx]
                 result_disk[(result_key, op_name_type_dict[result_key])
-                            ] = self._dequantize(v[0], q_node_scale[k])
+                            ] = Dequantize(v[0], q_node_scale[k])
         return result_disk
 
     def quantize(self):

@@ -22,7 +22,7 @@ import yaml
 import numpy as np
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, CpuInfo, singleton
+from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize
 from ..utils import logger
 from ..conf.dotdict import deep_get
 tensorflow = LazyImport('tensorflow')
@@ -97,13 +97,6 @@ class TensorFlowAdaptor(Adaptor):
         summary = tf.compat.v1.Summary(value=[tf.compat.v1.Summary.Value(tag=tag, histo=hist)])
         writer.add_summary(summary, step)
         writer.flush()
-
-    def _dequantize(self, data, scale_info):
-        original_shape = data.shape
-        size = data.size
-        new_data = data.reshape(size, )
-        max_value = 255 if scale_info[0].find("Relu") != -1 else 127
-        return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1,
@@ -251,7 +244,7 @@ class TensorFlowAdaptor(Adaptor):
                 for index, node_name in enumerate(outputs):
                     tensor = predictions[index]
                     if node_name in int8_inspect_node_name:
-                        tensor = self._dequantize(predictions[index], q_node_scale[node_name])
+                        tensor = Dequantize(predictions[index], q_node_scale[node_name])
                     self.log_histogram(writer, node_name + output_postfix, tensor, idx)
                 writer.close()
             if isinstance(predictions, list):
