@@ -25,7 +25,6 @@ options.
 import re
 import ast
 import os
-import inspect
 import time
 import sys
 import logging
@@ -34,21 +33,6 @@ from tempfile import NamedTemporaryFile
 import os.path as osp
 import cpuinfo
 import numpy as np
-
-
-def print_info():
-    print(inspect.stack()[1][1], ":", inspect.stack()[1][2], ":", inspect.stack()[1][3])
-
-
-def caller_obj(obj_name):
-    """Get the object of local variable, function or class in caller.
-
-       Args:
-           obj_name (string): The name of object in caller
-    """
-    for f in inspect.stack()[1:]:
-        if obj_name in f[0].f_locals:
-            return f[0].f_locals[obj_name]
 
 
 def singleton(cls):
@@ -77,31 +61,6 @@ class LazyImport(object):
             self.module = __import__(self.module_name)
 
         return getattr(self.module, name)
-
-
-class AverageMeter(object):
-    """Computes the average value
-
-       Args:
-           skip (optional, integar): the skipped iterations in calculation
-    """
-
-    def __init__(self, skip=0):
-        self.skip = skip
-        self.reset()
-
-    def reset(self):
-        self.sum = 0
-        self.cnt = 0
-        self.avg = 0
-
-    def update(self, val):
-        self.cnt += 1
-        if self.cnt <= self.skip:
-            self.avg = 0
-            return
-        self.sum += val
-        self.avg = self.sum / (self.cnt - self.skip)
 
 
 class Timeout(object):
