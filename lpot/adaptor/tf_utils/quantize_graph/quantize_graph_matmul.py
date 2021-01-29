@@ -161,6 +161,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
                 self.logger.info("Unknown match {}".format(fusion_name))
+                return self.input_graph
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
