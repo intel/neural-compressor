@@ -4,6 +4,7 @@ import os
 import yaml
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -30,6 +31,8 @@ def build_fake_yaml():
               name: mse
             accuracy_criterion:
               relative: 0.01
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -48,8 +51,8 @@ class TestFoldPadConv(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
 
+    @disable_random()
     def test_fold_pad_conv(self):
-        tf.compat.v1.disable_eager_execution()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -85,9 +88,8 @@ class TestFoldPadConv(unittest.TestCase):
                         break
                 self.assertEqual(found_pad, True)
 
+    @disable_random()
     def test_fold_pad_conv2(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -131,9 +133,8 @@ class TestFoldPadConv(unittest.TestCase):
                         break
                 self.assertEqual(found_pad, True)
 
+    @disable_random()
     def test_fold_pad_conv3(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -175,6 +176,7 @@ class TestFoldPadConv(unittest.TestCase):
                         break
 
                 self.assertEqual(found_pad, True)
+
 
 if __name__ == "__main__":
     unittest.main()

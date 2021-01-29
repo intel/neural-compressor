@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import dtypes
 from lpot.adaptor.tensorflow import TensorflowQuery
-
+from lpot.adaptor.tf_utils.util import disable_random
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -27,6 +27,8 @@ def build_fake_yaml():
               name: basic
             accuracy_criterion:
               relative: 0.01
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -48,10 +50,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
 
+    @disable_random()
     def test_matmul_biasadd_relu_requantize_fusion(self):
-        tf.disable_v2_behavior()
-        tf.reset_default_graph()
-        tf.set_random_seed(1)
 
         g = tf.Graph()
         with g.as_default():
@@ -83,11 +83,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                         break
                 self.assertEqual(found_quantized_matmul, True)
 
+    @disable_random()
     def test_first_matmul_biasadd_relu_fusion(self):
-        tf.disable_v2_behavior()
-        tf.reset_default_graph()
-        tf.set_random_seed(1)
-
         x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
         y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
         x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
@@ -118,11 +115,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
             self.assertEqual(found_quantized_matmul, True)
 
+    @disable_random()
     def test_matmul_biasadd_requantize_dequantize_fusion(self):
-        tf.disable_v2_behavior()
-        tf.reset_default_graph()
-        tf.set_random_seed(1)
-
         g = tf.Graph()
         with g.as_default():
             from lpot import Quantization
@@ -157,11 +151,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                             break
             self.assertEqual(found_quantized_matmul, True)
 
+    @disable_random()
     def test_matmul_biasadd_requantize_dequantize_last_fusion(self):
-        tf.disable_v2_behavior()
-        tf.reset_default_graph()
-        tf.set_random_seed(1)
-
         g = tf.Graph()
         with g.as_default():
             from lpot import Quantization
@@ -195,11 +186,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                             break
             self.assertEqual(found_quantized_matmul, True)
 
+    @disable_random()
     def test_disable_matmul_fusion(self):
-        tf.disable_v2_behavior()
-        tf.reset_default_graph()
-        tf.set_random_seed(1)
-
         g = tf.Graph()
         with g.as_default():
             from lpot import Quantization
@@ -231,11 +219,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                         break
             self.assertEqual(found_quantized_matmul, False)
 
+    @disable_random()
     def test_matmul_biasadd_requantize_dequantize_fusion_with_softmax(self):
-        tf.disable_v2_behavior()
-        tf.reset_default_graph()
-        tf.set_random_seed(1)
-
         g = tf.Graph()
         with g.as_default():
             from lpot import Quantization

@@ -660,28 +660,10 @@ class GraphRewriterHelper():
         return node
 
     @staticmethod
-    def copy_attr(node, key, attr_value):
-        """Copy the specified attr value to node.
-
-        Args:
-            node (nodedef): a nodedef object
-            key (string): string name
-            attr_value (any): the specified attribute value
-        """
-        node.attr[key].CopyFrom(attr_value)
-
-    @staticmethod
     def set_attr_dtype(node, key, value):
         """Set the attribute data type
         """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(type=value.as_datatype_enum))
-
-    @staticmethod
-    def set_attr_shape(node, key, value):
-        """Set the attribute data type
-        """
-        node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(shape=tensor_shape.as_shape(value).as_proto()))
 
     @staticmethod
     def set_attr_tensor(node, key, value, dtype, shape=None):
@@ -697,12 +679,6 @@ class GraphRewriterHelper():
         node.attr[key].CopyFrom(
             attr_value_pb2.AttrValue(
                 tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
-
-    @staticmethod
-    def set_attr_string(node, key, value):
-        """Set the node's attr which data type is string.
-        """
-        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(s=value))
 
     @staticmethod
     def set_attr_int_list(node, key, value):
@@ -723,11 +699,6 @@ class GraphRewriterHelper():
         """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
 
-    @staticmethod
-    def set_attr_float(node, key, value):
-        """Set the node's attr which data type is float.
-        """
-        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
 
     @staticmethod
     def node_name_from_input(node_name):

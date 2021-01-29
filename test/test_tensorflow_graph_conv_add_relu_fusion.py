@@ -5,10 +5,12 @@ from tensorflow.python.framework import graph_util
 from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from lpot.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tf_utils.util import disable_random
+
 
 class TestConvAddRelu(unittest.TestCase):
+    @disable_random()
     def test_conv_add_relu(self):
-        tf.compat.v1.disable_eager_execution()
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
         if tf.version.VERSION <= '2.1.0':
@@ -45,6 +47,7 @@ class TestConvAddRelu(unittest.TestCase):
                     found_QuantizedConv2DWithBiasAndRelu = True
                     break
             self.assertEqual(found_QuantizedConv2DWithBiasAndRelu, True)
- 
+
+
 if __name__ == "__main__":
     unittest.main()

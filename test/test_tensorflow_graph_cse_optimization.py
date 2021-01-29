@@ -9,10 +9,12 @@ from tensorflow.python.framework import dtypes
 from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
 
 from lpot.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
-class TestGraphCommonSequenceElimated(unittest.TestCase):
+from lpot.adaptor.tf_utils.util import disable_random
 
+
+class TestGraphCommonSequenceElimated(unittest.TestCase):
+    @disable_random()
     def test_graph_cse(self):
-        tf.compat.v1.disable_eager_execution()
 
         input_constant_name = "input_constant"
         relu_name = "relu"
@@ -67,7 +69,7 @@ class TestGraphCommonSequenceElimated(unittest.TestCase):
 
         last_identity_node_name = 'last_identity'
         last_identity_node = QuantizeGraphHelper.create_node("Identity", last_identity_node_name,
-                                                [post_relu_name])
+                                                             [post_relu_name])
         float_graph_def.node.extend([last_identity_node])
 
         left_relu_name = "final_left_relu"
@@ -81,12 +83,12 @@ class TestGraphCommonSequenceElimated(unittest.TestCase):
 
         cse_left_node_name = "cse_left_node"
         cse_left_node = QuantizeGraphHelper.create_node("Identity", cse_left_node_name,
-                                        [left_relu_name])
+                                                        [left_relu_name])
         float_graph_def.node.extend([cse_left_node])
 
         cse_right_node_name = "cse_right_node"
         cse_right_node = QuantizeGraphHelper.create_node("Identity", cse_right_node_name,
-                                        [right_relu_name])
+                                                         [right_relu_name])
         float_graph_def.node.extend([cse_right_node])
 
         # post_graph = QuantizeGraphHelper().graph_cse_optimization (
@@ -100,6 +102,7 @@ class TestGraphCommonSequenceElimated(unittest.TestCase):
                 break
 
         self.assertEqual(right_relu_optimized_flag, True)
+
 
 if __name__ == '__main__':
     unittest.main()

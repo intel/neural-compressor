@@ -7,6 +7,7 @@ import yaml
 import tensorflow as tf
 
 from tensorflow.python.framework import graph_util
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml_disable_first_quantization():
@@ -35,6 +36,8 @@ def build_fake_yaml_disable_first_quantization():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -70,6 +73,8 @@ def build_fake_yaml_enable_first_quantization():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -105,6 +110,8 @@ def build_fake_yaml_disable_scale_propagation():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -140,6 +147,8 @@ def build_fake_yaml_enable_scale_propagation():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -175,6 +184,8 @@ def build_fake_yaml_enable_scale_unification():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -210,6 +221,8 @@ def build_fake_yaml_disable_scale_unification():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -222,7 +235,6 @@ def build_fake_yaml_disable_scale_unification():
 class TestTensorflowInt8Recipe(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-
         build_fake_yaml_disable_first_quantization()
         build_fake_yaml_enable_first_quantization()
         build_fake_yaml_disable_scale_propagation()
@@ -239,11 +251,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
         os.remove('fake_yaml_disable_scale_unification.yaml')
         os.remove('fake_yaml_enable_scale_unification.yaml')
 
+    @disable_random()
     def test_disable_first_quantization(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
-
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -283,10 +292,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
 
             self.assertEqual(found_fp32_conv, True)
 
+    @disable_random()
     def test_enable_first_quantization(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -326,10 +333,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
 
             self.assertEqual(found_fp32_conv, False)
 
+    @disable_random()
     def test_enable_scale_propagation(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -371,10 +376,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
 
             self.assertEqual(1, len(set(max_freezed_out)))
 
+    @disable_random()
     def test_disable_scale_propagation(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -416,10 +419,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                   max_freezed_out.append(i.input[-1])
             self.assertEqual(2, len(set(max_freezed_out)))
 
+    @disable_random()
     def test_enable_scale_unification(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 128, 16], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -463,10 +464,8 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                   max_freezed_out.append(i.input[-1])
             self.assertEqual(1, len(set(max_freezed_out)))
 
+    @disable_random()
     def test_disable_scale_unification(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())

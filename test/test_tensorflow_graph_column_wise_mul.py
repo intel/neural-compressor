@@ -6,13 +6,13 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import graph_util
 from lpot.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 class TestColumnWiseMulFusion(unittest.TestCase):
 
+    @disable_random()
     def test_conv_mul_fusion(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])

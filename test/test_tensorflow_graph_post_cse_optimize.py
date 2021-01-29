@@ -5,6 +5,7 @@ import yaml
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import graph_util
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -30,7 +31,9 @@ def build_fake_yaml():
             strategy:
               name: mse
             accuracy_criterion:
-              relative: 0.01
+              relative: 0.9
+            exit_policy:
+              max_trials: 1  
             workspace:
               path: saved
         '''
@@ -53,9 +56,8 @@ class TestPostCSEOptimizer(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
 
+    @disable_random()
     def test_post_cse(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         x = tf.nn.relu(x)
         xw = tf.constant(np.random.random((2, 2, 16, 16)), dtype=tf.float32,  name='y')

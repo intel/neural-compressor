@@ -241,13 +241,6 @@ class QuantizeGraphHelper():
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(type=value.as_datatype_enum))
 
     @staticmethod
-    def set_attr_shape(node, key, value):
-        """Set the attribute data type
-        """
-        node.attr[key].CopyFrom(
-            attr_value_pb2.AttrValue(shape=tensor_shape.as_shape(value).as_proto()))
-
-    @staticmethod
     def set_attr_tensor(node, key, value, dtype, shape=None):
         """Set the tensor value to specified attribute field.
 

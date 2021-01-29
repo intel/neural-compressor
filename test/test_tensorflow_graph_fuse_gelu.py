@@ -6,6 +6,7 @@ import tensorflow as tf
 
 from tensorflow.python.framework import graph_util
 from lpot.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu import FuseGeluOptimizer
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 class TestGeluFusion(unittest.TestCase):
@@ -25,20 +26,18 @@ class TestGeluFusion(unittest.TestCase):
                                   (input_tensor + coeff * tf.pow(input_tensor, pow_value))))
 
     def gelu_disable_approximation(self, input_tensor,
-                                  another_add_value=0.5,
-                                  mul1_value=0.044715,
-                                  addv2_value=1.0,
-                                  mul2_value=0.7978845608028654,
-                                  pow_value=3):
+                                   another_add_value=0.5,
+                                   mul1_value=0.044715,
+                                   addv2_value=1.0,
+                                   mul2_value=0.7978845608028654,
+                                   pow_value=3):
         coeff = tf.cast(mul1_value, input_tensor.dtype)
         return (another_add_value + input_tensor) * (
             addv2_value + tf.tanh(mul2_value *
                                   (input_tensor + coeff * tf.pow(input_tensor, pow_value))))
 
+    @disable_random()
     def test_gelu_disable_approximation_fusion(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 3, 32],
@@ -67,9 +66,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_approximation_fusion(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -99,9 +97,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, True)
 
+    @disable_random()
     def test_gelu_approximation_fusion_with_invalid_pow_value(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -131,9 +128,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_approximation_fusion_with_invalid_mul2_value(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -163,9 +159,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_approximation_fusion_with_invalid_addv2_value(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -195,9 +190,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_approximation_fusion_with_invalid_mul1_value(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -228,9 +222,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_approximation_fusion_with_invalid_another_mul(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -261,9 +254,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_fusion_with_invalid_sqrt(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -292,9 +284,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_fusion_with_invalid_addv2(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -323,9 +314,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_fusion_with_invalid_mul(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 
@@ -354,9 +344,8 @@ class TestGeluFusion(unittest.TestCase):
 
             self.assertEqual(found_gelu, False)
 
+    @disable_random()
     def test_gelu_fusion(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 224, 224, 3], name="input")
 

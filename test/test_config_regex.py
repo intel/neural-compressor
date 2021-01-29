@@ -6,6 +6,7 @@ import unittest
 import tensorflow as tf
 
 from tensorflow.python.framework import graph_util
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -33,6 +34,8 @@ def build_fake_yaml():
               timeout: 0
             accuracy_criterion:
               relative: 0.05
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -91,10 +94,8 @@ class TestConfigRegex(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_with_invalid_cfg.yaml')
 
+    @disable_random()
     def test_config_regex(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
-        tf.compat.v1.set_random_seed(1)
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])

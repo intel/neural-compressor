@@ -11,6 +11,8 @@ from lpot.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import Stri
 from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
 from lpot.adaptor.tensorflow import TensorflowQuery
+from lpot.adaptor.tf_utils.util import disable_random
+
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -36,6 +38,8 @@ def build_fake_yaml():
               name: basic
             accuracy_criterion:
               relative: 0.1
+            exit_policy:
+              max_trials: 1
             workspace:
               path: saved
         '''
@@ -54,9 +58,8 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
 
+    @disable_random()
     def test_conv_relu_fusion(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -94,9 +97,8 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
             self.assertEqual(found_conv_fusion, False)
 
+    @disable_random()
     def test_conv_biasadd_addv2_relu_fusion(self):
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.reset_default_graph()
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])

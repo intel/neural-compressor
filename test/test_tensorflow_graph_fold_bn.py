@@ -10,11 +10,12 @@ from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeG
 
 from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import \
     FoldBatchNormNodesOptimizer
+from lpot.adaptor.tf_utils.util import disable_random
 
 
 class TestGraphFoldBNWithInvalidParameter(unittest.TestCase):
+    @disable_random()
     def test_graph_fold_bn(self):
-        tf.compat.v1.disable_eager_execution()
 
         input_constant_name = "input_constant"
         relu_name = "relu"
@@ -101,8 +102,7 @@ class TestGraphFoldBNWithInvalidParameter(unittest.TestCase):
             "Relu", post_relu_name, [fused_bn_node_name])
         float_graph_def.node.extend([post_relu_node])
 
-        post_graph = FoldBatchNormNodesOptimizer(
-            float_graph_def).do_transformation()
+        post_graph = FoldBatchNormNodesOptimizer(float_graph_def).do_transformation()
 
         bn_not_fused = False
         for i in post_graph.node:
