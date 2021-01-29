@@ -43,7 +43,10 @@ class TensorflowDatasets(object):
 @singleton
 class PyTorchDatasets(object):
     def __init__(self):
-        self.datasets = {}
+        self.datasets = {
+            'ImageFolder': PytorchMxnetWrapDataset(
+                    torchvision.datasets.ImageFolder),
+        }
         self.datasets.update(PYTORCH_DATASETS)
 
 @singleton
@@ -63,6 +66,29 @@ class ONNXRTITDatasets(object):
     def __init__(self):
         self.datasets = {}
         self.datasets.update(ONNXRTIT_DATASETS)
+
+class PytorchMxnetWrapDataset():
+    def __init__(self, datafunc):
+        self.datafunc = datafunc
+
+    def __call__(self, transform=None, filter=None, *args, **kwargs):
+        return PytorchMxnetWrapFunction(self.datafunc, transform=transform, \
+                        filter=filter, *args, **kwargs)
+
+class PytorchMxnetWrapFunction():
+    def __init__(self, dataset, transform, filter, *args, **kwargs):
+        self.dataset = dataset(*args, **kwargs)
+        self.transform = transform
+        self.filter = filter
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        sample = self.dataset[index]
+        if self.transform is not None:
+            sample = self.transform(sample)
+        return sample
 
 framework_datasets = {"tensorflow": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
@@ -332,9 +358,9 @@ class PytorchCIFAR10(CIFAR10):
 class MXNetCIFAR10(CIFAR10):
     def __getitem__(self, index): # pragma: no cover 
         image, label = self.data[index], self.targets[index]
+        image = mx.nd.array(image)
         if self.transform is not None:
             image, label = self.transform((image, label))
-        image = mx.nd.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="CIFAR10", framework="tensorflow", dataset_format='')
@@ -376,15 +402,16 @@ class PytorchCIFAR100(CIFAR100):
         image = Image.fromarray(image)
         if self.transform is not None:
             image, label = self.transform((image, label))
+        image = np.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="CIFAR100", framework="mxnet", dataset_format='')
 class MXNetCIFAR100(CIFAR100):
     def __getitem__(self, index): # pragma: no cover 
         image, label = self.data[index], self.targets[index]
+        image = mx.nd.array(image)
         if self.transform is not None:
             image, label = self.transform((image, label))
-        image = mx.nd.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="CIFAR100", framework="tensorflow", dataset_format='')
@@ -459,16 +486,17 @@ class PytorchMNIST(MNIST):
         image = Image.fromarray(image, mode='L')
         if self.transform is not None:
             image, label = self.transform((image, label))
+        image = np.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="MNIST", framework="mxnet", dataset_format='')
 class MXNetMNIST(MNIST):
     def __getitem__(self, index):
         image, label = self.data[index], int(self.targets[index])
-        image = np.expand_dims(image, -1)
+        image = mx.nd.array(image)
+        image = image.reshape((image.shape[0], image.shape[1], 1))
         if self.transform is not None:
             image, label = self.transform((image, label))
-        image = mx.nd.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="MNIST", framework="tensorflow", dataset_format='')
@@ -507,16 +535,17 @@ class PytorchFashionMNIST(FashionMNIST):
         image = Image.fromarray(image, mode='L')
         if self.transform is not None:
             image, label = self.transform((image, label))
+        image = np.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="FashionMNIST", framework="mxnet", dataset_format='')
 class MXNetFashionMNIST(FashionMNIST):
     def __getitem__(self, index):
         image, label = self.data[index], int(self.targets[index])
-        image = np.expand_dims(image, -1)
+        image = mx.nd.array(image)
+        image = image.reshape((image.shape[0], image.shape[1], 1))
         if self.transform is not None:
             image, label = self.transform((image, label))
-        image = mx.nd.array(image)
         return (image, label)
 
 @dataset_registry(dataset_type="FashionMNIST", framework="tensorflow", dataset_format='')
@@ -562,28 +591,15 @@ class ImageFolder(Dataset):
                 image, label = self.transform((image, label))
             return (image, label)
 
-@dataset_registry(dataset_type="ImageFolder", framework="pytorch", dataset_format='')
-class PytorchImageFolder(ImageFolder):
-    def __getitem__(self, index):
-        sample = self.image_list[index]
-        label = sample[1]
-        with Image.open(sample[0]) as image:
-            image = image.convert('RGB')
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            return (image, label)
-
 @dataset_registry(dataset_type="ImageFolder", framework="mxnet", dataset_format='')
 class MXNetImageFolder(ImageFolder):
     def __getitem__(self, index):
         sample = self.image_list[index]
         label = sample[1]
-        with Image.open(sample[0]) as image:
-            image = np.array(image)
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            image = mx.nd.array(image)
-            return (image, label)
+        image = mx.image.imread(sample[0])
+        if self.transform is not None:
+            image, label = self.transform((image, label))
+        return (image, label)
 
 @dataset_registry(dataset_type="ImageFolder", framework="tensorflow", dataset_format='')
 class TensorflowImageFolder(ImageFolder):

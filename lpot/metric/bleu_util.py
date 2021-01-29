@@ -31,13 +31,8 @@
 # ==============================================================================
 """Functions for calculating loss, accuracy, and other model metrics.
 
-Metrics:
- - Padded loss, accuracy, and negative log perplexity. Source:
-     https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/metrics.py
- - BLEU approximation. Source:
+ BLEU approximation. Source:
      https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
- - ROUGE score. Source:
-     https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/rouge.py
 """
 
 from __future__ import absolute_import

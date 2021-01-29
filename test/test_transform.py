@@ -32,12 +32,11 @@ class TestONNXQLImagenetTransform(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.img = np.random.random_sample([600,600,3])*255
-        cls.PIL_img = Image.fromarray(cls.img.astype(np.uint8))
 
     def testResizeCropImagenetTransform(self):
         transforms = TRANSFORMS('onnxrt_qlinearops', "preprocess")
         transform = transforms['ResizeCropImagenet'](height=224, width=224)
-        sample = (self.PIL_img, 0)
+        sample = (self.img, 0)
         result = transform(sample)
         resized_input = result[0]
         self.assertEqual(len(resized_input), 3)
@@ -48,12 +47,11 @@ class TestONNXITImagenetTransform(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.img = np.random.random_sample([600,600,3])*255
-        cls.PIL_img = Image.fromarray(cls.img.astype(np.uint8))
 
     def testResizeCropImagenetTransform(self):
         transforms = TRANSFORMS('onnxrt_integerops', "preprocess")
         transform = transforms['ResizeCropImagenet'](height=224, width=224)
-        sample = (self.PIL_img, 0)
+        sample = (self.img, 0)
         result = transform(sample)
         resized_input = result[0]
         self.assertEqual(len(resized_input), 3)
@@ -132,7 +130,7 @@ class TestSameTransfoms(unittest.TestCase):
         cls.pt_trans = TRANSFORMS('pytorch', 'preprocess')
         cls.mx_trans = TRANSFORMS('mxnet', 'preprocess')
         cls.ox_trans = TRANSFORMS('onnxrt_qlinearops', 'preprocess')
-        cls.mx_img = cls.img.astype(np.uint8)
+        cls.mx_img = mx.nd.array(cls.img.astype(np.uint8))
         cls.pt_img = Image.fromarray(cls.img.astype(np.uint8))
         _ = TRANSFORMS('tensorflow', 'postprocess')
         _ = TRANSFORMS('pytorch', 'postprocess')
@@ -141,24 +139,22 @@ class TestSameTransfoms(unittest.TestCase):
         _ = TRANSFORMS('onnxrt_integerops', 'postprocess')
 
     def testRescale(self):
-        mx_func = TestSameTransfoms.mx_trans['Rescale']()
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         ox_func = TestSameTransfoms.ox_trans['Rescale']()
-        ox_result = mx_func((TestSameTransfoms.img.astype(np.uint8), None))[0]
-        self.assertEqual(mx_result[1][2][0], ox_result[1][2][0])
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
+        self.assertAlmostEqual(ox_result[1][2][0], TestSameTransfoms.img[1][2][0]/255.)
 
     def testTranspose(self):
         args = {'perm': [2, 0, 1]}
         tf_func = TestSameTransfoms.tf_trans['Transpose'](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))
         tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
+        ox_func = TestSameTransfoms.ox_trans['Transpose'](**args)
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
         mx_func = TestSameTransfoms.mx_trans['Transpose'](**args)
         mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
-        ox_func = TestSameTransfoms.ox_trans['Transpose'](**args)
-        ox_result = mx_func((TestSameTransfoms.img, None))[0]
  
         self.assertEqual(tf_result.shape, (3,10,10))
-        self.assertEqual(mx_result.shape, (3,10,10))
+        self.assertEqual(ox_result.shape, (3,10,10))
         self.assertEqual(mx_result.shape, (3,10,10))
 
     def testCenterCrop(self):
@@ -173,7 +169,7 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertEqual(tf_result.shape, (4,4,3))
         self.assertEqual(pt_result.size, (4,4))
         self.assertEqual(mx_result.shape, (4,4,3))
-        self.assertEqual(np.array(pt_result)[0][0][0], int(mx_result[0][0][0]))
+        self.assertEqual(np.array(pt_result)[0][0][0], mx_result.asnumpy()[0][0][0])
         self.assertEqual(np.array(pt_result)[0][0][0], int(tf_result[0][0][0]))
 
         args = {'size':4}
@@ -187,7 +183,7 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertEqual(tf_result.shape, (4,4,3))
         self.assertEqual(pt_result.size, (4,4))
         self.assertEqual(mx_result.shape, (4,4,3))
-        self.assertEqual(np.array(pt_result)[0][0][0], int(mx_result[0][0][0]))
+        self.assertEqual(np.array(pt_result)[0][0][0], mx_result.asnumpy()[0][0][0])
         self.assertEqual(np.array(pt_result)[0][0][0], int(tf_result[0][0][0]))
         
         args = {'size':[4]}
@@ -360,8 +356,8 @@ class TestSameTransfoms(unittest.TestCase):
             (np.fliplr(TestSameTransfoms.img) == tf_result).all()
         )
         self.assertTrue(
-            (TestSameTransfoms.mx_img == mx_result).all() or
-            (np.fliplr(TestSameTransfoms.mx_img) == mx_result).all()
+            (TestSameTransfoms.mx_img.asnumpy() == mx_result.asnumpy()).all() or
+            (np.fliplr(TestSameTransfoms.mx_img.asnumpy()) == mx_result.asnumpy()).all()
         )
     
     def testRandomVerticalFlip(self):
@@ -381,8 +377,8 @@ class TestSameTransfoms(unittest.TestCase):
             (np.flipud(TestSameTransfoms.img) == tf_result).all()
         )
         self.assertTrue(
-            (TestSameTransfoms.mx_img == mx_result).all() or
-            (np.flipud(TestSameTransfoms.mx_img) == mx_result).all()
+            (TestSameTransfoms.mx_img.asnumpy() == mx_result.asnumpy()).all() or
+            (np.flipud(TestSameTransfoms.mx_img.asnumpy()) == mx_result.asnumpy()).all()
         )
  
 class TestTFTransorm(unittest.TestCase):
@@ -449,19 +445,20 @@ class TestAlignImageChannel(unittest.TestCase):
     def testTensorflow(self):
         transforms = TRANSFORMS('tensorflow', 'preprocess')
         align = transforms['AlignImageChannel'](**{'dim':1})
-        image, _ = align((TestAlignImageChannel.img1, None))
+        image, _ = align((TestAlignImageChannel.img1.astype(np.uint8), None))
         self.assertEqual(image.shape[-1], 1)
 
         align = transforms['AlignImageChannel'](**{'dim':1})
-        image, _ = align((TestAlignImageChannel.img2, None))
+        image, _ = align((TestAlignImageChannel.img2.astype(np.uint8), None))
         self.assertEqual(image.shape[-1], 1)
 
         align = transforms['AlignImageChannel'](**{'dim':3})
-        image, _ = align((TestAlignImageChannel.img3, None))
+        image, _ = align((TestAlignImageChannel.img3.astype(np.uint8), None))
         self.assertEqual(image.shape[-1], 3)
 
         align = transforms['AlignImageChannel'](**{'dim':2})
-        self.assertRaises(ValueError, align, (TestAlignImageChannel.img1, None))
+        self.assertRaises(ValueError, align, 
+                (TestAlignImageChannel.img1.astype(np.uint8), None))
 
         with self.assertRaises(ValueError):
             transforms['AlignImageChannel'](**{'dim':5})
@@ -469,19 +466,20 @@ class TestAlignImageChannel(unittest.TestCase):
     def testONNX(self):
         transforms = TRANSFORMS('onnxrt_qlinearops', 'preprocess')
         align = transforms['AlignImageChannel'](**{'dim':1})
-        image, _ = align((TestAlignImageChannel.img1, None))
+        image, _ = align((TestAlignImageChannel.img1.astype(np.uint8), None))
         self.assertEqual(image.shape[-1], 1)
 
         align = transforms['AlignImageChannel'](**{'dim':1})
-        image, _ = align((TestAlignImageChannel.img2, None))
+        image, _ = align((TestAlignImageChannel.img2.astype(np.uint8), None))
         self.assertEqual(image.shape[-1], 1)
 
         align = transforms['AlignImageChannel'](**{'dim':3})
-        image, _ = align((TestAlignImageChannel.img3, None))
+        image, _ = align((TestAlignImageChannel.img3.astype(np.uint8), None))
         self.assertEqual(image.shape[-1], 3)
 
         align = transforms['AlignImageChannel'](**{'dim':2})
-        self.assertRaises(ValueError, align, (TestAlignImageChannel.img1, None))
+        self.assertRaises(ValueError, align, 
+                (TestAlignImageChannel.img1.astype(np.uint8), None))
 
         with self.assertRaises(ValueError):
             transforms['AlignImageChannel'](**{'dim':5})
@@ -506,7 +504,8 @@ class TestToArray(unittest.TestCase):
 class TestMXNetTransform(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.img = np.random.random_sample([100,100,3]) * 255
+        array = np.random.random_sample([100,100,3]) * 255
+        cls.img = mx.nd.array(array)
         cls.transforms = TRANSFORMS('mxnet', 'preprocess')
 
     def testRandomCrop(self):
@@ -520,8 +519,8 @@ class TestMXNetTransform(unittest.TestCase):
         args = {'mean':[0.0,0.0,0.0], 'std':[0.29, 0.24, 0.25]}
         normalize = TestMXNetTransform.transforms['Normalize'](**args)
         image_result = normalize((TestMXNetTransform.img, None))
-        self.assertTrue(
-            (image_result[0] == np.array(TestMXNetTransform.img)/[0.29, 0.24, 0.25]).all())
+        self.assertAlmostEqual(image_result[0].asnumpy()[0][0][0],
+                (TestMXNetTransform.img.asnumpy()/[0.29])[0][0][0], places=3)
 
 class TestONNXTransfrom(unittest.TestCase):
     @classmethod

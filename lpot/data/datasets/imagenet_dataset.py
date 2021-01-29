@@ -88,19 +88,17 @@ class PytorchImagenetRaw(ImagenetRaw):
             image = image.convert('RGB')
             if self.transform is not None:
                 image, label = self.transform((image, label))
+            image = np.array(image)
             return (image, label)
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="mxnet", dataset_format='')
 class MXNetImagenetRaw(ImagenetRaw):
     def __getitem__(self, index):
         image_path, label = self.image_list[index], self.label_list[index]
-        with Image.open(image_path) as image:
-            image = np.array(image)
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            image = mx.nd.array(image)
-            return (image, label)
-
+        image = mx.image.imread(image_path)
+        if self.transform is not None:
+            image, label = self.transform((image, label))
+        return (image, label)
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="tensorflow", 
                     dataset_format='')

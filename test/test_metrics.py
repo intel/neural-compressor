@@ -61,10 +61,52 @@ class TestMetrics(unittest.TestCase):
         F1.update(preds, labels)
         self.assertEqual(F1.result(), 0.8)
 
+    def test_onnx_topk(self):
+        metrics = METRICS('onnxrt_qlinearops')
+        top1 = metrics['topk']()
+        top1.reset()
+        self.assertEqual(top1.result(), 0)
+        self.assertEqual(top1.result(), 0)
+        top2 = metrics['topk'](k=2)
+        top3 = metrics['topk'](k=3)
+
+        predicts = [[0, 0.2, 0.9, 0.3], [0, 0.9, 0.8, 0]]
+        single_predict = [0, 0.2, 0.9, 0.3]
+       
+        labels = [[0, 1, 0, 0], [0, 0, 1, 0]]
+        sparse_labels = [2, 2]
+        single_label = 2
+
+        # test functionality of one-hot label
+        top1.update(predicts, labels)
+        top2.update(predicts, labels)
+        top3.update(predicts, labels)
+        self.assertEqual(top1.result(), 0.0)
+        self.assertEqual(top2.result(), 0.5)
+        self.assertEqual(top3.result(), 1)
+
+        # test functionality of sparse label
+        top1.update(predicts, sparse_labels)
+        top2.update(predicts, sparse_labels)
+        top3.update(predicts, sparse_labels)
+        self.assertEqual(top1.result(), 0.25)
+        self.assertEqual(top2.result(), 0.75)
+        self.assertEqual(top3.result(), 1)
+
+        # test functionality of single label
+        top1.update(single_predict, single_label)
+        top2.update(single_predict, single_label)
+        top3.update(single_predict, single_label)
+        self.assertEqual(top1.result(), 0.4)
+        self.assertEqual(top2.result(), 0.8)
+        self.assertEqual(top3.result(), 1)
+
+
     def test_mxnet_topk(self):
         metrics = METRICS('mxnet')
         top1 = metrics['topk']()
         top1.reset()
+        self.assertEqual(top1.result(), 0)
         top2 = metrics['topk'](k=2)
         top3 = metrics['topk'](k=3)
 
@@ -103,6 +145,7 @@ class TestMetrics(unittest.TestCase):
         metrics = METRICS('tensorflow')
         top1 = metrics['topk']()
         top1.reset()
+        self.assertEqual(top1.result(), 0)
         top2 = metrics['topk'](k=2)
         top3 = metrics['topk'](k=3)
 
@@ -258,6 +301,8 @@ class TestMetrics(unittest.TestCase):
             np.array([[64, 62, 62, 67, 82, 52, 79, 81, 55, 55, 55, 55, 62, 55]]),
             np.array([b'000000037777.jpg'])
         ]
+        
+        self.assertEqual(mAP.result(), 0)
 
         mAP.update(detection, ground_truth)
         
@@ -375,6 +420,15 @@ class TestMetrics(unittest.TestCase):
         acc.reset()
         acc.update(predicts4, labels4)
         self.assertEqual(acc.result(), 0.25)
+
+        acc.reset()
+        acc.update(1, 1)
+        self.assertEqual(acc.result(), 1.0)
+        
+        wrong_predictions = [1, 0, 0]
+        wrong_labels = [[0, 1, 1]]
+        self.assertRaises(ValueError, acc.update, wrong_predictions, wrong_labels)
+ 
 
     def test_mxnet_accuracy(self):
         metrics = METRICS('mxnet')
@@ -588,6 +642,11 @@ class TestMetrics(unittest.TestCase):
         loss.update(predicts, labels)
         loss_result = loss.result()
         self.assertEqual(loss_result, 0.625)
+        loss.reset()
+        predicts = [1, 0, 0, 1]
+        labels = [0, 1, 0, 0]
+        loss.update(predicts, labels)
+        self.assertEqual(loss.result(), 0.5)
 
 if __name__ == "__main__":
     unittest.main()

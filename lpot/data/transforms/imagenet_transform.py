@@ -34,6 +34,7 @@ import numpy as np
 from lpot.utils.utility import LazyImport
 from .transform import transform_registry, Transform
 tf = LazyImport('tensorflow')
+cv2 = LazyImport('cv2')
 
 @transform_registry(transform_type="ParseDecodeImagenet", \
                     process="preprocess", framework="tensorflow")
@@ -203,14 +204,13 @@ class ONNXResizeCropImagenetTransform(Transform):
   # sample is (images, labels)
   def __call__(self, sample):
     image, label = sample
-    width, height = image.size
+    height, width = image.shape[0], image.shape[1]
     scale = self.resize_side / width if height > width else self.resize_side / height
     new_height = int(height*scale)
     new_width = int(width*scale)
-    image = np.asarray(image.resize((new_height, new_width)))
+    image = cv2.resize(image, (new_height, new_width))
     image = image / 255.
     shape = image.shape
-
     if self.random_crop:
         y0 = np.random.uniform(low=0, high=(shape[0] - self.height +1))
         x0 = np.random.uniform(low=0, high=(shape[1] - self.width +1))

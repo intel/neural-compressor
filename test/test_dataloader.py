@@ -48,7 +48,7 @@ class TestBuiltinDataloader(unittest.TestCase):
         dataloader = create_dataloader('pytorch', dataloader_args)
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
-            self.assertEqual(data[0][0].size, (24,24))
+            self.assertEqual(data[0][0].shape, (24,24))
             break
             
         dataloader_args = {
@@ -60,7 +60,7 @@ class TestBuiltinDataloader(unittest.TestCase):
         dataloader = create_dataloader('pytorch', dataloader_args)
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
-            self.assertEqual(data[0][0].size, (24,24))
+            self.assertEqual(data[0][0].shape, (24,24))
             break
  
     def test_mxnet_dataset(self):
@@ -263,7 +263,7 @@ class TestImagenetRaw(unittest.TestCase):
         }
         dataloader = create_dataloader('pytorch', dataloader_args)
         for data in dataloader:
-            self.assertEqual(data[0][0].size, (24,24))
+            self.assertEqual(data[0][0].shape, (24,24,3))
             break
 
         dataloader_args = {
@@ -273,7 +273,7 @@ class TestImagenetRaw(unittest.TestCase):
         }
         dataloader = create_dataloader('pytorch', dataloader_args)
         for data in dataloader:
-            self.assertEqual(data[0][0].size, (24,24))
+            self.assertEqual(data[0][0].shape, (24,24,3))
             break
 
     def test_mxnet(self):
@@ -350,13 +350,13 @@ class TestImageFolder(unittest.TestCase):
     def test_pytorch(self):
         dataloader_args = {
             'dataset': {"ImageFolder": {'root': './val'}},
-            'transform': {'Resize': {'size': 24}},
+            'transform': {'Resize': {'size': 24}, 'ToTensor':{}},
             'filter': None
         }
         dataloader = create_dataloader('pytorch', dataloader_args)
         
         for data in dataloader:
-            self.assertEqual(data[0][0].size, (24,24))
+            self.assertEqual(data[0][0].shape, (3,24,24))
             break
 
     def test_mxnet(self):
@@ -412,7 +412,9 @@ class TestDataloader(unittest.TestCase):
 
     def test_coco_raw(self):
         import json
+        import collections
         from lpot.data import TRANSFORMS
+        import mxnet as mx
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
@@ -499,15 +501,39 @@ class TestDataloader(unittest.TestCase):
 
         args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
         ds = create_dataset('mxnet', args, None, None)
-        dataloader = DataLoader('mxnet', ds)
+        def collate(batch):
+            elem = batch[0]
+            if isinstance(elem, mx.ndarray.NDArray):
+                return mx.nd.stack(*batch)
+            elif isinstance(elem, collections.abc.Sequence):
+                batch = zip(*batch)
+                return [collate(samples) for samples in batch]
+            elif isinstance(elem, collections.abc.Mapping):
+                return {key: collate([d[key] for d in batch]) for key in elem}
+            elif isinstance(elem, np.ndarray):
+                return np.stack(batch)
+            else:
+                return batch
+        dataloader = DataLoader('mxnet', ds, collate_fn=collate)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
 
         args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
         ds = create_dataset('pytorch', args, None, None)
-        dataloader = DataLoader('pytorch', ds)
+        def collate(batch):
+            elem = batch[0]
+            if isinstance(elem, collections.abc.Mapping):
+                return {key: collate([d[key] for d in batch]) for key in elem}
+            elif isinstance(elem, collections.abc.Sequence):
+                batch = zip(*batch)
+                return [collate(samples) for samples in batch]
+            elif isinstance(elem, np.ndarray):
+                return np.stack(batch)
+            else:
+                return batch
+        dataloader = DataLoader('pytorch', dataset=ds, collate_fn=collate)
         for image, label in dataloader:
-            self.assertEqual(image[0].size, (100,100))
+            self.assertEqual(image[0].shape, (100,100,3))
 
         os.remove('test_0.jpg')
         os.remove('test_1.jpg')

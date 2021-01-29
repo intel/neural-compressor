@@ -127,7 +127,7 @@ class COCORaw(Dataset):
         sample = self.image_list[index]
         label = sample[1]
         with Image.open(sample[0]) as image:
-            image = np.array(image)
+            image = np.array(image.convert('RGB'))
             if self.transform is not None:
                 image, label = self.transform((image, label))
             return (image, label)
@@ -141,6 +141,7 @@ class PytorchCOCORaw(COCORaw):
             image = image.convert('RGB')
             if self.transform is not None:
                 image, label = self.transform((image, label))
+            image = np.array(image)
             return (image, label)
 
 @dataset_registry(dataset_type="COCORaw", framework="mxnet", dataset_format='')
@@ -148,12 +149,10 @@ class MXNetCOCORaw(COCORaw):
     def __getitem__(self, index):
         sample = self.image_list[index]
         label = sample[1]
-        with Image.open(sample[0]) as image:
-            image = np.array(image)
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            image = mx.nd.array(image)
-            return (image, label)
+        image = mx.image.imread(sample[0])
+        if self.transform is not None:
+            image, label = self.transform((image, label))
+        return (image, label)
 
 @dataset_registry(dataset_type="COCORaw", framework="tensorflow", dataset_format='')
 class TensorflowCOCORaw(COCORaw):

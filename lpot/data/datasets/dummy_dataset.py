@@ -134,11 +134,9 @@ class MXNetDummyDataset(DummyDataset):
         if self.transform is not None:
             sample = self.transform(sample)
         if self.label:
-            return mx.nd.array(sample), 0
-        if isinstance(sample, tuple):
-            return [mx.nd.array(elem) for elem in sample]
+            return sample, 0
         else:
-            return mx.nd.array(sample)
+            return sample
 
 @dataset_registry(dataset_type="dummy", framework="pytorch, pytorch_ipex", 
                     dataset_format='')

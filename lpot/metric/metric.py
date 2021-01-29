@@ -218,15 +218,32 @@ def _topk_shape_validate(preds, labels):
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
     if isinstance(preds, int):
         preds = [preds]
-    preds = np.array(preds)
+        preds = np.array(preds)
+    elif isinstance(preds, np.ndarray):
+        preds = np.array(preds)
+    elif isinstance(preds, list):
+        preds = np.array(preds)
+        preds = preds.reshape((-1, preds.shape[-1]))
 
     # consider labels just int value 1x1
     if isinstance(labels, int):
         labels = [labels]
+        labels = np.array(labels)
+    elif isinstance(labels, tuple):
+        labels = np.array([labels])
+        labels = labels.reshape((labels.shape[-1], -1))
+    elif isinstance(labels, list):
+        if isinstance(labels[0], int):
+            labels = np.array(labels)
+            labels = labels.reshape((labels.shape[0], 1))
+        elif isinstance(labels[0], tuple):
+            labels = np.array(labels)
+            labels = labels.reshape((labels.shape[-1], -1))
+        else:
+            labels = np.array(labels)
     # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
     # only support 2 dimension one-shot labels
     # or 1 dimension one-hot class_num will confuse with N
-    labels = np.array(labels)
 
     if len(preds.shape) == 1:
         N = 1
