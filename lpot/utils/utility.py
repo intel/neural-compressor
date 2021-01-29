@@ -34,7 +34,6 @@ import os.path as osp
 import cpuinfo
 import numpy as np
 
-
 def singleton(cls):
     instances = {}
 
@@ -87,16 +86,30 @@ class Timeout(object):
 
 def get_size(obj, seen=None):
     """Recursively finds size of objects"""
+    tf = LazyImport("tensorflow")
+    from tensorflow.python.framework import tensor_util
+
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()
     obj_id = id(obj)
     if obj_id in seen:
         return 0
-    # Important mark as seen *before* entering recursion to gracefully handle
-    # self-referential objects
     seen.add(obj_id)
-    if isinstance(obj, dict):
+    # for Tensorflow case
+    if isinstance(obj, tf.Graph):
+        _graph_def = obj.as_graph_def()
+        _graph_node = _graph_def.node if isinstance(_graph_def, tf.compat.v1.GraphDef) \
+                      else _graph_def.graph_def.node
+        for node in _graph_node:
+            if node.op == "Const":
+                input_tensor = node.attr["value"].tensor
+                tensor_value = tensor_util.MakeNdarray(input_tensor)
+                size += tensor_value.size
+            else:
+                size += get_size(node)
+        return size
+    elif isinstance(obj, dict):
         size += sum([get_size(v, seen) for v in obj.values()])
         size += sum([get_size(k, seen) for k in obj.keys()])
     elif isinstance(obj, list):
