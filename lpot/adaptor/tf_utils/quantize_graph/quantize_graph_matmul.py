@@ -161,6 +161,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
                 self.logger.info("Unknown match {}".format(fusion_name))
+                if self.remove_redundant_quant_flag:
+                    self.input_graph = self.remove_redundant_quantization(self.input_graph)
                 return self.input_graph
 
             self.input_graph = self.output_graph

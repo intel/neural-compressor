@@ -4,6 +4,7 @@
 import unittest
 import os
 import yaml
+import numpy as np
 import tensorflow as tf
 
 from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
@@ -143,6 +144,103 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                     break
 
             self.assertEqual(found_conv_fusion, True)
+
+    @disable_random()
+    def test_conv_fusion_with_last_matmul(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        # paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        # x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        normed = tf.compat.v1.layers.batch_normalization(conv)
+
+        relu = tf.nn.relu(normed)
+        pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        reshape = tf.reshape(pooling, [-1, 3136])
+
+        y_data = np.random.random([3136, 1])
+
+        y = tf.constant(y_data, dtype=tf.float32, shape=[3136, 1])
+        z = tf.matmul(reshape, y)
+        y_data_1 = np.random.random([1, 1])
+        y_1 = tf.constant(y_data_1, dtype=tf.float32, shape=[1, 1])
+
+        z_2nd_matmul = tf.matmul(z, y_1)
+        relu6 = tf.nn.relu6(z_2nd_matmul, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot import Quantization
+
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            dataloader = quantizer.dataloader(dataset)
+            output_graph = quantizer(
+                output_graph_def,
+                q_dataloader=dataloader,
+                eval_dataloader=dataloader
+            )
+            quantize_v2_count = 0
+            for i in output_graph.as_graph_def().node:
+                if i.op == 'QuantizeV2':
+                    quantize_v2_count += 1
+                    break
+
+            self.assertEqual(quantize_v2_count, 1)
+
+    @disable_random()
+    def test_conv_fusion_with_last_conv(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        normed = tf.compat.v1.layers.batch_normalization(conv)
+
+        relu = tf.nn.relu(normed)
+        pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_weights_2 = tf.compat.v1.get_variable("weight2", [3, 3, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv2 = tf.nn.conv2d(pooling, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID")
+        conv_weights_3 = tf.compat.v1.get_variable("weight3", [3, 3, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        relu2 = tf.nn.relu(conv2)
+        conv3 = tf.nn.conv2d(relu2, conv_weights_3, strides=[1, 2, 2, 1], padding="VALID")
+
+        relu3 = tf.nn.relu(conv3)
+        relu6 = tf.nn.relu6(relu3, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot import Quantization
+
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            dataloader = quantizer.dataloader(dataset)
+            output_graph = quantizer(
+                output_graph_def,
+                q_dataloader=dataloader,
+                eval_dataloader=dataloader
+            )
+            quantize_v2_count = 0
+            for i in output_graph.as_graph_def().node:
+                if i.op == 'QuantizeV2':
+                    quantize_v2_count += 1
+                    break
+
+            self.assertEqual(quantize_v2_count, 1)
 
 
 class TestGraphConvFusion(unittest.TestCase):
