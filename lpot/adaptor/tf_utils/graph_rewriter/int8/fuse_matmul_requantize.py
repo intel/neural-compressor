@@ -31,13 +31,16 @@ from ..graph_util import GraphRewriterHelper as Helper
 class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
     """Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
     """
-    fuse_patterns = {"2.3.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                               ('Softmax',)],
-                     "2.2.0":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                                ('Softmax',)],
-                     "1.15.0-up2":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                                     ('Softmax',)],
-                     "default": []}
+    fuse_patterns = {
+        "2.4.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
+                  ('Softmax',)],
+        "2.3.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
+                  ('Softmax',)],
+        "2.2.0":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
+                   ('Softmax',)],
+        "1.15.0-up2":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
+                        ('Softmax',)],
+        "default": []}
 
     def __init__(self, model, device='cpu'):
         super().__init__(model)

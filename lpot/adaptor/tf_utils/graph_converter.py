@@ -56,7 +56,7 @@ from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
-TF_SUPPORTED_MAX_VERSION = '2.3.0'
+TF_SUPPORTED_MAX_VERSION = '2.4.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 class GraphConverter:
