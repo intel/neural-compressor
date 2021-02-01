@@ -35,7 +35,7 @@ def build_fake_yaml():
             accuracy_criterion:
               relative: 0.05
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''

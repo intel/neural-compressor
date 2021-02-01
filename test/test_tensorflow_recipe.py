@@ -37,7 +37,7 @@ def build_fake_yaml_disable_first_quantization():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''
@@ -74,7 +74,7 @@ def build_fake_yaml_enable_first_quantization():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''
@@ -111,7 +111,7 @@ def build_fake_yaml_disable_scale_propagation():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''
@@ -148,7 +148,7 @@ def build_fake_yaml_enable_scale_propagation():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''
@@ -185,7 +185,7 @@ def build_fake_yaml_enable_scale_unification():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''
@@ -222,7 +222,7 @@ def build_fake_yaml_disable_scale_unification():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              max_trials: 1
+              performance_only: True
             workspace:
               path: saved
         '''

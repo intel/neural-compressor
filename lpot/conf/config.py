@@ -302,7 +302,7 @@ schema = Schema({
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01},
         'objective': 'performance',
-        'exit_policy': {'timeout': 0, 'max_trials': 100},
+        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': None}}): {
         Optional('strategy', default={'name': 'basic'}): {
@@ -316,9 +316,12 @@ schema = Schema({
             Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
         },
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
-        Optional('exit_policy', default={'timeout': 0, 'max_trials': 100}): {
+        Optional('exit_policy', default={'timeout': 0,
+                                         'max_trials': 100,
+                                         'performance_only': False}): {
             Optional('timeout', default=0): int,
             Optional('max_trials', default=100): int,
+            Optional('performance_only', default=False): bool,
         },
         Optional('random_seed', default=1978): int,
         Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),

@@ -421,7 +421,8 @@ class TuneStrategy(object):
         """
         need_stop = False
 
-        if self.objective.compare(self.best_tune_result, self.baseline):
+        if self.cfg.tuning.exit_policy.performance_only or \
+            self.objective.compare(self.best_tune_result, self.baseline):
             del self.best_tune_result
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
@@ -443,7 +444,9 @@ class TuneStrategy(object):
             ('[{:.4f}, {:.4f}]'.format(
                 *self.best_tune_result) if self.best_tune_result else 'None'))
 
-        if timeout.seconds != 0 and timeout.timed_out:
+        if self.cfg.tuning.exit_policy.performance_only:
+            need_stop = True
+        elif timeout.seconds != 0 and timeout.timed_out:
             need_stop = True
         elif timeout.seconds == 0 and self.best_tune_result:
             need_stop = True
