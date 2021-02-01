@@ -1,11 +1,15 @@
 
 import torch
+import torch.nn.quantized as nnq
+from torch.quantization import QuantStub, DeQuantStub
 import torchvision
 import unittest
 import os
 from lpot.adaptor import FRAMEWORKS
+import lpot.adaptor.pytorch as lpot_torch
 import shutil
 import copy
+import numpy as np
 
 try:
     import intel_pytorch_extension as ipex
@@ -285,6 +289,52 @@ class TestPytorchAdaptor(unittest.TestCase):
             q_dataloader=dataloader,
         )
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
+
+    def test_floatfunctions_fallback(self):
+        class ModelWithFunctionals(torch.nn.Module):
+            def __init__(self):
+                super(ModelWithFunctionals, self).__init__()
+                self.mycat = nnq.FloatFunctional()
+                self.myadd = nnq.FloatFunctional()
+                self.myadd_relu = nnq.FloatFunctional()
+                # Tracing doesnt work yet for c10 ops with scalar inputs
+                # https://github.com/pytorch/pytorch/issues/27097
+                self.my_scalar_add = nnq.FloatFunctional()
+                self.mymul = nnq.FloatFunctional()
+                self.my_scalar_mul = nnq.FloatFunctional()
+                self.quant = QuantStub()
+                self.dequant = DeQuantStub()
+
+            def forward(self, x):
+                x = self.quant(x)
+                y = self.mycat.cat([x, x, x])
+                z = self.myadd.add(y, y)
+                w = self.myadd_relu.add_relu(z, z)
+                # Tracing doesnt work yet for c10 ops with scalar inputs
+                # https://github.com/pytorch/pytorch/issues/27097
+                w = self.my_scalar_add.add_scalar(w, -0.5)
+                w = self.mymul.mul(w, w)
+                w = self.my_scalar_mul.mul_scalar(w, 0.5)
+                w = self.dequant(w)
+                return w
+
+        model = ModelWithFunctionals()
+        x = torch.rand(10, 1, dtype=torch.float)
+        y = model(x)
+        fallback_ops = []
+        q_capability = self.adaptor.query_fw_capability(model)
+        for k, v in q_capability["opwise"].items():
+            if k[0] != "quant":
+              fallback_ops.append(k[0])
+        model.qconfig = torch.quantization.default_qconfig
+        model.quant.qconfig = torch.quantization.default_qconfig
+        lpot_torch._fallback_quantizable_ops_recursively(model, '', fallback_ops)
+        torch.quantization.add_observer_(model)
+        model(x)
+        torch.quantization.convert(model, self.adaptor.q_mapping, inplace=True)
+        qy = model(x)
+        tol = {'atol': 1e-01, 'rtol': 1e-03}
+        self.assertTrue(np.allclose(y, qy, **tol))
 
 
 @unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
