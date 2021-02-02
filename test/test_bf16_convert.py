@@ -42,6 +42,50 @@ def build_fake_yaml():
         f.write(fake_yaml)
     f.close()
 
+def build_fake_bf16_rnn_yaml():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: input_1
+          outputs: dense/BiasAdd 
+        device: cpu
+        quantization: 
+          op_wise: {
+                     \"lstm/while/MatMul\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                    \"lstm/while/MatMul_1\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                    \"lstm/while/MatMul_2\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                    \"lstm/while/MatMul_3\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                     \"lstm_1/while/MatMul\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                    \"lstm_1/while/MatMul_1\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                    \"lstm_1/while/MatMul_2\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
+                   }
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+            accuracy_criterion:
+              relative: 0.05
+        '''
+    with open('fake_bf16_rnn.yaml',"w",encoding="utf-8") as f:
+        f.write(fake_yaml)
+    f.close()
+
 def create_test_graph():
     input_node = node_def_pb2.NodeDef()
     input_node.name = "input"
@@ -204,10 +248,12 @@ class TestBF16Convert(unittest.TestCase):
             self.input_graph.ParseFromString(f.read())
         self.test_graph = create_test_graph()
         build_fake_yaml()
+        build_fake_bf16_rnn_yaml()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+        os.remove('fake_bf16_rnn.yaml')
         os.remove('saved/history.snapshot')
         os.remove('saved/deploy.yaml')
         shutil.rmtree("saved", ignore_errors=True)
@@ -250,6 +296,61 @@ class TestBF16Convert(unittest.TestCase):
             if node.op == 'Cast':
                 cast_op_count += 1
         self.assertTrue(cast_op_count >= 1)
+
+    @unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.x")
+    def test_bf16_rnn(self):
+        os.environ['FORCE_BF16'] = '1'
+
+        inp = tf.keras.layers.Input(shape=(None, 4))
+        lstm_1 = tf.keras.layers.LSTM(units=10,
+                    return_sequences=True)(inp)
+        dropout_1 = tf.keras.layers.Dropout(0.2)(lstm_1)
+        lstm_2 = tf.keras.layers.LSTM(units=10,
+                    return_sequences=False)(dropout_1)
+        dropout_2 = tf.keras.layers.Dropout(0.2)(lstm_2)
+        out = tf.keras.layers.Dense(1)(dropout_2)
+        model = tf.keras.models.Model(inputs=inp, outputs=out)
+
+        model.compile(loss="mse",
+                    optimizer=tf.keras.optimizers.RMSprop())
+
+        # input_names = [t.name.split(":")[0] for t in model.inputs]
+        output_names = [t.name.split(":")[0] for t in model.outputs]
+
+        q_data = np.random.randn(64, 10, 4)
+        label = np.random.randn(64, 1)
+        model.predict(q_data)
+
+        sess = tf.keras.backend.get_session()
+
+        graph = sess.graph
+
+        from tensorflow.python.framework import graph_util
+        graph_def = graph_util.convert_variables_to_constants(
+            sess,
+            graph.as_graph_def(),
+            output_names,
+        )
+        quant_data = (q_data, label)
+        evl_data = (q_data, label)
+
+        from lpot import Quantization
+
+        with tf.Graph().as_default() as g:
+            tf.import_graph_def(graph_def, name='')
+            quantizer = Quantization('fake_bf16_rnn.yaml')
+
+            q_dataloader = quantizer.dataloader(dataset=list(zip(quant_data[0], quant_data[1])))
+            e_dataloader = quantizer.dataloader(dataset=list(zip(evl_data[0], evl_data[1])))
+            quantized_model = quantizer(g, q_dataloader=q_dataloader, eval_dataloader=e_dataloader)
+
+            convert_to_bf16_flag = False
+            for i in quantized_model.as_graph_def().node:
+              if i.name == 'lstm/while/MatMul_3' and i.attr['T'].type == dtypes.bfloat16.as_datatype_enum:
+                convert_to_bf16_flag = True
+            
+            self.assertEqual(convert_to_bf16_flag, True)
+
 
 if __name__ == "__main__":
     unittest.main()

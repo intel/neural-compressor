@@ -694,13 +694,6 @@ class GraphRewriterHelper():
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(b=value))
 
     @staticmethod
-    def set_attr_int(node, key, value):
-        """Set the node's attr which data type is int.
-        """
-        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
-
-
-    @staticmethod
     def node_name_from_input(node_name):
         """Static method that get the valid node name from input name.
 
@@ -722,11 +715,6 @@ class GraphRewriterHelper():
 
         return GraphRewriterHelper.node_name_cache[node_name]
 
-    @staticmethod
-    def unique_node_name_from_input(node_name):
-        """Get the node name from other node name's input field.
-        """
-        return node_name.replace(":", "__port__").replace("^", "__hat__")
 
     @staticmethod
     def values_from_const(node_def):

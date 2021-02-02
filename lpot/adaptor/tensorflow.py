@@ -205,12 +205,10 @@ class TensorFlowAdaptor(Adaptor):
         config.inter_op_parallelism_threads = 1
         sess = tf.compat.v1.Session(graph=graph, config=config)
 
-        if metric:
-            if hasattr(metric, "compare_label"):
-                if not metric.compare_label:
-                    results = [[] for _ in range(len(outputs))]
-                    if not os.path.exists(os.path.join(self.work_dir, "output_tensors")):
-                        os.makedirs(os.path.join(self.work_dir, "output_tensors"))
+        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
+            results = [[] for _ in range(len(outputs))]
+            if not os.path.exists(os.path.join(self.work_dir, "output_tensors")):
+                os.makedirs(os.path.join(self.work_dir, "output_tensors"))
 
         logger.info("Start to evaluate Tensorflow model...")
         for idx, (inputs, labels) in enumerate(dataloader):
@@ -230,15 +228,13 @@ class TensorFlowAdaptor(Adaptor):
             else:
                 predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
                     else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration)
-            if metric:
-                if hasattr(metric, "compare_label"):
-                    if not metric.compare_label:
-                        if isinstance(predictions, list):
-                            result = [np.array(value) for value in predictions.values()]
-                        else:
-                            result = [predictions]
-                        for i in range(len(outputs)):
-                            results[i].append(result[i])
+            if metric and hasattr(metric, "compare_label") and not metric.compare_label:
+                if isinstance(predictions, list):
+                    result = [np.array(value) for value in predictions.values()]
+                else:
+                    result = [predictions]
+                for i in range(len(outputs)):
+                    results[i].append(result[i])
             # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):
@@ -250,33 +246,34 @@ class TensorFlowAdaptor(Adaptor):
             if isinstance(predictions, list):
                 if len(self.output_tensor_names) == 1:
                     predictions = predictions[0]
+                    print (type(predictions), 1111111111)
                 elif len(self.output_tensor_names) > 1:
                     predictions = predictions[:len(self.output_tensor_names)]
+
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
-                if (not hasattr(metric, "compare_label")):
+                if not hasattr(metric, "compare_label"):
                     metric.update(predictions, labels)
                 elif hasattr(metric, "compare_label") and metric.compare_label:
                     metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
         if metric:
-            if hasattr(metric, "compare_label"):
-                if not metric.compare_label:
-                    results = [np.array(result) for result in results]
-                    metric.reset()
-                    if fp32_baseline:
-                        np.savez(os.path.join(self.work_dir, "output_tensors", "fp32.npz"),
-                            *results)
-                        metric.update(results, results)
-                    else:
-                        np.savez(os.path.join(self.work_dir, "output_tensors", "int8.npz"),
-                            *results)
-                        reference_file = np.load(os.path.join(self.work_dir, "output_tensors", \
-                                     "fp32.npz"), allow_pickle=True)
-                        reference = [reference_file[key] for key in reference_file]
-                        metric.update(reference, results)
+            if hasattr(metric, "compare_label") and not metric.compare_label:
+                results = [np.array(result) for result in results]
+                metric.reset()
+                if fp32_baseline:
+                    np.savez(os.path.join(self.work_dir, "output_tensors", "fp32.npz"),
+                        *results)
+                    metric.update(results, results)
+                else:
+                    np.savez(os.path.join(self.work_dir, "output_tensors", "int8.npz"),
+                        *results)
+                    reference_file = np.load(os.path.join(self.work_dir, "output_tensors", \
+                                    "fp32.npz"), allow_pickle=True)
+                    reference = [reference_file[key] for key in reference_file]
+                    metric.update(reference, results)
         acc = metric.result() if metric is not None else 0
         if tensorboard:
             new_dir = temp_dir + "_acc_" + str(acc)
@@ -352,11 +349,12 @@ class TensorFlowAdaptor(Adaptor):
             for k in self.bf16_ops:
                 if k in self._init_op_stat[i]:
                     bf16_count += 1
-                if bf16_count > 0:
-                    logger.info(('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) \
-                         + '|'))
+            if bf16_count > 0:
+                logger.info(('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) + '|'))
             bf16_sum_count += bf16_count
+
         overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
+
         if overall_ops_count > 0:
             int8_percent = float(int8_sum_count / overall_ops_count)
             bf16_percent = float(bf16_sum_count / overall_ops_count)

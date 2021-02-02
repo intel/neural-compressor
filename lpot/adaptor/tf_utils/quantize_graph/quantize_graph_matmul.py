@@ -41,6 +41,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
         weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
+
+        # FIXME We only quantize the MatMul op which second input node type is const. This is a
+        # workaround for RNN model like LTSM.
+        if weight_node.op != 'Const':
+            self.output_graph = self.input_graph
+            return
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -96,7 +103,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
         weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
 
+        # FIXME We only quantize the MatMul op which second input node type is const. This is a
+        # workaround for RNN model like LTSM.
+        if weight_node.op != 'Const':
+            self.output_graph = self.input_graph
+            return
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)

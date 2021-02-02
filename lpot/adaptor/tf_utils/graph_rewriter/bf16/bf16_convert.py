@@ -147,10 +147,13 @@ class BF16Convert(GraphRewriterBase):
         bf16_node = bf16_node_detail.node
         bf16_node_inputs = list(bf16_node.input)
         for each_input in bf16_node_inputs:
-            each_input_detail = self.cur_graph.node_name_details[each_input]
+            each_input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
+                each_input)]
             each_input_node = each_input_detail.node
             # Const + Cast => Const optimization
-            if each_input_node.op == "Const":
+            # FIXME Added the checker for const node to check its a shared node or not.
+            # We only do cast on those const nodes which are not sharable.
+            if each_input_node.op == "Const" and len(each_input_detail.outputs) == 1:
                 if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(
                         type=dtypes.float32.as_datatype_enum):
                     fp32_value = tensor_util.MakeNdarray(each_input_node.attr.get('value').tensor)
@@ -182,7 +185,7 @@ class BF16Convert(GraphRewriterBase):
             else:
                 if each_input + "_FP32toBF16" not in list(self.cur_graph.node_name_details.keys()):
                     input_cast_node = Helper.create_node(
-                        "Cast", each_input + "_FP32toBF16", [each_input])
+                        "Cast", each_input.replace(':', '__') + "_FP32toBF16", [each_input])
                     Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
                     Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
                     Helper.set_attr_bool(input_cast_node, "Truncate", False)
@@ -191,7 +194,7 @@ class BF16Convert(GraphRewriterBase):
                     input_cast_node = self.cur_graph.node_name_details[each_input +
                                                                        "_FP32toBF16"].node
                     for index, input_name in enumerate(bf16_node.input):
-                        if input_name == each_input:
+                        if Helper.node_name_from_input(input_name) == each_input:
                             bf16_node.input[index] = input_cast_node.name
                     self.cur_graph.node_name_details[input_cast_node.name].outputs.append(
                         bf16_node_name)
@@ -256,7 +259,6 @@ class BF16Convert(GraphRewriterBase):
         Execute BF16 convert.
         :return: Transformed graph
         """
-        if len(self.bf16_ops) > 0:
-            self._model_bf16_convert()
+        self._model_bf16_convert()
 
         return self.cur_graph.dump_graph()
