@@ -23,6 +23,8 @@ import logging
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from .modeling_bert import BertEmbeddings, BertLayerNorm, BertModel, BertPreTrainedModel, gelu
 from .configuration_roberta import RobertaConfig
@@ -177,9 +179,8 @@ class RobertaModel(BertModel):
     pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
     base_model_prefix = "roberta"
 
-    def __init__(self, config):
-        super(RobertaModel, self).__init__(config)
-
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
+        super(RobertaModel, self).__init__(config, mix_qkv, bf16, mkldnn_train)
         self.embeddings = RobertaEmbeddings(config)
         self.init_weights()
 
@@ -317,11 +318,10 @@ class RobertaForSequenceClassification(BertPreTrainedModel):
     pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
     base_model_prefix = "roberta"
 
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False, bf16=False, mkldnn_train=False):
         super(RobertaForSequenceClassification, self).__init__(config)
         self.num_labels = config.num_labels
-
-        self.roberta = RobertaModel(config)
+        self.roberta = RobertaModel(config, mix_qkv, bf16, mkldnn_train)
         self.classifier = RobertaClassificationHead(config)
     
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None,
@@ -546,12 +546,18 @@ class RobertaClassificationHead(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
         x = self.dropout(x)
+        x = self.quant(x)
         x = self.dense(x)
+        x = self.dequant(x)
         x = torch.tanh(x)
         x = self.dropout(x)
+        x = self.quant(x)
         x = self.out_proj(x)
+        x = self.dequant(x)
         return x

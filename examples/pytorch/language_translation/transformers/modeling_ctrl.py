@@ -29,6 +29,8 @@ import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torch.nn.parameter import Parameter
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from .modeling_utils import PreTrainedModel, Conv1D, prune_conv1d_layer, SequenceSummary
 from .configuration_ctrl import CTRLConfig
@@ -95,6 +97,8 @@ class MultiHeadAttention(torch.nn.Module):
         self.Wv = torch.nn.Linear(d_model_size, d_model_size)
 
         self.dense = torch.nn.Linear(d_model_size, d_model_size)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def split_into_heads(self, x, batch_size):
         x = x.reshape(batch_size, -1, self.num_heads, self.depth)
@@ -102,10 +106,15 @@ class MultiHeadAttention(torch.nn.Module):
 
     def forward(self, v, k, q, mask, layer_past=None, attention_mask=None, head_mask=None):
         batch_size = q.shape[0]
-
+        q = self.quant(q)
         q = self.Wq(q)
+        q = self.dequant(q)
+        k = self.quant(k)
         k = self.Wk(k)
+        k = self.dequant(k)
+        v = self.quant(v)
         v = self.Wv(v)
+        v = self.dequant(v)
 
         q = self.split_into_heads(q, batch_size)
         k = self.split_into_heads(k, batch_size)
@@ -120,7 +129,9 @@ class MultiHeadAttention(torch.nn.Module):
         scaled_attention = output[0].permute([0, 2, 1, 3])
         attn = output[1]
         original_size_attention = scaled_attention.reshape(batch_size, -1, self.d_model_size)
+        original_size_attention = self.quant(original_size_attention)
         output = self.dense(original_size_attention)
+        output = self.dequant(output)
 
         outputs = (output, present)
         if self.output_attentions:
@@ -147,6 +158,8 @@ class EncoderLayer(torch.nn.Module):
 
         self.dropout1 = torch.nn.Dropout(rate)
         self.dropout2 = torch.nn.Dropout(rate)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, x, mask, layer_past=None, attention_mask=None, head_mask=None):
         normed = self.layernorm1(x)
@@ -159,7 +172,9 @@ class EncoderLayer(torch.nn.Module):
         out1 = x + attn_output
 
         out2 = self.layernorm2(out1)
+        out2 = self.quant(out2)
         ffn_output = self.ffn(out2)
+        ffn_output = self.dequant(ffn_output)
         ffn_output = self.dropout2(ffn_output)
         out2 = out1 + ffn_output
 
@@ -463,12 +478,14 @@ class CTRLLMHeadModel(CTRLPreTrainedModel):
         loss, logits = outputs[:2]
 
     """
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False):
         super(CTRLLMHeadModel, self).__init__(config)
         self.transformer = CTRLModel(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=True)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def get_output_embeddings(self):
         return self.lm_head
@@ -485,7 +502,9 @@ class CTRLLMHeadModel(CTRLPreTrainedModel):
 
         hidden_states = transformer_outputs[0]
 
+        hidden_states = self.quant(hidden_states)
         lm_logits = self.lm_head(hidden_states)
+        lm_logits = self.dequant(lm_logits)
 
         outputs = (lm_logits,) + transformer_outputs[1:]
 

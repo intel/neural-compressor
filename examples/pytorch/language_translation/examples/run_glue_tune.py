@@ -54,7 +54,10 @@ from transformers import (WEIGHTS_NAME, BertConfig,
                           DistilBertTokenizer,
                           AlbertConfig,
                           AlbertForSequenceClassification, 
-                          AlbertTokenizer)
+                          AlbertTokenizer,
+                          CamembertConfig, 
+                          CamembertForSequenceClassification, 
+                          CamembertTokenizer)
 
 from transformers import AdamW, get_linear_schedule_with_warmup
 
@@ -74,7 +77,8 @@ MODEL_CLASSES = {
     'xlm': (XLMConfig, XLMForSequenceClassification, XLMTokenizer),
     'roberta': (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
     'distilbert': (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
-    'albert': (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer)
+    'albert': (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
+    'camembert': (CamembertConfig, CamembertForSequenceClassification, CamembertTokenizer)
 }
 
 

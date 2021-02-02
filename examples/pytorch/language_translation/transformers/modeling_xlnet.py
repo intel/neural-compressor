@@ -28,6 +28,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import CrossEntropyLoss, MSELoss
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from .modeling_utils import PreTrainedModel, prune_linear_layer, SequenceSummary, PoolerAnswerClass, PoolerEndLogits, PoolerStartLogits
 from .configuration_xlnet import XLNetConfig
@@ -410,13 +412,19 @@ class XLNetFeedForward(nn.Module):
             self.activation_function = ACT2FN[config.ff_activation]
         else:
             self.activation_function = config.ff_activation
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, inp):
         output = inp
+        output = self.quant(output)
         output = self.layer_1(output)
+        output = self.dequant(output)
         output = self.activation_function(output)
         output = self.dropout(output)
+        output = self.quant(output)
         output = self.layer_2(output)
+        output = self.dequant(output)
         output = self.dropout(output)
         output = self.layer_norm(output + inp)
         return output
@@ -1013,7 +1021,7 @@ class XLNetForSequenceClassification(XLNetPreTrainedModel):
         loss, logits = outputs[:2]
 
     """
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv = False, bf16=False, mkldnn_train=False):
         super(XLNetForSequenceClassification, self).__init__(config)
         self.num_labels = config.num_labels
 
@@ -1022,6 +1030,8 @@ class XLNetForSequenceClassification(XLNetPreTrainedModel):
         self.logits_proj = nn.Linear(config.d_model, config.num_labels)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, input_ids=None, attention_mask=None, mems=None, perm_mask=None, target_mapping=None,
                 token_type_ids=None, input_mask=None, head_mask=None, inputs_embeds=None, labels=None):
@@ -1037,7 +1047,9 @@ class XLNetForSequenceClassification(XLNetPreTrainedModel):
         output = transformer_outputs[0]
 
         output = self.sequence_summary(output)
+        output = self.quant(output)
         logits = self.logits_proj(output)
+        logits = self.dequant(logits)
 
         outputs = (logits,) + transformer_outputs[1:]  # Keep mems, hidden states, attentions if there are in it
 

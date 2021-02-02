@@ -29,6 +29,8 @@ import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torch.nn.parameter import Parameter
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from .modeling_utils import PreTrainedModel, Conv1D, prune_conv1d_layer, SequenceSummary
 from .configuration_openai import OpenAIGPTConfig
@@ -496,12 +498,14 @@ class OpenAIGPTLMHeadModel(OpenAIGPTPreTrainedModel):
         loss, logits = outputs[:2]
 
     """
-    def __init__(self, config):
+    def __init__(self, config, mix_qkv=False):
         super(OpenAIGPTLMHeadModel, self).__init__(config)
         self.transformer = OpenAIGPTModel(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def get_output_embeddings(self):
         return self.lm_head
@@ -515,7 +519,9 @@ class OpenAIGPTLMHeadModel(OpenAIGPTPreTrainedModel):
                                                head_mask=head_mask,
                                                inputs_embeds=inputs_embeds)
         hidden_states = transformer_outputs[0]
+        hidden_states = self.quant(hidden_states)
         lm_logits = self.lm_head(hidden_states)
+        lm_logits = self.dequant(lm_logits)
 
         outputs = (lm_logits,) + transformer_outputs[1:]
         if labels is not None:

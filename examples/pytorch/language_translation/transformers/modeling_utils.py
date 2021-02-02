@@ -30,6 +30,8 @@ from torch import nn
 from torch.nn import CrossEntropyLoss
 from torch.nn import functional as F
 from torch.quantization import prepare, convert
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from .configuration_utils import PretrainedConfig
 from .file_utils import cached_path, WEIGHTS_NAME, TF_WEIGHTS_NAME, TF2_WEIGHTS_NAME
@@ -794,6 +796,9 @@ class SequenceSummary(nn.Module):
         self.last_dropout = Identity()
         if hasattr(config, 'summary_last_dropout') and config.summary_last_dropout > 0:
             self.last_dropout = nn.Dropout(config.summary_last_dropout)
+        
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, cls_index=None):
         """ hidden_states: float Tensor in shape [bsz, ..., seq_len, hidden_size], the hidden-states of the last layer.
@@ -820,7 +825,9 @@ class SequenceSummary(nn.Module):
             raise NotImplementedError
 
         output = self.first_dropout(output)
+        output = self.quant(output)
         output = self.summary(output)
+        output = self.dequant(output)
         output = self.activation(output)
         output = self.last_dropout(output)
 
