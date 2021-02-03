@@ -56,6 +56,8 @@ from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
+from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
+
 TF_SUPPORTED_MAX_VERSION = '2.4.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
@@ -572,6 +574,9 @@ class GraphConverter:
         if self.recipes['scale_propagation_concat']:
             self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
                                                         self.device).do_transformation()
+
+        self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(
+            self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = PostCseOptimizer(self._tmp_graph_def).do_transformation()
 
