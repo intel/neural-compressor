@@ -621,7 +621,7 @@ class TensorFlowAdaptor(Adaptor):
         quantize_node_outputs = [node for node in graph_def.node
                                  if quantize_node.name in node.input]
 
-        from .tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+        from .tf_utils.graph_rewriter.graph_util import GraphRewriterHelper
         if quantize_node_input.op == 'Pad':
             pad_node_input = node_name_mapping[quantize_node_input.input[0]]
             assert pad_node_input.op == 'Placeholder', \
@@ -634,12 +634,12 @@ class TensorFlowAdaptor(Adaptor):
             for conv_node in quantize_node_outputs:
                 assert 'Conv2D' in conv_node.op, 'only support QuantizeV2 to Conv2D'
 
-                QuantizeGraphHelper.set_attr_int_list(conv_node,
+                GraphRewriterHelper.set_attr_int_list(conv_node,
                                                       "padding_list", paddings_tensor)
             graph_def.node.remove(quantize_node_input)
 
         from tensorflow.python.framework import dtypes
-        QuantizeGraphHelper.set_attr_dtype(node_name_mapping[quantize_node.input[0]],
+        GraphRewriterHelper.set_attr_dtype(node_name_mapping[quantize_node.input[0]],
                                            "dtype", dtypes.qint8)
 
         for conv_node in quantize_node_outputs:

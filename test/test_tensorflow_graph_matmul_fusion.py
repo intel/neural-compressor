@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import dtypes
 from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.adaptor.tf_utils.util import disable_random
+from lpot.adaptor.tf_utils.util import disable_random, write_graph
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -230,8 +230,15 @@ class TestGraphMatMulFusion(unittest.TestCase):
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y)
-            z = tf.nn.bias_add(z, [1, 2])
-            z = tf.nn.softmax(z, name='op_to_store')
+            biasadd = tf.nn.bias_add(z, [1, 2])
+            biasadd1 = tf.nn.bias_add(biasadd, [1, 1])
+
+            y1 = tf.constant(x_data, dtype=tf.float32, shape=[2, 2])
+            matmul1 = tf.matmul(biasadd1, y1)
+
+            biasadd2 = tf.nn.bias_add(matmul1, [1, 1])
+
+            z = tf.nn.softmax(biasadd2, name='op_to_store')
             found_quantized_matmul = False
             if tf.version.VERSION < "2.2.0":
                 found_quantized_matmul = False
@@ -249,10 +256,11 @@ class TestGraphMatMulFusion(unittest.TestCase):
                         eval_dataloader=dataloader
                     )
 
+                    count=0
                     for i in output_graph.as_graph_def().node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
-                            found_quantized_matmul = True
-                            break
+                            count += 1
+                    found_quantized_matmul = bool(count > 1)
             self.assertEqual(found_quantized_matmul, False)
 
 

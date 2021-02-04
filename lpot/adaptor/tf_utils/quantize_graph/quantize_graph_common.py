@@ -262,13 +262,6 @@ class QuantizeGraphHelper():
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(s=value))
 
     @staticmethod
-    def set_attr_int_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
-        list_value = attr_value_pb2.AttrValue.ListValue(i=value)
-        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
-
-    @staticmethod
     def set_attr_bool(node, key, value):
         """Set the node's attr which data type is bool.
         """

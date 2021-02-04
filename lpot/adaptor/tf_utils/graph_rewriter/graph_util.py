@@ -215,6 +215,7 @@ class GraphAnalyzer():
                 if not matched_flag and isinstance(pattern[end_index], tuple):
                     end_index -= 1
                     continue
+
                 if matched_flag:
                     op_names.append(node.name)
                     op_types.append(node.op)
@@ -255,8 +256,8 @@ class GraphAnalyzer():
                 if isinstance(input_pattern[start_index], tuple):
                     start_index -= 1
                     continue
-                else:
-                    start_index = -2
+
+                start_index = -2
 
             if start_index < 0:
                 continue
@@ -274,16 +275,30 @@ class GraphAnalyzer():
             if index == len(sorted_output) - 1:
                 break
 
-            # cur_matched_op_names = value[: -1]
-            next_matched_op_names = sorted_output[index+1][:-1]
+            next_matched_op_names = sorted_output[index + 1][:-1]
             if len(value[:-1]) < len(next_matched_op_names) and \
-                _compare_list(value[:-1], next_matched_op_names):
+                    _compare_list(value[:-1], next_matched_op_names):
                 useless_match_list.append(value)
 
         for i in useless_match_list:
             sorted_output.remove(i)
 
-        return sorted_output
+        longest_match = {}
+        final_output = []
+        for i in sorted_output:
+            key = i[0]
+            if key not in longest_match:
+                longest_match[key] = i[-1]
+                continue
+
+            if len(longest_match[key]) < len(i[-1]):
+                longest_match[key] = i[-1]
+
+        for i in sorted_output:
+            if i[0] in longest_match and i[-1] == longest_match[i[0]]:
+                final_output.append(i)
+
+        return final_output
 
     def remove_node_with_single_input_output(self, node_name):
         """Remove node with one input and rebuild internal graph data structure.
