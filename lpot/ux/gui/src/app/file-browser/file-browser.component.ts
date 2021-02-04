@@ -14,6 +14,7 @@ export class FileBrowserComponent implements OnInit {
   currentPath: string;
   chosenFile: string;
   files: boolean;
+  modelsOnly: boolean;
 
   constructor(
     private modelService: ModelService,
@@ -23,11 +24,12 @@ export class FileBrowserComponent implements OnInit {
 
   ngOnInit() {
     this.files = this.data.files;
+    this.modelsOnly = this.data.modelsOnly;
     this.getFileSystem(this.data.path)
   }
 
   getFileSystem(path: string) {
-    this.modelService.getFileSystem(path, this.files)
+    this.modelService.getFileSystem(path, this.files, this.modelsOnly)
       .subscribe(
         resp => {
           this.contents = resp['contents'];

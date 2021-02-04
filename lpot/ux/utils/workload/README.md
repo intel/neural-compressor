@@ -2,17 +2,17 @@
 
 *Workload* class represents single workload.
 
-To create workload there should be passed dictionary with `framework`, `domain`, `model_name`, `accuracy_goal` values and paths to the LPOT workspace, dataset and model.
+To create workload there should be passed dictionary with `framework`, `domain`, `model_name`, `accuracy_goal` values and paths to the UX workspace, dataset and model.
 
 Example init data:  
 ```json
 {
     "framework": "tensorflow",
     "domain": "image_recognition",
-    "workspace_path": "/user/lpot-ux/my_workspace",
-    "dataset_path": "/user/lpot-ux/dataset",
+    "workspace_path": "/user/home/my_workspace",
+    "dataset_path": "/user/home/dataset",
     "accuracy_goal": 0.1,
-    "model_path": "/user/lpot-ux/my_model.pb",
+    "model_path": "/user/home/my_workspace/my_model.pb",
     "model_name": "my_model"
 }
 ```
@@ -24,10 +24,10 @@ from lpot.ux.utils.workload.workload import Workload
 workload = Workload({
     "framework": "tensorflow",
     "domain": "image_recognition",
-    "workspace_path": "/user/lpot-ux/my_workspace",
-    "dataset_path": "/user/lpot-ux/dataset",
+    "workspace_path": "/user/home/my_workspace",
+    "dataset_path": "/user/home/dataset",
     "accuracy_goal": 0.1,
-    "model_path": "/user/lpot-ux/my_model.pb",
+    "model_path": "/user/home/my_workspace/my_model.pb",
     "model_name": "my_model"
 })
 ``` 

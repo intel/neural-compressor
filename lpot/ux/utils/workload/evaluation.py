@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration evaluation module."""
+"""Configuration evaluation module."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import psutil
 
@@ -23,20 +23,20 @@ from lpot.ux.utils.workload.dataloader import Dataloader
 
 
 class Metric(JsonSerializer):
-    """LPOT configuration Metric class."""
+    """Configuration Metric class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Metric class."""
+        """Initialize Configuration Metric class."""
         super().__init__()
         self.topk = data.get("topk", 1)  # [Optional] One of 1, 5
         self.COCOmAP = data.get("COCOmAP", None)
 
 
 class Configs(JsonSerializer):
-    """LPOT configuration Configs class."""
+    """Configuration Configs class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Configs class."""
+        """Initialize Configuration Configs class."""
         super().__init__()
         self.cores_per_instance: int = 4
         self.num_of_instance: int = psutil.cpu_count() // self.cores_per_instance
@@ -46,19 +46,19 @@ class Configs(JsonSerializer):
 
 
 class PostprocessSchema(JsonSerializer):
-    """LPOT configuration PostprocessSchema class."""
+    """Configuration PostprocessSchema class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration PostprocessSchema class."""
+        """Initialize Configuration PostprocessSchema class."""
         super().__init__()
         self.LabelShift = data.get("LabelShift", None)  # [Optional] >0
 
 
 class Postprocess(JsonSerializer):
-    """LPOT configuration Postprocess class."""
+    """Configuration Postprocess class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Postprocess class."""
+        """Initialize Configuration Postprocess class."""
         super().__init__()
         self.transform = None
         if isinstance(data.get("transform"), dict):
@@ -66,10 +66,10 @@ class Postprocess(JsonSerializer):
 
 
 class Accuracy(JsonSerializer):
-    """LPOT configuration Accuracy class."""
+    """Configuration Accuracy class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Accuracy class."""
+        """Initialize Configuration Accuracy class."""
         super().__init__()
         self.metric = None
         if isinstance(data.get("metric"), dict):
@@ -89,10 +89,10 @@ class Accuracy(JsonSerializer):
 
 
 class Performance(JsonSerializer):
-    """LPOT configuration Performance class."""
+    """Configuration Performance class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Performance class."""
+        """Initialize Configuration Performance class."""
         super().__init__()
         self.warmup = data.get("warmup", 10)
 
@@ -110,12 +110,12 @@ class Performance(JsonSerializer):
 
 
 class Evaluation(JsonSerializer):
-    """LPOT configuration Evaluation class."""
+    """Configuration Evaluation class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Evaluation class."""
+        """Initialize Configuration Evaluation class."""
         super().__init__()
-        self.accuracy = None
+        self.accuracy: Optional[Accuracy] = None
         if isinstance(data.get("accuracy"), dict):
             self.accuracy = Accuracy(data.get("accuracy", {}))
 

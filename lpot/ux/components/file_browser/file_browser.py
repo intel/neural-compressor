@@ -22,6 +22,7 @@ from lpot.ux.utils.exceptions import (
     ClientErrorException,
     NotFoundException,
 )
+from lpot.ux.utils.utils import is_hidden, is_model_file
 
 
 def get_directory_entries(
@@ -30,16 +31,20 @@ def get_directory_entries(
     """Get directory entries."""
     try:
         path = os.path.abspath(data["path"][0])
-        contents = []
+        contents = get_non_hidden_directory_entries(path)
 
         show_files = should_show_files(data)
+        if not show_files:
+            contents = list(filter(lambda e: "file" != e["type"], contents))
 
-        with os.scandir(path) as it:
-            for entry in it:
-                if entry.is_dir():
-                    contents.append(create_dir_entry(entry))
-                if entry.is_file() and show_files:
-                    contents.append(create_file_entry(entry))
+        show_only_models = should_show_only_model_files(data)
+        if show_only_models:
+            contents = list(
+                filter(
+                    lambda e: "directory" == e["type"] or is_model_file(e["name"]),
+                    contents,
+                ),
+            )
 
         return {
             "path": path,
@@ -51,6 +56,22 @@ def get_directory_entries(
         raise NotFoundException(err)
     except NotADirectoryError as err:
         raise ClientErrorException(err)
+
+
+def get_non_hidden_directory_entries(path: str) -> List:
+    """Build a list of entries for path."""
+    entries = []
+
+    with os.scandir(path) as it:
+        for entry in it:
+            if is_hidden(entry.path):
+                continue
+            if entry.is_dir():
+                entries.append(create_dir_entry(entry))
+            if entry.is_file():
+                entries.append(create_file_entry(entry))
+
+    return entries
 
 
 def create_dir_entry(entry: os.DirEntry) -> Dict:
@@ -80,7 +101,21 @@ def sort_entries(entries: List) -> List:
 
 def should_show_files(data: Dict[str, Any]) -> bool:
     """Decide if files be returned."""
+    return get_setting_value("files", True, data)
+
+
+def should_show_only_model_files(data: Dict[str, Any]) -> bool:
+    """Decide if files be returned."""
+    return get_setting_value("models_only", False, data)
+
+
+def get_setting_value(setting: str, default: bool, data: Dict[str, Any]) -> bool:
+    """Get bool value from parameters."""
     try:
-        return "false" != data["files"][0].lower()
+        not_default = repr(not default).lower()
+        tested_value = data[setting][0].lower()
+
+        # opposite of default MUST be provided explicit to return not default
+        return not default if not_default == tested_value else default
     except KeyError:
-        return True
+        return default

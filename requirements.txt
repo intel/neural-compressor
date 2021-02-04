@@ -9,6 +9,7 @@ schema
 py-cpuinfo
 hyperopt
 contextlib2
+requests
 Flask
 Flask-Cors
 Flask-SocketIO

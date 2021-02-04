@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT UX server utils module."""
+"""UX server utils module."""
 
 import json
 import os
@@ -38,9 +38,13 @@ model_domains = {
 }
 
 framework_extensions = {
-    "tensorflow": ["pb", "ckpt"],
-    "pytorch": ["pt"],
+    "tensorflow": ["pb"],
 }
+
+
+def is_hidden(path: str) -> bool:
+    """Check if path is for hidden filesystem entry."""
+    return "." == os.path.basename(path)[0]
 
 
 def get_model_domain(model: str) -> str:
@@ -71,11 +75,21 @@ def get_framework_from_path(model_path: str) -> Optional[str]:
 
     :param model_path: Path to model.
     """
-    extension = model_path.split(".")[-1]
+    extension = get_file_extension(model_path)
     for framework, extensions in framework_extensions.items():
         if extension in extensions:
             return framework
     return None
+
+
+def get_file_extension(path: str) -> str:
+    """Get file extension without leading dot."""
+    return os.path.splitext(path)[1][1:]
+
+
+def is_model_file(path: str) -> bool:
+    """Check if given path is a model of supported framework."""
+    return get_framework_from_path(path) is not None
 
 
 def get_predefined_config_path(framework: str, domain: str) -> str:
@@ -135,7 +149,7 @@ def load_json(path: str) -> dict:
 
 
 def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
-    """Update model's input and output nodes in LPOT config."""
+    """Update model's input and output nodes in config file."""
     framework = get_framework_from_path(model_path)
     if framework is None:
         raise Exception("Could not found framework for specified model.")
@@ -225,6 +239,22 @@ def load_dataloader_config() -> Dict[str, Any]:
             os.path.dirname(__file__),
             "configs",
             "dataloaders.json",
+        ),
+        "r",
+    ) as f:
+        dataloaders_config = json.load(f)
+    if isinstance(dataloaders_config, dict):
+        return dataloaders_config
+    return {}
+
+
+def load_transforms_config() -> Dict[str, Any]:
+    """Load dataloader configs from json."""
+    with open(
+        os.path.join(
+            os.path.dirname(__file__),
+            "configs",
+            "transforms.json",
         ),
         "r",
     ) as f:

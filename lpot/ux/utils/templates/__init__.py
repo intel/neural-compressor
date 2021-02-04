@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""LPOT UX server templates module."""
+"""UX server templates module."""

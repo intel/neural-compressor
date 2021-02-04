@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration model module."""
+"""Configuration model module."""
 
 from typing import Any, Dict, List, Union
 
@@ -20,10 +20,10 @@ from lpot.ux.utils.json_serializer import JsonSerializer
 
 
 class Model(JsonSerializer):
-    """LPOT configuration model class."""
+    """Configuration Model class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration model class."""
+        """Initialize configuration Model class."""
         super().__init__()
         self.name = data.get("name", None)
         self.framework = data.get("framework", {})
@@ -51,7 +51,7 @@ class Model(JsonSerializer):
         self._outputs = parse_nodes(value)
 
     def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:
-        """Serialize LPOT configuration model class."""
+        """Serialize configuration Model class."""
         item = {
             "name": self.name,
             "framework": self.framework,

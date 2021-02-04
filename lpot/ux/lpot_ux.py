@@ -40,7 +40,7 @@ def main() -> None:
     """Get parameters and initialize server."""
     address = get_server_ip()
 
-    parser = argparse.ArgumentParser(description="Run LPOT-UX server.")
+    parser = argparse.ArgumentParser(description="Run UX server.")
     parser.add_argument(
         "-p",
         "--port",

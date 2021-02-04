@@ -20,8 +20,8 @@ import logging as log
 from threading import Lock, Thread
 from typing import Any, List, Optional, Union
 
-from lpot.ux.utils.lpot_proc import LPOTProc
-from lpot.ux.utils.lpot_processes import LPOTProcesses
+from lpot.ux.utils.proc import Proc
+from lpot.ux.utils.processes import LPOTProcesses
 from lpot.ux.web.communication import MessageQueue
 
 LOCK = Lock()
@@ -90,7 +90,7 @@ class Executor:
 
         try:
             log.info("Exec %s ", " ".join(map(str, args)))
-            proc = LPOTProc(
+            proc = Proc(
                 self.workdir,
                 pid=pid,
                 request_id=self.request_id,

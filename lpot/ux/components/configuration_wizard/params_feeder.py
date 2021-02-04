@@ -17,7 +17,14 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from lpot.ux.utils.utils import check_module, load_dataloader_config, load_model_config
+from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.utils import (
+    check_module,
+    is_model_file,
+    load_dataloader_config,
+    load_model_config,
+    load_transforms_config,
+)
 
 
 class Feeder:
@@ -35,16 +42,19 @@ class Feeder:
             "domain": self.get_domains,
             "model": self.get_models,
             "dataloader": self.get_dataloaders,
+            "transform": self.get_transforms,
             "objective": self.get_objectives,
             "strategy": self.get_strategies,
             "quantization_approach": self.get_quantization_approaches,
             "metric": self.get_metrics,
         }
         if self.param is None:
-            raise Exception("Parameter not defined.")
+            raise ClientErrorException("Parameter not defined.")
         get_param = param_mapper.get(self.param, None)
         if get_param is None:
-            raise Exception(f"Could not found method for {self.param} parameter.")
+            raise ClientErrorException(
+                f"Could not found method for {self.param} parameter.",
+            )
 
         return {
             self.param: get_param(),
@@ -59,23 +69,23 @@ class Feeder:
     def get_domains(self) -> List[str]:
         """Get list of available domains."""
         if self.config is None:
-            raise Exception("Config not found!")
+            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
-            raise Exception("Framework not set!")
+            raise ClientErrorException("Framework not set.")
         models_config = load_model_config()
         return list(models_config.get(framework, {}).keys())
 
     def get_models(self) -> List[str]:
         """Get list of models."""
         if self.config is None:
-            raise Exception("Config not found!")
+            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
-            raise Exception("Framework not set!")
+            raise ClientErrorException("Framework not set.")
         domain = self.config.get("domain", None)
         if domain is None:
-            raise Exception("Domain not set!")
+            raise ClientErrorException("Domain not set.")
         models_config = load_model_config()
 
         return list(models_config.get(framework, {}).get(domain, {}).keys())
@@ -86,11 +96,10 @@ class Feeder:
         all_models = self.get_models()
         for filename in os.listdir(workspace_path):
             name = os.path.splitext(filename)[0]
-            ext = os.path.splitext(filename)[1]
             if (
                 os.path.isfile(os.path.join(workspace_path, filename))
-                and ext in [".pb", ".ckpt"]
                 and name in all_models
+                and is_model_file(filename)
             ):
                 available_models.append(filename)
         return available_models
@@ -98,12 +107,22 @@ class Feeder:
     def get_dataloaders(self) -> Dict[str, Any]:
         """Get available dataloaders."""
         if self.config is None:
-            raise Exception("Config not found!")
+            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
-            raise Exception("Framework not set!")
+            raise ClientErrorException("Framework not set.")
         dataloaders = load_dataloader_config()
         return dataloaders.get(framework, {})
+
+    def get_transforms(self) -> Dict[str, Any]:
+        """Get available transforms."""
+        if self.config is None:
+            raise ClientErrorException("Config not found.")
+        framework = self.config.get("framework", None)
+        if framework is None:
+            raise ClientErrorException("Framework not set.")
+        transforms = load_transforms_config()
+        return transforms.get(framework, {})
 
     @staticmethod
     def get_objectives() -> List[str]:
@@ -140,7 +159,7 @@ class Feeder:
         check_module("lpot")
         framework = self.config.get("framework", None)
         if framework is None:
-            raise Exception("Framework not set!")
+            raise ClientErrorException("Framework not set.")
 
         if framework == "pytorch":
             check_module("ignite")

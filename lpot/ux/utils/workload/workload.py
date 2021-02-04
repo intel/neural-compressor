@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT workload module."""
+"""Workload module."""
 
 import json
 import logging
@@ -33,10 +33,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Workload(JsonSerializer):
-    """LPOT workload class."""
+    """Workload class."""
 
     def __init__(self, data: Dict[str, Any]):
-        """Initialize LPOT workload class."""
+        """Initialize Workload class."""
         super().__init__()
         self.config: Config = Config()
 
@@ -64,7 +64,9 @@ class Workload(JsonSerializer):
             get_framework_from_path(self.model_path),
         )
 
-        self.domain: str = data.get("domain", get_model_domain(self.model_name))
+        self.domain: str = data.get("domain", "")
+        if not self.domain:
+            self.domain = get_model_domain(self.model_name)
 
         self.dataset_path: str = data.get("dataset_path", "")
 
@@ -80,7 +82,11 @@ class Workload(JsonSerializer):
 
         self.accuracy_goal: float = data.get("accuracy_goal", 0.01)
 
-        self.config.load(get_predefined_config_path(self.framework, self.domain))
+        if not os.path.isfile(self.config_path):
+            self.config.load(get_predefined_config_path(self.framework, self.domain))
+        else:
+            self.config.load(self.config_path)
+
         self.config.model.name = self.model_name
         self.config.set_dataset_path(self.dataset_path)
         self.config.set_workspace(self.workspace_path)

@@ -10,14 +10,24 @@ export class ModelService {
 
   baseUrl = environment.baseUrl;
   myModels = [];
+  workspacePath: string;
 
   constructor(
     private http: HttpClient
   ) { }
 
-  getRepoPath() {
-    return this.http.get(
-      this.baseUrl + 'api/lpot_repository_path'
+  setWorkspacePath(path: string) {
+    this.workspacePath = path;
+    return this.http.post(
+      this.baseUrl + 'api/set_workspace',
+      { path: path }
+    );
+  }
+
+  getDefaultPath(name: string) {
+    return this.http.post(
+      this.baseUrl + 'api/get_default_path',
+      { name: name }
     );
   }
 
@@ -48,7 +58,8 @@ export class ModelService {
       this.baseUrl + 'api/configuration',
       {
         id: newModel.id,
-        model_path: newModel.model_path
+        model_path: newModel.model_path,
+        domain: newModel.domain
       });
   }
 
@@ -56,13 +67,14 @@ export class ModelService {
     return this.http.post(
       this.baseUrl + 'api/tune',
       {
-        workspace_path: newModel.workspace_path,
+        workspace_path: this.workspacePath,
         id: newModel.id
       }
     );
   }
 
   saveWorkload(fullModel: FullModel) {
+    fullModel['workspace_path'] = this.workspacePath;
     return this.http.post(
       this.baseUrl + 'api/save_workload',
       fullModel
@@ -74,15 +86,21 @@ export class ModelService {
     const model = this.myModels.find(model => model['id'] === id);
     let url = '';
     if (fileType === 'output') {
-      url = 'file' + model['workspace_path'] + '/' + model['id'] + '.txt';
+      url = 'file' + this.workspacePath + '/' + model['id'] + '.txt';
     } else if (fileType === 'config') {
-      url = 'file' + model['workspace_path'] + '/config.' + model['id'] + '.yaml';
+      url = 'file' + this.workspacePath + '/config.' + model['id'] + '.yaml';
     }
     return this.http.get(this.baseUrl + url, { responseType: 'text' as 'json' });
   }
 
-  getFileSystem(path: string, files: boolean) {
-    return this.http.get(this.baseUrl + 'api/filesystem', { params: { path: path, files: String(files) } });
+  getFileSystem(path: string, files: boolean, modelsOnly: boolean) {
+    return this.http.get(this.baseUrl + 'api/filesystem', {
+      params: {
+        path: path,
+        files: String(files),
+        models_only: String(modelsOnly)
+      }
+    });
   }
 }
 
@@ -94,5 +112,4 @@ export interface NewModel {
   input?: string;
   model_path: string;
   output?: string;
-  workspace_path: string;
 }

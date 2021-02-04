@@ -1,0 +1,49 @@
+{
+    "tensorflow": {
+        "Resize": {
+            "size": []
+        },
+        "CenterCrop": {
+            "central_fraction": 0.0
+        },
+        "RandomResizedCrop": {
+            "size": []
+        },
+        "Normalize": {
+            "mean": [],
+            "std": []
+        },
+        "RandomCrop": {
+            "size": []
+        },
+        "Compose": null,
+        "CropAndResize": {
+            "boxes": [],
+            "box_indices": [],
+            "crop_size": []
+        },
+        "RandomHorizontalFlip": null,
+        "RandomVerticalFlip": null,
+        "DecodeImage": null,
+        "EncodeJpeg": null,
+        "Transpose": {
+            "perm": []
+        },
+        "CropToBoundingBox": {
+            "offset_height": 0,
+            "offset_width": 0,
+            "target_height": 0,
+            "target_width": 0
+        },
+        "ConvertImageDtype": {
+            "dtype": "Dtype"
+        },
+        "ParseDecodeImagenet": null,
+        "ResizeCropImagenet": {
+            "height": 0,
+            "width": 0,
+            "mean_value": []
+        },
+        "ParseDecodeCoco": null
+    }
+}

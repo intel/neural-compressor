@@ -12,18 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Configuration to yaml."""
 
-from typing import Any, Dict, List, Union
+"""Constant values."""
 
-
-def get_predefined_workload(
-    data: Dict[str, Any],
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-    """Get configuration."""
-    from lpot.ux.utils.workload.workload import Workload
-
-    lpot_workload = Workload(data)
-    lpot_workload.dump()
-    lpot_workload.config.dump(lpot_workload.config_path)
-    return lpot_workload.serialize()
+github_info = {
+    "user": "intel",
+    "repository": "lpot",
+    "tag": "v1.1",  # TODO: Switch to v1.2 before release
+}

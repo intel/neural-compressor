@@ -12,5 +12,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""App package is the application running whole UX system."""
+"""Package benchmark contains all packages required to benchmark model."""

@@ -12,4 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Package lpot_tune contains all packages required to tune model using LPOT."""
+"""Download yaml config from GitHub."""
+
+from lpot.ux.components.model_zoo.downloader import Downloader
+
+
+def download_config(data: dict) -> None:
+    """Process config download request."""
+    downloader = Downloader(data)
+    downloader.download_config()

@@ -19,6 +19,7 @@ from typing import Any
 
 from flask import Flask
 from flask import Request as WebRequest
+from flask import Response as WebResponse
 from flask import jsonify, request, send_file
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -85,6 +86,16 @@ def allow_api_call(subpath: str) -> Any:
 def page_not_found(e: Any) -> Any:
     """Serve JS application index when no static file found."""
     return app.send_static_file("index.html")
+
+
+@app.after_request
+def disable_cache(response: WebResponse) -> WebResponse:
+    """Disable cache on all requests."""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    response.headers["Cache-Control"] = "public, max-age=0"
+    return response
 
 
 def build_parameters(endpoint: str, request: WebRequest) -> Request:

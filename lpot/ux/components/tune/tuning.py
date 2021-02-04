@@ -15,18 +15,17 @@
 """Tuning class."""
 
 import os
-from pathlib import Path
 
 from lpot.ux.utils.utils import load_model_config
 from lpot.ux.utils.workload.workload import Workload
 
 
 class Tuning:
-    """LPOT Tuning class."""
+    """Tuning class."""
 
     def __init__(self, workload: Workload) -> None:
-        """Initialize LPOT configuration Dataset class."""
-        model_output_name = "_".join(["lpot", Path(workload.model_path).name])
+        """Initialize configuration Dataset class."""
+        model_output_name = workload.model_name + "_int8.pb"
         self.model_output_path = os.path.join(
             workload.workspace_path,
             model_output_name,

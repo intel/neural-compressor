@@ -17,26 +17,23 @@
 
 from threading import Thread
 
-from lpot.ux.components.file_browser.file_browser import get_directory_entries
-from lpot.ux.components.lpot_benchmark.execute_benchmark import execute_benchmark
-from lpot.ux.components.lpot_configuration_wizard.get_boundary_nodes import (
+from lpot.ux.components.benchmark.execute_benchmark import execute_benchmark
+from lpot.ux.components.configuration_wizard.get_boundary_nodes import (
     get_boundary_nodes,
 )
-from lpot.ux.components.lpot_configuration_wizard.get_configuration import (
+from lpot.ux.components.configuration_wizard.get_configuration import (
     get_predefined_configuration,
 )
-from lpot.ux.components.lpot_configuration_wizard.get_predefined_workload import (
+from lpot.ux.components.configuration_wizard.get_predefined_workload import (
     get_predefined_workload,
 )
-from lpot.ux.components.lpot_configuration_wizard.lpot_repository_path import (
-    get_lpot_repository_path,
-)
-from lpot.ux.components.lpot_configuration_wizard.params_feeder import (
-    get_possible_values,
-)
-from lpot.ux.components.lpot_tune.execute_tune import execute_tuning
+from lpot.ux.components.configuration_wizard.params_feeder import get_possible_values
+from lpot.ux.components.file_browser.file_browser import get_directory_entries
+from lpot.ux.components.menage_workspace import get_default_path, set_workspace
+from lpot.ux.components.model_zoo.download_config import download_config
 from lpot.ux.components.model_zoo.download_model import download_model
 from lpot.ux.components.model_zoo.list_models import list_models
+from lpot.ux.components.tune.execute_tune import execute_tuning
 from lpot.ux.web.communication import Request, Response, create_simple_response
 from lpot.ux.web.exceptions import ServiceNotFoundException
 
@@ -56,11 +53,13 @@ class Router:
             "configuration": get_predefined_configuration,
             "tune": process_request_for_tuning,
             "benchmark": process_request_for_benchmark,
-            "lpot_repository_path": get_lpot_repository_path,
+            "get_default_path": get_default_path,
+            "set_workspace": set_workspace,
             "get_boundary_nodes": process_request_for_boundary_nodes,
             "get_possible_values": get_possible_values,
             "download_model": process_request_for_model_download,
             "list_model_zoo": list_models,
+            "download_config": process_request_for_model_config,
         }
 
         operation = operation_map.get(request.operation)
@@ -101,6 +100,15 @@ def process_request_for_boundary_nodes(data: dict) -> dict:
 def process_request_for_model_download(data: dict) -> dict:
     """Set thread and download model."""
     t = Thread(target=download_model, args=(data,))
+    t.daemon = True
+    t.start()
+
+    return {"exit_code": 102, "message": "processing"}
+
+
+def process_request_for_model_config(data: dict) -> dict:
+    """Set thread and download model."""
+    t = Thread(target=download_config, args=(data,))
     t.daemon = True
     t.start()
 

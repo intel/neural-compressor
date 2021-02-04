@@ -20,7 +20,7 @@ import logging as log
 import os
 from typing import Any, Dict
 
-from lpot.ux.components.lpot_benchmark.benchmark import Benchmark
+from lpot.ux.components.benchmark.benchmark import Benchmark
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.parser import Parser
@@ -93,6 +93,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
     for idx, model_info in enumerate(models, start=1):
         model_precision = model_info.get("precision", None)
         model_path = model_info.get("path", None)
+        benchmark_mode = model_info.get("mode", "performance")
         if not (model_precision and model_path):
             message = "Missing model precision or model path."
             mq.post_error(
@@ -101,9 +102,15 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
             )
             raise ClientErrorException(message)
 
-        benchmark: Benchmark = Benchmark(workload, model_path)
+        benchmark: Benchmark = Benchmark(
+            workload=workload,
+            model_path=model_path,
+            datatype=model_precision,
+            mode=benchmark_mode,
+        )
 
-        log_name = f"{request_id}_{model_precision}_benchmark"
+        log_name = f"{request_id}_{model_precision}_{benchmark_mode}_benchmark"
+
         executor = Executor(
             workspace_path,
             subject="benchmark",
@@ -132,7 +139,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
             log.info(f"Parsed data is {json.dumps(response_data)}")
             mq.post_success("benchmark_progress", response_data)
         else:
-            log.info("FAIL")
+            log.error("Benchmark failed.")
             mq.post_failure("benchmark_finish", {"message": "failed", "id": request_id})
             return
 

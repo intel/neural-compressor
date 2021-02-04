@@ -8,7 +8,7 @@
 | Parameter | Description |
 |:-----------|:-------------|
 | **id** | workload ID |
-| **workspace_path** | path to LPOT UX current workspace |
+| **workspace_path** | path to current UX workspace |
 | **models** | list of models to benchmark |
 
 > *Model definition*:
@@ -56,7 +56,7 @@
     ```json
     {
         "id": "22b60ef39915ff4931936ca43b8c3ead",
-        "perf_throughput_fp32": 85.672,
+        "perf_throughput_fp32": <float>,
         "progress": "1/2"
     }
     ```
@@ -67,9 +67,9 @@
     ```json
     {
         "id": "22b60ef39915ff4931936ca43b8c3ead",
-        "perf_throughput_fp32": 85.672,
+        "perf_throughput_fp32": <float>,
         "progress": "2/2",
-        "perf_throughput_int8": 241.698
+        "perf_throughput_int8": <float>
     }
     ```
 
@@ -79,8 +79,8 @@
     ```json
     {
         "id": "22b60ef39915ff4931936ca43b8c3ead",
-        "perf_throughput_fp32": 85.672,
+        "perf_throughput_fp32": <float>,
         "progress": "2/2",
-        "perf_throughput_int8": 241.698
+        "perf_throughput_int8": <float>
     }
     ```

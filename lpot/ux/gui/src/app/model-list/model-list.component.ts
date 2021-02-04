@@ -21,7 +21,6 @@ export class ModelListComponent implements OnInit, OnChanges {
     public dialog: MatDialog
   ) { }
 
-
   ngOnInit() {
     this.socketService.tuningStart$
       .subscribe(result => {

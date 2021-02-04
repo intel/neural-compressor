@@ -25,11 +25,11 @@ setup(
     package_dir = {'':'.'},
     package_data={
         '': ['*.py', '*.yaml'],
-        "lpot.ux": ["web/static/*.*", "web/static/assets/*.*"],
+        "lpot.ux": ["web/static/*.*", "web/static/assets/*.*", "utils/configs/*.json"],
     },
     install_requires=[
         'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas==1.1.5', 'pycocotools', 'opencv-python',
-        'Flask', 'Flask-Cors', 'Flask-SocketIO', 'gevent', 'gevent-websocket', 'psutil', 'ruamel.yaml',
+        'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'ruamel.yaml',
     ],
     entry_points={
       'console_scripts':  [

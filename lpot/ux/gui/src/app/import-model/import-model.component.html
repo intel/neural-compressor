@@ -11,13 +11,12 @@
           <mat-label>model</mat-label>
           <input required formControlName="modelLocation" matInput>
         </mat-form-field>
-        <button mat-raised-button color="primary" class="browse" (click)="openDialog('modelLocation', true)">
+        <button mat-raised-button color="primary" class="browse" (click)="openDialog('modelLocation', true, true)">
           Choose file</button>
         <br>
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>model domain</mat-label>
-          <mat-select formControlName="modelDomain" required
-            (selectionChange)="firstFormGroup.get('dataset').setValue('imagenet')">
+          <mat-select formControlName="modelDomain" required>
             <mat-option *ngFor="let domain of domains" [value]="domain">
               <ng-container *ngIf="domain === 'NLP'">{{ domain }}</ng-container>
               <ng-container *ngIf="domain !== 'NLP'">{{ domain | modelList | titlecase }}</ng-container>
@@ -51,17 +50,12 @@
           <mat-label>dataset location</mat-label>
           <input formControlName="datasetLocation" matInput>
         </mat-form-field>
-        <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasetLocation', false)">
+        <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasetLocation', false, false)">
           Choose folder</button>
         <br>
         <a *ngIf="this.secondFormGroup.get('samplingSize').value" class="info">
-          sampling size: {{ this.secondFormGroup.get('samplingSize').value }}
+          Default calibration sample size: 100
         </a>
-        <br>
-        <mat-form-field class="form-field long" appearance="fill">
-          <mat-label>workspace name</mat-label>
-          <input formControlName="workspace" matInput placeholder="workspace">
-        </mat-form-field>
       </mat-card>
       <br>
       <div>
@@ -97,18 +91,26 @@
         </ng-container>
       </span>
       <br>
-
-      <form [formGroup]="secondFormGroup">
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>transform</mat-label>
-          <input formControlName="transform" matInput>
-        </mat-form-field>
-
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>parameters (size, mean, std etc.)</mat-label>
-          <input formControlName="transformParams" matInput>
-        </mat-form-field>
-      </form>
+      <span class="inline">
+        <form [formGroup]="secondFormGroup">
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>transform</mat-label>
+            <mat-select formControlName="transform" (selectionChange)="setDefaultTransformationParam($event)">
+              <mat-option *ngFor="let transformation of transformations | keyvalue" [value]="transformation.key">
+                {{ transformation.key }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </form>
+      </span>
+      <span class="inline">
+        <ng-container *ngFor="let param of transformationParams | keyvalue; let index = index">
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>{{ param.key }}</mat-label>
+            <input [(ngModel)]="param.value" matInput>
+          </mat-form-field>
+        </ng-container>
+      </span>
     </mat-card>
 
     <h4>Quantization</h4>
@@ -124,14 +126,14 @@
           <input formControlName="samplingSize" matInput placeholder="100">
         </mat-form-field>
 
-        <mat-form-field class="form-field" appearance="fill">
+        <!-- <mat-form-field class="form-field" appearance="fill">
           <mat-label>op</mat-label>
           <mat-select formControlName="op" multiple>
             <mat-option *ngFor="let op of ops" [value]="op">
               {{ op }}
             </mat-option>
           </mat-select>
-        </mat-form-field>
+        </mat-form-field> -->
 
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>tuning strategy</mat-label>

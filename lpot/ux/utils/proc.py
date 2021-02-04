@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Execution common LPOT proc module."""
+"""Execution common proc module."""
 
 import datetime
 import json
@@ -25,7 +25,7 @@ import uuid
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
 
-class LPOTProc(object):
+class Proc(object):
     """Process class that runs commands from shell."""
 
     def __init__(

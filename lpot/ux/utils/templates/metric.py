@@ -27,7 +27,7 @@ class Metric(JsonSerializer):
     # TODO: Split into Accuracy, Performance if necessary for Benchmark
 
     def __init__(self) -> None:
-        """Initialize LPOT configuration Dataset class."""
+        """Initialize configuration Dataset class."""
         super().__init__()
         self._acc_fp32: Optional[float] = None
         self._acc_int8: Optional[float] = None

@@ -20,7 +20,7 @@ import logging as log
 import os
 from typing import Any, Dict
 
-from lpot.ux.components.lpot_tune.tuning import Tuning
+from lpot.ux.components.tune.tuning import Tuning
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.parser import Parser
 from lpot.ux.utils.utils import get_size, load_json
@@ -77,7 +77,7 @@ def execute_tuning(data: Dict[str, Any]) -> None:
         response_data = parser.process()
         if isinstance(response_data, dict):
             response_data["id"] = request_id
-            response_data["tuning_time"] = f"{tuning_time}s"
+            response_data["tuning_time"] = tuning_time
             response_data["size_int8"] = get_size(tuning.model_output_path)
             response_data["model_output_path"] = tuning.model_output_path
 

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration tuning module."""
+"""Configuration tuning module."""
 
 from typing import Any, Dict, Optional
 
@@ -20,10 +20,10 @@ from lpot.ux.utils.json_serializer import JsonSerializer
 
 
 class Strategy(JsonSerializer):
-    """LPOT configuration Strategy class."""
+    """Configuration Strategy class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Strategy class."""
+        """Initialize configuration Strategy class."""
         super().__init__()
         # [Required] One of lpot.strategy.STRATEGIES
         self.name: str = data.get("name", "basic")
@@ -33,10 +33,10 @@ class Strategy(JsonSerializer):
 
 
 class AccCriterion(JsonSerializer):
-    """LPOT configuration AccCriterion class."""
+    """Configuration AccCriterion class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Strategy class."""
+        """Initialize configuration AccCriterion class."""
         super().__init__()
         self.relative: Optional[float] = data.get(
             "relative",
@@ -49,10 +49,10 @@ class AccCriterion(JsonSerializer):
 
 
 class ExitPolicy(JsonSerializer):
-    """LPOT configuration ExitPolicy class."""
+    """Configuration ExitPolicy class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration ExitPolicy class."""
+        """Initialize Configuration ExitPolicy class."""
         super().__init__()
         self.timeout: Optional[int] = data.get("timeout", None)
 
@@ -60,10 +60,10 @@ class ExitPolicy(JsonSerializer):
 
 
 class Workspace(JsonSerializer):
-    """LPOT configuration Workspace class."""
+    """Configuration Workspace class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Workspace class."""
+        """Initialize Configuration Workspace class."""
         super().__init__()
         self.path: Optional[str] = data.get("path", None)  # [Optional]
 
@@ -71,10 +71,10 @@ class Workspace(JsonSerializer):
 
 
 class Tuning(JsonSerializer):
-    """LPOT configuration Tuning class."""
+    """Configuration Tuning class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Tuning class."""
+        """Initialize Configuration Tuning class."""
         super().__init__()
         self.strategy: Strategy = Strategy()  # [Optional]
         if data.get("strategy"):

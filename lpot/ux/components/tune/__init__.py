@@ -12,12 +12,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Get path to LPOT repository."""
-
-import os
-from typing import Any, Dict
-
-
-def get_lpot_repository_path(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Get path to LPOT repository."""
-    return {"LPOT_REPOSITORY_PATH": os.environ["LPOT_REPOSITORY_PATH"]}
+"""Package tune contains all packages required to tune model."""

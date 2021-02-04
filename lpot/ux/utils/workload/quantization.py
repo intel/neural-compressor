@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration quantization module."""
+"""Configuration quantization module."""
 
 from typing import Any, Dict, List
 
@@ -21,10 +21,10 @@ from lpot.ux.utils.workload.dataloader import Dataloader
 
 
 class Calibration(JsonSerializer):
-    """LPOT configuration Calibration class."""
+    """Configuration Calibration class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Calibration class."""
+        """Initialize Configuration Calibration class."""
         super().__init__()
         self.sampling_size: List[int] = data.get("sampling_size", None)
         self.dataloader = None
@@ -33,10 +33,10 @@ class Calibration(JsonSerializer):
 
 
 class WiseConfigDetails(JsonSerializer):
-    """LPOT configuration WiseConfigDetails class."""
+    """Configuration WiseConfigDetails class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration WiseConfigDetails class."""
+        """Initialize Configuration WiseConfigDetails class."""
         super().__init__()
         # [Optional] One of "per_channel", "per_tensor"
         self.granularity = data.get("granularity", None)
@@ -49,10 +49,10 @@ class WiseConfigDetails(JsonSerializer):
 
 
 class WiseConfig(JsonSerializer):
-    """LPOT configuration WiseConfig class."""
+    """Configuration WiseConfig class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration WiseConfig class."""
+        """Initialize Configuration WiseConfig class."""
         super().__init__()
         self.weight = None
         if isinstance(data.get("weight"), dict):
@@ -66,19 +66,19 @@ class WiseConfig(JsonSerializer):
 
 
 class Advance(JsonSerializer):
-    """LPOT configuration Advance class."""
+    """Configuration Advance class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Advance class."""
+        """Initialize Configuration Advance class."""
         super().__init__()
         self.bias_correction = data.get("bias_correction", None)
 
 
 class Quantization(JsonSerializer):
-    """LPOT configuration Quantization class."""
+    """Configuration Quantization class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Quantization class."""
+        """Initialize Configuration Quantization class."""
         super().__init__()
         self.calibration = None
         if isinstance(data.get("calibration"), dict):

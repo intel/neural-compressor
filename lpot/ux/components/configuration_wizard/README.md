@@ -3,7 +3,7 @@
 * Show "Predefined model zoo"
 * select a model from the table, import the model
 * Show hardware enviroment
-* import dataset from LPOT UX frontend to host
+* import dataset from UX frontend to host
 * select dataset on host
 * autogenerate a dataset (1.3)
 * update configuration according to dataset

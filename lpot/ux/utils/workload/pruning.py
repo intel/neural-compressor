@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration pruning module."""
+"""Configuration pruning module."""
 
 from typing import Any, Dict, List, Optional
 
@@ -20,10 +20,10 @@ from lpot.ux.utils.json_serializer import JsonSerializer
 
 
 class Magnitude(JsonSerializer):
-    """LPOT configuration Magnitude class."""
+    """Configuration Magnitude class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Magnitude class."""
+        """Initialize Configuration Magnitude class."""
         super().__init__()
         # [Optional]
         self.weights: Optional[List[Any]] = data.get("weights", None)
@@ -40,10 +40,10 @@ class Magnitude(JsonSerializer):
 
 
 class Pruning(JsonSerializer):
-    """LPOT configuration Pruning class."""
+    """Configuration Pruning class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration Pruning class."""
+        """Initialize Configuration Pruning class."""
         super().__init__()
         # [Optional]
         self.magnitude = Magnitude(data.get("magnitude", {}))

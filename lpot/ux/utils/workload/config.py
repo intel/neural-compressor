@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration module."""
+"""Configuration module."""
 
 import logging
 import os
@@ -31,10 +31,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Config(JsonSerializer):
-    """LPOT configuration class."""
+    """Configuration class."""
 
     def __init__(self, data: Dict[str, Any] = {}):
-        """Initialize LPOT configuration class."""
+        """Initialize Configuration class."""
         super().__init__()
         self._skip.append("model_path")
 
@@ -70,7 +70,7 @@ class Config(JsonSerializer):
             self.pruning = Pruning(data.get("pruning", {}))
 
     def set_dataset_path(self, dataset_path: str) -> None:
-        """Update dataset path in LPOT config."""
+        """Update dataset path in config."""
         if (
             self.evaluation
             and self.evaluation.accuracy
@@ -100,14 +100,14 @@ class Config(JsonSerializer):
             logging.warning("Could not set quantization dataset path.")
 
     def set_workspace(self, workspace_path: str) -> None:
-        """Update workspace path in LPOT config."""
+        """Update workspace path in config."""
         if self.tuning is None:
             raise Exception("Tuning section not defined!")
         os.makedirs(workspace_path, exist_ok=True)
         self.tuning.workspace.path = workspace_path
 
     def set_accuracy_goal(self, accuracy_goal: float) -> None:
-        """Update accuracy goal in LPOT config."""
+        """Update accuracy goal in config."""
         if self.tuning.accuracy_criterion and self.tuning.accuracy_criterion.relative:
             self.tuning.accuracy_criterion.relative = accuracy_goal
 

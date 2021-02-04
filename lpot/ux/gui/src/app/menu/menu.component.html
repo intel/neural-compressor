@@ -1,5 +1,20 @@
 <mat-toolbar>
-  <span class="example-spacer"></span>
+  <span class="example-spacer">
+    <ng-container *ngIf="!editable">
+      <p (dblclick)="editable = true" class="workspace" matTooltip="Double click to edit workspace path">
+        <a class="workspace-title"> Workspace: </a>
+        {{ this.workspacePath }}
+      </p>
+    </ng-container>
+    <ng-container *ngIf="editable">
+      <mat-form-field class="form-field workspace-editable" appearance="fill">
+        <mat-label>workspace</mat-label>
+        <input [(ngModel)]="workspacePath" (keydown)="saveWorkspace($event)" matInput placeholder="workspace">
+      </mat-form-field>
+      <button mat-icon-button (click)="saveWorkspace('save')" matTooltip="Save new workspace path">
+        <img class="save" src="./../../assets/056a-save-solid.svg"></button>
+    </ng-container>
+  </span>
   <img class="intel-logo" src="./../../assets/logo-energyblue-72px.svg">
   <img class="logo" src="./../../assets/298b-workflow-process-outlined.svg">
   <span class="title">

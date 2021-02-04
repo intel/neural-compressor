@@ -18,3 +18,24 @@
   color: $dark-blue;
   cursor: pointer;
 }
+
+.workspace-editable {
+  width: 50%;
+  font-size: 11px;
+}
+
+.workspace-title {
+  color: $blue;
+  font-weight: 500;
+}
+
+.workspace {
+  color: black;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.save {
+  width: 30px;
+  margin-left: 10px;
+}

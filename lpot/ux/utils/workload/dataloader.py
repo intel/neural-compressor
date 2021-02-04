@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""LPOT configuration dataloader module."""
+"""Configuration dataloader module."""
 
 from typing import Any, Dict
 
@@ -20,10 +20,10 @@ from lpot.ux.utils.json_serializer import JsonSerializer
 
 
 class Dataset(JsonSerializer):
-    """LPOT configuration Dataset class."""
+    """Configuration Dataset class."""
 
     def __init__(self, name: str, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Dataset class."""
+        """Initialize Configuration Dataset class."""
         super().__init__()
         self.name: str = name
         self.root: str = data.get("root", None)
@@ -38,19 +38,19 @@ class Dataset(JsonSerializer):
 
 
 class LabelBalance(JsonSerializer):
-    """LPOT configuration LabelBalance class."""
+    """Configuration LabelBalance class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration LabelBalance class."""
+        """Initialize Configuration LabelBalance class."""
         super().__init__()
         self.size = data.get("size", None)  # >0
 
 
 class Filter(JsonSerializer):
-    """LPOT configuration Filter class."""
+    """Configuration Filter class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Filter class."""
+        """Initialize Configuration Filter class."""
         super().__init__()
         self.LabelBalance = None
         if data.get("LabelBalance"):
@@ -58,10 +58,10 @@ class Filter(JsonSerializer):
 
 
 class Transform(JsonSerializer):
-    """LPOT configuration Transform class."""
+    """Configuration Transform class."""
 
     def __init__(self, name: str, parameters: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Transform class."""
+        """Initialize Configuration Transform class."""
         super().__init__()
         self.name: str = name
         self.parameters: Dict[str, Any] = parameters
@@ -72,10 +72,10 @@ class Transform(JsonSerializer):
 
 
 class Dataloader(JsonSerializer):
-    """LPOT configuration Dataloader class."""
+    """Configuration Dataloader class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize LPOT configuration Dataloader class."""
+        """Initialize Configuration Dataloader class."""
         super().__init__()
         self.last_batch = data.get("last_batch", None)  # One of "rollover", "discard"
         self.batch_size: int = data.get("batch_size", 1)  # > 0

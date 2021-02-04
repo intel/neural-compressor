@@ -12,4 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Package lpot_benchmark contains all packages required to benchmark model using LPOT."""
+"""Configuration to yaml."""
+
+from typing import Any, Dict, List, Union
+
+
+def get_predefined_workload(
+    data: Dict[str, Any],
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    """Get configuration."""
+    from lpot.ux.utils.workload.workload import Workload
+
+    workload = Workload(data)
+    workload.dump()
+    workload.config.dump(workload.config_path)
+    return workload.serialize()
