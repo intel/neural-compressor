@@ -10,7 +10,7 @@ First user needs to prepare FP32 model, and then configure the model information
     <td>Tutorial</td>
   </tr>
   <tr>
-    <td><img src="docs/imgs/tutorial.png" width=640 height=320></td>
+    <td><img src="./imgs/tutorial.png" width=640 height=320></td>
   </tr>
  </table>
  
@@ -21,8 +21,8 @@ Here is an example of ymal file and laucher code, the ymal file defined the tuni
     <td>launcher</td>
   </tr>
   <tr>
-    <td><img src="docs/imgs/ymal.png" width=640 height=320></td>
-    <td><img src="docs/imgs/launcher.png" width=640 height=320></td>
+    <td><img src="./imgs/ymal.png" width=640 height=320></td>
+    <td><img src="./imgs/launcher.png" width=640 height=320></td>
   </tr>
  </table>
 
@@ -32,18 +32,18 @@ To define a customized dataloader or evaluator for quantization, user can implem
     <td>Template for customized dataloader and evaluator</td>
   </tr>
   <tr>
-    <td><img src="docs/imgs/template.png" width=640 height=320></td>
+    <td><img src="./imgs/template.png" width=640 height=320></td>
   </tr>
  </table>
 
 Next, let's introduce how to do quantization in different scenarios. 
 
 # Buildin dataloader and metric 
-The [tf_example1](examples/helloworld/tf_example1) demonstrates how to utilize LPOT builtin dataloader and evalautors for quantizaiton. User only needs to add 3 lines of launcher code for tuning, see [README](examples/helloworld/tf_example1/README.md) for more details. 
+The [tf_example1](../examples/helloworld/tf_example1) demonstrates how to utilize LPOT builtin dataloader and evalautors for quantizaiton. User only needs to add 3 lines of launcher code for tuning, see [README](../examples/helloworld/tf_example1/README.md) for more details. 
 
 
 # Customized dataloader
-With a Keras saved model as example, [examples/helloworld/tf_example2](examples/helloworld/tf_example2] demonstrates how to define a customized dataloader and metric for quantization. 
+With a Keras saved model as example, [../examples/helloworld/tf_example2](../examples/helloworld/tf_example2] demonstrates how to define a customized dataloader and metric for quantization. 
 
 First define a dataset class on mnist, it implements a __getitem() interface and return the next (image, label) pair.
 
@@ -106,7 +106,7 @@ q_model = quantizer('../models/simple_model', q_dataloader = dataloader, eval_da
 ```
 
 # The interface is similiar for different TensorFlow models
-1.  TensorFlow checkpoint: see [tf_example4](examples/helloworld/tf_example4)
-2.  Enable benchmark for performanace and accuracy measurement: see [tf_example5](examples/helloworld/tf_example5)
-3.  TensorFlow slim model: see [tf_example3](examples/helloworld/tf_example3), while to quantize a slim .ckpt model we need to get the graph first, see [README](examples/helloworld/tf_example3/README.md).  
+1.  TensorFlow checkpoint: see [tf_example4](../examples/helloworld/tf_example4)
+2.  Enable benchmark for performanace and accuracy measurement: see [tf_example5](../examples/helloworld/tf_example5)
+3.  TensorFlow slim model: see [tf_example3](../examples/helloworld/tf_example3), while to quantize a slim .ckpt model we need to get the graph first, see [README](../examples/helloworld/tf_example3/README.md).  
 

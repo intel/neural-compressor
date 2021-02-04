@@ -96,7 +96,7 @@ python setup.py install
 * [Mixed precision](docs/mixed_precision.md) introduces how to enable mixed precision, including BFP16 and int8 and FP32, on Intel platforms during tuning.
 * [Transform](docs/transform.md) introduces how to utilize LPOT buildin data processing and how to develop a custom data processing method. 
 * [Dataset](docs/dataset.md) introudces how to utilize LPOT buildin dataset and how to develop a custom dataset.
-* [Metric](docs/metric.md) introduces how to utilize LPOT buildin metric and how to develop a custom metric.
+* [Metric](docs/metrics.md) introduces how to utilize LPOT buildin metrics and how to develop a custom metric.
 * [TensorBoard](docs/tensorboard.md) provides tensor histogram and execution graph for tuning debugging purpose.
 * [PyTorch Deploy](docs/pytorch_model_saving.md) introduces how LPOT saves and loads quantized PyTorch model.
 

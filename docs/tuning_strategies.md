@@ -33,7 +33,7 @@ tuning phase stops when the `accuracy` criteria is met.
 
 ## Configurations
 
-Detailed configuration templates can be found in [`here`](lpot/template).
+Detailed configuration templates can be found in [`here`](../lpot/template).
 
 ### Model-specific configurations
 
