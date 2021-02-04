@@ -1,0 +1,61 @@
+{
+    "mxnet": {
+        "dummy": {
+            "shape": []
+        },
+        "ImageFolderDataset": {
+            "root": ""
+        },
+        "ImageRecordDataset": {
+            "root": ""
+        }
+    },
+    "onnxrt": {
+        "dummy": {
+            "shape": []
+        },
+        "Imagenet": {
+            "root": ""
+        }
+    },
+    "pytorch": {
+        "Bert": {
+            "dataset": [],
+            "task": [
+                "classifier",
+                "squad"
+            ]
+        },
+        "DatasetFolder": {
+            "root": ""
+        },
+        "dummy": {
+            "shape": []
+        },
+        "ImageFolder": {
+            "root": ""
+        },
+        "ImageNet": {
+            "root": ""
+        }
+    },
+    "tensorflow": {
+        "COCORecord": {
+            "root": ""
+        },
+        "dummy": {
+            "shape": []
+        },
+        "ImageRecord": {
+            "root": "",
+            "subset": ""
+        },
+        "style_transfer": {
+            "content_path": "",
+            "style_path": ""
+        },
+        "TFRecordDataset": {
+            "filenames": ""
+        }
+    }
+}

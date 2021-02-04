@@ -1,0 +1,39 @@
+<h4>Predefined model list</h4>
+
+<table>
+  <tr>
+    <td class="header">framework</td>
+    <td class="header">model</td>
+    <td class="header">workspace folder</td>
+      <ng-container *ngFor="let key of objectKeys(modelList['tensorflow']['resnet50v1.0'])">
+    <td class="header" *ngIf="key !== 'input_model'">
+      {{ key | modelList }}
+    </td>
+    </ng-container>
+    <td class="header">precision</td>
+    <td class="header">
+      </td>
+  </tr>
+  <tr *ngFor="let model of objectKeys(modelList['tensorflow'])">
+    <td class="cell">tensorflow</td>
+    <td class="cell">{{ model }}</td>
+    <td class="cell">
+      <input matInput placeholder="set location">
+    </td>
+    <ng-container *ngFor="let key of objectKeys(modelList['tensorflow'][model])">
+      <td class="cell" *ngIf="key !== 'input_model' && key !== 'yaml' && key !== 'dataset_location'">
+        {{ modelList['tensorflow'][model][key] }}
+      </td>
+      <td class="cell" *ngIf="key === 'yaml'">
+        <a href="">
+          {{ modelList['tensorflow'][model][key] | modelList }}
+        </a>
+      </td>
+      <td class="cell" *ngIf="key === 'dataset_location'">
+        <input matInput placeholder="set location">
+      </td>
+    </ng-container>
+    <td class="cell">float32</td>
+    <td class="cell"><button mat-flat-button color="accent">&#65291; Add to my models</button></td>
+  </tr>
+</table>

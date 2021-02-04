@@ -1,0 +1,28 @@
+<button mat-button class="close-button" mat-dialog-close matTooltip="Close">&#x2573;</button>
+<mat-form-field class="form-field long" appearance="fill">
+  <input matInput appearance="fill" [ngModel]="currentPath" (change)="currentPathChange($event)">
+</mat-form-field>
+<button mat-icon-button class="parent-dir" (click)="goToParentDirectory()" matTooltip="Go to parent directory">
+  <img src="./../../assets/077-arrow-up.svg">
+</button>
+<button mat-raised-button class="confirm" color="accent" [disabled]="!chosenFile" [mat-dialog-close]="chosenFile"
+  matTooltip="Save selection">Choose</button>
+<br>
+<div class="file-container">
+  <ng-container *ngFor="let item of contents">
+    <p *ngIf="item.type === 'directory'">
+      <button class="file-button" (click)="chooseFile(item.name)" (dblclick)="getFileSystem(item.name)">
+        <img src="./../../assets/050a-folder-solid.svg">
+        {{ item.name.replace(currentPath + '/', '') }}
+      </button>
+    </p>
+  </ng-container>
+  <ng-container *ngFor="let item of contents">
+    <p *ngIf="item.type === 'file'">
+      <button [ngClass]="{'chosen': item.name === chosenFile, 'file-button':true}" (click)="chooseFile(item.name)">
+        <img src="./../../assets/145b-document-outlined.svg">
+        {{ item.name.replace(currentPath + '/', '') }}
+      </button>
+    </p>
+  </ng-container>
+</div>

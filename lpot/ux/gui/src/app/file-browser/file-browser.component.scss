@@ -1,0 +1,48 @@
+@import './../../variables.scss';
+
+img {
+  width: 20px;
+  position: relative;
+  top: 5px;
+  margin-right: 5px;
+}
+
+.parent-dir {
+  background-color: white;
+  width: 50px;
+  height: 50px;
+  position: relative;
+  top: -10px;
+}
+
+button {
+  background-color: white;
+  border: none;
+  padding-bottom: 5px;
+  cursor: pointer;
+}
+
+.file-button:hover {
+  background-color: $lighter-gray3;
+}
+
+.chosen,
+.chosen:hover {
+  background-color: $pale-blue;
+}
+
+.confirm {
+  padding-bottom: 0px;
+  position: relative;
+  top: -5px;
+}
+
+.close-button {
+  float: right;
+  position: relative;
+  top: 5px;
+}
+
+.file-container {
+  height: 88%;
+}

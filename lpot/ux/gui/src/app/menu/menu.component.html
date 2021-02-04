@@ -1,0 +1,17 @@
+<mat-toolbar>
+  <span class="example-spacer"></span>
+  <img class="intel-logo" src="./../../assets/logo-energyblue-72px.svg">
+  <img class="logo" src="./../../assets/298b-workflow-process-outlined.svg">
+  <span class="title">
+    <p (click)="openUrl('https://github.com/intel/lpot')">
+      Low Precision Optimization Tool
+    </p>
+  </span>
+  <span class="example-spacer"></span>
+</mat-toolbar>
+
+<mat-menu #menu="matMenu">
+  <button mat-menu-item routerLink="/my-models">My models</button>
+  <button mat-menu-item routerLink="/summary">Summary</button>
+  <button mat-menu-item routerLink="/tune">Tune</button>
+</mat-menu>

@@ -1,0 +1,55 @@
+@import './../../variables.scss';
+
+.form-field {
+  margin-right: 5px;
+}
+
+.long {
+  width: 500px;
+}
+
+.float-right {
+  float: right;
+}
+
+.content {
+  padding: 16px;
+}
+
+table {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.header {
+  background-color: $dark-blue;
+  text-align: center;
+  color: white;
+  padding: 5px;
+  border: 1px solid white;
+}
+
+.cell {
+  background-color: $lighter-gray1;
+  padding: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  border: 1px solid white;
+}
+
+.none {
+  background-color: none;
+}
+
+.pale-blue {
+  background-color: $pale-blue !important;
+}
+
+.icon-button {
+  cursor: pointer;
+}
+
+.align-right {
+  text-align: right;
+}

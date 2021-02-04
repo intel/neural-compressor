@@ -23,10 +23,18 @@ setup(
     url="https://github.com/intel/lpot",
     packages = find_packages(),
     package_dir = {'':'.'},
-    package_data={'': ['*.py', '*.yaml']},
-    install_requires=['numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas==1.1.5', 'pycocotools', 'opencv-python'],
+    package_data={
+        '': ['*.py', '*.yaml'],
+        "lpot.ux": ["web/static/*.*", "web/static/assets/*.*"],
+    },
+    install_requires=[
+        'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas==1.1.5', 'pycocotools', 'opencv-python',
+        'Flask', 'Flask-Cors', 'Flask-SocketIO', 'gevent', 'gevent-websocket', 'psutil', 'ruamel.yaml',
+    ],
     entry_points={
-      'console_scripts':  [""]
+      'console_scripts':  [
+            "lpot_ux = lpot.ux.lpot_ux:main"
+        ]
     },
     python_requires='>=3.5.0',
     classifiers=[

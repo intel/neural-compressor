@@ -9,5 +9,12 @@ schema
 py-cpuinfo
 hyperopt
 contextlib2
+Flask
+Flask-Cors
+Flask-SocketIO
+gevent
+gevent-websocket
+psutil
+ruamel.yaml
 pycocotools-windows; sys_platform != 'linux'
 pycocotools; sys_platform == 'linux'

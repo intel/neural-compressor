@@ -1,0 +1,20 @@
+@import './../../variables.scss';
+
+.example-spacer {
+  flex: 1 1 auto;
+}
+
+.intel-logo {
+  width: 70px;
+  margin-right: 20px;
+}
+
+.logo {
+  width: 30px;
+  margin-right: 5px;
+}
+
+.title {
+  color: $dark-blue;
+  cursor: pointer;
+}

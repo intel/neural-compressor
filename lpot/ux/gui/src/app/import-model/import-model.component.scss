@@ -1,0 +1,35 @@
+@import './../../variables.scss';
+
+button {
+  margin-right: 10px;
+}
+
+::ng-deep .mat-horizontal-stepper-header-container {
+  width: 50%;
+  margin-bottom: 10px;
+}
+
+.browse {
+  position: relative;
+  top: -5px;
+}
+
+.spinner {
+  position: relative;
+  top: 10px;
+  margin-left: 5px;
+}
+
+.spinner-wrapper {
+  display: flex;
+}
+
+.inline {
+  display: inline-block;
+}
+
+.info {
+  color: $dark-gray;
+  position: relative;
+  top: -12px;
+}

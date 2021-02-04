@@ -1,0 +1,107 @@
+<br>
+<div class="info-container" *ngIf="tuningInProgress">
+  <img class="info-icon" src="./../../assets/004a-information-solid.svg">
+  Do not close the window until tuning is finished.
+</div>
+
+<button mat-raised-button color="accent" [routerLink]="['/config-wizard']">&#65291; Create low precision model</button>
+<br>
+<br>
+<table *ngIf="modelList && modelList[0]">
+  <tr>
+    <td class="header" rowspan="2">RUN</td>
+    <td class="header" rowspan="2">Status</td>
+    <td class="header" colspan="4">Model</td>
+    <td class="header" colspan="3">Accuracy</td>
+    <td class="header" colspan="3">Throughput [sample/sec]</td>
+    <td class="header" colspan="3">Model size [MB]</td>
+    <td class="header" rowspan="2">Model generation time [sec]</td>
+    <td class="header" rowspan="2">Config</td>
+    <td class="header" rowspan="2">Console output</td>
+  </tr>
+  <tr>
+    <td class="header" colspan="2">FP32</td>
+    <td class="header" colspan="2">INT8</td>
+    <td class="header" colspan="1">FP32</td>
+    <td class="header" colspan="1">INT8</td>
+    <td class="header" colspan="1">Accuracy diff</td>
+    <td class="header" colspan="1">FP32</td>
+    <td class="header" colspan="1">INT8</td>
+    <td class="header" colspan="1">Perf speedup</td>
+    <td class="header" colspan="1">FP32</td>
+    <td class="header" colspan="1">INT8</td>
+    <td class="header" colspan="1">Ratio</td>
+  </tr>
+  <tr *ngFor="let model of modelList">
+    <td class="cell icon-button">
+      <img [matTooltip]="'Rerun this configuration'" (click)="tune(model)" src="./../../assets/088a-start-solid.svg">
+    </td>
+    <td class="cell">
+      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
+        src="./../../assets/010a-passed-completed-solid.svg">
+      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error'"
+        src="./../../assets/006a-alert-solid.svg">
+      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'failure'"
+        src="./../../assets/009a-close-solid.svg">
+      <mat-spinner *ngIf="model['status'] === 'wip'" [diameter]="25"></mat-spinner>
+    </td>
+    <td class="cell">
+      {{ model['model_path'] ? getFileName(model['model_path']) : null }}
+    </td>
+    <td class="cell clipboard">
+      <img *ngIf="model['model_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
+        matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+        (click)="copyToClipboard(model['model_path'])">
+    </td>
+    <td class="cell">
+      {{ model['model_output_path'] ? getFileName(model['model_output_path']) : null }}
+    </td>
+    <td class="cell clipboard">
+      <img *ngIf="model['model_output_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
+        matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+        (click)="copyToClipboard(model['model_output_path'])">
+    </td>
+    <td class="cell pale-blue align-right">
+      {{ model['acc_fp32'] ? (model['acc_fp32'] * 100 | number: '1.2-2') + '%' : null }}
+    </td>
+    <td class="cell pale-blue align-right">
+      {{ model['acc_int8'] ? (model['acc_int8'] * 100 | number: '1.2-2') + '%' : null }}
+    </td>
+    <td class="cell pale-blue align-right">
+      {{ model['acc_fp32'] && model['acc_int8'] ?
+      (((model['acc_int8'] - model['acc_fp32']) * 100 / model['acc_fp32']) | number: '1.2-2') + '%' : null }}
+    </td>
+    <td class="cell align-right">
+      {{ model['perf_throughput_fp32'] ? (model['perf_throughput_fp32'] | number: '1.0-0') : null }}
+    </td>
+    <td class="cell align-right">
+      {{ model['perf_throughput_int8'] ? (model['perf_throughput_int8'] | number: '1.0-0') : null }}
+    </td>
+    <td class="cell align-right">
+      {{ model['perf_throughput_fp32'] && model['perf_throughput_int8'] ?
+      ((model['perf_throughput_int8'] / model['perf_throughput_fp32']) | number: '1.1-1') + 'x' : null }}
+    </td>
+    <td class="cell align-right">
+      {{ model['size_fp32'] }}
+    </td>
+    <td class="cell align-right">
+      {{ model['size_int8'] }}
+    </td>
+    <td class="cell align-right">
+      {{ model['size_fp32'] && model['size_int8'] ?
+      ((model['size_fp32'] / model['size_int8']) | number: '1.1-1') + 'x' : null }}
+    </td>
+    <td class="cell align-right">
+      {{ model['tuning_time'] }}
+    </td>
+    <td class="cell">
+      <button class="file-button" (click)="openDialog(model['id'], 'config')">
+        Show config
+      </button>
+    </td>
+    <td class="cell">
+      <button class="file-button" (click)="openDialog(model['id'], 'output')">
+        Show output
+      </button>
+    </td>
+</table>
