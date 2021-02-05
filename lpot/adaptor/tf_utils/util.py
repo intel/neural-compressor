@@ -49,8 +49,7 @@ def read_graph(in_graph, in_graph_is_binary=True):
     :param in_graph_is_binary: whether input graph is binary, default True.
     :return: input graphDef.
     """
-    if not gfile.Exists(in_graph):
-        raise ValueError('Input graph pb file %s does not exist.' % in_graph)
+    assert gfile.Exists(in_graph), 'Input graph pb file %s does not exist.' % in_graph
 
     input_graph_def = graph_pb2.GraphDef()
     mode = "rb" if in_graph_is_binary else "r"
@@ -71,11 +70,13 @@ def write_graph(out_graph_def, out_graph_file):
     :param out_graph_file: path to output graph file.
     :return: None.
     """
-    if not isinstance(out_graph_def, tf.compat.v1.GraphDef):
-        raise ValueError(
-            'out_graph_def is not instance of TensorFlow GraphDef.')
-    if out_graph_file and not os.path.exists(os.path.dirname(out_graph_file)):
-        raise ValueError('"output_graph" directory does not exists.')
+    assert isinstance(
+        out_graph_def,
+        tf.compat.v1.GraphDef), 'out_graph_def is not instance of TensorFlow GraphDef.'
+
+    assert out_graph_file and os.path.exists(os.path.dirname(
+        out_graph_file)), '"output_graph" directory does not exists.'
+
     f = gfile.GFile(out_graph_file, 'wb')
     f.write(out_graph_def.SerializeToString())
 

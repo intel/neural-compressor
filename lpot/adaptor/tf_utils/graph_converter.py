@@ -199,8 +199,8 @@ class GraphConverter:
                                                               TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
-        if self.output_graph and not os.path.exists(os.path.dirname(self.output_graph)):
-            raise ValueError('"output_graph" directory does not exist.')
+        assert self.output_graph and os.path.exists(os.path.dirname(
+            self.output_graph)), '"output_graph" directory does not exist.'
 
         self._output_path = os.path.dirname(
             os.path.realpath(self.output_graph if self.output_graph else self.input_graph))

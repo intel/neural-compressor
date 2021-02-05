@@ -744,9 +744,9 @@ class GraphRewriterHelper():
         Raises:
           ValueError: If the node isn't a Const.
         """
-        if node_def.op != "Const":
-            raise ValueError("Node named '%s' should be a Const op for values_from_const." %
-                             node_def.name)
+
+        assert node_def.op == 'Const', "Node named '%s' should be a Const op." % node_def.name
+
         input_tensor = node_def.attr["value"].tensor
         tensor_value = tensor_util.MakeNdarray(input_tensor)
         return tensor_value
