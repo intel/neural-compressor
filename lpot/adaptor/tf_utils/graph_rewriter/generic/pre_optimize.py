@@ -31,6 +31,8 @@ from .fold_batch_norm import FoldBatchNormNodesOptimizer
 from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
+from .grappler_pass import GrapplerOptimizer
+
 class PreOptimization(object):
     def __init__(self, model, inputs, outputs):
         self.output_node_names = list(set([output.split(":")[0] for output in outputs]))
@@ -75,6 +77,9 @@ class PreOptimization(object):
 
         self._tmp_graph_def = ConvertLayoutOptimizer(
             self.input_graph, self.output_node_names).do_transformation()
+
+        self._tmp_graph_def = GrapplerOptimizer(
+            self._tmp_graph_def, self.output_node_names).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def, protected_nodes=self.output_node_names).do_transformation()

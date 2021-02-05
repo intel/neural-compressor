@@ -345,10 +345,9 @@ class TensorFlowAdaptor(Adaptor):
                     count += 1
             int8_sum_count += count
             logger.info('|' + 'INT8 {}: {} '.format(i, count).ljust(log_length) + '|')
-            bf16_count = 0
-            for k in self.bf16_ops:
-                if k in self._init_op_stat[i]:
-                    bf16_count += 1
+            valid_bf16_ops = [name for name in self.bf16_ops if name in self._init_op_stat[i]]
+            bf16_count = len(valid_bf16_ops)
+
             if bf16_count > 0:
                 logger.info(('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) + '|'))
             bf16_sum_count += bf16_count

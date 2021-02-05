@@ -86,8 +86,8 @@ class GraphConverter:
         """
         # Logger initial
         self.logger = logging.getLogger()
-        self.debug = bool(self.logger.level == logging.DEBUG)
 
+        self.debug = bool(self.logger.level == logging.DEBUG)
         # as we may have outputs with suffix, strip to get raw name
         self.output_node_names = list(set([x.split(":")[0] for x in outputs]))
         self.input_node_names = list(set([x.split(":")[0] for x in inputs]))

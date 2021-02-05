@@ -54,6 +54,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
     @disable_random()
     def test_tensorflow_graph_meta_pass(self):
+
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
