@@ -82,6 +82,9 @@ def build_non_MSE_yaml():
             metric:
               MSE: 
                compare_label: False
+          performance:
+            warmup: 5
+            iteration: 10
 
         tuning:
           accuracy_criterion:

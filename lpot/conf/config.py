@@ -512,7 +512,7 @@ class Conf(object):
 
                     if is_regex and re.match(k, k_op[0]):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
-
+                        
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
 

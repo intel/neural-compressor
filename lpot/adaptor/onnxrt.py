@@ -18,11 +18,13 @@
 
 import os
 import copy
+import yaml
 import logging
 from collections import OrderedDict
 
 import numpy as np
 from .adaptor import adaptor_registry, Adaptor
+from .query import QueryBackendCapability
 from ..utils.utility import LazyImport
 
 onnx = LazyImport("onnx")
@@ -72,47 +74,109 @@ class ONNXRTAdaptor(Adaptor):
             return model
         if model.opset_import[0].version < 11:
             logger.warning('quantize input need model opset >= 11')
-
-        from onnxruntime.quantization.onnx_quantizer import ONNXQuantizer
+        from .ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
         model = copy.deepcopy(model)
-        iterations = tune_cfg.get('calib_iteration', 1)
         self.quantizable_ops = self._query_quantizable_ops(model)
         q_config = self._cfg_to_qconfig(tune_cfg)
         if self.static:
-            quantize_params = self._get_quantize_params(model, dataLoader, q_config, iterations)
+            quantize_params = self._get_quantize_params(model, dataLoader, q_config)
         else:
             quantize_params = None
         quantizer = ONNXQuantizer(model,
-            q_config["per_channel"],
-            q_config["reduce_range"],
+            q_config,
             backend,
             self.static,
-            q_config["weight_dtype"],
-            q_config["input_dtype"],
             quantize_params,
-            q_config["nodes_include"],
-            q_config["nodes_exclude"],
             self.quantizable_op_types)
         quantizer.quantize_model()
         return quantizer.model.model
 
-    def _get_quantize_params(self, model, dataloader, q_config, iterations):
+    def _get_quantize_params(self, model, dataloader, q_config):
         from .ox_utils.onnx_calibrate import calibrate
+        black_nodes = [node for node in q_config if q_config[node]=='fp32']
+        white_nodes = [node for node in q_config if q_config[node]!='fp32']
         quantize_params = calibrate(model, dataloader, self.quantizable_op_types, \
-            q_config["nodes_exclude"], q_config["nodes_include"], iterations=iterations)
+                  black_nodes=black_nodes, white_nodes=white_nodes, \
+                  augmented_model_path=os.path.join(self.work_space, 'augmented_model.onnx'))
         return quantize_params
 
     def _pre_optimize(self, model, level=1):
         # TODO hardcoded to GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options = ort.SessionOptions()
-        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
         session = ort.InferenceSession(model.SerializeToString(), sess_options)
         self.pre_optimized_model = onnx.load(sess_options.optimized_model_filepath)
+        self.pre_optimized_model = self._replace_gemm_with_matmul(self.pre_optimized_model).model
+
+    def _replace_gemm_with_matmul(self, model):
+        new_nodes = []
+        from .ox_utils.onnx_model import ONNXModel
+        model = ONNXModel(model)
+
+        for node in model.nodes():
+            if node.op_type == 'Gemm':
+                alpha = 1.0
+                beta = 1.0
+                transA = 0
+                transB = 0
+                for attr in node.attribute:
+                    if attr.name == 'alpha':
+                        alpha = onnx.helper.get_attribute_value(attr)
+                    elif attr.name == 'beta':
+                        beta = onnx.helper.get_attribute_value(attr)
+                    elif attr.name == 'transA':
+                        transA = onnx.helper.get_attribute_value(attr)
+                    elif attr.name == 'transB':
+                        transB = onnx.helper.get_attribute_value(attr)
+                if alpha == 1.0 and beta == 1.0 and transA == 0:
+                    inputB = node.input[1]
+                    if transB == 1:
+                        B = model.get_initializer(node.input[1])
+                        if B:
+                            # assume B is not used by any other node
+                            B_array = onnx.numpy_helper.to_array(B)
+                            B_trans = onnx.numpy_helper.from_array(B_array.T)
+                            B_trans.name = B.name
+                            model.remove_initializer(B)
+                            model.add_initializer(B_trans)
+                        else:
+                            inputB += '_Transposed'
+                            transpose_node = onnx.helper.make_node('Transpose',
+                                                                inputs=[node.input[1]],
+                                                                outputs=[inputB],
+                                                                name=node.name+'_Transpose')
+                            new_nodes.append(transpose_node)
+
+                    matmul_node = onnx.helper.make_node('MatMul',
+                            inputs=[node.input[0], inputB],
+                            outputs=[node.output[0] + ('_MatMul' if len(node.input)>2 else '')],
+                            name=node.name + '_MatMul')
+                    new_nodes.append(matmul_node)
+
+                    if len(node.input) > 2:
+                        add_node = onnx.helper.make_node('Add',
+                            inputs=[node.output[0] + '_MatMul', node.input[2]],
+                            outputs=node.output,
+                            name=node.name + '_Add')
+                        new_nodes.append(add_node)
+
+                # unsupported
+                else:
+                    new_nodes.append(node)
+
+            # not GEMM
+            else:
+                new_nodes.append(node)
+
+        model.graph().ClearField('node')
+        model.graph().node.extend(new_nodes)
+
+        return model
 
     def query_fw_capability(self, model):
         """The function is used to query framework capability.
@@ -128,64 +192,51 @@ class ONNXRTAdaptor(Adaptor):
         self._pre_optimize(model)
         quantizable_ops = self._query_quantizable_ops(self.pre_optimized_model)
         optype_wise = OrderedDict()
+        special_config_types = list(self.query_handler.get_quantization_capability()\
+                                     ['int8'].keys())  # pylint: disable=no-member
+        default_config = self.query_handler.get_quantization_capability()[\
+                                     'int8']['default'] # pylint: disable=no-member
         op_wise = OrderedDict()
         for _, op in enumerate(quantizable_ops):
-            optype = op.op_type
-            op_capability = {
-                'activation': {
-                    'dtype': ['uint8', 'fp32']},
-                'weight': {
-                    'dtype': ['int8', 'fp32']}
-            }
-            if optype not in optype_wise.keys():
-                optype_wise[optype] = op_capability
+            if op.op_type not in special_config_types:
+                op_capability = default_config
+            else:
+                op_capability = \
+                    self.query_handler.get_quantization_capability()[\
+                                   'int8'][op.op_type]  # pylint: disable=no-member
+            if op.op_type not in optype_wise.keys():
+                optype_wise[op.op_type] = copy.deepcopy(op_capability)
 
             op_wise.update(
-                {(op.name, optype): op_capability})
+                {(op.name, op.op_type): copy.deepcopy(op_capability)})
 
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _cfg_to_qconfig(self, tune_cfg):
-        nodes_exclude = []
-        nodes_include = []
-        weight_dtype = None
-        input_dtype = None
-        per_channel = None
+        nodes_config = {}
+        granularity = 'per_tensor'
+        algorithm = 'minmax'
+        scheme = 'sym'
 
+        from onnx import onnx_pb as onnx_proto
         for _, op in enumerate(self.quantizable_ops):
             if tune_cfg['op'][(op.name, op.op_type)
                               ]['activation']['dtype'] == 'fp32':
-                nodes_exclude.append(op.name)
+                nodes_config[op.name] = 'fp32'
             else:
-                nodes_include.append(op.name)
-                if weight_dtype:
-                    assert weight_dtype == tune_cfg['op'][(op.name, op.op_type)
-                              ]['weight']['dtype']
-                weight_dtype = tune_cfg['op'][(op.name, op.op_type)
-                              ]['weight']['dtype']
-                if input_dtype:
-                    assert input_dtype == tune_cfg['op'][(op.name, op.op_type)
-                              ]['activation']['dtype']
-                input_dtype = tune_cfg['op'][(op.name, op.op_type)
-                              ]['activation']['dtype']
-                if per_channel:
-                    assert per_channel == tune_cfg['op'][(op.name, op.op_type)
-                              ]['activation']['granularity']
-                per_channel = tune_cfg['op'][(op.name, op.op_type)
-                              ]['weight']['granularity']
+                node_config = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
+                for tensor, config in tune_cfg['op'][(op.name, op.op_type)].items():
+                    if 'granularity' not in config:
+                        node_config[tensor]['granularity'] = granularity
+                    if 'algorithm' not in config:
+                        node_config[tensor]['algorithm'] = algorithm
+                    if 'scheme' not in config:
+                        node_config[tensor]['scheme'] = scheme
+                    node_config[tensor]['dtype'] = onnx_proto.TensorProto.INT8 \
+                             if config['dtype'] == "int8" else onnx_proto.TensorProto.UINT8
+                nodes_config[op.name] = node_config
 
-        from onnx import onnx_pb as onnx_proto
-        q_config = {}
-        q_config["per_channel"] = per_channel
-        q_config["reduce_range"] = False
-        q_config["weight_dtype"] = onnx_proto.TensorProto.INT8 if weight_dtype == "int8" \
-            else onnx_proto.TensorProto.UINT8
-        q_config["input_dtype"] = onnx_proto.TensorProto.INT8 if input_dtype == "int8" \
-            else onnx_proto.TensorProto.UINT8
-        q_config["nodes_include"] = nodes_include
-        q_config["nodes_exclude"] = nodes_exclude
-
-        return q_config
+        return nodes_config
 
     def _query_quantizable_ops(self, model):
         for node in model.graph.node:
@@ -195,14 +246,8 @@ class ONNXRTAdaptor(Adaptor):
         return self.quantizable_ops
 
     def _query_quantizable_op_types(self):
-        # TBD, we exclude "gather" for static quantize
-        # will be replaced with FWK query api
-        if self.backend == "qlinearops":
-            quantizable_op_types = ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip', \
-                'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization']
-        else:
-            quantizable_op_types = ['Gather', 'MatMul', 'Attention', \
-                'EmbedLayerNormalization']
+        quantizable_op_types = self.query_handler.get_op_types_by_precision( \
+                                  precision='int8') # pylint: disable=no-member
         return quantizable_op_types
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
@@ -297,6 +342,9 @@ class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
     """
 
     def __init__(self, framework_specific_info):
+        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
+        self.backend = "qlinearops"
         super(ONNXRT_QLinearOpsAdaptor, self).__init__(framework_specific_info)
 
 
@@ -309,5 +357,106 @@ class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
     """
 
     def __init__(self, framework_specific_info):
+        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "onnxrt_integer.yaml"))
+        self.backend = "integerops"
         super(ONNXRT_IntegerOpsAdaptor, self).__init__(framework_specific_info)
+
+class ONNXRTQuery(QueryBackendCapability):
+
+    def __init__(self, local_config_file=None):
+        import onnxruntime as ort
+        
+        super().__init__()
+        self.version = ort.__version__
+        self.cfg = local_config_file
+        self.cur_config = None
+        self._one_shot_query()
+
+    def _one_shot_query(self):
+        with open(self.cfg) as f:
+            content = yaml.safe_load(f)
+            try:
+                self.cur_config = self._get_specified_version_cfg(content)
+            except Exception as e: # pragma: no cover
+                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                self.cur_config = None
+                raise ValueError("Please check the {} format.".format(self.cfg))
+
+    def _get_specified_version_cfg(self, data):
+        """Get the configuration for the current runtime.
+        If there's no matched configuration in the input yaml, we'll
+        use the `default` field of yaml.
+
+        Args:
+            data (Yaml content): input yaml file.
+
+        Returns:
+            [dictionary]: the content for specific version.
+        """
+        default_config = None
+        for sub_data in data:
+            if sub_data['version']['name'] == self.version:
+                return sub_data
+
+            if sub_data['version']['name'] == 'default':
+                default_config = sub_data
+
+        return default_config
+
+    def get_version(self):
+        """Get the current backend version infomation.
+
+        Returns:
+            [string]: version string.
+        """
+        return self.cur_config['version']['name']
+
+    def get_precisions(self):
+        """Get supported precisions for current backend.
+
+        Returns:
+            [string list]: the precisions' name.
+        """
+        return self.cur_config['precisions']['names']
+
+    def get_op_types(self):
+        """Get the supported op types by all precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the op types.
+        """
+        return self.cur_config['ops']
+
+    def get_fuse_patterns(self):
+        """Get supported patterns by low precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the supported patterns.
+        """
+        return self.cur_config['patterns']
+
+    def get_quantization_capability(self):
+        """Get the supported op types' quantization capability.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is a dict that describes all op types' quantization capability.
+        """
+        return self.cur_config['capabilities']
+
+    def get_op_types_by_precision(self, precision):
+        """Get op types per precision
+
+        Args:
+            precision (string): precision name
+
+        Returns:
+            [string list]: A list composed of op type.
+        """
+        assert precision in list(self.cur_config['ops'].keys())
+
+        return self.cur_config['ops'][precision]
 

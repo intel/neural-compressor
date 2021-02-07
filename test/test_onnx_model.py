@@ -229,6 +229,9 @@ class TestOnnxModel(unittest.TestCase):
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "Conv1")
 
+    def test_save(self):
+        self.model.save_model_to_file('./test_model_6.onnx', use_external_data_format=True)
+
     
 if __name__ == "__main__":
     unittest.main()

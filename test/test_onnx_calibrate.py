@@ -1,3 +1,5 @@
+import os
+import shutil
 import sys
 import unittest
 import numpy as np
@@ -9,7 +11,7 @@ sys.path.append('..')
 # from lpot.data.dataloaders.onnx_dataloader import ONNXDataLoader
 # from lpot.data.datasets.imagenet_dataset import ImagenetDataset
 # from lpot.data.transforms.imagenet_transform import ResizeCropImagenetTransform
-from lpot.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader
+from lpot.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader, calibrate
 from lpot.data.datasets.dataset import Dataset
 
 
@@ -76,7 +78,17 @@ class TestDataset(Dataset):
         return data
 
 class TestCalibrate(unittest.TestCase):
-    
+
+    work_space = './onnxrt_calib_test' 
+
+    @classmethod
+    def setUpClass(cls):
+        os.makedirs(cls.work_space)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.work_space, ignore_errors=True)
+
     def test_augment_graph(self):
 
         ''' TEST_CONFIG_1'''
@@ -97,14 +109,14 @@ class TestCalibrate(unittest.TestCase):
         graph = helper.make_graph([conv_node, clip_node, matmul_node], 'test_graph_1', [A, B, E], [F])
 
         model = helper.make_model(graph)
-        test_model_path = './test_model_1.onnx'
+        test_model_path = os.path.join(self.work_space, './test_model_1.onnx')
         onnx.save(model, test_model_path)
         test_model = onnx.load(test_model_path)
         
 
         # Augmenting graph
         data_reader = TestDataReader()
-        augmented_model_path = './augmented_test_model_1.onnx'
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_1.onnx')
         calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul'], [], [], augmented_model_path)
         augmented_model = calibrater.augment_graph()
         onnx.save(augmented_model, augmented_model_path)
@@ -142,13 +154,13 @@ class TestCalibrate(unittest.TestCase):
         conv_node_2 = onnx.helper.make_node('Conv', ['I', 'J'], ['K'], name='Conv', kernel_shape=[3, 3], pads=[1, 1, 1, 1])
         graph = helper.make_graph([conv_node_1, conv_node_2], 'test_graph_2', [G, H, J], [K])
         model = helper.make_model(graph)
-        test_model_path = './test_model_2.onnx'
+        test_model_path = os.path.join(self.work_space,'./test_model_2.onnx')
         onnx.save(model, test_model_path)
         test_model = onnx.load(test_model_path)
 
         # Augmenting graph
         data_reader = TestDataReader()
-        augmented_model_path = './augmented_test_model_2.onnx'
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_2.onnx')
         calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul'], [], [], augmented_model_path)
         augmented_model = calibrater.augment_graph()
         onnx.save(augmented_model, augmented_model_path)
@@ -191,13 +203,13 @@ class TestCalibrate(unittest.TestCase):
         matmul_node = onnx.helper.make_node('MatMul', ['P','M'], ['Q'], name='MatMul')
         graph = helper.make_graph([relu_node, conv_node, clip_node, matmul_node], 'test_graph_3', [L, N], [Q])
         model = helper.make_model(graph)
-        test_model_path = './test_model_3.onnx'
+        test_model_path = os.path.join(self.work_space,'./test_model_3.onnx')
         onnx.save(model, test_model_path)
         test_model = onnx.load(test_model_path)
 
         # Augmenting graph
         data_reader = TestDataReader()
-        augmented_model_path = './augmented_test_model_3.onnx'
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_3.onnx')
         calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul'], [], [], augmented_model_path)
         augmented_model = calibrater.augment_graph()
         onnx.save(augmented_model, augmented_model_path)
@@ -235,13 +247,13 @@ class TestCalibrate(unittest.TestCase):
         matmul_node = onnx.helper.make_node('MatMul', ['R', 'S'], ['T'], name='MatMul')
         graph = helper.make_graph([attention_node, matmul_node], 'test_graph_4', [Attention_weight, Attention_bias, Attention_mask, S], [T])
         model = helper.make_model(graph)
-        test_model_path = './test_model_4.onnx'
+        test_model_path = os.path.join(self.work_space,'./test_model_4.onnx')
         onnx.save(model, test_model_path)
         test_model = onnx.load(test_model_path)
 
         # Augmenting graph
         data_reader = TestDataReader()
-        augmented_model_path = './augmented_test_model_4.onnx'
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_4.onnx')
         calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul', 'Attention'], [], [], augmented_model_path)
         augmented_model = calibrater.augment_graph()
         onnx.save(augmented_model, augmented_model_path)
@@ -303,11 +315,11 @@ class TestCalibrate(unittest.TestCase):
         graph.initializer.add().CopyFrom(X5_bias)
         
         model = helper.make_model(graph)
-        test_model_path = './test_model_5.onnx'
+        test_model_path = os.path.join(self.work_space,'./test_model_5.onnx')
         onnx.save(model, test_model_path)
         test_model = onnx.load(test_model_path)
         data_reader = TestDataset()
-        augmented_model_path = './augmented_test_model_5.onnx'
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
         calibrater = ONNXCalibrater(test_model, data_reader,['Conv', 'MatMul'], [], [], augmented_model_path)
         augmented_model = calibrater.augment_graph()
         onnx.save(augmented_model, augmented_model_path)

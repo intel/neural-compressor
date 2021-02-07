@@ -1,5 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # -------------------------------------------------------------------------
 # Copyright (c) Microsoft, Intel Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
@@ -10,16 +25,15 @@
 import abc
 import copy
 import logging
+import itertools
 
 import numpy as np
 import onnx
 import onnxruntime
-from onnxruntime.quantization.registry import CreateDefaultOpQuantizer, IntegerOpsRegistry, \
-    QLinearOpsRegistry
 from onnxruntime.quantization.operators.base_operator import QuantOperatorBase
 from onnxruntime.quantization.quant_utils import __producer__, __version__, attribute_to_kwarg, \
     QuantizationMode, QuantizedValue, QuantizedValueType
-from onnx import helper, TensorProto
+from onnx import helper, TensorProto, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
 logger = logging.getLogger()
@@ -70,7 +84,7 @@ class ONNXCalibrater:
         added_outputs = []
         tensors_to_calibrate = set()
 
-        for node in model.graph.node:
+        for node in model.graph.node: # pylint: disable=no-member
             should_be_calibrate = ((node.op_type in self.calibrate_op_types) and
                                    (node.name not in self.black_nodes)) or \
                                    (node.name in self.white_nodes)
@@ -79,20 +93,32 @@ class ONNXCalibrater:
                     logger.debug("indice input {} of attention node {} can't be calibrated"
                                  .format(node.input[-1], node.name))
                     tensors_to_calibrate.update(node.input[:-1])
+                elif node.op_type == "Gather":
+                    logger.debug("indice input {} of gather node {} can't be calibrated"
+                                 .format(node.input[-1], node.name))
+                    tensors_to_calibrate.update(node.input[:-1])
                 else:
                     tensors_to_calibrate.update(node.input)
                 tensors_to_calibrate.update(node.output)
 
             for tensor in tensors_to_calibrate:
-                if tensor in model.graph.initializer:
+                if tensor in model.graph.initializer: # pylint: disable=no-member
                     tensors_to_calibrate.remove(tensor)
+
+
+        # If augmenting all ops, it's possible that some nodes' input value are 0.
+        # Can't reduce on dim with value of 0 if 'keepdims' is false, therefore set keepdims to 1.
+        if self.calibrate_op_types:
+            keepdims_value = 0
+        else:
+            keepdims_value = 1
 
         for tensor in tensors_to_calibrate:
             # Adding ReduceMin nodes
             reduce_min_name = tensor + '_ReduceMin'
             reduce_min_node = onnx.helper.make_node('ReduceMin', [tensor], [tensor + '_ReduceMin'],
                                                     reduce_min_name,
-                                                    keepdims=0)
+                                                    keepdims=keepdims_value)
 
             added_nodes.append(reduce_min_node)
             added_outputs.append(helper.make_tensor_value_info(reduce_min_node.output[0],
@@ -102,14 +128,14 @@ class ONNXCalibrater:
             reduce_max_name = tensor + '_ReduceMax'
             reduce_max_node = onnx.helper.make_node('ReduceMax', [tensor], [tensor + '_ReduceMax'],
                                                     reduce_max_name,
-                                                    keepdims=0)
+                                                    keepdims=keepdims_value)
 
             added_nodes.append(reduce_max_node)
             added_outputs.append(helper.make_tensor_value_info(reduce_max_node.output[0],
                                                                TensorProto.FLOAT, ()))
 
-        model.graph.node.extend(added_nodes)
-        model.graph.output.extend(added_outputs)
+        model.graph.node.extend(added_nodes) # pylint: disable=no-member
+        model.graph.output.extend(added_outputs) # pylint: disable=no-member
 
         return model
 
@@ -186,7 +212,29 @@ class ONNXCalibrater:
                 else:
                     self.input_name_to_nodes[input_name].append(node)
 
-    def calculate_scale_zeropoint(self, next_node, rmin, rmax):
+    def _get_output_name_to_nodes(self, model):
+        '''
+            Helper function to get output_name_to_nodes dictionary
+        '''
+        self.output_name_to_nodes = {}
+        for node in model.graph.node:
+            for output_name in node.output:
+                if output_name not in self.output_name_to_nodes:
+                    self.output_name_to_nodes[output_name] = [node]
+                else:
+                    self.output_name_to_nodes[output_name].append(node) 
+    
+    def _get_node_from_name(self, name):
+        '''
+            Helper function to get node from name
+        '''
+        for node in self.model.graph.node:
+            if node.name == name:
+                return node
+            else:
+                return None
+    
+    def calculate_scale_zeropoint(self, last_node, next_node, rmin, rmax):
 
         zp_and_scale = []
         # adjust rmin and rmax such that 0 is included in the range. This is required
@@ -197,20 +245,20 @@ class ONNXCalibrater:
         # With this technique we can remove these 2 ops and
         # reduce the output range which in turn helps to improve accuracy
         if next_node:
-            if next_node.op_type == 'Clip':
-                for attr in next_node.attribute:
-                    if attr.name == 'max':
-                        clip_max = attr.f
-                    elif attr.name == 'min':
-                        clip_min = attr.f
-                if rmin < clip_min:
-                    rmin = clip_min
-                if rmax > clip_max:
-                    rmax = clip_max
-            elif next_node.op_type == 'Relu':
+            if next_node.op_type == 'Relu':
                 if rmin < 0:
                     rmin = 0
-
+            elif next_node.op_type == 'Conv':
+                for attr in next_node.attribute:
+                    if attr.name == 'activation' and attr.s == b'Relu':
+                        rmin = max(rmin, 0)
+        
+        if last_node:
+            if last_node.op_type == 'Conv':
+                for attr in last_node.attribute:
+                    if attr.name == 'activation' and attr.s == b'Relu':
+                        rmin = max(rmin, 0)
+        
         scale = np.float32((rmax - rmin) / 255 if rmin != rmax else 1)
         initial_zero_point = (0 - rmin) / scale
         zero_point = np.uint8(round(max(0, min(255, initial_zero_point))))
@@ -250,15 +298,21 @@ class ONNXCalibrater:
         model = self.model
 
         self._get_input_name_to_nodes(model)
+        self._get_output_name_to_nodes(model)
 
         for tensor_name in quantization_thresholds.keys():
             child = None
             if tensor_name in self.input_name_to_nodes:
                 children = self.input_name_to_nodes[tensor_name]
-                if (len(children) == 1):
+                if len(children) == 1:
                     child = children[0]
+            parent = None
+            if tensor_name in self.output_name_to_nodes:
+                parents = self.output_name_to_nodes[tensor_name]
+                if len(parents) == 1:
+                    parent = parents[0]
             node_thresholds = quantization_thresholds[tensor_name]
-            node_params = self.calculate_scale_zeropoint(child, node_thresholds[0],
+            node_params = self.calculate_scale_zeropoint(parent, child, node_thresholds[0],
                                                          node_thresholds[1])
             quantization_params[tensor_name] = node_params
 
