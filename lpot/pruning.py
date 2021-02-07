@@ -16,11 +16,12 @@
 # limitations under the License.
 
 
-from .adaptor import FRAMEWORKS
 from .conf.config import Conf
 from .policy import POLICIES
 from .utils import logger
 from .utils.utility import singleton
+from .model import Model as LpotModel
+from .model import MODELS
 
 
 @singleton
@@ -60,7 +61,7 @@ class Pruning(object):
         """ called on the end of epochs"""
         for policy in self.policies:
             policy.on_epoch_end()
-        stats, sparsity = self.adaptor.report_sparsity(self.model)
+        stats, sparsity = self.model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
 
@@ -158,11 +159,13 @@ class Pruning(object):
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'q_dataloader': None}
-        framework = self.cfg.model.framework.lower()
-        if framework == 'tensorflow':
+        self.framework = self.cfg.model.framework.lower()
+        if self.framework == 'tensorflow':
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
-        self.adaptor = FRAMEWORKS[framework](framework_specific_info)
+
+        if not isinstance(model, LpotModel):
+            model = self.create_lpot_model(model)
 
         self.model = model
         policies = {}
@@ -174,5 +177,17 @@ class Pruning(object):
         for name, policy_spec in policies.items():
             print(policy_spec)
             self.policies.append(POLICIES[policy_spec["policy_name"]](
-                self.model, policy_spec["policy_spec"], self.cfg, self.adaptor))
-        return q_func(model)
+                self.model, policy_spec["policy_spec"], self.cfg))
+        return q_func(model.model)
+
+    def create_lpot_model(self, model_or_path, **kwargs):
+        framework_model_info = {}
+        cfg = self.conf.usr_cfg
+        if self.framework == 'tensorflow':
+            framework_model_info.update(
+                {'name': cfg.model.name,
+                 'input_tensor_names': cfg.model.inputs,
+                 'output_tensor_names': cfg.model.outputs,
+                 'workspace_path': cfg.tuning.workspace.path})
+
+        return MODELS[self.framework](model_or_path, framework_model_info, **kwargs)

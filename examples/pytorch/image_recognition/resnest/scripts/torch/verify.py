@@ -64,7 +64,7 @@ class Options():
                             help='number of warmup iterations to run')
         parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                             help='run benchmark')
-        parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+        parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                             help='path to checkpoint tuned by Low Precision Optimization Tool'
                                  ' (default: ./)')
         parser.add_argument('--int8', dest='int8', action='store_true',
@@ -137,6 +137,7 @@ def main():
         from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
         q_model = quantizer(model)
+        q_model.save(args.tuned_checkpoint)
         exit(0)
 
     if args.int8:

@@ -373,7 +373,7 @@ class TuneStrategy(object):
                 # Pytorch can insert observer to model in this hook.
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
-            val = self.objective.evaluate(self.eval_func, model)
+            val = self.objective.evaluate(self.eval_func, model.model)
             if self.cfg.tuning.tensorboard:
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
@@ -427,12 +427,6 @@ class TuneStrategy(object):
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
-            if 'pytorch' in self.framework:
-                self.adaptor.save(self.best_qmodel, os.path.join(
-                              os.path.dirname(self.deploy_path), 'checkpoint'))
-            else:
-                self.adaptor.save(self.best_qmodel, os.path.join(
-                              os.path.dirname(self.deploy_path)))
         else:
             del self.last_qmodel
 

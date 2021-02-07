@@ -181,13 +181,11 @@ class eval_classifier_optimized_graph:
             graph: it will return a quantized pb
         """
         from lpot import Quantization
-
-        fp32_graph = load_graph(self.args.input_graph)
+        infer_graph = load_graph(self.args.input_graph)
         quantizer = Quantization(self.args.config)
         if self.args.calib_data:
             calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
-            q_model = quantizer(
-                                fp32_graph,
+            q_model = quantizer(infer_graph,
                                 q_dataloader=calib_dataloader,
                                 eval_func=self.eval_inference,
                                 eval_dataloader=None)
@@ -197,6 +195,11 @@ class eval_classifier_optimized_graph:
 
     def eval_inference(self, infer_graph):
         print("Run inference")
+        if isinstance(infer_graph, tf.compat.v1.GraphDef):
+            graph = tf.Graph() 
+            with graph.as_default():
+                tf.import_graph_def(infer_graph, name='') 
+            infer_graph = graph
 
         data_config = tf.compat.v1.ConfigProto()
         data_config.intra_op_parallelism_threads = self.args.num_intra_threads
@@ -294,19 +297,11 @@ class eval_classifier_optimized_graph:
 
         if self.args.tune:
             q_model = evaluate_opt_graph.auto_tune()
-            def save(model, path):
-                from tensorflow.python.platform import gfile
-                f = gfile.GFile(path, 'wb')
-                f.write(model.as_graph_def().SerializeToString())
-
-            save(q_model, self.args.output_graph)
+            q_model.save(self.args.output_graph)
 
         if self.args.benchmark:
             infer_graph = load_graph(self.args.input_graph)
-
             self.eval_inference(infer_graph)
-
-
 
 class Dataloader(object):
     def __init__(self, data_location, batch_size):

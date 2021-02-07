@@ -1389,6 +1389,7 @@ def validate_flags_or_throw(bert_config):
         "The max_seq_length (%d) must be greater than max_query_length "
         "(%d) + 3" % (FLAGS.max_seq_length, FLAGS.max_query_length))
 
+
 def main(_):
   tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
@@ -1558,22 +1559,28 @@ def main(_):
             for key, value in six.iteritems(results)
         }
 
-    def eval_func(graph, iteration=-1):
+    def eval_func(infer_graph, iteration=-1):
+        if isinstance(infer_graph, tf.compat.v1.GraphDef):
+            graph = tf.Graph() 
+            with graph.as_default():
+                tf.import_graph_def(infer_graph, name='') 
+            infer_graph = graph
+
         print("gonna eval the model....")
-        iter_op = graph.get_operation_by_name('MakeIterator')
+        iter_op = infer_graph.get_operation_by_name('MakeIterator')
         feed_dict = {'input_file:0': eval_writer.filename, \
                      'batch_size:0': FLAGS.predict_batch_size}
 
         all_results = []
         output_tensor = {
-            'unique_ids': graph.get_tensor_by_name('IteratorGetNext:3'),
-            'start_logits': graph.get_tensor_by_name('unstack:0'),
-            'end_logits': graph.get_tensor_by_name('unstack:1')
+            'unique_ids': infer_graph.get_tensor_by_name('IteratorGetNext:3'),
+            'start_logits': infer_graph.get_tensor_by_name('unstack:0'),
+            'end_logits': infer_graph.get_tensor_by_name('unstack:1')
         }
         config = tf.compat.v1.ConfigProto()
         config.use_per_session_threads = 1
         config.inter_op_parallelism_threads = 1
-        sess = tf.compat.v1.Session(graph=graph, config=config)
+        sess = tf.compat.v1.Session(graph=infer_graph, config=config)
         sess.run(iter_op, feed_dict)
         def result_producer(results):
           num_examples = results['unique_ids'].shape[0]
@@ -1627,13 +1634,16 @@ def main(_):
             return f1.result()
 
     from lpot.adaptor.tf_utils.util import is_ckpt_format
-    ckpt_model = None
+    is_ckpt_model = False
     if os.path.isdir(FLAGS.input_graph):
-        ckpt_model = is_ckpt_format(FLAGS.input_graph)
-    if ckpt_model is not None:
+        is_ckpt_model = is_ckpt_format(FLAGS.input_graph)
+    if is_ckpt_model:
         model_fn = model_fn_builder(
             bert_config=bert_config,
-            init_checkpoint=os.path.join(FLAGS.input_graph, ckpt_model),
+            init_checkpoint=os.path.join(
+                FLAGS.input_graph,
+                [os.path.splitext(i)[0] for i in os.listdir(FLAGS.input_graph) 
+                    if i.endswith(".meta")][0]),
             learning_rate=FLAGS.learning_rate,
             num_train_steps=num_train_steps,
             num_warmup_steps=num_warmup_steps,
@@ -1667,8 +1677,7 @@ def main(_):
         dataloader = quantizer.dataloader(dataset, collate_fn=collate_fn)
         q_model = quantizer(graph, q_dataloader=dataloader, eval_func=eval_func)
         # q_model = quantizer(graph, q_dataloader=dataloader)
-        from lpot.adaptor.tf_utils.util import write_graph
-        write_graph(q_model.as_graph_def(), FLAGS.output_model)
+        q_model.save(FLAGS.output_model)
         tf.logging.info("lpot tune done.....")
     eval_writer.rm_tmp_file()
 

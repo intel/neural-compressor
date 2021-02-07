@@ -91,7 +91,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             )
             found_conv_fusion = True
 
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'Relu':
                     found_conv_fusion = False
                     break
@@ -138,7 +138,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             )
             found_conv_fusion = False
 
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'QuantizedConv2DWithBiasSignedSumAndReluAndRequantize':
                     found_conv_fusion = True
                     break
@@ -188,7 +188,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 eval_dataloader=dataloader
             )
             quantize_v2_count = 0
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'QuantizeV2':
                     quantize_v2_count += 1
                     break
@@ -235,7 +235,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 eval_dataloader=dataloader
             )
             quantize_v2_count = 0
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'QuantizeV2':
                     quantize_v2_count += 1
                     break

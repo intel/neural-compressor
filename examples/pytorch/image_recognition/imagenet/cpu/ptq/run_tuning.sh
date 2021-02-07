@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-
+  output_model=saved_results
   for var in "$@"
   do
     case $var in
@@ -41,6 +41,9 @@ function run_tuning {
         sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf.yaml
     fi
     extra_cmd=""
+    if [ -n "$output_model" ];then
+        extra_cmd = $extra_cmd"--tuned_checkpoint ${output_model}"
+    fi
     result=$(echo $topology | grep "ipex")
     if [[ "$result" != "" ]];then
         sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml

@@ -87,7 +87,7 @@ parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                     help='For benchmark measurement only.')
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
-parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
@@ -278,6 +278,7 @@ def main_worker(gpu, ngpus_per_node, args):
         quantizer = Quantization(args.config)
         q_model = quantizer(model, q_dataloader=None, q_func=training_func_for_lpot,
                              eval_dataloader=val_loader)
+        q_model.save(args.tuned_checkpoint)
         return
 
     if args.benchmark:

@@ -177,7 +177,7 @@ class TestObjective(unittest.TestCase):
                               q_dataloader=dataloader,
                               eval_dataloader=dataloader)
 
-        self.assertTrue((get_size(q_model_1) - get_size(q_model)) > 0)
+        self.assertTrue((get_size(q_model_1.sess.graph) - get_size(q_model.sess.graph)) > 0)
 
 
 if __name__ == "__main__":

@@ -77,7 +77,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     q_dataloader=dataloader,
                     eval_dataloader=dataloader
                 )
-                for i in output_graph.as_graph_def().node:
+                for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndReluAndRequantize':
                         found_quantized_matmul = True
                         break
@@ -108,7 +108,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 eval_dataloader=dataloader
             )
             found_quantized_matmul = False
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'QuantizeV2' and i.name == 'MatMul_eightbit_quantize_x' and i.attr["T"].type == dtypes.quint8:
                     found_quantized_matmul = True
                     break
@@ -145,7 +145,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                         eval_dataloader=dataloader
                     )
 
-                    for i in output_graph.as_graph_def().node:
+                    for i in output_graph.graph_def.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
                             found_quantized_matmul = True
                             break
@@ -180,7 +180,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                         eval_dataloader=dataloader
                     )
 
-                    for i in output_graph.as_graph_def().node:
+                    for i in output_graph.graph_def.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
                             found_quantized_matmul = True
                             break
@@ -213,7 +213,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     eval_dataloader=dataloader
                 )
 
-                for i in output_graph.as_graph_def().node:
+                for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
                         found_quantized_matmul = True
                         break

@@ -27,6 +27,8 @@ from .utils import logger
 from .utils.create_obj_from_config import create_dataloader
 from .data import DataLoader as DATALOADER
 from .data import DATASETS, TRANSFORMS
+from .model import MODELS
+from .model import Model as LpotModel
 
 class Quantization(object):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -56,7 +58,7 @@ class Quantization(object):
         random.seed(seed)
         np.random.seed(seed)
 
-    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
+    def __call__(self, model=None, q_dataloader=None, q_func=None, eval_dataloader=None,
                  eval_func=None):
         """The main entry point of automatic quantization tuning.
 
@@ -153,6 +155,13 @@ class Quantization(object):
 
         """
         cfg = self.conf.usr_cfg
+        if model is None:
+            assert cfg.model.root is not None, 'root field in model field of the yaml' \
+                'file should be configured if model not transfered through calling'
+            root = cfg.model.root
+            model = self.model(root)
+        elif not isinstance(model, LpotModel):
+            model = self.model(model)
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if eval_func is None:
@@ -245,6 +254,18 @@ class Quantization(object):
                           batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
                           sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
                           pin_memory=pin_memory)
+
+    def model(self, root, **kwargs):
+        framework_model_info = {}
+        cfg = self.conf.usr_cfg
+        if self.framework == 'tensorflow':
+            framework_model_info.update(
+                {'name': cfg.model.name,
+                 'input_tensor_names': cfg.model.inputs,
+                 'output_tensor_names': cfg.model.outputs,
+                 'workspace_path': cfg.tuning.workspace.path})
+
+        return MODELS[self.framework](root, framework_model_info, **kwargs)
 
     def metric(self, name, metric_cls, **kwargs):
         metric_cfg = {name : {**kwargs}}

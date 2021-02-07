@@ -285,7 +285,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             )
             found_fp32_conv = False
 
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'Conv2D':
                 found_fp32_conv = True
                 break
@@ -326,7 +326,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             )
             found_fp32_conv = False
 
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'Conv2D':
                   found_fp32_conv = True
                   break
@@ -370,7 +370,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 eval_dataloader=dataloader
             )
             max_freezed_out = []
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
                 max_freezed_out.append(i.input[-1])
 
@@ -414,7 +414,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             )
 
             max_freezed_out = []
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
                   max_freezed_out.append(i.input[-1])
             self.assertEqual(2, len(set(max_freezed_out)))
@@ -459,7 +459,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             )
 
             max_freezed_out = []
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
                   max_freezed_out.append(i.input[-1])
             self.assertEqual(1, len(set(max_freezed_out)))
@@ -504,7 +504,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             )
 
             max_freezed_out = []
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
                   max_freezed_out.append(i.input[-1])
             self.assertEqual(2, len(set(max_freezed_out)))

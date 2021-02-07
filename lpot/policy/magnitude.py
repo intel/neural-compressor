@@ -22,8 +22,8 @@ from ..utils import logger
 
 @policy_registry
 class MagnitudePrunePolicy(PrunePolicy):
-    def __init__(self, model, local_config, global_config, adaptor):
-        super(MagnitudePrunePolicy, self).__init__(model, local_config, global_config, adaptor)
+    def __init__(self, model, local_config, global_config):
+        super(MagnitudePrunePolicy, self).__init__(model, local_config, global_config)
 
     def on_epoch_begin(self, epoch):
         logger.debug("start pruning in epoch {}".format(str(epoch)))
@@ -37,14 +37,14 @@ class MagnitudePrunePolicy(PrunePolicy):
         for weight in self.weights:
             if weight in self.masks:
                 new_weight = self.masks[weight] * \
-                    np.array(self.adaptor.get_weight(self.model, weight))
+                    np.array(self.model.get_weight(weight))
                 new_weight_zeros = (new_weight == 0).sum()
-                self.adaptor.update_weights(self.model, weight, new_weight)
+                self.model.update_weights(weight, new_weight)
 
     def compute_mask(self):
         """compute masks according to absolute values"""
         for weight in self.weights:
-            tensor = np.array(self.adaptor.get_weight(self.model, weight))
+            tensor = np.array(self.model.get_weight(weight))
             if len(tensor.shape) in self.tensor_dims:
                 if self.method == "per_channel":
                     tensor_flat = tensor.copy().reshape([tensor.shape[0], tensor.shape[1], -1])
@@ -70,12 +70,12 @@ class MagnitudePrunePolicy(PrunePolicy):
                             self.masks[weight].sum()), str(
                             1 - self.masks[weight].sum() / self.masks[weight].size)))
                     new_weight = self.masks[weight] * \
-                        np.array(self.adaptor.get_weight(self.model, weight))
-                    self.adaptor.update_weights(self.model, weight, new_weight)
+                        np.array(self.model.get_weight(weight))
+                    self.model.update_weights(weight, new_weight)
 
     def on_batch_end(self):
         for weight in self.weights:
             if weight in self.masks:
                 new_weight = self.masks[weight] * \
-                    np.array(self.adaptor.get_weight(self.model, weight))
-                self.adaptor.update_weights(self.model, weight, new_weight)
+                    np.array(self.model.get_weight(weight))
+                self.model.update_weights(weight, new_weight)

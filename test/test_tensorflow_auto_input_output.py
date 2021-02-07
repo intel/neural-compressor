@@ -3,10 +3,8 @@
 #
 import unittest
 import os
-from lpot.adaptor.tf_utils.util import get_graph_def
-from lpot.adaptor.tf_utils.util import validate_graph_input, validate_graph_output
-from lpot.adaptor.tf_utils.util import get_input_node_names, get_output_node_names
 from lpot.adaptor.tensorflow import TensorFlowAdaptor
+from lpot.model.model import TensorflowModel, validate_graph_node
 
 
 class TestTFAutoDetectInputOutput(unittest.TestCase):
@@ -24,20 +22,14 @@ class TestTFAutoDetectInputOutput(unittest.TestCase):
 
     def testAutoDetectInputOutput(self):
         if self.saved_flag:
-            graph_def = get_graph_def(self.pb_path)
-            outputs = get_output_node_names(graph_def)
-            inputs = get_input_node_names(graph_def)
-            output_validate = validate_graph_output(graph_def, outputs)
+            model = TensorflowModel(self.pb_path)
+            outputs = model.output_node_names
+            inputs = model.input_node_names
+            output_validate = validate_graph_node(model.graph_def, outputs)
             self.assertTrue(output_validate)
 
-            input_validate = validate_graph_input(graph_def, inputs)
+            input_validate = validate_graph_node(model.graph_def, inputs)
             self.assertTrue(input_validate)
-            framework_specific_info = {'device': 'cpu', 'workspace_path': './', 'recipes': {
-                'scale_propagation_max_pooling': True, 'scale_propagation_concat': True, 'first_conv_or_matmul_quantization': True}}
-            adaptor = TensorFlowAdaptor(framework_specific_info)
-            adaptor._validate_and_inference_input_output(graph_def)
-            self.assertTrue(len(adaptor.input_node_names) > 0)
-            self.assertTrue(len(adaptor.output_node_names) > 0)
 
 if __name__ == "__main__":
     unittest.main()

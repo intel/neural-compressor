@@ -139,7 +139,8 @@ class TestQuantization(unittest.TestCase):
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)
-        testObject = TpeTuneStrategy(self.constant_graph, quantizer.conf, dataloader)
+        model = quantizer.model(self.constant_graph)
+        testObject = TpeTuneStrategy(model, quantizer.conf, dataloader)
         testObject._calculate_loss_function_scaling_components(0.01, 2, testObject.loss_function_config)
         # check if latency difference between min and max corresponds to 10 points of loss function
         tmp_val = testObject.calculate_loss(0.01, 2, testObject.loss_function_config)

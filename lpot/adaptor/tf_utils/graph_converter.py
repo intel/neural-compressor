@@ -33,11 +33,10 @@ from lpot.utils.utility import CaptureOutputToFile
 from lpot.utils.utility import str2array
 from lpot.utils.utility import Dequantize
 from lpot.conf.dotdict import deep_get
+from lpot.model.model import TensorflowModel
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import write_graph
-from .util import get_graph_def
 from .util import get_tensor_by_name, iterator_sess_run
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
@@ -63,10 +62,7 @@ TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 class GraphConverter:
     def __init__(self,
-                 input_graph,
-                 output_graph,
-                 inputs=[],
-                 outputs=[],
+                 model,
                  qt_config={},
                  recipes={},
                  int8_sequences={},
@@ -75,10 +71,7 @@ class GraphConverter:
                  data_loader=None):
         """Convert graph.
 
-        :param input_graph: input graph pb file.
-        :param output_graph: output graph pb file. If set, output directory should be exist.
-        :param inputs: input nodes' names.
-        :param outputs: output nodes' names.
+        :param model: input tensorflow model.
         :param qt_config: quantization configs, including interation and op-wise quant config
         :param fp32_ops: fall back to fp32 dtype op list
         :param bf16_ops: fall back to bf16 dtype op list
@@ -86,19 +79,8 @@ class GraphConverter:
         """
         # Logger initial
         self.logger = logging.getLogger()
-
         self.debug = bool(self.logger.level == logging.DEBUG)
-        # as we may have outputs with suffix, strip to get raw name
-        self.output_node_names = list(set([x.split(":")[0] for x in outputs]))
-        self.input_node_names = list(set([x.split(":")[0] for x in inputs]))
-        # For lpot, the input_graph is not graph file path but Graph object.
-        self.input_graph = get_graph_def(input_graph, self.output_node_names)
-        if 'MakeIterator' in [node.op for node in self.input_graph.node]:
-            self.output_node_names.append('MakeIterator')
-        self.output_graph = output_graph
-        self.input_tensor_names = inputs
-        self.output_tensor_names = outputs
-
+        self.model = model
         # quantize specific config
         self.calib_iteration = qt_config['calib_iteration']
         self.op_wise_config = qt_config['op_wise_config']
@@ -121,36 +103,20 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
-        self._fp32_origin_graph = copy.deepcopy(self.input_graph)
-
-    def _inference(self, input_graph):
+        self._fp32_model = TensorflowModel(self.model.model,
+                                           self.model.framework_specific_info,
+                                           **self.model.kwargs)
+        self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
+    # pylint: disable=no-member 
+    def _inference(self, model):
         """Run the calibration on the input graph
 
         Args:
-            input_graph (tf.compat.v1.GraphDef): input graph
+            model(TensorflowModel): input TensorflowModel
         """
         import tensorflow as tf
-
-        graph = tf.Graph()
-        graph_def = get_graph_def(input_graph)
-        assert graph_def
-        with graph.as_default():
-            tf.import_graph_def(graph_def, name='')
-
-        iter_op = None
-        if 'MakeIterator' in self.output_node_names:
-            iter_op = graph.get_operation_by_name('MakeIterator')
-
-        input_tensor = [get_tensor_by_name(graph, x) for x in self.input_tensor_names]
-        output_tensor = [
-            get_tensor_by_name(graph, x) for x in self.output_tensor_names \
-            ] if len(self.output_tensor_names) > 1 else \
-            get_tensor_by_name(graph, self.output_tensor_names[0])
-
-        config = tf.compat.v1.ConfigProto()
-        # config.use_per_session_threads = 1
-        config.inter_op_parallelism_threads = 1
-        sess = tf.compat.v1.Session(graph=graph, config=config)
+        input_tensor = model.input_tensor
+        output_tensor = model.output_tensor
 
         self.logger.info("Sampling data...")
         for idx, (inputs, labels) in enumerate(self.data_loader):
@@ -161,13 +127,12 @@ class GraphConverter:
                     'inputs len must equal with input_tensor'
                 feed_dict = dict(zip(input_tensor, inputs))
 
-            _ = sess.run(output_tensor, feed_dict) if iter_op is None else \
-                iterator_sess_run(sess, iter_op, feed_dict, output_tensor, self.calib_iteration)
+            _ = model.sess.run(output_tensor, feed_dict) if model.iter_op is None \
+                else iterator_sess_run(model.sess, model.iter_op, \
+                    feed_dict, output_tensor, self.calib_iteration)
 
             if idx + 1 == self.calib_iteration:
                 break
-
-        sess.close()
 
     def _check_tf_version(self):
         is_supported_version = False
@@ -199,26 +164,26 @@ class GraphConverter:
                                                               TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
-        assert self.output_graph and os.path.exists(os.path.dirname(
-            self.output_graph)), '"output_graph" directory does not exist.'
-
-        self._output_path = os.path.dirname(
-            os.path.realpath(self.output_graph if self.output_graph else self.input_graph))
+        if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
+                and not os.path.exists(os.path.dirname(self.model.workspace_path)):
+            raise ValueError('"output_graph" directory does not exist.')
+        self._output_path = self.model.workspace_path
 
     def _gen_tmp_filenames(self):
-        self._fp32_optimized_graph = os.path.join(self._output_path, 'fp32_optimized_graph.pb')
-        self._int8_dynamic_range_graph = os.path.join(self._output_path,
-                                                      'int8_dynamic_range_graph.pb')
-        self._int8_logged_graph = os.path.join(self._output_path, 'int8_logged_graph.pb')
-        self._fp32_logged_graph = os.path.join(self._output_path, 'fp32_logged_graph.pb')
-        self._int8_frozen_range_graph = os.path.join(self._output_path,
-                                                     'int8_frozen_range_graph.pb')
-        self._bf16_mixed_precision_graph = os.path.join(self._output_path,
-                                                        'int8_bf16_mixed_precision_graph.pb')
-        if not self.output_graph:
-            self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph.pb')
-        # to keep temp graphDef
-        self._tmp_graph_def = copy.deepcopy(self.input_graph)
+        self._int8_dynamic_range_model_path = os.path.join(self._output_path, \
+                                                      'int8_dynamic_range_graph')
+        self._int8_logged_model_path = os.path.join(self._output_path, 'int8_logged_graph')
+        self._fp32_logged_model_path = os.path.join(self._output_path, 'fp32_logged_graph')
+        self._int8_frozen_range_model_path = os.path.join(self._output_path,
+                                                          'int8_frozen_range_graph')
+        self._bf16_mixed_precision_model_path = os.path.join(self._output_path,
+                                                        'int8_bf16_mixed_precision_graph')
+
+        self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
+        # to keep temp model
+        self._tmp_model = TensorflowModel(self.model.model, \
+                                          self.model.framework_specific_info,
+                                          **self.model.kwargs)
 
     def convert(self):
         """Do convert, including:
@@ -230,19 +195,12 @@ class GraphConverter:
 
         :return:
         """
-        try:
-            graph = tf.Graph()
-            with graph.as_default():
-                tf.import_graph_def(self._tmp_graph_def, name='')
-        except Exception as e:
-            self.logger.error('Failed to optimize fp32 graph due to: %s', str(e))
-            raise ValueError(e) from e
-        else:
-            if len(self.op_wise_config) > 0:
-                graph = self.quantize()
-            if len(self.bf16_ops) > 0:
-                graph = self.bf16_convert()
-            return graph
+        model = self._tmp_model
+        if len(self.op_wise_config) > 0:
+            model = self.quantize()
+        if len(self.bf16_ops) > 0:
+            model = self.bf16_convert()
+        return model
 
     def _get_fp32_print_node_names(self, specified_op_list):
         offset_map = {
@@ -251,9 +209,10 @@ class GraphConverter:
             "QuantizedConv2DWithBias": 1,
         }
         target_conv_op = []
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph,
-                                                              self.input_node_names,
-                                                              self.output_node_names)
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
+            self._fp32_model.graph_def,
+            self._fp32_model.input_node_names,
+            self._fp32_model.output_node_names)
 
         node_name_mapping = {
             node.name: node
@@ -294,14 +253,17 @@ class GraphConverter:
         for i in output_node_names:
             self._kl_keys.append(';' + i + '__print__;__KL')
 
-        InsertLogging(self._fp32_origin_graph,
+        fp32_graph_def = graph_pb2.GraphDef()
+        fp32_graph_def.CopyFrom(self._fp32_model.graph_def)
+        self._fp32_model.graph_def = InsertLogging(self._fp32_model.graph_def,
                       node_name_list=output_node_names,
                       message="__KL:",
                       summarize=-1,
                       dump_fp32=True).do_transformation()
 
-        write_graph(self._fp32_origin_graph, self._fp32_logged_graph)
-        return self._fp32_origin_graph
+        self._fp32_model.save(self._fp32_logged_model_path)
+        self._fp32_model.graph_def = fp32_graph_def
+        return self._fp32_model
 
     def inspect_tensor(self, original_op_list, iteration_list, work_dir):
         """dump the specified op's output tensor content
@@ -318,9 +280,11 @@ class GraphConverter:
         fp32_node_name = []
         fp32_node_name_mapping = {}
         q_node_scale = {}
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(self._fp32_origin_graph,
-                                                              self.input_node_names,
-                                                              self.output_node_names)
+        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
+            self._fp32_model.graph_def,
+            self._fp32_model.input_node_names,
+            self._fp32_model.output_node_names)
+
         graph_q_node_name = []
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
@@ -378,8 +342,10 @@ class GraphConverter:
                                          summarize=-1).do_transformation()
 
         tmp_dump_file = os.path.join(work_dir, 'kl.log')
+
+        model = TensorflowModel(sorted_graph, self._tmp_model.framework_specific_info)
         with CaptureOutputToFile(tmp_dump_file):
-            self._inference(sorted_graph)
+            self._inference(model)
 
         with open(tmp_dump_file) as f:
             disk_content = f.readlines()
@@ -421,102 +387,113 @@ class GraphConverter:
             self._quantize_graph()
             if self._enable_kl_op_names:
                 self._get_fp32_print_node_names(self._enable_kl_op_names)
-                self._generate_calibration_data(self._fp32_logged_graph, self._fp32_print_data,
+                self._generate_calibration_data(self._fp32_logged_model_path,
+                                                self._fp32_print_data,
                                                 True)
+ 
             self._insert_logging()
-            self._generate_calibration_data(self._int8_logged_graph, self._calibration_data)
-
+            self._generate_calibration_data(self._int8_logged_model_path,
+                                            self._calibration_data)
             if len(self._calibration_data) > 0:
                 self._freeze_requantization_ranges(self._kl_op_dict)
                 self._fuse_requantize_with_fused_quantized_node()
-            graph = tf.Graph()
-            with graph.as_default():
-                tf.import_graph_def(self._tmp_graph_def, name='')
         except Exception as e:
             import traceback
             traceback.print_exc()
-            graph = None
+            self._tmp_model = None
             self.logger.error('Failed to quantize graph due to: %s', str(e))
         finally:
             if not self.debug:
                 self._post_clean()
-            return graph
+            return self._tmp_model
 
     def bf16_convert(self):
         """Convert fp32 nodes in bf16_node to bf16 dtype based on
            FP32 + INT8 mixed precision graph.
         """
         try:
-            self._tmp_graph_def = BF16Convert(self._tmp_graph_def, self.fp32_ops,
-                                              self.bf16_ops).do_transformation()
-            graph = tf.Graph()
-            with graph.as_default():
-                tf.import_graph_def(self._tmp_graph_def, name='')
+            self._tmp_model.graph_def = BF16Convert(
+                self._tmp_model.graph_def,
+                self.fp32_ops,
+                self.bf16_ops).do_transformation()
+
         except Exception as e:
-            graph = None
+            self._tmp_model = None
             self.logger.error('Failed to convert graph due to: %s', str(e))
         finally:
             if self.debug:
-                write_graph(self._tmp_graph_def, self._bf16_mixed_precision_graph)
-            return graph
+                self._tmp_model.save(self._bf16_mixed_precision_model_path)
+
+            return self._tmp_model
 
     def _quantize_graph(self):
         """quantize graph."""
 
-        g = ops.Graph()
-        with g.as_default():
-            importer.import_graph_def(self._tmp_graph_def)
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
 
-        self._tmp_graph_def = FusePadWithConv2DOptimizer(self._tmp_graph_def,
-                                                         non_pad_ops,
-                                                         self.input_node_names,
-                                                         self.op_wise_config).do_transformation()
+        self._tmp_graph_def = FusePadWithConv2DOptimizer(
+            self._tmp_graph_def,
+            non_pad_ops,
+            self._tmp_model.input_node_names,
+            self.op_wise_config).do_transformation()
 
-        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(self._tmp_graph_def,
-                                                                     self.input_node_names,
-                                                                     self.output_node_names)
-        intel_quantizer = QuantizeGraphForIntel(self._tmp_graph_def,
-                                                self.output_node_names,
-                                                self.op_wise_config,
-                                                self.int8_sequences,
-                                                self.device)
+        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
+            self._tmp_graph_def,
+            self._tmp_model.input_node_names,
+            self._tmp_model.output_node_names)
 
-        self._tmp_graph_def = intel_quantizer.do_transform()
+        self._tmp_graph_def = QuantizeGraphForIntel(
+            self._tmp_graph_def,
+            self._tmp_model.output_node_names,
+            self.op_wise_config,
+            self.int8_sequences,
+            self.device).do_transform()
 
-        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
-
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if self.debug:
-            write_graph(self._tmp_graph_def, self._int8_dynamic_range_graph)
+            self._tmp_model.graph_def = self._tmp_graph_def
+            self._tmp_model.save(self._int8_dynamic_range_model_path)
 
     def _insert_logging(self):
         int8_dynamic_range_graph_def = graph_pb2.GraphDef()
         int8_dynamic_range_graph_def.CopyFrom(self._tmp_graph_def)
         # TODO need to insert op-wise logging op.
-        self._tmp_graph_def = InsertLoggingTransformer(self._tmp_graph_def,
-                                                       target_op_types=[
-                                                        "RequantizationRange",
-                                                        "RequantizationRangePerChannel"],
-                                                       message="__requant_min_max:"). \
-                                                       do_transformation()
+        self._tmp_graph_def = InsertLoggingTransformer(
+            self._tmp_graph_def,
+            target_op_types=[
+             "RequantizationRange",
+             "RequantizationRangePerChannel"],
+             message="__requant_min_max:").do_transformation()
 
         self._tmp_graph_def = InsertLoggingTransformer(
-            self._tmp_graph_def, target_op_types=["Min"], message="__min:").do_transformation()
+            self._tmp_graph_def,
+            target_op_types=["Min"],
+            message="__min:").do_transformation()
 
         self._tmp_graph_def = InsertLoggingTransformer(
-            self._tmp_graph_def, target_op_types=["Max"], message="__max:").do_transformation()
-        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
-        write_graph(self._tmp_graph_def, self._int8_logged_graph)
+            self._tmp_graph_def,
+            target_op_types=["Max"],
+            message="__max:").do_transformation()
+
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+
+        self._tmp_model.graph_def = self._tmp_graph_def
+        self._tmp_model.save(self._int8_logged_model_path)
+
         self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
 
-    def _generate_calibration_data(self, graph, output_data, enable_kl_algo=False):
+    def _generate_calibration_data(self, tmp_path, output_data, enable_kl_algo=False):
 
         tmp_dump_file = os.path.join(os.path.dirname(self.output_graph), 'requant_min_max.log')
 
         self.logger.debug("Generating calibration data and saving to {}".format(tmp_dump_file))
 
+        model = TensorflowModel(tmp_path,
+                                self._tmp_model.framework_specific_info,
+                                **self._tmp_model.kwargs)
+
         with CaptureOutputToFile(tmp_dump_file):
-            self._inference(graph)
+            self._inference(model)
 
         with open(tmp_dump_file) as f:
             output_data.extend(f.readlines())
@@ -532,29 +509,36 @@ class GraphConverter:
                     self._kl_op_dict[key] = combine_histogram(self._kl_op_dict[key], fp32_data)
 
     def _freeze_requantization_ranges(self, additional_data=None):
-        self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def, self._calibration_data,
-                                                     '__max:').do_transformation()
+        self._tmp_graph_def = FreezeValueTransformer(
+            self._tmp_graph_def,
+            self._calibration_data,
+            '__max:').do_transformation()
 
-        self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def, self._calibration_data,
-                                                     '__min:').do_transformation()
+        self._tmp_graph_def = FreezeValueTransformer(
+            self._tmp_graph_def,
+            self._calibration_data,
+            '__min:').do_transformation()
 
-        self._tmp_graph_def = FreezeValueTransformer(self._tmp_graph_def,
-                                                     self._calibration_data,
-                                                     '__requant_min_max',
-                                                     tensor_data= additional_data,
-                                                     device=self.device,
-                                                     ).do_transformation()
+        self._tmp_graph_def = FreezeValueTransformer(
+            self._tmp_graph_def,
+            self._calibration_data,
+            '__requant_min_max',
+            tensor_data= additional_data,
+            device=self.device,
+            ).do_transformation()
 
         if self.recipes['scale_propagation_max_pooling']:
             self._tmp_graph_def = ScaleProPagationTransformer(
                 self._tmp_graph_def).do_transformation()
 
         if self.debug:
-            write_graph(self._tmp_graph_def, self._int8_frozen_range_graph)
+            self._tmp_model.graph_def = self._tmp_graph_def
+            self._tmp_model.save(self._int8_frozen_range_model_path)
 
     def _fuse_requantize_with_fused_quantized_node(self):
-        self._tmp_graph_def = FuseConvRequantizeTransformer(self._tmp_graph_def,
-                                                            self.device).do_transformation()
+        self._tmp_graph_def = FuseConvRequantizeTransformer(
+            self._tmp_graph_def,
+            self.device).do_transformation()
 
         self._tmp_graph_def = FuseMatMulRequantizeTransformer(
             self._tmp_graph_def).do_transformation()
@@ -562,18 +546,21 @@ class GraphConverter:
         self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
             self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
-                                                        self.input_node_names,
-                                                        self.output_node_names).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(
+            self._tmp_graph_def,
+            self._tmp_model.input_node_names,
+            self._tmp_model.output_node_names).do_transformation()
 
-        self._tmp_graph_def = RemoveTrainingNodesOptimizer(self._tmp_graph_def,
-                                                           protected_nodes=self.output_node_names
-                                                          ).do_transformation()
+        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
+            self._tmp_graph_def,
+            protected_nodes=self._tmp_model.output_node_names).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(
+            self._tmp_graph_def).do_transformation()
+
         if self.recipes['scale_propagation_concat']:
             self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
-                                                        self.device).do_transformation()
+                                                     self.device).do_transformation()
 
         self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(
             self._tmp_graph_def).do_transformation()
@@ -583,12 +570,13 @@ class GraphConverter:
         if self.advance_config is not None and \
            deep_get(self.advance_config, 'bias_correction') is not None:
             self._tmp_graph_def = BiasCorrection(
-                self._tmp_graph_def, self.input_graph).do_transformation()
+                self._tmp_graph_def, self.model.graph_def).do_transformation()
 
-        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
+        self._tmp_model.graph_def = self._tmp_graph_def
         if self.debug:
-            write_graph(self._tmp_graph_def, self.output_graph)
+            self._tmp_model.save(self.output_graph)
             self.logger.info('Converted graph file is saved to: %s', self.output_graph)
 
     def _post_clean(self):
@@ -596,5 +584,10 @@ class GraphConverter:
 
         :return: None
         """
-        if gfile.Exists(self._int8_logged_graph):
-            os.remove(self._int8_logged_graph)
+        if os.path.exists(self._int8_logged_model_path) and \
+            os.path.isdir(self._int8_logged_model_path):
+            import shutil
+            shutil.rmtree(self._int8_logged_model_path)
+
+        elif gfile.Exists(self._int8_logged_model_path + '.pb'):
+            os.remove(self._int8_logged_model_path + '.pb')

@@ -45,7 +45,11 @@ function run_tuning {
     fi
     sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" $conf_yaml
     sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" $conf_yaml
-    extra_cmd="${dataset_location}"
+    extra_cmd=""
+    if [ -n "$output_model" ];then
+        extra_cmd = "--tuned_checkpoint ${output_model}"
+    fi
+    extra_cmd=$extra_cmd" ${dataset_location}"
 
     python validate.py \
             --pretrained \

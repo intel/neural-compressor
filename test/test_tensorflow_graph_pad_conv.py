@@ -82,7 +82,7 @@ class TestFoldPadConv(unittest.TestCase):
             found_pad = False
 
             if tf.__version__ >= "2.0.0":
-                for i in output_graph.as_graph_def().node:
+                for i in output_graph.graph_def.node:
                     if i.op == 'Pad':
                         found_pad = True
                         break
@@ -127,7 +127,7 @@ class TestFoldPadConv(unittest.TestCase):
             found_pad = False
 
             if tf.__version__ >= "2.0.0":
-                for i in output_graph.as_graph_def().node:
+                for i in output_graph.graph_def.node:
                     if i.op == 'Pad':
                         found_pad = True
                         break
@@ -170,7 +170,7 @@ class TestFoldPadConv(unittest.TestCase):
             found_pad = False
 
             if tf.__version__ >= "2.0.0":
-                for i in output_graph.as_graph_def().node:
+                for i in output_graph.graph_def.node:
                     if i.op == 'Pad':
                         found_pad = True
                         break

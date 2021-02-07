@@ -100,19 +100,19 @@ class MxNetAdaptor(Adaptor):
         assert q_func is None, "quantization aware training mode is not support on mxnet"
 
         # get symbol from FP32 model
-        if isinstance(model, mx.gluon.HybridBlock):
+        if isinstance(model.model, mx.gluon.HybridBlock):
             # transfer hybridblock to symbol
             sym, arg_params, aux_params, calib_data = \
-                self._get_gluon_symbol(model, dataloader=dataloader)
+                self._get_gluon_symbol(model.model, dataloader=dataloader)
             data_names = [pair[0] for pair in calib_data.provide_data]
             self.__config_dict['calib_data'] = calib_data
-        elif isinstance(model[0], mx.symbol.Symbol):
-            sym, arg_params, aux_params = model
+        elif isinstance(model.model[0], mx.symbol.Symbol):
+            sym, arg_params, aux_params = model.model
             self.__config_dict['calib_data'] = dataloader
         else:
             raise ValueError(
                 'Need a symbol model or HybridBlock model, while received %s' % str(
-                    type(model)))
+                    type(model.model)))
 
         self._cfg_to_qconfig(tune_cfg)
         self.th_dict = None
@@ -149,7 +149,7 @@ class MxNetAdaptor(Adaptor):
             qsym, arg_params, th_dict)
         qsym = self._get_backedn_graph(qsym, qconfig['ctx'])
 
-        if isinstance(model, mx.gluon.HybridBlock):
+        if isinstance(model.model, mx.gluon.HybridBlock):
             from mxnet.gluon import SymbolBlock
             data_sym = []
             for name in data_names:
@@ -166,9 +166,10 @@ class MxNetAdaptor(Adaptor):
                 mx.ndarray.save(param_name, save_dict)  # pylint: disable=no-member
                 net.collect_params().load(param_name, cast_dtype=True, dtype_source='saved')
                 net.collect_params().reset_ctx(self.__config_dict['ctx'])
-                return net
-
-        return (qsym, qarg_params, aux_params)
+                model.model = net
+                return model
+        model.model = (qsym, qarg_params, aux_params)
+        return model
 
     def train(self, model, dataloader):
         """The function is used to do training in quantization-aware training.
@@ -197,15 +198,15 @@ class MxNetAdaptor(Adaptor):
         Returns:
             acc: evaluate result.
         """
-        if isinstance(model, mx.gluon.HybridBlock):
-            acc = self._mxnet_gluon_forward(model, dataloader, postprocess, \
+        if isinstance(model.model, mx.gluon.HybridBlock):
+            acc = self._mxnet_gluon_forward(model.model, dataloader, postprocess, \
                                             metric, measurer, iteration)
 
-        elif isinstance(model[0], mx.symbol.symbol.Symbol):
+        elif isinstance(model.model[0], mx.symbol.symbol.Symbol):
             assert isinstance(dataloader, mx.io.DataIter), \
                 'need mx.io.DataIter. but recived %s' % str(type(dataloader))
             dataloader.reset()
-            acc = self._mxnet_symbol_forward(model, dataloader, postprocess, \
+            acc = self._mxnet_symbol_forward(model.model, dataloader, postprocess, \
                                              metric, measurer, iteration)
 
         else:
@@ -284,6 +285,9 @@ class MxNetAdaptor(Adaptor):
         Returns:
             tuple: Symbol model include sym, arg_params, aux_params.
         """
+        from lpot.model.model import MXNetModel
+        if isinstance(model, MXNetModel):
+            model = model.model
         if isinstance(model, mx.gluon.HybridBlock):
             # model.hybridblock()
             sym, arg_params, aux_params, calib_data = \
@@ -855,7 +859,7 @@ class MxNetAdaptor(Adaptor):
         return dst
 
     def save(self, model, path):
-        pass
+        model.save(path)
 
 @singleton
 class MXNetQuery(QueryBackendCapability):

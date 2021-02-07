@@ -29,7 +29,7 @@ quantization:                                        # optional. tuning constrai
           style_folder: ./style_images/              # NOTE: modify to style images path if needed
 
 evaluation:
-  accuracy:
+  performance:
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       batch_size: 2
       dataset:

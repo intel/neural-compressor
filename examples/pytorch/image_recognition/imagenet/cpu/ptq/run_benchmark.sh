@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=32
-  tuned_checkpoint=lpot_workspace/pytorch/imagenet/checkpoint
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -36,6 +36,9 @@ function init_params {
       ;;
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
+      ;;
+      --config=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -67,7 +70,6 @@ function run_benchmark {
             extra_cmd=$extra_cmd" --int8"
         fi
         extra_cmd=$extra_cmd" --ipex"
-        tuned_checkpoint=lpot_workspace/pytorch_ipex/imagenet/checkpoint
         topology=${topology%*${topology:(-5)}}
     else
         sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml

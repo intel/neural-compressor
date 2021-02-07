@@ -110,7 +110,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
             q_dataloader=dataloader,
             eval_dataloader=dataloader
         )
-        self.assertGreater(len(output_graph.as_graph_def().node), 0)
+        self.assertGreater(len(output_graph.graph_def.node), 0)
 
     def test_invalid_input_output_config(self):
         g = GraphAnalyzer()
@@ -123,16 +123,14 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         quantizer = Quantization('fake_yaml_2.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)
         dataloader = quantizer.dataloader(dataset, batch_size=2)
-        catch_assert = False
-        try:
-          quantizer(
-              float_graph_def,
-              q_dataloader=dataloader,
-              eval_dataloader=dataloader
-          )
-        except AssertionError as e:
-          catch_assert = True
-        self.assertEqual(catch_assert, True)
+        model = quantizer(
+            float_graph_def,
+            q_dataloader=dataloader,
+            eval_dataloader=dataloader
+        )
+        # will detect the right inputs/outputs
+        self.assertNotEqual(model.input_node_names, ['x'])
+        self.assertNotEqual(model.output_node_names, ['op_to_store'])
 
 if __name__ == '__main__':
     unittest.main()

@@ -273,7 +273,7 @@ if __name__ == '__main__':
         from lpot import Quantization
         quantizer = Quantization("./ssd.yaml")
         q_model = quantizer(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
-        save(q_model, args.output_graph)
+        q_model.save(args.output_graph)
         sys.exit()
 
     if args.accuracy_only:

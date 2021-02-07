@@ -292,7 +292,7 @@ class TestBF16Convert(unittest.TestCase):
             eval_dataloader=dataloader
         )
         cast_op_count = 0
-        for node in quant_model.as_graph_def().node:
+        for node in quant_model.graph_def.node:
             if node.op == 'Cast':
                 cast_op_count += 1
         self.assertTrue(cast_op_count >= 1)
@@ -345,7 +345,7 @@ class TestBF16Convert(unittest.TestCase):
             quantized_model = quantizer(g, q_dataloader=q_dataloader, eval_dataloader=e_dataloader)
 
             convert_to_bf16_flag = False
-            for i in quantized_model.as_graph_def().node:
+            for i in quantized_model.graph_def.node:
               if i.name == 'lstm/while/MatMul_3' and i.attr['T'].type == dtypes.bfloat16.as_datatype_enum:
                 convert_to_bf16_flag = True
             

@@ -47,21 +47,12 @@ class TensorFlowAdaptor(Adaptor):
         self.framework_specific_info = framework_specific_info
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
+        self.recipes = self.framework_specific_info['recipes']
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
-
-        self.pre_optimized_graph = None
+        
+        self.pre_optimized_model = None
         self.pre_optimizer_handle = None
-        self.input_tensor_names = self.framework_specific_info['inputs'] \
-            if 'inputs' in self.framework_specific_info else []
-        self.output_tensor_names = self.framework_specific_info['outputs'] \
-            if 'outputs' in self.framework_specific_info else []
-        self.recipes = self.framework_specific_info['recipes']
-
-        self.output_node_names = list(
-            set([x.split(":")[0] for x in self.output_tensor_names]))
-        self.input_node_names = list(
-            set([x.split(":")[0] for x in self.input_tensor_names]))
 
         self.bf16_ops = []
         self.fp32_ops = []
@@ -98,13 +89,13 @@ class TensorFlowAdaptor(Adaptor):
         writer.add_summary(summary, step)
         writer.flush()
 
-    def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+    def evaluate(self, model, dataloader, postprocess=None,
+                 metric=None, measurer=None, iteration=-1, 
                  tensorboard=False, fp32_baseline=False):
         """Evaluate the model for specified metric on validation dataset.
 
         Args:
-            input_graph ([Graph, GraphDef or Path String]): The model could be the graph,
+            model ([Graph, GraphDef or Path String]): The model could be the graph,
                         graph_def object, the frozen pb or ckpt/savedmodel folder path.
             dataloader (generator): generate the data and labels.
             postprocess (object, optional): process the result from the model
@@ -118,21 +109,9 @@ class TensorFlowAdaptor(Adaptor):
             [float]: evaluation result, the larger is better.
         """
         import tensorflow as tf
-        from .tf_utils.util import get_graph_def
-        from .tf_utils.util import get_tensor_by_name, iterator_sess_run
+        from .tf_utils.util import iterator_sess_run
 
-        graph = tf.Graph()
-        graph_def = get_graph_def(input_graph, self.output_node_names)
-        self._validate_and_inference_input_output(graph_def)
-        outputs = copy.deepcopy(self.output_tensor_names)
-
-        assert graph_def
-        with graph.as_default():
-            tf.import_graph_def(graph_def, name='')
-
-        iter_op = None
-        if 'MakeIterator' in [node.op for node in graph_def.node]:
-            iter_op = graph.get_operation_by_name('MakeIterator')
+        outputs = copy.deepcopy(model.output_tensor_names)
 
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
@@ -152,13 +131,13 @@ class TensorFlowAdaptor(Adaptor):
             if os.path.isdir(temp_dir):
                 import shutil
                 shutil.rmtree(temp_dir, ignore_errors=True)
-            writer = tf.compat.v1.summary.FileWriter(temp_dir, graph)
+            writer = tf.compat.v1.summary.FileWriter(temp_dir, model.sess.graph)
 
             cur_graph = GraphAnalyzer()
-            cur_graph.graph = graph_def
+            cur_graph.graph = model.graph_def
             cur_graph.parse_graph()
             graph_info = cur_graph.node_name_details
-            for node in graph_def.node:
+            for node in model.graph_def.node:
                 if node.op in inspect_node_types:
                     fp32_inspect_node_name.append(node.name)
                 # Tensor dump supported quantized op including,
@@ -195,21 +174,16 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
 
-        input_tensor = [get_tensor_by_name(graph, x) for x in self.input_tensor_names]
-        output_tensor = [get_tensor_by_name(graph, x) for x in outputs] if \
-            len(outputs) > 1 else get_tensor_by_name(graph, outputs[0])
-
-        config = tf.compat.v1.ConfigProto()
-        config.use_per_session_threads = 1
-        # config.intra_op_parallelism_threads = 28
-        config.inter_op_parallelism_threads = 1
-        sess = tf.compat.v1.Session(graph=graph, config=config)
-
         if metric and hasattr(metric, "compare_label") and not metric.compare_label:
             results = [[] for _ in range(len(outputs))]
             if not os.path.exists(os.path.join(self.work_dir, "output_tensors")):
                 os.makedirs(os.path.join(self.work_dir, "output_tensors"))
 
+        origin_output_tensor_names = model.output_tensor_names
+        model.output_tensor_names = outputs
+        input_tensor = model.input_tensor
+        output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                            model.output_tensor[0]
         logger.info("Start to evaluate Tensorflow model...")
         for idx, (inputs, labels) in enumerate(dataloader):
             # dataloader should keep the order and len of inputs same with input_tensor
@@ -222,12 +196,14 @@ class TensorFlowAdaptor(Adaptor):
 
             if measurer is not None:
                 measurer.start()
-                predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
-                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration)
+                predictions = model.sess.run(output_tensor, feed_dict) if \
+                    model.iter_op is None else iterator_sess_run(
+                    model.sess, model.iter_op, feed_dict, output_tensor, iteration)
                 measurer.end()
             else:
-                predictions = sess.run(output_tensor, feed_dict) if iter_op is None \
-                    else iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration)
+                predictions = model.sess.run(output_tensor, feed_dict) if \
+                    model.iter_op is None else iterator_sess_run(
+                    model.sess, model.iter_op, feed_dict, output_tensor, iteration)
             if metric and hasattr(metric, "compare_label") and not metric.compare_label:
                 if isinstance(predictions, list):
                     result = [np.array(value) for value in predictions.values()]
@@ -244,12 +220,10 @@ class TensorFlowAdaptor(Adaptor):
                     self.log_histogram(writer, node_name + output_postfix, tensor, idx)
                 writer.close()
             if isinstance(predictions, list):
-                if len(self.output_tensor_names) == 1:
+                if len(origin_output_tensor_names) == 1:
                     predictions = predictions[0]
-                    print (type(predictions), 1111111111)
-                elif len(self.output_tensor_names) > 1:
-                    predictions = predictions[:len(self.output_tensor_names)]
-
+                elif len(origin_output_tensor_names) > 1:
+                    predictions = predictions[:len(origin_output_tensor_names)]
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
             if metric is not None:
@@ -283,7 +257,7 @@ class TensorFlowAdaptor(Adaptor):
                 shutil.rmtree(new_dir, ignore_errors=True)
             os.rename(temp_dir, new_dir)
             self.dump_times += 1
-        sess.close()
+        model.output_tensor_names = origin_output_tensor_names
         return acc
 
     def tuning_cfg_to_fw(self, tuning_cfg):
@@ -382,15 +356,12 @@ class TensorFlowAdaptor(Adaptor):
         """
         assert q_func is None, "quantization aware training mode is not support on tensorflow"
         logger.info('Start to run model quantization...')
-        quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(self.pre_optimized_graph if self.pre_optimized_graph else model,
-                                   quantized_model,
-                                   inputs=self.input_tensor_names,
-                                   outputs=self.output_tensor_names,
+        quantize_model = self.pre_optimized_model if self.pre_optimized_model else model
+        converter = GraphConverter(quantize_model,
                                    qt_config=self.quantize_config,
                                    recipes=self.recipes,
                                    int8_sequences=self.op_wise_sequences,
@@ -472,35 +443,6 @@ class TensorFlowAdaptor(Adaptor):
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
         return self.quantizable_op_details
 
-    def _validate_and_inference_input_output(self, graph_def):
-        """ As node name is part of tensor name and deterministic tensor name is needed
-        for session inference during evaluation and calibration, lpot has an assumption
-        that tensor name equal to node's first tensor if ':idx' not in tensor name.
-        this means inputs/outputs from user or auto detected will be treated as tensor names
-        and add ':0' when ':idx' not in inputs/outputs.
-
-        Args:
-            graph_def (tf.compat.v1.GraphDef): model graph definition.
-        """
-        from .tf_utils.util import validate_graph_input, validate_graph_output
-        from .tf_utils.util import get_input_node_names, get_output_node_names
-
-        self.output_tensor_names = self.output_tensor_names \
-            if validate_graph_output(graph_def, self.output_node_names) else \
-            get_output_node_names(graph_def)
-
-        self.input_tensor_names = self.input_tensor_names \
-            if validate_graph_input(graph_def, self.input_node_names) else \
-            get_input_node_names(graph_def)
-
-        self.output_node_names = list(
-            set([x.split(":")[0] for x in self.output_tensor_names]))
-        self.input_node_names = list(
-            set([x.split(":")[0] for x in self.input_tensor_names]))
-
-        assert self.input_tensor_names
-        assert self.output_tensor_names
-
     def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
@@ -512,19 +454,13 @@ class TensorFlowAdaptor(Adaptor):
         """
         import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-        from .tf_utils.util import get_graph_def
 
-        graph_def = get_graph_def(model, self.output_node_names)
-        self._validate_and_inference_input_output(graph_def)
-        self.pre_optimizer_handle = PreOptimization(model,
-                                                    self.input_tensor_names,
-                                                    self.output_tensor_names)
-
-        self.pre_optimized_graph = self.pre_optimizer_handle.get_optimized_graphdef()
+        self.pre_optimizer_handle = PreOptimization(model)
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
-        original_graph_node_name = [i.name for i in self.pre_optimized_graph.node]
+        original_graph_node_name = [i.name for i in self.pre_optimized_model.model.node]
         matched_nodes = sorted(matched_nodes, key=lambda i: original_graph_node_name.index(i[0]))
 
         def check_match(patterns, input_pattern):
@@ -570,10 +506,8 @@ class TensorFlowAdaptor(Adaptor):
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         from .tf_utils.graph_converter import GraphConverter
 
-        converter = GraphConverter(self.pre_optimized_graph if self.pre_optimized_graph else model,
-                                   quantized_model,
-                                   inputs=self.input_tensor_names,
-                                   outputs=self.output_tensor_names,
+        converter = GraphConverter(self.pre_optimized_model \
+                                        if self.pre_optimized_model else model,
                                    qt_config=self.quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    data_loader=dataloader)

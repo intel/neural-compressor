@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -24,7 +24,7 @@ function init_params {
           input_model=$(echo $var |cut -f2 -d=)
       ;;
        --output_model=*)
-           output_model=$(echo $var |cut -f2 -d=)
+           tuned_checkpoint=$(echo $var |cut -f2 -d=)
        ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -83,6 +83,7 @@ function run_tuning {
     fi
 
     python -u $SCRIPTS \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --model_type ${model_type} \
         --model_name_or_path ${model_name_or_path} \
         --task_name ${TASK_NAME} \

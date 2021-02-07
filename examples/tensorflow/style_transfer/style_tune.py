@@ -125,13 +125,9 @@ def main(args=None):
           with tf.Graph().as_default() as graph:
               tf.import_graph_def(frozen_graph, name='')
               quantizer = Quantization(FLAGS.config)
-              quantized_model = quantizer(graph, eval_func=eval_func)
-
-              # save the frozen model for deployment
-              with tf.io.gfile.GFile(FLAGS.output_model, "wb") as f:
-                  f.write(quantized_model.as_graph_def().SerializeToString())
-
-              frozen_graph= quantized_model.as_graph_def()
+              quantized_model = quantizer(graph)
+              quantized_model.save(FLAGS.output_model)
+              frozen_graph= quantized_model.graph_def
 
   # validate the quantized model here
   with tf.Graph().as_default(), tf.Session() as sess:
@@ -185,8 +181,6 @@ def style_transfer(sess, dataloader, precision='fp32'):
       print('Latency: {:.3f} ms'.format(np.array(time_list[warm_up:]).mean() * 1000)) 
       print('Throughput: {:.3f} images/sec'.format(throughput)) 
 
-def eval_func(model):
-    return 1.
 
 def run_tuning():
   tf.disable_v2_behavior()

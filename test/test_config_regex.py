@@ -136,7 +136,7 @@ class TestConfigRegex(unittest.TestCase):
             )
             found_fp32_conv = False
             found_quantized_conv = False
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'Conv2D' and i.name == 'conv1_1':
                     found_fp32_conv = True
 
@@ -190,7 +190,7 @@ class TestConfigRegex(unittest.TestCase):
             )
             found_fp32_conv = False
             found_quantized_conv = False
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
                 if i.op == 'Conv2D' and i.name == 'conv1_1':
                     found_fp32_conv = True
 

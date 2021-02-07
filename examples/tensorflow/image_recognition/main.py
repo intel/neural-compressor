@@ -53,19 +53,7 @@ class eval_classifier_optimized_graph:
           from lpot import Quantization
           quantizer = Quantization(self.args.config)
           q_model = quantizer(self.args.input_graph)
-
-          def save(model, path):
-              from tensorflow.python.platform import gfile
-              f = gfile.GFile(path, 'wb')
-              f.write(model.as_graph_def().SerializeToString())
-
-          try:
-            save(q_model, evaluate_opt_graph.args.output_graph)
-          except AttributeError as no_model:
-              print("None of the quantized models fits the \
-                     accuracy criteria: {0}".format(no_model))
-          except Exception as exc:
-              print("Unexpected error while saving the model: {0}".format(exc))
+          q_model.save(self.args.output_graph)
 
       if self.args.benchmark:
           from lpot import Benchmark

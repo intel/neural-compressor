@@ -285,7 +285,6 @@ if __name__ == "__main__":
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         from lpot import Quantization
-        from lpot.adaptor.tf_utils.util import write_graph
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.yaml, "./config_tmp.yaml", list(inputs.keys()), outputs)
@@ -298,7 +297,7 @@ if __name__ == "__main__":
                                            batch_size=batch_size,
                                            collate_fn=oob_collate_data_func)
         q_model = quantizer(args.model_path, q_dataloader=data_loader)
-        write_graph(q_model.as_graph_def(), args.output_path)
+        q_model.save(args.output_path)
 
     else:
         run_benchmark(model_detail, num_iter, num_warmup,

@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  tuned_checkpoint=lpot_workspace/pytorch/resnest/checkpoint
+  tuned_checkpoint=saved_results
   batch_size=30
   for var in "$@"
   do
@@ -36,6 +36,9 @@ function init_params {
       ;;
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
+      ;;
+      --config=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"

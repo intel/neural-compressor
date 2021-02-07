@@ -6,7 +6,9 @@ import torchvision
 import unittest
 import os
 from lpot.adaptor import FRAMEWORKS
+from lpot.model import MODELS
 import lpot.adaptor.pytorch as lpot_torch
+from lpot import Quantization
 import shutil
 import copy
 import numpy as np
@@ -205,6 +207,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
+    lpot_model = MODELS['pytorch'](model)
 
     @classmethod
     def setUpClass(self):
@@ -221,7 +224,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_get_all_weight_name(self):
-        assert len(list(self.adaptor.get_all_weight_names(self.model))) == 62
+        assert len(list(self.lpot_model.get_all_weight_names())) == 62
 
     def test_get_weight(self):
         for name, param in self.model.named_parameters():
@@ -229,31 +232,29 @@ class TestPytorchAdaptor(unittest.TestCase):
                 param.data.fill_(0.0)
             if name == "fc.bias":
                 param.data.fill_(0.1)
-        assert int(torch.sum(self.adaptor.get_weight(self.model, "layer4.1.conv2.weight"))) == 0
+        assert int(torch.sum(self.lpot_model.get_weight("layer4.1.conv2.weight"))) == 0
         assert torch.allclose(
             torch.sum(
-                self.adaptor.get_weight(
-                    self.model,
-                    "fc.bias")),
+                self.lpot_model.get_weight("fc.bias")),
             torch.tensor(100.))
 
     def test_update_weights(self):
-        model = self.adaptor.update_weights(self.model, "fc.bias", torch.zeros([1000]))
-        assert int(torch.sum(self.adaptor.get_weight(model, "fc.bias"))) == 0
+        self.lpot_model.update_weights("fc.bias", torch.zeros([1000]))
+        assert int(torch.sum(self.lpot_model.get_weight("fc.bias"))) == 0
 
     def test_report_sparsity(self):
-        df, total_sparsity = self.adaptor.report_sparsity(self.model)
+        df, total_sparsity = self.lpot_model.report_sparsity()
         self.assertTrue(total_sparsity > 0)
         self.assertTrue(len(df) == 22)
 
     def test_quantization_saved(self):
-        from lpot import Quantization
         from lpot.utils.pytorch import load
+        
         model = copy.deepcopy(self.model)
+
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             if fake_yaml == 'ptq_yaml.yaml':
-                model.eval()
-                model.fuse_model()
+                model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
             dataloader = quantizer.dataloader(dataset)
@@ -263,17 +264,18 @@ class TestPytorchAdaptor(unittest.TestCase):
                 q_dataloader=dataloader,
                 eval_dataloader=dataloader
             )
-            new_model = load('./saved/checkpoint', model)
-            eval_func(new_model)
+            q_model.save('./saved')
+            new_model = MODELS['pytorch'](model, {"workspace_path": "./saved"})
+            eval_func(new_model.model)
         from lpot import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
         results = evaluator(model=new_model, b_dataloader=dataloader)
+        fp32_results = evaluator(model=model, b_dataloader=dataloader)
+        self.assertTrue((fp32_results['accuracy'][0] - results['accuracy'][0]) < 0.01)
 
     def test_tensor_dump(self):
-        from lpot import Quantization
-        model = copy.deepcopy(self.model)
-        model.eval()
-        model.fuse_model()
+        model = copy.deepcopy(self.lpot_model)
+        model.model.eval().fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         dataloader = quantizer.dataloader(dataset)
@@ -319,20 +321,21 @@ class TestPytorchAdaptor(unittest.TestCase):
                 return w
 
         model = ModelWithFunctionals()
+        model = MODELS['pytorch'](model)
         x = torch.rand(10, 1, dtype=torch.float)
-        y = model(x)
+        y = model.model(x)
         fallback_ops = []
         q_capability = self.adaptor.query_fw_capability(model)
         for k, v in q_capability["opwise"].items():
             if k[0] != "quant":
               fallback_ops.append(k[0])
-        model.qconfig = torch.quantization.default_qconfig
-        model.quant.qconfig = torch.quantization.default_qconfig
-        lpot_torch._fallback_quantizable_ops_recursively(model, '', fallback_ops)
-        torch.quantization.add_observer_(model)
-        model(x)
-        torch.quantization.convert(model, self.adaptor.q_mapping, inplace=True)
-        qy = model(x)
+        model.model.qconfig = torch.quantization.default_qconfig
+        model.model.quant.qconfig = torch.quantization.default_qconfig
+        lpot_torch._fallback_quantizable_ops_recursively(model.model, '', fallback_ops)
+        torch.quantization.add_observer_(model.model)
+        model.model(x)
+        torch.quantization.convert(model.model, self.adaptor.q_mapping, inplace=True)
+        qy = model.model(x)
         tol = {'atol': 1e-01, 'rtol': 1e-03}
         self.assertTrue(np.allclose(y, qy, **tol))
 
@@ -351,19 +354,22 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
     def test_tuning_ipex(self):
         from lpot import Quantization
         model = torchvision.models.resnet18()
+        model = MODELS['pytorch_ipex'](model)
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         dataloader = quantizer.dataloader(dataset)
-        quantizer(
+        lpot_model = quantizer(
             model,
             eval_dataloader=dataloader,
             q_dataloader=dataloader,
         )
-        model.to(ipex.DEVICE)
+        lpot_model.save("./saved")
+        new_model = MODELS['pytorch_ipex'](model.model, {"workspace_path": "./saved"})
+        new_model.model.to(ipex.DEVICE)
         try:
-            script_model = torch.jit.script(model)
+            script_model = torch.jit.script(new_model.model)
         except:
-            script_model = torch.jit.trace(model, torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
+            script_model = torch.jit.trace(new_model.model, torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
         from lpot import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         results = evaluator(model=script_model, b_dataloader=dataloader)

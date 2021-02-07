@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -24,7 +24,7 @@ function init_params {
           input_model=$(echo $var |cut -f2 -d=)
       ;;
       --output_model=*)
-          output_model=$(echo $var |cut -f2 -d=)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -55,6 +55,7 @@ function init_params {
 function run_tuning {
 
     python classify.py --tune \
+                       --tuned_checkpoint ${tuned_checkpoint} \
                        --input_model=${input_model}/model_final.pt \
                        --dataset_location=${dataset_location}/dev.tsv
 }

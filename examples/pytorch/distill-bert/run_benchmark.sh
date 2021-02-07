@@ -12,6 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=32
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -35,6 +36,13 @@ function init_params {
       ;;
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
+      ;;
+      --config=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
+      ;;
+      *)
+          echo "Error: No such parameter: ${var}"
+          exit 1
       ;;
     esac
   done
@@ -81,6 +89,7 @@ function run_benchmark {
     fi
 
     python classify.py \
+            --tuned_checkpoint ${tuned_checkpoint} \
             ${mode_cmd} \
             ${extra_cmd}
 }

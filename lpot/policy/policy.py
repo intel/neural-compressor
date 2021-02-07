@@ -35,20 +35,17 @@ def policy_registry(cls):
     return cls
 
 class PrunePolicy:
-    def __init__(self, model, local_config, global_config, adaptor):
+    def __init__(self, model, local_config, global_config):
         """The base clase of Prune policies
 
         Args:
-            model (object):                        The original model (currently torhc.nn.module
-                                                   instance).
-            local_config (Conf):                   configs specific for this pruning instance
-            global_config (Conf):                  global configs which may be overwritten by
-                                                   local_config
-            adaptor (Adaptor):                     Correspond adaptor for current framework
+            model (object):          The original model (currently PyTorchModel instance).
+            local_config (Conf):     configs specific for this pruning instance
+            global_config (Conf):    global configs which may be overwritten by
+                                     local_config
 
         """
         self.model = model
-        self.adaptor = adaptor
         self.tensor_dims = [4]
 
         if local_config.method:
@@ -70,7 +67,7 @@ class PrunePolicy:
         if local_config.weights:
             self.weights = local_config.weights
         else:
-            self.weights = self.adaptor.get_all_weight_names(self.model)
+            self.weights = self.model.get_all_weight_names()
 
         self.is_last_epoch = False
         self.masks = {}

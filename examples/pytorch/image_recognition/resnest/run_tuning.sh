@@ -11,6 +11,7 @@ function main {
 # init params
 function init_params {
   batch_size=30
+  tuned_checkpoint=saved_results
 
   for var in "$@"
   do
@@ -25,7 +26,7 @@ function init_params {
           input_model=$(echo $var |cut -f2 -d=)
       ;;
       --output_model=*)
-          output_model=$(echo $var |cut -f2 -d=)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -46,6 +47,7 @@ function run_tuning {
     python -u scripts/torch/verify.py \
         --model ${topology} \
         --batch-size ${batch_size} \
+        --tuned_checkpoint ${tuned_checkpoint} \
         --workers 1 \
         --no-cuda \
         --tune \

@@ -26,7 +26,6 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from lpot.utils import logger
 from .graph_transform_base import GraphTransformBase
-from ..util import get_graph_def
 
 
 class BiasCorrection(GraphTransformBase):
@@ -51,7 +50,7 @@ class BiasCorrection(GraphTransformBase):
             'only support weight empirical correction method'
 
         super(BiasCorrection, self).__init__(input_graph)
-        self.fp32_graph = get_graph_def(fp32_graph)
+        self.fp32_graph = fp32_graph
         self.input_graph = input_graph
         self.method = method
         self.fp32_node_mapping = {}

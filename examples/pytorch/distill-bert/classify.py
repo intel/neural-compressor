@@ -203,6 +203,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
 
             quantizer = lpot.Quantization(args.tuned_yaml)
             q_model = quantizer(model, q_dataloader=eval_dataloader, eval_func=eval_func)
+            q_model.save(args.tuned_checkpoint)
 
         elif args.int8:
             from lpot.utils.pytorch import load
@@ -247,8 +248,8 @@ if __name__ == '__main__':
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_yaml", default='./blendcnn.yaml', type=str, metavar='PATH',
                         help='path to Intel® Low Precision Optimization Tool config file')
-    parser.add_argument("--tuned_checkpoint", default='./lpot_workspace/pytorch/blendcnn/checkpoint', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by  (default: ./lpot_workspace/pytorch/blendcnn/checkpoint)')
+    parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by  (default: ./saved_results)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run Intel® Low Precision Optimization Tool model benchmark')
     args = parser.parse_args()

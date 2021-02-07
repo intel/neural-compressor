@@ -18,12 +18,9 @@ def main():
     images = tf.compat.v1.placeholder(name='input', \
     dtype=tf.float32, shape=inputs_shape)
 
-    from lpot.adaptor.tf_utils.util import get_slim_graph
-    graph = get_slim_graph('./inception_v1.ckpt', model_func, \
-            arg_scope, images, **kwargs)
     
     # Do quantization
-    quantized_model = quantizer(graph)
+    quantized_model = quantizer('./inception_v1.ckpt')
   
      
 if __name__ == "__main__":

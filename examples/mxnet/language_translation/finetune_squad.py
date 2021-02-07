@@ -904,7 +904,8 @@ if __name__ == '__main__':
         dev_dataloader = gen_dataset()
         from lpot import Quantization
         quantizer = Quantization("./bert.yaml")
-        quantizer(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
+        q_model = quantizer(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
+        q_model.save(args.output_dir)
     elif model_parameters or deploy:
         evaluate()
 

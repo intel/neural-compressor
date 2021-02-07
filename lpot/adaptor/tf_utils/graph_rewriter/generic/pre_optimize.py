@@ -17,9 +17,10 @@
 
 
 import logging
-from lpot.adaptor.tf_utils.util import get_graph_def
+import copy
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 from lpot.utils.utility import dump_elapsed_time
+from lpot.model.model import TensorflowModel
 
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer
@@ -34,21 +35,19 @@ from .fuse_gelu import FuseGeluOptimizer
 from .grappler_pass import GrapplerOptimizer
 
 class PreOptimization(object):
-    def __init__(self, model, inputs, outputs):
-        self.output_node_names = list(set([output.split(":")[0] for output in outputs]))
-        self.input_graph = get_graph_def(model, self.output_node_names)
-        if 'MakeIterator' in [node.op for node in self.input_graph.node]:
+    def __init__(self, model):
+        self.model = model
+        self.output_node_names = model.output_node_names
+        self.input_node_names = model.input_node_names
+        if model.iter_op is not None:
             self.output_node_names.append('MakeIterator')
 
         self.analyzer = GraphAnalyzer()
-        self.analyzer.graph = self.input_graph
+        self.analyzer.graph = model.graph_def
         self.analyzer.parse_graph()
-        self.input_node_names = inputs
         self.logger = logging.getLogger()
         self._tmp_graph_def = None
         self._excluded_node_names = []
-        if not self.input_node_names or not self.output_node_names:
-            self.input_node_names, self.output_node_names = self.analyzer.get_graph_input_output()
 
     def get_excluded_node_names(self):
         """Get the excluded node name
@@ -59,7 +58,7 @@ class PreOptimization(object):
         return self._excluded_node_names
 
     @dump_elapsed_time("Pass Pre Optimization")
-    def get_optimized_graphdef(self):
+    def get_optimized_model(self):
         """Executed the non-precision dependant graph optimization.
         The input graph will be optimized with following passes:
         1. Remove the training nodes like Identity Op.
@@ -76,7 +75,7 @@ class PreOptimization(object):
         self.logger.debug("Start to pre optimize input model...")
 
         self._tmp_graph_def = ConvertLayoutOptimizer(
-            self.input_graph, self.output_node_names).do_transformation()
+            self.model.graph_def, self.output_node_names).do_transformation()
 
         self._tmp_graph_def = GrapplerOptimizer(
             self._tmp_graph_def, self.output_node_names).do_transformation()
@@ -103,9 +102,10 @@ class PreOptimization(object):
         self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
             self._tmp_graph_def).do_transformation()
         self._excluded_node_names.extend(excluded_node_names)
-        self._tmp_graph_def.library.CopyFrom(self.input_graph.library)
-
-        return self._tmp_graph_def
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+        
+        optimized_model = TensorflowModel(self._tmp_graph_def, self.model.framework_specific_info)
+        return optimized_model
 
     def get_matched_nodes(self, patterns):
         """Searche the matched nodes with the specified patterns

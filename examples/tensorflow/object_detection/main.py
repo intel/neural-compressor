@@ -21,7 +21,6 @@ from __future__ import division
 import time
 import numpy as np
 import tensorflow as tf
-from lpot.adaptor.tf_utils.util import write_graph, get_graph_def
 from argparse import ArgumentParser
 tf.compat.v1.disable_eager_execution()
 
@@ -46,10 +45,7 @@ class eval_object_detection_optimized_graph(object):
             from lpot import Quantization
             quantizer = Quantization(self.args.config)
             q_model = quantizer(self.args.input_graph)
-            try:
-                write_graph(q_model.as_graph_def(), self.args.output_model)
-            except Exception as e:
-                print("Failed to save model due to {}".format(str(e)))
+            q_model.save(self.args.output_model)
                 
         if self.args.benchmark:
             from lpot import Benchmark

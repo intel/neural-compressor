@@ -1,22 +1,23 @@
-#
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
 
+from ..utils.utility import singleton
+
+@singleton
 class TFSlimNetsFactory(object):
     def __init__(self):
         # tf_slim only support specific models by default
@@ -60,7 +61,7 @@ class TFSlimNetsFactory(object):
           'resnet_v2_200': {'model': resnet_v2.resnet_v2_200, 'input_shape': [None, 224, 224, 3], \
                             'num_classes': 1001, 'arg_scope': resnet_v2.resnet_arg_scope}
         }
-    def register(self, checkpoint, model_func, input_shape, arg_scope, **kwargs):
+    def register(self, name, model_func, input_shape, arg_scope, **kwargs):
         """register a model to TFSlimNetsFactory, all info
         Args:
             checkpoint: checkpoint for this slim model
@@ -69,7 +70,6 @@ class TFSlimNetsFactory(object):
             arg_scope: slim arg scope that needed
             kwargs: other input params needed by model_func, eg num_classes
         """ 
-        name = checkpoint.rsplit('.', 1)[0].rsplit('/', 1)[-1]
         net_info = {'model': model_func, 'input_shape': input_shape, \
                     'arg_scope':arg_scope}
         net = {name: {**net_info, **kwargs}}

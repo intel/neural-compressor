@@ -124,7 +124,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
         build_fake_yaml()
         build_fake_yaml_kl()
         self.kl_log_path = os.path.join(os.getcwd(), 'saved/kl.log')
-        self.calibration_log_path = os.path.join(os.getcwd(), 'requant_min_max.log')
+        self.calibration_log_path = os.path.join(os.getcwd(), 'saved/requant_min_max.log')
 
     @classmethod
     def tearDownClass(self):

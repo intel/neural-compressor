@@ -512,7 +512,7 @@ def main():
                         help='run benchmark')
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
-    parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+    parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
@@ -675,7 +675,8 @@ def main():
                     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                                      task=eval_task, model_type=args.model_type)
                     test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-                    quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
+                    q_model = quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
+                    q_model.save(args.tuned_checkpoint)
                 exit(0)
 
             if args.benchmark or args.accuracy_only:

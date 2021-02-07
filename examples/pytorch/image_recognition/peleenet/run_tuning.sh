@@ -39,7 +39,11 @@ function init_params {
 # run_tuning
 function run_tuning {
     sed -i "/root:/s|root:.*|root: $dataset_location/val|g" conf.yaml
-    extra_cmd="${dataset_location}"
+    extra_cmd=""
+    if [ -n "$output_model" ];then
+        extra_cmd = "--tuned_checkpoint ${output_model}"
+    fi
+    extra_cmd=$extra_cmd" ${dataset_location}"
 
     python main.py \
             --pretrained \

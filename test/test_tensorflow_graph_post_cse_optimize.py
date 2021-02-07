@@ -98,7 +98,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
             )
             quantize_v2_count = 0
 
-            for i in output_graph.as_graph_def().node:
+            for i in output_graph.graph_def.node:
               if i.op == 'QuantizeV2':
                 quantize_v2_count += 1
 

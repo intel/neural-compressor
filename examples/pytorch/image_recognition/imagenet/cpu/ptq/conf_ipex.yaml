@@ -24,7 +24,7 @@ quantization:                                        # optional. tuning constrai
       batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/calibration/dataset
+          root: /path/to/calibration/dataset        # NOTE: modify to calibration dataset location if needed
       transform:
         RandomResizedCrop:
           size: 224
@@ -42,7 +42,7 @@ evaluation:                                          # optional. required if use
       batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/evaluation/dataset
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
@@ -61,7 +61,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageFolder:
-          root: /path/to/evaluation/dataset
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256

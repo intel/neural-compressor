@@ -20,8 +20,7 @@
 import numpy as np
 from argparse import ArgumentParser
 import tensorflow as tf
-# from lpot.adaptor.tf_utils.util import write_graph
-from nets_factory import TFSlimNetsFactory
+from lpot.model.nets_factory import TFSlimNetsFactory
 import copy
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -62,35 +61,18 @@ def main(_):
   # user specific model can register to slim net factory
   input_shape = [None, 299, 299, 3]
   factory.register('inception_v4', inception_v4, input_shape, inception_v4_arg_scope)
-  if args.input_graph.endswith('.ckpt'):
-      # directly get the topology name from input_graph 
-      topology = args.input_graph.rsplit('/', 1)[-1].split('.', 1)[0]
-      # get the model func from net factory 
-      assert topology in factory.default_slim_models, \
-          'only support topology {}'.format(factory.default_slim_models)
-      net = copy.deepcopy(factory.networks_map[topology])
-      model_func = net.pop('model')
-      arg_scope = net.pop('arg_scope')()
-      inputs_shape = net.pop('input_shape')
-      kwargs = net
-      images = tf.compat.v1.placeholder(name='input', dtype=tf.float32, \
-                                    shape=inputs_shape)
-      from lpot.adaptor.tf_utils.util import get_slim_graph
-      model = get_slim_graph(args.input_graph, model_func, arg_scope, images, **kwargs)
-  else:
-      model = args.input_graph
 
   if args.tune:
 
       from lpot import Quantization
       quantizer = Quantization(args.config)
-      q_model = quantizer(model)
-      save(q_model, args.output_graph)
+      q_model = quantizer(args.input_graph)
+      q_model.save(args.output_graph)
 
   if args.benchmark:
       from lpot import Benchmark
       evaluator = Benchmark(args.config)
-      results = evaluator(model=model)
+      results = evaluator(model=args.input_graph)
       for mode, result in results.items():
           acc, batch_size, result_list = result
           latency = np.array(result_list).mean() / batch_size

@@ -56,13 +56,11 @@ flags.DEFINE_string("config", None,
 flags.DEFINE_string("output_model", None,
                     "The output model of the quantized model.")
 
-flags.DEFINE_enum("bleu_variant", "uncased",
-                   enum_values=["uncased", "cased"], case_sensitive=False,
-                   help="Specify BLEU variant to calculate. "
-                   "Variants: \"cased\" or \"uncased\".")
+flags.DEFINE_string("mode", "tune",
+                     "One of three options: 'benchmark'/'accuracy'/'tune'.")
 
-flags.DEFINE_bool('tune', True,
-                  "Whether to tune model")
+flags.DEFINE_integer("iters", -1,
+                     "The iteration used for benchmark.")
 
 class UnicodeRegex(object):
     def __init__(self):
@@ -84,8 +82,7 @@ def bleu_tokenize(string):
     return string.split()
 
 class bleu(object):
-    def __init__(self, case_sensitive):
-        self.case_sensitive = case_sensitive
+    def __init__(self):
         self.translations = []
         self.labels = []
 
@@ -98,9 +95,8 @@ class bleu(object):
             raise ValueError("Reference and translation files have different number "
                              "of lines. If training only a few steps (100-200), the "
                              "translation may be empty.")
-        if self.case_sensitive is "uncased":
-            label = [x.lower() for x in label]
-            pred = [x.lower() for x in pred]
+        label = [x.lower() for x in label]
+        pred = [x.lower() for x in pred]
         label = [bleu_tokenize(x) for x in label]
         pred = [bleu_tokenize(x) for x in pred]
         self.labels.extend(label)
@@ -131,42 +127,60 @@ def load_graph(file_name):
         tf.import_graph_def(graph_def, name='')
     return graph
 
-def eval_func(graph):
+def eval_func(infer_graph, iteration=-1):
+    if isinstance(infer_graph, tf.compat.v1.GraphDef):
+        graph = tf.Graph() 
+        with graph.as_default():
+            tf.import_graph_def(infer_graph, name='') 
+        infer_graph = graph
+
     subtokenizer = Subtokenizer(FLAGS.vocab_file)
-    input_tensor = graph.get_tensor_by_name('input_tensor:0')
-    output_tensor = graph.get_tensor_by_name('model/Transformer/strided_slice_19:0')
+    input_tensor = infer_graph.get_tensor_by_name('input_tensor:0')
+    output_tensor = infer_graph.get_tensor_by_name(\
+        'model/Transformer/strided_slice_19:0')
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
     dataloader = DataLoader('tensorflow', ds, batch_size=FLAGS.batch_size, 
                                                             collate_fn=collate_fn)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    sess = tf.compat.v1.Session(graph=graph, config=config)
+    sess = tf.compat.v1.Session(graph=infer_graph, config=config)
     time_list = []
-    bleu_eval = bleu(FLAGS.bleu_variant)
-    for inputs, labels in dataloader:
-        time_start = time.time()
-        results = sess.run([output_tensor], {input_tensor: inputs})
-        duration = time.time() - time_start
-        time_list.append(duration)
-        decode = []
-        for i,tr in enumerate(results):
-            for i,itr in enumerate(tr):
-                try:
-                    index = list(itr).index(tokenizer.EOS_ID)
-                    decode.append(subtokenizer.decode(itr[:index]))
-                except:
-                    decode.append(subtokenizer.decode(itr))
-        bleu_eval.update(decode, labels)
-    latency = np.array(time_list).mean() / FLAGS.batch_size
+    bleu_eval = bleu()
+    predictions = []
+    labels = []
+    warmup = 10
+    if iteration != -1:
+        assert iteration >= warmup, 'iteration must be larger than warmup'
+    for idx, (input_data, label) in enumerate(dataloader):
+        if idx < iteration or iteration == -1:
+            time_start = time.time()
+            out = sess.run([output_tensor], {input_tensor: input_data})
+            duration = time.time() - time_start
+            time_list.append(duration)
+            predictions.append(out)
+            labels.extend(label)
+        else:
+            break
+    latency = np.array(time_list[warmup: ]).mean() / FLAGS.batch_size
     print('Batch size = {}'.format(FLAGS.batch_size))
     print('Latency: {:.3f} ms'.format(latency * 1000))
     print('Throughput: {:.3f} items/sec'.format(1./ latency))
-    if FLAGS.bleu_variant is "uncased":
-        print('Case-insensitive results: {:.3f}'.format(bleu_eval.result()))
-    else:
-        print('Case-sensitive results: {:.3f}'.format(bleu_eval.result()))
-    return bleu_eval.result()
+    
+    # only calculate accuracy when running out all predictions
+    if iteration == -1:
+        decode = []
+        for i,tr in enumerate(predictions):
+            for j,itr in enumerate(tr):
+                for k, otr in enumerate(itr):
+                    try:
+                        index = list(otr).index(tokenizer.EOS_ID)
+                        decode.append(subtokenizer.decode(otr[:index]))
+                    except:
+                        decode.append(subtokenizer.decode(otr))
+        bleu_eval.update(decode, labels)
+        print('Accuracy is {:.3f}'.format(bleu_eval.result()))
+        return bleu_eval.result()
  
 class Dataset(object):
     def __init__(self, inputs_file, reference_file, vocab_file):
@@ -210,22 +224,23 @@ class Dataset(object):
 
 def main(_):
     graph = load_graph(FLAGS.input_graph)
-    if FLAGS.tune:
+    if FLAGS.mode == 'tune':
         from lpot import Quantization
-        from lpot.adaptor.tf_utils.util import write_graph
         quantizer = Quantization(FLAGS.config)
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-        q_dataloader = quantizer.dataloader(ds, collate_fn=collate_fn, 
+        q_dataloader = quantizer.dataloader(ds, collate_fn=collate_fn,
                                                     batch_size=FLAGS.batch_size)
         q_model = quantizer(graph,
                             q_dataloader=q_dataloader,
                             eval_func=eval_func)
         try:
-            write_graph(q_model.as_graph_def(), FLAGS.output_model)
+            q_model.save(FLAGS.output_model)
         except Exception as e:
             print("Failed to save model due to {}".format(str(e)))
-    else:
-        eval_func(graph)
+    elif FLAGS.mode == 'benchmark':
+        eval_func(graph, FLAGS.iters)
+    elif FLAGS.mode == 'accuracy':
+        eval_func(graph, -1)
         
 if __name__ == "__main__":
     tf.compat.v1.app.run()

@@ -299,4 +299,4 @@ if __name__ == "__main__":
         from lpot.quantization import Quantization
         quantize = Quantization(args.config)
         q_model = quantize(model, q_dataloader=eval_dataloader, eval_func=eval_func)
-        onnx.save(q_model, args.output_model)
+        q_model.save(args.output_model)

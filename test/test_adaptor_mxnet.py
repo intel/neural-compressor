@@ -139,7 +139,7 @@ class TestAdaptorMXNet(unittest.TestCase):
             qmodel = self.quantizer_1(fp32_model,
                                       q_dataloader=calib_data,
                                       eval_dataloader=calib_data)
-            self.assertIsInstance(qmodel[0], mx.symbol.Symbol)
+            self.assertIsInstance(qmodel.model[0], mx.symbol.Symbol)
 
     def test_conv_model_quantization(self):
         """
@@ -163,6 +163,7 @@ class TestAdaptorMXNet(unittest.TestCase):
                                       eval_dataloader=calib_data, eval_func=eval_func)
             # test inspected_tensor
             inspect_tensor = self.quantizer_2.strategy.adaptor.inspect_tensor
+            fp32_model = self.quantizer_2.model(fp32_model)
             inspected_tensor = inspect_tensor(fp32_model, calib_data,
                                               op_list=[('sg_mkldnn_conv_bn_act_0_output', 'CONV'),
                                                        ('data', 'input')],
@@ -173,7 +174,7 @@ class TestAdaptorMXNet(unittest.TestCase):
 
             self.assertNotEqual(len(inspected_tensor), 0)
             self.assertNotEqual(len(inspected_qtensor), 0)
-            self.assertIsInstance(qmodel[0], mx.symbol.Symbol)
+            self.assertIsInstance(qmodel.model[0], mx.symbol.Symbol)
 
     def test_gluon_model(self):
         """
@@ -201,7 +202,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         valid_dataset = mx.gluon.data.vision.datasets.FashionMNIST(train=False)
         q_dataloader = Quant_dataloader(valid_dataset)
         qmodel = self.quantizer_1(net, q_dataloader=q_dataloader, eval_func=eval_func)
-        self.assertIsInstance(qmodel, mx.gluon.HybridBlock)
+        self.assertIsInstance(qmodel.model, mx.gluon.HybridBlock)
 
 if __name__ == "__main__":
     unittest.main()

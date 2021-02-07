@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -24,7 +24,7 @@ function init_params {
           input_model=$(echo $var |cut -f2 -d=)
       ;;
       --output_model=*)
-         output_model=$(echo $var |cut -f2 -d=)
+         tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -40,6 +40,7 @@ function run_tuning {
     extra_cmd=""
 
     python -u dlrm_s_pytorch_tune.py \
+            --tuned_checkpoint ${tuned_checkpoint} \
             --arch-sparse-feature-size=128 \
             --arch-mlp-bot="13-512-256-128" \
             --arch-mlp-top="1024-1024-512-256-1" \

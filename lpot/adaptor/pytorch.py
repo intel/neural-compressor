@@ -16,14 +16,12 @@
 # limitations under the License.
 
 import copy
-import random
 import os
 from collections import OrderedDict
 import yaml
-import pandas as pd
 from lpot.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, compute_sparsity, CpuInfo, singleton
+from ..utils.utility import LazyImport, CpuInfo
 from ..utils import logger
 from .query import QueryBackendCapability
 
@@ -472,13 +470,13 @@ class TemplateAdaptor(Adaptor):
         """This is a helper function to get all quantizable ops from model.
 
         Args:
-            model (object): input model
+            model (object): input model which is LPOT model
 
         Returns:
             q_capability (dictionary): tuning capability for each op from model.
         """
         quantizable_ops = []
-        self._get_quantizable_ops_recursively(model, '', quantizable_ops)
+        self._get_quantizable_ops_recursively(model.model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['int8']
 
         q_capability = {}
@@ -493,104 +491,6 @@ class TemplateAdaptor(Adaptor):
                     if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
 
         return q_capability
-
-
-    def get_all_weight_names(self, model):
-        """Get weight names
-
-        Args:
-            model (object): input model
-
-        Returns:
-            names (list): list of weight names
-
-        """
-        names = []
-        for name, param in model.named_parameters():
-            names.append(name)
-        return names
-
-    def get_weight(self, model, tensor_name):
-        """Get weight value
-
-        Args:
-            model (object): input model
-            tensor_name (string): weight name
-
-        Returns:
-            (object): weight tensor
-
-        """
-        for name, param in model.named_parameters():
-            if tensor_name == name:
-                return param.data
-
-    def update_weights(self, model, tensor_name, new_tensor):
-        """Update weight value
-
-        Args:
-            model (object): input model
-            tensor_name (string): weight name
-            new_tensor (ndarray): weight value
-
-        Returns:
-            model (object): model with new weight
-
-        """
-        new_tensor = torch.Tensor(new_tensor)
-        for name, param in model.named_parameters():
-            if name == tensor_name:
-                param.data.copy_(new_tensor.data)
-        return model
-
-    def report_sparsity(self, model):
-        """Get sparsity of the model
-
-        Args:
-            model (object): input model
-
-        Returns:
-            df (DataFrame): DataFrame of sparsity of each weight
-            total_sparsity (float): total sparsity of model
-
-        """
-        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
-                                   'Std', 'Mean', 'Abs-Mean'])
-        pd.set_option('precision', 2)
-        param_dims = [2, 4]
-        params_size = 0
-        sparse_params_size = 0
-        for name, param in model.named_parameters():
-            # Extract just the actual parameter's name, which in this context we treat
-            # as its "type"
-            if param.dim() in param_dims and any(type in name for type in ['weight', 'bias']):
-                param_size, sparse_param_size, dense_param_size = compute_sparsity(
-                    param.detach().numpy())
-                density = dense_param_size / param_size
-                params_size += param_size
-                sparse_params_size += sparse_param_size
-                df.loc[len(df.index)] = ([
-                    name,
-                    list(param.shape),
-                    dense_param_size,
-                    sparse_param_size,
-                    (1 - density) * 100,
-                    param.std().item(),
-                    param.mean().item(),
-                    param.abs().mean().item()
-                ])
-
-        total_sparsity = sparse_params_size / params_size * 100
-
-        df.loc[len(df.index)] = ([
-            'Total sparsity:',
-            params_size,
-            "-",
-            int(sparse_params_size),
-            total_sparsity,
-            0, 0, 0])
-
-        return df, total_sparsity
 
 
 @adaptor_registry
@@ -711,36 +611,40 @@ class PyTorchAdaptor(TemplateAdaptor):
             (dict): quantized model
         """
 
-        assert isinstance(model, torch.nn.Module), \
+        assert isinstance(model.model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
-        q_model = copy.deepcopy(model.eval())
+        q_model = copy.deepcopy(model)
         if self.approach == 'quant_aware_training':
-            q_model.train()
+            q_model.model.train()
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
         op_cfgs = _cfg_to_qconfig(
             tune_cfg, (self.approach == 'quant_aware_training'))
-        _propagate_qconfig(q_model, op_cfgs)
+        _propagate_qconfig(q_model.model, op_cfgs)
         # sanity check common API misusage
-        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
+        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
             logger.warn("None of the submodule got qconfig applied. Make sure you "
                         "passed correct configuration through `qconfig_dict` or "
                         "by assigning the `.qconfig` attribute directly on submodules")
-        torch.quantization.add_observer_(q_model)
+        torch.quantization.add_observer_(q_model.model)
 
         if self.approach == 'post_training_static_quant':
             iterations = tune_cfg.get('calib_iteration', 1)
-            self.model_calibration(q_model, dataloader, iterations)
+            self.model_calibration(q_model.model, dataloader, iterations)
         elif self.approach == 'quant_aware_training':
-            torch.quantization.convert(q_model, self.q_mapping, inplace=True)
+            torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
             if q_func is None:
                 assert False, "quantization aware training mode requires q_function to train"
             else:
-                q_func(q_model)
-            q_model.eval()
+                q_func(q_model.model)
+            q_model.model.eval()
 
-        q_model = torch.quantization.convert(q_model, inplace=True)
+        torch.quantization.convert(q_model.model, inplace=True)
+        q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
+
+        if self.is_baseline:
+            self.is_baseline = False
 
         return q_model
 
@@ -762,17 +666,18 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             (dict): quantized model
         """
-        assert isinstance(
-            model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
-        model.eval()
-        if self.device == "cpu":
-            model.to("cpu")
-        elif self.device == "gpu":
-            if self.is_baseline:
-                model.to("dpcpp")
-
         if tensorboard:
             model = self._pre_eval_hook(model)
+
+        model_ = model.model
+        assert isinstance(
+            model_, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+        model_.eval()
+        if self.device == "cpu":
+            model_.to("cpu")
+        elif self.device == "gpu":
+            if self.is_baseline:
+                model_.to("dpcpp")
 
         with torch.no_grad():
             for idx, (input, label) in enumerate(dataloader):
@@ -783,15 +688,15 @@ class PyTorchAdaptor(TemplateAdaptor):
                     if self.device == "gpu":
                         for inp in input.keys():
                             input[inp] = input[inp].to("dpcpp")
-                    output = model(**input)
+                    output = model_(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
                     if self.device == "gpu":
                         input = [inp.to("dpcpp") for inp in input]
-                    output = model(*input)
+                    output = model_(*input)
                 else:
                     if self.device == "gpu":
                         input = input.to("dpcpp")
-                    output = model(input)
+                    output = model_(input)
                 if self.device == "gpu":
                     output = output.to("cpu")
                 if measurer is not None:
@@ -803,9 +708,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if idx + 1 == iteration:
                     break
         acc = metric.result() if metric is not None else 0
-
-        if self.is_baseline:
-            self.is_baseline = False
 
         if tensorboard:
             self._post_eval_hook(model, accuracy=acc)
@@ -1028,14 +930,11 @@ class PyTorchAdaptor(TemplateAdaptor):
              set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
              set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
 
-        model = model if not self.is_baseline else copy.deepcopy(model)
-        model.qconfig = torch.quantization.QConfig(
+        model = copy.deepcopy(model) if self.is_baseline else model
+        model.model.qconfig = torch.quantization.QConfig(
             weight=torch.quantization.default_weight_observer,
             activation=_RecordingObserver)
-        model = _prepare(model, op_list=None, white_list=white_list)
-
-        if self.is_baseline:
-            self.is_baseline = False
+        _prepare(model.model, op_list=None, white_list=white_list)
 
         return model
 
@@ -1099,6 +998,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         """
         from torch.utils.tensorboard import SummaryWriter
         from torch.quantization import get_observer_dict
+
+        model = model.model
 
         if args is not None and 'accuracy' in args:
            accuracy = args['accuracy']
@@ -1189,26 +1090,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         return summary
 
     @dump_elapsed_time("Pass save quantized model")
-    def save(self, model, path):
-        """The function is used by tune strategy class for saving model.
-
-           Args:
-               model (object): The model to saved.
-               path (string): The path where to save.
-
-        Returns:
-            None
-        """
-
-        path = os.path.expanduser(path)
-        os.makedirs(path, exist_ok=True)
-        try:
-            with open(os.path.join(path, "best_configure.yaml"), 'w') as f:
-                yaml.dump(self.tune_cfg, f, default_flow_style=False)
-            torch.save(model.state_dict(), os.path.join(path, "best_model_weights.pt"))
-            logger.info("save config file and weights of quantized model to path %s" % path)
-        except IOError as e:
-            logger.error("Unable to save configure file and weights. %s" % e)
+    def save(self, model, path=None):
+        pass
 
 
 @adaptor_registry
@@ -1266,7 +1149,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
 
         Args:
             tune_cfg (dict): quantization config.
-            model (object): model need to do quantization.
+            model (object): model need to do quantization, it is LPOT model.
             dataloader (object): calibration dataset.
             q_func (objext, optional): training function for quantization aware training mode.
 
@@ -1275,16 +1158,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         """
 
         model_ = copy.deepcopy(model)
-        q_model = model_.eval().to(ipex.DEVICE)
         try:
-            q_model = torch.jit.script(model_)
+            q_model = torch.jit.script(model_.model.eval().to(ipex.DEVICE))
         except:
             try:
                 for input, _ in dataloader:
-                    q_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
+                    q_model = torch.jit.trace(model_.model.eval().to(ipex.DEVICE),
+                                              input.to(ipex.DEVICE)).to(ipex.DEVICE)
                     break
             except:
                 logger.info("This model can't convert to Script model")
+                q_model = model_.model.eval().to(ipex.DEVICE)
 
         self._cfg_to_qconfig(tune_cfg)
 
@@ -1296,7 +1180,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
 
         assert self.approach != 'quant_aware_training', "Intel PyTorch Extension didn't support \
                                quantization aware training mode"
-        return q_model
+        model_.model = q_model
+        model_.tune_cfg = copy.deepcopy(self.cfgs)
+
+        if self.is_baseline:
+            self.is_baseline = False
+        return model_
 
     def _cfg_to_qconfig(self, tune_cfg):
         """Convert tune configure to quantization config for each op.
@@ -1357,7 +1246,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         """Execute the evaluate process on the specified model.
 
         Args:
-            model (object): model to run evaluation.
+            model (object): LPOT model to run evaluation.
             dataloader (object): evaluation dataset.
             postprocess (object, optional): process function after evaluation.
             metric (object, optional): metric function.
@@ -1372,12 +1261,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         """
         assert not tensorboard, "Intel PyTorch Extension didn't tensor dump"
 
-        model.eval()
+        model_ = model.model
+        model_.eval()
         if self.is_baseline:
-            model.to(ipex.DEVICE)
+            model_.to(ipex.DEVICE)
 
         ipex_config = self.ipex_config_path if not self.benchmark else \
-                      os.path.join(self.workspace_path, 'checkpoint/best_configure.json')
+                      os.path.join(self.workspace_path, 'best_configure.json')
         conf = ipex.AmpConf(torch.int8, configure_file=ipex_config) \
             if not self.is_baseline else ipex.AmpConf(None)
 
@@ -1390,15 +1280,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                     for inp in input.keys():
                         input[inp] = input[inp].to(ipex.DEVICE)
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model(**input)
+                        output = model_(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
                     input = [inp.to(ipex.DEVICE) for inp in input]
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model(*input)
+                        output = model_(*input)
                 else:
                     input = input.to(ipex.DEVICE) # pylint: disable=no-member
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model(input)
+                        output = model_(input)
                 label = label.to(ipex.DEVICE)
                 if measurer is not None:
                     measurer.end()
@@ -1409,9 +1299,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                 if idx + 1 == iteration:
                     break
         acc = metric.result() if metric is not None else 0
-
-        if self.is_baseline:
-            self.is_baseline = False
 
         return acc
 
@@ -1434,7 +1321,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
 
             model_ = copy.deepcopy(model)
             model_.eval().to(ipex.DEVICE)
-            init_model = model_
             try:
                 init_model = torch.jit.script(model_)
             except:
@@ -1444,6 +1330,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                         break
                 except:
                     logger.info("This model can't convert to Script model")
+                    init_model = model_
 
             # create a quantization config file for intel pytorch extension model
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
@@ -1461,26 +1348,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         os.remove(self.ipex_config_path)
 
     @dump_elapsed_time("Pass save quantized model")
-    def save(self, model, path):
-        """The function is used by tune strategy class for saving model.
+    def save(self, model, path=None):
+        """The function is used by tune strategy class for set best configure in LPOT model.
 
            Args:
-               model (object): The model to saved.
-               path (string): The path where to save.
+               model (object): The LPOT model which is best results.
+               path (string): No used.
 
         Returns:
             None
         """
 
-        path = os.path.expanduser(path)
-        os.makedirs(path, exist_ok=True)
-        import shutil
-        try:
-            shutil.copy(self.ipex_config_path,
-                        os.path.join(path, "best_configure.json"))
-            # TODO: Now Intel PyTorch Extension don't support save jit model.
-        except IOError as e:
-            logger.error("Unable to save configure file. %s" % e)
+        pass
 
 
 class PyTorchQuery(QueryBackendCapability):

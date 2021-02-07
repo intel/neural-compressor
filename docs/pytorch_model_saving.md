@@ -1,45 +1,35 @@
 # Introduction
+
 This document provides solutions regarding the saving and loading of tuned models with Intel® Low Precision Optimization Tool.
 
-PyTorch 
-================================
+PyTorch
+=======
+
 # Design
+
 ### Without Intel PyTorch Extension(IPEX)
-For PyTorch eager model, Intel® Low Precision Optimization Tool will automatically save tuning configure and weights of model which meet target goal to checkpoint folder under workspace folder when tuning process.
+
+For PyTorch eager model, the tool will save the tuned configure and weights of model which meet target goal by lpot.model save function.
+
 ```python
-# In lpot/strategy/strategy.py
-def stop(self, timeout, trials_count):
-    if self.objective.compare(self.best_tune_result, self.baseline):
-        ......
-        self.adaptor.save(self.best_qmodel, os.path.join(
-                              os.path.dirname(self.deploy_path), 'checkpoint'))
-# In lpot/adaptor/pytorch.py
-def save(self, model, path):
-    '''The function is used by tune strategy class for saving model.
-
-       Args:
-           model (object): The model to saved.
-           path (string): The path where to save.
-    '''
-
-    path = os.path.expanduser(path)
-    os.makedirs(path, exist_ok=True)
-    try:
-        with open(os.path.join(path, "best_configure.yaml"), 'w') as f:
-            yaml.dump(self.tune_cfg, f, default_flow_style=False)
-        torch.save(model.state_dict(), os.path.join(path, "best_model_weights.pt"))
-        logger.info("save config file and weights of quantized model to path %s" % path)
-    except IOError as e:
-        logger.error("Unable to save configure file and weights. %s" % e)
+# In lpot/model/model.py
+class PyTorchModel(PyTorchBaseModel):
+    ...
+    def save(self, path):
+        path = os.path.expanduser(path)
+        os.makedirs(path, exist_ok=True)
+        try:
+            with open(os.path.join(path, "best_configure.yaml"), 'w') as f:
+                yaml.dump(self.tune_cfg, f, default_flow_style=False)
+            torch.save(self._model.state_dict(), os.path.join(path, "best_model_weights.pt"))
+            logger.info("save config file and weights of quantized model to path %s" % path)
+        except IOError as e:
+            logger.error("Unable to save configure file and weights. %s" % e)
 ```
-Here, deploy_path is defined in configure yaml file. Default path is ./lpot_workspace/$framework/$module_name/, this folder will saving tuning history, deploy yaml, checkpoint. Tuning configure and weights files name are "best_configure.yaml" and "best_model_weights.pt".
 
-```yaml
-tuning:
-  workspace:
-    path: /path/to/saving/directory
-```
-If you want get tuned model, you can load tuning configure and weights in saving folder.
+Here, the model is class of PyTorchModel, The tuned configure and weights files named "best_configure.yaml" and "best_model_weights.pt" will be saved to the given path.
+
+If you want to get the tuned model, you can load tuned configure and weights in the saving folder.
 
 ```python
 # In utils/pytorch.py
@@ -86,40 +76,40 @@ def load(checkpoint_dir, model):
 ```
 
 ### With IPEX
-If you use IPEX to tune model, Intel® Low Precision Optimization Tool will only save tuning configure which meet target goal to checkpoint folder under workspace folder when tuning process.
-If you want run tuned model, you can load tuning configure in saving folder.
+
+If you use IPEX to tune model, the tool will only save the tuned configure which meet target goal by lpot.model save function.
+
+```python
+class PyTorchIpexModel(PyTorchBaseModel):
+    ...
+    def save(self, path):
+        path = os.path.expanduser(path)
+        os.makedirs(path, exist_ok=True)
+        try:
+            with open(os.path.join(path, "best_configure.json"), 'w') as f:
+                json.dump(self.tune_cfg, f)
+            logger.info("save config file of quantized model to path %s" % path)
+        except IOError as e:
+            logger.error("Unable to save configure file and weights. %s" % e)
+```
+
+If you want to run the tuned model, you can load the tuned configure in the saving folder.
 
 # Usage
-* Saving model:  
-Intel® Low Precision Optimization Tool will automatically save tuning configure and weights of model which meet target goal when tuning process.
+
+* Saving model:
+
 ```python
-# In lpot/strategy/strategy.py
-def stop(self, timeout, trials_count):
-    if self.objective.compare(self.best_tune_result, self.baseline):
-        ......
-        self.adaptor.save(self.best_qmodel, os.path.join(
-                              os.path.dirname(self.deploy_path), 'checkpoint'))
-# In lpot/adaptor/pytorch.py
-def save(self, model, path):
-    '''The function is used by tune strategy class for saving model.
-
-       Args:
-           model (object): The model to saved.
-           path (string): The path where to save.
-    '''
-
-    path = os.path.expanduser(path)
-        os.makedirs(path, exist_ok=True)
-        import shutil
-        try:
-            shutil.copy(self.ipex_config_path,
-                        os.path.join(path, "best_configure.json"))
-            # TODO: Now Intel PyTorch Extension don't support save jit model.
-        except IOError as e:
-            logger.error("Unable to save configure file. %s" % e)
+from lpot import Quantization
+quantizer = Quantization("./conf.yaml")
+LPOT_model = quantizer(model)
+LPOT_model.save("./saved_path")
 ```
-Here, deploy_path is defined in configure yaml file. Default path is ./lpot_workspace/$framework/$module_name/, this folder will saving tuning history, deploy yaml, checkpoint. Tuning configure and weights files name are "best_configure.yaml" and "best_model_weights.pt".
-* loading model:  
+
+For IPEX backend, only the tuned configure  "best_configure.json" will be saved, and for non_IPEX backend, the tuned configure and weights files named "best_configure.yaml" and "best_model_weights.pt" will be saved.
+
+* Loading model:
+
 ```python
 # Without IPEX
 model                 # fp32 model
@@ -145,6 +135,5 @@ with torch.no_grad():
 ```
 
 # Examples
+
 [example of PyTorch resnet50](../examples/pytorch/image_recognition/imagenet/cpu/ptq/README.md)
-
-

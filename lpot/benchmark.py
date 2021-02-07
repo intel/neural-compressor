@@ -24,6 +24,7 @@ from .conf.dotdict import deep_get, deep_set
 from .data import DataLoader as DATALOADER
 from .data import TRANSFORMS
 from .metric import METRICS
+from .model import Model as LpotModel
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance, with the objective
@@ -62,6 +63,19 @@ class Benchmark(object):
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None,
                                             "benchmark": True})
+
+        if not isinstance(model, LpotModel):
+            from lpot.model import MODELS
+            if framework == 'pytorch_ipex' or framework == 'pytorch':
+                lpot_model_framework_info = {}
+            else:
+                lpot_model_framework_info = {
+                    'name': cfg.model.name,
+                    'input_tensor_names': cfg.model.inputs,
+                    'output_tensor_names': cfg.model.outputs,
+                    'workspace_path': cfg.tuning.workspace.path
+                }
+            model = MODELS[framework](model, lpot_model_framework_info)
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 

@@ -100,7 +100,7 @@ parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
 parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                     help='For accuracy measurement only.')
-parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
@@ -293,6 +293,7 @@ def main_worker(gpu, ngpus_per_node, args):
             model.fuse_model()
             quantizer = Quantization("./conf.yaml")
         q_model = quantizer(model)
+        q_model.save(args.tuned_checkpoint)
         return
 
     if args.benchmark or args.accuracy_only:

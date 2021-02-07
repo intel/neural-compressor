@@ -114,7 +114,7 @@ if __name__ == "__main__":
                         help='For benchmark measurement only.')
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
-    parser.add_argument("--tuned_checkpoint", default='./', type=str, metavar='PATH',
+    parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark for int8')
@@ -176,7 +176,8 @@ if __name__ == "__main__":
         )
         lpot_dataloader = yolo_dataLoader(dataloader)
         quantizer = Quantization("./conf.yaml")
-        quantizer(model, q_dataloader=lpot_dataloader, eval_func=eval_func)
+        q_model = quantizer(model, q_dataloader=lpot_dataloader, eval_func=eval_func)
+        q_model.save(opt.tuned_checkpoint)
         exit(0)
 
     if opt.benchmark:

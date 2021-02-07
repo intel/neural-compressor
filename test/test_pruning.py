@@ -59,7 +59,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
  
         def training_func_for_lpot(model):
-            prune.model = model
+            prune.model.model = model
             epochs = 16
             iters = 30
             criterion = nn.CrossEntropyLoss()

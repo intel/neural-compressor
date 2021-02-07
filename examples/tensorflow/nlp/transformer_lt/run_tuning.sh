@@ -34,14 +34,15 @@ function init_params {
 
 # run_tuning
 function run_tuning {
+    config=$topology'.yaml'
     python main.py \
       --input_graph=${input_model} \
       --inputs_file=${dataset_location}/newstest2014.en \
       --reference_file=${dataset_location}/newstest2014.de \
       --vocab_file=${dataset_location}/vocab.txt \
-      --config=${topology} \
+      --config=${config} \
       --output_model=${output_model} \
-      --tune=True
+      --mode=tune
 }
 
 main "$@"

@@ -72,27 +72,28 @@ class ONNXRTAdaptor(Adaptor):
         if ort_version < [1, 5, 2]:
             logger.warning('quantize input need onnxruntime version > 1.5.2')
             return model
-        if model.opset_import[0].version < 11:
+        if model.model.opset_import[0].version < 11:
             logger.warning('quantize input need model opset >= 11')
         from .ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
         model = copy.deepcopy(model)
-        self.quantizable_ops = self._query_quantizable_ops(model)
+        self.quantizable_ops = self._query_quantizable_ops(model.model)
         q_config = self._cfg_to_qconfig(tune_cfg)
         if self.static:
-            quantize_params = self._get_quantize_params(model, dataLoader, q_config)
+            quantize_params = self._get_quantize_params(model.model, dataLoader, q_config)
         else:
             quantize_params = None
-        quantizer = ONNXQuantizer(model,
+        quantizer = ONNXQuantizer(model.model,
             q_config,
             backend,
             self.static,
             quantize_params,
             self.quantizable_op_types)
         quantizer.quantize_model()
-        return quantizer.model.model
+        model.model = quantizer.model.model
+        return model
 
     def _get_quantize_params(self, model, dataloader, q_config):
         from .ox_utils.onnx_calibrate import calibrate
@@ -109,9 +110,10 @@ class ONNXRTAdaptor(Adaptor):
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        session = ort.InferenceSession(model.SerializeToString(), sess_options)
-        self.pre_optimized_model = onnx.load(sess_options.optimized_model_filepath)
-        self.pre_optimized_model = self._replace_gemm_with_matmul(self.pre_optimized_model).model
+        session = ort.InferenceSession(model.model.SerializeToString(), sess_options)
+        tmp_model = onnx.load(sess_options.optimized_model_filepath)
+        model.model = self._replace_gemm_with_matmul(tmp_model).model
+        self.pre_optimized_model = model
 
     def _replace_gemm_with_matmul(self, model):
         new_nodes = []
@@ -190,7 +192,7 @@ class ONNXRTAdaptor(Adaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
-        quantizable_ops = self._query_quantizable_ops(self.pre_optimized_model)
+        quantizable_ops = self._query_quantizable_ops(self.pre_optimized_model.model)
         optype_wise = OrderedDict()
         special_config_types = list(self.query_handler.get_quantization_capability()\
                                      ['int8'].keys())  # pylint: disable=no-member
@@ -268,7 +270,7 @@ class ONNXRTAdaptor(Adaptor):
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
-        session = ort.InferenceSession(input_graph.SerializeToString(), None)
+        session = ort.InferenceSession(input_graph.model.SerializeToString(), None)
         len_outputs = len(session.get_outputs())
         if metric:
             if hasattr(metric, "compare_label"):
@@ -330,7 +332,7 @@ class ONNXRTAdaptor(Adaptor):
         return acc
 
     def save(self, model, path):
-        onnx.save_model(model, os.path.join(path, "best_model.onnx"))
+        model.save(os.path.join(path, "best_model.onnx"))
 
 
 @adaptor_registry
