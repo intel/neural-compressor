@@ -122,8 +122,8 @@ class PreOptimization(object):
         res = []
 
         for sub_pattern in patterns:
-            res.extend(self.analyzer.query_fusion_pattern_nodes(sub_pattern))
-
+            res.extend([i for i in self.analyzer.query_fusion_pattern_nodes(
+                sub_pattern) if i not in res])
         return res
 
     def has_positive_input(self, node_name):

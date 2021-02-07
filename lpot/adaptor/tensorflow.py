@@ -461,7 +461,8 @@ class TensorFlowAdaptor(Adaptor):
         patterns = self.query_handler.generate_internal_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
         original_graph_node_name = [i.name for i in self.pre_optimized_model.model.node]
-        matched_nodes = sorted(matched_nodes, key=lambda i: original_graph_node_name.index(i[0]))
+        matched_nodes = sorted(matched_nodes, reverse=True, key=lambda i: (
+            original_graph_node_name.index(i[0]), len(i[-1])))
 
         def check_match(patterns, input_pattern):
             for i in patterns:
@@ -606,11 +607,10 @@ class TensorFlowAdaptor(Adaptor):
                            detail configurations of activation and weight for this op type.
         """
         res = OrderedDict()
-        for op in self.quantizable_op_details.keys():
-            if op[1] not in res.keys():
-                res[op[1]] = {}
-                res[op[1]]['activation'] = self.quantizable_op_details[op]['activation']
-                if 'weight' in self.quantizable_op_details[op].keys():
+        for op in self.quantizable_op_details:
+            if op[1] not in res:
+                res[op[1]] = {'activation': self.quantizable_op_details[op]['activation']}
+                if 'weight' in self.quantizable_op_details[op]:
                     res[op[1]]['weight'] = self.quantizable_op_details[op]['weight']
         return res
 
