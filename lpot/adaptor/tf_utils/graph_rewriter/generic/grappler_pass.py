@@ -35,23 +35,27 @@ class GrapplerOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass GrapplerOptimizer")
     def do_transformation(self):
-        g = tf.Graph()
-        with g.as_default():
-            g = tf.compat.v1.import_graph_def(self.model, name='')
-            meta_graph = saver.export_meta_graph(
-                graph_def=self.model, graph=g, clear_devices=True)
-            fetch_collection = meta_graph_pb2.CollectionDef()
-            for fetch in self.outputs:
-                fetch_collection.node_list.value.append(fetch)  
-            meta_graph.collection_def["train_op"].CopyFrom(fetch_collection)
-            config = config_pb2.ConfigProto()
-            rewriter_config = config.graph_options.rewrite_options
-            rewriter_config.optimizers.append('pruning')
-            rewriter_config.optimizers.append('dependency')
-            rewriter_config.optimizers.append('debug_stripper')
-            rewriter_config.optimizers.append('loop')
-            rewriter_config.min_graph_nodes = -1
+        try:
+            g = tf.Graph()
+            with g.as_default():
+                g = tf.compat.v1.import_graph_def(self.model, name='')
+                meta_graph = saver.export_meta_graph(
+                    graph_def=self.model, graph=g, clear_devices=True)
+                fetch_collection = meta_graph_pb2.CollectionDef()
+                for fetch in self.outputs:
+                    fetch_collection.node_list.value.append(fetch)
+                meta_graph.collection_def["train_op"].CopyFrom(fetch_collection)
+                config = config_pb2.ConfigProto()
+                rewriter_config = config.graph_options.rewrite_options
+                rewriter_config.optimizers.append('pruning')
+                rewriter_config.optimizers.append('dependency')
+                rewriter_config.optimizers.append('debug_stripper')
+                rewriter_config.optimizers.append('loop')
+                rewriter_config.min_graph_nodes = -1
 
-            optimized_graph = tf_optimizer.OptimizeGraph(config, meta_graph)
+                optimized_graph = tf_optimizer.OptimizeGraph(config, meta_graph)
 
-        return optimized_graph
+            return optimized_graph
+        except Exception as e:
+            self.logger.warning("Failed to run grappler pass due to {}".format(str(e)))
+            return self.model
