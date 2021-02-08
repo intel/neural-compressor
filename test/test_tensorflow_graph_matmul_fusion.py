@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import dtypes
 from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.adaptor.tf_utils.util import disable_random, write_graph
+from lpot.adaptor.tf_utils.util import disable_random
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -257,7 +257,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     )
 
                     count=0
-                    for i in output_graph.as_graph_def().node:
+                    for i in output_graph.model.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
                             count += 1
                     found_quantized_matmul = bool(count > 1)

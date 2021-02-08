@@ -62,6 +62,24 @@ def read_graph(in_graph, in_graph_is_binary=True):
 
     return input_graph_def
 
+def write_graph(out_graph_def, out_graph_file):
+    """Write output graphDef to file.
+
+    :param out_graph_def: output graphDef.
+    :param out_graph_file: path to output graph file.
+    :return: None.
+    """
+    assert isinstance(
+        out_graph_def,
+        tf.compat.v1.GraphDef), 'out_graph_def is not instance of TensorFlow GraphDef.'
+
+    assert out_graph_file and os.path.exists(os.path.dirname(
+        out_graph_file)), '"output_graph" directory does not exists.'
+
+    f = gfile.GFile(out_graph_file, 'wb')
+    f.write(out_graph_def.SerializeToString())
+
+
 def is_ckpt_format(model_path):
     """check the model_path format is ckpt or not.
 
