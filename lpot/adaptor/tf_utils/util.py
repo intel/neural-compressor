@@ -27,8 +27,11 @@ from tensorflow.python.framework import graph_util
 from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.framework.ops import Graph
+from tensorflow.core.framework import node_def_pb2
+from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from lpot.utils import logger
+from .graph_rewriter.graph_util import GraphAnalyzer
 
 def disable_random(seed=1):
     """A Decorator to disable tf random seed.
@@ -228,15 +231,81 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
     return preds
 
 def get_input_node_names(graph_def):
-    from .graph_rewriter.graph_util import GraphAnalyzer
     g = GraphAnalyzer()
     g.graph = graph_def
     g.parse_graph()
     return g.get_graph_input_output()[0]
 
 def get_output_node_names(graph_def):
-    from .graph_rewriter.graph_util import GraphAnalyzer
     g = GraphAnalyzer()
     g.graph = graph_def
     g.parse_graph()
     return g.get_graph_input_output()[1]
+
+def fix_ref_type_of_graph_def(graph_def):
+    # according to https://github.com/onnx/tensorflow-onnx/issues/77
+    for node in graph_def.node:
+        if node.op == 'RefSwitch':
+            node.op = 'Switch'
+            for index in range(len(node.input)):
+                if 'moving_' in node.input[index]:
+                    node.input[index] = node.input[index] + '/read'
+        elif node.op == 'AssignSub':
+            node.op = 'Sub'
+            if 'use_locking' in node.attr:
+                del node.attr['use_locking']
+        elif node.op == 'AssignAdd':
+            node.op = 'Add'
+            if 'use_locking' in node.attr:
+                del node.attr['use_locking']
+        elif node.op == 'Assign':
+            node.op = 'Identity'
+            if 'use_locking' in node.attr:
+                del node.attr['use_locking']
+            if 'validate_shape' in node.attr:
+                del node.attr['validate_shape']
+            if len(node.input) == 2:
+                # input0: ref: Should be from a Variable node. May be uninitialized.
+                # input1: value: The value to be assigned to the variable.
+                node.input[0] = node.input[1]
+                del node.input[1]
+    return graph_def
+
+def strip_unused_nodes(graph_def, input_node_names, output_node_names):
+    cur_graph = GraphAnalyzer()
+    cur_graph.graph = graph_def
+    graph_info = cur_graph.parse_graph()
+    type_attr = {"Sub": "T"}
+    not_found = {name for name in input_node_names}
+    for node_name in list(graph_info.keys()):
+        if node_name in not_found:
+            not_found.remove(node_name)
+            node = graph_info[node_name].node
+            # skip the convertion to Placeholder that with type list
+            if 'component_types' in node.attr:
+                continue
+            original_output = graph_info[node_name].outputs
+            placeholder_node = node_def_pb2.NodeDef()
+            placeholder_node.op = "Placeholder"
+            placeholder_node.name = node.name
+
+            if "dtype" in node.attr:
+                placeholder_node.attr["dtype"].CopyFrom(
+                    attr_value_pb2.AttrValue(type=node.attr["dtype"].type))
+            elif node.op in type_attr.keys():
+                placeholder_node.attr["dtype"].CopyFrom(
+                    attr_value_pb2.AttrValue(type=node.attr[type_attr[node.op]].type))
+            else:
+                raise KeyError("%s op's type attribute is not found,"
+                               "you should add it to type_attr dict" % node.op)
+            if "_output_shapes" in node.attr:
+                placeholder_node.attr["_output_shapes"].CopyFrom(node.attr["_output_shapes"])
+            if "shape" in node.attr:
+                placeholder_node.attr["shape"].CopyFrom(node.attr["shape"])
+
+            cur_graph.remove_node(node_name)
+
+            cur_graph.replace_const_node(placeholder_node, [node_name], original_output)
+
+    return tf.compat.v1.graph_util.extract_sub_graph(cur_graph.dump_graph(),
+                                                     output_node_names)

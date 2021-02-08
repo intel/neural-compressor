@@ -116,28 +116,48 @@ def validate_graph_node(graph_def, node_names):
             return False
     return True
 
+def validate_and_inference_input_output(graph_def, \
+    input_tensor_names, output_tensor_names):
+
+    from lpot.adaptor.tf_utils.util import get_input_node_names
+    input_tensor_names = input_tensor_names if validate_graph_node(\
+        graph_def, tensor_to_node(input_tensor_names)) else \
+        get_input_node_names(graph_def)
+
+    from lpot.adaptor.tf_utils.util import get_output_node_names
+    output_tensor_names = output_tensor_names if validate_graph_node(\
+        graph_def, tensor_to_node(output_tensor_names)) else \
+        get_output_node_names(graph_def)
+    return input_tensor_names, output_tensor_names
+
 def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
     sess = tf.compat.v1.Session(graph=model, config=config)
 
-    from lpot.adaptor.tf_utils.util import get_input_node_names
-    input_tensor_names = input_tensor_names if validate_graph_node(\
-        model.as_graph_def(), tensor_to_node(input_tensor_names)) else \
-        get_input_node_names(model.as_graph_def())
-
-    from lpot.adaptor.tf_utils.util import get_output_node_names
-    output_tensor_names = output_tensor_names if validate_graph_node(\
-        model.as_graph_def(), tensor_to_node(output_tensor_names)) else \
-        get_output_node_names(model.as_graph_def())
+    input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
+        model.as_graph_def(), input_tensor_names, output_tensor_names)
 
     return sess, input_tensor_names, output_tensor_names
 
 def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     graph = tf.Graph()
-    with graph.as_default():
-        tf.import_graph_def(model, name='')
+    try:
+        with graph.as_default():
+            tf.import_graph_def(model, name='')
+    except:
+        input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
+            model, input_tensor_names, output_tensor_names)
+        from lpot.adaptor.tf_utils.util import fix_ref_type_of_graph_def
+        from lpot.adaptor.tf_utils.util import strip_unused_nodes
+        model = fix_ref_type_of_graph_def(model)
+        input_node_names = tensor_to_node(input_tensor_names)
+        output_node_names = tensor_to_node(output_tensor_names)
+        model = strip_unused_nodes(model, input_node_names, output_node_names)
+        with graph.as_default():
+            tf.import_graph_def(model, name='')
+
     return graph_session(graph, input_tensor_names, output_tensor_names, **kwargs)
 
 def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
@@ -154,7 +174,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     if not isinstance(model, tf.keras.Model):
         model = tf.keras.models.load_model(model)
     kwargs = dict(zip(model.input_names, model.inputs))
-    import tensorflow.python.keras.engine.keras_tensor as keras_tensor
+    from tensorflow.python.keras.engine import keras_tensor
     if keras_tensor.keras_tensors_enabled():
         for name, tensor in kwargs.items():
             kwargs[name] = tensor.type_spec 
