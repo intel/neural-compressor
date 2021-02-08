@@ -1,0 +1,53 @@
+{% set version = "1.1" %}
+{% set buildnumber = 0 %}
+package:
+  name: lpot
+  version: {{version}}
+build:
+  script_env:
+    - LPOT_WHL
+  number: {{buildnumber}}
+  noarch: python
+  script: pip install --no-deps {{LPOT_WHL}}
+  entry_points:
+    - lpot_ux = lpot.ux.lpot_ux:main
+requirements:
+  build:
+    - python
+    - pip
+  run:
+    - python
+    - pip
+    - numpy
+    - pyyaml
+    - scikit-learn
+    - schema
+    - py-cpuinfo
+    - hyperopt
+    - pandas==1.1.5
+    - pycocotools
+    - opencv
+    - Flask
+    - Flask-Cors
+    - Flask-SocketIO
+    - gevent
+    - gevent-websocket
+    - psutil
+    - ruamel.yaml
+    - requests
+test:
+  imports:
+    - lpot
+about:
+  home: https://github.com/intel/lpot
+  license: Apache 2.0
+  license_family: Apache
+  license_file: LICENSE
+  description: '
+    <strong>LEGAL NOTICE: Use of this software package is subject to the software license agreement (as set forth above, in the license section of the installed Conda package and/or the README file) and all notices, disclaimers or license terms for third party or open source software included in or with the software.</strong>
+    <br/><br/>
+    EULA: <a href="https://github.com/intel/lpot/blob/master/LICENSE" target="_blank">Apache 2.0</a><br/>
+    Third Party Programs: https://github.com/intel/lpot/blob/master/third-party-programs.txt
+    <br/><br/>
+    Intel® Low Precision Optimization Tool.
+    '
