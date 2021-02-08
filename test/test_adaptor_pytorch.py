@@ -249,7 +249,7 @@ class TestPytorchAdaptor(unittest.TestCase):
 
     def test_quantization_saved(self):
         from lpot.utils.pytorch import load
-        
+
         model = copy.deepcopy(self.model)
 
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
@@ -265,10 +265,13 @@ class TestPytorchAdaptor(unittest.TestCase):
                 eval_dataloader=dataloader
             )
             q_model.save('./saved')
-            new_model = MODELS['pytorch'](model, {"workspace_path": "./saved"})
-            eval_func(new_model.model)
+            # Load configure and weights by lpot.utils
+            saved_model = load("./saved", model)
+            eval_func(saved_model)
         from lpot import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
+        # Load configure and weights by lpot.model
+        new_model = MODELS['pytorch'](model, {"workspace_path": "./saved"})
         results = evaluator(model=new_model, b_dataloader=dataloader)
         fp32_results = evaluator(model=model, b_dataloader=dataloader)
         self.assertTrue((fp32_results['accuracy'][0] - results['accuracy'][0]) < 0.01)
