@@ -531,6 +531,7 @@ class GraphConverter:
             self._tmp_graph_def = ScaleProPagationTransformer(
                 self._tmp_graph_def).do_transformation()
 
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if self.debug:
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_frozen_range_model_path)
