@@ -9,86 +9,8 @@
 ### Path
 `/api/list_model_zoo`
 
-### Example responses
+### Example response
 
-#### Case when `LPOT_REPOSITORY_PATH` is set to `/home/user/lpot`
-
-```json
-[
-    {
-        "domain": "image_recognition",
-        "framework": "tensorflow",
-        "model": "inception_v3",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/image_recognition/inceptionv3.yaml"
-    },
-    {
-        "domain": "image_recognition",
-        "framework": "tensorflow",
-        "model": "inception_v4",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/image_recognition/inceptionv4.yaml"
-    },
-    {
-        "domain": "image_recognition",
-        "framework": "tensorflow",
-        "model": "mobilenetv1",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/image_recognition/mobilenet_v1.yaml"
-    },
-    {
-        "domain": "image_recognition",
-        "framework": "tensorflow",
-        "model": "resnet50_v1_5",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/image_recognition/resnet50_v1_5.yaml"
-    },
-    {
-        "domain": "image_recognition",
-        "framework": "tensorflow",
-        "model": "resnet101",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/image_recognition/resnet101.yaml"
-    },
-    {
-        "domain": "object_detection",
-        "framework": "tensorflow",
-        "model": "faster_rcnn_inception_resnet_v2",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/object_detection/faster_rcnn_inception_resnet_v2.yaml"
-    },
-    {
-        "domain": "object_detection",
-        "framework": "tensorflow",
-        "model": "faster_rcnn_resnet101",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/object_detection/faster_rcnn_resnet101.yaml"
-    },
-    {
-        "domain": "object_detection",
-        "framework": "tensorflow",
-        "model": "mask_rcnn_inception_v2",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/object_detection/mask_rcnn_inception_v2.yaml"
-    },
-    {
-        "domain": "object_detection",
-        "framework": "tensorflow",
-        "model": "ssd_mobilenet_v1",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/object_detection/ssd_mobilenet_v1.yaml"
-    },
-    {
-        "domain": "object_detection",
-        "framework": "tensorflow",
-        "model": "ssd_resnet50_v1",
-        "model_path": "",
-        "yaml": "/home/user/lpot/examples/tensorflow/object_detection/ssd_resnet50_v1.yaml"
-    }
-]
-```
-
-#### Case when `LPOT_REPOSITORY_PATH` is not set
 ```json
 [
     {

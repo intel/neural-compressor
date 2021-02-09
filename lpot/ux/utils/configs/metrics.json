@@ -1,0 +1,28 @@
+{
+    "__help__F1": "help placeholder for F1",
+    "__help__Accuracy": "help placeholder for Accuracy",
+    "__help__Loss": "help placeholder for Loss",
+    "__help__MAE": "help placeholder for MAE",
+    "MAE": {
+        "__help__compare_label": "help placeholder for MAE compare label"
+    },
+    "__help__RMSE": "help placeholder for RMSE",
+    "RMSE": {
+        "__help__compare_label": "help placeholder for RMSE compare label"
+    },
+    "__help__MSE": "help placeholder for MSE",
+    "MSE": {
+        "__help__compare_label": "help placeholder for MSE compare label"
+    },
+    "__help__topk": "help placeholder for topk",
+    "topk": {
+        "__help__k": "help placeholder for topk k"
+    },
+    "__help__COCOmAP": "help placeholder for COCOmAP",
+    "COCOmAP": {
+        "__help__anno_path": "help placeholder for COCOmAP anno_path"
+    },
+    "__help__BLEU": "help placeholder for BLEU",
+    "__help__custom": "Create your own metric. After you choose this option code template will be generated on the server",
+    "custom": ""
+}

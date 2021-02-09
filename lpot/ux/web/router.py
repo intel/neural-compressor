@@ -24,12 +24,17 @@ from lpot.ux.components.configuration_wizard.get_boundary_nodes import (
 from lpot.ux.components.configuration_wizard.get_configuration import (
     get_predefined_configuration,
 )
-from lpot.ux.components.configuration_wizard.get_predefined_workload import (
-    get_predefined_workload,
+from lpot.ux.components.configuration_wizard.params_feeder import (
+    get_possible_values,
+    get_possible_values_v2,
 )
-from lpot.ux.components.configuration_wizard.params_feeder import get_possible_values
+from lpot.ux.components.configuration_wizard.save_workload import save_workload
 from lpot.ux.components.file_browser.file_browser import get_directory_entries
-from lpot.ux.components.menage_workspace import get_default_path, set_workspace
+from lpot.ux.components.manage_workspace import (
+    get_default_path,
+    get_workloads_list,
+    set_workspace,
+)
 from lpot.ux.components.model_zoo.download_config import download_config
 from lpot.ux.components.model_zoo.download_model import download_model
 from lpot.ux.components.model_zoo.list_models import list_models
@@ -49,14 +54,16 @@ class Router:
         """Run operation on requested component and return result."""
         operation_map = {
             "filesystem": get_directory_entries,
-            "save_workload": get_predefined_workload,
+            "save_workload": save_workload,
             "configuration": get_predefined_configuration,
             "tune": process_request_for_tuning,
             "benchmark": process_request_for_benchmark,
             "get_default_path": get_default_path,
             "set_workspace": set_workspace,
+            "get_workloads_list": get_workloads_list,
             "get_boundary_nodes": process_request_for_boundary_nodes,
             "get_possible_values": get_possible_values,
+            "get_possible_values_v2": get_possible_values_v2,
             "download_model": process_request_for_model_download,
             "list_model_zoo": list_models,
             "download_config": process_request_for_model_config,

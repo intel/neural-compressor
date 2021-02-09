@@ -15,21 +15,27 @@
 """Configuration to yaml."""
 
 import json
-import logging as log
 import os
 from typing import Any, Dict
 
+from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.logger import log
+from lpot.ux.utils.utils import (
+    check_module,
+    framework_extensions,
+    get_framework_from_path,
+    get_module_version,
+)
 from lpot.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
-log.basicConfig(level=log.INFO)
 
 
 def get_boundary_nodes(data: Dict[str, Any]) -> None:
     """Get configuration."""
     from lpot.ux.utils.utils import find_boundary_nodes
 
-    request_id = data.get("id", None)
+    request_id = str(data.get("id", ""))
     model_path = data.get("model_path", None)
 
     if not (request_id and model_path):
@@ -38,7 +44,7 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
             "boundary_nodes_finish",
             {"message": message, "code": 404, "id": request_id},
         )
-        raise Exception(message)
+        return
 
     if not os.path.isfile(model_path):
         message = "Could not found model in specified path."
@@ -46,20 +52,39 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
             "boundary_nodes_finish",
             {"message": message, "code": 404, "id": request_id},
         )
-        raise Exception(message)
+        return
 
     try:
         mq.post_success(
             "boundary_nodes_start",
             {"message": "started", "id": request_id},
         )
+        framework = get_framework_from_path(model_path)
+        if framework is None:
+            supported_frameworks = list(framework_extensions.keys())
+            raise ClientErrorException(
+                f"Framework for specified model is not yet supported. "
+                f"Supported frameworks are: {', '.join(supported_frameworks)}.",
+            )
+        try:
+            check_module(framework)
+        except ClientErrorException:
+            raise ClientErrorException(
+                f"Detected {framework} model. "
+                f"Could not find installed {framework} module. "
+                f"Please install {framework}.",
+            )
+        framework_version = get_module_version(framework)
+
         response_data = find_boundary_nodes(model_path)
         response_data["id"] = request_id
-    except Exception as err:
+        response_data["framework"] = framework
+        response_data["framework_version"] = framework_version
+    except ClientErrorException as err:
         mq.post_error(
             "boundary_nodes_finish",
-            {"message": repr(err), "code": 404, "id": request_id},
+            {"message": str(err), "code": 404, "id": request_id},
         )
-        raise err
-    log.info(f"Parsed data is {json.dumps(response_data)}")
+        return
+    log.debug(f"Parsed data is {json.dumps(response_data)}")
     mq.post_success("boundary_nodes_finish", response_data)

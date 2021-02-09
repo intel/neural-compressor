@@ -1,0 +1,31 @@
+from tensorflow import keras
+
+
+class Dataset(object):
+    def __init__(self):
+        pass
+
+    def __getitem__(self, index):
+        pass
+
+    def __len__(self):
+        pass
+
+
+# Define a customized Metric function
+import lpot
+from lpot.metric import Metric
+
+
+class MyMetric(Metric):
+    def __init__(self, *args):
+        pass
+
+    def update(self, predict, label):
+        pass
+
+    def reset(self):
+        pass
+
+    def result(self):
+        pass

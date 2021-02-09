@@ -16,18 +16,18 @@
 """Execute benchmark."""
 
 import json
-import logging as log
 import os
 from typing import Any, Dict
 
 from lpot.ux.components.benchmark.benchmark import Benchmark
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
+from lpot.ux.utils.logger import log
 from lpot.ux.utils.parser import Parser
+from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import load_json
 from lpot.ux.web.communication import MessageQueue
 
-log.basicConfig(level=log.INFO)
 mq = MessageQueue()
 
 
@@ -53,21 +53,22 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
     """
     from lpot.ux.utils.workload.workload import Workload
 
-    request_id = data.get("id", None)
-    workspace_path = data.get("workspace_path", None)
+    request_id = str(data.get("id", ""))
     models = data.get("models", None)
 
-    if not (request_id and workspace_path and models):
-        message = "Missing workspace path, request id or model list."
+    if not (request_id and models):
+        message = "Missing request id or model list."
         mq.post_error(
             "benchmark_finish",
             {"message": message, "code": 404, "id": request_id},
         )
         raise ClientErrorException(message)
 
+    workdir = Workdir(request_id=request_id, overwrite=False)
     try:
+        workload_path = workdir.workload_path
         workload_data = load_json(
-            os.path.join(workspace_path, f"workload.{request_id}.json"),
+            os.path.join(workload_path, f"workload.{request_id}.json"),
         )
     except Exception as err:
         mq.post_error(
@@ -112,7 +113,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
         log_name = f"{request_id}_{model_precision}_{benchmark_mode}_benchmark"
 
         executor = Executor(
-            workspace_path,
+            workload_path,
             subject="benchmark",
             data={"id": request_id},
             send_response=False,
@@ -123,20 +124,22 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
             benchmark.command,
         )
 
-        logs = [os.path.join(workspace_path, f"{log_name}.txt")]
+        logs = [os.path.join(workload_path, f"{log_name}.txt")]
 
         if proc.is_ok:
             parser = Parser(logs)
             metrics = parser.process()
+            metric = {}
             throughput_field = f"perf_throughput_{model_precision}"
             if isinstance(metrics, dict):
-                response_data.update(
-                    {
-                        throughput_field: metrics.get(throughput_field),
-                        "progress": f"{idx}/{len(models)}",
-                    },
-                )
-            log.info(f"Parsed data is {json.dumps(response_data)}")
+                metric = {throughput_field: metrics.get(throughput_field, "")}
+                response_data.update({"progress": f"{idx}/{len(models)}"})
+                response_data.update(metric)
+            workdir.update_metrics(
+                request_id=request_id,
+                metric_data=metric,
+            )
+            log.debug(f"Parsed data is {json.dumps(response_data)}")
             mq.post_success("benchmark_progress", response_data)
         else:
             log.error("Benchmark failed.")

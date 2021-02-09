@@ -18,6 +18,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
+from lpot.ux.utils.exceptions import ClientErrorException
+
 
 def get_predefined_configuration(
     data: Dict[str, Any],
@@ -32,7 +34,9 @@ def get_predefined_configuration(
 
     model_path = data.get("model_path", "")
     if not os.path.isfile(model_path):
-        raise Exception("Could not found model in specified path.")
+        raise ClientErrorException(
+            f"Could not find model in specified path: {model_path}.",
+        )
 
     model_name = Path(model_path).stem
 
@@ -42,7 +46,9 @@ def get_predefined_configuration(
 
     framework = get_framework_from_path(model_path)
     if framework is None:
-        raise Exception("Could not found framework for specified model.")
+        raise ClientErrorException(
+            f"Could not find framework for specified model {model_name} in path {model_path}.",
+        )
 
     config = Config()
     predefined_config_path = get_predefined_config_path(framework, domain)

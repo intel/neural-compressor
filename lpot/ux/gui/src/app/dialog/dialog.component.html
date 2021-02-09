@@ -1,6 +1,9 @@
 <button mat-button class="close-button" mat-dialog-close matTooltip="Close">&#x2573;</button>
-<h1 mat-dialog-title>{{ data.fileType === 'config' ? 'config.' + data.fileName + '.yaml' : data.fileName + '.txt'}}</h1>
+<h1 mat-dialog-title>{{ getFileName() }}
+  <button *ngIf="data.fileType === 'output'" mat-button matTooltip="Refresh output" (click)="refreshOutput()">
+    <img src="./../../assets/091-refresh.svg"></button>
+</h1>
 
 <div mat-dialog-content>
-  <app-file [id]="data.fileName" [fileType]="data.fileType"></app-file>
+  <app-file [path]="data.path" [refresh]="refresh" [fileType]="data.fileType"></app-file>
 </div>

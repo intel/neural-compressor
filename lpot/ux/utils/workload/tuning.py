@@ -96,3 +96,17 @@ class Tuning(JsonSerializer):
         self.tensorboard: Optional[bool] = data.get("tensorboard", None)
 
         self.workspace: Workspace = Workspace(data.get("workspace", {}))
+
+    def set_timeout(self, timeout: int) -> None:
+        """Update tuning timeout in config."""
+        if self.exit_policy:
+            self.exit_policy.timeout = timeout
+        else:
+            self.exit_policy = ExitPolicy({"timeout": timeout})
+
+    def set_max_trials(self, max_trials: int) -> None:
+        """Update max tuning trials in config."""
+        if self.exit_policy:
+            self.exit_policy.max_trials = max_trials
+        else:
+            self.exit_policy = ExitPolicy({"max_trials": max_trials})

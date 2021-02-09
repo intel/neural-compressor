@@ -25,7 +25,13 @@ setup(
     package_dir = {'':'.'},
     package_data={
         '': ['*.py', '*.yaml'],
-        "lpot.ux": ["web/static/*.*", "web/static/assets/*.*", "utils/configs/*.json"],
+        "lpot.ux": [
+            "web/static/*.*",
+            "web/static/assets/*.*",
+            "utils/configs/*.json",
+            "utils/configs/predefined_configs/tensorflow/*.yaml",
+            "utils/templates/*.txt",
+        ],
     },
     install_requires=[
         'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas==1.1.5', 'pycocotools', 'opencv-python',

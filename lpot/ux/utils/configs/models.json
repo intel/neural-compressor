@@ -1,346 +1,650 @@
 {
+    "__help__pytorch": "help placeholder for pytorch",
     "pytorch": {
+        "__help__image_recognition": "help placeholder for pytorch image_recognition",
         "image_recognition": {
+            "__help__inception_v3": "help placeholder for pytorch image_recognition inception_v3",
             "inception_v3": {
+                "__help__download": "help placeholder for pytorch image_recognition inception_v3 download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition inception_v3 model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/ptq",
+                "__help__yaml": "help placeholder for pytorch image_recognition inception_v3 yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__mobilenet_v2": "help placeholder for pytorch image_recognition mobilenet_v2",
             "mobilenet_v2": {
+                "__help__download": "help placeholder for pytorch image_recognition mobilenet_v2 download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition mobilenet_v2 model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/ptq",
+                "__help__yaml": "help placeholder for pytorch image_recognition mobilenet_v2 yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__peleenet": "help placeholder for pytorch image_recognition peleenet",
             "peleenet": {
+                "__help__download": "help placeholder for pytorch image_recognition peleenet download",
                 "download": {
+                    "__help__url": "help placeholder for pytorch image_recognition peleenet download url",
                     "url": "https://github.com/Robert-JunWang/PeleeNet/blob/master/weights/peleenet_acc7208.pth.tar",
+                    "__help__filename": "help placeholder for pytorch image_recognition peleenet download filename",
                     "filename": "peleenet_acc7208.pth.tar",
+                    "__help__is_archived": "help placeholder for pytorch image_recognition peleenet download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition peleenet model_src_dir",
                 "model_src_dir": "image_recognition/peleenet",
+                "__help__yaml": "help placeholder for pytorch image_recognition peleenet yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnest50": "help placeholder for pytorch image_recognition resnest50",
             "resnest50": {
+                "__help__download": "help placeholder for pytorch image_recognition resnest50 download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnest50 model_src_dir",
                 "model_src_dir": "image_recognition/resnest",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnest50 yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnet18": "help placeholder for pytorch image_recognition resnet18",
             "resnet18": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet18 download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet18 model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/ptq",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet18 yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnet18_qat": "help placeholder for pytorch image_recognition resnet18_qat",
             "resnet18_qat": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet18_qat download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet18_qat model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/qat",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet18_qat yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnet50": "help placeholder for pytorch image_recognition resnet50",
             "resnet50": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet50 download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet50 model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/ptq",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet50 yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnet50_gpu": "help placeholder for pytorch image_recognition resnet50_gpu",
             "resnet50_gpu": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet50_gpu download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet50_gpu model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/gpu",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet50_gpu yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnet50_ipex": "help placeholder for pytorch image_recognition resnet50_ipex",
             "resnet50_ipex": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet50_ipex download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet50_ipex model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/ptq",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet50_ipex yaml",
                 "yaml": "conf_ipex.yaml"
             },
+            "__help__resnet50_qat": "help placeholder for pytorch image_recognition resnet50_qat",
             "resnet50_qat": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet50_qat download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet50_qat model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/qat",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet50_qat yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnet101_qat": "help placeholder for pytorch image_recognition resnet101_qat",
             "resnet101_qat": {
+                "__help__download": "help placeholder for pytorch image_recognition resnet101_qat download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnet101_qat model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/qat",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnet101_qat yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__resnext101_32x8d": "help placeholder for pytorch image_recognition resnext101_32x8d",
             "resnext101_32x8d": {
+                "__help__download": "help placeholder for pytorch image_recognition resnext101_32x8d download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition resnext101_32x8d model_src_dir",
                 "model_src_dir": "image_recognition/imagenet/cpu/ptq",
+                "__help__yaml": "help placeholder for pytorch image_recognition resnext101_32x8d yaml",
                 "yaml": "conf.yaml"
             },
+            "__help__se_resnext50_32x4d": "help placeholder for pytorch image_recognition se_resnext50_32x4d",
             "se_resnext50_32x4d": {
+                "__help__download": "help placeholder for pytorch image_recognition se_resnext50_32x4d download",
                 "download": null,
+                "__help__model_src_dir": "help placeholder for pytorch image_recognition se_resnext50_32x4d model_src_dir",
                 "model_src_dir": "image_recognition/se_resnext",
+                "__help__yaml": "help placeholder for pytorch image_recognition se_resnext50_32x4d yaml",
                 "yaml": "conf.yaml"
             }
         },
+        "__help__nlp": "help placeholder for pytorch nlp",
         "nlp": {
+            "__help__blendcnn": "help placeholder for pytorch nlp blendcnn",
             "blendcnn": {
+                "__help__download": "help placeholder for pytorch nlp blendcnn download",
                 "download": {
+                    "__help__url": "help placeholder for pytorch nlp blendcnn download url",
                     "url": "https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip",
+                    "__help__dir": "help placeholder for pytorch nlp blendcnn download dir",
                     "dir": "uncased_L-12_H-768_A-12/bert_model*",
+                    "__help__is_archived": "help placeholder for pytorch nlp blendcnn download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for pytorch nlp blendcnn model_src_dir",
                 "model_src_dir": "distill-bert",
+                "__help__yaml": "help placeholder for pytorch nlp blendcnn yaml",
                 "yaml": "blendcnn.yaml"
             }
         },
+        "__help__object_detection": "help placeholder for pytorch object_detection",
         "object_detection": {
+            "__help__yolo_v3": "help placeholder for pytorch object_detection yolo_v3",
             "yolo_v3": {
+                "__help__download": "help placeholder for pytorch object_detection yolo_v3 download",
                 "download": {
+                    "__help__script": "help placeholder for pytorch object_detection yolo_v3 download script",
                     "script": "examples/pytorch/object_detection/yolo_v3/weights/download_weights.sh",
+                    "__help__filename": "help placeholder for pytorch object_detection yolo_v3 download filename",
                     "filename": "yolov3.weights"
                 },
+                "__help__model_src_dir": "help placeholder for pytorch object_detection yolo_v3 model_src_dir",
                 "model_src_dir": "object_detection/yolo_v3",
+                "__help__yaml": "help placeholder for pytorch object_detection yolo_v3 yaml",
                 "yaml": "conf.yaml"
             }
         },
+        "__help__recommendation": "help placeholder for pytorch recommendation",
         "recommendation": {
+            "__help__dlrm": "help placeholder for pytorch recommendation dlrm",
             "dlrm": {
+                "__help__download": "help placeholder for pytorch recommendation dlrm download",
                 "download": {
+                    "__help__url": "help placeholder for pytorch recommendation dlrm download url",
                     "url": "https://dlrm.s3-us-west-1.amazonaws.com/models/tb00_40M.pt",
+                    "__help__filename": "help placeholder for pytorch recommendation dlrm download filename",
                     "filename": "tb00_40M.pt"
                 },
+                "__help__model_src_dir": "help placeholder for pytorch recommendation dlrm model_src_dir",
                 "model_src_dir": "recommendation",
+                "__help__yaml": "help placeholder for pytorch recommendation dlrm yaml",
                 "yaml": "conf.yaml"
             }
         }
     },
+    "__help__tensorflow": "help placeholder for tensorflow",
     "tensorflow": {
+        "__help__image_recognition": "help placeholder for tensorflow image_recognition",
         "image_recognition": {
+            "__help__inception_v1_slim": "help placeholder for tensorflow image_recognition inception_v1_slim",
             "inception_v1_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition inception_v1_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition inception_v1_slim download url",
                     "url": "http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition inception_v1_slim download filename",
                     "filename": "inception_v1.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition inception_v1_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition inception_v1_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition inception_v1_slim yaml",
                 "yaml": "../inceptionv1.yaml"
             },
+            "__help__inception_v2_slim": "help placeholder for tensorflow image_recognition inception_v2_slim",
             "inception_v2_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition inception_v2_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition inception_v2_slim download url",
                     "url": "http://download.tensorflow.org/models/inception_v2_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition inception_v2_slim download filename",
                     "filename": "inception_v2.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition inception_v2_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition inception_v2_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition inception_v2_slim yaml",
                 "yaml": "../inceptionv2.yaml"
             },
+            "__help__inception_v3": "help placeholder for tensorflow image_recognition inception_v3",
             "inception_v3": {
+                "__help__download": "help placeholder for tensorflow image_recognition inception_v3 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition inception_v3 download url",
                     "url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/inceptionv3_fp32_pretrained_model.pb",
+                    "__help__filename": "help placeholder for tensorflow image_recognition inception_v3 download filename",
                     "filename": "inceptionv3_fp32_pretrained_model.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition inception_v3 model_src_dir",
                 "model_src_dir": "image_recognition",
+                "__help__yaml": "help placeholder for tensorflow image_recognition inception_v3 yaml",
                 "yaml": "inception_v3.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow image_recognition inception_v3 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__inception_v3_slim": "help placeholder for tensorflow image_recognition inception_v3_slim",
             "inception_v3_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition inception_v3_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition inception_v3_slim download url",
                     "url": "http://download.tensorflow.org/models/inception_v3_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition inception_v3_slim download filename",
                     "filename": "inception_v3.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition inception_v3_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition inception_v3_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition inception_v3_slim yaml",
                 "yaml": "inceptionv3.yaml"
             },
+            "__help__inception_v4": "help placeholder for tensorflow image_recognition inception_v4",
             "inception_v4": {
+                "__help__download": "help placeholder for tensorflow image_recognition inception_v4 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition inception_v4 download url",
                     "url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/inceptionv4_fp32_pretrained_model.pb",
+                    "__help__filename": "help placeholder for tensorflow image_recognition inception_v4 download filename",
                     "filename": "inceptionv4_fp32_pretrained_model.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition inception_v4 model_src_dir",
                 "model_src_dir": "image_recognition",
+                "__help__yaml": "help placeholder for tensorflow image_recognition inception_v4 yaml",
                 "yaml": "inception_v4.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow image_recognition inception_v4 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__inception_v4_slim": "help placeholder for tensorflow image_recognition inception_v4_slim",
             "inception_v4_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition inception_v4_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition inception_v4_slim download url",
                     "url": "http://download.tensorflow.org/models/inception_v4_2016_09_09.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition inception_v4_slim download filename",
                     "filename": "inception_v4.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition inception_v4_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition inception_v4_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition inception_v4_slim yaml",
                 "yaml": "../inceptionv4.yaml"
             },
+            "__help__mobilenetv1": "help placeholder for tensorflow image_recognition mobilenetv1",
             "mobilenetv1": {
+                "__help__download": "help placeholder for tensorflow image_recognition mobilenetv1 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition mobilenetv1 download url",
                     "url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb",
+                    "__help__filename": "help placeholder for tensorflow image_recognition mobilenetv1 download filename",
                     "filename": "mobilenet_v1_1.0_224_frozen.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition mobilenetv1 model_src_dir",
                 "model_src_dir": "image_recognition",
+                "__help__yaml": "help placeholder for tensorflow image_recognition mobilenetv1 yaml",
                 "yaml": "mobilenet_v1.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow image_recognition mobilenetv1 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__resnet_v1_50_slim": "help placeholder for tensorflow image_recognition resnet_v1_50_slim",
             "resnet_v1_50_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnet_v1_50_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnet_v1_50_slim download url",
                     "url": "http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnet_v1_50_slim download filename",
                     "filename": "resnet_v1_50.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition resnet_v1_50_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnet_v1_50_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnet_v1_50_slim yaml",
                 "yaml": "resnet_v1_50.yaml"
             },
+            "__help__resnet_v1_101_slim": "help placeholder for tensorflow image_recognition resnet_v1_101_slim",
             "resnet_v1_101_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnet_v1_101_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnet_v1_101_slim download url",
                     "url": "http://download.tensorflow.org/models/resnet_v1_101_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnet_v1_101_slim download filename",
                     "filename": "resnet_v1_101.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition resnet_v1_101_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnet_v1_101_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnet_v1_101_slim yaml",
                 "yaml": "../resnet101.yaml"
             },
+            "__help__resnet_v1_152_slim": "help placeholder for tensorflow image_recognition resnet_v1_152_slim",
             "resnet_v1_152_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnet_v1_152_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnet_v1_152_slim download url",
                     "url": "http://download.tensorflow.org/models/resnet_v1_152_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnet_v1_152_slim download filename",
                     "filename": "resnet_v1_152.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition resnet_v1_152_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnet_v1_152_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnet_v1_152_slim yaml",
                 "yaml": "resnet_v1_152.yaml"
             },
+            "__help__resnet50_v1_5": "help placeholder for tensorflow image_recognition resnet50_v1_5",
             "resnet50_v1_5": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnet50_v1_5 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnet50_v1_5 download url",
                     "url": "https://zenodo.org/record/2535873/files/resnet50_v1.pb",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnet50_v1_5 download filename",
                     "filename": "resnet50_v1.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnet50_v1_5 model_src_dir",
                 "model_src_dir": "image_recognition",
+                "__help__script_path": "help placeholder for tensorflow image_recognition resnet50_v1_5 script_path",
                 "script_path": "examples/tensorflow/image_recognition/main.py",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnet50_v1_5 yaml",
                 "yaml": "resnet50_v1_5.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow image_recognition resnet50_v1_5 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
             "resnet50v1.0": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnet50v1.0 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnet50v1.0 download url",
                     "url": "--continue https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnet50v1.0 download filename",
                     "filename": "resnet50_fp32_pretrained_model.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnet50v1.0 model_src_dir",
                 "model_src_dir": "image_recognition",
+                "__help__script_path": "help placeholder for tensorflow image_recognition resnet50v1.0 script_path",
                 "script_path": "examples/tensorflow/image_recognition/main.py",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnet50v1.0 yaml",
                 "yaml": "resnet50_v1.yaml"
             },
+            "__help__resnet101": "help placeholder for tensorflow image_recognition resnet101",
             "resnet101": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnet101 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnet101 download url",
                     "url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet101_fp32_pretrained_model.pb",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnet101 download filename",
                     "filename": "resnet101_fp32_pretrained_model.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnet101 model_src_dir",
                 "model_src_dir": "image_recognition",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnet101 yaml",
                 "yaml": "resnet101.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow image_recognition resnet101 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__resnetv2_50_slim": "help placeholder for tensorflow image_recognition resnetv2_50_slim",
             "resnetv2_50_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnetv2_50_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnetv2_50_slim download url",
                     "url": "http://download.tensorflow.org/models/resnet_v2_50_2017_04_14.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnetv2_50_slim download filename",
                     "filename": "resnet_v2_50.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition resnetv2_50_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnetv2_50_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnetv2_50_slim yaml",
                 "yaml": "../resnet_v2_50.yaml"
             },
+            "__help__resnetv2_101_slim": "help placeholder for tensorflow image_recognition resnetv2_101_slim",
             "resnetv2_101_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnetv2_101_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnetv2_101_slim download url",
                     "url": "http://download.tensorflow.org/models/resnet_v2_101_2017_04_14.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnetv2_101_slim download filename",
                     "filename": "resnet_v2_101.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition resnetv2_101_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnetv2_101_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnetv2_101_slim yaml",
                 "yaml": "../resnet_v2_101.yaml"
             },
+            "__help__resnetv2_152_slim": "help placeholder for tensorflow image_recognition resnetv2_152_slim",
             "resnetv2_152_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition resnetv2_152_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition resnetv2_152_slim download url",
                     "url": "http://download.tensorflow.org/models/resnet_v2_152_2017_04_14.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition resnetv2_152_slim download filename",
                     "filename": "resnet_v2_152.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition resnetv2_152_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition resnetv2_152_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition resnetv2_152_slim yaml",
                 "yaml": "../resnet_v2_152.yaml"
             },
+            "__help__vgg16_slim": "help placeholder for tensorflow image_recognition vgg16_slim",
             "vgg16_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition vgg16_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition vgg16_slim download url",
                     "url": "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition vgg16_slim download filename",
                     "filename": "vgg_16.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition vgg16_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition vgg16_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition vgg16_slim yaml",
                 "yaml": "../vgg16.yaml"
             },
+            "__help__vgg19_slim": "help placeholder for tensorflow image_recognition vgg19_slim",
             "vgg19_slim": {
+                "__help__download": "help placeholder for tensorflow image_recognition vgg19_slim download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow image_recognition vgg19_slim download url",
                     "url": "http://download.tensorflow.org/models/vgg_19_2016_08_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow image_recognition vgg19_slim download filename",
                     "filename": "vgg_19.ckpt",
+                    "__help__is_archived": "help placeholder for tensorflow image_recognition vgg19_slim download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow image_recognition vgg19_slim model_src_dir",
                 "model_src_dir": "image_recognition/slim",
+                "__help__yaml": "help placeholder for tensorflow image_recognition vgg19_slim yaml",
                 "yaml": "../vgg19.yaml"
             }
         },
+        "__help__nlp": "help placeholder for tensorflow nlp",
         "nlp": {
+            "__help__bert": "help placeholder for tensorflow nlp bert",
             "bert": {
+                "__help__download": "help placeholder for tensorflow nlp bert download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow nlp bert download url",
                     "url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/bert_large_checkpoints.zip",
+                    "__help__files": "help placeholder for tensorflow nlp bert download files",
                     "files": "bert_large_checkpoints/model.ckpt*",
+                    "__help__is_archived": "help placeholder for tensorflow nlp bert download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow nlp bert model_src_dir",
                 "model_src_dir": "nlp/bert",
+                "__help__yaml": "help placeholder for tensorflow nlp bert yaml",
                 "yaml": "bert.yaml"
             }
         },
+        "__help__object_detection": "help placeholder for tensorflow object_detection",
         "object_detection": {
+            "__help__faster_rcnn_inception_resnet_v2": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2",
             "faster_rcnn_inception_resnet_v2": {
+                "__help__download": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 download url",
                     "url": "http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 download filename",
                     "filename": "faster_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb",
+                    "__help__is_archived": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 model_src_dir",
                 "model_src_dir": "object_detection",
+                "__help__yaml": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 yaml",
                 "yaml": "faster_rcnn_inception_resnet_v2.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow object_detection faster_rcnn_inception_resnet_v2 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__faster_rcnn_resnet101": "help placeholder for tensorflow object_detection faster_rcnn_resnet101",
             "faster_rcnn_resnet101": {
+                "__help__download": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 download url",
                     "url": "http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 download filename",
                     "filename": "faster_rcnn_resnet101_coco_2018_01_28/frozen_inference_graph.pb",
+                    "__help__is_archived": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 model_src_dir",
                 "model_src_dir": "object_detection",
+                "__help__yaml": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 yaml",
                 "yaml": "faster_rcnn_resnet101.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow object_detection faster_rcnn_resnet101 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__mask_rcnn_inception_v2": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2",
             "mask_rcnn_inception_v2": {
+                "__help__download": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 download url",
                     "url": "http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 download filename",
                     "filename": "mask_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb",
+                    "__help__is_archived": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 model_src_dir",
                 "model_src_dir": "object_detection",
+                "__help__yaml": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 yaml",
                 "yaml": "mask_rcnn_inception_v2.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow object_detection mask_rcnn_inception_v2 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__ssd_mobilenet_v1": "help placeholder for tensorflow object_detection ssd_mobilenet_v1",
             "ssd_mobilenet_v1": {
+                "__help__download": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 download url",
                     "url": "http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 download filename",
                     "filename": "ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb",
+                    "__help__is_archived": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 model_src_dir",
                 "model_src_dir": "object_detection",
+                "__help__yaml": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 yaml",
                 "yaml": "ssd_mobilenet_v1.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow object_detection ssd_mobilenet_v1 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             },
+            "__help__ssd_resnet50_v1": "help placeholder for tensorflow object_detection ssd_resnet50_v1",
             "ssd_resnet50_v1": {
+                "__help__download": "help placeholder for tensorflow object_detection ssd_resnet50_v1 download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow object_detection ssd_resnet50_v1 download url",
                     "url": "http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz",
+                    "__help__filename": "help placeholder for tensorflow object_detection ssd_resnet50_v1 download filename",
                     "filename": "ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb",
+                    "__help__is_archived": "help placeholder for tensorflow object_detection ssd_resnet50_v1 download is_archived",
                     "is_archived": true
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow object_detection ssd_resnet50_v1 model_src_dir",
                 "model_src_dir": "object_detection",
+                "__help__yaml": "help placeholder for tensorflow object_detection ssd_resnet50_v1 yaml",
                 "yaml": "ssd_resnet50_v1.yaml",
-                "framework_version": ["2.0","2.3","2.4"]
+                "__help__framework_version": "help placeholder for tensorflow object_detection ssd_resnet50_v1 framework_version",
+                "framework_version": [
+                    "2.0",
+                    "2.3",
+                    "2.4"
+                ]
             }
         },
+        "__help__recommendation": "help placeholder for tensorflow recommendation",
         "recommendation": {
+            "__help__wide_deep_large_ds": "help placeholder for tensorflow recommendation wide_deep_large_ds",
             "wide_deep_large_ds": {
+                "__help__download": "help placeholder for tensorflow recommendation wide_deep_large_ds download",
                 "download": {
+                    "__help__url": "help placeholder for tensorflow recommendation wide_deep_large_ds download url",
                     "url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/wide_deep_fp32_pretrained_model.pb",
+                    "__help__filename": "help placeholder for tensorflow recommendation wide_deep_large_ds download filename",
                     "filename": "wide_deep_fp32_pretrained_model.pb"
                 },
+                "__help__model_src_dir": "help placeholder for tensorflow recommendation wide_deep_large_ds model_src_dir",
                 "model_src_dir": "recommendation/wide_deep_large_ds",
+                "__help__yaml": "help placeholder for tensorflow recommendation wide_deep_large_ds yaml",
                 "yaml": "wide_deep_large_ds.yaml"
             }
         }
     }
 }
+

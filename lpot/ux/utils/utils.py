@@ -15,6 +15,7 @@
 """UX server utils module."""
 
 import json
+import logging
 import os
 from importlib import import_module
 from importlib.util import find_spec
@@ -94,43 +95,72 @@ def is_model_file(path: str) -> bool:
 
 def get_predefined_config_path(framework: str, domain: str) -> str:
     """Get predefined config for specified model domain."""
-    path = [os.environ["LPOT_REPOSITORY_PATH"], "examples", framework, domain]
-    config_map = {
-        "image_recognition": ["resnet50_v1_5.yaml"],
-        "object_detection": ["ssd_mobilenet_v1.yaml"],
-        "recommendation": ["wide_deep_large_ds", "wide_deep_large_ds.yaml"],
-        "nlp": ["bert", "bert.yaml"],
-    }
-
-    config_path = config_map.get(domain, None)
-    if config_path is None:
-        raise Exception(f"Could not found config for {domain} domain.")
-
-    path.extend(config_path)
-    return os.path.join(*path)
+    config_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        "predefined_configs",
+        f"{framework}",
+        f"{domain}.yaml",
+    )
+    if config_path and os.path.isfile(config_path):
+        return config_path
+    raise Exception(
+        f"Could not found predefined config for {framework} {domain} model.",
+    )
 
 
 def get_model_zoo_config_path(
+    workspace_path: Optional[str],
     framework: str,
     domain: str,
+    model_name: str,
     model_dict: Dict[str, Any],
 ) -> str:
     """Get predefined config for model from Model Zoo."""
-    try:
-        lpot_repository_path = os.environ["LPOT_REPOSITORY_PATH"]
-    except KeyError:
+    if workspace_path is None:
         return ""
-
+    model_dir = os.path.join(
+        workspace_path,
+        "model_zoo",
+        framework,
+        domain,
+        model_name,
+    )
     yaml_relative_location = model_dict.get("yaml")
-    if lpot_repository_path and yaml_relative_location:
-        path = [
-            lpot_repository_path,
-            "examples",
-            framework,
-            domain,
-            yaml_relative_location,
-        ]
-        return os.path.join(*path)
+    if (
+        model_dir
+        and yaml_relative_location
+        and os.path.exists(os.path.join(model_dir, yaml_relative_location))
+    ):
+        return os.path.join(model_dir, yaml_relative_location)
+    return ""
+
+
+def get_model_zoo_model_path(
+    workspace_path: Optional[str],
+    framework: str,
+    domain: str,
+    model_name: str,
+    model_dict: Dict[str, Any],
+) -> str:
+    """Get path for model from Model Zoo."""
+    if workspace_path is None:
+        return ""
+    model_dir = os.path.join(
+        workspace_path,
+        "model_zoo",
+        framework,
+        domain,
+        model_name,
+    )
+
+    model_relative_path = model_dict.get("download", {}).get("filename", None)
+    if (
+        model_dir
+        and model_relative_path
+        and os.path.exists(os.path.join(model_dir, model_relative_path))
+    ):
+        return os.path.join(model_dir, model_relative_path)
     return ""
 
 
@@ -152,24 +182,27 @@ def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
     """Update model's input and output nodes in config file."""
     framework = get_framework_from_path(model_path)
     if framework is None:
-        raise Exception("Could not found framework for specified model.")
+        raise Exception("Could not find framework for specified model.")
     check_module(framework)
     # Inputs are only required for TF models
     if framework == "tensorflow":
-        from lpot.adaptor.tf_utils.util import (
-            get_graph_def,
-            get_input_node_names,
-            get_output_node_names,
-        )
+        from lpot.utils.logger import Logger
 
-        graph_def = get_graph_def(model_path)
+        Logger().get_logger().setLevel(logging.CRITICAL)
+        from lpot.model.model import TensorflowModel
+
+        model = TensorflowModel(model_path)
+
+        inputs = []
+        outputs = []
+        if hasattr(model, "input_node_names"):
+            inputs = model.input_node_names  # pylint: disable=no-member
+        if hasattr(model, "output_node_names"):
+            outputs = model.output_node_names  # pylint: disable=no-member
+
         return {
-            "inputs": get_input_node_names(graph_def)[
-                -1
-            ],  # TODO: Remove passing last value
-            "outputs": get_output_node_names(graph_def)[
-                -1
-            ],  # TODO: Remove passing last value
+            "inputs": inputs,
+            "outputs": outputs,
         }
     return {}
 
@@ -178,7 +211,7 @@ def check_module(module_name: str) -> None:
     """Check if module exists. Raise exception when not found."""
     module = find_spec(module_name)
     if module is None:
-        raise Exception(f"Could not found {module_name} module.")
+        raise ClientErrorException(f"Could not find {module_name} module.")
 
 
 def get_module_version(module_name: str) -> str:
@@ -262,3 +295,16 @@ def load_transforms_config() -> Dict[str, Any]:
     if isinstance(dataloaders_config, dict):
         return dataloaders_config
     return {}
+
+
+def load_help_lpot_params(parameter: str) -> Dict[str, Any]:
+    """Load help info from json for metrics, objectives and strategies."""
+    with open(
+        os.path.join(os.path.dirname(__file__), "configs", f"{parameter}.json"),
+        "r",
+    ) as f:
+        config = json.load(f)
+    if isinstance(config, dict):
+        return config
+    else:
+        return {}

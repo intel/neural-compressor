@@ -33,3 +33,33 @@ button {
   position: relative;
   top: -12px;
 }
+
+.icon {
+  width: 20px;
+  position: relative;
+  top: -2px;
+}
+
+.version {
+  color: $dark-gray;
+  position: relative;
+  top: 15px;
+}
+
+.custom {
+  color: $dark-gray;
+  position: relative;
+  top: -5px;
+}
+
+.warning-icon {
+  width: 20px;
+  position: relative;
+  top: 5px;
+}
+
+.warning {
+  color: $red;
+  position: relative;
+  top: 10px;
+}

@@ -14,38 +14,48 @@
 # limitations under the License.
 """Get available models from Model Zoo."""
 
-import logging as log
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.logger import log
+from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import (
+    framework_extensions,
     get_model_zoo_config_path,
+    get_model_zoo_model_path,
     get_module_version,
     load_model_config,
 )
 
-log.basicConfig(level=log.DEBUG)
-
-SUPPORTED_FRAMEWORKS = ["tensorflow"]
+SUPPORTED_FRAMEWORKS = list(framework_extensions.keys())
 
 
 def list_models(data: dict) -> List[Dict[str, Any]]:
     """Process download model request."""
-    model_list = get_available_models()
+    workspace_path = Workdir().get_active_workspace()
+    model_list = get_available_models(workspace_path)
     return model_list
 
 
-def get_available_models() -> List[Dict[str, Any]]:
+def get_available_models(workspace_path: Optional[str]) -> List[Dict[str, Any]]:
     """Get available models from Model Zoo."""
     model_list = []
     full_list = load_model_config()
-    for framework, framework_dict in full_list.items():
-        if framework not in SUPPORTED_FRAMEWORKS:
+    for framework in SUPPORTED_FRAMEWORKS:
+        try:
+            framework_version = get_module_version(framework)
+        except Exception:
+            log.debug(f"Framework {framework} not installed.")
             continue
-        framework_version = get_module_version(framework)
         log.debug(f"{framework} version is {framework_version}")
 
+        framework_dict = full_list[framework]
         for domain, domain_dict in framework_dict.items():
+            if not isinstance(domain_dict, dict):
+                continue
             for model, model_dict in domain_dict.items():
+                if not isinstance(model_dict, dict):
+                    continue
                 if check_version(
                     framework_version,
                     model_dict.get("framework_version", []),
@@ -56,16 +66,35 @@ def get_available_models() -> List[Dict[str, Any]]:
                             "domain": domain,
                             "model": model,
                             "yaml": get_model_zoo_config_path(
+                                workspace_path,
                                 framework,
                                 domain,
+                                model,
                                 model_dict,
                             ),
-                            "model_path": "",
+                            "model_path": get_model_zoo_model_path(
+                                workspace_path,
+                                framework,
+                                domain,
+                                model,
+                                model_dict,
+                            ),
                         },
                     )
+
+    validate_model_list(model_list)
     return model_list
 
 
 def check_version(framework_version: str, supported_versions: List[str]) -> bool:
     """Check if framework version is in supported versions list."""
     return any(framework_version.startswith(version) for version in supported_versions)
+
+
+def validate_model_list(model_list: List[dict]) -> None:
+    """Check if model list is valid."""
+    if not model_list:
+        raise ClientErrorException(
+            "Model Zoo requires installed TensorFlow in specific version. "
+            "Please install TensorFlow in one of following versions: 2.0.x, 2.3.x or 2.4.x.",
+        )

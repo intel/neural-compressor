@@ -1,12 +1,13 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { DialogComponent } from '../dialog/dialog.component';
+import { ErrorComponent } from '../error/error.component';
 import { ModelService } from '../services/model.service';
 
 @Component({
   selector: 'app-file-browser',
   templateUrl: './file-browser.component.html',
-  styleUrls: ['./file-browser.component.scss', './../start-page/start-page.component.scss']
+  styleUrls: ['./file-browser.component.scss', './../error/error.component.scss']
 })
 export class FileBrowserComponent implements OnInit {
 
@@ -19,7 +20,8 @@ export class FileBrowserComponent implements OnInit {
   constructor(
     private modelService: ModelService,
     public dialogRef: MatDialogRef<DialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data
+    @Inject(MAT_DIALOG_DATA) public data,
+    public dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -34,12 +36,24 @@ export class FileBrowserComponent implements OnInit {
         resp => {
           this.contents = resp['contents'];
           this.currentPath = resp['path'];
+        },
+        error => {
+          this.openErrorDialog(error);
         }
       )
   }
 
-  chooseFile(name: string) {
+  openErrorDialog(error) {
+    const dialogRef = this.dialog.open(ErrorComponent, {
+      data: error
+    });
+  }
+
+  chooseFile(name: string, close: boolean) {
     this.chosenFile = name;
+    if (close) {
+      this.dialogRef.close(this.chosenFile);
+    }
   }
 
   currentPathChange(event) {

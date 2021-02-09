@@ -16,40 +16,23 @@
 
 """WSGI Web Server."""
 
-import argparse
-import socket
+import sys
 
+from lpot.ux.utils.exceptions import NotFoundException
+from lpot.ux.web.configuration import Configuration
 from lpot.ux.web.server import run_server
-
-
-def get_server_ip() -> str:
-    """Return IP used by server."""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        sock.connect(("10.0.0.0", 1))
-        ip = sock.getsockname()[0]
-    except Exception:
-        ip = "127.0.0.1"
-    finally:
-        sock.close()
-
-    return ip
 
 
 def main() -> None:
     """Get parameters and initialize server."""
-    address = get_server_ip()
+    try:
+        configuration = Configuration()
+    except NotFoundException as e:
+        print(str(e))
+        sys.exit(1)
 
-    parser = argparse.ArgumentParser(description="Run UX server.")
-    parser.add_argument(
-        "-p",
-        "--port",
-        type=int,
-        default=5000,
-        help="port number to listen on",
-    )
-    args = parser.parse_args()
-    port = args.port
+    address = configuration.ip
+    port = configuration.port
 
     print(f"Server listening on http://{address}:{port}")
 

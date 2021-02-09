@@ -35,6 +35,9 @@ class Metric(JsonSerializer):
         self._perf_latency_int8: Optional[float] = None
         self._perf_throughput_int8: Optional[float] = None
         self._perf_throughput_fp32: Optional[float] = None
+        self._tuning_time: Optional[float] = None
+        self._size_fp32: Optional[float] = None
+        self._size_int8: Optional[float] = None
 
     @property
     def acc_fp32(self) -> Optional[float]:
@@ -117,3 +120,33 @@ class Metric(JsonSerializer):
         TODO: change 1000 to the batch size when Benchmark is ready
         """
         return 1000 / value
+
+    @property
+    def size_fp32(self) -> Optional[float]:
+        """Model size for float32."""
+        return self._size_fp32
+
+    @size_fp32.setter
+    def size_fp32(self, value: str) -> None:
+        """Set model size fp32 from value."""
+        self._acc_fp32 = float(value)
+
+    @property
+    def size_int8(self) -> Optional[float]:
+        """Model size for int8."""
+        return self._size_int8
+
+    @size_int8.setter
+    def size_int8(self, value: str) -> None:
+        """Set model size int8 from value."""
+        self._acc_int8 = float(value)
+
+    @property
+    def tuning_time(self) -> Optional[float]:
+        """Tuning time."""
+        return self.tuning_time
+
+    @tuning_time.setter
+    def tuning_time(self, value: str) -> None:
+        """Set tuning_time value."""
+        self.tuning_time = float(value)

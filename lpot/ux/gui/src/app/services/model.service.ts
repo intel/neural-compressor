@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { FullModel } from '../import-model/import-model.component';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +11,7 @@ export class ModelService {
   baseUrl = environment.baseUrl;
   myModels = [];
   workspacePath: string;
+  workspacePathChange: Subject<boolean> = new Subject<boolean>();
 
   constructor(
     private http: HttpClient
@@ -33,24 +34,19 @@ export class ModelService {
 
   getPossibleValues(param: string, config: {}) {
     return this.http.post(
-      this.baseUrl + 'api/get_possible_values',
+      this.baseUrl + 'api/get_possible_values_v2',
       {
-        "param": param,
-        "config": config
+        param: param,
+        config: config
       }
     );
   }
 
-  addModel(newModel: NewModel) {
-    this.myModels.push(newModel);
-    localStorage.setItem('myModels', JSON.stringify(this.myModels));
-  }
-
   getAllModels() {
-    if (JSON.parse(localStorage.getItem('myModels'))) {
-      this.myModels = JSON.parse(localStorage.getItem('myModels'));
-    }
-    return this.myModels;
+    return this.http.post(
+      this.baseUrl + 'api/get_workloads_list',
+      { workspace_path: this.workspacePath }
+    );
   }
 
   getConfiguration(newModel: NewModel) {
@@ -73,7 +69,7 @@ export class ModelService {
     );
   }
 
-  saveWorkload(fullModel: FullModel) {
+  saveWorkload(fullModel) {
     fullModel['workspace_path'] = this.workspacePath;
     return this.http.post(
       this.baseUrl + 'api/save_workload',
@@ -81,16 +77,8 @@ export class ModelService {
     );
   }
 
-  getFile(id: string, fileType: string) {
-    this.getAllModels();
-    const model = this.myModels.find(model => model['id'] === id);
-    let url = '';
-    if (fileType === 'output') {
-      url = 'file' + this.workspacePath + '/' + model['id'] + '.txt';
-    } else if (fileType === 'config') {
-      url = 'file' + this.workspacePath + '/config.' + model['id'] + '.yaml';
-    }
-    return this.http.get(this.baseUrl + url, { responseType: 'text' as 'json' });
+  getFile(path: string) {
+    return this.http.get(this.baseUrl + 'file' + path, { responseType: 'text' as 'json' });
   }
 
   getFileSystem(path: string, files: boolean, modelsOnly: boolean) {
@@ -102,6 +90,59 @@ export class ModelService {
       }
     });
   }
+
+  listModelZoo() {
+    return this.http.get(this.baseUrl + 'api/list_model_zoo');
+  }
+
+  benchmark(id: string, modelPath: string, outputModelPath: string) {
+    return this.http.post(
+      this.baseUrl + 'api/benchmark',
+      {
+        id: id,
+        workspace_path: this.workspacePath,
+        models: [
+          {
+            precision: 'fp32',
+            path: modelPath
+          },
+          {
+            precision: 'int8',
+            path: outputModelPath
+          }
+        ]
+
+      });
+  }
+
+  downloadModel(model, index: number) {
+    return this.http.post(
+      this.baseUrl + 'api/download_model',
+      {
+        id: index,
+        workspace_path: this.workspacePath,
+        framework: model.framework,
+        domain: model.domain,
+        model: model.model,
+        progress_steps: 20,
+      }
+    );
+  }
+
+  downloadConfig(model, index: number) {
+    return this.http.post(
+      this.baseUrl + 'api/download_config',
+      {
+        id: index,
+        workspace_path: this.workspacePath,
+        framework: model.framework,
+        domain: model.domain,
+        model: model.model,
+        progress_steps: 20,
+      }
+    );
+  }
+
 }
 
 export interface NewModel {

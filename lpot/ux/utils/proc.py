@@ -17,12 +17,13 @@
 
 import datetime
 import json
-import logging as log
 import os
 import re
 import subprocess
 import uuid
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
+
+from lpot.ux.utils.logger import log
 
 
 class Proc(object):

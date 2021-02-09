@@ -15,21 +15,18 @@
 """Workload module."""
 
 import json
-import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from lpot.ux.utils.json_serializer import JsonSerializer
+from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import (
-    find_boundary_nodes,
     get_framework_from_path,
     get_model_domain,
     get_predefined_config_path,
 )
 from lpot.ux.utils.workload.config import Config
-
-logging.basicConfig(level=logging.INFO)
 
 
 class Workload(JsonSerializer):
@@ -40,8 +37,8 @@ class Workload(JsonSerializer):
         super().__init__()
         self.config: Config = Config()
 
-        self.id: Optional[str] = data.get("id")
-        if self.id is None:
+        self.id: str = str(data.get("id", ""))
+        if not self.id:
             raise Exception("Workload ID not specified.")
 
         self.model_path: str = data.get("model_path", "")
@@ -49,15 +46,19 @@ class Workload(JsonSerializer):
             raise Exception("Model path is not defined!")
 
         self.model_name = Path(self.model_path).stem
-        self.workspace_path: str = data.get(
-            "workspace_path",
-            os.path.dirname(self.model_path),
+        self.workspace_path: str = os.path.join(
+            data.get("workspace_path", os.path.dirname(self.model_path)),
+            self.id,
         )
+        self.set_workspace()
 
-        self.config_path = os.path.join(
-            self.workspace_path,
-            f"config.{self.id}.yaml",
-        )
+        self.config_name = f"config.{self.id}.yaml"
+        self.config_path = data.get("config_path", None)
+        if not self.config_path:
+            self.config_path = os.path.join(
+                self.workspace_path,
+                f"config.{self.id}.yaml",
+            )
 
         self.framework: str = data.get(
             "framework",
@@ -91,26 +92,10 @@ class Workload(JsonSerializer):
         self.config.set_dataset_path(self.dataset_path)
         self.config.set_workspace(self.workspace_path)
         self.config.set_accuracy_goal(self.accuracy_goal)
-        self.set_boundary_nodes(data)
 
-    def set_boundary_nodes(self, data: Dict[str, Any]) -> None:
-        """Set model input and output nodes."""
-        detected_nodes = {}
-        if not data.get("input") or not data.get("output") is None:
-            detected_nodes = find_boundary_nodes(self.model_path)
-
-        if data.get("input"):
-            input_nodes = data.get("input")
-        else:
-            input_nodes = detected_nodes.get("inputs", [])
-
-        if data.get("output"):
-            output_nodes = data.get("output")
-        else:
-            output_nodes = detected_nodes.get("outputs", [])
-
-        self.config.model.inputs = input_nodes  # type: ignore
-        self.config.model.outputs = output_nodes  # type: ignore
+    def set_workspace(self) -> None:
+        """Update workspace path in LPOT config."""
+        os.makedirs(self.workspace_path, exist_ok=True)
 
     def dump(self) -> None:
         """Dump workload to yaml."""
@@ -118,4 +103,4 @@ class Workload(JsonSerializer):
         with open(json_path, "w") as f:
             json.dump(self.serialize(), f, indent=4)
 
-        logging.info(f"Successfully saved workload to {json_path}")
+        log.debug(f"Successfully saved workload to {json_path}")

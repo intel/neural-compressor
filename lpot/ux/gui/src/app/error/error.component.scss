@@ -53,3 +53,28 @@ table {
 .align-right {
   text-align: right;
 }
+
+.success {
+  color: $dark-green;
+  background-color: $light-green;
+  text-align: center;
+}
+
+.close-button {
+  float: right;
+}
+
+.failure,
+.mat-dialog-container {
+  background-color: $lighter-red;
+  color: $dark-red;
+  margin: -24px;
+  box-sizing: unset;
+}
+
+.big-spinner-center {
+  position: fixed;
+  z-index: 10;
+  top: 50%;
+  left: 48%;
+}

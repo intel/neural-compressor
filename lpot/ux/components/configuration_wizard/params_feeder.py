@@ -15,13 +15,15 @@
 """Parameters feeder module."""
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.utils import (
     check_module,
+    framework_extensions,
     is_model_file,
     load_dataloader_config,
+    load_help_lpot_params,
     load_model_config,
     load_transforms_config,
 )
@@ -61,12 +63,20 @@ class Feeder:
         }
 
     @staticmethod
-    def get_frameworks() -> List[str]:
+    def get_frameworks() -> List[dict]:
         """Get list of available frameworks."""
+        frameworks = []
         models_config = load_model_config()
-        return list(models_config.keys())
+        for framework in models_config.keys():
+            if framework.startswith("__help__"):
+                continue
+            if framework not in framework_extensions.keys():
+                continue
+            help_msg = models_config.get(f"__help__{framework}", "")
+            frameworks.append({"name": framework, "help": help_msg})
+        return frameworks
 
-    def get_domains(self) -> List[str]:
+    def get_domains(self) -> List[Dict[str, Any]]:
         """Get list of available domains."""
         if self.config is None:
             raise ClientErrorException("Config not found.")
@@ -74,9 +84,20 @@ class Feeder:
         if framework is None:
             raise ClientErrorException("Framework not set.")
         models_config = load_model_config()
-        return list(models_config.get(framework, {}).keys())
+        domains = []
+        for domain in models_config.get(framework, {}).keys():
+            if domain.startswith("__help__"):
+                continue
+            help_msg = models_config.get(framework, {}).get(f"__help__{domain}", "")
+            domains.append(
+                {
+                    "name": domain,
+                    "help": help_msg,
+                },
+            )
+        return domains
 
-    def get_models(self) -> List[str]:
+    def get_models(self) -> List[Dict[str, Any]]:
         """Get list of models."""
         if self.config is None:
             raise ClientErrorException("Config not found.")
@@ -88,7 +109,14 @@ class Feeder:
             raise ClientErrorException("Domain not set.")
         models_config = load_model_config()
 
-        return list(models_config.get(framework, {}).get(domain, {}).keys())
+        raw_models_dict = models_config.get(framework, {}).get(domain, {})
+        models = []
+        for model in raw_models_dict.keys():
+            if model.startswith("__help__"):
+                continue
+            help_msg = raw_models_dict.get(f"__help__{model}", "")
+            models.append({"name": model, "help": help_msg})
+        return models
 
     def get_available_models(self, workspace_path: str) -> List[str]:
         """Get list of available models in workspace."""
@@ -104,57 +132,77 @@ class Feeder:
                 available_models.append(filename)
         return available_models
 
-    def get_dataloaders(self) -> Dict[str, Any]:
+    def get_dataloaders(self) -> List[Dict[str, Any]]:
         """Get available dataloaders."""
         if self.config is None:
             raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
-        dataloaders = load_dataloader_config()
-        return dataloaders.get(framework, {})
+        dataloaders = load_dataloader_config().get(framework, {})
+        return self._parse_help_in_dict(dataloaders)
 
-    def get_transforms(self) -> Dict[str, Any]:
+    def get_transforms(self) -> List[Dict[str, Any]]:
         """Get available transforms."""
         if self.config is None:
             raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
-        transforms = load_transforms_config()
-        return transforms.get(framework, {})
+        transforms = load_transforms_config().get(framework, {})
+        return self._parse_help_in_dict(transforms)
 
     @staticmethod
-    def get_objectives() -> List[str]:
+    def get_objectives() -> List[dict]:
         """Get list of supported objectives."""
         check_module("lpot")
         from lpot.objective import OBJECTIVES
 
-        objectives = list(OBJECTIVES.keys())
+        help_dict = load_help_lpot_params("objectives")
+
+        objectives = []
+        for objective in OBJECTIVES.keys():
+            help_msg = help_dict.get(f"__help__{objective}", "")
+            objectives.append({"name": objective, "help": help_msg})
         return objectives
 
     @staticmethod
-    def get_strategies() -> List[str]:
+    def get_strategies() -> List[Dict[str, Any]]:
         """Get list of supported strategies."""
         check_module("lpot")
         from lpot.strategy import STRATEGIES
 
-        strategies = list(STRATEGIES.keys())
-        return sorted(strategies)
+        help_dict = load_help_lpot_params("strategies")
+        strategies = []
+        for strategy in STRATEGIES.keys():
+            help_msg = help_dict.get(f"__help__{strategy}", "")
+            strategies.append({"name": strategy, "help": help_msg})
+        return strategies
 
-    def get_quantization_approaches(self) -> List[str]:
+    def get_quantization_approaches(self) -> List[Dict[str, Any]]:
         """Get list of supported quantization approaches."""
         approaches = [
-            "post_training_static_quant",
-            "quant_aware_training",
+            {
+                "name": "post_training_static_quant",
+                "help": "help placeholder for post_training_static_quant",
+            },
+            {
+                "name": "quant_aware_training",
+                "help": "help placeholder for quant_aware_training",
+            },
         ]
         framework = self.config.get("framework", None)
         if framework in ["pytorch", "onnxruntime"]:
-            approaches.append("post_training_dynamic_quant")
+            approaches.append(
+                {
+                    "name": "post_training_dynamic_quant",
+                    "help": f"help placeholder for {framework} post_training_dynamic_quant",
+                },
+            )
 
         return approaches
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> List[Dict[str, Any]]:
         """Get list of possible metrics."""
         check_module("lpot")
         framework = self.config.get("framework", None)
@@ -165,13 +213,48 @@ class Feeder:
             check_module("ignite")
         else:
             check_module(framework)
-
         from lpot.metric.metric import framework_metrics
 
-        metric_list = list(framework_metrics.get(framework)().metrics.keys())
-        metrics = update_metric_parameters(metric_list)
+        help_dict = load_help_lpot_params("metrics")
+        raw_metric_list = list(framework_metrics.get(framework)().metrics.keys())
+        raw_metric_list += ["custom"]
+        metrics_updated = update_metric_parameters(raw_metric_list)
+        for metric, value in metrics_updated.copy().items():
+            if isinstance(value, dict):
+                for key in value.copy().keys():
+                    help_msg_key = f"__help__{key}"
+                    metrics_updated[metric][help_msg_key] = help_dict.get(
+                        metric,
+                        {},
+                    ).get(help_msg_key, "")
+            metrics_updated[f"__help__{metric}"] = help_dict.get(
+                f"__help__{metric}",
+                "",
+            )
+        return self._parse_help_in_dict(metrics_updated)
 
-        return metrics
+    def _parse_help_in_dict(self, data: dict) -> list:
+        parsed_list = []
+        for key, value in data.items():
+            if key.startswith("__help__"):
+                continue
+            if isinstance(value, dict):
+                parsed_list.append(
+                    {
+                        "name": key,
+                        "help": data.get(f"__help__{key}", ""),
+                        "params": self._parse_help_in_dict(value),
+                    },
+                )
+            else:
+                parsed_list.append(
+                    {
+                        "name": key,
+                        "help": data.get(f"__help__{key}", ""),
+                        "value": value,
+                    },
+                )
+        return parsed_list
 
 
 def update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
@@ -201,5 +284,48 @@ def get_possible_values(data: dict) -> Dict[str, List[Any]]:
         }
     }
     """
+    feeder = Feeder(data)
+    return convert_to_v1_api(feeder.feed())
+
+
+def convert_to_v1_api(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert new API into old (without "help")."""
+    data_v1 = {}
+    for key, value in data.items():
+        if isinstance(value, list):
+            data_v1[key] = _convert_to_v1_api_list(value)
+        else:
+            data_v1[key] = value
+    return data_v1
+
+
+def _convert_to_v1_api_list(data: list) -> Union[List[str], Dict[str, Any]]:
+    """Convert values in list with "help" args into dict or list, based on content."""
+    data_v1_dict = {}
+    data_v1_list = []
+    for item in data:
+        if isinstance(item, dict):
+            if "params" in item.keys():
+                params = item["params"]
+                if isinstance(params, list):
+                    data_v1_dict[item["name"]] = _convert_to_v1_api_list(params)
+                else:
+                    raise TypeError(
+                        f"Type of params could be only type of list, not {type(params)}.",
+                    )
+            elif "value" in item.keys():
+                data_v1_dict[item["name"]] = item["value"]
+            else:
+                data_v1_list.append(item["name"])
+    if data_v1_dict and not data_v1_list:
+        return data_v1_dict
+    elif data_v1_list and not data_v1_dict:
+        return data_v1_list
+    else:
+        raise Exception("Could not determine return type, error in input data.")
+
+
+def get_possible_values_v2(data: dict) -> Dict[str, List[Any]]:
+    """Get list of possible values for specified scenario with "help" information."""
     feeder = Feeder(data)
     return feeder.feed()

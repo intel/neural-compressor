@@ -2,38 +2,35 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModelService, NewModel } from '../services/model.service';
 import { Md5 } from 'ts-md5/dist/md5';
-import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { MatDialog } from '@angular/material';
 import { SocketService } from '../services/socket.service';
+import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
+import { ErrorComponent } from '../error/error.component';
 
 @Component({
   selector: 'app-import-model',
   templateUrl: './import-model.component.html',
-  styleUrls: ['./import-model.component.scss', './../start-page/start-page.component.scss']
+  styleUrls: ['./import-model.component.scss', './../error/error.component.scss']
 })
 export class ImportModelComponent implements OnInit {
 
-  frameworks = ['tensorflow', 'pytorch'];
-  datasets = {
-    tensorflow: ['dummy', 'ImageNet', 'TFRecordDataset', 'COCORecord', 'style_transfer'],
-    pytorch: ['dummy', 'ImageNet', 'ImageFolder', 'DatasetFolder', 'Bert'],
-  };
-  domains = ['image_recognition', 'NLP', 'object_detection', 'recommendation'];
-  ops = [];
-  transforms = {
-    tensorflow: ['Resize', 'CenterCrop', 'RandomResizedCrop', 'Normalize', 'RandomCrop', 'Compose', 'CropAndResize',
-      'RandomHorizontalFlip', 'RandomVerticalFlip', 'DecodeImage', 'EncodeJped', 'Transpose', 'CropToBoundingBox', 'ConvertImageDtype'],
-    pytorch: ['Resize', 'CenterCrop', 'RandomResizedCrop', 'Normalize', 'RandomCrop', 'Compose', 'RandomHorizontalFlip',
-      'RandomVerticalFlip', 'ToTensor', 'ToPILImage', 'Pad', 'ColorJitter'],
-  };
-  metrics = {};
-  dataLoaders = {};
-  dataLoaderParams = {};
-  transformations = {};
-  transformationParams = {};
+  frameworks = [];
+  domains = [];
+  metrics = [];
+  metricParam: string | boolean;
+  metricParams = [];
+  objectives = [];
+  approaches = [];
+  dataLoaders = [];
+  dataLoaderParams = [];
+  transformations = [];
+  transformationParams = [];
   tunings = [];
+  inputs = [];
   outputs = [];
+  frameworkVersion: string;
+  frameworkWarning: string;
 
   firstFormGroup: FormGroup;
   secondFormGroup: FormGroup;
@@ -73,62 +70,102 @@ export class ImportModelComponent implements OnInit {
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value && this.firstFormGroup.get('modelDomain').value) {
           this.getConfig();
-          this.socketService.getBoundaryNodes(this.getNewModel()).subscribe()
         }
       }
       );
 
-    this.socketService.boundaryNodesStart$
-      .subscribe(result => {
-        this.showSpinner = true;
+
+    this.firstFormGroup.get('modelLocation').valueChanges
+      .subscribe(response => {
+        if (this.firstFormGroup.get('modelLocation').value) {
+          this.showSpinner = true;
+          this.frameworkVersion = null;
+          this.frameworkWarning = null;
+          this.socketService.getBoundaryNodes(this.getNewModel()).subscribe()
+        }
       });
 
     this.socketService.boundaryNodesFinish$
       .subscribe(result => {
         this.showSpinner = false;
-        if (result['data'] && result['data']['inputs'] && result['data']['outputs']) {
-          this.firstFormGroup.get('input').setValue(result['data']['inputs']);
-          this.outputs = [result['data']['outputs']];
-          this.firstFormGroup.get('output').setValue(result['data']['outputs']);
+        if (result['data'] && this.firstFormGroup.get('modelLocation').value) {
+          if (result['status'] === 'error') {
+            this.frameworkWarning = result['data']['message'];
+          } else {
+            this.firstFormGroup.get('framework').setValue(result['data']['framework']);
+            this.getPossibleValues();
+            this.frameworkVersion = result['data']['framework_version'];
+            ['inputs', 'outputs'].forEach(param => {
+              if (result['data'][param]) {
+                if (result['data'][param].length > 1) {
+                  this[param] = result['data'][param];
+                } else {
+                  this[param] = result['data'][param];
+                  this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
+                }
+              }
+            });
+          }
         }
       });
   }
 
   getPossibleValues() {
+    this.modelService.getPossibleValues('framework', {})
+      .subscribe(
+        resp => this.frameworks = resp['framework'],
+        error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('metric', { framework: this.firstFormGroup.get('framework').value })
-      .subscribe(resp =>
-        this.metrics = resp['metric']);
+      .subscribe(
+        resp => this.metrics = resp['metric'],
+        error => this.openErrorDialog(error));
+    this.modelService.getPossibleValues('domain', { framework: this.firstFormGroup.get('framework').value })
+      .subscribe(
+        resp => this.domains = resp['domain'],
+        error => this.openErrorDialog(error));
+    this.modelService.getPossibleValues('objective', { framework: this.firstFormGroup.get('framework').value })
+      .subscribe(
+        resp => this.objectives = resp['objective'],
+        error => this.openErrorDialog(error));
+    this.modelService.getPossibleValues('quantization_approach', { framework: this.firstFormGroup.get('framework').value })
+      .subscribe(
+        resp => this.approaches = resp['quantization_approach'],
+        error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('dataloader', { framework: this.firstFormGroup.get('framework').value })
-      .subscribe(resp =>
-        this.dataLoaders = resp['dataloader']);
+      .subscribe(
+        resp => this.dataLoaders = resp['dataloader'],
+        error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value })
-      .subscribe(resp =>
-        this.transformations = resp['transform']);
+      .subscribe(
+        resp => this.transformations = resp['transform'],
+        error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('strategy', { framework: this.firstFormGroup.get('framework').value })
-      .subscribe(resp =>
-        this.tunings = resp['strategy']);
+      .subscribe(
+        resp => this.tunings = resp['strategy'],
+        error => this.openErrorDialog(error));
   }
 
   setDefaultMetricParam(event) {
-    if (this.metrics[event.value]) {
-      if (Array.isArray(this.metrics[event.value][Object.keys(this.metrics[event.value])[0]])) {
-        this.secondFormGroup.get('metricParam').setValue(this.metrics[event.value][Object.keys(this.metrics[event.value])[0]][0]);
-      } else {
-        this.secondFormGroup.get('metricParam').setValue(this.metrics[event.value][Object.keys(this.metrics[event.value])[0]]);
-      }
+    this.metricParams = this.metrics.find(x => x.name === event.value).params;
+    if (this.metricParams) {
+      this.metricParam = this.metricParams[0].value;
     }
   }
 
   setDefaultDataLoaderParam(event) {
-    if (this.dataLoaders[event.value]) {
-      this.dataLoaderParams = this.dataLoaders[event.value];
-    }
+    this.dataLoaderParams = this.dataLoaders.find(x => x.name === event.value).params;
   }
 
-  setDefaultTransformationParam(event) {
-    if (this.transformations[event.value]) {
-      this.transformationParams = this.transformations[event.value];
-    }
+  setDefaultTransformationParam(event, index) {
+    this.transformationParams[index]['params'] = this.transformations.find(x => x.name === event.value).params;
+  }
+
+  addNewTransformation(name?: string) {
+    this.transformationParams.push({ name: name ? name : '', params: {} });
+  }
+
+  removeTransformation(index: number) {
+    this.transformationParams.splice(index, 1);;
   }
 
   setDefaultValues() {
@@ -149,17 +186,21 @@ export class ImportModelComponent implements OnInit {
       transformParams: [''],
       samplingSize: [''],
       op: [''],
-      strategy: ['basic'],
+      strategy: [''],
       batchSize: [1],
       cores_per_instance: [''],
       num_of_instance: [''],
       inter_num_of_threads: [''],
       intra_num_of_threads: [''],
       kmp_blocktime: [''],
-      warmup: [''],
-      iteration: [''],
+      warmup: [],
+      iteration: [],
       metric: [''],
-      metricParam: [''],
+      objective: [''],
+      timeout: [0],
+      maxTrials: [100],
+      randomSeed: [],
+      approach: [],
     });
   }
 
@@ -169,25 +210,47 @@ export class ImportModelComponent implements OnInit {
       .subscribe(resp => {
         if (resp['config']) {
           this.firstFormGroup.get('framework').setValue(resp['framework']);
-          this.getPossibleValues();
-
           this.firstFormGroup.get('modelDomain').setValue(resp['domain']);
-          this.secondFormGroup.get('dataLoader').setValue(resp['config']['quantization'].calibration.dataloader.dataset);
-          this.secondFormGroup.get('transform').setValue(resp['config']['quantization'].calibration.dataloader.transform);
-          this.secondFormGroup.get('metric').setValue(Object.keys(resp['config']['evaluation'].accuracy.metric)[0]);
-          this.secondFormGroup.get('samplingSize').setValue(resp['config']['quantization'].calibration.sampling_size);
-          this.secondFormGroup.get('strategy').setValue(resp['config']['tuning'].strategy.name);
-          this.secondFormGroup.get('kmp_blocktime').setValue(resp['config']['evaluation'].performance.configs.kmp_blocktime);
-          this.secondFormGroup.get('warmup').setValue(resp['config']['evaluation'].performance.warmup);
-          this.secondFormGroup.get('iteration').setValue(resp['config']['evaluation'].performance.iteration);
-          this.secondFormGroup.get('batchSize').setValue(resp['config']['evaluation'].performance.dataloader.batch_size);
 
-          const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
-          const transform = Object.keys(resp['config']['quantization'].calibration.dataloader.transform)[0];
-          this.secondFormGroup.get('dataLoader').setValue(dataLoader);
-          this.secondFormGroup.get('transform').setValue(transform);
-          this.dataLoaderParams = resp['config']['quantization'].calibration.dataloader.dataset[dataLoader];
-          this.transformationParams = resp['config']['quantization'].calibration.dataloader.transform[transform];
+          if (resp['config']['quantization']) {
+            this.secondFormGroup.get('dataLoader').setValue(resp['config']['quantization'].calibration.dataloader.dataset);
+            this.secondFormGroup.get('transform').setValue(resp['config']['quantization'].calibration.dataloader.transform);
+            this.secondFormGroup.get('samplingSize').setValue(resp['config']['quantization'].calibration.sampling_size);
+            this.secondFormGroup.get('approach').setValue(resp['config']['quantization'].approach);
+            const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
+            const transformNames = Object.keys(resp['config']['quantization'].calibration.dataloader.transform);
+            this.secondFormGroup.get('dataLoader').setValue(dataLoader);
+            this.transformationParams = [];
+            transformNames.forEach((name, index) => {
+              this.addNewTransformation(name);
+              this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
+              if (Array.isArray(this.transformationParams[index]['params'])) {
+                this.transformationParams[index]['params'].forEach(param => {
+                  param.value = resp['config']['quantization'].calibration.dataloader.transform[name][param.name];
+                });
+              }
+            });
+            this.dataLoaderParams = this.dataLoaders.find(x => x.name === dataLoader).params;
+          }
+
+          if (resp['config']['evaluation']) {
+            this.secondFormGroup.get('metric').setValue(Object.keys(resp['config']['evaluation'].accuracy.metric)[0]);
+            this.metricParams = this.metrics.find(x => x.name === this.secondFormGroup.get('metric').value).params;
+            this.metricParam = this.metricParams[0].value;
+            if (Array.isArray(this.metricParams[0].value)) {
+              this.metricParam = this.metricParams[0].value[0];
+            }
+            this.secondFormGroup.get('kmp_blocktime').setValue(resp['config']['evaluation'].performance.configs.kmp_blocktime);
+            this.secondFormGroup.get('warmup').setValue(resp['config']['evaluation'].performance.warmup);
+            this.secondFormGroup.get('iteration').setValue(resp['config']['evaluation'].performance.iteration);
+            this.secondFormGroup.get('batchSize').setValue(resp['config']['evaluation'].performance.dataloader.batch_size);
+          }
+
+          if (resp['config']['tuning']) {
+            this.secondFormGroup.get('strategy').setValue(resp['config']['tuning'].strategy.name);
+            this.secondFormGroup.get('timeout').setValue(resp['config']['tuning'].exit_policy.timeout);
+            this.secondFormGroup.get('randomSeed').setValue(resp['config']['tuning'].random_seed);
+          }
 
           if (typeof resp['config']['model'].outputs === 'string') {
             this.outputs = [resp['config']['model'].outputs];
@@ -196,14 +259,21 @@ export class ImportModelComponent implements OnInit {
             this.outputs = resp['config']['model'].outputs;
           }
         }
-      });
+      },
+        error => {
+          this.openErrorDialog(error);
+        });
   }
 
   addModel() {
-    const newModel = this.getNewModel();
-    this.modelService.addModel(newModel);
+    const newModel = this.getFullModel();
     this.modelService.saveWorkload(this.getFullModel())
-      .subscribe();
+      .subscribe(
+        response => { },
+        error => {
+          this.openErrorDialog(error);
+        }
+      );
   }
 
   getNewModel(): NewModel {
@@ -220,29 +290,36 @@ export class ImportModelComponent implements OnInit {
 
   getFullModel(): FullModel {
     let model: FullModel;
+    if (this.dataLoaderParams && Object.keys(this.dataLoaderParams).includes('root')) {
+      this.dataLoaderParams['root'] = this.firstFormGroup.get('datasetLocation').value;
+    }
     model = {
       dataset_path: this.firstFormGroup.get('datasetLocation').value,
       domain: this.firstFormGroup.get('modelDomain').value,
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
       model_path: this.firstFormGroup.get('modelLocation').value,
+      inputs: this.firstFormGroup.get('input').value,
+      outputs: this.firstFormGroup.get('output').value,
       dataloader: {
         name: this.secondFormGroup.get('dataLoader').value,
-        params: this.dataLoaderParams,
+        params: this.dataLoaderParams ? this.getParams(this.dataLoaderParams) : null,
       },
-      transform: {
-        name: this.secondFormGroup.get('transform').value,
-        params: this.transformationParams,
-      },
+      transform: this.getTransformParams(this.transformationParams),
       quantization: {
         accuracy_goal: this.secondFormGroup.get('accuracyGoal').value,
         sampling_size: this.secondFormGroup.get('samplingSize').value,
         // op: this.secondFormGroup.get('op').value,
         strategy: this.secondFormGroup.get('strategy').value,
+        approach: this.secondFormGroup.get('approach').value,
+        objective: this.secondFormGroup.get('objective').value,
+        timeout: this.secondFormGroup.get('timeout').value,
+        max_trials: this.secondFormGroup.get('maxTrials').value,
+        random_seed: this.secondFormGroup.get('randomSeed').value
       },
       evaluation: {
         metric: this.secondFormGroup.get('metric').value,
-        metric_param: this.secondFormGroup.get('metricParam').value,
+        metric_param: this.metricParam,
         batch_size: this.secondFormGroup.get('batchSize').value,
         cores_per_instance: this.secondFormGroup.get('cores_per_instance').value,
         instances: this.secondFormGroup.get('num_of_instance').value,
@@ -254,6 +331,25 @@ export class ImportModelComponent implements OnInit {
       }
     }
     return model;
+  }
+
+  getParams(obj: any[]): {} {
+    let newObj = {};
+    obj.forEach(item => {
+      newObj[item['name']] = item['value'];
+    });
+    return newObj;
+  }
+
+  getTransformParams(obj: any[]): { name: string; params: {}; }[] {
+    let newObj = [];
+    obj.forEach(item => {
+      newObj.push({
+        name: item.name,
+        params: item.params ? this.getParams(item.params) : null
+      })
+    });
+    return newObj;
   }
 
   openDialog(fieldName: string, files: boolean, modelsOnly: boolean) {
@@ -274,12 +370,25 @@ export class ImportModelComponent implements OnInit {
     });;
   }
 
+  openErrorDialog(error) {
+    const dialogRef = this.dialog.open(ErrorComponent, {
+      data: error
+    });
+  }
+
   objectKeys(obj: {}): string[] {
     return Object.keys(obj);
   }
 
   typeOf(obj: any): string {
     return typeof obj;
+  }
+
+  isArray(obj: any): boolean {
+    if (Array.isArray(obj)) {
+      return true;
+    }
+    return false;
   }
 }
 
@@ -289,6 +398,8 @@ export interface FullModel {
   framework: string;
   id: string;
   model_path: string;
+  inputs: string[];
+  outputs: string[];
   dataloader: {
     name: string;
     params: {};
@@ -296,12 +407,17 @@ export interface FullModel {
   transform: {
     name: string;
     params: {};
-  }
+  }[]
   quantization: {
     accuracy_goal: number;
     sampling_size: number;
     op?: string[];
     strategy: string;
+    approach: string;
+    objective: string;
+    timeout: number;
+    max_trials: number;
+    random_seed: number;
   }
   evaluation: {
     metric: string;

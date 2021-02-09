@@ -16,16 +16,15 @@
 """Definition of executor."""
 
 import datetime
-import logging as log
 from threading import Lock, Thread
 from typing import Any, List, Optional, Union
 
+from lpot.ux.utils.logger import log
 from lpot.ux.utils.proc import Proc
 from lpot.ux.utils.processes import LPOTProcesses
 from lpot.ux.web.communication import MessageQueue
 
 LOCK = Lock()
-log.basicConfig(level=log.INFO)
 
 
 class Executor:
@@ -45,7 +44,7 @@ class Executor:
         :param args: arguments for parser execution
         """
         if data:
-            self._request_id = data.get("id", None)
+            self._request_id = str(data.get("id", ""))
         self._log_name = log_name
         self._workdir = workspace_path
         self._mq = MessageQueue()
@@ -89,7 +88,7 @@ class Executor:
         proc = None
 
         try:
-            log.info("Exec %s ", " ".join(map(str, args)))
+            log.debug("Exec %s ", " ".join(map(str, args)))
             proc = Proc(
                 self.workdir,
                 pid=pid,
@@ -129,7 +128,7 @@ class Executor:
             processes.append(proc)
         finally:
             LOCK.release()
-            log.info("DONE")
+            log.debug("DONE")
 
     def call(
         self,

@@ -15,17 +15,26 @@
 """Generic benchmark script."""
 
 import argparse
-import logging as log
 from typing import Any, Dict, List
 
-log.basicConfig(level=log.INFO)
+from lpot.ux.utils.logger import log
 
 
 def parse_args() -> Any:
     """Parse input arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--yaml", type=str, required=True, help="Path to yaml config.")
-    parser.add_argument("--model", type=str, required=False, help="Path to model.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Path to yaml config.",
+    )
+    parser.add_argument(
+        "--input-graph",
+        type=str,
+        required=False,
+        help="Path to model.",
+    )
     parser.add_argument(
         "--mode",
         type=str,
@@ -37,8 +46,8 @@ def parse_args() -> Any:
 
 
 def benchmark_model(
-    model_path: str,
-    config_path: str,
+    input_graph: str,
+    config: str,
     benchmark_mode: str,
     datatype: str = "",
 ) -> List[Dict[str, Any]]:
@@ -47,36 +56,37 @@ def benchmark_model(
 
     benchmark_results = []
 
-    evaluator = Benchmark(config_path)
-    results = evaluator(model=model_path)
+    evaluator = Benchmark(config)
+    results = evaluator(model=input_graph)
     for mode, result in results.items():
-        log.info(f"Mode: {mode}")
-        acc, batch_size, result_list = result
-        latency = (sum(result_list) / len(result_list)) / batch_size
-        log.info(f"Batch size: {batch_size}")
-        if mode == "accuracy":
-            log.info(f"Accuracy: {acc:.3f}")
-        elif mode == "performance":
-            log.info(f"Latency: {latency * 1000:.3f} ms")
-            log.info(f"Throughput: {1. / latency:.3f} images/sec")
+        if benchmark_mode == mode:
+            log.info(f"Mode: {mode}")
+            acc, batch_size, result_list = result
+            latency = (sum(result_list) / len(result_list)) / batch_size
+            log.info(f"Batch size: {batch_size}")
+            if mode == "accuracy":
+                log.info(f"Accuracy: {acc:.3f}")
+            elif mode == "performance":
+                log.info(f"Latency: {latency * 1000:.3f} ms")
+                log.info(f"Throughput: {1. / latency:.3f} images/sec")
 
-        benchmark_results.append(
-            {
-                "precision": datatype,
-                "mode": mode,
-                "batch_size": batch_size,
-                "accuracy": acc,
-                "latency": latency * 1000,
-                "throughput": 1.0 / latency,
-            },
-        )
+            benchmark_results.append(
+                {
+                    "precision": datatype,
+                    "mode": mode,
+                    "batch_size": batch_size,
+                    "accuracy": acc,
+                    "latency": latency * 1000,
+                    "throughput": 1.0 / latency,
+                },
+            )
     return benchmark_results
 
 
 if __name__ == "__main__":
     args = parse_args()
     benchmark_model(
-        model_path=args.model,
-        config_path=args.yaml,
+        input_graph=args.input_graph,
+        config=args.config,
         benchmark_mode=args.mode,
     )

@@ -1,49 +1,96 @@
 {
+    "__help__tensorflow": "help placeholder for tensorflow",
     "tensorflow": {
-        "Resize": {
-            "size": []
+        "__help__AlignImageChannel": "help placeholder for tensorflow AlignImageChannel",
+        "AlignImageChannel": null,
+        "__help__BilinearImagenet": "help placeholder for tensorflow BilinearImagenet",
+        "BilinearImagenet": {
+            "__help__height": "help placeholder for tensorflow BilinearImagenet height",
+            "height": 224,
+            "__help__width": "help placeholder for tensorflow BilinearImagenet width",
+            "width": 224
         },
+        "__help__CenterCrop": "help placeholder for tensorflow CenterCrop",
         "CenterCrop": {
-            "central_fraction": 0.0
+            "__help__central_fraction": "help placeholder for tensorflow CenterCrop central_fraction",
+            "central_fraction": 0
         },
-        "RandomResizedCrop": {
-            "size": []
-        },
-        "Normalize": {
-            "mean": [],
-            "std": []
-        },
-        "RandomCrop": {
-            "size": []
-        },
+        "__help__Compose": "help placeholder for tensorflow Compose",
         "Compose": null,
-        "CropAndResize": {
-            "boxes": [],
-            "box_indices": [],
-            "crop_size": []
-        },
-        "RandomHorizontalFlip": null,
-        "RandomVerticalFlip": null,
-        "DecodeImage": null,
-        "EncodeJpeg": null,
-        "Transpose": {
-            "perm": []
-        },
-        "CropToBoundingBox": {
-            "offset_height": 0,
-            "offset_width": 0,
-            "target_height": 0,
-            "target_width": 0
-        },
+        "__help__ConvertImageDtype": "help placeholder for tensorflow ConvertImageDtype",
         "ConvertImageDtype": {
+            "__help__dtype": "help placeholder for tensorflow ConvertImageDtype dtype",
             "dtype": "Dtype"
         },
-        "ParseDecodeImagenet": null,
-        "ResizeCropImagenet": {
-            "height": 0,
-            "width": 0,
-            "mean_value": []
+        "__help__CropAndResize": "help placeholder for tensorflow CropAndResize",
+        "CropAndResize": {
+            "__help__box_indices": "help placeholder for tensorflow CropAndResize box_indices",
+            "box_indices": [],
+            "__help__boxes": "help placeholder for tensorflow CropAndResize boxes",
+            "boxes": [],
+            "__help__crop_size": "help placeholder for tensorflow CropAndResize crop_size",
+            "crop_size": []
         },
-        "ParseDecodeCoco": null
+        "__help__CropToBoundingBox": "help placeholder for tensorflow CropToBoundingBox",
+        "CropToBoundingBox": {
+            "__help__offset_height": "help placeholder for tensorflow CropToBoundingBox offset_height",
+            "offset_height": 0,
+            "__help__offset_width": "help placeholder for tensorflow CropToBoundingBox offset_width",
+            "offset_width": 0,
+            "__help__target_height": "help placeholder for tensorflow CropToBoundingBox target_height",
+            "target_height": 0,
+            "__help__target_width": "help placeholder for tensorflow CropToBoundingBox target_width",
+            "target_width": 0
+        },
+        "__help__DecodeImage": "help placeholder for tensorflow DecodeImage",
+        "DecodeImage": null,
+        "__help__EncodeJpeg": "help placeholder for tensorflow EncodeJpeg",
+        "EncodeJpeg": null,
+        "__help__Normalize": "help placeholder for tensorflow Normalize",
+        "Normalize": {
+            "__help__mean": "help placeholder for tensorflow Normalize mean",
+            "mean": [],
+            "__help__std": "help placeholder for tensorflow Normalize std",
+            "std": []
+        },
+        "__help__ParseDecodeCoco": "help placeholder for tensorflow ParseDecodeCoco",
+        "ParseDecodeCoco": null,
+        "__help__ParseDecodeImagenet": "help placeholder for tensorflow ParseDecodeImagenet",
+        "ParseDecodeImagenet": null,
+        "__help__RandomCrop": "help placeholder for tensorflow RandomCrop",
+        "RandomCrop": {
+            "__help__size": "help placeholder for tensorflow RandomCrop size",
+            "size": []
+        },
+        "__help__RandomHorizontalFlip": "help placeholder for tensorflow RandomHorizontalFlip",
+        "RandomHorizontalFlip": null,
+        "__help__RandomResizedCrop": "help placeholder for tensorflow RandomResizedCrop",
+        "RandomResizedCrop": {
+            "__help__size": "help placeholder for tensorflow RandomResizedCrop size",
+            "size": []
+        },
+        "__help__RandomVerticalFlip": "help placeholder for tensorflow RandomVerticalFlip",
+        "RandomVerticalFlip": null,
+        "__help__Rescale": "help placeholder for tensorflow Rescale",
+        "Rescale": null,
+        "__help__Resize": "help placeholder for tensorflow Resize",
+        "Resize": {
+            "__help__size": "help placeholder for tensorflow Resize size",
+            "size": []
+        },
+        "__help__ResizeCropImagenet": "help placeholder for tensorflow ResizeCropImagenet",
+        "ResizeCropImagenet": {
+            "__help__height": "help placeholder for tensorflow ResizeCropImagenet height",
+            "height": 0,
+            "__help__mean_value": "help placeholder for tensorflow ResizeCropImagenet mean_value",
+            "mean_value": [],
+            "__help__width": "help placeholder for tensorflow ResizeCropImagenet width",
+            "width": 0
+        },
+        "__help__Transpose": "help placeholder for tensorflow Transpose",
+        "Transpose": {
+            "__help__perm": "help placeholder for tensorflow Transpose perm",
+            "perm": []
+        }
     }
 }

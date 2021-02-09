@@ -14,15 +14,12 @@
 # limitations under the License.
 """Benchmark class."""
 
-import logging as log
 import os
 from typing import Any, Dict, List
 
 from lpot.ux.components.benchmark.benchmark_model import benchmark_model
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.workload.workload import Workload
-
-log.basicConfig(level=log.INFO)
 
 
 class Benchmark:
@@ -63,9 +60,9 @@ class Benchmark:
         self.command = [
             "python",
             self.benchmark_script,
-            "--yaml",
+            "--config",
             self.config_path,
-            "--model",
+            "--input-graph",
             self.model_path,
             "--mode",
             self.mode,
@@ -74,8 +71,8 @@ class Benchmark:
     def execute(self) -> List[Dict[str, Any]]:
         """Execute benchmark and collect results."""
         return benchmark_model(
-            model_path=self.model_path,
-            config_path=self.config_path,
+            input_graph=self.model_path,
+            config=self.config_path,
             benchmark_mode=self.mode,
             datatype=self.datatype,
         )

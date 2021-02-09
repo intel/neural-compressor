@@ -18,20 +18,19 @@ import os
 from typing import Any, Dict
 
 from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.templates.workdir import Workdir
 
 
 def get_default_path(data: Dict[str, Any]) -> Dict[str, Any]:
     """Get paths repository or workspace."""
-    env_name = data.get("name", None)
-    if not env_name:
-        raise ClientErrorException("Could not find proper env.")
+    workdir = Workdir()
+    path = os.environ["HOME"]
+    if os.path.isfile(workdir.workloads_json):
+        path = workdir.get_active_workspace()
+    else:
+        workdir.set_active_workspace(path)
 
-    map_param_to_env = {
-        "lpot_repository": "LPOT_REPOSITORY_PATH",
-        "workspace": "HOME",
-    }
-
-    return {"path": os.environ[map_param_to_env[env_name]]}
+    return {"path": path}
 
 
 def set_workspace(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -39,8 +38,20 @@ def set_workspace(data: Dict[str, Any]) -> Dict[str, Any]:
     workspace_path = data.get("path", None)
 
     if not workspace_path:
-        raise ClientErrorException("Parameter 'path' is missing.")
+        raise ClientErrorException("Parameter 'path' is missing in request.")
 
     os.makedirs(workspace_path, exist_ok=True)
+    workdir = Workdir()
+    workdir.set_active_workspace(workspace_path)
 
     return {"message": "SUCCESS"}
+
+
+def get_workloads_list(data: dict) -> Dict[str, Any]:
+    """Return workloads list."""
+    workspace_path = os.environ["HOME"]
+    if data.get("workspace_path"):
+        workspace_path = os.environ["HOME"]
+    workdir = Workdir(workspace_path=workspace_path)
+
+    return workdir.map_to_response()

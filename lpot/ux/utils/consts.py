@@ -18,5 +18,5 @@
 github_info = {
     "user": "intel",
     "repository": "lpot",
-    "tag": "v1.1",  # TODO: Switch to v1.2 before release
+    "tag": "v1.2",
 }

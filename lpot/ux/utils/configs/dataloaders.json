@@ -1,61 +1,100 @@
 {
+    "__help__mxnet": "help placeholder for mxnet",
     "mxnet": {
+        "__help__dummy": "help placeholder for mxnet dummy",
         "dummy": {
+            "__help__shape": "help placeholder for mxnet dummy shape",
             "shape": []
         },
+        "__help__ImageFolderDataset": "help placeholder for mxnet ImageFolderDataset",
         "ImageFolderDataset": {
+            "__help__root": "help placeholder for mxnet ImageFolderDataset root",
             "root": ""
         },
+        "__help__ImageRecordDataset": "help placeholder for mxnet ImageRecordDataset",
         "ImageRecordDataset": {
+            "__help__root": "help placeholder for mxnet ImageRecordDataset root",
             "root": ""
         }
     },
+    "__help__onnxrt": "help placeholder for onnxrt",
     "onnxrt": {
+        "__help__dummy": "help placeholder for onnxrt dummy",
         "dummy": {
+            "__help__shape": "help placeholder for onnxrt dummy shape",
             "shape": []
         },
+        "__help__Imagenet": "help placeholder for onnxrt Imagenet",
         "Imagenet": {
+            "__help__root": "help placeholder for onnxrt Imagenet root",
             "root": ""
         }
     },
+    "__help__pytorch": "help placeholder for pytorch",
     "pytorch": {
+        "__help__Bert": "help placeholder for pytorch Bert",
         "Bert": {
+            "__help__dataset": "help placeholder for pytorch Bert dataset",
             "dataset": [],
+            "__help__task": "help placeholder for pytorch Bert task",
             "task": [
                 "classifier",
                 "squad"
             ]
         },
+        "__help__DatasetFolder": "help placeholder for pytorch DatasetFolder",
         "DatasetFolder": {
+            "__help__root": "help placeholder for pytorch DatasetFolder root",
             "root": ""
         },
+        "__help__dummy": "help placeholder for pytorch dummy",
         "dummy": {
+            "__help__shape": "help placeholder for pytorch dummy shape",
             "shape": []
         },
+        "__help__ImageFolder": "help placeholder for pytorch ImageFolder",
         "ImageFolder": {
+            "__help__root": "help placeholder for pytorch ImageFolder root",
             "root": ""
         },
+        "__help__ImageNet": "help placeholder for pytorch ImageNet",
         "ImageNet": {
+            "__help__root": "help placeholder for pytorch ImageNet root",
             "root": ""
         }
     },
+    "__help__tensorflow": "help placeholder for tensorflow",
     "tensorflow": {
+        "__help__COCORecord": "help placeholder for tensorflow COCORecord",
         "COCORecord": {
+            "__help__root": "help placeholder for tensorflow COCORecord root",
             "root": ""
         },
+        "__help__dummy": "help placeholder for tensorflow dummy",
         "dummy": {
+            "__help__shape": "help placeholder for tensorflow dummy shape",
             "shape": []
         },
+        "__help__ImageRecord": "help placeholder for tensorflow ImageRecord",
         "ImageRecord": {
+            "__help__root": "help placeholder for tensorflow ImageRecord root",
             "root": "",
+            "__help__subset": "help placeholder for tensorflow ImageRecord subset",
             "subset": ""
         },
+        "__help__style_transfer": "help placeholder for tensorflow style_transfer",
         "style_transfer": {
+            "__help__content_path": "help placeholder for tensorflow style_transfer content_path",
             "content_path": "",
+            "__help__style_path": "help placeholder for tensorflow style_transfer style_path",
             "style_path": ""
         },
+        "__help__TFRecordDataset": "help placeholder for tensorflow TFRecordDataset",
         "TFRecordDataset": {
+            "__help__filenames": "help placeholder for tensorflow TFRecordDataset filenames",
             "filenames": ""
-        }
+        },
+        "__help__custom": "Create your own dataloader. After you choose this option code template will be generated on the server",
+        "custom": ""
     }
 }

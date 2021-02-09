@@ -1,0 +1,19 @@
+from tensorflow import keras
+
+# Define a customized Metric function
+import lpot
+from lpot.metric import Metric
+
+
+class MyMetric(Metric):
+    def __init__(self, *args):
+        pass
+
+    def update(self, predict, label):
+        pass
+
+    def reset(self):
+        pass
+
+    def result(self):
+        pass

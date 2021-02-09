@@ -16,31 +16,24 @@
 
 import os
 
-from lpot.ux.utils.utils import load_model_config
 from lpot.ux.utils.workload.workload import Workload
 
 
 class Tuning:
     """Tuning class."""
 
-    def __init__(self, workload: Workload) -> None:
+    def __init__(self, workload: Workload, workload_path: str) -> None:
         """Initialize configuration Dataset class."""
         model_output_name = workload.model_name + "_int8.pb"
         self.model_output_path = os.path.join(
-            workload.workspace_path,
+            workload_path,
             model_output_name,
         )
         self.model_path = workload.model_path
         self.config_path = workload.config_path
 
-        model_config = load_model_config()
-        script_path = (
-            model_config.get(workload.framework, None)
-            .get(workload.domain, None)
-            .get(workload.model_name, None)
-            .get("script_path", None)
-        )
-        self.script_path = os.path.join(os.environ["LPOT_REPOSITORY_PATH"], script_path)
+        self.script_path = os.path.join(os.path.dirname(__file__), "tune_model.py")
+
         self.command = [
             "python",
             self.script_path,
@@ -50,5 +43,4 @@ class Tuning:
             self.model_output_path,
             "--config",
             self.config_path,
-            "--tune",
         ]

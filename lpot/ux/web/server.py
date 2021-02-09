@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Main endpoint for GUI."""
+import os
 from threading import Thread
 from typing import Any
 
@@ -38,6 +39,9 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 router = Router()
 
 METHODS = ["GET", "POST"]
+
+# Suppress TensorFlow messages
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
 def run_server(addr: str, port: int) -> None:

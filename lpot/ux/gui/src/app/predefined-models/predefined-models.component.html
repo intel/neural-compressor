@@ -1,39 +1,57 @@
-<h4>Predefined model list</h4>
-
-<table>
+<h1>Predefined model list</h1>
+<p>You can add predefined model to <a href="/my-models">My models</a> list only if you get config and model files and
+  set the dataset location.</p>
+<mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+  [style.display]="showSpinner ? 'block' : 'none'">
+</mat-spinner>
+<table *ngIf="modelList[0]">
   <tr>
     <td class="header">framework</td>
+    <td class="header">domain</td>
     <td class="header">model</td>
-    <td class="header">workspace folder</td>
-      <ng-container *ngFor="let key of objectKeys(modelList['tensorflow']['resnet50v1.0'])">
-    <td class="header" *ngIf="key !== 'input_model'">
-      {{ key | modelList }}
-    </td>
-    </ng-container>
-    <td class="header">precision</td>
-    <td class="header">
-      </td>
+    <td class="header">yaml</td>
+    <td class="header">model <br> location</td>
+    <td class="header">dataset location</td>
+    <td class="header"></td>
   </tr>
-  <tr *ngFor="let model of objectKeys(modelList['tensorflow'])">
-    <td class="cell">tensorflow</td>
-    <td class="cell">{{ model }}</td>
-    <td class="cell">
-      <input matInput placeholder="set location">
+  <tr *ngFor="let model of modelList; let index = index">
+    <td class="cell">{{ model['framework'] }}</td>
+    <td class="cell">{{ model['domain'] }}</td>
+    <td class="cell">{{ model['model'] }}</td>
+    <td class="cell" align="center">
+      <p *ngIf="model['yaml']" class="form-field">
+        {{ getFileNameFromPath(model['yaml']) }}
+      </p>
+      <button *ngIf="!model['yaml'] && !showSpinnerConfig[index]" mat-icon-button color="primary"
+        (click)="downloadConfig(model, index)" matTooltip="Download config .yaml file">
+        <img src="./../../assets/160b-download-outlined-blue.svg">
+      </button>
+      <mat-spinner *ngIf="showSpinnerConfig[index]" [diameter]="25"></mat-spinner>
     </td>
-    <ng-container *ngFor="let key of objectKeys(modelList['tensorflow'][model])">
-      <td class="cell" *ngIf="key !== 'input_model' && key !== 'yaml' && key !== 'dataset_location'">
-        {{ modelList['tensorflow'][model][key] }}
-      </td>
-      <td class="cell" *ngIf="key === 'yaml'">
-        <a href="">
-          {{ modelList['tensorflow'][model][key] | modelList }}
-        </a>
-      </td>
-      <td class="cell" *ngIf="key === 'dataset_location'">
-        <input matInput placeholder="set location">
-      </td>
-    </ng-container>
-    <td class="cell">float32</td>
-    <td class="cell"><button mat-flat-button color="accent">&#65291; Add to my models</button></td>
+    <td class="cell" align="center">
+      <p *ngIf="model['model_path']" class="form-field">
+        {{ getFileNameFromPath(model['model_path']) }}
+      </p>
+      <button *ngIf="!model['model_path'] && !showSpinnerModel[index]" mat-icon-button color="primary"
+        (click)="downloadModel(model, index)" matTooltip="Download the model">
+        <img src="./../../assets/160b-download-outlined-blue.svg">
+      </button>
+      <mat-spinner *ngIf="showSpinnerModel[index]" [diameter]="25"></mat-spinner>
+    </td>
+    <td class="cell">
+      <mat-form-field class="form-field">
+        <input matInput class="input" placeholder="set location" [(ngModel)]="model['dataset_path']">
+      </mat-form-field>
+      <button mat-raised-button color="primary" class="browse" (click)="openDialog(false, false, index)">
+        <img src="./../../assets/050a-folder-solid-white.svg">
+        Choose folder
+      </button>
+    </td>
+    <td class="cell" [ngClass]="model['added'] ? 'success' : null">
+      <button *ngIf="!model['added']" mat-flat-button color="accent" [disabled]="!isModelFilled(model)"
+        (click)="saveWorkload(model)">&#65291;
+        Add to my models</button>
+      <p *ngIf="model['added']">Model successfully added.</p>
+    </td>
   </tr>
 </table>

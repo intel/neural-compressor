@@ -14,20 +14,18 @@
 # limitations under the License.
 """Download model from Model Zoo."""
 
-import logging as log
 import os
 import tarfile
 import zipfile
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 
 from lpot.ux.utils.consts import github_info
 from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import load_model_config
 from lpot.ux.web.communication import MessageQueue
-
-log.basicConfig(level=log.INFO)
 
 
 class Downloader:
@@ -35,7 +33,7 @@ class Downloader:
 
     def __init__(self, data: Dict[str, Any]) -> None:
         """Initialize Downloader class."""
-        self.request_id: Optional[str] = data.get("id", None)
+        self.request_id: str = str(data.get("id", ""))
         self.framework: str = data.get("framework", "")
         self.domain: str = data.get("domain", "")
         self.model: str = data.get("model", "")
@@ -84,32 +82,29 @@ class Downloader:
 
     def download_yaml_config(self, model_info: Dict[str, Any]) -> None:
         """Download config from GitHub for specified model."""
-        user = github_info.get("user")
-        repository = github_info.get("repository")
-        tag = github_info.get("tag")
         yaml_relative_location = model_info.get("yaml", "")
-
-        if not (user, repository, tag, yaml_relative_location):
-            message = "Missing github repository information or yaml relative location."
+        if not yaml_relative_location:
+            message = "Missing yaml location."
             self.mq.post_error(
                 "download_finish",
                 {"message": message, "code": 404, "id": self.request_id},
             )
             raise ClientErrorException(message)
-        url_prefix = f"https://raw.githubusercontent.com/{user}/{repository}/{tag}/"
-        url = os.path.join(
-            url_prefix,
-            "examples",
-            self.framework,
-            self.domain,
+
+        url, headers = self.get_yaml_url(
             yaml_relative_location,
+            mode=os.environ.get("LPOT_MODE"),
         )
 
         download_path = os.path.join(
             self.download_dir,
             os.path.basename(yaml_relative_location),
         )
-        self.download_file(url, download_path)
+        self.download_file(
+            url=url,
+            headers=headers,
+            download_path=download_path,
+        )
 
     def download_model(self) -> None:
         """Find model resource and initialize downloading."""
@@ -161,17 +156,25 @@ class Downloader:
         if is_archived:
             download_path = os.path.join(self.download_dir, url.split("/")[-1])
 
-        self.download_file(url, download_path)
+        self.download_file(
+            url=url,
+            download_path=download_path,
+        )
 
         if is_archived:
             self.unpack_archive(download_path, filename)
 
-    def download_file(self, url: str, download_path: str) -> None:
+    def download_file(
+        self,
+        url: str,
+        download_path: str,
+        headers: Optional[dict] = {},
+    ) -> None:
         """Download specified file."""
         os.makedirs(os.path.dirname(download_path), exist_ok=True)
         with open(download_path, "wb") as f:
-            log.info(f"Download file from {url} to {download_path}")
-            r = requests.get(url, allow_redirects=True, stream=True)
+            log.debug(f"Download file from {url} to {download_path}")
+            r = requests.get(url, allow_redirects=True, stream=True, headers=headers)
             total_length = r.headers.get("content-length")
             self.mq.post_success(
                 "download_start",
@@ -203,12 +206,16 @@ class Downloader:
                                 "progress": f"{downloaded}/{total_size}",
                             },
                         )
-                        log.info(f"Download progress: {progress}%")
+                        log.debug(f"Download progress: {progress}%")
                         last_progress = progress
 
         self.mq.post_success(
             "download_finish",
-            {"id": self.request_id, "progress": f"{downloaded}/{total_size}"},
+            {
+                "id": self.request_id,
+                "progress": f"{downloaded}/{total_size}",
+                "path": download_path,
+            },
         )
 
     def unpack_archive(self, archive_path: str, filename: str) -> None:
@@ -219,7 +226,7 @@ class Downloader:
                 "id": self.request_id,
             },
         )
-        log.info(f"Unpacking {archive_path}")
+        log.debug(f"Unpacking {archive_path}")
 
         if zipfile.is_zipfile(archive_path):
             z = zipfile.ZipFile(archive_path)
@@ -245,4 +252,50 @@ class Downloader:
             "unpack_finish",
             {"id": self.request_id, "path": unpacked_path},
         )
-        log.info(f"Model file has been extracted to {unpacked_path}")
+        log.debug(f"Model file has been extracted to {unpacked_path}")
+
+    def get_yaml_url(
+        self,
+        yaml_relative_location: str,
+        mode: Optional[str] = None,
+    ) -> Tuple[str, dict]:
+        """Get url for yaml config download."""
+        log.debug(f"Mode: {mode}")
+        if mode and mode == "development":
+            from urllib.parse import quote_plus
+
+            file_path = quote_plus(
+                os.path.join(
+                    "examples",
+                    self.framework,
+                    self.domain,
+                    yaml_relative_location,
+                ),
+            )
+            url = os.path.join(
+                os.environ["LPOT_PROJECT_URL"],
+                file_path,
+                "raw?ref=developer",
+            )
+            headers = {"Private-Token": os.environ.get("LPOT_TOKEN")}
+            return url, headers
+        user = github_info.get("user")
+        repository = github_info.get("repository")
+        tag = github_info.get("tag")
+
+        if not (user, repository, tag):
+            message = "Missing github repository information."
+            self.mq.post_error(
+                "download_finish",
+                {"message": message, "code": 500, "id": self.request_id},
+            )
+            raise ClientErrorException(message)
+        url_prefix = f"https://raw.githubusercontent.com/{user}/{repository}/{tag}/"
+        url = os.path.join(
+            url_prefix,
+            "examples",
+            self.framework,
+            self.domain,
+            yaml_relative_location,
+        )
+        return url, {}

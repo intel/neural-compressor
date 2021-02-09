@@ -1,8 +1,8 @@
-<h2>Create low precision model</h2>
+<h1>Create low precision model</h1>
 
 <mat-horizontal-stepper #stepper>
   <mat-step [stepControl]="firstFormGroup">
-    <h4>Required</h4>
+    <h2>Model</h2>
     <form [formGroup]="firstFormGroup">
       <mat-card>
         <ng-template matStepLabel>Basic parameters</ng-template>
@@ -12,32 +12,54 @@
           <input required formControlName="modelLocation" matInput>
         </mat-form-field>
         <button mat-raised-button color="primary" class="browse" (click)="openDialog('modelLocation', true, true)">
-          Choose file</button>
+          <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
+          Choose file
+        </button>
         <br>
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>model domain</mat-label>
           <mat-select formControlName="modelDomain" required>
-            <mat-option *ngFor="let domain of domains" [value]="domain">
-              <ng-container *ngIf="domain === 'NLP'">{{ domain }}</ng-container>
-              <ng-container *ngIf="domain !== 'NLP'">{{ domain | modelList | titlecase }}</ng-container>
+            <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
+              [matTooltip]="domain.help">
+              <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
+              <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}</ng-container>
             </mat-option>
           </mat-select>
         </mat-form-field>
         <br>
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>framework</mat-label>
-          <input formControlName="framework" matInput>
-        </mat-form-field>
-        <br>
+        <div class="spinner-wrapper">
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>framework</mat-label>
+            <mat-select formControlName="framework" required>
+              <mat-option *ngFor="let framework of frameworks" [value]="framework.name" matTooltipPosition="right"
+                [matTooltip]="framework.help">
+                {{ framework.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <a *ngIf="frameworkVersion" class="version">
+            version: {{ frameworkVersion }}
+          </a>
+          <a *ngIf="frameworkWarning" class="warning">
+            <img class="warning-icon" src="./../../assets/006a-alert-solid-red.svg">
+            {{ frameworkWarning }}
+          </a>
+          <mat-spinner class="spinner" *ngIf="showSpinner" [diameter]="25"></mat-spinner>
+        </div>
 
         <div class="spinner-wrapper">
           <mat-form-field class="form-field" appearance="fill">
-            <mat-label>input </mat-label>
-            <input formControlName="input" matInput>
+            <mat-label>input</mat-label>
+            <mat-select formControlName="input" multiple required>
+              <mat-option *ngFor="let input of inputs" [value]="input">
+                {{ input }}
+              </mat-option>
+            </mat-select>
           </mat-form-field>
           <mat-form-field class="form-field" appearance="fill">
             <mat-label>output</mat-label>
-            <mat-select formControlName="output">
+            <mat-select formControlName="output" multiple required>
               <mat-option *ngFor="let output of outputs" [value]="output">
                 {{ output }}
               </mat-option>
@@ -46,20 +68,135 @@
           <mat-spinner class="spinner" *ngIf="showSpinner" [diameter]="25"></mat-spinner>
         </div>
 
+      </mat-card>
+      <h2>Data loader</h2>
+      <mat-card>
+
         <mat-form-field class="form-field long" appearance="fill">
           <mat-label>dataset location</mat-label>
-          <input formControlName="datasetLocation" matInput>
+          <input formControlName="datasetLocation" matInput required>
         </mat-form-field>
         <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasetLocation', false, false)">
-          Choose folder</button>
+          <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+          Choose folder
+        </button>
         <br>
-        <a *ngIf="this.secondFormGroup.get('samplingSize').value" class="info">
-          Default calibration sample size: 100
-        </a>
+        <span class="inline">
+          <form [formGroup]="secondFormGroup">
+            <mat-form-field class="form-field" appearance="fill">
+              <mat-label>provided data loader</mat-label>
+              <mat-select formControlName="dataLoader" (selectionChange)="setDefaultDataLoaderParam($event)">
+                <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
+                  [matTooltip]="dataLoader.help">
+                  {{ dataLoader.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <a *ngIf="secondFormGroup.get('dataLoader').value === 'custom'" class="custom">
+              Fill the code template before tuning
+            </a>
+          </form>
+        </span>
+        <span class="inline">
+          <ng-container *ngFor="let param of dataLoaderParams">
+            <ng-container *ngIf="param.name !== 'root'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                  matTooltipPosition="right" [matTooltip]="param.help">
+              </mat-form-field>
+            </ng-container>
+          </ng-container>
+        </span>
+        <ng-container *ngFor="let transformItem of transformationParams; let index = index">
+          <br>
+          <span class="inline">
+            <form [formGroup]="secondFormGroup">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>transform {{ index }}</mat-label>
+                <mat-select [(ngModel)]="transformItem['name']" [ngModelOptions]="{standalone: true}"
+                  (selectionChange)="setDefaultTransformationParam($event, index)">
+                  <mat-option *ngFor="let transformation of transformations" [value]="transformation.name"
+                    matTooltipPosition="right" [matTooltip]="transformation.help">
+                    {{ transformation.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </form>
+          </span>
+          <span class="inline">
+            <ng-container *ngIf="isArray(transformItem['params'])">
+              <ng-container *ngFor="let param of transformItem['params']">
+                <mat-form-field class="form-field" appearance="fill">
+                  <mat-label>{{ param.name }}</mat-label>
+                  <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                    matTooltipPosition="right" [matTooltip]="param.help">
+                </mat-form-field>
+              </ng-container>
+            </ng-container>
+          </span>
+          <button mat-icon-button color="warn" class="browse" (click)="removeTransformation(index)"
+            matTooltip="Remove this transformation">
+            &#x2573;
+          </button>
+        </ng-container>
+        <button mat-raised-button color="primary" class="browse" (click)="addNewTransformation()">
+          &#65291; Add new transformation
+        </button>
+        <br>
+        <form [formGroup]="secondFormGroup">
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>batch size</mat-label>
+            <input formControlName="batchSize" matInput value="1">
+          </mat-form-field>
+        </form>
       </mat-card>
+      <h2>Metric</h2>
+      <form [formGroup]="secondFormGroup">
+        <mat-card>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>metric</mat-label>
+            <mat-select formControlName="metric" (selectionChange)="setDefaultMetricParam($event)">
+              <mat-option *ngFor="let metric of metrics" [value]="metric.name" matTooltipPosition="right"
+                [matTooltip]="metric.help">
+                {{ metric.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <a *ngIf="secondFormGroup.get('metric').value === 'custom'" class="custom">
+            Fill the code template before tuning
+          </a>
+          <ng-container *ngFor="let param of metricParams">
+            <ng-container *ngIf="isArray(param.value)">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
+                  <mat-option *ngFor="let option of param.value" [value]="option">{{ option }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="typeOf(param.value) === 'boolean'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
+                  <mat-option [value]="true">yes</mat-option>
+                  <mat-option [value]="false">no</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="typeOf(param.value) === 'string'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <input [(ngModel)]="metricParam" matInput [ngModelOptions]="{standalone: true}"
+                  matTooltipPosition="right" [matTooltip]="param.help">
+              </mat-form-field>
+            </ng-container>
+          </ng-container>
+        </mat-card>
+      </form>
       <br>
       <div>
-        <button mat-raised-button routerLink="/my-models">Cancel</button>
+        <button mat-raised-button color="warn" routerLink="/my-models">Cancel</button>
         <button mat-raised-button matStepperNext>Next</button>
         <button mat-raised-button color="accent" [disabled]="this.firstFormGroup.status === 'INVALID'"
           routerLink="/my-models" (click)="addModel()">Finish</button>
@@ -68,57 +205,66 @@
   </mat-step>
 
   <mat-step [stepControl]="secondFormGroup" label="Advanced parameters">
-    <h4>Dataset</h4>
-    <mat-card>
-      <span class="inline">
-        <form [formGroup]="secondFormGroup">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>provided data loader</mat-label>
-            <mat-select formControlName="dataLoader" (selectionChange)="setDefaultDataLoaderParam($event)">
-              <mat-option *ngFor="let dataLoader of dataLoaders | keyvalue" [value]="dataLoader.key">
-                {{ dataLoader.key }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </form>
-      </span>
-      <span class="inline">
-        <ng-container *ngFor="let param of dataLoaderParams | keyvalue; let index = index">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>{{ param.key }}</mat-label>
-            <input [(ngModel)]="param.value" matInput>
-          </mat-form-field>
-        </ng-container>
-      </span>
-      <br>
-      <span class="inline">
-        <form [formGroup]="secondFormGroup">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>transform</mat-label>
-            <mat-select formControlName="transform" (selectionChange)="setDefaultTransformationParam($event)">
-              <mat-option *ngFor="let transformation of transformations | keyvalue" [value]="transformation.key">
-                {{ transformation.key }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </form>
-      </span>
-      <span class="inline">
-        <ng-container *ngFor="let param of transformationParams | keyvalue; let index = index">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>{{ param.key }}</mat-label>
-            <input [(ngModel)]="param.value" matInput>
-          </mat-form-field>
-        </ng-container>
-      </span>
-    </mat-card>
 
-    <h4>Quantization</h4>
+    <h2>Tune</h2>
     <mat-card>
       <form [formGroup]="secondFormGroup">
+
+        <mat-form-field class="form-field" appearance="fill">
+          <mat-label>tuning strategy</mat-label>
+          <mat-select formControlName="strategy">
+            <mat-option *ngFor="let tuning of tunings" [value]="tuning.name" matTooltipPosition="right"
+              [matTooltip]="tuning.help">
+              {{ tuning.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>accuracy goal</mat-label>
-          <input formControlName="accuracyGoal" matInput>
+          <input type="number" formControlName="accuracyGoal" matInput>
+        </mat-form-field>
+
+        <mat-form-field class="form-field" appearance="fill">
+          <mat-label>objective</mat-label>
+          <mat-select formControlName="objective">
+            <mat-option *ngFor="let objective of objectives" [value]="objective.name" matTooltipPosition="right"
+              [matTooltip]="objective.help">
+              {{ objective.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <br>
+        <mat-form-field class="form-field" appearance="fill">
+          <mat-label>timeout</mat-label>
+          <input type="number" formControlName="timeout" matInput>
+        </mat-form-field>
+
+        <mat-form-field class="form-field" appearance="fill">
+          <mat-label>max trials</mat-label>
+          <input type="number" formControlName="maxTrials" matInput>
+        </mat-form-field>
+
+        <mat-form-field class="form-field" appearance="fill">
+          <mat-label>random seed</mat-label>
+          <input type="number" formControlName="randomSeed" matInput>
+        </mat-form-field>
+
+      </form>
+    </mat-card>
+
+    <h2>Quantization</h2>
+    <mat-card>
+      <form [formGroup]="secondFormGroup">
+
+        <mat-form-field class="form-field" appearance="fill">
+          <mat-label>approach</mat-label>
+          <mat-select formControlName="approach">
+            <mat-option *ngFor="let approach of approaches" [value]="approach.name" matTooltipPosition="right"
+              [matTooltip]="approach.help">
+              {{ approach.name }}
+            </mat-option>
+          </mat-select>
         </mat-form-field>
 
         <mat-form-field class="form-field" appearance="fill">
@@ -126,77 +272,12 @@
           <input formControlName="samplingSize" matInput placeholder="100">
         </mat-form-field>
 
-        <!-- <mat-form-field class="form-field" appearance="fill">
-          <mat-label>op</mat-label>
-          <mat-select formControlName="op" multiple>
-            <mat-option *ngFor="let op of ops" [value]="op">
-              {{ op }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field> -->
-
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>tuning strategy</mat-label>
-          <mat-select formControlName="strategy">
-            <mat-option *ngFor="let tuning of tunings" [value]="tunings[0]">
-              {{ tuning }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
       </form>
     </mat-card>
 
-    <h4>Evaluation</h4>
+    <h2>Evaluation</h2>
     <form [formGroup]="secondFormGroup">
       <mat-card>
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>metric</mat-label>
-          <mat-select formControlName="metric" (selectionChange)="setDefaultMetricParam($event)">
-            <mat-option *ngFor="let metric of metrics | keyvalue" [value]="metric.key">
-              {{ metric.key }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <ng-container
-          *ngIf="metrics[this.secondFormGroup.get('metric').value] && ['string'].includes(typeOf(metrics[this.secondFormGroup.get('metric').value][objectKeys(metrics[this.secondFormGroup.get('metric').value])[0]]))">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>{{ objectKeys(metrics[this.secondFormGroup.get('metric').value])[0] }}</mat-label>
-            <input formControlName="metricParam" matInput
-              [value]="metrics[this.secondFormGroup.get('metric').value][objectKeys(metrics[this.secondFormGroup.get('metric').value])[0]]">
-          </mat-form-field>
-        </ng-container>
-        <ng-container
-          *ngIf="metrics[this.secondFormGroup.get('metric').value] && ['boolean'].includes(typeOf(metrics[this.secondFormGroup.get('metric').value][objectKeys(metrics[this.secondFormGroup.get('metric').value])[0]]))">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>{{ objectKeys(metrics[this.secondFormGroup.get('metric').value])[0] }}</mat-label>
-            <mat-select formControlName="metricParam">
-              <mat-option [value]="true">
-                yes
-              </mat-option>
-              <mat-option [value]="false">
-                no
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </ng-container>
-        <ng-container
-          *ngIf="metrics[this.secondFormGroup.get('metric').value] && metrics[this.secondFormGroup.get('metric').value][objectKeys(metrics[this.secondFormGroup.get('metric').value])[0]][0]">
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>{{ objectKeys(metrics[this.secondFormGroup.get('metric').value])[0] }}</mat-label>
-            <mat-select formControlName="metricParam">
-              <mat-option
-                *ngFor="let metric of metrics[this.secondFormGroup.get('metric').value][objectKeys(metrics[this.secondFormGroup.get('metric').value])[0]]"
-                [value]="metric">
-                {{ metric }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </ng-container>
-        <br>
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>batch size</mat-label>
-          <input formControlName="batchSize" matInput value="1">
-        </mat-form-field>
         <!-- <mat-form-field class="form-field" appearance="fill">
         <mat-label>cores per instance</mat-label>
         <input formControlName="cores_per_instance" matInput value="4">
@@ -219,16 +300,16 @@
       </mat-form-field> -->
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>warmup</mat-label>
-          <input formControlName="warmup" matInput>
+          <input type="number" formControlName="warmup" matInput>
         </mat-form-field>
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>iteration</mat-label>
-          <input formControlName="iteration" matInput>
+          <input type="number" formControlName="iteration" matInput>
         </mat-form-field>
       </mat-card>
       <br>
       <div>
-        <button mat-raised-button routerLink="/my-models">Cancel</button>
+        <button mat-raised-button color="warn" routerLink="/my-models">Cancel</button>
         <button mat-raised-button matStepperPrevious>Back</button>
         <button mat-raised-button color="accent" [disabled]="this.firstFormGroup.status === 'INVALID'"
           routerLink="/my-models" (click)="addModel()">Finish</button>

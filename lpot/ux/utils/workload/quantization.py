@@ -14,7 +14,7 @@
 # limitations under the License.
 """Configuration quantization module."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.workload.dataloader import Dataloader
@@ -26,7 +26,7 @@ class Calibration(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}) -> None:
         """Initialize Configuration Calibration class."""
         super().__init__()
-        self.sampling_size: List[int] = data.get("sampling_size", None)
+        self.sampling_size: Union[int, List[int], str] = data.get("sampling_size", None)
         self.dataloader = None
         if isinstance(data.get("dataloader"), dict):
             self.dataloader = Dataloader(data.get("dataloader", {}))

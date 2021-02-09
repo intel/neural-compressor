@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material';
+import { ErrorComponent } from '../error/error.component';
+import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { ModelService } from '../services/model.service';
 
 
@@ -10,9 +13,10 @@ import { ModelService } from '../services/model.service';
 export class MenuComponent implements OnInit {
 
   workspacePath: string;
-  editable = false;
+
   constructor(
-    private modelService: ModelService
+    private modelService: ModelService,
+    public dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -23,16 +27,40 @@ export class MenuComponent implements OnInit {
       })
   }
 
-  saveWorkspace(event?) {
-    if ((event && event.key === 'Enter') || event === 'save') {
-      this.editable = false;
-      this.modelService.setWorkspacePath(this.workspacePath)
-        .subscribe(resp => console.log(resp));
-    }
-  }
-
   openUrl(url: string) {
     window.open(url);
+  }
+
+  openDialog() {
+    const dialogRef = this.dialog.open(FileBrowserComponent, {
+      width: '60%',
+      height: '60%',
+      data: {
+        path: this.modelService.workspacePath,
+        files: false
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(chosenFile => {
+      if (chosenFile) {
+        this.workspacePath = chosenFile;
+        this.modelService.setWorkspacePath(chosenFile)
+          .subscribe(
+            response => {
+              this.modelService.workspacePathChange.next(true);
+            },
+            error => {
+              this.openErrorDialog(error);
+            }
+          );
+      }
+    });;
+  }
+
+  openErrorDialog(error) {
+    const dialogRef = this.dialog.open(ErrorComponent, {
+      data: error
+    });
   }
 
 }

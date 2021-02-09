@@ -16,6 +16,8 @@ export class SocketService {
   public tuningFinish$ = new BehaviorSubject({});
   public boundaryNodesStart$ = new BehaviorSubject({});
   public boundaryNodesFinish$ = new BehaviorSubject({});
+  public modelDownloadFinish$ = new BehaviorSubject({});
+  public benchmarkFinish$ = new BehaviorSubject({});
 
   constructor(
     private http: HttpClient
@@ -23,6 +25,8 @@ export class SocketService {
     this.socket = io(this.baseUrl);
     this.setupTuningConnection();
     this.setupBoundaryNodesConnection();
+    this.setupModelDownload();
+    this.setupBenchmark();
   }
 
   setupTuningConnection() {
@@ -40,6 +44,18 @@ export class SocketService {
     });
     this.socket.on('boundary_nodes_finish', (data) => {
       this.boundaryNodesFinish$.next(data);
+    });
+  }
+
+  setupModelDownload() {
+    this.socket.on('download_finish', (data) => {
+      this.modelDownloadFinish$.next(data);
+    });
+  }
+
+  setupBenchmark() {
+    this.socket.on('benchmark_finish', (data) => {
+      this.benchmarkFinish$.next(data);
     });
   }
 

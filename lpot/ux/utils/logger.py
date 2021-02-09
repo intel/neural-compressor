@@ -12,18 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Configuration to yaml."""
+"""Ux Logger module."""
+import logging
 
-from typing import Any, Dict, List, Union
-
-
-def get_predefined_workload(
-    data: Dict[str, Any],
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-    """Get configuration."""
-    from lpot.ux.utils.workload.workload import Workload
-
-    workload = Workload(data)
-    workload.dump()
-    workload.config.dump(workload.config_path)
-    return workload.serialize()
+log = logging.getLogger("main")
+log.setLevel(level=logging.INFO)

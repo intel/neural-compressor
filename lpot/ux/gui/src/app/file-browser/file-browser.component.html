@@ -11,7 +11,7 @@
 <div class="file-container">
   <ng-container *ngFor="let item of contents">
     <p *ngIf="item.type === 'directory'">
-      <button class="file-button" (click)="chooseFile(item.name)" (dblclick)="getFileSystem(item.name)">
+      <button class="file-button" (click)="chooseFile(item.name, false)" (dblclick)="getFileSystem(item.name)">
         <img src="./../../assets/050a-folder-solid.svg">
         {{ item.name.replace(currentPath + '/', '') }}
       </button>
@@ -19,7 +19,8 @@
   </ng-container>
   <ng-container *ngFor="let item of contents">
     <p *ngIf="item.type === 'file'">
-      <button [ngClass]="{'chosen': item.name === chosenFile, 'file-button':true}" (click)="chooseFile(item.name)">
+      <button [ngClass]="{'chosen': item.name === chosenFile, 'file-button':true}"
+        (dblclick)="chooseFile(item.name, true)" (click)="chooseFile(item.name, false)">
         <img src="./../../assets/145b-document-outlined.svg">
         {{ item.name.replace(currentPath + '/', '') }}
       </button>

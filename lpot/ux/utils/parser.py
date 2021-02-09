@@ -14,13 +14,11 @@
 # limitations under the License.
 
 """Parser for tuning."""
-import logging as log
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Dict
 
+from lpot.ux.utils.logger import log
 from lpot.ux.utils.templates.metric import Metric
-
-log.basicConfig(level=log.INFO)
 
 
 class Parser:
@@ -31,10 +29,10 @@ class Parser:
         self._logs = logs
         self.metric = Metric()
 
-    def process(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    def process(self) -> Dict[str, Any]:
         """Process files."""
         for log_file in self._logs:
-            log.info(f"Read from {log_file}")
+            log.debug(f"Read from {log_file}")
 
             with open(log_file) as f:
                 for line in f:
@@ -43,7 +41,8 @@ class Parser:
                         match = prog.search(line)
                         if match:
                             self.metric.insert_data(key, match.group(1))
-        return self.metric.serialize()
+        parsed_data: Dict[str, Any] = self.metric.serialize()  # type: ignore
+        return parsed_data
 
     @property
     def patterns(self) -> dict:
@@ -51,8 +50,8 @@ class Parser:
         return {
             "acc_fp32": r".*FP32 baseline is: \[(\d+.\d+),",
             "acc_int8": r".*Best tune result is: \[(\d+.\d+),",
-            "perf_latency_fp32": r".*FP32 baseline is: \[\d+.\d+, (\d+.\d+)\]",
-            "perf_latency_int8": r".*Best tune result is: \[\d+.\d+, (\d+.\d+)\]",
+            "perf_latency_fp32": r"Latency:\s+(\d+(\.\d+)?)",
+            "perf_latency_int8": r"Latency:\s+(\d+(\.\d+)?)",
             "perf_throughput_fp32": r"Throughput:\s+(\d+(\.\d+)?)",
             "perf_throughput_int8": r"Throughput:\s+(\d+(\.\d+)?)",
         }

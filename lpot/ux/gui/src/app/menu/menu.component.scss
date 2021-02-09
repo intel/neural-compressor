@@ -35,7 +35,10 @@
   font-weight: 400;
 }
 
-.save {
-  width: 30px;
+.browse {
   margin-left: 10px;
+}
+
+.active {
+  background-color: $pale-blue;
 }

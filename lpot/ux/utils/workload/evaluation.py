@@ -14,7 +14,7 @@
 # limitations under the License.
 """Configuration evaluation module."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import psutil
 
@@ -28,8 +28,42 @@ class Metric(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration Metric class."""
         super().__init__()
-        self.topk = data.get("topk", 1)  # [Optional] One of 1, 5
-        self.COCOmAP = data.get("COCOmAP", None)
+        self._name: str = data.get("name", None)
+        self._param: Optional[Union[int, bool]] = data.get("param", None)
+
+        if len(data) == 1 and not (self.name and self.param):
+            self._name = list(data.keys())[0]
+            self._param = data.get(self.name, None)
+
+    @property
+    def name(self) -> str:
+        """Get metric name."""
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        """Set metric name."""
+        self._name = value
+
+    @property
+    def param(self) -> Optional[Union[int, bool]]:
+        """Get metric param."""
+        return self._param
+
+    @param.setter
+    def param(self, value: Union[int, bool]) -> None:
+        """Set metric param."""
+        self._param = value
+
+    def serialize(
+        self,
+        serialization_type: str = "default",
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        """Return metric dict for config."""
+        if self.name in ["MSE", "RMSE", "MAE"]:
+            return {"self.name": {"compare_label": self.param}}
+
+        return {self.name: self.param}
 
 
 class Configs(JsonSerializer):
@@ -94,17 +128,17 @@ class Performance(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration Performance class."""
         super().__init__()
-        self.warmup = data.get("warmup", 10)
+        self.warmup: int = data.get("warmup", 10)
 
-        self.iteration = data.get("iteration", -1)
+        self.iteration: int = data.get("iteration", -1)
 
-        self.configs = Configs(data.get("configs", {}))
+        self.configs: Configs = Configs(data.get("configs", {}))
 
-        self.dataloader = None
+        self.dataloader: Optional[Dataloader] = None
         if isinstance(data.get("dataloader"), dict):
             self.dataloader = Dataloader(data.get("dataloader", {}))
 
-        self.postprocess = None
+        self.postprocess: Optional[Postprocess] = None
         if isinstance(data.get("postprocess"), dict):
             self.postprocess = Postprocess(data.get("postprocess", {}))
 

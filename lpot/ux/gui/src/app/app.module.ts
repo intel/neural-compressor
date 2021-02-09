@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MenuComponent } from './menu/menu.component';
-import { StartPageComponent } from './start-page/start-page.component';
+import { ErrorComponent } from './error/error.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule, MatCardModule, MatDialogModule, MatDialogRef, MatExpansionModule, MatFormFieldModule, MatInputModule, MatMenuModule, MatProgressSpinnerModule, MatSelectModule, MatStepperModule, MatTabsModule, MatToolbarModule, MatTooltipModule } from '@angular/material';
 import { FlexLayoutModule } from '@angular/flex-layout';
@@ -27,7 +27,7 @@ import { FileBrowserComponent } from './file-browser/file-browser.component';
   declarations: [
     AppComponent,
     MenuComponent,
-    StartPageComponent,
+    ErrorComponent,
     PredefinedModelsComponent,
     ImportModelComponent,
     TuneComponent,
@@ -71,6 +71,7 @@ import { FileBrowserComponent } from './file-browser/file-browser.component';
   ],
   entryComponents: [
     DialogComponent,
+    ErrorComponent,
     FileBrowserComponent
   ],
   bootstrap: [AppComponent]
