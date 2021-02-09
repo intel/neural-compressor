@@ -56,9 +56,6 @@ class QuantizeGraphBase():
         return tf.compat.v1.graph_util.extract_sub_graph(
             input_graph, output_names)
 
-    def get_supported_fusion_node(self):
-        return self.transformers.keys()
-
 class QuantizeNodeBase():
     """This is the base class for nodes fusion
 
@@ -73,12 +70,9 @@ class QuantizeNodeBase():
 
         input_graph = kwargs['input_graph']
 
-        if isinstance(input_graph, graph_pb2.GraphDef):
-            self.input_graph = input_graph
-        else:
-            self.input_graph = graph_pb2.GraphDef()
-            with gfile.Open(input_graph, 'rb') as f:
-                self.input_graph.ParseFromString(f.read())
+        assert isinstance(input_graph, graph_pb2.GraphDef)
+
+        self.input_graph = input_graph
 
         self._parse_graph()
         self.output_node_maps = {}
@@ -378,9 +372,10 @@ class QuantizeNodeBase():
                 continue
 
             dequantize_node_name = helper.node_name_from_input(node.input[0])
-            if dequantize_node_name not in old_nodes_map:
-                raise ValueError("Input node name '" + dequantize_node_name +
-                                 "' not found in node '" + node.name + "'")
+
+            assert dequantize_node_name in old_nodes_map, "Input node name '" + \
+                dequantize_node_name + "' not found in node '" + node.name + "'"
+
             dequantize_node = old_nodes_map[dequantize_node_name]
             # Do we have a Dequantize feeding in, with the same type as the
             # Quantize?
@@ -451,10 +446,8 @@ class QuantizeNodeBase():
         """Builds a mapping of node names to their defs from the graph."""
         nodes_map = {}
         for node in graph.node:
-            if node.name not in nodes_map.keys():
-                nodes_map[node.name] = node
-            else:
-                raise ValueError("Duplicate node names detected.")
+            assert node.name not in nodes_map, "Duplicate node names detected."
+            nodes_map[node.name] = node
 
         return nodes_map
 
