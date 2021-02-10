@@ -574,6 +574,52 @@ class TestDataloader(unittest.TestCase):
 
         os.remove('validation-00000-of-00000')
         os.remove('test.jpeg')
+
+    def test_pytorch_bert_dataset(self):
+        dataset = [[
+           [101,2043,2001],
+           [1,1,1],
+           [[0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0]],
+           [1,1,1],
+           [1,1,1],
+           [[0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0]]
+        ]]
+        with self.assertRaises(AssertionError):
+            create_dataset('pytorch', {'bert': {'dataset':dataset, 'task':'test'}}, 
+                            None, None)
+
+        ds = create_dataset(
+            'pytorch', 
+            {'bert': {'dataset':dataset, 'task':'classifier', 'model_type':'distilbert'}},
+            None, None)
+        self.assertEqual(len(ds), 1)
+        self.assertEqual(3, len(ds[0][0]))
+
+        ds = create_dataset(
+            'pytorch', 
+            {'bert': {'dataset':dataset, 'task':'classifier', 'model_type':'bert'}},
+            None, None)
+        self.assertEqual(4, len(ds[0][0]))
+        
+        ds = create_dataset(
+            'pytorch', {'bert': {'dataset':dataset, 'task':'squad'}}, None, None)
+        self.assertEqual(3, len(ds[0][0]))
+
+        ds = create_dataset(
+            'pytorch', 
+            {'bert': {'dataset':dataset, 'task':'squad', 'model_type':'distilbert'}},
+            None, None)
+        self.assertEqual(2, len(ds[0][0]))
+
+        ds = create_dataset(
+            'pytorch', 
+            {'bert': {'dataset':dataset, 'task':'squad', 'model_type':'xlnet'}},
+            None, None)
+        self.assertEqual(5, len(ds[0][0]))
         
     def test_tensorflow_dummy(self):
         datasets = DATASETS('tensorflow')
