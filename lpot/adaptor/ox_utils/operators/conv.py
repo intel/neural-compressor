@@ -46,7 +46,9 @@ class ConvInteger(QuantOperatorBase):
 
         kwargs = {}
         for attribute in node.attribute:
-            if attribute.name == 'activation' and attribute.s == b'Relu':
+            if attribute.name == 'activation' and attribute.s in [b'Relu', b'Clip']:
+                continue
+            if attribute.name == 'activation_params':
                 continue
             kwargs.update(attribute_to_kwarg(attribute))
         conv_integer_node = onnx.helper.make_node("ConvInteger", 
@@ -130,7 +132,9 @@ class QLinearConv(QuantOperatorBase):
 
         kwargs = {}
         for attribute in node.attribute:
-            if attribute.name == 'activation' and attribute.s == b'Relu':
+            if attribute.name == 'activation' and attribute.s in [b'Relu', b'Clip']:
+                continue
+            if attribute.name == 'activation_params':
                 continue
             kwargs.update(attribute_to_kwarg(attribute))
         qlinear_conv_inputs = []

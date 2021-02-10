@@ -19,7 +19,13 @@ def build_static_yaml():
         quantization:                                        
           approach: post_training_static_quant  
           calibration:
-            sampling_size: 50                                       
+            sampling_size: 50
+          op_wise: {
+            'Gather_*': {
+            'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+            'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+            }
+          }                                       
 
         evaluation:
           accuracy:
@@ -33,10 +39,8 @@ def build_static_yaml():
             timeout: 0
           random_seed: 9527
         """
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open("static_yaml.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
+        f.write(fake_yaml)
 
 def build_dynamic_yaml():
     fake_yaml = """
@@ -61,10 +65,8 @@ def build_dynamic_yaml():
             timeout: 0
           random_seed: 9527
         """
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open("dynamic_yaml.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
+        f.write(fake_yaml)
 
 def build_non_MSE_yaml():
     fake_yaml = """
@@ -76,6 +78,12 @@ def build_non_MSE_yaml():
           approach: post_training_static_quant
           calibration:
               sampling_size: 50
+          op_wise: {
+            'Gather_*': {
+            'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+            'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+            }
+          }
 
         evaluation:
           accuracy:
@@ -93,10 +101,8 @@ def build_non_MSE_yaml():
             timeout: 0
           random_seed: 9527
         """
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open("non_MSE_yaml.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
+        f.write(fake_yaml)
 
 def eval_func(model):
     return 1.0
@@ -110,7 +116,7 @@ def export_onnx_model(model, path):
                     x,                         # model input (or a tuple for multiple inputs)
                     path,                      # where to save the model (can be a file or file-like object)
                     export_params=True,        # store the trained parameter weights inside the model file
-                    opset_version=11,          # the ONNX version to export the model to, please ensure at least 11.
+                    opset_version=12,          # the ONNX version to export the model to, please ensure at least 11.
                     do_constant_folding=True,  # whether to execute constant folding for optimization
                     input_names = ["input"],   # the model"s input names
                     output_names = ["output"], # the model"s output names
@@ -119,23 +125,28 @@ def export_onnx_model(model, path):
 
 class TestAdaptorONNXRT(unittest.TestCase):
 
-    cnn_export_path = "cnn.onnx"
-    cnn_model = torchvision.models.quantization.resnet18()
+    mb_v2_export_path = "mb_v2.onnx"
+    mb_v2_model = torchvision.models.mobilenet_v2()
+    rn50_export_path = "rn50.onnx"
+    rn50_model = torchvision.models.resnet50()
 
     @classmethod
     def setUpClass(self):
         build_static_yaml()
         build_dynamic_yaml()
         build_non_MSE_yaml()
-        export_onnx_model(self.cnn_model, self.cnn_export_path)
-        self.cnn_model = onnx.load(self.cnn_export_path)
+        export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
+        self.mb_v2_model = onnx.load(self.mb_v2_export_path)
+        export_onnx_model(self.rn50_model, self.rn50_export_path)
+        self.rn50_model = onnx.load(self.rn50_export_path)
 
     @classmethod
     def tearDownClass(self):
         os.remove("static_yaml.yaml")
         os.remove("dynamic_yaml.yaml")
         os.remove("non_MSE_yaml.yaml")
-        os.remove(self.cnn_export_path)
+        os.remove(self.mb_v2_export_path)
+        os.remove(self.rn50_export_path)
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
 
@@ -153,12 +164,22 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     def test_quantizate(self):
         from lpot import Quantization
-        for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml", "non_MSE_yaml.yaml"]:
+        for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
             dataloader = quantizer.dataloader(dataset)
             q_model = quantizer(
-                self.cnn_model,
+                self.rn50_model,
+                q_dataloader=dataloader,
+                eval_dataloader=dataloader
+            )
+            eval_func(q_model)
+        for fake_yaml in ["non_MSE_yaml.yaml"]:
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
+            dataloader = quantizer.dataloader(dataset)
+            q_model = quantizer(
+                self.mb_v2_model,
                 q_dataloader=dataloader,
                 eval_dataloader=dataloader
             )

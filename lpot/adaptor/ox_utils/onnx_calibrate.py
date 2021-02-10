@@ -241,24 +241,26 @@ class ONNXCalibrater:
         # to make sure zero can be uniquely represented.
         rmin = min(rmin, 0)
         rmax = max(rmax, 0)
-        # We update the output range min and max when next node is clip or relu
-        # With this technique we can remove these 2 ops and
-        # reduce the output range which in turn helps to improve accuracy
         if next_node:
             if next_node.op_type == 'Relu':
                 if rmin < 0:
-                    rmin = 0
-            elif next_node.op_type == 'Conv':
-                for attr in next_node.attribute:
-                    if attr.name == 'activation' and attr.s == b'Relu':
-                        rmin = max(rmin, 0)
-        
+                    rmin = 0       
+ 
         if last_node:
-            if last_node.op_type == 'Conv':
-                for attr in last_node.attribute:
-                    if attr.name == 'activation' and attr.s == b'Relu':
+            if last_node.op_type in ['Conv', 'FusedConv']:
+                attrs = [attr for attr in last_node.attribute]
+                attrs_names = [attr.name for attr in last_node.attribute]
+                if 'activation' in attrs_names:
+                    if attrs[attrs_names.index('activation')].s == b'Relu':
                         rmin = max(rmin, 0)
-        
+                    if attrs[attrs_names.index('activation')].s == b'Clip':
+                        assert 'activation_params' in attrs_names, "the model contains no \
+                                                                   params for clip node \
+                                                                   {}".format(last_node)
+                        clip_params = attrs[attrs_names.index('activation_params')].floats
+                        rmin = min(rmin, clip_params[0], clip_params[1])
+                        rmax = max(rmax, clip_params[0], clip_params[1])
+                        
         scale = np.float32((rmax - rmin) / 255 if rmin != rmax else 1)
         initial_zero_point = (0 - rmin) / scale
         zero_point = np.uint8(round(max(0, min(255, initial_zero_point))))

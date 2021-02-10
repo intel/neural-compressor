@@ -35,11 +35,20 @@
                         'granularity': ['per_channel'],
                         },
             'activation': {
-                        'dtype': ['uint8', 'int8', 'fp32'],
+                        'dtype': ['int8', 'fp32'],
                         'granularity': ['per_tensor'],
                         }
                     },
-          'Conv': *key_1_6_0,
+          'Conv': {
+            'weight':   {
+                        'dtype': ['int8', 'fp32'],
+                        'granularity': ['per_channel'],
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'granularity': ['per_tensor'],
+                        }
+                    },
           'default': {
              'weight': {
                         'dtype': ['int8', 'fp32'],
