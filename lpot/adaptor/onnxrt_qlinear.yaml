@@ -35,7 +35,7 @@
                         'granularity': ['per_channel'],
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8', 'uint8', 'fp32'],
                         'granularity': ['per_tensor'],
                         }
                     },
