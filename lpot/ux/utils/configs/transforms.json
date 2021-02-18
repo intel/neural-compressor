@@ -1,96 +1,534 @@
-{
-    "__help__tensorflow": "help placeholder for tensorflow",
-    "tensorflow": {
-        "__help__AlignImageChannel": "help placeholder for tensorflow AlignImageChannel",
-        "AlignImageChannel": null,
-        "__help__BilinearImagenet": "help placeholder for tensorflow BilinearImagenet",
-        "BilinearImagenet": {
-            "__help__height": "help placeholder for tensorflow BilinearImagenet height",
-            "height": 224,
-            "__help__width": "help placeholder for tensorflow BilinearImagenet width",
-            "width": 224
-        },
-        "__help__CenterCrop": "help placeholder for tensorflow CenterCrop",
-        "CenterCrop": {
-            "__help__central_fraction": "help placeholder for tensorflow CenterCrop central_fraction",
-            "central_fraction": 0
-        },
-        "__help__Compose": "help placeholder for tensorflow Compose",
-        "Compose": null,
-        "__help__ConvertImageDtype": "help placeholder for tensorflow ConvertImageDtype",
-        "ConvertImageDtype": {
-            "__help__dtype": "help placeholder for tensorflow ConvertImageDtype dtype",
-            "dtype": "Dtype"
-        },
-        "__help__CropAndResize": "help placeholder for tensorflow CropAndResize",
-        "CropAndResize": {
-            "__help__box_indices": "help placeholder for tensorflow CropAndResize box_indices",
-            "box_indices": [],
-            "__help__boxes": "help placeholder for tensorflow CropAndResize boxes",
-            "boxes": [],
-            "__help__crop_size": "help placeholder for tensorflow CropAndResize crop_size",
-            "crop_size": []
-        },
-        "__help__CropToBoundingBox": "help placeholder for tensorflow CropToBoundingBox",
-        "CropToBoundingBox": {
-            "__help__offset_height": "help placeholder for tensorflow CropToBoundingBox offset_height",
-            "offset_height": 0,
-            "__help__offset_width": "help placeholder for tensorflow CropToBoundingBox offset_width",
-            "offset_width": 0,
-            "__help__target_height": "help placeholder for tensorflow CropToBoundingBox target_height",
-            "target_height": 0,
-            "__help__target_width": "help placeholder for tensorflow CropToBoundingBox target_width",
-            "target_width": 0
-        },
-        "__help__DecodeImage": "help placeholder for tensorflow DecodeImage",
-        "DecodeImage": null,
-        "__help__EncodeJpeg": "help placeholder for tensorflow EncodeJpeg",
-        "EncodeJpeg": null,
-        "__help__Normalize": "help placeholder for tensorflow Normalize",
-        "Normalize": {
-            "__help__mean": "help placeholder for tensorflow Normalize mean",
-            "mean": [],
-            "__help__std": "help placeholder for tensorflow Normalize std",
-            "std": []
-        },
-        "__help__ParseDecodeCoco": "help placeholder for tensorflow ParseDecodeCoco",
-        "ParseDecodeCoco": null,
-        "__help__ParseDecodeImagenet": "help placeholder for tensorflow ParseDecodeImagenet",
-        "ParseDecodeImagenet": null,
-        "__help__RandomCrop": "help placeholder for tensorflow RandomCrop",
-        "RandomCrop": {
-            "__help__size": "help placeholder for tensorflow RandomCrop size",
-            "size": []
-        },
-        "__help__RandomHorizontalFlip": "help placeholder for tensorflow RandomHorizontalFlip",
-        "RandomHorizontalFlip": null,
-        "__help__RandomResizedCrop": "help placeholder for tensorflow RandomResizedCrop",
-        "RandomResizedCrop": {
-            "__help__size": "help placeholder for tensorflow RandomResizedCrop size",
-            "size": []
-        },
-        "__help__RandomVerticalFlip": "help placeholder for tensorflow RandomVerticalFlip",
-        "RandomVerticalFlip": null,
-        "__help__Rescale": "help placeholder for tensorflow Rescale",
-        "Rescale": null,
-        "__help__Resize": "help placeholder for tensorflow Resize",
-        "Resize": {
-            "__help__size": "help placeholder for tensorflow Resize size",
-            "size": []
-        },
-        "__help__ResizeCropImagenet": "help placeholder for tensorflow ResizeCropImagenet",
-        "ResizeCropImagenet": {
-            "__help__height": "help placeholder for tensorflow ResizeCropImagenet height",
-            "height": 0,
-            "__help__mean_value": "help placeholder for tensorflow ResizeCropImagenet mean_value",
-            "mean_value": [],
-            "__help__width": "help placeholder for tensorflow ResizeCropImagenet width",
-            "width": 0
-        },
-        "__help__Transpose": "help placeholder for tensorflow Transpose",
-        "Transpose": {
-            "__help__perm": "help placeholder for tensorflow Transpose perm",
-            "perm": []
-        }
+[
+    {
+        "name": "tensorflow",
+        "help": null,
+        "params": [
+            {
+                "name": "AlignImageChannel",
+                "help": null,
+                "params": [
+                    {
+                        "name": "dim",
+                        "help": "The channel number of result image",
+                        "value": ""
+                    }
+                ]
+            },
+            {
+                "name": "BilinearImagenet",
+                "help": null,
+                "params": [
+                    {
+                        "name": "height",
+                        "help": "Height of the result",
+                        "value": 224
+                    },
+                    {
+                        "name": "width",
+                        "help": "Width of the result",
+                        "value": 224
+                    },
+                    {
+                        "name": "central_fraction",
+                        "help": "Fraction of size to crop",
+                        "value": 0.875
+                    },
+                    {
+                        "name": "mean_value",
+                        "help": "Means for each channel",
+                        "value": [0.0, 0.0, 0.0]
+                    },
+                    {
+                        "name": "scale",
+                        "help": "Std value",
+                        "value": 1.0
+                    }
+                ]
+            },
+            {
+                "name": "Cast",
+                "help": null,
+                "params": [
+                    {
+                        "name": "dtype",
+                        "help": null,
+                        "value": "float32"
+                    }
+                ]
+            },
+            {
+                "name": "CenterCrop",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    }
+                ]
+            },
+            {
+                "name": "Compose",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "CropResize",
+                "help": null,
+                "params": [
+                    {
+                        "name": "x",
+                        "help": "Left boundary of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "y",
+                        "help": "Top boundary of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "width",
+                        "help": "Width of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "height",
+                        "help": "Height of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "size",
+                        "help": "Resize to new size after cropping",
+                        "value": ""
+                    },
+                    {
+                        "name": "interpolation",
+                        "help": "Desired interpolation type, support 'bilinear', 'nearest'",
+                        "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "CropToBoundingBox",
+                "help": null,
+                "params": [
+                    {
+                        "name": "offset_height",
+                        "help": "Vertical coordinate of the top-left corner of the result in the input",
+                        "value": 0
+                    },
+                    {
+                        "name": "offset_width",
+                        "help": "Horizontal coordinate of the top-left corner of the result in the input",
+                        "value": 0
+                    },
+                    {
+                        "name": "target_height",
+                        "help": "Height of the result",
+                        "value": 0
+                    },
+                    {
+                        "name": "target_width",
+                        "help": "Width of the result",
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "DecodeImage",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "EncodeJpeg",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "LabelShift",
+                "help": null,
+                "params": [
+                    {
+                        "name": "label_shift",
+                        "help": "Number of label shift",
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "Normalize",
+                "help": null,
+                "params": [
+                    {
+                        "name": "mean",
+                        "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
+                        "value": [0.0]
+                    },
+                    {
+                        "name": "std",
+                        "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
+                        "value": [1.0]
+                    }
+                ]
+            },
+            {
+                "name": "ParseDecodeCoco",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "ParseDecodeImagenet",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "QuantizedInput",
+                "help": null,
+                "params": [
+                    {
+                        "name": "dtype",
+                        "help": "Desired image dtype, support 'uint8', 'int8'",
+                        "value": ""
+                    },
+                    {
+                        "name": "scale",
+                        "help": "Scaling ratio of each point in image",
+                        "value": ""
+                    }
+                ]
+            },
+            {
+                "name": "RandomCrop",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    }
+                ]
+            },
+            {
+                "name": "RandomHorizontalFlip",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "RandomResizedCrop",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    },
+                    {
+                        "name": "scale",
+                        "help": "Range of size of the origin size cropped",
+                        "value": "0.08, 1.0"
+                    },
+                    {
+                        "name": "ratio",
+                        "help": "Range of aspect ratio of the origin aspect ratio cropped",
+                        "value": "3.0 / 4.0, 4.0 / 3.0"
+                    },
+                    {
+                        "name": "interpolation",
+                        "help": "Desired interpolation type, support 'bilinear', 'nearest'",
+                        "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "RandomVerticalFlip",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "Rescale",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "Resize",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    },
+                    {
+                        "name": "interpolation",
+                        "help": "Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'",
+                        "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "ResizeCropImagenet",
+                "help": null,
+                "params": [
+                    {
+                        "name": "height",
+                        "help": "Height of the result",
+                        "value": 0
+                    },
+                    {
+                        "name": "width",
+                        "help": "Width of the result",
+                        "value": 0
+                    },
+                    {
+                        "name": "random_crop",
+                        "help": "Whether to random crop",
+                        "value": "False"
+                    },
+                    {
+                        "name": "resize_side",
+                        "help": "Desired shape after resize operation",
+                        "value": 256
+                    },
+                    {
+                        "name": "random_flip_left_right",
+                        "help": "Whether to random flip left and right",
+                        "value": "False"
+                    },
+                    {
+                        "name": "mean_value",
+                        "help": "Means for each channel",
+                        "value": [0.0, 0.0, 0.0]
+                    },
+                    {
+                        "name": "scale",
+                        "help": "Std value",
+                        "value": 1.0
+                    }
+                ]
+            },
+            {
+                "name": "Transpose",
+                "help": null,
+                "params": [
+                    {
+                        "name": "perm",
+                        "help": "A permutation of the dimensions of input image",
+                        "value": []
+                    }
+                ]
+            },
+            {
+                "name": "ToArray",
+                "help": null,
+                "value": null
+            }
+        ]
+    },
+    {
+        "name": "onnxrt",
+        "help": null,
+        "params": [
+            {
+                "name": "CenterCrop",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    }
+                ]
+            },
+            {
+                "name": "ColorJitter",
+                "help": null,
+                "params": [
+                    {
+                        "name": "brightness",
+                        "help": "How much to jitter brightness",
+                        "value": 0
+                    },
+                    {
+                        "name": "contrast",
+                        "help": "How much to jitter contrast",
+                        "value": 0
+                    },
+                    {
+                        "name": "saturation",
+                        "help": "How much to jitter saturation",
+                        "value": 0
+                    },
+                    {
+                        "name": "hue",
+                        "help": "How much to jitter hue",
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "Compose",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "CropResize",
+                "help": null,
+                "params": [
+                    {
+                        "name": "x",
+                        "help": "Left boundary of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "y",
+                        "help": "Top boundary of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "width",
+                        "help": "Width of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "height",
+                        "help": "Height of the cropping area",
+                        "value": ""
+                    },
+                    {
+                        "name": "size",
+                        "help": "Resize to new size after cropping",
+                        "value": ""
+                    },
+                    {
+                        "name": "interpolation",
+                        "help": "Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'",
+                        "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "Normalize",
+                "help": null,
+                "params": [
+                    {
+                        "name": "mean",
+                        "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
+                        "value": [0.0]
+                    },
+                    {
+                        "name": "std",
+                        "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
+                        "value": [1.0]
+                    }
+                ]
+            },
+            {
+                "name": "Pad",
+                "help": null,
+                "params": [
+                    {
+                        "name": "padding",
+                        "help": "Padding on each border",
+                        "value": []
+                    },
+                    {
+                        "name": "fill",
+                        "help": "Pixel fill value for constant fill",
+                        "value": 0
+                    },
+                    {
+                        "name": "padding_mode",
+                        "help": "Type of padding. Should be: constant, edge, reflect or symmetric.",
+                        "value": "constant"
+                    }
+                ]
+            },
+            {
+                "name": "RandomCrop",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    }
+                ]
+            },
+            {
+                "name": "RandomHorizontalFlip",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "RandomResizedCrop",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    },
+                    {
+                        "name": "scale",
+                        "help": "Range of size of the origin size cropped",
+                        "value": "0.08, 1.0"
+                    },
+                    {
+                        "name": "ratio",
+                        "help": "Range of aspect ratio of the origin aspect ratio cropped",
+                        "value": "3.0 / 4.0, 4.0 / 3.0"
+                    },
+                    {
+                        "name": "interpolation",
+                        "help": "Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'",
+                        "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "RandomVerticalFlip",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "Resize",
+                "help": null,
+                "params": [
+                    {
+                        "name": "size",
+                        "help": "Size of the result",
+                        "value": []
+                    },
+                    {
+                        "name": "interpolation",
+                        "help": "Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'",
+                        "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "ToArray",
+                "help": null,
+                "value": null
+            },
+            {
+                "name": "ToPILImage",
+                "help": null,
+                "params": [
+                    {
+                        "name": "mode",
+                        "help": "Color space and pixel depth of input data",
+                        "value": ""
+                    }
+                ]
+            },
+            {
+                "name": "ToTensor",
+                "help": null,
+                "value": null
+            }
+        ]
     }
-}
+]
+
+

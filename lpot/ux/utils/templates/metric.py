@@ -129,7 +129,7 @@ class Metric(JsonSerializer):
     @size_fp32.setter
     def size_fp32(self, value: str) -> None:
         """Set model size fp32 from value."""
-        self._acc_fp32 = float(value)
+        self._size_fp32 = float(value)
 
     @property
     def size_int8(self) -> Optional[float]:
@@ -139,7 +139,7 @@ class Metric(JsonSerializer):
     @size_int8.setter
     def size_int8(self, value: str) -> None:
         """Set model size int8 from value."""
-        self._acc_int8 = float(value)
+        self._size_int8 = float(value)
 
     @property
     def tuning_time(self) -> Optional[float]:

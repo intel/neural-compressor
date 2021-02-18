@@ -15,14 +15,15 @@
 """UX server utils module."""
 
 import json
-import logging
 import os
+import re
 from importlib import import_module
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.logger import log
 
 dataset_locations = {
     "tensorflow": {
@@ -33,31 +34,17 @@ dataset_locations = {
     },
 }
 
-model_domains = {
-    "image_recognition": ["resnet50_v1_5"],
-    "object_detection": ["ssd_mobilenet_v1"],
-}
-
 framework_extensions = {
     "tensorflow": ["pb"],
+    "onnxrt": ["onnx"],
 }
+
+support_boundary_nodes = ["tensorflow"]
 
 
 def is_hidden(path: str) -> bool:
     """Check if path is for hidden filesystem entry."""
     return "." == os.path.basename(path)[0]
-
-
-def get_model_domain(model: str) -> str:
-    """
-    Get model domain.
-
-    :param model: Model name.
-    """
-    for domain, models in model_domains.items():
-        if model in models:
-            return domain
-    raise Exception(f"Could not found domain of {model} model.")
 
 
 def get_dataset_path(framework: str, domain: str) -> str:
@@ -91,6 +78,15 @@ def get_file_extension(path: str) -> str:
 def is_model_file(path: str) -> bool:
     """Check if given path is a model of supported framework."""
     return get_framework_from_path(path) is not None
+
+
+def is_dataset_file(path: str) -> bool:
+    """Check if given path is for a dataset of supported framework."""
+    dataset_extensions = ["record"]
+
+    extension = get_file_extension(path)
+
+    return extension in dataset_extensions
 
 
 def get_predefined_config_path(framework: str, domain: str) -> str:
@@ -180,35 +176,36 @@ def load_json(path: str) -> dict:
 
 def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
     """Update model's input and output nodes in config file."""
+    boundary_nodes = {
+        "inputs": None,
+        "outputs": None,
+    }
     framework = get_framework_from_path(model_path)
     if framework is None:
         raise Exception("Could not find framework for specified model.")
     check_module(framework)
     # Inputs are only required for TF models
+    if framework not in support_boundary_nodes:
+        return boundary_nodes
+
     if framework == "tensorflow":
         from lpot.utils.logger import Logger
 
-        Logger().get_logger().setLevel(logging.CRITICAL)
+        Logger().get_logger().setLevel(log.level)
         from lpot.model.model import TensorflowModel
 
         model = TensorflowModel(model_path)
 
-        inputs = []
-        outputs = []
-        if hasattr(model, "input_node_names"):
-            inputs = model.input_node_names  # pylint: disable=no-member
-        if hasattr(model, "output_node_names"):
-            outputs = model.output_node_names  # pylint: disable=no-member
-
-        return {
-            "inputs": inputs,
-            "outputs": outputs,
-        }
+        boundary_nodes["inputs"] = getattr(model, "input_node_names", [])
+        boundary_nodes["outputs"] = getattr(model, "output_node_names", [])
+        return boundary_nodes
     return {}
 
 
 def check_module(module_name: str) -> None:
     """Check if module exists. Raise exception when not found."""
+    if module_name == "onnxrt":
+        module_name = "onnx"
     module = find_spec(module_name)
     if module is None:
         raise ClientErrorException(f"Could not find {module_name} module.")
@@ -217,6 +214,8 @@ def check_module(module_name: str) -> None:
 def get_module_version(module_name: str) -> str:
     """Check module version. Raise exception when not found."""
     check_module(module_name)
+    if module_name == "onnxrt":
+        module_name = "onnx"
     module = import_module(module_name)
     version = getattr(module, "__version__")
     if version is None:
@@ -265,7 +264,7 @@ def load_model_config() -> Dict[str, Any]:
     return {}
 
 
-def load_dataloader_config() -> Dict[str, Any]:
+def load_dataloader_config() -> List[Dict[str, Any]]:
     """Load dataloader configs from json."""
     with open(
         os.path.join(
@@ -276,12 +275,12 @@ def load_dataloader_config() -> Dict[str, Any]:
         "r",
     ) as f:
         dataloaders_config = json.load(f)
-    if isinstance(dataloaders_config, dict):
+    if isinstance(dataloaders_config, list):
         return dataloaders_config
-    return {}
+    return []
 
 
-def load_transforms_config() -> Dict[str, Any]:
+def load_transforms_config() -> List[Dict[str, Any]]:
     """Load dataloader configs from json."""
     with open(
         os.path.join(
@@ -292,9 +291,9 @@ def load_transforms_config() -> Dict[str, Any]:
         "r",
     ) as f:
         dataloaders_config = json.load(f)
-    if isinstance(dataloaders_config, dict):
+    if isinstance(dataloaders_config, list):
         return dataloaders_config
-    return {}
+    return []
 
 
 def load_help_lpot_params(parameter: str) -> Dict[str, Any]:
@@ -308,3 +307,14 @@ def load_help_lpot_params(parameter: str) -> Dict[str, Any]:
         return config
     else:
         return {}
+
+
+def replace_with_values(param: dict, file_path: str) -> None:
+    """Replace parameters with value."""
+    with open(file_path, "r+") as opened_file:
+        text = opened_file.read()
+        for key, value in param.items():
+            key_to_search = "".join(["{{", key, "}}"])
+            text = re.sub(key_to_search, value, text)
+        opened_file.seek(0)
+        opened_file.write(text)

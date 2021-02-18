@@ -1,5 +1,18 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 import { Component, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { Md5 } from 'ts-md5';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
@@ -35,13 +48,27 @@ export class PredefinedModelsComponent implements OnInit {
 
     this.socketService.modelDownloadFinish$
       .subscribe(response => {
-        if (response['data'] && response['data']['path']) {
-          if (response['data']['path'].includes('.yaml')) {
-            this.showSpinnerConfig[response['data']['id']] = false;
-            this.modelList[response['data']['id']]['yaml'] = response['data']['path'];
+        if (response['status']) {
+          if (response['status'] === 'success') {
+            if (response['data'] && response['data']['path']) {
+              if (response['data']['path'].includes('.yaml')) {
+                this.showSpinnerConfig[response['data']['id']] = false;
+                this.modelList[response['data']['id']]['yaml'] = response['data']['path'];
+              } else {
+                this.showSpinnerModel[response['data']['id']] = false;
+                this.modelList[response['data']['id']]['model_path'] = response['data']['path'];
+              }
+            }
           } else {
-            this.showSpinnerModel[response['data']['id']] = false;
-            this.modelList[response['data']['id']]['model_path'] = response['data']['path'];
+            if (response['data']['message'].includes('.yaml')) {
+              this.showSpinnerConfig[response['data']['id']] = false;
+            } else {
+              this.showSpinnerModel[response['data']['id']] = false;
+            }
+            this.openErrorDialog({
+              error: 'download finish',
+              message: response['data']['message'],
+            });
           }
         }
       });
@@ -93,14 +120,13 @@ export class PredefinedModelsComponent implements OnInit {
     return false;
   }
 
-  openDialog(files: boolean, modelsOnly: boolean, index: number) {
+  openDialog(filter: 'models' | 'datasets' | 'directories', index: number) {
     const dialogRef = this.dialog.open(FileBrowserComponent, {
       width: '60%',
       height: '60%',
       data: {
         path: this.modelService.workspacePath,
-        files: files,
-        modelsOnly: modelsOnly
+        filter: filter
       }
     });
 

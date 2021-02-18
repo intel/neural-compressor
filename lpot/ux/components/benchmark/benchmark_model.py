@@ -19,6 +19,13 @@ from typing import Any, Dict, List
 
 from lpot.ux.utils.logger import log
 
+try:
+    import tensorflow as tf
+
+    tf.compat.v1.disable_eager_execution()
+except Exception as err:
+    print(err)
+
 
 def parse_args() -> Any:
     """Parse input arguments."""
@@ -42,6 +49,12 @@ def parse_args() -> Any:
         choices=["accuracy", "performance"],
         help="Benchmark mode.",
     )
+    parser.add_argument(
+        "--framework",
+        type=str,
+        required=False,
+        help="Framework to use.",
+    )
     return parser.parse_args()
 
 
@@ -49,6 +62,7 @@ def benchmark_model(
     input_graph: str,
     config: str,
     benchmark_mode: str,
+    framework: str,
     datatype: str = "",
 ) -> List[Dict[str, Any]]:
     """Execute benchmark."""
@@ -56,6 +70,10 @@ def benchmark_model(
 
     benchmark_results = []
 
+    if framework == "onnxrt":
+        import onnx
+
+        input_graph = onnx.load(input_graph)
     evaluator = Benchmark(config)
     results = evaluator(model=input_graph)
     for mode, result in results.items():
@@ -89,4 +107,5 @@ if __name__ == "__main__":
         input_graph=args.input_graph,
         config=args.config,
         benchmark_mode=args.mode,
+        framework=args.framework,
     )

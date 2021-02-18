@@ -17,13 +17,13 @@
   <span class="example-spacer"></span>
 </mat-toolbar>
 
-<mat-menu #menu="matMenu">
-  <button mat-menu-item routerLink="/my-models">My models</button>
-  <button mat-menu-item routerLink="/summary">Summary</button>
-  <button mat-menu-item routerLink="/tune">Tune</button>
-</mat-menu>
-
 <nav mat-tab-nav-bar>
-  <a mat-tab-link [routerLink]="'/my-models'" routerLinkActive="active"> My models </a>
-  <a mat-tab-link [routerLink]="'/model-zoo'" routerLinkActive="active"> Model zoo </a>
+  <a mat-tab-link [routerLink]="'/my-models'" routerLinkActive="active">
+    <img class="icon" src="./../../assets/001b-home-outlined.svg">
+    My models
+  </a>
+  <a mat-tab-link [routerLink]="'/model-zoo'" routerLinkActive="active">
+    <img class="icon" src="./../../assets/008b-plus-outlined.svg">
+    Model zoo
+  </a>
 </nav>

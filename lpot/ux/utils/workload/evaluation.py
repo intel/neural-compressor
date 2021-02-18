@@ -32,8 +32,8 @@ class Metric(JsonSerializer):
         self._param: Optional[Union[int, bool]] = data.get("param", None)
 
         if len(data) == 1 and not (self.name and self.param):
-            self._name = list(data.keys())[0]
-            self._param = data.get(self.name, None)
+            self.name = list(data.keys())[0]
+            self.param = data.get(self.name, None)
 
     @property
     def name(self) -> str:
@@ -53,7 +53,8 @@ class Metric(JsonSerializer):
     @param.setter
     def param(self, value: Union[int, bool]) -> None:
         """Set metric param."""
-        self._param = value
+        if not (isinstance(value, str) and value == ""):
+            self._param = value
 
     def serialize(
         self,
@@ -61,9 +62,10 @@ class Metric(JsonSerializer):
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """Return metric dict for config."""
         if self.name in ["MSE", "RMSE", "MAE"]:
-            return {"self.name": {"compare_label": self.param}}
-
-        return {self.name: self.param}
+            return {self.name: {"compare_label": self.param}}
+        if self.name:
+            return {self.name: self.param}
+        return {}
 
 
 class Configs(JsonSerializer):

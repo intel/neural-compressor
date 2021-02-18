@@ -68,7 +68,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
     try:
         workload_path = workdir.workload_path
         workload_data = load_json(
-            os.path.join(workload_path, f"workload.{request_id}.json"),
+            os.path.join(workload_path, "workload.json"),
         )
     except Exception as err:
         mq.post_error(
@@ -79,9 +79,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
 
     workload = Workload(workload_data)
 
-    response_data = {
-        "id": request_id,
-    }
+    response_data: Dict[str, Any] = {"id": request_id, "execution_details": {}}
 
     mq.post_success(
         "benchmark_start",
@@ -110,7 +108,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
             mode=benchmark_mode,
         )
 
-        log_name = f"{request_id}_{model_precision}_{benchmark_mode}_benchmark"
+        log_name = f"{model_precision}_{benchmark_mode}_benchmark"
 
         executor = Executor(
             workload_path,
@@ -118,6 +116,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
             data={"id": request_id},
             send_response=False,
             log_name=log_name,
+            additional_log_names=["output.txt"],
         )
 
         proc = executor.call(
@@ -130,20 +129,29 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
             parser = Parser(logs)
             metrics = parser.process()
             metric = {}
+            execution_details: Dict[str, Any] = {}
             throughput_field = f"perf_throughput_{model_precision}"
             if isinstance(metrics, dict):
                 metric = {throughput_field: metrics.get(throughput_field, "")}
+                execution_details = {
+                    f"{model_precision}_benchmark": benchmark.serialize(),
+                }
                 response_data.update({"progress": f"{idx}/{len(models)}"})
                 response_data.update(metric)
+                response_data["execution_details"].update(execution_details)
             workdir.update_metrics(
                 request_id=request_id,
                 metric_data=metric,
+            )
+            workdir.update_execution_details(
+                request_id=request_id,
+                execution_details=execution_details,
             )
             log.debug(f"Parsed data is {json.dumps(response_data)}")
             mq.post_success("benchmark_progress", response_data)
         else:
             log.error("Benchmark failed.")
             mq.post_failure("benchmark_finish", {"message": "failed", "id": request_id})
-            return
+            raise ClientErrorException("Benchmark failed during execution.")
 
     mq.post_success("benchmark_finish", response_data)

@@ -14,9 +14,11 @@
 # limitations under the License.
 """Workdir class."""
 
+import glob
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from lpot.ux.utils.templates.metric import Metric
@@ -32,7 +34,7 @@ class Workdir:
         request_id: Optional[str] = None,
         model_path: Optional[str] = None,
         model_output_path: Optional[str] = None,
-        metric: Optional[Union[dict, Metric]] = Metric(),
+        metric: Optional[Union[dict, Metric]] = None,
         overwrite: bool = True,
     ) -> None:
         """Initialize workdir class."""
@@ -41,6 +43,8 @@ class Workdir:
         self.workloads_json = os.path.join(self.workdir_path, "workloads_list.json")
         self.request_id = request_id
         self.workload_path: str
+        if not metric:
+            metric = Metric()
 
         if os.path.isfile(self.workloads_json):
             self.workloads_data = self.load()
@@ -61,10 +65,20 @@ class Workdir:
                 "workload_path"
             ]
         elif workspace_path and request_id:
+            workload_name = request_id
+            if model_path:
+                workload_name = "_".join(
+                    [
+                        Path(model_path).stem,
+                        request_id,
+                    ],
+                )
             self.workload_path = os.path.join(
                 workspace_path,
-                request_id,
+                "workloads",
+                workload_name,
             )
+
         if request_id and overwrite:
             self.update_data(request_id, model_path, model_output_path, metric)
 
@@ -103,6 +117,7 @@ class Workdir:
         model_output_path: Optional[str] = None,
         metric: Optional[Union[Dict[str, Any], Metric]] = Metric(),
         status: Optional[str] = None,
+        execution_details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Update data in workloads.list_json."""
         self.load()
@@ -113,6 +128,8 @@ class Workdir:
             model_output_path=model_output_path,
             metric=metric,
             status=status,
+            code_template_path=self.template_path,
+            execution_details=execution_details,
         ).serialize()
         self.workloads_data["workloads"][request_id] = workload_info
         self.dump()
@@ -128,6 +145,21 @@ class Workdir:
             metric_data,
         )
         self.workloads_data["workloads"][request_id].update(metric_data)
+        self.dump()
+
+    def update_execution_details(
+        self,
+        request_id: Optional[str],
+        execution_details: Dict[str, Any],
+    ) -> None:
+        """Update metric data in workload."""
+        self.load()
+        self.workloads_data["workloads"][request_id].get(
+            "execution_details",
+            {},
+        ).update(
+            execution_details,
+        )
         self.dump()
 
     def get_active_workspace(self) -> str:
@@ -146,3 +178,30 @@ class Workdir:
             "code_template_path"
         ] = code_template_path
         self.dump()
+
+    def clean_logs(self) -> None:
+        """Clean log files."""
+        log_files = ["output.txt"]
+        log_files.extend(
+            glob.glob(
+                os.path.join(self.workload_path, "*.proc"),
+            ),
+        )
+        log_files.extend(
+            glob.glob(
+                os.path.join(self.workload_path, "*performance_benchmark.txt"),
+            ),
+        )
+        for file in log_files:
+            if os.path.exists(file):
+                os.remove(file)
+
+    @property
+    def template_path(self) -> Optional[str]:
+        """Get template_path."""
+        path = (
+            self.workloads_data["workloads"]
+            .get(self.request_id, {})
+            .get("code_template_path", None)
+        )
+        return path

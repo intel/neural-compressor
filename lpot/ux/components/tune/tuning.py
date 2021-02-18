@@ -15,21 +15,34 @@
 """Tuning class."""
 
 import os
+import re
+from typing import Any, Dict, Optional
 
+from lpot.ux.utils.hw_info import HWInfo
 from lpot.ux.utils.workload.workload import Workload
 
 
 class Tuning:
     """Tuning class."""
 
-    def __init__(self, workload: Workload, workload_path: str) -> None:
+    def __init__(
+        self,
+        workload: Workload,
+        workload_path: str,
+        template_path: Optional[str] = None,
+    ) -> None:
         """Initialize configuration Dataset class."""
+        self.model_path = workload.model_path
+        self.framework = workload.framework
+
+        self.instances: int = 1
+        self.cores_per_instance: int = HWInfo().cores // self.instances
+
         model_output_name = workload.model_name + "_int8.pb"
         self.model_output_path = os.path.join(
             workload_path,
             model_output_name,
         )
-        self.model_path = workload.model_path
         self.config_path = workload.config_path
 
         self.script_path = os.path.join(os.path.dirname(__file__), "tune_model.py")
@@ -43,4 +56,20 @@ class Tuning:
             self.model_output_path,
             "--config",
             self.config_path,
+            "--framework",
+            self.framework,
         ]
+
+        if template_path:
+            self.command = ["python", template_path]
+
+    def serialize(self) -> Dict[str, Any]:
+        """Serialize Tuning to dict."""
+        result = {}
+        for key, value in self.__dict__.items():
+            variable_name = re.sub(r"^_", "", key)
+            if variable_name == "command":
+                result[variable_name] = " ".join(value)
+            else:
+                result[variable_name] = value
+        return result

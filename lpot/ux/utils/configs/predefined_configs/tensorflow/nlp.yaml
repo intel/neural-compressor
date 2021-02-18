@@ -21,7 +21,7 @@ model:
 
 quantization:
   calibration:
-    sampling_size: 500
+    sampling_size: 100
   model_wise:
     weight:
       granularity: per_channel

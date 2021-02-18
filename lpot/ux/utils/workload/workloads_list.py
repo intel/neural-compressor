@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.templates.metric import Metric
+from lpot.ux.utils.utils import get_size
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,7 +37,8 @@ class WorkloadInfo(JsonSerializer):
         model_output_path: Optional[str],
         metric: Optional[Union[Metric, dict]],
         status: Optional[str],
-        code_template_path: Optional[str] = None,
+        code_template_path: Optional[str],
+        execution_details: Optional[Dict[str, dict]] = None,
     ) -> None:
         """Initialize configuration WorkloadInfo class."""
         super().__init__()
@@ -49,12 +51,22 @@ class WorkloadInfo(JsonSerializer):
         self._code_template_path = code_template_path
         self._config_path: Optional[str] = None
         self._log_path: Optional[str] = None
+        self._execution_details = execution_details
         if self._workload_path:
             self._config_path = os.path.join(
                 self._workload_path,
-                f"config.{self._id}.yaml",
+                "config.yaml",
             )
-            self._log_path = os.path.join(self._workload_path, f"{self._id}.txt")
+            self._log_path = os.path.join(self._workload_path, "output.txt")
+            if not os.path.isfile(self._log_path):
+                os.makedirs(os.path.dirname(self._log_path), exist_ok=True)
+                with open(self._log_path, "w") as log_file:
+                    log_file.write("Configuration created.\n")
+        if self._model_path and self._metric:
+            if isinstance(self._metric, dict) and not self._metric.get("size_fp32"):
+                self._metric["size_fp32"] = get_size(self._model_path)
+            if isinstance(self._metric, Metric) and not self._metric.size_fp32:
+                self._metric.insert_data("size_fp32", str(get_size(self._model_path)))
 
     def insert_data(self, data: dict) -> None:
         """

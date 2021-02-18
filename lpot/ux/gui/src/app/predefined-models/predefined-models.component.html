@@ -42,9 +42,9 @@
       <mat-form-field class="form-field">
         <input matInput class="input" placeholder="set location" [(ngModel)]="model['dataset_path']">
       </mat-form-field>
-      <button mat-raised-button color="primary" class="browse" (click)="openDialog(false, false, index)">
+      <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasets', index)">
         <img src="./../../assets/050a-folder-solid-white.svg">
-        Choose folder
+        Choose dataset
       </button>
     </td>
     <td class="cell" [ngClass]="model['added'] ? 'success' : null">

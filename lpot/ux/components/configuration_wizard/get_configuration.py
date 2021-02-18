@@ -25,11 +25,7 @@ def get_predefined_configuration(
     data: Dict[str, Any],
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """Get configuration."""
-    from lpot.ux.utils.utils import (
-        get_framework_from_path,
-        get_model_domain,
-        get_predefined_config_path,
-    )
+    from lpot.ux.utils.utils import get_framework_from_path, get_predefined_config_path
     from lpot.ux.utils.workload.config import Config
 
     model_path = data.get("model_path", "")
@@ -41,8 +37,9 @@ def get_predefined_configuration(
     model_name = Path(model_path).stem
 
     domain = data.get("domain", None)
-    if domain is None:
-        domain = get_model_domain(model_name)
+
+    if not domain:
+        raise ClientErrorException("Domain is not defined!")
 
     framework = get_framework_from_path(model_path)
     if framework is None:

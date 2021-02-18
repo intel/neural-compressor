@@ -106,6 +106,14 @@ class Downloader:
             download_path=download_path,
         )
 
+        self.mq.post_success(
+            "download_finish",
+            {
+                "id": self.request_id,
+                "path": download_path,
+            },
+        )
+
     def download_model(self) -> None:
         """Find model resource and initialize downloading."""
         model_config = load_model_config()
@@ -161,8 +169,17 @@ class Downloader:
             download_path=download_path,
         )
 
+        model_path = download_path
         if is_archived:
-            self.unpack_archive(download_path, filename)
+            model_path = self.unpack_archive(download_path, filename)
+
+        self.mq.post_success(
+            "download_finish",
+            {
+                "id": self.request_id,
+                "path": model_path,
+            },
+        )
 
     def download_file(
         self,
@@ -171,55 +188,65 @@ class Downloader:
         headers: Optional[dict] = {},
     ) -> None:
         """Download specified file."""
-        os.makedirs(os.path.dirname(download_path), exist_ok=True)
-        with open(download_path, "wb") as f:
-            log.debug(f"Download file from {url} to {download_path}")
-            r = requests.get(url, allow_redirects=True, stream=True, headers=headers)
-            total_length = r.headers.get("content-length")
-            self.mq.post_success(
-                "download_start",
+        try:
+            with requests.get(
+                url,
+                allow_redirects=True,
+                stream=True,
+                headers=headers,
+            ) as r:
+                r.raise_for_status()
+                os.makedirs(os.path.dirname(download_path), exist_ok=True)
+                with open(download_path, "wb") as f:
+                    log.debug(f"Download file from {url} to {download_path}")
+                    total_length = r.headers.get("content-length")
+                    self.mq.post_success(
+                        "download_start",
+                        {
+                            "message": "started",
+                            "id": self.request_id,
+                            "url": url,
+                        },
+                    )
+                    if total_length is None:
+                        f.write(r.content)
+                        return
+                    downloaded = 0
+                    last_progress = 0
+                    total_size = int(total_length)
+                    for data in r.iter_content(chunk_size=4096):
+                        downloaded += len(data)
+                        f.write(data)
+                        if self.progress_steps:
+                            progress = int(100 * downloaded / total_size)
+                            if (
+                                last_progress != progress
+                                and progress % int(100 / self.progress_steps) == 0
+                            ):
+                                self.mq.post_success(
+                                    "download_progress",
+                                    {
+                                        "id": self.request_id,
+                                        "progress": f"{downloaded}/{total_size}",
+                                    },
+                                )
+                                log.debug(f"Download progress: {progress}%")
+                                last_progress = progress
+        except requests.exceptions.HTTPError:
+            message = f"Error downloading file from {url} to {download_path}"
+            self.mq.post_error(
+                "download_finish",
                 {
-                    "message": "started",
+                    "message": message,
+                    "code": 404,
                     "id": self.request_id,
-                    "url": url,
                 },
             )
-            if total_length is None:
-                f.write(r.content)
-                return
-            downloaded = 0
-            last_progress = 0
-            total_size = int(total_length)
-            for data in r.iter_content(chunk_size=4096):
-                downloaded += len(data)
-                f.write(data)
-                if self.progress_steps:
-                    progress = int(100 * downloaded / total_size)
-                    if (
-                        last_progress != progress
-                        and progress % int(100 / self.progress_steps) == 0
-                    ):
-                        self.mq.post_success(
-                            "download_progress",
-                            {
-                                "id": self.request_id,
-                                "progress": f"{downloaded}/{total_size}",
-                            },
-                        )
-                        log.debug(f"Download progress: {progress}%")
-                        last_progress = progress
+            log.warning(message)
+            return
 
-        self.mq.post_success(
-            "download_finish",
-            {
-                "id": self.request_id,
-                "progress": f"{downloaded}/{total_size}",
-                "path": download_path,
-            },
-        )
-
-    def unpack_archive(self, archive_path: str, filename: str) -> None:
-        """Unpack archive."""
+    def unpack_archive(self, archive_path: str, filename: str) -> str:
+        """Unpack archive and return path to unpacked model."""
         self.mq.post_success(
             "unpack_start",
             {
@@ -253,6 +280,7 @@ class Downloader:
             {"id": self.request_id, "path": unpacked_path},
         )
         log.debug(f"Model file has been extracted to {unpacked_path}")
+        return unpacked_path
 
     def get_yaml_url(
         self,

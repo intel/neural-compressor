@@ -79,7 +79,7 @@ class Router:
 
 def process_request_for_tuning(data: dict) -> dict:
     """Set thread and execute tuning."""
-    t = Thread(target=execute_tuning, args=(data,))
+    t = Thread(target=_execute_tuning_benchmark, args=(data,))
     t.daemon = True
     t.start()
 
@@ -120,3 +120,30 @@ def process_request_for_model_config(data: dict) -> dict:
     t.start()
 
     return {"exit_code": 102, "message": "processing"}
+
+
+def _execute_tuning_benchmark(data: dict) -> None:
+    """Execute both tuning and benchmark."""
+    tuning_data = execute_tuning(data)
+    benchmark_data = {
+        "id": data.get("id"),
+        "models": [
+            {
+                "precision": "fp32",
+                "path": tuning_data.get("execution_details", {})
+                .get("tuning", {})
+                .get("model_path"),
+            },
+            {
+                "precision": "int8",
+                "path": tuning_data.get("execution_details", {})
+                .get("tuning", {})
+                .get(
+                    "model_output_path",
+                ),
+            },
+        ],
+        "workspace_path": data.get("workspace_path"),
+    }
+    if not tuning_data.get("is_custom_dataloader", None):
+        execute_benchmark(benchmark_data)

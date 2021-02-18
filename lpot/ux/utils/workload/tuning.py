@@ -16,6 +16,7 @@
 
 from typing import Any, Dict, Optional
 
+from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.json_serializer import JsonSerializer
 
 
@@ -99,6 +100,15 @@ class Tuning(JsonSerializer):
 
     def set_timeout(self, timeout: int) -> None:
         """Update tuning timeout in config."""
+        try:
+            timeout = int(timeout)
+            if timeout < 0:
+                raise ValueError
+        except ValueError:
+            raise ClientErrorException(
+                "The timeout value is not valid. "
+                "Timeout should be non negative integer.",
+            )
         if self.exit_policy:
             self.exit_policy.timeout = timeout
         else:
@@ -106,7 +116,27 @@ class Tuning(JsonSerializer):
 
     def set_max_trials(self, max_trials: int) -> None:
         """Update max tuning trials in config."""
+        try:
+            max_trials = int(max_trials)
+            if max_trials < 0:
+                raise ValueError
+        except ValueError:
+            raise ClientErrorException(
+                "The max trials value is not valid. "
+                "Max trials should be non negative integer.",
+            )
         if self.exit_policy:
             self.exit_policy.max_trials = max_trials
         else:
             self.exit_policy = ExitPolicy({"max_trials": max_trials})
+
+    def set_random_seed(self, random_seed: int) -> None:
+        """Update random seed value in config."""
+        try:
+            random_seed = int(random_seed)
+        except ValueError:
+            raise ClientErrorException(
+                "The random seed value is not valid. "
+                "Random seed should be an integer.",
+            )
+        self.random_seed = random_seed

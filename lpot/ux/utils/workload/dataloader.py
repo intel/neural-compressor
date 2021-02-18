@@ -14,8 +14,9 @@
 # limitations under the License.
 """Configuration dataloader module."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
+from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.json_serializer import JsonSerializer
 
 
@@ -26,14 +27,16 @@ class Dataset(JsonSerializer):
         """Initialize Configuration Dataset class."""
         super().__init__()
         self.name: str = name
-        self.root: str = data.get("root", None)
+        self.params: dict = data
 
     def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:
         """Serialize Dataset class."""
+        if self.params == {}:
+            return {
+                self.name: None,
+            }
         return {
-            self.name: {
-                "root": self.root,
-            },
+            self.name: self.params,
         }
 
 
@@ -74,15 +77,20 @@ class Transform(JsonSerializer):
 class Dataloader(JsonSerializer):
     """Configuration Dataloader class."""
 
-    def __init__(self, data: Dict[str, Any] = {}) -> None:
+    def __init__(
+        self,
+        data: Dict[str, Any] = {},
+        batch_size: Optional[int] = None,
+    ) -> None:
         """Initialize Configuration Dataloader class."""
         super().__init__()
         self.last_batch = data.get("last_batch", None)  # One of "rollover", "discard"
         self.batch_size: int = data.get("batch_size", 1)  # > 0
-        self.dataset = None
+        if batch_size:
+            self.batch_size = batch_size
+        self.dataset: Optional[Dataset] = None
         if data.get("dataset"):
-            for key, value in data.get("dataset", {}).items():
-                self.dataset = Dataset(key, value)
+            self.set_dataset(data.get("dataset", {}))
 
         self.transform = {}
         if data.get("transform"):
@@ -92,6 +100,16 @@ class Dataloader(JsonSerializer):
         self.filter = None
         if data.get("filter"):
             self.filter = Filter(data.get("filter", {}))
+
+    def set_dataset(self, dataset_data: Dict[str, Any]) -> None:
+        """Set dataset for dataloader."""
+        if len(dataset_data.keys()) > 1:
+            raise ClientErrorException(
+                "There can be specified only one dataset per dataloader. "
+                f"Found keys: {dataset_data.keys()}.",
+            )
+        for key, val in dataset_data.items():
+            self.dataset = Dataset(key, val)
 
     def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:
         """Serialize Dataloader class."""

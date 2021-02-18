@@ -37,6 +37,7 @@ class Executor:
         data: Optional[dict] = None,
         send_response: bool = True,
         log_name: Optional[str] = None,
+        additional_log_names: List[str] = [],
     ) -> None:
         """
         Bash Executor constructor.
@@ -46,6 +47,7 @@ class Executor:
         if data:
             self._request_id = str(data.get("id", ""))
         self._log_name = log_name
+        self._additional_log_names = additional_log_names
         self._workdir = workspace_path
         self._mq = MessageQueue()
         self._subject = subject
@@ -94,6 +96,7 @@ class Executor:
                 pid=pid,
                 request_id=self.request_id,
                 filename=self.log_name,
+                additional_log_names=self.additional_log_names,
             )
             if self._send_response:
                 self._mq.post_success(
@@ -235,6 +238,15 @@ class Executor:
         :return: requested log filename
         """
         return self._log_name
+
+    @property
+    def additional_log_names(self) -> List[str]:
+        """
+        Property contain info about additional output file names.
+
+        :return: list of additional log filenames
+        """
+        return self._additional_log_names
 
     def refresh_workdir(self) -> str:
         """

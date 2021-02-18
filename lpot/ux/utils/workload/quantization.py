@@ -26,10 +26,13 @@ class Calibration(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}) -> None:
         """Initialize Configuration Calibration class."""
         super().__init__()
-        self.sampling_size: Union[int, List[int], str] = data.get("sampling_size", None)
+        self.sampling_size: Union[int, List[int], str] = data.get("sampling_size", 100)
         self.dataloader = None
         if isinstance(data.get("dataloader"), dict):
-            self.dataloader = Dataloader(data.get("dataloader", {}))
+            self.dataloader = Dataloader(
+                data=data.get("dataloader", {}),
+                batch_size=1,
+            )
 
 
 class WiseConfigDetails(JsonSerializer):
@@ -89,8 +92,9 @@ class Quantization(JsonSerializer):
             self.model_wise = WiseConfig(data.get("model_wise", {}))
 
         self.op_wise = None
+
         if isinstance(data.get("op_wise"), dict):
-            self.op_wise = WiseConfig(data.get("op_wise", {}))
+            self.op_wise = data.get("op_wise", {})
 
         self.approach = data.get("approach", "post_training_static_quant")
 

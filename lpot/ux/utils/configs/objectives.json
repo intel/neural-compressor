@@ -1,5 +1,5 @@
 {
-    "__help__performance": "help placeholder for performance",
-    "__help__footprint": "help placeholder for footprint",
-    "__help__modelsize": "help placeholder for modelsize"
+    "__help__performance": null,
+    "__help__footprint": null,
+    "__help__modelsize": null
 }

@@ -21,6 +21,7 @@ import os
 import re
 import subprocess
 import uuid
+from contextlib import ExitStack
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
 from lpot.ux.utils.logger import log
@@ -34,7 +35,8 @@ class Proc(object):
         output_dir: str = ".",
         pid: Optional[str] = None,
         request_id: Optional[str] = None,
-        filename: Optional[str] = None,
+        filename: Optional[Union[str, List[str]]] = None,
+        additional_log_names: List[str] = [],
     ) -> None:
         """
         Initialize class parameters.
@@ -51,8 +53,10 @@ class Proc(object):
             name = request_id
         else:
             name = pid
-        file_name = f"{name}.txt"
+        log_names = [f"{name}.txt"]
         info_file_name = f"{name}.proc"
+
+        log_names.extend(additional_log_names)
 
         if not os.path.exists(output_dir):
             try:
@@ -61,7 +65,8 @@ class Proc(object):
                 log.debug("Directory %s already exists.", output_dir)
 
         # process output file
-        self.stage_output_path = os.path.join(output_dir, file_name)
+        self.stage_output_path = os.path.join(output_dir, log_names[0])
+        self.log_paths = [os.path.join(output_dir, filename) for filename in log_names]
 
         # process info file
         self.proc_info_path = os.path.join(output_dir, info_file_name)
@@ -125,12 +130,17 @@ class Proc(object):
                 startupinfo=startupinfo,
                 creationflags=creationflags,
             )
-            with open(self.stage_output_path, "w", 1, encoding="utf-8") as log_file:
+            with ExitStack() as stack:
+                files = [
+                    stack.enter_context(open(fname, "a", encoding="utf-8"))
+                    for fname in self.log_paths
+                ]
                 for line in proc.stdout:  # type: ignore
                     decoded_line = line.decode("utf-8", errors="ignore").strip()
-                    log_file.write(decoded_line + "\n")
                     log.debug(decoded_line)
-
+                    for log_file in files:
+                        log_file.write(decoded_line + "\n")
+                        log_file.flush()
             proc.wait()
             self.time_stop = datetime.datetime.utcnow()
             self.return_code = proc.returncode

@@ -15,10 +15,12 @@
 """Benchmark class."""
 
 import os
+import re
 from typing import Any, Dict, List
 
 from lpot.ux.components.benchmark.benchmark_model import benchmark_model
 from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.hw_info import HWInfo
 from lpot.ux.utils.workload.workload import Workload
 
 
@@ -33,10 +35,13 @@ class Benchmark:
         datatype: str,
     ) -> None:
         """Initialize Benchmark class."""
+        self.instances: int = 1
+        self.cores_per_instance: int = HWInfo().cores // self.instances
         self.model_path = model_path
         self.datatype = datatype
         self.mode = mode
         self.batch_size = 1
+        self.framework = workload.framework
         if (
             workload.config
             and workload.config.evaluation
@@ -66,6 +71,8 @@ class Benchmark:
             self.model_path,
             "--mode",
             self.mode,
+            "--framework",
+            self.framework,
         ]
 
     def execute(self) -> List[Dict[str, Any]]:
@@ -74,5 +81,17 @@ class Benchmark:
             input_graph=self.model_path,
             config=self.config_path,
             benchmark_mode=self.mode,
+            framework=self.framework,
             datatype=self.datatype,
         )
+
+    def serialize(self) -> Dict[str, Any]:
+        """Serialize Benchmark to dict."""
+        result = {}
+        for key, value in self.__dict__.items():
+            variable_name = re.sub(r"^_", "", key)
+            if variable_name == "command":
+                result[variable_name] = " ".join(value)
+            else:
+                result[variable_name] = value
+        return result

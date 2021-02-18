@@ -31,7 +31,8 @@
     <td class="header" colspan="1">INT8</td>
     <td class="header" colspan="1">Ratio</td>
   </tr>
-  <tr *ngFor="let model of modelList; let index = index">
+  <tr *ngFor="let model of modelList; let index = index" [matTooltip]="getTooltip(model.execution_details)"
+    [matTooltipPosition]="'right'">
     <td class="cell icon-button">
       <img [matTooltip]="'Rerun this configuration'" (click)="tune(model)" src="./../../assets/088a-start-solid.svg">
     </td>

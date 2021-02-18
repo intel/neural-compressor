@@ -1,16 +1,19 @@
-from tensorflow import keras
-
-
 class Dataset(object):
-    def __init__(self):
+    def __init__(self, *args):
+        # TODO:initialize dataset related info here
         pass
 
     def __getitem__(self, index):
+        # TODO:get item magic method
+        # return a tuple containing 1 image and 1 label
+        # for example, return img, label
         pass
 
     def __len__(self):
+        # TODO:get total length of dataset, such as how many images in the dataset
+        # if the total length is not able to know, pls implement __iter__() magic method
+        # rather than above two methods.
         pass
-
 
 # Define a customized Metric function
 import lpot
@@ -29,3 +32,11 @@ class MyMetric(Metric):
 
     def result(self):
         pass
+
+
+# Quantize with customized dataloader and metric
+quantizer = lpot.Quantization('{{config_path}}')
+dataset = Dataset()
+quantizer.metric('my_metric', MyMetric)
+dataloader = quantizer.dataloader(dataset, batch_size=1)
+q_model = quantizer('{{model_path}}', q_dataloader = dataloader, eval_dataloader = dataloader)

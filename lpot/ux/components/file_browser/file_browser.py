@@ -22,7 +22,7 @@ from lpot.ux.utils.exceptions import (
     ClientErrorException,
     NotFoundException,
 )
-from lpot.ux.utils.utils import is_hidden, is_model_file
+from lpot.ux.utils.utils import is_dataset_file, is_hidden, is_model_file
 
 
 def get_directory_entries(
@@ -30,21 +30,10 @@ def get_directory_entries(
 ) -> Dict[str, Any]:
     """Get directory entries."""
     try:
-        path = os.path.abspath(data["path"][0])
+        path = get_requested_path(data)
         contents = get_non_hidden_directory_entries(path)
 
-        show_files = should_show_files(data)
-        if not show_files:
-            contents = list(filter(lambda e: "file" != e["type"], contents))
-
-        show_only_models = should_show_only_model_files(data)
-        if show_only_models:
-            contents = list(
-                filter(
-                    lambda e: "directory" == e["type"] or is_model_file(e["name"]),
-                    contents,
-                ),
-            )
+        contents = filter_requested_entries(contents, get_filter_value(data))
 
         return {
             "path": path,
@@ -56,6 +45,16 @@ def get_directory_entries(
         raise NotFoundException(err)
     except NotADirectoryError as err:
         raise ClientErrorException(err)
+
+
+def get_requested_path(data: Dict[str, Any]) -> str:
+    """Get name of requested filter."""
+    try:
+        path = data["path"][0]
+    except KeyError:
+        path = "."
+
+    return os.path.abspath(path)
 
 
 def get_non_hidden_directory_entries(path: str) -> List:
@@ -119,3 +118,41 @@ def get_setting_value(setting: str, default: bool, data: Dict[str, Any]) -> bool
         return not default if not_default == tested_value else default
     except KeyError:
         return default
+
+
+def get_filter_value(data: Dict[str, Any]) -> str:
+    """Get name of requested filter."""
+    try:
+        return data["filter"][0].lower()
+    except KeyError:
+        return ""
+
+
+def filter_requested_entries(entries: List, filter_name: str) -> List:
+    """Filter list of entries using provided filter."""
+    filter_map = {
+        "models": is_model_or_directory_entry,
+        "datasets": is_dataset_or_directory_entry,
+        "directories": is_directory_entry,
+    }
+
+    requested_filter = filter_map.get(filter_name)
+    if requested_filter is None:
+        return entries
+
+    return list(filter(requested_filter, entries))
+
+
+def is_directory_entry(entry: Dict) -> bool:
+    """Return if given entry is for directory."""
+    return "directory" == entry["type"]
+
+
+def is_model_or_directory_entry(entry: Dict) -> bool:
+    """Return if given entry should be shown on model list."""
+    return is_model_file(entry["name"]) or is_directory_entry(entry)
+
+
+def is_dataset_or_directory_entry(entry: Dict) -> bool:
+    """Return if given entry should be shown on dataset list."""
+    return is_dataset_file(entry["name"]) or is_directory_entry(entry)

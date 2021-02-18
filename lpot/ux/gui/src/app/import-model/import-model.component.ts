@@ -1,9 +1,22 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModelService, NewModel } from '../services/model.service';
 import { Md5 } from 'ts-md5/dist/md5';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { SocketService } from '../services/socket.service';
 import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { ErrorComponent } from '../error/error.component';
@@ -23,7 +36,14 @@ export class ImportModelComponent implements OnInit {
   objectives = [];
   approaches = [];
   dataLoaders = [];
-  dataLoaderParams = [];
+  dataLoaderParams = {
+    evaluation: [],
+    quantization: []
+  };
+  showDatasetLocation = {
+    evaluation: true,
+    quantization: true
+  };
   transformations = [];
   transformationParams = [];
   tunings = [];
@@ -74,14 +94,13 @@ export class ImportModelComponent implements OnInit {
       }
       );
 
-
     this.firstFormGroup.get('modelLocation').valueChanges
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value) {
           this.showSpinner = true;
           this.frameworkVersion = null;
           this.frameworkWarning = null;
-          this.socketService.getBoundaryNodes(this.getNewModel()).subscribe()
+          this.socketService.getBoundaryNodes(this.getNewModel()).subscribe();
         }
       });
 
@@ -93,16 +112,25 @@ export class ImportModelComponent implements OnInit {
             this.frameworkWarning = result['data']['message'];
           } else {
             this.firstFormGroup.get('framework').setValue(result['data']['framework']);
+            if (result['data']['framework'] === 'tensorflow') {
+              this.firstFormGroup.controls['input'].setValidators([Validators.required]);
+              this.firstFormGroup.controls['output'].setValidators([Validators.required]);
+              this.firstFormGroup.controls['input'].updateValueAndValidity();
+              this.firstFormGroup.controls['output'].updateValueAndValidity();
+            } else {
+              this.firstFormGroup.controls['input'].clearValidators();
+              this.firstFormGroup.controls['output'].clearValidators();
+              this.firstFormGroup.controls['input'].updateValueAndValidity();
+              this.firstFormGroup.controls['output'].updateValueAndValidity();
+            }
             this.getPossibleValues();
             this.frameworkVersion = result['data']['framework_version'];
             ['inputs', 'outputs'].forEach(param => {
-              if (result['data'][param]) {
-                if (result['data'][param].length > 1) {
-                  this[param] = result['data'][param];
-                } else {
-                  this[param] = result['data'][param];
-                  this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
-                }
+              if (result['data'][param] && result['data'][param].length === 1) {
+                this[param] = result['data'][param];
+                this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
+              } else {
+                this[param] = result['data'][param];
               }
             });
           }
@@ -152,8 +180,17 @@ export class ImportModelComponent implements OnInit {
     }
   }
 
-  setDefaultDataLoaderParam(event) {
-    this.dataLoaderParams = this.dataLoaders.find(x => x.name === event.value).params;
+  setDefaultDataLoaderParam(event, section: string) {
+    this.dataLoaderParams[section] = this.dataLoaders.find(x => x.name === event.value).params;
+    this.showDatasetLocation[section] = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
+    const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
+    if (this.showDatasetLocation[section]) {
+      this.secondFormGroup.controls[controlName].setValidators([Validators.required]);
+      this.secondFormGroup.controls[controlName].updateValueAndValidity();
+    } else {
+      this.secondFormGroup.controls[controlName].clearValidators();
+      this.secondFormGroup.controls[controlName].updateValueAndValidity();
+    }
   }
 
   setDefaultTransformationParam(event, index) {
@@ -171,7 +208,6 @@ export class ImportModelComponent implements OnInit {
   setDefaultValues() {
     this.firstFormGroup = this._formBuilder.group({
       framework: ['', Validators.required],
-      datasetLocation: ['', Validators.required],
       modelLocation: ['', Validators.required],
       modelDomain: ['', Validators.required],
       input: [''],
@@ -179,12 +215,15 @@ export class ImportModelComponent implements OnInit {
     });
     this.secondFormGroup = this._formBuilder.group({
       accuracyGoal: [0.01],
-      dataLoader: [''],
+      dataLoaderEvaluation: [''],
+      dataLoaderQuantization: [''],
+      datasetLocationEvaluation: [''],
+      datasetLocationQuantization: [''],
       datasetParams0: [''],
       datasetParams1: [''],
       transform: [''],
       transformParams: [''],
-      samplingSize: [''],
+      samplingSize: [100],
       op: [''],
       strategy: [''],
       batchSize: [1],
@@ -194,7 +233,7 @@ export class ImportModelComponent implements OnInit {
       intra_num_of_threads: [''],
       kmp_blocktime: [''],
       warmup: [],
-      iteration: [],
+      iteration: [-1],
       metric: [''],
       objective: [''],
       timeout: [0],
@@ -213,13 +252,13 @@ export class ImportModelComponent implements OnInit {
           this.firstFormGroup.get('modelDomain').setValue(resp['domain']);
 
           if (resp['config']['quantization']) {
-            this.secondFormGroup.get('dataLoader').setValue(resp['config']['quantization'].calibration.dataloader.dataset);
             this.secondFormGroup.get('transform').setValue(resp['config']['quantization'].calibration.dataloader.transform);
             this.secondFormGroup.get('samplingSize').setValue(resp['config']['quantization'].calibration.sampling_size);
             this.secondFormGroup.get('approach').setValue(resp['config']['quantization'].approach);
             const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
             const transformNames = Object.keys(resp['config']['quantization'].calibration.dataloader.transform);
-            this.secondFormGroup.get('dataLoader').setValue(dataLoader);
+            this.secondFormGroup.get('dataLoaderQuantization').setValue(dataLoader);
+            this.secondFormGroup.get('dataLoaderEvaluation').setValue(dataLoader);
             this.transformationParams = [];
             transformNames.forEach((name, index) => {
               this.addNewTransformation(name);
@@ -230,7 +269,18 @@ export class ImportModelComponent implements OnInit {
                 });
               }
             });
-            this.dataLoaderParams = this.dataLoaders.find(x => x.name === dataLoader).params;
+            this.dataLoaderParams['quantization'] = this.dataLoaders.find(x => x.name === dataLoader).params;
+            this.dataLoaderParams['evaluation'] = this.dataLoaders.find(x => x.name === dataLoader).params;
+            this.showDatasetLocation['quantization'] = this.dataLoaders.find(x => x.name === dataLoader).show_dataset_location;
+            this.showDatasetLocation['evaluation'] = this.dataLoaders.find(x => x.name === dataLoader).show_dataset_location;
+            if (this.showDatasetLocation['quantization']) {
+              this.secondFormGroup.controls['datasetLocationQuantization'].setValidators([Validators.required]);
+              this.secondFormGroup.controls['datasetLocationQuantization'].updateValueAndValidity();
+            }
+            if (this.showDatasetLocation['evaluation']) {
+              this.secondFormGroup.controls['datasetLocationEvaluation'].setValidators([Validators.required]);
+              this.secondFormGroup.controls['datasetLocationEvaluation'].updateValueAndValidity();
+            }
           }
 
           if (resp['config']['evaluation']) {
@@ -251,13 +301,6 @@ export class ImportModelComponent implements OnInit {
             this.secondFormGroup.get('timeout').setValue(resp['config']['tuning'].exit_policy.timeout);
             this.secondFormGroup.get('randomSeed').setValue(resp['config']['tuning'].random_seed);
           }
-
-          if (typeof resp['config']['model'].outputs === 'string') {
-            this.outputs = [resp['config']['model'].outputs];
-            this.firstFormGroup.get('output').setValue(resp['config']['model'].outputs);
-          } else if (Array.isArray(resp['config']['model'].outputs)) {
-            this.outputs = resp['config']['model'].outputs;
-          }
         }
       },
         error => {
@@ -266,7 +309,6 @@ export class ImportModelComponent implements OnInit {
   }
 
   addModel() {
-    const newModel = this.getFullModel();
     this.modelService.saveWorkload(this.getFullModel())
       .subscribe(
         response => { },
@@ -279,7 +321,6 @@ export class ImportModelComponent implements OnInit {
   getNewModel(): NewModel {
     let model: NewModel;
     model = {
-      dataset_path: this.firstFormGroup.get('datasetLocation').value,
       domain: this.firstFormGroup.get('modelDomain').value,
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
@@ -290,26 +331,27 @@ export class ImportModelComponent implements OnInit {
 
   getFullModel(): FullModel {
     let model: FullModel;
-    if (this.dataLoaderParams && Object.keys(this.dataLoaderParams).includes('root')) {
-      this.dataLoaderParams['root'] = this.firstFormGroup.get('datasetLocation').value;
-    }
+    ['evaluation', 'quantization'].forEach(section => {
+      if (this.dataLoaderParams[section] && Object.keys(this.dataLoaderParams[section]).includes('root')) {
+        this.dataLoaderParams[section]['root'] = this.secondFormGroup.get('datasetLocationQuantization').value;
+      }
+    });
     model = {
-      dataset_path: this.firstFormGroup.get('datasetLocation').value,
       domain: this.firstFormGroup.get('modelDomain').value,
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
       model_path: this.firstFormGroup.get('modelLocation').value,
-      inputs: this.firstFormGroup.get('input').value,
-      outputs: this.firstFormGroup.get('output').value,
-      dataloader: {
-        name: this.secondFormGroup.get('dataLoader').value,
-        params: this.dataLoaderParams ? this.getParams(this.dataLoaderParams) : null,
-      },
+      inputs: typeof this.firstFormGroup.get('input').value === 'string' ? [this.firstFormGroup.get('input').value] : this.firstFormGroup.get('input').value,
+      outputs: typeof this.firstFormGroup.get('output').value === 'string' ? [this.firstFormGroup.get('output').value] : this.firstFormGroup.get('output').value,
       transform: this.getTransformParams(this.transformationParams),
       quantization: {
+        dataset_path: this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location',
+        dataloader: {
+          name: this.secondFormGroup.get('dataLoaderQuantization').value,
+          params: this.dataLoaderParams['quantization'] ? this.getParams(this.dataLoaderParams['quantization']) : null,
+        },
         accuracy_goal: this.secondFormGroup.get('accuracyGoal').value,
         sampling_size: this.secondFormGroup.get('samplingSize').value,
-        // op: this.secondFormGroup.get('op').value,
         strategy: this.secondFormGroup.get('strategy').value,
         approach: this.secondFormGroup.get('approach').value,
         objective: this.secondFormGroup.get('objective').value,
@@ -318,6 +360,11 @@ export class ImportModelComponent implements OnInit {
         random_seed: this.secondFormGroup.get('randomSeed').value
       },
       evaluation: {
+        dataset_path: this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location',
+        dataloader: {
+          name: this.secondFormGroup.get('dataLoaderEvaluation').value,
+          params: this.dataLoaderParams['evaluation'] ? this.getParams(this.dataLoaderParams['evaluation']) : null,
+        },
         metric: this.secondFormGroup.get('metric').value,
         metric_param: this.metricParam,
         batch_size: this.secondFormGroup.get('batchSize').value,
@@ -352,20 +399,23 @@ export class ImportModelComponent implements OnInit {
     return newObj;
   }
 
-  openDialog(fieldName: string, files: boolean, modelsOnly: boolean) {
+  openDialog(fieldName: string, filter: 'models' | 'datasets' | 'directories') {
+    let form = 'firstFormGroup';
+    if (filter === 'datasets') {
+      form = 'secondFormGroup';
+    }
     const dialogRef = this.dialog.open(FileBrowserComponent, {
       width: '60%',
       height: '60%',
       data: {
-        path: this.firstFormGroup.get(fieldName).value ? this.firstFormGroup.get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
-        files: files,
-        modelsOnly: modelsOnly
+        path: this[form].get(fieldName).value ? this[form].get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
+        filter: filter
       }
     });
 
     dialogRef.afterClosed().subscribe(chosenFile => {
       if (chosenFile) {
-        this.firstFormGroup.get(fieldName).setValue(chosenFile);
+        this[form].get(fieldName).setValue(chosenFile);
       }
     });;
   }
@@ -393,17 +443,12 @@ export class ImportModelComponent implements OnInit {
 }
 
 export interface FullModel {
-  dataset_path: string;
   domain: string;
   framework: string;
   id: string;
   model_path: string;
   inputs: string[];
   outputs: string[];
-  dataloader: {
-    name: string;
-    params: {};
-  }
   transform: {
     name: string;
     params: {};
@@ -418,6 +463,11 @@ export interface FullModel {
     timeout: number;
     max_trials: number;
     random_seed: number;
+    dataset_path: string;
+    dataloader: {
+      name: string;
+      params: {};
+    }
   }
   evaluation: {
     metric: string;
@@ -430,5 +480,10 @@ export interface FullModel {
     iterations: number;
     warmup: number;
     kmp_blocktime: string;
+    dataset_path: string;
+    dataloader: {
+      name: string;
+      params: {};
+    }
   }
 }

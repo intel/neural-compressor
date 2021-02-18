@@ -1,5 +1,18 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 import { Component, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from '../dialog/dialog.component';
 import { ErrorComponent } from '../error/error.component';
 import { ModelService, NewModel } from '../services/model.service';
@@ -26,14 +39,46 @@ export class ModelListComponent implements OnInit {
   ngOnInit() {
     this.socketService.tuningStart$
       .subscribe(result => {
-        if (Object.keys(result).length > 0) {
-          this.updateResult(result, 'start');
+        if (result['data']) {
+          if (result['status'] === 'success') {
+            this.updateResult(result, 'start');
+          } else {
+            this.openErrorDialog({
+              error: 'tuning started',
+              message: result['data']['message'],
+            });
+          }
         }
       });
     this.socketService.tuningFinish$
       .subscribe(result => {
-        if (Object.keys(result).length > 0) {
-          this.updateResult(result, 'finish');
+        if (result['data']) {
+          if (result['status'] === 'success') {
+            this.updateResult(result, 'finish');
+          } else {
+            const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
+            if (index !== -1) {
+              this.modelList[index]['status'] = result['status'];
+              this.openErrorDialog({
+                error: 'tuning finished',
+                message: result['data']['message'],
+              });
+            }
+          }
+        }
+      });
+    this.socketService.benchmarkStart$
+      .subscribe(result => {
+        if (result['data']) {
+          if (result['status'] === 'success') {
+            const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
+            this.benchmarkSpinner[index] = true;
+          } else {
+            this.openErrorDialog({
+              error: 'benchmark started',
+              message: result['data']['message'],
+            });
+          }
         }
       });
     this.socketService.benchmarkFinish$
@@ -41,8 +86,18 @@ export class ModelListComponent implements OnInit {
         if (result['data']) {
           const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
           this.benchmarkSpinner[index] = false;
-          this.modelList[index]['perf_throughput_fp32'] = result['data']['perf_throughput_fp32'];
-          this.modelList[index]['perf_throughput_int8'] = result['data']['perf_throughput_int8'];
+          if (index !== -1) {
+            if (result['status'] === 'success') {
+              this.modelList[index]['perf_throughput_fp32'] = result['data']['perf_throughput_fp32'];
+              this.modelList[index]['perf_throughput_int8'] = result['data']['perf_throughput_int8'];
+            } else {
+              this.modelList[index]['status'] = result['status'];
+              this.openErrorDialog({
+                error: 'benchmark finished',
+                message: result['data']['message'],
+              });
+            }
+          }
         }
       });
     this.getAllModels();
@@ -94,21 +149,8 @@ export class ModelListComponent implements OnInit {
         this.modelList[index]['size_int8'] = result['data']['size_int8'];
         this.modelList[index]['model_output_path'] = result['data']['model_output_path'];
 
-        this.modelService.benchmark(
-          result['data']['id'],
-          this.modelList[index]['model_path'],
-          result['data']['model_output_path']
-        )
-          .subscribe(
-            response => {
-              this.benchmarkSpinner[index] = true;
-              this.modelList[index]['perf_throughput_fp32'] = null;
-              this.modelList[index]['perf_throughput_int8'] = null;
-            },
-            error => {
-              this.openErrorDialog(error);
-            }
-          );
+        this.modelList[index]['perf_throughput_fp32'] = null;
+        this.modelList[index]['perf_throughput_int8'] = null;
       } else if (param === 'start') {
         this.modelList[index]['size_fp32'] = result['data']['size_fp32'];
       }
@@ -134,6 +176,29 @@ export class ModelListComponent implements OnInit {
           this.openErrorDialog(error);
         }
       );
+  }
+
+  getTooltip(execution_details): string | null {
+    if (execution_details) {
+      let tooltip = '';
+      if (execution_details.fp32_benchmark) {
+        tooltip += 'FP32 BENCHMARK\n' +
+          'cores per instance: ' + execution_details.fp32_benchmark.cores_per_instance + '\n' +
+          'instances: ' + execution_details.fp32_benchmark.instances + '\n\n'
+      }
+      if (execution_details.int8_benchmark) {
+        tooltip += 'INT8 BENCHMARK\n' +
+          'cores per instance: ' + execution_details.int8_benchmark.cores_per_instance + '\n' +
+          'instances: ' + execution_details.int8_benchmark.instances + '\n\n';
+      }
+      if (execution_details.tuning) {
+        tooltip += 'TUNING\n' +
+          'cores per instance: ' + execution_details.tuning.cores_per_instance + '\n' +
+          'instances: ' + execution_details.tuning.instances + '\n\n';
+      }
+      return tooltip;
+    }
+    return null;
   }
 
   copyToClipboard(text: string) {

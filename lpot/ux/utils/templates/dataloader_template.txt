@@ -1,4 +1,6 @@
-class dataset(object):
+import lpot
+
+class Dataset(object):
     def __init__(self, *args):
         # TODO:initialize dataset related info here
         pass
@@ -14,3 +16,8 @@ class dataset(object):
         # if the total length is not able to know, pls implement __iter__() magic method
         # rather than above two methods.
         pass
+
+quantizer = lpot.Quantization('{{config_path}}')
+dataset = Dataset()
+dataloader = quantizer.dataloader(dataset, batch_size=1)
+q_model = quantizer('{{model_path}}', q_dataloader = dataloader, eval_dataloader = dataloader)

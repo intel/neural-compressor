@@ -139,8 +139,10 @@ class Feeder:
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
-        dataloaders = load_dataloader_config().get(framework, {})
-        return self._parse_help_in_dict(dataloaders)
+        for fw_dataloader in load_dataloader_config():
+            if fw_dataloader.get("name") == framework:
+                return fw_dataloader.get("params", [])
+        return []
 
     def get_transforms(self) -> List[Dict[str, Any]]:
         """Get available transforms."""
@@ -149,8 +151,10 @@ class Feeder:
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
-        transforms = load_transforms_config().get(framework, {})
-        return self._parse_help_in_dict(transforms)
+        for fw_transforms in load_transforms_config():
+            if fw_transforms.get("name") == framework:
+                return fw_transforms.get("params", [])
+        return []
 
     @staticmethod
     def get_objectives() -> List[dict]:
@@ -186,13 +190,9 @@ class Feeder:
                 "name": "post_training_static_quant",
                 "help": "help placeholder for post_training_static_quant",
             },
-            {
-                "name": "quant_aware_training",
-                "help": "help placeholder for quant_aware_training",
-            },
         ]
         framework = self.config.get("framework", None)
-        if framework in ["pytorch", "onnxruntime"]:
+        if framework in ["pytorch", "onnxrt"]:
             approaches.append(
                 {
                     "name": "post_training_dynamic_quant",
@@ -216,7 +216,12 @@ class Feeder:
         from lpot.metric.metric import framework_metrics
 
         help_dict = load_help_lpot_params("metrics")
-        raw_metric_list = list(framework_metrics.get(framework)().metrics.keys())
+        if framework == "onnxrt":
+            raw_metric_list = list(
+                framework_metrics.get("onnxrt_qlinearops")().metrics.keys(),
+            )
+        else:
+            raw_metric_list = list(framework_metrics.get(framework)().metrics.keys())
         raw_metric_list += ["custom"]
         metrics_updated = update_metric_parameters(raw_metric_list)
         for metric, value in metrics_updated.copy().items():

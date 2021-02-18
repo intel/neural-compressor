@@ -27,8 +27,8 @@ class Model(JsonSerializer):
         super().__init__()
         self.name = data.get("name", None)
         self.framework = data.get("framework", {})
-        self._inputs: List[str] = []
-        self._outputs: List[str] = []
+        self._inputs: List[str] = data.get("inputs", [])
+        self._outputs: List[str] = data.get("outputs", [])
 
     @property
     def inputs(self) -> List[str]:

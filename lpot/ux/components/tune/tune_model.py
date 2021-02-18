@@ -17,6 +17,13 @@
 import argparse
 from typing import Any
 
+try:
+    import tensorflow as tf
+
+    tf.compat.v1.disable_eager_execution()
+except Exception as err:
+    print(err)
+
 
 def parse_args() -> Any:
     """Parse input arguments."""
@@ -39,6 +46,12 @@ def parse_args() -> Any:
         required=False,
         help="Output path for quantized model.",
     )
+    parser.add_argument(
+        "--framework",
+        type=str,
+        required=False,
+        help="Framework to use.",
+    )
     return parser.parse_args()
 
 
@@ -46,10 +59,15 @@ def tune_model(
     input_graph: str,
     output_graph: str,
     config: str,
+    framework: str,
 ) -> None:
     """Execute tuning."""
     from lpot.quantization import Quantization
 
+    if framework == "onnxrt":
+        import onnx
+
+        input_graph = onnx.load(input_graph)
     quantizer = Quantization(config)
     quantized_model = quantizer(input_graph)
     quantized_model.save(output_graph)
@@ -61,4 +79,5 @@ if __name__ == "__main__":
         input_graph=args.input_graph,
         output_graph=args.output_graph,
         config=args.config,
+        framework=args.framework,
     )

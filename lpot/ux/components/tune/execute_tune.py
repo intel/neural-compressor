@@ -20,6 +20,7 @@ import os
 from typing import Any, Dict
 
 from lpot.ux.components.tune.tuning import Tuning
+from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.parser import Parser
@@ -30,7 +31,7 @@ from lpot.ux.web.communication import MessageQueue
 mq = MessageQueue()
 
 
-def execute_tuning(data: Dict[str, Any]) -> None:
+def execute_tuning(data: Dict[str, Any]) -> dict:
     """Get configuration."""
     from lpot.ux.utils.workload.workload import Workload
 
@@ -47,7 +48,7 @@ def execute_tuning(data: Dict[str, Any]) -> None:
     workload_path: str = workdir.workload_path
     try:
         workload_data = load_json(
-            os.path.join(workload_path, f"workload.{request_id}.json"),
+            os.path.join(workload_path, "workload.json"),
         )
     except Exception as err:
         mq.post_error(
@@ -56,12 +57,13 @@ def execute_tuning(data: Dict[str, Any]) -> None:
         )
         raise err
     workload = Workload(workload_data)
-    tuning: Tuning = Tuning(workload, workdir.workload_path)
+    tuning: Tuning = Tuning(workload, workdir.workload_path, workdir.template_path)
     send_data = {
         "message": "started",
         "id": request_id,
         "size_fp32": get_size(tuning.model_path),
     }
+    workdir.clean_logs()
     workdir.update_data(
         request_id=request_id,
         model_path=tuning.model_path,
@@ -69,7 +71,12 @@ def execute_tuning(data: Dict[str, Any]) -> None:
         status="wip",
     )
 
-    executor = Executor(workload_path, subject="tuning", data=send_data)
+    executor = Executor(
+        workspace_path=workload_path,
+        subject="tuning",
+        data=send_data,
+        log_name="output",
+    )
 
     proc = executor.call(
         tuning.command,
@@ -78,7 +85,7 @@ def execute_tuning(data: Dict[str, Any]) -> None:
     if tuning_time:
         tuning_time = round(tuning_time, 2)
     log.debug(f"Elapsed time: {tuning_time}")
-    logs = [os.path.join(workload_path, f"{request_id}.txt")]
+    logs = [os.path.join(workload_path, "output.txt")]
     parser = Parser(logs)
     if proc.is_ok:
         response_data = parser.process()
@@ -89,6 +96,7 @@ def execute_tuning(data: Dict[str, Any]) -> None:
             response_data["size_int8"] = get_size(tuning.model_output_path)
             response_data["model_output_path"] = tuning.model_output_path
             response_data["size_fp32"] = get_size(tuning.model_path)
+            response_data["is_custom_dataloader"] = bool(workdir.template_path)
 
             workdir.update_data(
                 request_id=request_id,
@@ -96,10 +104,13 @@ def execute_tuning(data: Dict[str, Any]) -> None:
                 model_output_path=tuning.model_output_path,
                 metric=response_data,
                 status="success",
+                execution_details={"tuning": tuning.serialize()},
             )
+            response_data["execution_details"] = {"tuning": tuning.serialize()}
 
         log.debug(f"Parsed data is {json.dumps(response_data)}")
         mq.post_success("tuning_finish", response_data)
+        return response_data
     else:
         log.debug("FAIL")
         workdir.update_data(
@@ -108,3 +119,4 @@ def execute_tuning(data: Dict[str, Any]) -> None:
             status="error",
         )
         mq.post_failure("tuning_finish", {"message": "failed", "id": request_id})
+        raise ClientErrorException("Tuning failed during execution.")
