@@ -431,7 +431,7 @@ class TuneStrategy(object):
             del self.last_qmodel
 
         logger.info(
-            'Tune result is: ' +
+            'Tune {} result is: '.format(trials_count) +
             ('[{:.4f}, {:.4f}]'.format(
                 *self.last_tune_result) if self.last_tune_result else 'None') +
             ' Best tune result is: ' +

@@ -35,6 +35,17 @@ quantization:                                        # optional. tuning constrai
       algorithm: minmax
     weight:
       granularity: per_channel
+  op_wise: {
+             'MobilenetV3/expanded_conv_3/project/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV3/expanded_conv_1/expand/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             },
+             'MobilenetV3/Conv/Conv2D': {
+               'activation':  {'dtype': ['fp32']},
+             }
+           }
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
