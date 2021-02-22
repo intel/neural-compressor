@@ -620,12 +620,10 @@ class TensorflowImageFolder(ImageFolder):
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
     """Configuration for Imagenet dataset."""
-    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
-        assert subset in ('validation', 'train'), \
-            'only support subset (validation, train)'
+    def __new__(cls, root, transform=None, filter=None):
 
         from tensorflow.python.platform import gfile # pylint: disable=no-name-in-module
-        glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
+        glob_pattern = os.path.join(root, '*-*-of-*')
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
             raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
@@ -633,9 +631,7 @@ class TensorflowImageRecord(IterableDataset):
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
-        ds = ds.apply(
-            parallel_interleave(
-                tf.data.TFRecordDataset, cycle_length=num_cores))
+        ds = ds.apply(parallel_interleave(tf.data.TFRecordDataset, cycle_length=28))
         if transform is not None:
             ds = ds.map(transform, num_parallel_calls=None)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned

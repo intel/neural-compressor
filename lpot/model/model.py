@@ -174,10 +174,11 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     if not isinstance(model, tf.keras.Model):
         model = tf.keras.models.load_model(model)
     kwargs = dict(zip(model.input_names, model.inputs))
-    from tensorflow.python.keras.engine import keras_tensor
-    if keras_tensor.keras_tensors_enabled():
-        for name, tensor in kwargs.items():
-            kwargs[name] = tensor.type_spec 
+    if tf.version.VERSION > '2.2.0':
+        from tensorflow.python.keras.engine import keras_tensor
+        if keras_tensor.keras_tensors_enabled():
+            for name, tensor in kwargs.items():
+                kwargs[name] = tensor.type_spec 
     full_model = tf.function(lambda **kwargs: model(kwargs.values()))
     concrete_function = full_model.get_concrete_function(**kwargs)
     frozen_model = convert_variables_to_constants_v2(concrete_function)
