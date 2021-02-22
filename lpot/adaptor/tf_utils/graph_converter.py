@@ -196,10 +196,21 @@ class GraphConverter:
         :return:
         """
         model = self._tmp_model
+
         if len(self.op_wise_config) > 0:
             model = self.quantize()
+
         if len(self.bf16_ops) > 0:
             model = self.bf16_convert()
+
+        post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
+        post_cse_graph_def.library.CopyFrom(self.model.graph_def.library)
+        model.graph_def = post_cse_graph_def
+
+        if self.debug:
+            model.save(self.output_graph)
+            self.logger.info('Converted graph file is saved to: %s', self.output_graph)
+
         return model
 
     def _get_fp32_print_node_names(self, specified_op_list):
@@ -531,8 +542,8 @@ class GraphConverter:
             self._tmp_graph_def = ScaleProPagationTransformer(
                 self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if self.debug:
+            self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_frozen_range_model_path)
 
@@ -566,8 +577,6 @@ class GraphConverter:
         self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(
             self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = PostCseOptimizer(self._tmp_graph_def).do_transformation()
-
         if self.advance_config is not None and \
            deep_get(self.advance_config, 'bias_correction') is not None:
             self._tmp_graph_def = BiasCorrection(
@@ -576,9 +585,6 @@ class GraphConverter:
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         self._tmp_model.graph_def = self._tmp_graph_def
-        if self.debug:
-            self._tmp_model.save(self.output_graph)
-            self.logger.info('Converted graph file is saved to: %s', self.output_graph)
 
     def _post_clean(self):
         """Delete the temporarily files generated during the quantization process.

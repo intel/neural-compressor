@@ -150,10 +150,9 @@ class BF16Convert(GraphRewriterBase):
             each_input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
                 each_input)]
             each_input_node = each_input_detail.node
+
             # Const + Cast => Const optimization
-            # FIXME Added the checker for const node to check its a shared node or not.
-            # We only do cast on those const nodes which are not sharable.
-            if each_input_node.op == "Const" and len(each_input_detail.outputs) == 1:
+            if each_input_node.op == "Const":
                 if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(
                         type=dtypes.float32.as_datatype_enum):
                     fp32_value = tensor_util.MakeNdarray(each_input_node.attr.get('value').tensor)
@@ -161,7 +160,8 @@ class BF16Convert(GraphRewriterBase):
                     each_input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(
                             fp32_value, dtypes.bfloat16, fp32_value.shape)))
-                self.converted_ops.append(each_input)
+                    self.converted_ops.append(each_input)
+
             # Cast + Cast => O optimization
             elif (each_input_node.op == "Cast" and
                   each_input_node.attr["SrcT"] == attr_value_pb2.AttrValue(
@@ -260,5 +260,4 @@ class BF16Convert(GraphRewriterBase):
         :return: Transformed graph
         """
         self._model_bf16_convert()
-
         return self.cur_graph.dump_graph()
