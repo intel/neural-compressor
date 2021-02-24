@@ -1342,9 +1342,9 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
 @transform_registry(transform_type="SquadV1PostTransform", \
                 process="postprocess", framework="tensorflow")
 class SquadV1PostTransform(Transform):
-    def __init__(self, input_file, vocab_file, n_best_size=20, max_seq_length=384, \
+    def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
-        self.eval_examples = read_squad_examples(input_file)
+        self.eval_examples = read_squad_examples(label_file)
         tokenizer = tokenization.FullTokenizer(
             vocab_file=vocab_file, do_lower_case=do_lower_case)
 

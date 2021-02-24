@@ -191,10 +191,17 @@ transform_schema = Schema({
     Optional('Transpose'): {
         'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
     },
+    Optional('SquadV1PreTransform'): {
+        'vocab_file': str
+    },
 })
 
 postprocess_schema = Schema({
     Optional('LabelShift'):  And(int, lambda s: s > 0),
+    Optional('SquadV1PostTransform'): {
+        'label_file': str,
+        'vocab_file': str
+    },
 })
 
 dataset_schema = Schema({
@@ -338,6 +345,7 @@ schema = Schema({
                 Optional('COCOmAP'): {
                     Optional('anno_path'): str
                 },
+                Optional('SquadF1'): Or({}, None), 
                 Optional('MSE'): {
                     Optional('compare_label'): bool
                 },
