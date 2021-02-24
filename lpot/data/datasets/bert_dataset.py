@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .dataset import dataset_registry, Dataset
+from .dataset import dataset_registry, Dataset, TFInGraphDataset
 
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
@@ -68,3 +68,22 @@ class BertDataset(Dataset):
             example_indices = sample[3]
             sample = (inputs, example_indices)
         return sample
+
+@dataset_registry(dataset_type="bert", framework="tensorflow", dataset_format='')
+class TensorflowInGraphDataset(TFInGraphDataset):
+    def __init__(self, root, label_file, task='squad', transform=None, filter=None):
+        import json
+        with open(label_file) as lf:
+            label_json = json.load(lf)
+            assert label_json['version'] == '1.1', 'only support squad 1.1'
+            self.label = label_json['data']
+        self.root = root
+        self.transform = transform
+        self.filter = filter
+
+    def __getitem__(self, index):
+        return self.root, self.label
+
+    def __len__(self):
+        return 1
+

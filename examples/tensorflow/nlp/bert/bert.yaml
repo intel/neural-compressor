@@ -19,9 +19,30 @@ model:
   inputs: input_file, batch_size
   outputs: IteratorGetNext:3, unstack:0, unstack:1
 
+evaluation:
+  accuracy:
+    metric:
+      SquadF1:
+    dataloader:
+      dataset:
+        bert:
+          root: /path/to/eval.tf_record
+          label_file: /path/to/dev-v1.1.json
+      batch_size: 8
+    postprocess:
+      transform:
+        SquadV1PostTransform:
+          label_file: /path/to/dev-v1.1.json
+          vocab_file: /path/to/vocab.txt
 quantization:            
   calibration:
     sampling_size: 500
+    dataloader:
+      dataset:
+        bert:
+          root: /path/to/eval.tf_record
+          label_file: /path/to/dev-v1.1.json
+      batch_size: 8
   model_wise:
     weight:
       granularity: per_channel

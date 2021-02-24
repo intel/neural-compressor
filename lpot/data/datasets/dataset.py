@@ -180,6 +180,15 @@ class Dataset(object):
     # def __len__(self):
     #     raise NotImplementedError
 
+class TFInGraphDataset(object):
+    """ The base class of in-graph-dataset. Subclass datasets should overwrite two methods:
+    `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
+
+    """
+
+    @abstractmethod
+    def __getitem__(self, index):
+        raise NotImplementedError
 
 class IterableDataset(object):
     """An iterable Dataset. Subclass iterable dataset should aslo implement a method:
@@ -633,10 +642,12 @@ class TensorflowTFRecordDataset(IterableDataset):
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
     """Configuration for Imagenet dataset."""
-    def __new__(cls, root, transform=None, filter=None):
+    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
+        assert subset in ('validation', 'train'), \
+            'only support subset (validation, train)'
 
         from tensorflow.python.platform import gfile # pylint: disable=no-name-in-module
-        glob_pattern = os.path.join(root, '*-*-of-*')
+        glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
             raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
@@ -646,6 +657,7 @@ class TensorflowImageRecord(IterableDataset):
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
         ds = ds.apply(parallel_interleave(
                 tf.data.TFRecordDataset, cycle_length=len(file_names)))
+
         if transform is not None:
             ds = ds.map(transform, num_parallel_calls=None)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned

@@ -20,10 +20,11 @@ from abc import abstractmethod
 import collections
 import numpy as np
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
-from .default_dataloader import DefaultDataLoader
+from .default_dataloader import DefaultDataLoader, TensorflowInGraphDataLoader
 from .base_dataloader import BaseDataLoader
 
 tf = LazyImport('tensorflow')
+lpot = LazyImport('lpot')
 
 
 class TensorflowDataLoader(BaseDataLoader):
@@ -37,6 +38,12 @@ class TensorflowDataLoader(BaseDataLoader):
 
         if isinstance(dataset, tf.data.Dataset):
             return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
+        elif isinstance(dataset, lpot.data.TFInGraphDataset):
+            def collate_fn(batch):
+                elem = batch[0]
+                return elem
+            return TensorflowInGraphDataLoader(dataset, batch_size, last_batch,
+                        collate_fn, sampler, batch_sampler, num_workers, pin_memory)
         else:
             return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
                                      sampler, batch_sampler, num_workers, pin_memory)
