@@ -642,12 +642,10 @@ class TensorflowTFRecordDataset(IterableDataset):
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
     """Configuration for Imagenet dataset."""
-    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
-        assert subset in ('validation', 'train'), \
-            'only support subset (validation, train)'
+    def __new__(cls, root, transform=None, filter=None):
 
         from tensorflow.python.platform import gfile # pylint: disable=no-name-in-module
-        glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
+        glob_pattern = os.path.join(root, '*-*-of-*')
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
             raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
