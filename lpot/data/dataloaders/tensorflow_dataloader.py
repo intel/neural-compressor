@@ -98,13 +98,13 @@ class TensorflowBertDataLoader(DefaultDataLoader):
             except StopIteration:
                 return
 
-class TensorflowDataLoader(object):
+class TensorflowDataLoader(BaseDataLoader):
     """DataLoader for frameework Tensorflow, if it's a tf.data.Dataset we will directly use
        the dataloader in the other case will use DefaultDataLoader instead.
 
     """
 
-    def __new__(self, dataset, batch_size, last_batch, collate_fn, \
+    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, \
                 sampler, batch_sampler, num_workers, pin_memory):
 
         if isinstance(dataset, tf.data.Dataset):
