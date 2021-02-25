@@ -620,8 +620,11 @@ class TensorflowTFRecordDataset(IterableDataset):
     def __new__(cls, root, transform=None, filter=None):
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
-        ds = tf.data.TFRecordDataset.list_files(root, shuffle=False)
-        ds = ds.apply(parallel_interleave(tf.data.TFRecordDataset, cycle_length=28))
+        from tensorflow.python.platform import gfile
+        file_names = gfile.Glob(root)
+        ds = tf.data.Dataset.from_tensor_slices(file_names)
+        ds = ds.apply(parallel_interleave(
+                tf.data.TFRecordDataset, cycle_length=len(file_names)))
         if transform is not None:
             ds = ds.map(transform, num_parallel_calls=None)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
@@ -641,7 +644,8 @@ class TensorflowImageRecord(IterableDataset):
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
-        ds = ds.apply(parallel_interleave(tf.data.TFRecordDataset, cycle_length=28))
+        ds = ds.apply(parallel_interleave(
+                tf.data.TFRecordDataset, cycle_length=len(file_names)))
         if transform is not None:
             ds = ds.map(transform, num_parallel_calls=None)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
