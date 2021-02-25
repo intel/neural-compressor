@@ -52,7 +52,6 @@ class TensorflowTransforms(BaseTransforms):
 
     def _get_preprocess(self):
         preprocess = {
-            "ConvertImageDtype": TensorflowWrapFunction(tf.image.convert_image_dtype),
             "CropToBoundingBox": TensorflowWrapFunction(tf.image.crop_to_bounding_box),
             "RandomHorizontalFlip": TensorflowWrapFunction(tf.image.random_flip_left_right),
             "RandomVerticalFlip": TensorflowWrapFunction(tf.image.random_flip_up_down),
@@ -113,8 +112,6 @@ class PyTorchTransforms(BaseTransforms):
                 torchvision.transforms.ToTensor),
             "ToPILImage": PytorchMxnetWrapFunction(
                 torchvision.transforms.ToPILImage),
-            "Normalize": PytorchMxnetWrapFunction(
-                torchvision.transforms.Normalize),
             "CenterCrop": PytorchMxnetWrapFunction(
                 torchvision.transforms.CenterCrop),
             "RandomCrop": PytorchMxnetWrapFunction(
@@ -371,6 +368,27 @@ class ToArray(Transform):
         else:
             raise ValueError("Unknown image type!")
         return (image, label)
+
+@transform_registry(transform_type="Cast",
+                    process="general", framework="tensorflow")
+class CastTFTransform(Transform):
+    def __init__(self, dtype='float32'):
+        dtype_map = {'int8': tf.int8, 'uint8': tf.uint8, 'uint16': tf.uint16, 
+                     'uint32':tf.uint32, 'uint64': tf.uint64, 'int16': tf.int16, 
+                     'int32': tf.int32, 'int64':tf.int64, 'float32': tf.float32, 
+                     'float16': tf.float16, 'float64':tf.float64, 'bool': tf.bool, 
+                     'string': tf.string, 'qint8': tf.qint8, 'quint8': tf.quint8, 
+                     'qint16': tf.qint16, 'quint16': tf.quint16, 'qint32': tf.qint32, 
+                     'resource': tf.resource, 'variant': tf.variant, 'bfloat16': tf.bfloat16, 
+                     'complex64': tf.complex64, 'complex128': tf.complex128}
+        assert dtype in dtype_map.keys(), 'Unknown dtype'
+        self.dtype = dtype_map[dtype]
+
+    def __call__(self, sample):
+        image, label = sample
+        image = tf.image.convert_image_dtype(image, dtype=self.dtype)
+        return (image, label)
+
 
 @transform_registry(transform_type="CenterCrop",
                     process="preprocess", framework="tensorflow")
@@ -803,7 +821,6 @@ class MXNetCropResizeTransform(Transform):
                                 self.height, self.size, self.interpolation)
         return (transformer(image), label)
 
-
 @transform_registry(transform_type="CropResize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
 class CropResizeTransform(Transform):
@@ -881,6 +898,14 @@ class MXNetNormalizeTransform(Transform):
         image = mx.ndarray.transpose(image, axes)
         return (image, label)
 
+@transform_registry(transform_type="Normalize", process="preprocess", framework="pytorch")
+class PyTorchNormalizeTransform(MXNetNormalizeTransform):
+    def __call__(self, sample):
+        image, label = sample
+        transformer = torchvision.transforms.Normalize(self.mean, self.std)
+        image = transformer(image)
+        return (image, label)
+
 @transform_registry(transform_type="Normalize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
 class NormalizeTransform(Transform):
@@ -896,7 +921,6 @@ class NormalizeTransform(Transform):
         assert len(self.mean) == image.shape[-1], 'Mean channel must match image channel'
         image = (image - self.mean) / self.std
         return (image, label)
-
 
 @transform_registry(transform_type="RandomCrop", process="preprocess", \
                 framework="mxnet, onnxrt_qlinearops, onnxrt_integerops")

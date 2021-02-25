@@ -34,9 +34,7 @@ glob = LazyImport('glob')
 @singleton
 class TensorflowDatasets(object):
     def __init__(self):
-        self.datasets = {
-            "TFRecordDataset": tf.data.TFRecordDataset,
-        }
+        self.datasets = {}
         self.datasets.update(TENSORFLOW_DATASETS)
 
 
@@ -616,6 +614,18 @@ class TensorflowImageFolder(ImageFolder):
             elif type(image).__name__ == 'EagerTensor':
                 image = image.numpy()
             return (image, label)
+
+@dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow", dataset_format='')
+class TensorflowTFRecordDataset(IterableDataset):
+    def __new__(cls, root, transform=None, filter=None):
+        # pylint: disable=no-name-in-module
+        from tensorflow.python.data.experimental import parallel_interleave
+        ds = tf.data.TFRecordDataset.list_files(root, shuffle=False)
+        ds = ds.apply(parallel_interleave(tf.data.TFRecordDataset, cycle_length=28))
+        if transform is not None:
+            ds = ds.map(transform, num_parallel_calls=None)
+        ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
+        return ds
 
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow", dataset_format='')
 class TensorflowImageRecord(IterableDataset):

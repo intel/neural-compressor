@@ -410,6 +410,44 @@ class TestDataloader(unittest.TestCase):
             self.assertEqual(image[0].size, (100,100))
         shutil.rmtree('val')
 
+    def test_coco_record(self):
+        import tensorflow as tf
+        tf.compat.v1.disable_eager_execution()
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test.jpeg')
+
+        image = tf.compat.v1.gfile.FastGFile('test.jpeg','rb').read()
+        source_id = '000000397133.jpg'.encode('utf-8')
+        label = 'person'.encode('utf-8')
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'image/encoded':tf.train.Feature(
+                bytes_list=tf.train.BytesList(value=[image])),
+            'image/object/class/text':tf.train.Feature(
+                bytes_list=tf.train.BytesList(value=[label])),
+            'image/source_id':tf.train.Feature(
+                bytes_list=tf.train.BytesList(value=[source_id])),
+            'image/object/bbox/xmin':tf.train.Feature(
+                float_list=tf.train.FloatList(value=[10])),
+            'image/object/bbox/ymin':tf.train.Feature(
+                float_list=tf.train.FloatList(value=[10])),
+            'image/object/bbox/xmax':tf.train.Feature(
+                float_list=tf.train.FloatList(value=[100])),
+            'image/object/bbox/ymax':tf.train.Feature(
+                float_list=tf.train.FloatList(value=[100])),
+        }))
+
+        with tf.io.TFRecordWriter('test.record') as writer:
+            writer.write(example.SerializeToString())
+        eval_dataset = create_dataset(
+            'tensorflow', {'TFRecordDataset':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, None)
+        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1)
+        for (inputs, labels) in dataloader:
+            self.assertEqual(labels[0].shape, (1,1,4))
+        os.remove('test.record')
+        os.remove('test.jpeg')
+
     def test_coco_raw(self):
         import json
         import collections

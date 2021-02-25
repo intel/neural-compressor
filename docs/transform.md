@@ -4,67 +4,84 @@ LPOT supports builtin preprocessing methods on diffrent framework backend. Pleae
 
 ## Transform support list
 
-### Tensorflow
+### TensorFlow
 
-| Type                | Parameters                            | Inputs        | Outputs      |
-| :------             | :------                               | :------       | :------      |
-| Resize              | size (list)                            | image, label  | image, label |
-| CenterCrop          | central_fraction (float)               | image, label  | image, label |
-| RandomResizedCrop   | size (list)                            | image, label  | image, label |
-| Normalize           | mean (list)<br>std (list)               | image, label  | image, label |
-| RandomCrop          | size (list)                            | image, label  | image, label |
-| Compose             | None                                  | image, label  | image, label |
-| CropAndResize       | boxes (list)<br>box_indices (list)<br>crop_size (list)| image, label  | image, label |
-| RandomHorizontalFlip| None                                  | image, label  | image, label |
-| RandomVerticalFlip  | None                                  | image, label  | image, label |
-| DecodeImage         | None                                  | contents(str), label| image, label |
-| EncodeJped          | None                                  | image, label  | Tensor(str), label|
-| Transpose           | perm (list)                            | image, label  | image, label |
-| CropToBoundingBox   | offset_height (int)<br>offset_width (int)<br>target_height (int)<br>target_width (int)| image, label  | image, label |
-| ConvertImageDtype   | dtype (Dtype)                          | image, label  | image, label |
-
+| Type | Parameters |
+| :------ | :------ |
+| Resize | size (list or int): Size of the result <br> interpolation(str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| CenterCrop | size (list or int): Size of the result |
+| RandomResizedCrop | size (list or int): Size of the result <br> scale (tuple, default=(0.08, 1.0)):range of size of the origin size cropped <br> ratio (tuple, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest' |
+| Normalize | mean (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> std (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape |
+| RandomCrop | size (list or int): Size of the result |
+| Compose | transform_list (list of Transform objects):  list of transforms to compose |
+| CropResize | x (int):Left boundary of the cropping area <br> y (int):Top boundary of the cropping area <br> width (int):Width of the cropping area <br> height (int):Height of the cropping area <br> size (list or int): resize to new size after cropping <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest' |
+| RandomHorizontalFlip | None |
+| RandomVerticalFlip | None |
+| DecodeImage | None |
+| EncodeJped | None |
+| Transpose | perm (list): A permutation of the dimensions of input image |
+| CropToBoundingBox | offset_height (int): Vertical coordinate of the top-left corner of the result in the input <br> offset_width (int): Horizontal coordinate of the top-left corner of the result in the input <br> target_height (int): Height of the result <br> target_width (int): Width of the result |
+| Cast | dtype(str, default='float32'): A dtype to convert image to |
+| ToArray | None |
+| Rescale | None |
+| AlignImageChannel | dim (int): The channel number of result image |
+| ParseDecodeImagenet | None | 
+| ResizeCropImagenet | height: Height of the result <br> width: Width of the result <br> random_crop(bool, default=False): whether to random crop <br> resize_side(int, default=256):desired shape after resize operation <br> random_flip_left_right(bool, default=False): whether to random flip left and right <br> mean_value(list, default=[0.0,0.0,0.0]):means for each channel <br> scale(float, default=1.0):std value |
+| QuantizedInput | dtype(str): desired image dtype, support 'uint8', 'int8' <br> scale(float, default=None):scaling ratio of each point in image | 
+| LabelShift | label_shift(int, default=0): number of label shift |
+| BilinearImagenet | height: Height of the result <br> width:Width of the result <br> central_fraction(float, default=0.875):fraction of size to crop <br> mean_value(list, default=[0.0,0.0,0.0]):means for each channel <br> scale(float, default=1.0):std value |
+| ParseDecodeCoco | None|
 
 ### Pytorch
 
-| Type                  | Parameters                | Inputs        | Outputs      |
-| ------                | :------                   | :------       | :------      |
-| Resize                | size (list or int)         | image, label  | image, label |
-| CenterCrop            | size (list or int)         | image, label  | image, label |
-| RandomResizedCrop     | size (list or int)         | image, label  | image, label |
-| Normalize             | mean (list)<br>std (list)   | image, label  | image, label |
-| RandomCrop            | size (list or int)         | image, label  | image, label |
-| Compose               | None                      | transform_list| None         |
-| RandomHorizontalFlip  | None                      | image, label  | image, label |
-| RandomVerticalFlip    | None                      | image, label  | image, label |
-| ToTensor              | None                      | image, label  | image, label |
-| ToPILImage            | None                      | image, label  | image, label |
-| Pad                   | padding (int or tuple or list)| image, label  | image, label |
-| ColorJitter           | brightness (float or tuple)<br>contrast (float or tuple)<br>saturation (float or tuple)<br>hue (float or tuple)| image, label  | image, label |
+| Type | Parameters |
+| :------ | :------ |
+| Resize | size (list or int): Size of the result <br> interpolation(str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| CenterCrop | size (list or int): Size of the result|
+| RandomResizedCrop | size (list or int): Size of the result <br> scale (tuple, default=(0.08, 1.0)):range of size of the origin size cropped <br> ratio (tuple, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| Normalize | mean (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> std (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape |
+| RandomCrop | size (list or int): Size of the result |
+| Compose | transform_list (list of Transform objects):  list of transforms to compose |
+| RandomHorizontalFlip | None |
+| RandomVerticalFlip | None |
+| ToTensor | None |
+| ToPILImage | None |
+| Pad | padding  (int or tuple or list): Padding on each border <br> fill (int or str or tuple): Pixel fill value for constant fill. Default is 0 <br> padding_mode (str): Type of padding. Should be: constant, edge, reflect or symmetric. Default is constant |
+| ColorJitter | brightness (float or tuple of python:float (min, max)): How much to jitter brightness. Default is 0 <br> contrast (float or tuple of python:float (min, max)): How much to jitter contrast. Default is 0 <br> saturation (float or tuple of python:float (min, max)): How much to jitter saturation. Default is 0 <br> hue (float or tuple of python:float (min, max)): How much to jitter hue. Default is 0 |
+| ToArray | None |
+| CropResize | x (int):Left boundary of the cropping area <br> y (int):Top boundary of the cropping area <br> width (int):Width of the cropping area <br> height (int):Height of the cropping area <br> size (list or int): resize to new size after cropping <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
 
-### Mxnet
+### MXNet
 
-| Type                  | Parameters             | Inputs        | Outputs      |
-| ------                | :------                | :------       | :------      |
-| Resize                | size (tuple or int)     | image, label  | image, label |
-| CenterCrop            | size (tuple or int)     | image, label  | image, label |
-| RandomResizedCrop     | size (tuple or int)     | image, label  | image, label |
-| Normalize             | mean (tuple or float)<br>std (tuple or float) | image, label | image, label |
-| RandomCrop            | size (tuple or int)     | image, label  | image, label |
-| Compose               | None                   | transform_list| None         |
-| CropResize            | x (int)<br>y (int)<br>w (int)<br>h (int)   | image, label | image, label |
-| RandomHorizontalFlip  | None                   | image, label  | image, label |
-| RandomVerticalFlip    | None                   | image, label  | image, label |
-| ToTensor              | None                   | image, label  | image, label |
-| Cast                  | dtype (str)             | image, label  | image, label |
+| Type | Parameters |
+| :------ | :------ |
+| Resize | size (list or int): Size of the result <br> interpolation(str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| CenterCrop | size (list or int): Size of the result|
+| RandomResizedCrop | size (list or int): Size of the result <br> scale (tuple, default=(0.08, 1.0)):range of size of the origin size cropped <br> ratio (tuple, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| Normalize | mean (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> std (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape |
+| RandomCrop | size (list or int): Size of the result |
+| Compose | transform_list (list of Transform objects):  list of transforms to compose |
+| CropResize | x (int):Left boundary of the cropping area <br> y (int):Top boundary of the cropping area <br> width (int):Width of the cropping area <br> height (int):Height of the cropping area <br> size (list or int): resize to new size after cropping <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| RandomHorizontalFlip | None |
+| RandomVerticalFlip | None |
+| ToTensor | None |
+| Cast | dtype (str, default ='float32') :The target data type |
+| Transpose | perm (list): A permutation of the dimensions of input image |
 
-### Onnxrt
+### ONNXRT
 
-| Type                  | Parameters              | Inputs        | Outputs      |
-| ------                | :------                 | :------       | :------      |
-| Resize                | size (list)              | image, label  | image, label |
-| CenterCrop            | size (list)              | image, label  | image, label |
-| RandomResizedCrop     | size (list)              | image, label  | image, label |
-| Normalize             | mean (list)<br>std (list) | image, label  | image, label |
-| RandomCrop            | size (list)              | image, label  | image, label |
-| Compose               | None                    | transform_list| None         |
-| ImageTypeParse        | None                    | image, label  | image, label |
+| Type | Parameters | 
+| :------ | :------ |
+| Resize | size (list or int): Size of the result <br> interpolation(str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' |
+| CenterCrop | size (list or int): Size of the result|
+| RandomResizedCrop | size (list or int): Size of the result <br> scale (tuple, default=(0.08, 1.0)):range of size of the origin size cropped <br> ratio (tuple, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest' |
+| Normalize | mean (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> std (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape |
+| RandomCrop | size (list or int): Size of the result |
+| Compose | transform_list (list of Transform objects):  list of transforms to compose |
+| CropResize | x (int):Left boundary of the cropping area <br> y (int):Top boundary of the cropping area <br> width (int):Width of the cropping area <br> height (int):Height of the cropping area <br> size (list or int): resize to new size after cropping <br> interpolation (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest' |
+| RandomHorizontalFlip | None |
+| RandomVerticalFlip | None |
+| ToArray | None |
+| Rescale | None |
+| AlignImageChannel | dim (int): The channel number of result image |
+| ResizeCropImagenet | height: Height of the result <br> width: Width of the result <br> random_crop(bool, default=False): whether to random crop <br> resize_side(int, default=256):desired shape after resize operation <br> random_flip_left_right(bool, default=False): whether to random flip left and right <br> mean_value(list, default=[0.0,0.0,0.0]):means for each channel <br> scale(float, default=1.0):std value |

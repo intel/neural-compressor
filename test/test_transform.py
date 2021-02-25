@@ -138,6 +138,22 @@ class TestSameTransfoms(unittest.TestCase):
         _ = TRANSFORMS('onnxrt_qlinearops' , 'postprocess')
         _ = TRANSFORMS('onnxrt_integerops', 'postprocess')
 
+    def testCast(self):
+        args = {'dtype': 'int64'}
+        tf_func = TestSameTransfoms.tf_trans['Cast'](**args)
+        tf_result = tf_func((TestSameTransfoms.img, None))
+        tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
+        self.assertEqual(tf_result[0][0][0].dtype, 'int64')
+ 
+    def testNormalize(self):
+        args = {}
+        normalize = TestSameTransfoms.pt_trans['Normalize'](**args)
+        totensor = TestSameTransfoms.pt_trans['ToTensor']()
+        pt_func = TestSameTransfoms.pt_trans['Compose']([totensor, normalize])
+        pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
+        self.assertEqual(TestSameTransfoms.img.astype(
+                np.uint8)[0][0][0]/255., pt_result[0][0][0])
+
     def testRescale(self):
         ox_func = TestSameTransfoms.ox_trans['Rescale']()
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
