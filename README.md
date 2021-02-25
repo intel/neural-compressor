@@ -26,6 +26,18 @@ Supported Intel optimized DL frameworks are:
 
 
 # Installation
+
+The Intel® LPOT library is released as part of
+[Intel® AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+The toolkit provides a consolidated package of Intel's latest deep learning and
+machine optimizations all in one place for ease of development.  Along with
+LPOT, the toolkit includes Intel-optimized versions of deep learning frameworks
+(TensorFlow, PyTorch) and high performing Python libraries to streamline
+end-to-end data science and AI workflows on Intel architectures.
+
+You can also download and install just the LPOT library using one of
+the methods described below.
+
 ## Install for Linux
 ### Install from binary
 
@@ -44,6 +56,14 @@ Supported Intel optimized DL frameworks are:
   cd lpot
   python setup.py install
   ```
+### Install Intel AI Analytics Toolkit
+
+The Intel® AI Analytics Toolkit is distributed through many common channels,
+including from Intel's website, YUM, APT, Anaconda, and more.
+[Select and download](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html)
+the toolkit distribution package that's best suited for you and follow the
+[Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html)
+for post-installation instructions.
 
 ## Install for Windows
 ### Install from binary
@@ -87,6 +107,8 @@ python setup.py install
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples. 
 * [Examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: [TensorFlow](examples/tensorflow), [PyTorch](examples/pytorch), [MXNet](examples/mxnet) and [ONNX Runtime](examples/onnxrt).
 * [UX](docs/ux.md) is a web based system to simplify Intel® Low Precision Optimization Tool usage.
+* [Intel AI Analytics Toolkit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) explains the toolkit components, installation and configuration guides, and instructions for building and running sample apps.
+* [AI and Analytics Samples](https://github.com/oneapi-src/oneAPI-samples/tree/master/AI-and-Analytics) includes code samples for Intel oneAPI toolkits
 
 
 # Deep Dive
