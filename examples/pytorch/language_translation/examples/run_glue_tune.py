@@ -508,6 +508,8 @@ def main():
                         help="warmup for performance")
     parser.add_argument('-i', "--iter", default=0, type=int,
                         help='For accuracy measurement only.')
+    parser.add_argument('--config', default='conf.yaml', type=str,
+                        help='yaml config file path') 
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
@@ -669,7 +671,7 @@ def main():
                         model = mkldnn_utils.to_mkldnn(model)
                         print(model)
                     from lpot import Quantization
-                    quantizer = Quantization("./conf.yaml")
+                    quantizer = Quantization(args.config)
                     if eval_task != "squad":
                         eval_task = 'classifier'
                     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,

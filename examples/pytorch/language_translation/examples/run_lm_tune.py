@@ -103,9 +103,15 @@ class TextDataset(Dataset):
 
 class WikiDataset(Dataset):
     def __init__(self, tokenizer, args, file_path='train', block_size=512):
+        if not os.path.exists("./dataset_cached"):
+            os.makedirs("./dataset_cached")
+        cached_features_file = os.path.join("./dataset_cached", 'cached_{}_{}_{}_{}'.format(
+            'dev' if 'test' in file_path else 'train',
+            list(filter(None, args.model_name_or_path.split('/'))).pop(),
+            str(block_size),
+            'wikitext'))
         assert os.path.isfile(file_path)
         directory, filename = os.path.split(file_path)
-        cached_features_file = os.path.join(directory, args.model_name_or_path + '_cached_lm_' + str(block_size) + '_' + filename)
         
         self.tokenizer = tokenizer
         self.args = args
@@ -142,7 +148,7 @@ class WikiDataset(Dataset):
 
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
-    dataset = TextDataset(tokenizer, args, file_path=args.eval_data_file if evaluate else args.train_data_file, block_size=args.block_size)
+    dataset = WikiDataset(tokenizer, args, file_path=args.eval_data_file if evaluate else args.train_data_file, block_size=args.block_size)
     return dataset
 
 
@@ -387,18 +393,14 @@ def evaluate(args, model, tokenizer, prefix=""):
     # Eval!
     logger.info("***** Running evaluation {} *****".format(prefix))
     logger.info("  Num examples = %d", len(eval_dataset))
-    logger.info("  Batch size = %d", args.eval_batch_size)
+    print("  Batch size = %d" % args.eval_batch_size)
     eval_loss = 0.0
     nb_eval_steps = 0
     model.eval()
 
     import timeit
     total_time = 0.0
-    for batch in tqdm(eval_dataloader, desc="Evaluating"):
-        inputs, labels = mask_tokens(batch, tokenizer, args) if args.mlm else (batch, batch)
-        inputs = inputs.to(args.device)
-        labels = labels.to(args.device)
-
+    for inputs, labels in tqdm(eval_dataloader, desc="Evaluating"):
         with torch.no_grad():
             if nb_eval_steps >= args.warmup_steps:
                 start = timeit.default_timer()
@@ -408,6 +410,9 @@ def evaluate(args, model, tokenizer, prefix=""):
             lm_loss = outputs[0]
             eval_loss += lm_loss.mean().item()
         nb_eval_steps += 1
+
+        if args.iter > 0 and nb_eval_steps > (args.warmup_steps + args.iter):
+            break
 
     if nb_eval_steps >= args.warmup_steps:
         perf = (nb_eval_steps - args.warmup_steps) * args.eval_batch_size / total_time
@@ -422,13 +427,10 @@ def evaluate(args, model, tokenizer, prefix=""):
     result = {
         "perplexity": perplexity
     }
-
-    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
-    with open(output_eval_file, "w") as writer:
-        logger.info("***** Eval results {} *****".format(prefix))
-        for key in sorted(result.keys()):
-            logger.info("  %s = %s", key, str(result[key]))
-            writer.write("%s = %s\n" % (key, str(result[key])))
+    print("Accuracy: %.5f" % (100 - perplexity))
+    logger.info("***** Eval results {} *****".format(prefix))
+    for key in sorted(result.keys()):
+        logger.info("  %s = %s", key, str(result[key]))
 
     return result
 
@@ -524,9 +526,18 @@ def main():
     parser.add_argument('--server_port', type=str, default='', help="For distant debugging.")
     parser.add_argument("--tune", action='store_true',
                         help="run Low Precision Optimization Tool to tune int8 acc.")
+    parser.add_argument('-i', "--iter", default=0, type=int,
+                        help='For accuracy measurement only.')
+    parser.add_argument('--config', type=str, default='conf.yaml', help="yaml config file")
     parser.add_argument("--do_fp32_inference", action='store_true',
                         help="Whether to run fp32 inference.")
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                        help='run benchmark')
+    parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
+                        help='For accuracy measurement only.')
+    parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
+                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+    parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
     args = parser.parse_args()
 
@@ -627,7 +638,6 @@ def main():
         tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
         model.to(args.device)
 
-
     # Evaluation
     results = {}
     if args.do_eval and args.local_rank in [-1, 0]:
@@ -650,23 +660,24 @@ def main():
             if args.tune:
                 def eval_func_for_lpot(model):
                     result = evaluate(args, model, tokenizer, prefix=prefix)
-                    return result['perplexity'].numpy()
+                    return 100 - result['perplexity'].numpy()
 
                 model = model_class.from_pretrained(checkpoint)
                 model.to(args.device)
                 model.eval()
 
                 from lpot import Quantization
-                quantizer = Quantization("./conf.yaml")
+                quantizer = Quantization(args.config)
                 eval_dataset = WikiDataset(tokenizer, args, file_path=args.eval_data_file if evaluate else args.train_data_file, block_size=args.block_size)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 # Note that DistributedSampler samples randomly
                 eval_sampler = SequentialSampler(eval_dataset)
                 eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-                quantizer(model, eval_dataloader, eval_func=eval_func_for_lpot)
+                q_model = quantizer(model, eval_dataloader, eval_func=eval_func_for_lpot)
+                q_model.save(args.tuned_checkpoint)
                 exit(0)
 
-            if args.benchmark:
+            if args.benchmark or args.accuracy_only:
                 model = model_class.from_pretrained(checkpoint, mix_qkv=True)
                 model.to(args.device)
 

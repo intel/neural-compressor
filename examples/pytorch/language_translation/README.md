@@ -51,6 +51,7 @@ This document is used to list steps of reproducing PyTorch BERT tuning zoo resul
    * Before running any of these GLUE tasks you should download the [GLUE data](https://gluebenchmark.com/tasks) by running
 [this script](https://gist.github.com/W4ngatang/60c2bdb54d156a41194446737ce03e2e) and unpack it to some directory `$GLUE_DIR`.
    * For SQuAD task, you should download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/)
+   * For language model, you should get a file that contains text on which the language model will be fine-tuned. A good example of such text is the [WikiText-2 dataset](https://blog.einstein.ai/the-wikitext-long-term-dependency-language-modeling-dataset/).
 
 ### 3. Prepare pretrained model
   Before use Intel® Low Precision Optimization Tool, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
@@ -60,6 +61,7 @@ This document is used to list steps of reproducing PyTorch BERT tuning zoo resul
   pip install -r examples/requirements.txt
   ```
 
+  #### BERT
    * For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)  
 
   ```shell
@@ -156,6 +158,65 @@ please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tunin
 
   * After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
 
+#### GPT
+
+Please download [WikiText-2 dataset](https://blog.einstein.ai/the-wikitext-long-term-dependency-language-modeling-dataset/). We will refer to two different files: `$TRAIN_FILE`, which contains text for training, and `$TEST_FILE`, which contains text that will be used for evaluation.
+```bash
+  cd examples/pytorch/language_translation
+  export TRAIN_FILE=/path/to/dataset/wiki.train.raw
+  export TEST_FILE=/path/to/dataset/wiki.test.raw
+
+  python examples/run_lm_tune.py \
+      --model_type=openai-gpt \
+      --model_name_or_path=openai-gpt \
+      --do_train \
+      --train_data_file=$TRAIN_FILE \
+      --do_eval \
+      --eval_data_file=$TEST_FILE \
+      --output_dir=/path/to/gpt/checkpoint/dir
+  ```
+
+
+#### RoBERTa
+```bash
+  export GLUE_DIR=/path/to/glue
+  export TASK_NAME=MRPC
+  
+  cd examples/pytorch/language_translation
+  python examples/run_glue_tune.py \
+      --model_type roberta \
+      --model_name_or_path roberta-base \
+      --task_name $TASK_NAME \
+      --do_train \
+      --do_eval \
+      --data_dir $GLUE_DIR/$TASK_NAME \
+      --max_seq_length 128 \
+      --per_gpu_eval_batch_size=8  \
+      --per_gpu_train_batch_size=8 \
+      --output_dir /path/to/roberta/checkpoint/dir
+  ```
+
+
+#### CamemBERT
+```bash
+  export GLUE_DIR=/path/to/glue
+  export TASK_NAME=MRPC
+  
+  cd examples/pytorch/language_translation
+  python examples/run_glue_tune.py \
+      --model_type camembert \
+      --model_name_or_path camembert-base \
+      --task_name $TASK_NAME \
+      --do_train \
+      --do_eval \
+      --data_dir $GLUE_DIR/$TASK_NAME \
+      --max_seq_length 128 \
+      --per_gpu_eval_batch_size=8  \
+      --per_gpu_train_batch_size=8 \
+      --output_dir /path/to/camembert/checkpoint/dir
+  ```
+
+
 # Run
 
 ### BERT glue task
@@ -199,6 +260,64 @@ please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tunin
       --tune \
       --output_dir /path/to/checkpoint/dir
   ```
+  Where output_dir is path of checkpoint which be created by fine tuning.
+
+### GPT WikiText
+  ```Shell
+  export TRAIN_FILE=/path/to/dataset/wiki.train.raw
+  export TEST_FILE=/path/to/dataset/wiki.test.raw
+
+  cd examples/pytorch/language_translation
+  python examples/run_lm_tune.py \
+      --model_type openai-gpt \
+      --model_name_or_path /path/to/gpt/checkpoint/dir \
+      --do_eval \
+      --train_data_file=$TRAIN_FILE \
+      --eval_data_file=$TEST_FILE \
+      --no_cuda \
+      --tune \
+      --output_dir /path/to/gpt/checkpoint/dir
+  ```
+  Where output_dir is path of checkpoint which be created by fine tuning.
+
+
+#### RoBERTa glue task
+```bash
+  export GLUE_DIR=/path/to/glue
+  export TASK_NAME=MRPC
+  
+  cd examples/pytorch/language_translation
+  python examples/run_glue_tune.py \
+      --model_type roberta \
+      --model_name_or_path /path/to/roberta/checkpoint/dir \
+      --task_name $TASK_NAME \
+      --do_eval \
+      --data_dir $GLUE_DIR/$TASK_NAME \
+      --max_seq_length 128 \
+      --per_gpu_eval_batch_size=8  \
+      --output_dir /path/to/roberta/checkpoint/dir
+  ```
+  where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
+  Where output_dir is path of checkpoint which be created by fine tuning.
+
+
+#### CamemBERT glue task
+```bash
+  export GLUE_DIR=/path/to/glue
+  export TASK_NAME=MRPC
+  
+  cd examples/pytorch/language_translation
+  python examples/run_glue_tune.py \
+      --model_type camembert \
+      --model_name_or_path /path/to/camembert/checkpoint/dir \
+      --task_name $TASK_NAME \
+      --do_eval \
+      --data_dir $GLUE_DIR/$TASK_NAME \
+      --max_seq_length 128 \
+      --per_gpu_eval_batch_size=8  \
+      --output_dir /path/to/camembert/checkpoint/dir
+  ```
+  where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
   Where output_dir is path of checkpoint which be created by fine tuning.
 
 

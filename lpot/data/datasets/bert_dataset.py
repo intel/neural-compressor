@@ -51,8 +51,8 @@ class BertDataset(Dataset):
 
             if self.model_type != 'distilbert':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
-                inputs['token_type_ids'] = sample[2] if self.model_type in [
-                    'bert', 'xlnet'] else None
+                if self.model_type in ['bert', 'xlnet']:
+                    inputs['token_type_ids'] = sample[2] 
             sample = (inputs, inputs['labels'])
 
         elif self.task == 'squad':
