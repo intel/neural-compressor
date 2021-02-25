@@ -161,7 +161,10 @@ class BF16Convert(GraphRewriterBase):
                         tensor=tensor_util.make_tensor_proto(
                             fp32_value, dtypes.bfloat16, fp32_value.shape)))
                     self.converted_ops.append(each_input)
-
+            elif 'T' in each_input_node.attr and each_input_node.attr['T'] != \
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum) and \
+                    each_input_node.op != 'Dequantize':
+                continue
             # Cast + Cast => O optimization
             elif (each_input_node.op == "Cast" and
                   each_input_node.attr["SrcT"] == attr_value_pb2.AttrValue(
