@@ -506,7 +506,7 @@ class GraphConverter:
         with CaptureOutputToFile(tmp_dump_file):
             self._inference(model)
 
-        with open(tmp_dump_file) as f:
+        with open(tmp_dump_file, errors='ignore') as f:
             output_data.extend(f.readlines())
 
         for line in output_data:

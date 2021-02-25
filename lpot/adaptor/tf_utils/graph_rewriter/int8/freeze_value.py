@@ -25,6 +25,7 @@ from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
+import re
 
 class FreezeValueTransformer(GraphRewriterBase):
     def __init__(self, model, max_min_data, postfix, tensor_data=None, th=0.95, device='gpu'):
@@ -79,8 +80,10 @@ class FreezeValueTransformer(GraphRewriterBase):
         res = {}
         temp = {}
         for i in lines:
-            if i.find(print_suffix + ";" + self.postfix) == -1:
+
+            if not re.search(r"{};{}\[\-?\d+\.?\d*\]".format(print_suffix, self.postfix), i):
                 continue
+
             max_line_data = i.split(';')
             name = max_line_data[1][:-len(print_suffix)]
             value = max_line_data[-1].split('[')[-1].split(']')[0]
@@ -107,8 +110,9 @@ class FreezeValueTransformer(GraphRewriterBase):
         temp_min = {}
         temp_max = {}
         for i in lines:
-            if i.find(print_suffix + ";" + self.postfix) == -1:
+            if not re.search(r"{};{}:\[\-?\d+\.?\d*\]".format(print_suffix, self.postfix), i):
                 continue
+
             max_line_data = i.split(print_suffix + ";" + self.postfix)[-1]
             min_value = max_line_data.split('][')[0].split('[')[1]
             max_value = max_line_data.split('][')[1].split(']')[0]
