@@ -146,11 +146,15 @@ class BF16Convert(GraphRewriterBase):
         bf16_node_detail = self.cur_graph.node_name_details[bf16_node_name]
         bf16_node = bf16_node_detail.node
         bf16_node_inputs = list(bf16_node.input)
+
+        if 'T' in bf16_node.attr and bf16_node.attr['T'] != \
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum) and \
+                    bf16_node.op != 'Dequantize':
+            return
         for each_input in bf16_node_inputs:
             each_input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
                 each_input)]
             each_input_node = each_input_detail.node
-
             # Const + Cast => Const optimization
             if each_input_node.op == "Const":
                 if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(
@@ -263,4 +267,5 @@ class BF16Convert(GraphRewriterBase):
         :return: Transformed graph
         """
         self._model_bf16_convert()
+
         return self.cur_graph.dump_graph()
