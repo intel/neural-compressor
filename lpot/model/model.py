@@ -349,6 +349,8 @@ class TensorflowBaseModel(Model):
         self.sess, self._input_tensor_names, self._output_tensor_names = \
             create_session_with_input_output(graph_def, self._input_tensor_names, \
                 self._output_tensor_names)
+        if self.iter_op:
+            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator') 
 
     @property
     def input_tensor_names(self):

@@ -180,16 +180,6 @@ class Dataset(object):
     # def __len__(self):
     #     raise NotImplementedError
 
-class TFInGraphDataset(object):
-    """ The base class of in-graph-dataset. Subclass datasets should overwrite two methods:
-    `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
-
-    """
-
-    @abstractmethod
-    def __getitem__(self, index):
-        raise NotImplementedError
-
 class IterableDataset(object):
     """An iterable Dataset. Subclass iterable dataset should aslo implement a method:
     `__iter__` for interating over the samples of the dataset.

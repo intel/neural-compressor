@@ -20,33 +20,13 @@ from abc import abstractmethod
 import collections
 import numpy as np
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
-from .default_dataloader import DefaultDataLoader, TensorflowInGraphDataLoader
+from .fetcher import FETCHERS
+from .default_dataloader import DefaultDataLoader
+from ..datasets.bert_dataset import TensorflowBertDataset
 from .base_dataloader import BaseDataLoader
 
 tf = LazyImport('tensorflow')
 lpot = LazyImport('lpot')
-
-
-class TensorflowDataLoader(BaseDataLoader):
-    """DataLoader for frameework Tensorflow, if it's a tf.data.Dataset we will directly use
-       the dataloader in the other case will use DefaultDataLoader instead.
-
-    """
-
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory):
-
-        if isinstance(dataset, tf.data.Dataset):
-            return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
-        elif isinstance(dataset, lpot.data.TFInGraphDataset):
-            def collate_fn(batch):
-                elem = batch[0]
-                return elem
-            return TensorflowInGraphDataLoader(dataset, batch_size, last_batch,
-                        collate_fn, sampler, batch_sampler, num_workers, pin_memory)
-        else:
-            return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
-                                     sampler, batch_sampler, num_workers, pin_memory)
 
 class TFDataDataLoader(BaseDataLoader):
     """In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
@@ -99,3 +79,39 @@ class TFDataDataLoader(BaseDataLoader):
                     data_sess.close()
                     return
 
+class TensorflowBertDataLoader(DefaultDataLoader):
+    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
+                             sampler, batch_sampler, num_workers, pin_memory):
+
+        def bert_collate_fn(batch):
+            elem = batch[0]
+            return elem
+        drop_last = False if last_batch == 'rollover' else True
+        sampler = self._generate_sampler(dataset)
+        self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+        self.fetcher = FETCHERS[self.dataset_type](dataset, bert_collate_fn, drop_last)
+
+        for batched_indices in self.batch_sampler:
+            try:
+                data = self.fetcher(batched_indices)
+                yield (data[0], batch_size), data[1]
+            except StopIteration:
+                return
+
+class TensorflowDataLoader(object):
+    """DataLoader for frameework Tensorflow, if it's a tf.data.Dataset we will directly use
+       the dataloader in the other case will use DefaultDataLoader instead.
+
+    """
+
+    def __new__(self, dataset, batch_size, last_batch, collate_fn, \
+                sampler, batch_sampler, num_workers, pin_memory):
+
+        if isinstance(dataset, tf.data.Dataset):
+            return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
+        elif isinstance(dataset, TensorflowBertDataset):
+            return TensorflowBertDataLoader(dataset, batch_size, last_batch,
+                        collate_fn, sampler, batch_sampler, num_workers, pin_memory)
+        else:
+            return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
+                                     sampler, batch_sampler, num_workers, pin_memory)

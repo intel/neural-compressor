@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .dataset import dataset_registry, Dataset, TFInGraphDataset
+from .dataset import dataset_registry, Dataset
 
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
-class BertDataset(Dataset):
+class PytorchBertDataset(Dataset):
     """Dataset used for model Bert.
        This Dataset is to construct from the Bert TensorDataset and not a full implementation
        from yaml cofig. The original repo link is: https://github.com/huggingface/transformers.
@@ -70,7 +70,7 @@ class BertDataset(Dataset):
         return sample
 
 @dataset_registry(dataset_type="bert", framework="tensorflow", dataset_format='')
-class TensorflowInGraphDataset(TFInGraphDataset):
+class TensorflowBertDataset(Dataset):
     def __init__(self, root, label_file, task='squad', transform=None, filter=None):
         import json
         with open(label_file) as lf:

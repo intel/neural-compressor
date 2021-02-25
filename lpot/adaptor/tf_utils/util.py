@@ -17,7 +17,7 @@
 #
 
 import os
-
+import numpy as np
 from google.protobuf import text_format
 import tensorflow as tf
 
@@ -219,10 +219,15 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
             idx += 1
         except tf.errors.OutOfRangeError:
             break
-        except:
-            logger.warning('not run out of the preds...')
-            break
-    preds = list(zip(*preds))
+
+    def collate_fn(results):
+        results = zip(*results)
+        collate_results = []
+        for output in results:
+           collate_results.append(np.concatenate(output))
+        return collate_results
+
+    preds = collate_fn(preds)
     return preds
 
 def get_input_node_names(graph_def):

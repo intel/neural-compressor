@@ -1339,7 +1339,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
 
             unique_id += 1
 
-@transform_registry(transform_type="SquadV1PostTransform", \
+@transform_registry(transform_type="SquadV1", \
                 process="postprocess", framework="tensorflow")
 class SquadV1PostTransform(Transform):
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
@@ -1368,24 +1368,14 @@ class SquadV1PostTransform(Transform):
 
     def process_result(self, results):
         processed_results = []
-        def result_producer(results):
-            num_examples = results[0][0].shape[0]
-            for i in range(num_examples):
-                yield {
-                    key: value[i]
-                    for key, value in zip(['unique_ids', 'start_logits', 'end_logits'], 
-                        iter(results))
-                }
-        for batch_result in result_producer(results):
-            for result in batch_result:
-                unique_id = int(result["unique_ids"])
-                start_logits = [float(x) for x in result["start_logits"].flat]
-                end_logits = [float(x) for x in result["end_logits"].flat]
-                processed_results.append(
-                    self.RawResult(
-                        unique_id=unique_id,
-                        start_logits=start_logits,
-                        end_logits=end_logits))
+        # notice the result list sequence
+        for unique_id, start_logits, end_logits in zip(*results):
+            processed_results.append(
+                self.RawResult(
+                    unique_id=int(unique_id),
+                    start_logits=[float(x) for x in start_logits.flat],
+                    end_logits=[float(x) for x in end_logits.flat]))
+
         return processed_results
 
     def __call__(self, sample):

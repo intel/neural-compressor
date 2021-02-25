@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .dataset import DATASETS, Dataset, TFInGraphDataset, IterableDataset, dataset_registry
+from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -26,4 +26,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["DATASETS", "Dataset", "TFInGraphDataset", "IterableDataset", "dataset_registry"]
+__all__ = ["DATASETS", "Dataset", "IterableDataset", "dataset_registry"]

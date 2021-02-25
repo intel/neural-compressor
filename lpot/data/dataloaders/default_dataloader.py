@@ -19,6 +19,7 @@ import collections
 import numpy as np
 from abc import abstractmethod
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
+from .fetcher import FETCHERS
 from .base_dataloader import BaseDataLoader
 
 def default_collate(batch):
@@ -33,42 +34,6 @@ def default_collate(batch):
         return np.stack(batch)
     else:
         return batch
-
-class Fetcher(object):
-    def __init__(self, dataset, collate_fn, drop_last):
-        self.dataset = dataset
-        self.collate_fn = collate_fn
-        self.drop_last = drop_last
-
-    @abstractmethod
-    def __call__(self, batched_indices):
-        raise NotImplementedError
-
-class IterableFetcher(Fetcher):
-    def __init__(self, dataset, collate_fn, drop_last):
-        super(IterableFetcher, self).__init__(dataset, collate_fn, drop_last)
-        self.dataset_iter = iter(dataset)
-
-    def __call__(self, batched_indices):
-        data = []
-        for _ in batched_indices:
-            try:
-                data.append(next(self.dataset_iter))
-            except StopIteration:
-                break
-        if len(data) == 0 or (self.drop_last and len(data) < len(batched_indices)):
-            raise StopIteration
-        return self.collate_fn(data)
-
-class IndexFetcher(Fetcher):
-    def __init__(self, dataset, collate_fn, drop_last):
-        super(IndexFetcher, self).__init__(dataset, collate_fn, drop_last)
-
-    def __call__(self, batched_indices):
-        data = [self.dataset[idx] for idx in batched_indices]
-        return self.collate_fn(data)
-
-FETCHERS = {"index": IndexFetcher, "iter": IterableFetcher, }
 
 class DefaultDataLoader(BaseDataLoader):
     """DefaultDataLoader
@@ -130,23 +95,6 @@ class DefaultDataLoader(BaseDataLoader):
                 data = self.fetcher(batched_indices)
 
                 yield data
-            except StopIteration:
-                return
-
-class TensorflowInGraphDataLoader(DefaultDataLoader):
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory):
-
-        drop_last = False if last_batch == 'rollover' else True
-        sampler = self._generate_sampler(dataset)
-        self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
-        self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, drop_last)
-
-        for batched_indices in self.batch_sampler:
-            try:
-                data = self.fetcher(batched_indices)
-
-                yield (data[0], batch_size), data[1]
             except StopIteration:
                 return
 

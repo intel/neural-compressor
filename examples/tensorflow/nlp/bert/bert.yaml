@@ -28,10 +28,10 @@ evaluation:
         bert:
           root: /path/to/eval.tf_record
           label_file: /path/to/dev-v1.1.json
-      batch_size: 8
+      batch_size: 64
     postprocess:
       transform:
-        SquadV1PostTransform:
+        SquadV1:
           label_file: /path/to/dev-v1.1.json
           vocab_file: /path/to/vocab.txt
 quantization:            
@@ -42,7 +42,7 @@ quantization:
         bert:
           root: /path/to/eval.tf_record
           label_file: /path/to/dev-v1.1.json
-      batch_size: 8
+      batch_size: 64
   model_wise:
     weight:
       granularity: per_channel

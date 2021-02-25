@@ -16,10 +16,6 @@
 # limitations under the License.
 """Run BERT on SQuAD 1.1 and SQuAD 2.0."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import tensorflow as tf
 import numpy as np
 
@@ -28,6 +24,10 @@ FLAGS = flags.FLAGS
 
 ## Required parameters
 flags.DEFINE_string(
+    "input_model", None,
+    "Run inference with specified pb graph.")
+
+flags.DEFINE_string(
     "output_model", None,
     "The output model of the quantized model.")
 
@@ -35,13 +35,8 @@ flags.DEFINE_string(
     "mode", 'tune',
     "One of three options: 'benchmark'/'tune'/'accuracy'.")
 
-flags.DEFINE_integer(
-    "iters", -1,
-    "The iteration used for benchmark.")
-
 flags.DEFINE_string(
-    "input_graph", None,
-    "Run inference with specified pb graph.")
+    "config", 'bert.yaml', "yaml configuration of the model")
 
 def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
@@ -49,7 +44,7 @@ def main(_):
     if FLAGS.mode == 'benchmark':
         from lpot import Benchmark
         evaluator = Benchmark('./bert.yaml')
-        results = evaluator(model=FLAGS.input_graph)
+        results = evaluator(model=FLAGS.input_model)
         for mode, result in results.items():
             acc, batch_size, result_list = result
             latency = np.array(result_list).mean() / batch_size
@@ -61,7 +56,7 @@ def main(_):
     elif FLAGS.mode == 'tune':
         from lpot.quantization import Quantization
         quantizer = Quantization('./bert.yaml')
-        q_model = quantizer(FLAGS.input_graph)
+        q_model = quantizer(FLAGS.input_model)
         q_model.save(FLAGS.output_model)
 
 if __name__ == "__main__":

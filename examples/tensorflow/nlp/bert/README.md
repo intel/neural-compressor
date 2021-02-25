@@ -34,6 +34,11 @@ cd examples/tensorflow/nlp/bert
 bash prepare_dataset.sh --output_dir=./data
 ```
 
+Then create the tf_record file, you should config the tf_record path in yaml file.
+```shell
+python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
+```
+
 ### 4. Prepare Pretrained model
 
 #### Manual approach
@@ -51,9 +56,13 @@ cd examples/tensorflow/nlp/bert
 bash prepare_model.sh --output_dir=./model
 ```
 
+## Prepare frozen pb from checkpoint
+  ```shell
+  python freeze_estimator_to_pb.py --input_model=./model --output_model=./bert_fp32.pb
+  ```
 ## Run Command
   ```Shell
-  python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --model_dir=./model --precision=quantized
+  python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --mode=tune
   ```
 
 Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
@@ -65,84 +74,10 @@ This is a tutorial of how to enable bert model with Intel® Low Precision Optimi
 
 2. User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
 
-For bert, we applied the latter one because we don't have metric for bert squad task. The task is to implement the q_dataloader and implement a *eval_func*. 
-
-### Evaluation Part Adaption
-
-For easy metric the result, we write a SquadF1 metric for squad task accuracy.
-
-```python
-def eval_func(graph, iteration=-1):
-    print("gonna eval the model....")
-    from lpot.adaptor.tf_utils.util import iterator_sess_run
-    iter_op = graph.get_operation_by_name('MakeIterator')
-    feed_dict = {'input_file:0': eval_writer.filename, \
-        'batch_size:0': FLAGS.predict_batch_size}
-
-    all_results = []
-    output_tensor = {
-        'unique_ids': graph.get_tensor_by_name('IteratorGetNext:3'),
-        'start_logits': graph.get_tensor_by_name('unstack:0'),
-        'end_logits': graph.get_tensor_by_name('unstack:1')
-    }
-    config = tf.compat.v1.ConfigProto()
-    config.use_per_session_threads = 1
-    config.inter_op_parallelism_threads = 1
-    config.intra_op_parallelism_threads = 28
-    sess = tf.compat.v1.Session(graph=graph, config=config)
-    sess.run(iter_op, feed_dict)
-    def result_producer(results):
-      num_examples = results['unique_ids'].shape[0]
-      for i in range(num_examples):
-        yield {
-            key: value[i]
-            for key, value in six.iteritems(results)
-        }
-    import time
-    time_list = []
-    idx = 0
-    while idx < iteration or iteration == -1:
-        try:
-            time_start = time.time() 
-            results = sess.run(output_tensor)
-            duration = time.time() - time_start
-            time_list.append(duration)
-            for result in result_producer(results):
-              unique_id = int(result["unique_ids"])
-              start_logits = [float(x) for x in result["start_logits"].flat]
-              end_logits = [float(x) for x in result["end_logits"].flat]
-              all_results.append(
-                  RawResult(
-                      unique_id=unique_id,
-                      start_logits=start_logits,
-                      end_logits=end_logits))
-            idx += 1
-        except tf.errors.OutOfRangeError:
-            print("run out of data, exit....")
-            break
-
-    # all_predictions is the preds here, can caculate the accuracy
-    label = parse_label_file(FLAGS.label_file)
-    warmup = 5
-    print('Latency is {}'.format(np.array(time_list[warmup:]).mean() / FLAGS.predict_batch_size))
-    print('Batch size is {}'.format(FLAGS.predict_batch_size))
-    # only calculate accuracy when running out all predictions
-    if iteration == -1:
-        squad_transform = SquadV1PostTransform(eval_examples, eval_features,
-                          FLAGS.n_best_size, FLAGS.max_answer_length,
-                          FLAGS.do_lower_case)
-
-        preds, label = squad_transform((all_results, label))
-        f1 = SquadF1()
-        f1.update(preds, label)
-        print('accuracy is F1: {}'.format(f1.result()))
-        return f1.result()
-
-```
-We also right postprocess Transform to postprocess the predistion of the output, it's named *SquadV1PostTransform*, and metric for squad task named *SquadF1*, after these preparation, we can get the accuracy F1 from squad task
+For bert, we applied the first one as we  already have built-in dataset and metric for bert squad task. 
 
 ### Write Yaml config file
-In examples directory, there is a bert.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader
+In examples directory, there is a bert.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evalation function at internal lpot.
 
 ```yaml
 model: 
@@ -150,6 +85,22 @@ model:
   framework: tensorflow
   inputs: input_file, batch_size
   outputs: IteratorGetNext:3, unstack:0, unstack:1
+
+evaluation:
+  accuracy:
+    metric:
+      SquadF1:
+    dataloader:
+      dataset:
+        bert:
+          root: eval.tf_record
+          label_file: dev-v1.1.json
+      batch_size: 64
+    postprocess:
+      transform:
+        SquadV1PostTransform:
+          label_file: dev-v1.1.json
+          vocab_file: vocab.txt
 
 quantization:            
   calibration:
@@ -176,18 +127,29 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 ### Code update
 
-After prepare step is done, we add tune code to generate quantized model.
+After prepare step is done, we add tune and benchmark code to generate quantized model and benchmark.
 
+#### Tune
 ```python
-    from lpot.quantization import Quantization
-    quantizer = Quantization('./bert.yaml')
-    # we should change the dataloader to provide only once the file name and batch_size
-    dataset = Dataset(eval_writer.filename, FLAGS.predict_batch_size)
-    dataloader = quantizer.dataloader(dataset, collate_fn=collate_fn)
-    q_model = quantizer(graph, q_dataloader=dataloader, eval_func=eval_func)
-    # q_model = quantizer(graph, q_dataloader=dataloader)
-    from lpot.adaptor.tf_utils.util import write_graph
-    write_graph(q_model.as_graph_def(), FLAGS.output_model)
-```
+        from lpot.quantization import Quantization
+        quantizer = Quantization('./bert.yaml')
+        q_model = quantizer(FLAGS.input_model)
+        q_model.save(FLAGS.output_model)
 
+```
+#### Benchmark
+```python
+        from lpot import Benchmark
+        evaluator = Benchmark('./bert.yaml')
+        results = evaluator(model=FLAGS.input_model)
+        for mode, result in results.items():
+            acc, batch_size, result_list = result
+            latency = np.array(result_list).mean() / batch_size
+            print('\n{} mode benchmark result:'.format(mode))
+            print('Accuracy is {:.3f}'.format(acc))
+            print('Batch size = {}'.format(batch_size))
+            print('Latency: {:.3f} ms'.format(latency * 1000))
+            print('Throughput: {:.3f} images/sec'.format(1./ latency))
+```
 The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model under time constraint.
+

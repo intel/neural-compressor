@@ -191,14 +191,11 @@ transform_schema = Schema({
     Optional('Transpose'): {
         'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
     },
-    Optional('SquadV1PreTransform'): {
-        'vocab_file': str
-    },
 })
 
 postprocess_schema = Schema({
     Optional('LabelShift'):  And(int, lambda s: s > 0),
-    Optional('SquadV1PostTransform'): {
+    Optional('SquadV1'): {
         'label_file': str,
         'vocab_file': str
     },
