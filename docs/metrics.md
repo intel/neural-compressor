@@ -20,6 +20,7 @@ LPOT supports some builtin metrics that popularly used in industry. Please refer
 | F1                    | None              | preds, labels   |
 | COCOmAP               | anno_path(str, default=None):annotation path | preds, labels   |
 | BLEU                  | None              | preds, labels   |
+| SquadF1               | None              | preds, labels   |
 
 #### PyTorch
 

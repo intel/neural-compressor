@@ -31,6 +31,7 @@ LPOT supports builtin preprocessing methods on diffrent framework backend. Pleae
 | LabelShift | label_shift(int, default=0): number of label shift |
 | BilinearImagenet | height: Height of the result <br> width:Width of the result <br> central_fraction(float, default=0.875):fraction of size to crop <br> mean_value(list, default=[0.0,0.0,0.0]):means for each channel <br> scale(float, default=1.0):std value |
 | ParseDecodeCoco | None|
+| SquadV1 | label_file(str): path of label file <br> vocab_file(str): path of vocabulary file <br> n_best_size(int, default=20): The total number of n-best predictions to generate in the nbest_predictions.json output file <br> max_seq_length(int, default=384): The maximum total input sequence length after WordPiece tokenization. Sequences longer than this will be truncated, and sequences shorter, than this will be padded <br> max_query_length(int, default=64): The maximum number of tokens for the question. Questions longer than this will be truncated to this length <br> max_answer_length(int, default=30): The maximum length of an answer that can be generated. This is needed because the start and end predictions are not conditioned on one another <br> do_lower_case(bool, default=True): Whether to lower case the input text. Should be True for uncased models and False for cased models <br> doc_stride(int, default=128): When splitting up a long document into chunks, how much stride to take between chunks |
 
 ### Pytorch
 
