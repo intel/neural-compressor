@@ -530,6 +530,7 @@ def main():
                         help="warmup for performance")
     parser.add_argument('-i', "--iter", default=0, type=int,
                         help='For accuracy measurement only.')
+    parser.add_argument('--config', type=str, default='conf.yaml', help="yaml config file")
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
@@ -687,7 +688,7 @@ def main():
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 eval_task = "squad"
                 from lpot import Quantization
-                quantizer = Quantization("./conf.yaml")
+                quantizer = Quantization(args.config)
                 dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task,
                                             model_type=args.model_type)
                 test_dataloader = quantizer.dataloader(dataset, batch_size=args.eval_batch_size)

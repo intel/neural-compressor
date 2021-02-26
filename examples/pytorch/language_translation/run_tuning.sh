@@ -132,7 +132,7 @@ function run_tuning {
         test_data='wiki.test.raw'
     fi
 
-    if [ "${SCRIPTS}" = "examples/run_glue_tune.py" ];then
+    if [ "${SCRIPTS}" = "examples/run_glue_tune.py" -o "${SCRIPTS}" = "examples/run_squad_tune.py" ];then
         python -u $SCRIPTS \
             --tuned_checkpoint ${tuned_checkpoint} \
             --model_type ${model_type} \
