@@ -634,6 +634,63 @@ class TestONNXTransfrom(unittest.TestCase):
         with self.assertRaises(ValueError):
             TestONNXTransfrom.transforms["RandomResizedCrop"](**args)
 
+class TestBertSquad(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        bert_url = 'https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip' 
+        label_url = 'https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json'
+        model_path = '/tmp/.lpot/wwm_uncased_L-24_H-1024_A-16.zip'
+        model_unzip = '/tmp/.lpot/wwm_uncased_L-24_H-1024_A-16'
+        label_path = '/tmp/.lpot/dev-v1.1.json'
+
+        if not os.path.exists(model_path):
+            os.system('mkdir -p /tmp/.lpot && wget {} -O {}'.format(bert_url, model_path))
+        if not os.path.exists(label_path):
+            os.system('mkdir -p /tmp/.lpot && wget {} -O {}'.format(label_url, label_path))
+        if not os.path.exists(model_unzip):
+            os.system('unzip {} -d /tmp/.lpot'.format(model_path))
+
+        os.system('mkdir -p bert && cp {}/vocab.txt bert'.format(model_unzip))
+        os.system('cp {} bert'.format(label_path))
+        cls.label_file = 'bert/dev-v1.1.json'
+        cls.vocab_file = 'bert/vocab.txt'
+
+    def testSquadV1PostAndF1(self):
+        from lpot.data.transforms.transform import SquadV1PostTransform
+        squad_post = SquadV1PostTransform(self.label_file, self.vocab_file) 
+        unique_ids=np.arange(1000000000, 1000010833) 
+        start_logits=np.ones((10833, 384), np.float32)
+        end_logits=np.ones((10833, 384), np.float32)
+        preds = [unique_ids, start_logits, end_logits]
+        def get_labels(label_file):
+            import json
+            with open(label_file) as lf:
+                label_json = json.load(lf)
+                assert label_json['version'] == '1.1', 'only support squad 1.1'
+                return label_json['data']
+
+        labels = get_labels(self.label_file)
+        preds, labels = squad_post((preds, labels))
+        from lpot.metric.metric import SquadF1
+        squad_metric = SquadF1()
+        squad_metric.update(preds, labels)
+        result = squad_metric.result()
+        self.assertEqual(round(result, 2), 1.92)
+        squad_metric.reset()
+
+    def testBertDataLoader(self):
+        from lpot.data.datasets.bert_dataset import TensorflowBertDataset
+        fake_record='fake.tf_record'
+        bert_dataset = TensorflowBertDataset(fake_record, self.label_file) 
+        self.assertEqual(len(bert_dataset), 1)
+        get_record, _ = bert_dataset[0]
+        self.assertEqual(fake_record, get_record)
+        from lpot.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
+        bert_dataloader = TensorflowDataLoader(bert_dataset, batch_size=1)
+        iterator = iter(bert_dataloader)
+        (get_record, batch_size), _ = next(iterator)
+        self.assertEqual(fake_record, get_record)
+
 class TestCOCOTransform(unittest.TestCase):
     def testCOCODecode(self):
         from lpot.data.transforms.coco_transform import ParseDecodeCocoTransform

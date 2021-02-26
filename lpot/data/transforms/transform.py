@@ -25,7 +25,6 @@ torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 cv2 = LazyImport('cv2')
-tokenization = LazyImport('tokenization')
 
 class BaseTransforms(object):
     def __init__(self, process, concat_general=True):
@@ -1052,6 +1051,7 @@ def _get_best_indexes(logits, n_best_size):
 def get_final_text(pred_text, orig_text, do_lower_case):
     """Project the tokenized prediction back to the original text."""
     import six
+    from . import tokenization
     def _strip_spaces(text):
         ns_chars = []
         ns_to_s_map = collections.OrderedDict()
@@ -1333,10 +1333,8 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
                 start_position=start_position,
                 end_position=end_position,
                 is_impossible=example.is_impossible)
-
             # Run callback
             output_fn(feature)
-
             unique_id += 1
 
 @transform_registry(transform_type="SquadV1", \
@@ -1344,6 +1342,8 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
 class SquadV1PostTransform(Transform):
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
+
+        from . import tokenization
         self.eval_examples = read_squad_examples(label_file)
         tokenizer = tokenization.FullTokenizer(
             vocab_file=vocab_file, do_lower_case=do_lower_case)

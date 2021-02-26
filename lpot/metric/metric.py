@@ -701,12 +701,12 @@ class TensorflowCOCOMAP(Metric):
             return box_metrics['DetectionBoxes_Precision/mAP']
 
 @metric_registry('SquadF1', 'tensorflow')
-class TensorflowBert(Metric):
+class SquadF1(Metric):
     def __init__(self):
         self._score_list = []
 
     def update(self, preds, labels, sample_weight=None):
-        from evaluate_squad import evaluate
+        from .evaluate_squad import evaluate
         result = evaluate(labels, preds)
         self._score_list.append(result['f1'])
 
