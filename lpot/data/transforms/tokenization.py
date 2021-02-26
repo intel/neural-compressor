@@ -35,12 +35,12 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
+from lpot.utils.utility import LazyImport
 import collections
 import re
 import unicodedata
 import six
-import tensorflow as tf
+tf =  LazyImport('tensorflow') 
 
 def convert_to_unicode(text):
   """Converts `text` to Unicode (if it's not already), assuming utf-8 input."""
