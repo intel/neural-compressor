@@ -19,7 +19,6 @@ import re
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import tensor_util
 
 
@@ -90,7 +89,7 @@ class QuantizeGraphHelper():
 
         node_map = {}
         for node in input_graph_def.node:
-            if node.name not in node_map.keys():
+            if node.name not in node_map:
                 node_map[node.name] = node
 
         output_graph_def = graph_pb2.GraphDef()

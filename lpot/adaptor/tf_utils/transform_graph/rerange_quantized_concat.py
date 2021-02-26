@@ -47,7 +47,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
     }
 
     def __init__(self, input_pb, device):
-        super(RerangeQuantizedConcat, self).__init__(input_pb)
+        super().__init__(input_pb)
 
         self.parse_input_pb()
         self.concat_node_input_mapping = {}
@@ -198,10 +198,8 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     another_conv_node.input[offset_value]]
                 max_freezed_output_node = self.node_mapping[
                     another_conv_node.input[offset_value + 1]]
-                min_input = min_freezed_output_node.attr[
-                    'value'].tensor.float_val[0]
-                max_input = max_freezed_output_node.attr[
-                    'value'].tensor.float_val[0]
+                min_input = min_freezed_output_node.attr['value'].tensor.float_val[0]
+                max_input = max_freezed_output_node.attr['value'].tensor.float_val[0]
 
                 bias_tensor = (tensor_util.MakeNdarray(
                     bias_node.attr['value'].tensor))
@@ -213,8 +211,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 for i in range(channel_size):
                     scales.append(activation_range * weights_range /
                                   (max(abs(max_input), abs(min_input)) *
-                                   max(abs(max_filter_tensor[i]),
-                                       abs(min_filter_tensor[i]))))
+                                   max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
                 int32_bias = []
                 if channel_size > 1:
                     for i in range(bias_length):
@@ -234,5 +231,4 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(
                             int32_bias, dtypes.int32, bias_tensor.shape)))
-                bias_node.attr[
-                    'value'].tensor.dtype = dtypes.qint32.as_datatype_enum
+                bias_node.attr['value'].tensor.dtype = dtypes.qint32.as_datatype_enum

@@ -24,7 +24,6 @@ import logging
 import re
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
-from tensorflow.python.framework import tensor_util
 
 class GraphTransformBase(object):
     def __init__(self, input_pb):

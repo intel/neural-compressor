@@ -79,10 +79,10 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
             new_dtype = self.graph_info[dequantize_node_name].node.attr['T'].type
             for node_name in res[1: -1]:
                 self.graph_info[node_name].node.attr['T'].type = new_dtype
-            
+
             if 'T1' in self.graph_info[quantized_node_name].node.attr:
                 self.graph_info[quantized_node_name].node.attr['T1'].type = new_dtype
-            
+
             if 'Tinput' in self.graph_info[quantized_node_name].node.attr:
                 self.graph_info[quantized_node_name].node.attr['Tinput'].type = new_dtype
 

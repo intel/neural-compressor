@@ -17,7 +17,6 @@
 
 
 import logging
-import copy
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 from lpot.utils.utility import dump_elapsed_time
 from lpot.model.model import TensorflowModel
@@ -34,7 +33,7 @@ from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
 from .grappler_pass import GrapplerOptimizer
 
-class PreOptimization(object):
+class PreOptimization():
     def __init__(self, model):
         self.model = model
         self.output_node_names = model.output_node_names
@@ -103,7 +102,7 @@ class PreOptimization(object):
             self._tmp_graph_def).do_transformation()
         self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        
+
         optimized_model = TensorflowModel(self._tmp_graph_def, self.model.framework_specific_info)
         return optimized_model
 

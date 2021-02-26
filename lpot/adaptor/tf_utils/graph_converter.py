@@ -19,12 +19,9 @@
 import copy
 import os
 import logging
-import numpy as np
 import tensorflow as tf
 
 from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import importer
-from tensorflow.python.framework import ops
 from tensorflow.python.platform import gfile
 from lpot.utils.utility import get_all_fp32_data
 from lpot.utils.utility import get_tensor_histogram
@@ -37,7 +34,7 @@ from lpot.model.model import TensorflowModel
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import get_tensor_by_name, iterator_sess_run
+from .util import iterator_sess_run
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -114,7 +111,6 @@ class GraphConverter:
         Args:
             model(TensorflowModel): input TensorflowModel
         """
-        import tensorflow as tf
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
 
@@ -401,7 +397,7 @@ class GraphConverter:
                 self._generate_calibration_data(self._fp32_logged_model_path,
                                                 self._fp32_print_data,
                                                 True)
- 
+
             self._insert_logging()
             self._generate_calibration_data(self._int8_logged_model_path,
                                             self._calibration_data)

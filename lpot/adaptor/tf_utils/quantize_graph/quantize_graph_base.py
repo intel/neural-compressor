@@ -17,12 +17,10 @@
 
 
 import logging
-import os
 from collections import namedtuple
 import numpy as np
 import tensorflow as tf
 
-from tensorflow.python.platform import gfile
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util

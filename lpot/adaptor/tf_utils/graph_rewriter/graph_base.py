@@ -20,7 +20,7 @@ from abc import abstractmethod
 import logging
 
 
-class GraphRewriterBase(object):
+class GraphRewriterBase():
     """Graph Rewrite Base class.
     We abstract this base class and define the interface only.
 

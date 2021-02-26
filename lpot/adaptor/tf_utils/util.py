@@ -23,13 +23,8 @@ import tensorflow as tf
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
-from tensorflow.python.framework import graph_util
-from tensorflow.python.saved_model import signature_constants
-from tensorflow.python.saved_model import tag_constants
-from tensorflow.python.framework.ops import Graph
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
-from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from lpot.utils import logger
 from .graph_rewriter.graph_util import GraphAnalyzer
 
