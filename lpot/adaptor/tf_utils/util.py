@@ -196,7 +196,7 @@ def get_tensor_by_name(graph, name, try_cnt=3):
             name = 'import/' + name
     raise ValueError('can not find tensor by name')
 
-def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
+def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, measurer=None):
     """Run the graph that have iterator integrated in the graph
 
     Args:
@@ -214,7 +214,12 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1):
     idx = 0
     while idx < iteration or iteration == -1:
         try:
-            prediction = sess.run(output_tensor)
+            if measurer:
+                measurer.start()
+                prediction = sess.run(output_tensor)
+                measurer.end()
+            else:
+                prediction = sess.run(output_tensor)
             preds.append(prediction)
             idx += 1
         except tf.errors.OutOfRangeError:

@@ -1123,24 +1123,6 @@ class SquadExample(object):
         self.end_position = end_position
         self.is_impossible = is_impossible
 
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        s = ""
-        s += "qas_id: %s" % (tokenization.printable_text(self.qas_id))
-        s += ", question_text: %s" % (
-            tokenization.printable_text(self.question_text))
-        s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
-        if self.start_position:
-            s += ", start_position: %d" % (self.start_position)
-        if self.start_position:
-            s += ", end_position: %d" % (self.end_position)
-        if self.start_position:
-            s += ", is_impossible: %r" % (self.is_impossible)
-
-        return s
-
 class InputFeatures(object):
     """A single set of features of data."""
     def __init__(self,

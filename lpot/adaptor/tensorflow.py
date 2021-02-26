@@ -194,16 +194,16 @@ class TensorFlowAdaptor(Adaptor):
                     'inputs len must equal with input_tensor'
                 feed_dict = dict(zip(input_tensor, inputs))
 
-            if measurer is not None:
+            if model.iter_op:
+                predictions = iterator_sess_run(model.sess, model.iter_op, \
+                    feed_dict, output_tensor, iteration, measurer)
+            elif measurer is not None:
                 measurer.start()
-                predictions = model.sess.run(output_tensor, feed_dict) if \
-                    model.iter_op is None else iterator_sess_run(
-                    model.sess, model.iter_op, feed_dict, output_tensor, iteration)
+                predictions = model.sess.run(output_tensor, feed_dict)
                 measurer.end()
             else:
-                predictions = model.sess.run(output_tensor, feed_dict) if \
-                    model.iter_op is None else iterator_sess_run(
-                    model.sess, model.iter_op, feed_dict, output_tensor, iteration)
+                predictions = model.sess.run(output_tensor, feed_dict)
+
             if metric and hasattr(metric, "compare_label") and not metric.compare_label:
                 if isinstance(predictions, list):
                     result = [np.array(value) for value in predictions.values()]
