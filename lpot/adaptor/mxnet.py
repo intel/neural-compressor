@@ -30,6 +30,7 @@ from ..utils.kl_divergence import KL_Divergence
 from ..utils.collect_layer_histogram import LayerHistogramCollector
 from collections import OrderedDict
 from lpot.utils.utility import dump_elapsed_time
+from lpot.model.model import MXNetModel as Model
 
 mx = LazyImport("mxnet")
 
@@ -166,10 +167,8 @@ class MxNetAdaptor(Adaptor):
                 mx.ndarray.save(param_name, save_dict)  # pylint: disable=no-member
                 net.collect_params().load(param_name, cast_dtype=True, dtype_source='saved')
                 net.collect_params().reset_ctx(self.__config_dict['ctx'])
-                model.model = net
-                return model
-        model.model = (qsym, qarg_params, aux_params)
-        return model
+                return Model(net)
+        return Model((qsym, qarg_params, aux_params))
 
     def train(self, model, dataloader):
         """The function is used to do training in quantization-aware training.

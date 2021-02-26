@@ -460,7 +460,7 @@ class TensorFlowAdaptor(Adaptor):
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
-        original_graph_node_name = [i.name for i in self.pre_optimized_model.model.node]
+        original_graph_node_name = [i.name for i in self.pre_optimized_model.graph_def.node]
         matched_nodes = sorted(matched_nodes, reverse=True, key=lambda i: (
             original_graph_node_name.index(i[0]), len(i[-1])))
 
