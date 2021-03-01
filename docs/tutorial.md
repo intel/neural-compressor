@@ -14,7 +14,7 @@ First user needs to prepare FP32 model, and then configure the model information
   </tr>
  </table>
  
-Here is an example of ymal file and laucher code, the ymal file defined the tuning accuracy target and evaluation funciton, and only 3 lines of code are added to launch LPOT for quantization.
+Here is an example of yaml file and launcher code, the yaml file defined the tuning accuracy target and evaluation function, and only 3 lines of code are added to launch LPOT for quantization.
 <table>
   <tr>
     <td>ymal</td>
@@ -36,10 +36,10 @@ To define a customized dataloader or evaluator for quantization, user can implem
   </tr>
  </table>
 
-Next, let's introduce how to do quantization in different scenarios. 
+Next, let's introduce how to do quantization in different scenarios.
 
-# Buildin dataloader and metric 
-The [tf_example1](../examples/helloworld/tf_example1) demonstrates how to utilize LPOT builtin dataloader and evalautors for quantizaiton. User only needs to add 3 lines of launcher code for tuning, see [README](../examples/helloworld/tf_example1/README.md) for more details. 
+# Built-in dataloader and metric
+The [tf_example1](../examples/helloworld/tf_example1) demonstrates how to utilize LPOT builtin dataloader and evaluators for quantization. User only needs to add 3 lines of launcher code for tuning, see [README](../examples/helloworld/tf_example1/README.md) for more details.
 
 
 # Customized dataloader
@@ -63,7 +63,7 @@ class Dataset(object):
       return len(self.test_images)
 
 ```
-Then define a customized metric to caculate accuracy. The update() function record the predict result and result() function provide the summary of accurate rate. 
+Then define a customized metric to calculate accuracy. The update() function record the predict result and result() function provide the summary of accurate rate.
 
 ```
 import lpot
@@ -105,8 +105,8 @@ q_model = quantizer('../models/simple_model', q_dataloader = dataloader, eval_da
 
 ```
 
-# The interface is similiar for different TensorFlow models
+# The interface is similar for different TensorFlow models
 1.  TensorFlow checkpoint: see [tf_example4](../examples/helloworld/tf_example4)
-2.  Enable benchmark for performanace and accuracy measurement: see [tf_example5](../examples/helloworld/tf_example5)
+2.  Enable benchmark for performance and accuracy measurement: see [tf_example5](../examples/helloworld/tf_example5)
 3.  TensorFlow slim model: see [tf_example3](../examples/helloworld/tf_example3), while to quantize a slim .ckpt model we need to get the graph first, see [README](../examples/helloworld/tf_example3/README.md).  
 

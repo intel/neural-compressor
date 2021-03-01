@@ -5,7 +5,7 @@ User can use LPOT builtin metrics as well as register their own metrics.
 
 ## Builtin metric support list
 
-LPOT supports some builtin metrics that polularly used in industry. Pleaes refer to 'examples/helloworld/tf_example1' about how to config a builtin metric.
+LPOT supports some builtin metrics that popularly used in industry. Please refer to 'examples/helloworld/tf_example1' about how to config a builtin metric.
 
 #### TensorFlow
 

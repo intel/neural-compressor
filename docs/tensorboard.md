@@ -20,7 +20,7 @@ The detailed algorithm can be described by the Pseudo code:
 
 def evaluate(self, model, dataloader, postprocess=None, \
                  metric=None, measurer=None, iteration=-1, tensorboard=False):
-# The tensorboard summary is collected in the evaluation funciton of adapter 
+# The tensorboard summary is collected in the evaluation function of adaptor
 
     if tensorboard:
          model = self._pre_eval_hook(model) 
@@ -37,7 +37,7 @@ def _pre_eval_hook(self, model):
    # Define the Observer class 
 
         def forward(self, x):
-        # Record the tensor inforamtion in a dict structure 
+        # Record the tensor information in a dict structure
             self.output_tensors_dict[self.current_iter] = x.to("cpu") 
 
         @torch.jit.export
@@ -148,7 +148,7 @@ See lpot/adaptor/tensorflow.py evaluate() function for details.
 # Examples
 
 
-1.  Add "tensorboard: true" into examples/tensorflow/image_recognition/inceptionv3.yaml. In order to demonstrate the usage of TensorBoard, pleae remove the following lines which is added to skip the quantization of 'v0/cg/conv0/conv2d/Conv2D' to avoid a known limitation.
+1.  Add "tensorboard: true" into examples/tensorflow/image_recognition/inceptionv3.yaml. In order to demonstrate the usage of TensorBoard, please remove the following lines which is added to skip the quantization of 'v0/cg/conv0/conv2d/Conv2D' to avoid a known limitation.
 ```
     op_wise: {
              'v0/cg/conv0/conv2d/Conv2D': {
@@ -174,7 +174,7 @@ tensorboard --bind_all --logdir_spec baseline:./runs_v3/eval/baseline_acc_0.776/
   <img src="imgs/tensorboard_baseline_v0_cg_conv0.png" width="700px" />
 </div>
 
-2). On the Graphs tab, select "tune_1/." in "Run" box, find the first 'Cond2d' op after 'input' op, the tensor name is 'v0/cg/conv0/conv2d/Conv2D_eightbit_requantize'.
+2). On the Graphs tab, select "tune_1/." in "Run" box, find the first 'Conv2d' op after 'input' op, the tensor name is 'v0/cg/conv0/conv2d/Conv2D_eightbit_requantize'.
 
 
 <div align="left">
