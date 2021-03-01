@@ -14,51 +14,50 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 ### 1. Installation
 
-  ```Shell
-  pip install -r requirements.txt
-  ```
+```Shell
+pip install -r requirements.txt
+```
 
 ### 2. Prepare Dataset
 
-  Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
-
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
 
 # Run
 
 ### 1. ResNet50
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/ptq
-  python main.py -t -a resnet50 --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/ptq
+python main.py -t -a resnet50 --pretrained /path/to/imagenet
+```
 
 ### 2. ResNet18
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/ptq
-  python main.py -t -a resnet18 --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/ptq
+python main.py -t -a resnet18 --pretrained /path/to/imagenet
+```
 
 ### 3. ResNext101_32x8d
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/ptq
-  python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/ptq
+python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
+```
 
 ### 4. InceptionV3
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/ptq
-  python main.py -t -a inception_v3 --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/ptq
+python main.py -t -a inception_v3 --pretrained /path/to/imagenet
+```
 
 ### 5. Mobilenet_v2
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/ptq
-  python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/ptq
+python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
+```
 
 ### 6. ResNet50 dump tensors for debug
 
@@ -75,10 +74,24 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 ```
 
 # Saving and loading model:
-* Saving model:  
-LPOT will automatically save tuning configure and weights of model which meet target goal when tuning process.
-For Intel PyTorch Extension model(IPEX), LPOT only save IPEX configure file.
-* loading model:  
+
+* Saving model:
+  After tuning with LPOT, we can get LPOT.model:
+
+```
+from lpot import Quantization
+quantizer = Quantization("./conf.yaml")
+lpot_model = quantizer(model)
+```
+
+Here, lpot_model is LPOT model class, so it has "save" API:
+
+```python
+lpot_model.save("Path_to_save_configure_file")
+```
+
+* loading model:
+
 ```python
 # Without IPEX
 model                 # fp32 model
@@ -121,8 +134,7 @@ As ResNet18/50/101 series are typical classification models, use Top-K as metric
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
-
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
 ```
 model:
@@ -225,27 +237,34 @@ LPOT can dump every layer output tensor which you specify in evaluation. You jus
 ```
 tensorboard: true
 ```
+
 The default value of "tensorboard" is "off".
 
-For example: 
+For example:
+
 ```
 sh run_tuning_dump_tensor.sh --topology=resnet18 --dataset_location=<Dataset>
 ```
-A "./runs" folder will be generated, for example 
+
+A "./runs" folder will be generated, for example
 
 ```
 ls runs/eval/
 tune_0_acc0.73  tune_1_acc0.71 tune_2_acc0.72
 ```
-"tune_0_acc0.73" means FP32 baseline is accuracy 0.73, and the best tune result is tune_2 with accuracy 0.72. You may want to compare them in tensorboard. It will demonstrate the output tensor and weight of each op in "Histogram", you can also find the tune config of each tuning run in "Text":  
+
+"tune_0_acc0.73" means FP32 baseline is accuracy 0.73, and the best tune result is tune_2 with accuracy 0.72. You may want to compare them in tensorboard. It will demonstrate the output tensor and weight of each op in "Histogram", you can also find the tune config of each tuning run in "Text":
+
 ```
 tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.72
 ```
 
 ### Tuning With Intel PyTorch Extension
+
 1. Write Yaml Config File
 
 Add 'backend' field to Yaml Configure and the same for other fields.
+
 ```python
   model:
   name: imagenet
@@ -257,12 +276,22 @@ Add 'backend' field to Yaml Configure and the same for other fields.
 ```python
   from lpot import Quantization
   quantizer = Quantization("./conf_ipex.yaml")
+  lpot_model = quantizer(model)
+  lpot_model.save("Path_to_save_configure_file")
 ```
 
 3. Saving and Run ipex model
-* Saving model: 
-LPOT will automatically save tuning configure which meet target goal when tuning process.
+
+* Saving model
+
+```python
+  lpot_model.save("Path_to_save_configure_file")
+```
+
+Here, lpot_model is the result of LPOT tuning. It is LPOT.model class, so it has "save" API.
+
 * Run ipex model:
+
 ```python
 import intel_pytorch_extension as ipex 
 model                 # fp32 model

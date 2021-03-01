@@ -4,6 +4,5 @@ scikit-learn
 seqeval
 lpot
 pytorch-ignite
-torchvision==0.6.1
 
 rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability
