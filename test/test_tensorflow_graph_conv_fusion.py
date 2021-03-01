@@ -98,6 +98,45 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
             self.assertEqual(found_conv_fusion, False)
 
+    @unittest.skipUnless(bool(
+            tf.version.VERSION.find('1.15.0-up') != -1 or tf.version.VERSION >= '2.1.0'), 'not supported the current tf version.')
+    @disable_random()
+    def test_conv_biasadd_relu6_fusion(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(x, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        normed = tf.compat.v1.layers.batch_normalization(conv)
+
+        relu6 = tf.nn.relu6(normed, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot import Quantization
+
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            dataloader = quantizer.dataloader(dataset)
+            output_graph = quantizer(
+                output_graph_def,
+                q_dataloader=dataloader,
+                eval_dataloader=dataloader
+            )
+            found_conv_fusion = True
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Relu6':
+                    found_conv_fusion = False
+                    break
+            self.assertEqual(found_conv_fusion, True)
+
     @disable_random()
     def test_conv_biasadd_addv2_relu_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
