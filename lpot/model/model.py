@@ -169,7 +169,7 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_tensor_names, **kwargs)
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    assert tf.version.VERSION > '2.0.0', 'keras model only used in tensorflow 2.x'
+    assert tf.version.VERSION > '2.1.0', 'keras model need tensorflow version > 2.1.0....'
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     if not isinstance(model, tf.keras.Model):
         model = tf.keras.models.load_model(model)

@@ -11,6 +11,4 @@ lpot
 pandas
 tf_slim
 pillow>=8.1.0
-onnx
-onnxruntime
 transformers

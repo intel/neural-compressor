@@ -202,7 +202,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf .lpot/slim')
 
     def test_keras_saved_model(self):
-        if tf.version.VERSION < '2.0.0':
+        if tf.version.VERSION < '2.2.0':
             return
         keras_model = build_keras()
         model = TensorflowModel(keras_model)
