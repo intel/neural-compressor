@@ -43,7 +43,7 @@ def main(_):
 
     if FLAGS.mode == 'benchmark':
         from lpot import Benchmark
-        evaluator = Benchmark('./bert.yaml')
+        evaluator = Benchmark(FLAGS.config)
         results = evaluator(model=FLAGS.input_model)
         for mode, result in results.items():
             acc, batch_size, result_list = result
