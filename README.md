@@ -54,6 +54,7 @@ the methods described below.
   ```Shell
   git clone https://github.com/intel/lpot.git
   cd lpot
+  pip install -r requirements.txt
   python setup.py install
   ```
 ### Install Intel oneAPI AI Analytics Toolkit
