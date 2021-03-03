@@ -71,7 +71,8 @@ class PytorchBertDataset(Dataset):
 
 @dataset_registry(dataset_type="bert", framework="tensorflow", dataset_format='')
 class TensorflowBertDataset(Dataset):
-    def __init__(self, root, label_file, task='squad', transform=None, filter=None):
+    def __init__(self, root, label_file, task='squad', 
+            model_type='bert', transform=None, filter=None):
         import json
         with open(label_file) as lf:
             label_json = json.load(lf)

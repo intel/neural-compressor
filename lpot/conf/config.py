@@ -66,6 +66,16 @@ def input_to_list_float(data):
     assert isinstance(data, list)
     return [float(d) for d in data]
 
+def input_to_list_int(data):
+    if isinstance(data, str):
+        return [int(s.strip()) for s in data.split(',')]
+
+    if isinstance(data, int):
+        return [data]
+
+    assert isinstance(data, list)
+    return [int(d) for d in data]
+
 def input_to_list(data):
     if isinstance(data, str):
         return [s.strip() for s in data.split(',')]
@@ -76,6 +86,19 @@ def input_to_list(data):
     assert isinstance(data, list)
     return data
 
+def list_to_tuple(data):
+    if isinstance(data, str):
+        return tuple([s.strip() for s in data.split(',')])
+
+    elif isinstance(data, list):
+        if isinstance(data[0], list):
+            result = []
+            for item in data:
+                result.append(tuple([int(s) for s in item]))
+            return result
+        else:
+            return tuple([int(s) for s in data])   
+        
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
         data = float(data.strip('%')) / 100
@@ -132,28 +155,47 @@ filter_schema = Schema({
 })
 
 transform_schema = Schema({
+    Optional('Cast'): {
+        Optional('dtype'): str
+    },
     Optional('RandomResizedCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0))
+                    And(int, lambda s: s > 0)),
+        Optional('scale'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('ratio'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('interpolation'): And(
+            str, 
+            lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('AlignImageChannel'): {
         Optional('dim'): int
     },
     Optional('ToNDArray'): Or({}, None),
     Optional('CropResize'): {
+        'x': int,
+        'y': int,
+        'width': int,
+        'height': int,
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0))
+                    And(int, lambda s: s > 0)),
+        Optional('interpolation'): And(
+            str, 
+            lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('RandomHorizontalFlip'): Or({}, None),
+    Optional('RandomVerticalFlip'): Or({}, None),
     Optional('ToTensor'): Or({}, None),
     Optional('ToPILImage'): Or({}, None),
     Optional('Normalize'): {
-        'mean': And(list, lambda s: all(isinstance(i, float) for i in s)),
-        'std': And(list, lambda s: all(isinstance(i, float) for i in s))
+        Optional('mean'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('std'): And(list, lambda s: all(isinstance(i, float) for i in s))
     },
     Optional('Resize'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0))
+                    And(int, lambda s: s > 0)),
+        Optional('interpolation'): And(
+            str, 
+            lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('RandomCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
@@ -167,7 +209,7 @@ transform_schema = Schema({
     Optional('BilinearImagenet'): {
         'height': And(int, lambda s: s > 0),
         'width': And(int, lambda s: s > 0),
-        Optional('central_fraction'): bool,
+        Optional('central_fraction'): float,
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float,
     },
@@ -202,7 +244,71 @@ postprocess_schema = Schema({
 })
 
 dataset_schema = Schema({
-    str: object,
+    Optional('CIFAR10'): {
+        'root': str,
+        Optional('train'): bool,
+        Optional('download'): bool,
+    },
+    Optional('CIFAR100'): {
+        'root': str,
+        Optional('train'): bool,
+        Optional('download'): bool,
+    },
+    Optional('MNIST'): {
+        'root': str,
+        Optional('train'): bool,
+        Optional('download'): bool,
+    },
+    Optional('FashionMNIST'): {
+        'root': str,
+        Optional('train'): bool,
+        Optional('download'): bool,
+    },
+    Optional('ImageFolder'): {
+        'root': str,
+    },
+    Optional('TFRecordDataset'): {
+        'root': str,
+    },
+    Optional('ImageRecord'): {
+        'root': str,
+    },
+    Optional('dummy'): {
+        'shape': And(Or(str, list), Use(list_to_tuple)), 
+        Optional('low'): Or(
+            float,
+            And(list, lambda s: all(isinstance(i, float) for i in s))),
+        Optional('high'): Or(
+            float,
+            And(list, lambda s: all(isinstance(i, float) for i in s))),
+        Optional('dtype'): And(Or(str, list), Use(input_to_list)),
+        Optional('label'): bool,
+    },
+    Optional('bert'): {
+        'root': str,
+        'label_file': str,
+        Optional('task'): And(str, lambda s: s in ["classifier", "squad"]),
+        Optional('model_type'): And(str, lambda s: s in ['bert', 'xlnet', 'xlm']),
+    },
+    Optional('COCORecord'): {
+        'root': str,
+        Optional('num_cores'): int,
+    },
+    Optional('COCORaw'): {
+        'root': str,
+        Optional('num_cores'): int,
+    },
+    Optional('ImagenetRaw'): {
+        'data_path': str,
+        'image_list': list,
+    },
+    Optional('style_transfer'): {
+        'content_folder': str,
+        'style_folder': str,
+        Optional('crop_ratio'): float,
+        Optional('resize_shape'): And(Or(str, list), Use(input_to_list_int)),
+        Optional('image_format'): str,
+    },
 })
 
 dataloader_schema = Schema({
@@ -352,6 +458,11 @@ schema = Schema({
                 Optional('MAE'): {
                     Optional('compare_label'): bool
                 },
+                Optional('Accuracy'): Or({}, None),
+                Optional('Loss"'): Or({}, None),
+                Optional('BLEU'): Or({}, None),
+                Optional('SquadF1'): Or({}, None),
+                Optional('F1'): Or({}, None),
             },
             Optional('configs'): configs_schema,
             Optional('dataloader'): dataloader_schema,

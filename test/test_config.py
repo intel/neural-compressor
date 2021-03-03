@@ -425,9 +425,111 @@ class TestConf(unittest.TestCase):
           frequency: 2
           init_sparsity: 0.0
           target_sparsity: 0.5
-      '''
+        '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')
+
+    def test_data_type(self):
+        test = '''
+        model:
+          name: test
+          framework: tensorflow
+
+        quantization:
+          calibration:
+            sampling_size: 20
+            dataloader:
+              batch_size: 1
+              dataset:
+                dummy:
+                  shape: [[224,224], [256,256]]
+                  high: [128., 127.]
+                  low: [0.1, 1.2]
+                  dtype: ['float32', 'int8']
+        '''
+        helper(test)
+        cfg = conf.Conf('fake_conf.yaml').usr_cfg
+        shape_cfg = cfg['quantization']['calibration']['dataloader']['dataset']['dummy']['shape']
+        self.assertTrue(isinstance(shape_cfg[0], tuple))
+        self.assertTrue(isinstance(shape_cfg, list)) 
+
+        test = '''
+        model:
+          name: test
+          framework: tensorflow
+
+        quantization:
+          calibration:
+            sampling_size: 20
+            dataloader:
+              batch_size: 1
+              dataset:
+                style_transfer:
+                  content_folder: test
+                  style_folder: test
+                  crop_ratio: 0.5
+                  resize_shape: 10,10
+              transform:
+                RandomResizedCrop:
+                  size: 10
+                  scale: [0.07, 0.99]
+                  ratio: [0.6, 0.8]
+        '''
+        helper(test)
+        cfg = conf.Conf('fake_conf.yaml').usr_cfg
+        shape_cfg = cfg['quantization']['calibration']['dataloader']['dataset']['style_transfer']['resize_shape']
+        self.assertTrue(isinstance(shape_cfg, list)) 
+        transform_cfg = cfg['quantization']['calibration']['dataloader']['transform']['RandomResizedCrop']
+        self.assertTrue(isinstance(transform_cfg['scale'], list))
+        self.assertTrue(isinstance(transform_cfg['ratio'], list))
+
+        test = '''
+        model:
+          name: test
+          framework: tensorflow
+
+        quantization:
+          calibration:
+            sampling_size: 20
+            dataloader:
+              batch_size: 1
+              dataset:
+                style_transfer:
+                  content_folder: test
+                  style_folder: test
+                  crop_ratio: 0.5
+                  resize_shape: [10,10]
+        '''
+        helper(test)
+        cfg = conf.Conf('fake_conf.yaml').usr_cfg
+        shape_cfg = cfg['quantization']['calibration']['dataloader']['dataset']['style_transfer']['resize_shape']
+        self.assertTrue(isinstance(shape_cfg, list)) 
+
+        test = '''
+        model:
+          name: test
+          framework: tensorflow
+
+        quantization:
+          calibration:
+            sampling_size: 20
+            dataloader:
+              batch_size: 1
+              dataset:
+                dummy:
+                  shape: [224,224]
+              transform:
+                BilinearImagenet:
+                  height: 224
+                  width: 224
+                  mean_value: 123.68 116.78 103.94
+        '''
+        helper(test)
+        cfg = conf.Conf('fake_conf.yaml').usr_cfg
+        shape_cfg = cfg['quantization']['calibration']['dataloader']['dataset']['dummy']['shape']
+        self.assertTrue(isinstance(shape_cfg, tuple)) 
+        transform_cfg = cfg['quantization']['calibration']['dataloader']['transform']['BilinearImagenet']
+        self.assertTrue(isinstance(transform_cfg['mean_value'], list))
 
 
 if __name__ == "__main__":

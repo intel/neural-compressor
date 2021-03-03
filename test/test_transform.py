@@ -122,6 +122,11 @@ class TestDataConversion(unittest.TestCase):
         image, _ = trans((mx.nd.array(TestDataConversion.img), None))
         self.assertTrue(isinstance(image, mx.ndarray.NDArray)) # pylint: disable=no-member
 
+    def testToNDArray(self):
+        trans = TestDataConversion.mx_trans['ToNDArray']()
+        image, _ = trans((TestDataConversion.img.astype(np.uint8), None))
+        self.assertTrue(isinstance(image, mx.ndarray.NDArray))
+
 class TestSameTransfoms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -207,7 +212,20 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))
         tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
         self.assertEqual(tf_result.shape, (4,4,3))
+        tf_result = tf_func((np.array([TestSameTransfoms.img]), None))
+        tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
+        self.assertEqual(tf_result.shape, (1,4,4,3))
 
+        with self.assertRaises(ValueError):
+            tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
+            tf_result = tf_func((np.array([[TestSameTransfoms.img]]), None))
+
+        args = {'size':[20]}
+        with self.assertRaises(ValueError):
+            tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
+            tf_result = tf_func((TestSameTransfoms.img, None))
+
+ 
     def testResize(self):
         tf_func = TestSameTransfoms.tf_trans['Resize'](**{'size':[4,5]})
         tf_result = tf_func((TestSameTransfoms.img, None))
@@ -246,6 +264,8 @@ class TestSameTransfoms(unittest.TestCase):
             TestSameTransfoms.tf_trans['Resize'](**args)
         with self.assertRaises(ValueError):
             TestSameTransfoms.pt_trans['Resize'](**args)
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.mx_trans['Resize'](**args)
  
     def testRandomResizedCrop(self):
         tf_func = TestSameTransfoms.tf_trans['RandomResizedCrop'](**{'size':[4,5]})
@@ -264,6 +284,9 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))
         tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
         self.assertEqual(tf_result.shape, (4,4,3))
+        mx_func = TestSameTransfoms.mx_trans['RandomResizedCrop'](**args)
+        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
+        self.assertEqual(mx_result.shape, (4,4,3))
 
         args = {'size': 4}
         tf_func = TestSameTransfoms.tf_trans['RandomResizedCrop'](**args)
@@ -411,7 +434,12 @@ class TestTFTransorm(unittest.TestCase):
         transform = TestTFTransorm.transforms['RandomCrop'](**args)
         img_result = transform((TestTFTransorm.img, None))[0]
         img_result = img_result.eval(session=tf.compat.v1.Session())
-        self.assertAlmostEqual(img_result.shape, (5,5,3))
+        self.assertEqual(img_result.shape, (5,5,3))
+        args = {'size': [10,10]}
+        transform = TestTFTransorm.transforms['RandomCrop'](**args)
+        img_result = transform((TestTFTransorm.img, None))[0]
+        self.assertEqual(img_result.shape, (10,10,3))
+
 
     def testRescale(self):
         transform = TestTFTransorm.transforms['Rescale']()
@@ -690,6 +718,41 @@ class TestBertSquad(unittest.TestCase):
         iterator = iter(bert_dataloader)
         (get_record, batch_size), _ = next(iterator)
         self.assertEqual(fake_record, get_record)
+
+class TestImagenetTransform(unittest.TestCase):
+    def testParseDecodeImagenet(self):
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test.jpeg')
+
+        image = tf.compat.v1.gfile.FastGFile('test.jpeg','rb').read()
+        label = 10
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'image/encoded': tf.train.Feature(
+                    bytes_list=tf.train.BytesList(value=[image])),
+            'image/class/label': tf.train.Feature(
+                    int64_list=tf.train.Int64List(value=[label])),
+            'image/object/bbox/xmin': tf.train.Feature(
+                    float_list=tf.train.FloatList(value=[10])),
+            'image/object/bbox/ymin': tf.train.Feature(
+                    float_list=tf.train.FloatList(value=[20])),
+            'image/object/bbox/xmax': tf.train.Feature(
+                    float_list=tf.train.FloatList(value=[100])),
+            'image/object/bbox/ymax': tf.train.Feature(
+                    float_list=tf.train.FloatList(value=[200])),
+        }))
+        with tf.io.TFRecordWriter('test.record') as writer:
+            writer.write(example.SerializeToString())
+        eval_dataset = create_dataset(
+            'tensorflow', {'TFRecordDataset':{'root':'test.record'}}, {'ParseDecodeImagenet':{}}, None)
+        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1)
+        for (inputs, labels) in dataloader:
+            self.assertEqual(inputs.shape, (1,100,100,3))
+            self.assertEqual(labels[0][0], 10)
+            break
+        os.remove('test.record')
+        os.remove('test.jpeg')
 
 class TestCOCOTransform(unittest.TestCase):
     def testCOCODecode(self):
