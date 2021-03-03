@@ -16,7 +16,7 @@ The implementation of PyTorch TensorBoard basically have 3 steps:
 
 
 The detailed algorithm can be described by the Pseudo code:
-```
+```python
 
 def evaluate(self, model, dataloader, postprocess=None, \
                  metric=None, measurer=None, iteration=-1, tensorboard=False):

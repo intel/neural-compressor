@@ -14,7 +14,7 @@ shows several notable modifications that can be used to enable quantization:
 * Insert ``QuantStub`` and ``DeQuantStub`` at the beginning and end of the network.
 * Replace ``ReLU6`` with ``ReLU``.
 
-```
+```python
 from torch.quantization import QuantStub, DeQuantStub
 
 def _make_divisible(v, divisor, min_value=None):
@@ -173,7 +173,7 @@ class MobileNetV2(nn.Module):
 ### Helper Functions
 
 Define several helper functions to help with the model evaluation:
-```
+```python
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self, name, fmt=':f'):
@@ -249,7 +249,7 @@ def print_size_of_model(model):
     os.remove('temp.p')
 ```
 ### PTQ
-```
+```python
 num_calibration_batches = 10
 
 myModel = load_model(saved_model_dir + float_model_file).to('cpu')
@@ -333,7 +333,7 @@ In addition, we can significantly improve on the accuracy simply by using a diff
 
 * Quantizes weights on a per-channel basis
 * Uses a histogram observer that collects a histogram of activations and then picks quantization parameters in an optimal manner.
-```
+```python
 per_channel_quantized_model = load_model(saved_model_dir + float_model_file)
 per_channel_quantized_model.eval()
 per_channel_quantized_model.fuse_model()

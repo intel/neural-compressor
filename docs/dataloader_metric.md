@@ -17,7 +17,7 @@ With the importance of DataLoader and Metric, different framework have their own
   <img src="imgs/metric.png" width="700px" />
 </div>
 
-Both DataLoader and Metric use Transform as its data process component, Transform contains 3 different part, aimng at different part of the life cycle of data processing, it is:
+Both DataLoader and Metric use Transform as its data process component, Transform contains 3 different part, aiming at different part of the life cycle of data processing, it is:
   a. preprocessing
   b. postprocessing
   c. general
@@ -34,7 +34,7 @@ DataLoader will take dataset as input parameter and load data from dataset when 
 ## config dataloader and metric in yaml file
 In this case dataloader and metric will created when the tool's tuner initialized. As calibration and evaluation may have different Transform and dataset, you can config different dataloader in yaml file.
 eg:
-
+```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 300                               # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
@@ -89,6 +89,7 @@ evaluation:                                          # optional. required if use
           std: [0.229, 0.224, 0.225]
 
 ## create Intel® Low Precision Optimization Tool internal dataloader and metric and pass to quantizer
+```python
 from lpot import Quantization
 quantizer = Quantization('conf.yaml')
 eval_dataset = quantizer.dataset('bert', dataset=eval_dataset, task=eval_task)
@@ -97,6 +98,7 @@ quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
 
 ## use user specific dataloader and metric
 
+```python
 calib_data = mx.io.ImageRecordIter(path_imgrec=dataset, label_width=1, preprocess_threads=data_nthreads, 
                                    batch_size=batch_size, data_shape=data_shape, label_name=label_name,
                                    rand_crop=False, rand_mirror=False, shuffle=args.shuffle_dataset,

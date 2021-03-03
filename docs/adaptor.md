@@ -13,7 +13,7 @@ Intel® Low Precision Optimization Tool supports new adaptor extension by implem
  and registering this strategy by `adaptor_registry` decorator.
 
 for example, user can implement an `Abc` adaptor like below:
-```
+```python
 @adaptor_registry
 class AbcAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
@@ -37,6 +37,156 @@ class AbcAdaptor(Adaptor):
 `evaluate` function is used to run evaluation on validation dataset.
 `query_fw_capability` function is used to run query framework quantization capability and intersects with user yaml configuration setting to
 `query_fused_patterns` function is used to run query framework graph fusion capability and decide the fusion tuning space.
+
+### Query API
+
+#### **Background**
+Besides the adaptor API, we also introduced the Query API which describes the behavior of the specific framework.
+With this API, the LPOT is easy to query below information of the current runtime framework.
+*  The runtime version information;
+*  The Quantizable ops' type;
+*  The supported sequence of each quantizable op;
+*  The instance of each sequence.
+
+In the past, the above information were generally defined and hidden in every corner of the code and make it hard to maintain effectively. With the Query API, we only need to create one unify yaml file and call corresponding API to get the information, e.g, the [tensorflow.yaml](../lpot/adaptor/tensorflow.yaml) keeps the current Tensorflow framework ability. Theoretically, we don't recommend the end user make any modification if the requirement is not clearly.
+
+#### **Unify Config Introduction**
+Below is a fragment of the Tensorflow configuration file.
+
+* **precisions** field defines the supported precision for LPOT.
+    -  valid_mixed_precision enumerate all supported precision combinations for specific scenario. e.g, if one hardware doesn't support bf16， it should be `int8 + fp32`.
+* **ops** field defines the valid OP type list for each precision.
+* **capabilities** field focus on the quantization ability of specific op, like granularity, scheme and algorithm. Note, the activation here means the input activation of the op rather than its output.
+* **patterns** field defines the supported fusion sequence of each op.
+
+```yaml
+---
+-
+  version:
+    name: '2.4.0'
+  
+  precisions: &common_precisions
+    names: int8, uint8, bf16, fp32
+    valid_mixed_precisions: []
+  
+  ops: &common_ops
+    int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &common_capabilities
+    int8: &ref_2_4_int8 {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+    uint8: &ref_2_4_uint8 {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+  patterns: &common_patterns
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd'
+        ]
+    int8: ['Conv2D + BiasAdd', 'Conv2D + BiasAdd + Relu', 'Conv2D + BiasAdd + Relu6']
+    uint8: [
+        'Conv2D + BiasAdd + AddN + Relu',
+        'Conv2D + BiasAdd + AddN + Relu6',
+        'Conv2D + BiasAdd + AddV2 + Relu',
+        'Conv2D + BiasAdd + AddV2 + Relu6',
+        'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Relu6',
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd',
+        'DepthwiseConv2dNative + BiasAdd + Relu6',
+        'DepthwiseConv2dNative + Add + Relu6',
+        'DepthwiseConv2dNative + BiasAdd',
+        'MatMul + BiasAdd + Relu',
+        'MatMul + BiasAdd',
+  ]
+```
+#### **Query API Introduction**
+We defines the abstract class `QueryBackendCapability` in [query.py](../lpot/adaptor/query.py#L21). Each framework should inherit it and implement the member function if needed. You may refer to Tensorflow implementation [TensorflowQuery](../lpot/adaptor/tensorflow.py#L628)
+
 
 Customize a New Framework Backend
 =================

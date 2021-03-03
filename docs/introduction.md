@@ -11,7 +11,7 @@ The API is intended to unify low-precision quantization interfaces cross multipl
 The API consists of three components:
 
 ### quantization-related APIs
-```
+```python
 class Quantization(object):
     def __init__(self, conf_fname):
         ...
@@ -36,7 +36,7 @@ For MXNet backend, LPOT supports the instance of `mxnet.symbol.Symbol` and `gluo
 
 
 ### pruning-related APIs (POC)
-```
+```python
 class Pruning(object):
     def __init__(self, conf_fname):
         ...
@@ -58,7 +58,7 @@ class Pruning(object):
 ```
 
 ### benchmarking-related APIs
-```
+```python
 class Benchmark(object):
     def __init__(self, conf_fname):
         ...
@@ -75,7 +75,7 @@ Essentially Intel® Low Precision Optimization Tool constructs the quantization 
 
 User can implement `dataloader` component by filling code into below:
 
-```
+```python
 class dataset(object):
   def __init__(self, *args):
       # initialize dataset related info here
@@ -100,7 +100,7 @@ or by user yaml configuration through setting up `dataloader` field in `calibrat
 
 ## metric
 User can implement `metric` component by filling code into below:
-```
+```python
 from lpot.metric.metric import Metric
 class metric(Metric):
   def __init__(self, *args):
@@ -126,7 +126,7 @@ or by user yaml configuration through setting up `accuracy` field in `evaluation
 
 If `dataloader` and `metric` component get configured by code, the quantization process would start with below lines:
 
-```
+```python
 quantizer = Quantization('/path/to/user.yaml')
 dataloader = tuner.dataloader(dataset, batch_size=100)
 quantizer.metric('metric', metric)
@@ -135,7 +135,7 @@ q_model = quantizer('/path/to/model', q_dataloader = dataloader, eval_dataloader
 
 If `dataloader` and `metric` components get fully configured by yaml, the quantization process would start with below lines:
 
-```
+```python
 quantizer = Quantization('/path/to/user.yaml')
 q_model = quantizer('/path/to/model')
 ```

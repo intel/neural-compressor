@@ -20,7 +20,7 @@ Please refer to [PTQ Usage](PTQ.md#L173)
 
 ### QAT
 First, define a training function:
-```
+```python
 def train_one_epoch(model, criterion, optimizer, data_loader, device, ntrain_batches):
     model.train()
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -54,20 +54,20 @@ def train_one_epoch(model, criterion, optimizer, data_loader, device, ntrain_bat
     return
 ```
 Fuse modules as PTQ:
-```
+```python
 model.fuse_model()
 optimizer = torch.optim.SGD(model.parameters(), lr = 0.0001)
 model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
 ```
 Finally, prepare_qat performs the "fake quantization", preparing the model for quantization-aware training:
-```
+```python
 torch.quantization.prepare_qat(model, inplace=True)
 ```
 Training a quantized model with high accuracy requires accurate modeling of numerics at inference. For quantization-aware training, therefore,modify the training loop by doing the following:
 
 * Switch batch norm to use running mean and variance towards the end of training to better match inference numerics.
 * We also freeze the quantizer parameters (scale and zero-point) and fine tune the weights.
-```
+```python
 num_train_batches = 20
 # Train and check accuracy after each epoch
 for nepoch in range(8):

@@ -6,7 +6,7 @@ Benchmarking feature of LPOT is used to measure the model performance with the o
 # how to use it
 ## config evaluation filed in yaml file
 
-```
+```yaml
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
