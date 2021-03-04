@@ -25,7 +25,7 @@ from collections import OrderedDict
 import numpy as np
 from .adaptor import adaptor_registry, Adaptor
 from .query import QueryBackendCapability
-from ..utils.utility import LazyImport
+from ..utils.utility import LazyImport, dump_elapsed_time
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -53,6 +53,7 @@ class ONNXRTAdaptor(Adaptor):
         self.quantizable_op_types = self._query_quantizable_op_types()
         self.evaluate_nums = 0
 
+    @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataLoader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
            quantization.

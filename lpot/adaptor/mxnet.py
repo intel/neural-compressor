@@ -84,6 +84,7 @@ class MxNetAdaptor(Adaptor):
         else:
             pass
 
+    @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """The function is used to do MXNet calibration and quanitization in post-training
            quantization.

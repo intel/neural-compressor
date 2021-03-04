@@ -22,7 +22,7 @@ import yaml
 import numpy as np
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize
+from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
 from ..utils import logger
 from ..conf.dotdict import deep_get
 tensorflow = LazyImport('tensorflow')
@@ -341,6 +341,7 @@ class TensorFlowAdaptor(Adaptor):
                   .ljust(log_length) + '|'))
         logger.info('|' +  '*' * log_length + '|')
 
+    @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
 
