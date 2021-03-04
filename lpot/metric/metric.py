@@ -42,7 +42,7 @@ class PyTorchMetrics(object):
             "Accuracy": WrapPyTorchMetric(
                 torch_ignite.metrics.Accuracy),
             "Loss": WrapPyTorchMetric(
-                torch_ignite.metrics.Loss),
+                PyTorchLoss),
             "MAE": WrapPyTorchMetric(
                 torch_ignite.metrics.MeanAbsoluteError),
             "RMSE": WrapPyTorchMetric(
@@ -410,6 +410,28 @@ class Accuracy(Metric):
             np.array(self.pred_list) == np.array(self.label_list))
         return correct_num / self.sample
 
+class PyTorchLoss():
+    def __init__(self):
+        self._num_examples = 0
+        self._device = torch.device('cpu')
+        self._sum = torch.tensor(0.0, device=self._device)
+
+    def reset(self):
+        self._num_examples = 0
+        self._sum = torch.tensor(0.0, device=self._device)
+
+    def update(self, output):
+        y_pred, y = output[0].detach(), output[1].detach()
+        loss = torch.sum(y_pred)
+        self._sum += loss.to(self._device)
+        self._num_examples += y.shape[0]
+
+    def compute(self):
+        if self._num_examples == 0:
+            raise ValueError("Loss must have at least one example \
+                                      before it can be computed.")
+        return self._sum.item() / self._num_examples
+        
 @metric_registry('Loss', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class Loss(Metric):
     def __init__(self):

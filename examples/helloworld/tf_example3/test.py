@@ -20,7 +20,8 @@ def main():
 
     
     # Do quantization
-    quantized_model = quantizer('./inception_v1.ckpt')
+    model = quantizer.model('./inception_v1.ckpt')
+    quantized_model = quantizer(model)
   
      
 if __name__ == "__main__":

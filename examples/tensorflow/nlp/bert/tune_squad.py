@@ -44,7 +44,8 @@ def main(_):
     if FLAGS.mode == 'benchmark':
         from lpot import Benchmark
         evaluator = Benchmark(FLAGS.config)
-        results = evaluator(model=FLAGS.input_model)
+        model = evaluator.model(FLAGS.input_model)
+        results = evaluator(model=model)
         for mode, result in results.items():
             acc, batch_size, result_list = result
             latency = np.array(result_list).mean() / batch_size
@@ -56,7 +57,8 @@ def main(_):
     elif FLAGS.mode == 'tune':
         from lpot.quantization import Quantization
         quantizer = Quantization('./bert.yaml')
-        q_model = quantizer(FLAGS.input_model)
+        model = quantizer.model(FLAGS.input_model)
+        q_model = quantizer(model)
         q_model.save(FLAGS.output_model)
 
 if __name__ == "__main__":

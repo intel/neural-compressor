@@ -123,6 +123,7 @@ def main():
         conf_yaml = "conf_" + args.model + ".yaml"
         from lpot import Quantization
         quantizer = Quantization(conf_yaml)
+        model = quantizer.model(model)
         q_model = quantizer(model)
         q_model.save(args.tuned_checkpoint)
         exit(0)

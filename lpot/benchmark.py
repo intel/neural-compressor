@@ -25,6 +25,7 @@ from .data import DataLoader as DATALOADER
 from .data import TRANSFORMS
 from .metric import METRICS
 from .model import Model as LpotModel
+from .model import MODELS
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance, with the objective
@@ -65,17 +66,7 @@ class Benchmark(object):
                                             "benchmark": True})
 
         if not isinstance(model, LpotModel):
-            from lpot.model import MODELS
-            if framework == 'pytorch_ipex' or framework == 'pytorch':
-                lpot_model_framework_info = {}
-            else:
-                lpot_model_framework_info = {
-                    'name': cfg.model.name,
-                    'input_tensor_names': cfg.model.inputs,
-                    'output_tensor_names': cfg.model.outputs,
-                    'workspace_path': cfg.tuning.workspace.path
-                }
-            model = MODELS[framework](model, lpot_model_framework_info)
+            model = self.model(model)
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
@@ -127,6 +118,18 @@ class Benchmark(object):
                             self.objective.measurer.result_list()[warmup:]
 
         return results
+
+    def model(self, root, **kwargs):
+        framework_model_info = {}
+        cfg = self.conf.usr_cfg
+        if self.framework == 'tensorflow':
+            framework_model_info.update(
+                {'name': cfg.model.name,
+                 'input_tensor_names': cfg.model.inputs,
+                 'output_tensor_names': cfg.model.outputs,
+                 'workspace_path': cfg.tuning.workspace.path})
+
+        return MODELS[self.framework](root, framework_model_info, **kwargs)
 
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
                    sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):

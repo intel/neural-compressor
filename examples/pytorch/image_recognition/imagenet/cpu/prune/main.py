@@ -173,9 +173,9 @@ def main_worker(gpu, args):
     if args.prune:
         from lpot import Pruning
         prune = Pruning(args.config)
+        model = prune.model(model)
 
         def training_func_for_lpot(model):
-            prune.model.model = model
             epochs = 16
             iters = 30
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)

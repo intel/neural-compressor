@@ -18,6 +18,8 @@
 from .dataset import dataset_registry, Dataset
 import numpy as np
 from lpot.utils.utility import LazyImport
+import logging
+
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
@@ -54,6 +56,7 @@ class DummyDataset(Dataset):
         np.random.seed(9527)
         self.transform = transform
         self.label = label
+        self.logger = logging.getLogger()
         if isinstance(shape, list):
             # list tensor should same first demension n
             n = shape[0][0]
@@ -120,7 +123,7 @@ class DummyDataset(Dataset):
 
         sample = self.dataset[index]
         if self.transform is not None:
-            sample = self.transform(sample)
+            self.logger.info('Dummy dataset does not need transform!')
 
         if self.label:
             return sample, 0
@@ -132,7 +135,7 @@ class MXNetDummyDataset(DummyDataset):
     def __getitem__(self, index):
         sample = self.dataset[index]
         if self.transform is not None:
-            sample = self.transform(sample)
+            self.logger.info('Dummy dataset does not need transform!')
         if self.label:
             return sample, 0
         else:
@@ -144,7 +147,7 @@ class PyTorchDummyDataset(DummyDataset):
     def __getitem__(self, index):
         sample = self.dataset[index]
         if self.transform is not None:
-            sample = self.transform(sample)
+            self.logger.info('Dummy dataset does not need transform!')
         if self.label:
             return sample, 0
         else:

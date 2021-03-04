@@ -184,6 +184,7 @@ def main():
     if args.tune:
         quantizer = Quantization('conf.yaml')
         calib_dl = CalibrationDL()
+        model = quantizer.model(model)
         q_model = quantizer(model, q_dataloader = calib_dl, eval_func=eval_func)
         q_model.save('./lpot_workspace')
         exit(0)

@@ -272,7 +272,8 @@ if __name__ == '__main__':
         # Doing auto-tuning here
         from lpot import Quantization
         quantizer = Quantization("./ssd.yaml")
-        q_model = quantizer(net, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
+        model = quantizer.model(net)
+        q_model = quantizer(model, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
         q_model.save(args.output_graph)
         sys.exit()
 

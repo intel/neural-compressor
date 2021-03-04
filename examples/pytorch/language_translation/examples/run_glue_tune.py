@@ -677,6 +677,7 @@ def main():
                     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                                      task=eval_task, model_type=args.model_type)
                     test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
+                    model = quantizer.model(model)
                     q_model = quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
                     q_model.save(args.tuned_checkpoint)
                 exit(0)

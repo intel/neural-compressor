@@ -44,13 +44,15 @@ class eval_object_detection_optimized_graph(object):
         if self.args.tune:
             from lpot import Quantization
             quantizer = Quantization(self.args.config)
-            q_model = quantizer(self.args.input_graph)
+            model = quantizer.model(self.args.input_graph)
+            q_model = quantizer(model)
             q_model.save(self.args.output_model)
                 
         if self.args.benchmark:
             from lpot import Benchmark
             evaluator = Benchmark(self.args.config)
-            results = evaluator(model=self.args.input_graph)
+            model = evaluator.model(self.args.input_graph)
+            results = evaluator(model=model)
             for mode, result in results.items():
                 acc, batch_size, result_list = result
                 latency = np.array(result_list).mean() / batch_size

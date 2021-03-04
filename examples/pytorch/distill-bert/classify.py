@@ -202,6 +202,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
             quantizer = lpot.Quantization(args.tuned_yaml)
+            model = quantizer.model(model)
             q_model = quantizer(model, q_dataloader=eval_dataloader, eval_func=eval_func)
             q_model.save(args.tuned_checkpoint)
 

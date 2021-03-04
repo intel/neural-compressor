@@ -12,7 +12,8 @@ def main():
     quantizer = lpot.Quantization('./conf.yaml')
     dataset = quantizer.dataset('dummy', shape=(100, 100, 100, 3), label=True)
     data_loader = DataLoader('tensorflow', dataset)
-    quantized_model = quantizer('./model/public/rfcn-resnet101-coco-tf/model/public/rfcn-resnet101-coco-tf/rfcn_resnet101_coco_2018_01_28/', q_dataloader=data_loader )
+    model = quantizer.model('./model/public/rfcn-resnet101-coco-tf/model/public/rfcn-resnet101-coco-tf/rfcn_resnet101_coco_2018_01_28/')
+    quantized_model = quantizer(model, q_dataloader=data_loader )
 
  
 if __name__ == "__main__":

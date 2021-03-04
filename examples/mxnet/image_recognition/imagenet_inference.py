@@ -317,7 +317,8 @@ if __name__ == '__main__':
 
             calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
             quantizer = Quantization("./cnn.yaml")
-            q_model = quantizer(fp32_model, q_dataloader=calib_data, eval_dataloader=data)
+            model = quantizer.model(fp32_model)
+            q_model = quantizer(model, q_dataloader=calib_data, eval_dataloader=data)
             q_model.save(args.output_graph)
             sys.exit()
         

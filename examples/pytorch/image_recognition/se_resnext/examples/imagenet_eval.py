@@ -151,6 +151,7 @@ def main():
         model.module.fuse_model()
         from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
+        model = quantizer.model(model)
         q_model = quantizer(model)
         q_model.save(args.tuned_checkpoint)
         return

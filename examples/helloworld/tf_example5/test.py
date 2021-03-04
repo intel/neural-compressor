@@ -6,7 +6,8 @@ def main():
 
     import lpot
     quantizer = lpot.Quantization('./conf.yaml')
-    quantized_model = quantizer("./mobilenet_v1_1.0_224_frozen.pb")
+    model = quantizer.model("./mobilenet_v1_1.0_224_frozen.pb")
+    quantized_model = quantizer(model)
 
      # Optional, run benchmark 
     from lpot import Benchmark

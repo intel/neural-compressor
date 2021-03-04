@@ -296,7 +296,8 @@ if __name__ == "__main__":
         data_loader = quantizer.dataloader(dataset=dataset,
                                            batch_size=batch_size,
                                            collate_fn=oob_collate_data_func)
-        q_model = quantizer(args.model_path, q_dataloader=data_loader)
+        model = quantizer.model(args.model_path)
+        q_model = quantizer(model, q_dataloader=data_loader)
         q_model.save(args.output_path)
 
     else:

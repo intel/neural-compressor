@@ -673,6 +673,15 @@ class TestDataloader(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy'](shape=[(4, 256, 256, 3), (256, 256, 3)])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy'](shape=(4, 256, 256, 3), low=[1., 0.])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy'](shape=(4, 256, 256, 3), high=[128., 127.])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy'](shape=(4, 256, 256, 3), dtype=['float32', 'int8'])
+ 
     def test_style_transfer_dataset(self):
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
@@ -746,6 +755,9 @@ class TestDataloader(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
+        dataset = datasets['dummy'](shape=(4, 256, 256, 3), label=True)
+        self.assertEqual(dataset[0][1], 0)
+ 
     def test_onnxrt_qlinear_dummy(self):
         datasets = DATASETS('onnxrt_qlinearops')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))

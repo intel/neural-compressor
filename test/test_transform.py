@@ -158,6 +158,9 @@ class TestSameTransfoms(unittest.TestCase):
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
         self.assertEqual(TestSameTransfoms.img.astype(
                 np.uint8)[0][0][0]/255., pt_result[0][0][0])
+        args = {'std': [0.]}
+        with self.assertRaises(ValueError):
+            TestSameTransfoms.pt_trans['Normalize'](**args)
 
     def testRescale(self):
         ox_func = TestSameTransfoms.ox_trans['Rescale']()

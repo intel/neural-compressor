@@ -298,5 +298,6 @@ if __name__ == "__main__":
 
         from lpot.quantization import Quantization
         quantize = Quantization(args.config)
+        model = quantize.model(model)
         q_model = quantize(model, q_dataloader=eval_dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

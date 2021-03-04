@@ -630,6 +630,25 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(rmse_result, np.sqrt(1/(0.5+0.001)))
 
     def test_loss(self):
+        metrics = METRICS('pytorch')
+        loss = metrics['Loss']()
+        predicts = [1, 0, 0, 1]
+        labels = [0, 1, 0, 0]
+        loss.update(predicts, labels)
+        loss_result = loss.result()
+        self.assertEqual(loss_result, 0.5)
+        predicts = [1, 1, 0, 1]
+        labels = [0, 1, 0, 0]
+        loss.update(predicts, labels)
+        loss_result = loss.result()
+        self.assertEqual(loss_result, 0.625)
+        loss.reset()
+        predicts = [1, 0, 0, 1]
+        labels = [0, 1, 0, 0]
+        loss.update(predicts, labels)
+        self.assertEqual(loss.result(), 0.5)
+
+       
         metrics = METRICS('onnxrt_qlinearops')
         loss = metrics['Loss']()
         predicts = [1, 0, 0, 1]

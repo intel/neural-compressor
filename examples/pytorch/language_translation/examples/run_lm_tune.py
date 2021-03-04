@@ -673,6 +673,7 @@ def main():
                 # Note that DistributedSampler samples randomly
                 eval_sampler = SequentialSampler(eval_dataset)
                 eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
+                model = quantizer.model(model)
                 q_model = quantizer(model, eval_dataloader, eval_func=eval_func_for_lpot)
                 q_model.save(args.tuned_checkpoint)
                 exit(0)

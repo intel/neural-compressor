@@ -254,6 +254,7 @@ def main_worker(gpu, ngpus_per_node, args):
         model.module.fuse_model()
         from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
+        model = quantizer.model(model)
         q_model = quantizer(model)
         return
 

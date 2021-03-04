@@ -176,6 +176,7 @@ if __name__ == "__main__":
         )
         lpot_dataloader = yolo_dataLoader(dataloader)
         quantizer = Quantization("./conf.yaml")
+        model = quantizer.model(model)
         q_model = quantizer(model, q_dataloader=lpot_dataloader, eval_func=eval_func)
         q_model.save(opt.tuned_checkpoint)
         exit(0)

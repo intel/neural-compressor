@@ -184,8 +184,9 @@ class eval_classifier_optimized_graph:
         infer_graph = load_graph(self.args.input_graph)
         quantizer = Quantization(self.args.config)
         if self.args.calib_data:
+            model = quantizer.model(infer_graph)
             calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
-            q_model = quantizer(infer_graph,
+            q_model = quantizer(model,
                                 q_dataloader=calib_dataloader,
                                 eval_func=self.eval_inference,
                                 eval_dataloader=None)

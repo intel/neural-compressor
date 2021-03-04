@@ -904,6 +904,7 @@ if __name__ == "__main__":
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         from lpot import Quantization
         quantizer = Quantization("./conf.yaml")
+        dlrm = quantizer.model(dlrm)
         q_model = quantizer(dlrm, eval_dataloader, eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         exit(0)

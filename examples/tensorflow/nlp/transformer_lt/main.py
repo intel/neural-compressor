@@ -230,7 +230,8 @@ def main(_):
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
         q_dataloader = quantizer.dataloader(ds, collate_fn=collate_fn,
                                                     batch_size=FLAGS.batch_size)
-        q_model = quantizer(graph,
+        model = quantizer.model(graph)
+        q_model = quantizer(model,
                             q_dataloader=q_dataloader,
                             eval_func=eval_func)
         try:

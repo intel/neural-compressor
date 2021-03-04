@@ -111,6 +111,7 @@ if __name__ == "__main__":
     if args.benchmark:
         from lpot import Benchmark
         evaluator = Benchmark(args.config)
+        model = evaluator.model(model)
         results = evaluator(model=model, b_dataloader=dummy_dataloader)
         for mode, result in results.items():
             acc, batch_size, result_list = result
@@ -126,6 +127,7 @@ if __name__ == "__main__":
 
         from lpot.quantization import Quantization
         quantize = Quantization(args.config)
+        model = quantize.model(model)
         q_model = quantize(
             model, 
             q_dataloader=dummy_dataloader,

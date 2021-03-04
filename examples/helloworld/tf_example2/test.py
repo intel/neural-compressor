@@ -48,7 +48,8 @@ quantizer = lpot.Quantization('./conf.yaml')
 dataset = Dataset()
 quantizer.metric('hello_metric', MyMetric) 
 dataloader = quantizer.dataloader(dataset, batch_size=1)
-q_model = quantizer('../models/simple_model', q_dataloader = dataloader, eval_dataloader = dataloader)
+model = quantizer.model('../models/simple_model')
+q_model = quantizer(model, q_dataloader = dataloader, eval_dataloader = dataloader)
 
 # Optional, run quantized model
 import tensorflow as tf
