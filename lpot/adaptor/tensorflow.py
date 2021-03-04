@@ -166,7 +166,8 @@ class TensorFlowAdaptor(Adaptor):
                 if node.op == "Const" and graph_info[graph_info[node.name].outputs[0]].node.op \
                     in ["Conv2D", "DepthwiseConv2dNative", "MatMul",
                     "FusedBatchNormV3", "BiasAdd"]:
-                    const_value = tensor_util.MakeNdarray(node.attr.get('value').tensor)
+                    const_value = tensor_util.MakeNdarray(node.attr.get(
+                                  'value').tensor).astype(np.float32)
                     self.log_histogram(writer, node.name, const_value)
 
             outputs.extend(fp32_inspect_node_name)
@@ -217,7 +218,8 @@ class TensorFlowAdaptor(Adaptor):
                     tensor = predictions[index]
                     if node_name in int8_inspect_node_name:
                         tensor = Dequantize(predictions[index], q_node_scale[node_name])
-                    self.log_histogram(writer, node_name + output_postfix, tensor, idx)
+                    self.log_histogram(writer, node_name + output_postfix, tensor.astype(
+                                       np.float32), idx)
                 writer.close()
             if isinstance(predictions, list):
                 if len(origin_output_tensor_names) == 1:
