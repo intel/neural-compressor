@@ -83,7 +83,14 @@ export class PredefinedModelsComponent implements OnInit {
         },
         error => {
           this.showSpinner = false;
-          this.openErrorDialog(error);
+          if (error.error === 'Access denied') {
+            this.modelService.getToken()
+              .subscribe(response => {
+                this.modelService.setToken(response['token']);
+              });
+          } else {
+            this.openErrorDialog(error);
+          }
         });
   }
 

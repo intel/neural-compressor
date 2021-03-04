@@ -58,8 +58,12 @@
             <mat-form-field class="form-field" appearance="fill">
               <mat-label>input *</mat-label>
               <mat-select formControlName="input" multiple>
-                <mat-option *ngFor="let input of inputs" [value]="input">
+                <mat-option *ngFor="let input of inputs" [value]="input"
+                  [disabled]="order['input'][0] === 'custom' && input !== 'custom'"
+                  (onSelectionChange)="boundaryNodesChanged($event.source.value, 'input')">
                   {{ input }}
+                  {{ inputs.length > 1 && order['input'].indexOf(input) !== -1 && input !== 'custom' ?
+                  '(' + (order['input'].indexOf(input) + 1) + ')' : null }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -77,11 +81,22 @@
             <mat-form-field class="form-field" appearance="fill">
               <mat-label>output *</mat-label>
               <mat-select formControlName="output" multiple>
-                <mat-option *ngFor="let output of outputs" [value]="output">
+                <mat-option *ngFor="let output of outputs" [value]="output"
+                  [disabled]="order['output'][0] === 'custom' && output !== 'custom'"
+                  (onSelectionChange)="boundaryNodesChanged($event.source.value, 'output')">
                   {{ output }}
+                  {{ outputs.length > 1 && order['output'].indexOf(output) !== -1 && output !== 'custom' ?
+                  '(' + (order['output'].indexOf(output) + 1) + ')' : null }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <ng-container
+              *ngIf="firstFormGroup.get('output').value.length === 1 && firstFormGroup.get('output').value[0] === 'custom'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>output *</mat-label>
+                <input formControlName="outputOther" matInput>
+              </mat-form-field>
+            </ng-container>
           </ng-container>
           <ng-container *ngIf="!outputs.length">
             <mat-form-field class="form-field" appearance="fill">
@@ -94,11 +109,18 @@
           </ng-container>
           <mat-spinner class="spinner" *ngIf="showSpinner" [diameter]="25"></mat-spinner>
         </div>
+        <a *ngIf="inputs && outputs" class="info">
+          Order of the inputs and outputs matters.
+        </a>
       </form>
     </mat-card>
 
     <form [formGroup]="secondFormGroup">
-      <h2>Dataset</h2>
+      <h2>Dataset
+        <a href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
+          <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
+        </a>
+      </h2>
       <mat-card>
         <h3>Calibration</h3>
         <mat-card>
@@ -186,7 +208,11 @@
         </mat-card>
         <ng-container
           *ngIf="secondFormGroup.get('dataLoaderQuantization').value !== 'custom' && secondFormGroup.get('dataLoaderEvaluation').value !== 'custom'">
-          <h3>Transforms</h3>
+          <h3>Transforms
+            <a href="https://github.com/intel/lpot/blob/master/docs/transform.md" target="_blank">
+              <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
+            </a>
+          </h3>
           <mat-card>
             <ng-container *ngFor="let transformItem of transformationParams; let index = index">
               <br>
@@ -225,7 +251,11 @@
           </mat-card>
         </ng-container>
       </mat-card>
-      <h2>Metric</h2>
+      <h2>Metric
+        <a href="https://github.com/intel/lpot/blob/master/docs/metrics.md" target="_blank">
+          <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
+        </a>
+      </h2>
       <mat-card>
         <mat-form-field class="form-field" appearance="fill">
           <mat-label>metric</mat-label>

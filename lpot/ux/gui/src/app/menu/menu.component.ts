@@ -21,7 +21,7 @@ import { ModelService } from '../services/model.service';
 @Component({
   selector: 'app-menu',
   templateUrl: './menu.component.html',
-  styleUrls: ['./menu.component.scss']
+  styleUrls: ['./menu.component.scss', './../error/error.component.scss']
 })
 export class MenuComponent implements OnInit {
 
@@ -33,11 +33,24 @@ export class MenuComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.getWorkspace();
+  }
+
+  getWorkspace() {
     this.modelService.getDefaultPath('workspace')
       .subscribe(repoPath => {
         this.workspacePath = repoPath['path'];
         this.modelService.workspacePath = repoPath['path'];
-      })
+      },
+        error => {
+          if (error.error === 'Access denied') {
+            this.modelService.getToken()
+              .subscribe(response => {
+                this.modelService.setToken(response['token']);
+              });
+          }
+        }
+      );
   }
 
   openUrl(url: string) {

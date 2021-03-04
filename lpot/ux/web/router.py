@@ -15,6 +15,7 @@
 
 """Connector between api.py and components."""
 
+import os
 from threading import Thread
 
 from lpot.ux.components.benchmark.execute_benchmark import execute_benchmark
@@ -39,6 +40,7 @@ from lpot.ux.components.model_zoo.download_config import download_config
 from lpot.ux.components.model_zoo.download_model import download_model
 from lpot.ux.components.model_zoo.list_models import list_models
 from lpot.ux.components.tune.execute_tune import execute_tuning
+from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.web.communication import Request, Response, create_simple_response
 from lpot.ux.web.exceptions import ServiceNotFoundException
 
@@ -48,7 +50,7 @@ class Router:
 
     def __init__(self) -> None:
         """Initialize object."""
-        pass
+        clean_workloads_wip_status()
 
     def handle(self, request: Request) -> Response:
         """Run operation on requested component and return result."""
@@ -147,3 +149,9 @@ def _execute_tuning_benchmark(data: dict) -> None:
     }
     if not tuning_data.get("is_custom_dataloader", None):
         execute_benchmark(benchmark_data)
+
+
+def clean_workloads_wip_status() -> None:
+    """Clean WIP status for workloads in workloads_list.json."""
+    workdir = Workdir(workspace_path=os.environ["HOME"])
+    workdir.clean_status(status_to_clean="wip")

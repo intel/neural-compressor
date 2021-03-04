@@ -19,6 +19,9 @@ import os
 from shutil import copy
 from typing import Any, Dict, List, Union
 
+from lpot.ux.components.configuration_wizard.configuration_parser import (
+    ConfigurationParser,
+)
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import replace_with_values
 from lpot.ux.utils.workload.config import Config
@@ -36,10 +39,12 @@ def save_workload(
         request_id=data["id"],
         model_path=data["model_path"],
     )
+    parser = ConfigurationParser()
+    parsed_data = parser.parse(data)
 
-    workload = Workload(data)
+    workload = Workload(parsed_data)
     workload.dump()
-    update_config(workload, data, workdir)
+    update_config(workload, parsed_data, workdir)
     workload.config.dump(os.path.join(workdir.workload_path, workload.config_name))
     return workload.serialize()
 
@@ -68,7 +73,7 @@ def update_config(workload: Workload, data: dict, workdir: Workdir) -> None:
     }
 
     for key, action in map_key_to_action.items():
-        if data.get(key, None):
+        if data.get(key, None) is not None:
             action(data[key])
     if data.get("evaluation", None):
         update_evaluation_data(config, data["evaluation"])

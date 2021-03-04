@@ -13,6 +13,16 @@
 // limitations under the License.
 @import './../../variables.scss';
 
+* {
+  font-family: IntelClearRg;
+}
+
+h1,
+h2,
+h3 {
+  font-family: IntelOneRg;
+}
+
 .form-field {
   margin-right: 5px;
 }
@@ -90,4 +100,10 @@ table {
   z-index: 10;
   top: 50%;
   left: 48%;
+}
+
+.help-icon {
+  width: 20px;
+  position: relative;
+  top: 3px;
 }

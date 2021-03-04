@@ -69,3 +69,35 @@ $darker-gray: #333;
 $darkest-gray: #111;
 $hover-gray: $lighter-gray;
 $tapped-gray: $light-gray;
+
+/* Intel Clear font */
+
+@font-face {
+  font-family: IntelOneRg;
+  src: url('/assets/fonts/intelone-display-regular.ttf');
+}
+
+@font-face {
+  font-family: IntelOneLt;
+  src: url('/assets/fonts/intelone-display-light.ttf');
+}
+
+@font-face {
+  font-family: IntelOneBd;
+  src: url('/assets/fonts/intelone-display-bold.ttf');
+}
+
+@font-face {
+  font-family: IntelClearRg;
+  src: url('/assets/fonts/IntelClear_Rg.ttf');
+}
+
+@font-face {
+  font-family: IntelClearLt;
+  src: url('/assets/fonts/IntelClear_Lt.ttf');
+}
+
+@font-face {
+  font-family: IntelClearBd;
+  src: url('/assets/fonts/IntelClear_Bd.ttf');
+}

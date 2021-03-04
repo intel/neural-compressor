@@ -49,6 +49,10 @@ export class ImportModelComponent implements OnInit {
   tunings = [];
   inputs = [];
   outputs = [];
+  order = {
+    input: [],
+    output: []
+  };
   frameworkVersion: string;
   frameworkWarning: string;
 
@@ -100,6 +104,10 @@ export class ImportModelComponent implements OnInit {
           this.showSpinner = true;
           this.frameworkVersion = null;
           this.frameworkWarning = null;
+          ['input', 'output'].forEach(type => {
+            this.firstFormGroup.get(type).setValue([]);
+            this.order[type] = [];
+          });
           this.socketService.getBoundaryNodes(this.getNewModel()).subscribe();
         }
       });
@@ -136,6 +144,64 @@ export class ImportModelComponent implements OnInit {
           }
         }
       });
+  }
+
+  boundaryNodesChanged(value, type: 'input' | 'output') {
+    if (value === 'custom') {
+      if (!this.order[type].includes(value)) {
+        this.firstFormGroup.get(type).setValue([value]);
+        this.order[type] = [value];
+      } else {
+        this.firstFormGroup.get(type).setValue([]);
+        this.order[type] = [];
+      }
+    } else {
+      if (!this.order[type].includes(value)) {
+        this.order[type].push(value);
+      } else {
+        this.order[type].splice(this.order[type].indexOf(value), 1);
+      }
+    }
+  }
+
+  setDefaultValues() {
+    this.firstFormGroup = this._formBuilder.group({
+      framework: ['', Validators.required],
+      modelLocation: ['', Validators.required],
+      modelDomain: ['', Validators.required],
+      input: [''],
+      inputOther: [''],
+      output: [''],
+      outputOther: [''],
+    });
+    this.secondFormGroup = this._formBuilder.group({
+      accuracyGoal: [0.01],
+      dataLoaderEvaluation: [''],
+      dataLoaderQuantization: [''],
+      datasetLocationEvaluation: [''],
+      datasetLocationQuantization: [''],
+      datasetParams0: [''],
+      datasetParams1: [''],
+      transform: [''],
+      transformParams: [''],
+      samplingSize: [100],
+      op: [''],
+      strategy: [''],
+      batchSize: [1],
+      cores_per_instance: [''],
+      num_of_instance: [''],
+      inter_num_of_threads: [''],
+      intra_num_of_threads: [''],
+      kmp_blocktime: [''],
+      warmup: [],
+      iteration: [-1],
+      metric: [''],
+      objective: [''],
+      timeout: [0],
+      maxTrials: [100],
+      randomSeed: [],
+      approach: [],
+    });
   }
 
   getPossibleValues() {
@@ -177,11 +243,23 @@ export class ImportModelComponent implements OnInit {
     this.metricParams = this.metrics.find(x => x.name === event.value).params;
     if (this.metricParams) {
       this.metricParam = this.metricParams[0].value;
+      if (Array.isArray(this.metricParams[0].value)) {
+        this.metricParam = this.metricParams[0].value[0];
+      }
     }
   }
 
   setDefaultDataLoaderParam(event, section: string) {
-    this.dataLoaderParams[section] = this.dataLoaders.find(x => x.name === event.value).params;
+    const parameters = this.dataLoaders.find(x => x.name === event.value).params;
+    this.dataLoaderParams[section] = [];
+    if (Array.isArray(parameters)) {
+      parameters.forEach((param, index) => {
+        this.dataLoaderParams[section][index] = {};
+        Object.keys(param).forEach(paramValue => {
+          this.dataLoaderParams[section][index][paramValue] = param[paramValue];
+        });
+      })
+    }
     this.showDatasetLocation[section] = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
     const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
     if (this.showDatasetLocation[section]) {
@@ -205,44 +283,6 @@ export class ImportModelComponent implements OnInit {
     this.transformationParams.splice(index, 1);;
   }
 
-  setDefaultValues() {
-    this.firstFormGroup = this._formBuilder.group({
-      framework: ['', Validators.required],
-      modelLocation: ['', Validators.required],
-      modelDomain: ['', Validators.required],
-      input: [''],
-      output: [''],
-    });
-    this.secondFormGroup = this._formBuilder.group({
-      accuracyGoal: [0.01],
-      dataLoaderEvaluation: [''],
-      dataLoaderQuantization: [''],
-      datasetLocationEvaluation: [''],
-      datasetLocationQuantization: [''],
-      datasetParams0: [''],
-      datasetParams1: [''],
-      transform: [''],
-      transformParams: [''],
-      samplingSize: [100],
-      op: [''],
-      strategy: [''],
-      batchSize: [1],
-      cores_per_instance: [''],
-      num_of_instance: [''],
-      inter_num_of_threads: [''],
-      intra_num_of_threads: [''],
-      kmp_blocktime: [''],
-      warmup: [],
-      iteration: [-1],
-      metric: [''],
-      objective: [''],
-      timeout: [0],
-      maxTrials: [100],
-      randomSeed: [],
-      approach: [],
-    });
-  }
-
   getConfig() {
     const newModel = this.getNewModel();
     this.modelService.getConfiguration(newModel)
@@ -252,14 +292,19 @@ export class ImportModelComponent implements OnInit {
           this.firstFormGroup.get('modelDomain').setValue(resp['domain']);
 
           if (resp['config']['quantization']) {
-            this.secondFormGroup.get('transform').setValue(resp['config']['quantization'].calibration.dataloader.transform);
             this.secondFormGroup.get('samplingSize').setValue(resp['config']['quantization'].calibration.sampling_size);
             this.secondFormGroup.get('approach').setValue(resp['config']['quantization'].approach);
-            const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
-            const transformNames = Object.keys(resp['config']['quantization'].calibration.dataloader.transform);
-            this.secondFormGroup.get('dataLoaderQuantization').setValue(dataLoader);
-            this.secondFormGroup.get('dataLoaderEvaluation').setValue(dataLoader);
             this.transformationParams = [];
+            let transform = {};
+            if (resp['config']['quantization'].calibration.dataloader.transform) {
+              transform = resp['config']['quantization'].calibration.dataloader.transform;
+            } else if (resp['config']['evaluation'].dataloader && resp['config']['evaluation'].dataloader.transform) {
+              transform = resp['config']['evaluation'].dataloader.transform;
+            } else if (resp['config']['evaluation'].accuracy && resp['config']['evaluation'].accuracy.postprocess.transform) {
+              transform = resp['config']['evaluation'].accuracy.postprocess.transform;
+            }
+            this.secondFormGroup.get('transform').setValue(transform);
+            const transformNames = Object.keys(transform);
             transformNames.forEach((name, index) => {
               this.addNewTransformation(name);
               this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
@@ -269,27 +314,17 @@ export class ImportModelComponent implements OnInit {
                 });
               }
             });
-            this.dataLoaderParams['quantization'] = this.dataLoaders.find(x => x.name === dataLoader).params;
-            this.dataLoaderParams['evaluation'] = this.dataLoaders.find(x => x.name === dataLoader).params;
-            this.showDatasetLocation['quantization'] = this.dataLoaders.find(x => x.name === dataLoader).show_dataset_location;
-            this.showDatasetLocation['evaluation'] = this.dataLoaders.find(x => x.name === dataLoader).show_dataset_location;
-            if (this.showDatasetLocation['quantization']) {
-              this.secondFormGroup.controls['datasetLocationQuantization'].setValidators([Validators.required]);
-              this.secondFormGroup.controls['datasetLocationQuantization'].updateValueAndValidity();
-            }
-            if (this.showDatasetLocation['evaluation']) {
-              this.secondFormGroup.controls['datasetLocationEvaluation'].setValidators([Validators.required]);
-              this.secondFormGroup.controls['datasetLocationEvaluation'].updateValueAndValidity();
-            }
+
+            const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
+            this.secondFormGroup.get('dataLoaderQuantization').setValue(dataLoader);
+            this.secondFormGroup.get('dataLoaderEvaluation').setValue(dataLoader);
+            this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderQuantization'), 'quantization');
+            this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
           }
 
           if (resp['config']['evaluation']) {
             this.secondFormGroup.get('metric').setValue(Object.keys(resp['config']['evaluation'].accuracy.metric)[0]);
-            this.metricParams = this.metrics.find(x => x.name === this.secondFormGroup.get('metric').value).params;
-            this.metricParam = this.metricParams[0].value;
-            if (Array.isArray(this.metricParams[0].value)) {
-              this.metricParam = this.metricParams[0].value[0];
-            }
+            this.setDefaultMetricParam(this.secondFormGroup.get('metric'));
             this.secondFormGroup.get('kmp_blocktime').setValue(resp['config']['evaluation'].performance.configs.kmp_blocktime);
             this.secondFormGroup.get('warmup').setValue(resp['config']['evaluation'].performance.warmup);
             this.secondFormGroup.get('iteration').setValue(resp['config']['evaluation'].performance.iteration);
@@ -341,8 +376,8 @@ export class ImportModelComponent implements OnInit {
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
       model_path: this.firstFormGroup.get('modelLocation').value,
-      inputs: typeof this.firstFormGroup.get('input').value === 'string' ? [this.firstFormGroup.get('input').value] : this.firstFormGroup.get('input').value,
-      outputs: typeof this.firstFormGroup.get('output').value === 'string' ? [this.firstFormGroup.get('output').value] : this.firstFormGroup.get('output').value,
+      inputs: this.getBoundaryNodes('input'),
+      outputs: this.getBoundaryNodes('output'),
       transform: this.getTransformParams(this.transformationParams),
       quantization: {
         dataset_path: this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location',
@@ -378,6 +413,19 @@ export class ImportModelComponent implements OnInit {
       }
     }
     return model;
+  }
+
+  getBoundaryNodes(type: 'input' | 'output') {
+    if (this.firstFormGroup.get(type + 'Other').value) {
+      return [this.firstFormGroup.get(type + 'Other').value];
+    }
+    if (this.order[type]) {
+      return this.order[type];
+    }
+    if (typeof this.firstFormGroup.get(type).value === 'string') {
+      return [this.firstFormGroup.get(type).value];
+    }
+    return this.firstFormGroup.get(type).value;
   }
 
   getParams(obj: any[]): {} {

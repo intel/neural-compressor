@@ -27,7 +27,6 @@ export class ModelListComponent implements OnInit {
 
   modelList = [];
   visibleColumns = ['model_name', 'framework', 'config', 'console_output', 'acc_fp32', 'acc_int8'];
-  benchmarkSpinner = [];
   showSpinner = true;
 
   constructor(
@@ -72,7 +71,6 @@ export class ModelListComponent implements OnInit {
         if (result['data']) {
           if (result['status'] === 'success') {
             const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
-            this.benchmarkSpinner[index] = true;
           } else {
             this.openErrorDialog({
               error: 'benchmark started',
@@ -85,13 +83,12 @@ export class ModelListComponent implements OnInit {
       .subscribe(result => {
         if (result['data']) {
           const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
-          this.benchmarkSpinner[index] = false;
           if (index !== -1) {
+            this.modelList[index]['status'] = result['status'];
             if (result['status'] === 'success') {
               this.modelList[index]['perf_throughput_fp32'] = result['data']['perf_throughput_fp32'];
               this.modelList[index]['perf_throughput_int8'] = result['data']['perf_throughput_int8'];
             } else {
-              this.modelList[index]['status'] = result['status'];
               this.openErrorDialog({
                 error: 'benchmark finished',
                 message: result['data']['message'],
@@ -138,7 +135,6 @@ export class ModelListComponent implements OnInit {
     const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
     if (this.modelList[index]) {
       if (param === 'finish') {
-        this.modelList[index]['status'] = result['status'];
         this.modelList[index]['message'] = result['data']['message'];
         this.modelList[index]['acc_fp32'] = result['data']['acc_fp32'];
         this.modelList[index]['acc_int8'] = result['data']['acc_int8'];

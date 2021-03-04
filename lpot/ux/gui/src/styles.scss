@@ -82,6 +82,10 @@ $mat-intel-light-blue: (50 : #e0f3fc,
     A700 : #000000,
   ));
 
+$custom-typography: mat-typography-config($font-family: IntelClearRg);
+@include mat-table-typography($custom-typography);
+@include mat-core($custom-typography);
+
 
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
@@ -110,6 +114,6 @@ body {
 body,
 button {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: IntelOneBd;
   font-size: 12px;
 }

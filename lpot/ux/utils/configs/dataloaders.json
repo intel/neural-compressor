@@ -136,6 +136,24 @@
                 ]
             },
             {
+                "name": "FashionMNIST",
+                "help": null,
+                "show_dataset_location": true,
+                "params": [
+                    {
+                        "name": "root",
+                        "help": null,
+                        "value": ""
+                    },
+                    {
+                        "name": "train",
+                        "help": "If True, creates dataset from train subset, otherwise from validation subset",
+                        "value": "False"
+                    }
+
+                ]
+            },
+            {
                 "name": "ImageFolder",
                 "help": null,
                 "show_dataset_location": true,
@@ -162,6 +180,24 @@
                         "help": "Data file, record image_names and their labels",
                         "value": ""
                     }
+                ]
+            },
+            {
+                "name": "MNIST",
+                "help": null,
+                "show_dataset_location": true,
+                "params": [
+                    {
+                        "name": "root",
+                        "help": null,
+                        "value": ""
+                    },
+                    {
+                        "name": "train",
+                        "help": "If True, creates dataset from train subset, otherwise from validation subset",
+                        "value": "False"
+                    }
+
                 ]
             },
             {

@@ -36,7 +36,7 @@
                     {
                         "name": "mean_value",
                         "help": "Means for each channel",
-                        "value": [0.0, 0.0, 0.0]
+                        "value": "[0.0, 0.0, 0.0]"
                     },
                     {
                         "name": "scale",
@@ -162,12 +162,12 @@
                     {
                         "name": "mean",
                         "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": [0.0]
+                        "value": "[0.0]"
                     },
                     {
                         "name": "std",
                         "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": [1.0]
+                        "value": "[1.0]"
                     }
                 ]
             },
@@ -297,7 +297,7 @@
                     {
                         "name": "mean_value",
                         "help": "Means for each channel",
-                        "value": [0.0, 0.0, 0.0]
+                        "value": "[0.0, 0.0, 0.0]"
                     },
                     {
                         "name": "scale",
@@ -329,6 +329,17 @@
         "help": null,
         "params": [
             {
+                "name": "AlignImageChannel",
+                "help": null,
+                "params": [
+                    {
+                        "name": "dim",
+                        "help": "The channel number of result image",
+                        "value": ""
+                    }
+                ]
+            },
+            {
                 "name": "CenterCrop",
                 "help": null,
                 "params": [
@@ -336,32 +347,6 @@
                         "name": "size",
                         "help": "Size of the result",
                         "value": []
-                    }
-                ]
-            },
-            {
-                "name": "ColorJitter",
-                "help": null,
-                "params": [
-                    {
-                        "name": "brightness",
-                        "help": "How much to jitter brightness",
-                        "value": 0
-                    },
-                    {
-                        "name": "contrast",
-                        "help": "How much to jitter contrast",
-                        "value": 0
-                    },
-                    {
-                        "name": "saturation",
-                        "help": "How much to jitter saturation",
-                        "value": 0
-                    },
-                    {
-                        "name": "hue",
-                        "help": "How much to jitter hue",
-                        "value": 0
                     }
                 ]
             },
@@ -413,33 +398,12 @@
                     {
                         "name": "mean",
                         "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": [0.0]
+                        "value": "[0.0]"
                     },
                     {
                         "name": "std",
                         "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": [1.0]
-                    }
-                ]
-            },
-            {
-                "name": "Pad",
-                "help": null,
-                "params": [
-                    {
-                        "name": "padding",
-                        "help": "Padding on each border",
-                        "value": []
-                    },
-                    {
-                        "name": "fill",
-                        "help": "Pixel fill value for constant fill",
-                        "value": 0
-                    },
-                    {
-                        "name": "padding_mode",
-                        "help": "Type of padding. Should be: constant, edge, reflect or symmetric.",
-                        "value": "constant"
+                        "value": "[1.0]"
                     }
                 ]
             },
@@ -491,6 +455,11 @@
                 "value": null
             },
             {
+                "name": "Rescale",
+                "help": null,
+                "value": null
+            },
+            {
                 "name": "Resize",
                 "help": null,
                 "params": [
@@ -507,25 +476,61 @@
                 ]
             },
             {
+                "name": "ResizeCropImagenet",
+                "help": null,
+                "params": [
+                    {
+                        "name": "height",
+                        "help": "Height of the result",
+                        "value": 0
+                    },
+                    {
+                        "name": "width",
+                        "help": "Width of the result",
+                        "value": 0
+                    },
+                    {
+                        "name": "random_crop",
+                        "help": "Whether to random crop",
+                        "value": "False"
+                    },
+                    {
+                        "name": "resize_side",
+                        "help": "Desired shape after resize operation",
+                        "value": 256
+                    },
+                    {
+                        "name": "random_flip_left_right",
+                        "help": "Whether to random flip left and right",
+                        "value": "False"
+                    },
+                    {
+                        "name": "mean_value",
+                        "help": "Means for each channel",
+                        "value": "[0.0, 0.0, 0.0]"
+                    },
+                    {
+                        "name": "scale",
+                        "help": "Std value",
+                        "value": 1.0
+                    }
+                ]
+            },
+            {
                 "name": "ToArray",
                 "help": null,
                 "value": null
             },
             {
-                "name": "ToPILImage",
+                "name": "Transpose",
                 "help": null,
                 "params": [
                     {
-                        "name": "mode",
-                        "help": "Color space and pixel depth of input data",
-                        "value": ""
+                        "name": "perm",
+                        "help": "A permutation of the dimensions of input image",
+                        "value": []
                     }
                 ]
-            },
-            {
-                "name": "ToTensor",
-                "help": null,
-                "value": null
             }
         ]
     }

@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Configuration module."""
-
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-import ruamel.yaml as yaml
+import yaml
 
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.json_serializer import JsonSerializer
@@ -28,6 +27,7 @@ from lpot.ux.utils.workload.model import Model
 from lpot.ux.utils.workload.pruning import Pruning
 from lpot.ux.utils.workload.quantization import Quantization
 from lpot.ux.utils.workload.tuning import Tuning
+from lpot.ux.utils.yaml_utils import float_representer
 
 
 class Config(JsonSerializer):
@@ -311,15 +311,18 @@ class Config(JsonSerializer):
         """Load configuration from file."""
         log.debug(f"Loading predefined config from {path}")
         with open(path) as yaml_config:
-            config = yaml.round_trip_load(yaml_config, preserve_quotes=True)
+            config = yaml.safe_load(yaml_config)
         self.initialize(config)
 
     def dump(self, yaml_path: str) -> None:
         """Dump configuration to file."""
-        yaml_content = yaml.round_trip_dump(
+        yaml.add_representer(float, float_representer)  # type: ignore
+
+        yaml_content = yaml.dump(
             data=self.serialize(),
             indent=4,
-            default_flow_style=False,
+            default_flow_style=None,
+            sort_keys=False,
         )
 
         with open(yaml_path, "w") as yaml_config:

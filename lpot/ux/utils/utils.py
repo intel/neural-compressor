@@ -176,7 +176,7 @@ def load_json(path: str) -> dict:
 
 def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
     """Update model's input and output nodes in config file."""
-    boundary_nodes = {
+    boundary_nodes: Dict[str, Optional[List[Any]]] = {
         "inputs": None,
         "outputs": None,
     }
@@ -196,8 +196,11 @@ def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
 
         model = TensorflowModel(model_path)
 
-        boundary_nodes["inputs"] = getattr(model, "input_node_names", [])
-        boundary_nodes["outputs"] = getattr(model, "output_node_names", [])
+        inputs = getattr(model, "input_node_names", [])
+        outputs = getattr(model, "output_node_names", [])
+        outputs += ["custom"]
+        boundary_nodes["inputs"] = inputs
+        boundary_nodes["outputs"] = list(set(outputs))
         return boundary_nodes
     return {}
 

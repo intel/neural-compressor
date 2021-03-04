@@ -14,6 +14,7 @@
 # limitations under the License.
 """Configuration dataloader module."""
 
+from collections import OrderedDict
 from typing import Any, Dict, Optional
 
 from lpot.ux.utils.exceptions import ClientErrorException
@@ -92,10 +93,11 @@ class Dataloader(JsonSerializer):
         if data.get("dataset"):
             self.set_dataset(data.get("dataset", {}))
 
-        self.transform = {}
+        self.transform: OrderedDict = OrderedDict()
         if data.get("transform"):
             for key, value in data.get("transform", {}).items():
                 self.transform.update({key: Transform(key, value)})
+                self.transform.move_to_end(key)
 
         self.filter = None
         if data.get("filter"):

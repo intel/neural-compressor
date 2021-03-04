@@ -59,6 +59,9 @@ def get_distribution() -> str:
     if psutil.WINDOWS:
         return f"{platform.system()} {platform.release()}"
     elif psutil.LINUX:
-        return " ".join(platform.dist())
+        try:
+            return " ".join(platform.dist())
+        except AttributeError:
+            return f"{platform.system()} {platform.release()}"
     else:
         return platform.platform()

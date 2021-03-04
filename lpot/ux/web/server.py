@@ -15,8 +15,10 @@
 
 """Main endpoint for GUI."""
 import os
+import uuid
+from functools import wraps
 from threading import Thread
-from typing import Any
+from typing import Any, Callable
 
 from flask import Flask
 from flask import Request as WebRequest
@@ -46,7 +48,39 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 def run_server(addr: str, port: int) -> None:
     """Run webserver on specified scheme, address and port."""
+    app.secret_key = uuid.uuid4().hex
     socketio.run(app, host=addr, port=port)
+
+
+@app.after_request
+def block_iframe(response: WebResponse) -> WebResponse:
+    """Block iframe and set others CSP."""
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers[
+        "Content-Security-Policy"
+    ] = "frame-ancestors 'none'; font-src 'self'; img-src 'self'; script-src 'self'"
+    return response
+
+
+@app.after_request
+def block_sniffing(response: WebResponse) -> WebResponse:
+    """Block MIME sniffing."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def require_api_token(func: Callable) -> Any:
+    """Validate authorization token."""
+
+    @wraps(func)
+    def check_token(*args: str, **kwargs: str) -> Any:
+        if not request.headers.get("Authorization", None):
+            return "Access denied", 403
+        if request.headers.get("Authorization", None) != app.secret_key:
+            return "Access denied", 403
+        return func(*args, **kwargs)
+
+    return check_token
 
 
 @app.route("/", methods=METHODS)
@@ -65,7 +99,14 @@ def serve_from_filesystem(path: str) -> Any:
         return "File not found", 404
 
 
+@app.route("/token", methods=["GET"])
+def serve_token() -> Any:
+    """Get token."""
+    return jsonify({"token": app.secret_key})
+
+
 @app.route("/api/<path:subpath>", methods=METHODS)
+@require_api_token
 def handle_api_call(subpath: str) -> Any:
     """Handle API access."""
     try:
@@ -81,6 +122,7 @@ def handle_api_call(subpath: str) -> Any:
 
 
 @app.route("/api/<path:subpath>", methods=["OPTIONS"])
+@require_api_token
 def allow_api_call(subpath: str) -> Any:
     """Allow for API access."""
     return "OK"

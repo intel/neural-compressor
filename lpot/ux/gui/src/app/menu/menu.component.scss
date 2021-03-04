@@ -60,3 +60,11 @@
   width: 20px;
   margin-right: 5px;
 }
+
+.footer {
+  position: fixed;
+  bottom: 5px;
+  width: 98%;
+  text-align: center;
+  color: $dark-gray;
+}

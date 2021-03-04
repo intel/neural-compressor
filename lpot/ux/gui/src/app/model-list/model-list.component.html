@@ -33,15 +33,16 @@
   </tr>
   <tr *ngFor="let model of modelList; let index = index" [matTooltip]="getTooltip(model.execution_details)"
     [matTooltipPosition]="'right'">
-    <td class="cell icon-button">
-      <img [matTooltip]="'Rerun this configuration'" (click)="tune(model)" src="./../../assets/088a-start-solid.svg">
+    <td class="cell">
+      <img *ngIf="model['status'] === 'wip'" [matTooltip]="'Rerun this configuration'"
+        src="./../../assets/088a-start-solid-gray.svg">
+      <img *ngIf="model['status'] !== 'wip'" class="icon-button" [matTooltip]="'Rerun this configuration'"
+        (click)="tune(model)" src="./../../assets/088a-start-solid.svg">
     </td>
     <td class="cell center">
       <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
         src="./../../assets/010a-passed-completed-solid.svg">
-      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error'"
-        src="./../../assets/006a-alert-solid.svg">
-      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'failure'"
+      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
         src="./../../assets/009a-close-solid.svg">
       <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Tuning is running"
         *ngIf="model['status'] === 'wip'" [diameter]="25">
@@ -80,9 +81,6 @@
       {{ model['perf_throughput_int8'] ? (model['perf_throughput_int8'] | number: '1.0-0') : null }}
     </td>
     <td class="cell align-right">
-      <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Benchmark is running"
-        *ngIf="benchmarkSpinner[index]" [diameter]="25">
-      </mat-spinner>
       {{ model['perf_throughput_fp32'] && model['perf_throughput_int8'] ?
       ((model['perf_throughput_int8'] / model['perf_throughput_fp32']) | number: '1.1-1') + 'x' : null }}
     </td>

@@ -31,6 +31,14 @@ export class ModelService {
     private http: HttpClient
   ) { }
 
+  getToken() {
+    return this.http.get(this.baseUrl + 'token');
+  }
+
+  setToken(token: string) {
+    localStorage.setItem('token', token);
+  }
+
   setWorkspacePath(path: string) {
     this.workspacePath = path;
     return this.http.post(

@@ -19,7 +19,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from lpot.ux.utils.templates.metric import Metric
 from lpot.ux.utils.workload.workloads_list import WorkloadInfo
@@ -181,7 +181,7 @@ class Workdir:
 
     def clean_logs(self) -> None:
         """Clean log files."""
-        log_files = ["output.txt"]
+        log_files = [os.path.join(self.workload_path, "output.txt")]
         log_files.extend(
             glob.glob(
                 os.path.join(self.workload_path, "*.proc"),
@@ -195,6 +195,29 @@ class Workdir:
         for file in log_files:
             if os.path.exists(file):
                 os.remove(file)
+
+    def clean_status(
+        self,
+        status_to_clean: Optional[str] = None,
+        requests_id: Optional[List[str]] = [],
+    ) -> None:
+        """Clean status for workloads according to passed parameters."""
+        for workload_id, workload_params in self.workloads_data["workloads"].items():
+            if requests_id and workload_id not in requests_id:
+                continue
+            self._clean_workload_status(
+                workload_params,
+                status_to_clean,
+            )
+        self.dump()
+
+    @staticmethod
+    def _clean_workload_status(workload: dict, status: Optional[str]) -> None:
+        """Clean specified workload status."""
+        workload_status = workload.get("status")
+        if status and workload_status != status:
+            return
+        workload["status"] = ""
 
     @property
     def template_path(self) -> Optional[str]:

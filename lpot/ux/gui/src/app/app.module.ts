@@ -39,11 +39,12 @@ import { ModelListComponent } from './model-list/model-list.component';
 import { ModelListPipe } from './pipes/model-list.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModelService } from './services/model.service';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { SocketService } from './services/socket.service';
 import { DialogComponent } from './dialog/dialog.component';
 import { FileComponent } from './file/file.component';
 import { FileBrowserComponent } from './file-browser/file-browser.component';
+import { AuthenticationInterceptor } from './authentication/authentication.interceptor';
 
 @NgModule({
   declarations: [
@@ -87,6 +88,12 @@ import { FileBrowserComponent } from './file-browser/file-browser.component';
       provide: MatDialogRef,
       useValue: {}
     },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthenticationInterceptor,
+      multi: true
+    },
+
   ],
   entryComponents: [
     DialogComponent,
