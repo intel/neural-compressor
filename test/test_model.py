@@ -160,7 +160,7 @@ class TestTensorflowModel(unittest.TestCase):
         dst_path = '/tmp/.lpot/mobilenet_v1_1.0_224.tgz'
         if not os.path.exists(dst_path):
           os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(
-                  mobilenet_ckpt_url, self.dst_path))
+                  mobilenet_ckpt_url, dst_path))
 
         os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
         fwk_info = {'output_tensor_names': ['MobilenetV1/Predictions/Reshape_1']}
