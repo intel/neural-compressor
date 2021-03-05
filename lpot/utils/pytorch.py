@@ -23,6 +23,9 @@ import yaml
 import os
 import copy
 
+yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
+                                 lambda loader, node: tuple(loader.construct_sequence(node)))
+
 def load(checkpoint_dir, model):
     """Execute the quantize process on the specified model.
 
@@ -49,7 +52,7 @@ def load(checkpoint_dir, model):
     q_model = copy.deepcopy(model.eval())
 
     with open(tune_cfg_file, 'r') as f:
-        tune_cfg = yaml.load(f, Loader=yaml.UnsafeLoader)
+        tune_cfg = yaml.safe_load(f)
 
     op_cfgs = _cfg_to_qconfig(tune_cfg)
     _propagate_qconfig(q_model, op_cfgs)

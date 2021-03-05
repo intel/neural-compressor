@@ -33,7 +33,10 @@ from .dotdict import DotDict
 # To make sure the fields under dataloader.transform field of yaml file
 # get loaded with written sequence, this workaround is used to convert
 # None to {} in yaml load().
-yaml.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {})
+yaml.SafeLoader.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {})
+# Add python tuple support because best_configure.yaml may contain tuple
+yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
+                                lambda loader, node: tuple(loader.construct_sequence(node)))
 
 def _valid_accuracy_field(key, scope, error):
     assert bool(
@@ -459,7 +462,7 @@ schema = Schema({
                     Optional('compare_label'): bool
                 },
                 Optional('Accuracy'): Or({}, None),
-                Optional('Loss"'): Or({}, None),
+                Optional('Loss'): Or({}, None),
                 Optional('BLEU'): Or({}, None),
                 Optional('SquadF1'): Or({}, None),
                 Optional('F1'): Or({}, None),
@@ -526,7 +529,7 @@ class Conf(object):
                 # of the syntax as user may not quite familiar with this and
                 # arbitrarily add it or not.
                 content = f.read().replace('- ', '  ')
-                cfg = yaml.load(content, yaml.Loader)
+                cfg = yaml.safe_load(content)
                 return schema.validate(cfg)
         except Exception as e:
             logger.error("{}".format(e))

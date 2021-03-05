@@ -573,7 +573,7 @@ class PyTorchModel(PyTorchBaseModel):
                 weights_file), "weight file %s didn't exist" % weights_file
             self._model = copy.deepcopy(model.eval())
             with open(tune_cfg_file, 'r') as f:
-                tune_cfg = yaml.load(f, Loader=yaml.UnsafeLoader)
+                tune_cfg = yaml.safe_load(f)
 
             op_cfgs = _cfg_to_qconfig(tune_cfg)
             _propagate_qconfig(self._model, op_cfgs)
