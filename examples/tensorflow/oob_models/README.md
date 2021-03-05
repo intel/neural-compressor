@@ -3,17 +3,17 @@ Step-by-Step
 
 This document is used to list steps of reproducing Intel Optimized TensorFlow OOB models tuning zoo result.
 
-> **Note**: 
-> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. We use 2.2.0 as an example.
-
 # Prerequisite
 
 ## 1. Installation
   Recommend python 3.6 or higher version.
 
   ```bash
-  pip install intel-tensorflow==2.2.0
+  # Install Intel® Low Precision Optimization Tool
+  pip install lpot
+  pip install intel-tensorflow
   ```
+> Note: Supported Tensorflow [Version](../../../README.md).
 
 ## 2. Prepare Dataset
 

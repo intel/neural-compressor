@@ -13,8 +13,9 @@ pip install lpot
 
 ### 2. Install Intel Tensorflow
 ```Shell
-pip install intel-tensorflow==2.2.0
+pip install intel-tensorflow
 ```
+> Note: Supported Tensorflow [Version](../../../../README.md).
 
 ### 3. Prepare Dataset & Pretrained model
 

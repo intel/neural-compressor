@@ -11,10 +11,11 @@ This document is used to list steps of reproducing TensorFlow ssd_resnet50_v1 tu
 # Install Intel® Low Precision Optimization Tool
 pip instal lpot
 ```
-### 2. Install Intel Tensorflow 1.15/2.0/2.1
+### 2. Install Intel Tensorflow
 ```shell
-pip intel-tensorflow==1.15.2 [2.0,2.1]
+pip install intel-tensorflow
 ```
+> Note: Supported Tensorflow [Version](../../../README.md).
 
 ### 3. Install Additional Dependency packages
 ```shell

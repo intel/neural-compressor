@@ -1,11 +1,11 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Intel Optimized TensorFlow image recognition models tuning zoo result.
+This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning zoo result.
 
 > **Note**: 
-> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. We use 1.15.2 as an example.
-
+> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
+> [Version support](../../../README.md)
 # Prerequisite
 
 ### 1. Installation
@@ -13,7 +13,6 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow im
 
   ```Shell
   pip install -r requirements.txt
-  
   ```
 
 ### 2. Prepare Dataset
