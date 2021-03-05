@@ -22,7 +22,12 @@ from lpot.ux.utils.exceptions import (
     ClientErrorException,
     NotFoundException,
 )
-from lpot.ux.utils.utils import is_dataset_file, is_hidden, is_model_file
+from lpot.ux.utils.utils import (
+    is_dataset_file,
+    is_hidden,
+    is_model_file,
+    verify_file_path,
+)
 
 
 def get_directory_entries(
@@ -31,6 +36,7 @@ def get_directory_entries(
     """Get directory entries."""
     try:
         path = get_requested_path(data)
+        verify_file_path(path)
         contents = get_non_hidden_directory_entries(path)
 
         contents = filter_requested_entries(contents, get_filter_value(data))

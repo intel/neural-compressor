@@ -22,6 +22,7 @@ from typing import Dict
 from numpy.random import randint
 
 from lpot.ux.utils.exceptions import NotFoundException
+from lpot.ux.utils.utils import determine_ip
 
 
 class Configuration:
@@ -32,7 +33,7 @@ class Configuration:
 
     def __init__(self) -> None:
         """Set the variables."""
-        self.ip = self.determine_ip()
+        self.ip = determine_ip()
         args = self.get_command_line_args()
         self.port = self.determine_port(args)
 
@@ -46,19 +47,6 @@ class Configuration:
             help="port number to listen on",
         )
         return vars(parser.parse_args())
-
-    def determine_ip(self) -> str:
-        """Return IP to be used by server."""
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            sock.connect(("10.0.0.0", 1))
-            ip = sock.getsockname()[0]
-        except Exception:
-            ip = "127.0.0.1"
-        finally:
-            sock.close()
-
-        return ip
 
     def determine_port(self, args: Dict) -> int:
         """

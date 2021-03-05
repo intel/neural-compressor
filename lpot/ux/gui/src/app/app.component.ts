@@ -11,13 +11,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ModelService } from './services/model.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
-  title = 'gui';
+export class AppComponent implements OnInit {
+  tokenIsSet = false;
+
+  constructor(
+    private modelService: ModelService
+  ) { }
+
+  ngOnInit() {
+    this.modelService.getToken()
+      .subscribe(response => {
+        this.modelService.setToken(response['token']);
+        this.tokenIsSet = true;
+      })
+  }
+
 }

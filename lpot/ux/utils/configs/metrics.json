@@ -24,5 +24,7 @@
     },
     "__help__BLEU": null,
     "__help__custom": "Create your own metric. After you choose this option code template will be generated on the server",
-    "custom": ""
+    "custom": "",
+    "__help__SquadF1": null,
+    "SquadF1": ""
 }

@@ -84,12 +84,12 @@ class Workload(JsonSerializer):
             if dataset_path != "no_dataset_location" and not os.path.exists(
                 dataset_path,
             ):
-                raise Exception(
+                raise ClientErrorException(
                     f'Could not found dataset in specified location: "{dataset_path}".',
                 )
 
         if not os.path.isfile(self.model_path):
-            raise Exception(
+            raise ClientErrorException(
                 f'Could not found model in specified location: "{self.model_path}".',
             )
 

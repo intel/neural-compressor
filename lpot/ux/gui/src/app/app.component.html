@@ -1,6 +1,8 @@
-<div class="container">
-  <app-menu></app-menu>
-</div>
-<div class="container">
-  <router-outlet></router-outlet>
-</div>
+<ng-container *ngIf="tokenIsSet">
+  <div class="container">
+    <app-menu></app-menu>
+  </div>
+  <div class="container">
+    <router-outlet></router-outlet>
+  </div>
+</ng-container>

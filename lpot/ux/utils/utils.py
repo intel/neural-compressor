@@ -17,12 +17,17 @@
 import json
 import os
 import re
+import socket
 from importlib import import_module
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.exceptions import (
+    AccessDeniedException,
+    ClientErrorException,
+    NotFoundException,
+)
 from lpot.ux.utils.logger import log
 
 dataset_locations = {
@@ -321,3 +326,49 @@ def replace_with_values(param: dict, file_path: str) -> None:
             text = re.sub(key_to_search, value, text)
         opened_file.seek(0)
         opened_file.write(text)
+
+
+def verify_file_path(path: str) -> None:
+    """Check if path can be accessed."""
+    restricted_paths = [
+        "/bin",
+        "/boot",
+        "/dev",
+        "/etc",
+        "/lib",
+        "/media",
+        "/proc",
+        "/root",
+        "/run",
+        "/sbin",
+        "/snap",
+        "/srv",
+        "/swapfile",
+        "/usr",
+        "/var",
+    ]
+    real_path = os.path.realpath(path)
+    if not os.path.exists(real_path):
+        raise NotFoundException("File not found.")
+    if os.stat(real_path).st_uid == 0:
+        raise AccessDeniedException("Access denied.")
+    for path_element in real_path.split(os.sep):
+        if path_element.startswith("."):
+            raise AccessDeniedException("Access denied.")
+    for restricted_path in restricted_paths:
+        if real_path.startswith(restricted_path):
+            raise AccessDeniedException("Access denied.")
+
+
+def determine_ip() -> str:
+    """Return IP to be used by server."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(("10.0.0.0", 1))
+        ip = sock.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        sock.close()
+
+    return ip

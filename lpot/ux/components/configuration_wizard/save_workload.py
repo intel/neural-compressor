@@ -34,16 +34,18 @@ def save_workload(
     data: Dict[str, Any],
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """Get configuration."""
-    workdir = Workdir(
-        workspace_path=data["workspace_path"],
-        request_id=data["id"],
-        model_path=data["model_path"],
-    )
     parser = ConfigurationParser()
     parsed_data = parser.parse(data)
 
     workload = Workload(parsed_data)
     workload.dump()
+
+    workdir = Workdir(
+        workspace_path=data["workspace_path"],
+        request_id=data["id"],
+        model_path=data["model_path"],
+    )
+
     update_config(workload, parsed_data, workdir)
     workload.config.dump(os.path.join(workdir.workload_path, workload.config_name))
     return workload.serialize()

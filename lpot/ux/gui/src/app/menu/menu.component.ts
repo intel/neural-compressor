@@ -43,12 +43,7 @@ export class MenuComponent implements OnInit {
         this.modelService.workspacePath = repoPath['path'];
       },
         error => {
-          if (error.error === 'Access denied') {
-            this.modelService.getToken()
-              .subscribe(response => {
-                this.modelService.setToken(response['token']);
-              });
-          }
+          this.openErrorDialog(error);
         }
       );
   }

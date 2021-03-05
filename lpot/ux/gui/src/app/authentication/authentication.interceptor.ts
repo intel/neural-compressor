@@ -19,47 +19,52 @@ import {
   HttpInterceptor,
   HttpHeaders,
 } from '@angular/common/http';
-import { EMPTY, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ModelService } from '../services/model.service';
 
 @Injectable()
 export class AuthenticationInterceptor implements HttpInterceptor {
 
+  token;
+
   constructor(
     private modelService: ModelService
   ) { }
 
-  getToken(): string {
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     if (localStorage.getItem('token')) {
-      return localStorage.getItem('token');
+      this.token = localStorage.getItem('token');
+
+      let headers = new HttpHeaders({
+        'Authorization': this.token,
+      });
+
+      const modifiedReq = request.clone({
+        headers: headers
+      });
+
+      return next.handle(modifiedReq);
+
+    } else if (request.url.includes('token')) {
+
+      return next.handle(request);
+
     } else {
       this.modelService.getToken()
         .subscribe(response => {
           this.modelService.setToken(response['token']);
-          return response['token'];
+          this.token = response['token'];
+
+          let headers = new HttpHeaders({
+            'Authorization': this.token,
+          });
+
+          const modifiedReq = request.clone({
+            headers: headers
+          });
+
+          return next.handle(modifiedReq);
         });
-    }
-  }
-
-  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    let headers = new HttpHeaders({
-      'Authorization': this.getToken(),
-    });
-
-    if (!localStorage.getItem('token')) {
-      headers = new HttpHeaders({
-        'Content-Type': 'application/vnd.api+json'
-      });
-    }
-
-    const modifiedReq = request.clone({
-      headers: headers
-    });
-
-    if (localStorage.getItem('token') || request.url.includes('token')) {
-      return next.handle(modifiedReq);
-    } else {
-      return EMPTY;
     }
   }
 }
