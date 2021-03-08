@@ -6,8 +6,7 @@ Intel® Low Precision Optimization Tool UX
    ```shell
    lpot_ux
    ```
-1. Server prints information how to access the Web UI, for example:
-   > Server listening on http://localhost:5000
+1. Server prints information how to access the Web UI.
 
    Use a modern web browser to visit address given by the server.
 
@@ -15,7 +14,7 @@ Intel® Low Precision Optimization Tool UX
 # My Models list
 This view lists all Model Configurations defined on given server. 
 
-You can create new model using pre-defined models using a New Model Wizard or Model Zoo
+You can create new model using pre-defined models using a New Model Wizard or Examples
 
 ![My models list](imgs/ux/my_models.png "My models list")
 
@@ -36,13 +35,13 @@ You can create new model using pre-defined models using a New Model Wizard or Mo
 On advanced parameters page, you can select how more features of tuning, quantization and benchmarking will be configured.
    ![Advanced parameters wizard](imgs/ux/wizard_advanced.png "Advanced parameters")
 
-# New Model Configuration from Model Zoo
-![Model Zoo](imgs/ux/model_zoo.png "Model Zoo")
-We have some models prepared to test the tuning with. Visit "Model zoo" tab to:
+# New Model Configuration from Examples
+![Examples](imgs/ux/examples.png "Examples")
+We have some models prepared to test the tuning with. Visit "Examples" tab to:
 1. Download a model to selected Workspace.
 1. Download predefined configuration file for models.
 1. When both model and configuration are downloaded, you can point to Dataset to be used and finally click "Add to my models".
-1. New model will be added to "Mo models" list, ready for tuning.
+1. New model will be added to "My models" list, ready for tuning.
 
 # Custom dataset or metric
 If you choose "custom" in Dataset or Metric section, appropriate code template will be generated for you to fill in with your code.

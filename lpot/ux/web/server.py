@@ -15,7 +15,6 @@
 
 """Main endpoint for GUI."""
 import os
-import uuid
 from functools import wraps
 from threading import Thread
 from typing import Any, Callable
@@ -32,11 +31,15 @@ from lpot.ux.utils.exceptions import (
     ClientErrorException,
     NotFoundException,
 )
-from lpot.ux.utils.utils import determine_ip, verify_file_path
+from lpot.ux.utils.utils import determine_ip, is_development_env, verify_file_path
 from lpot.ux.web.communication import MessageQueue, Request
 from lpot.ux.web.router import Router
 
 allowed_origin = r"http://{}:*".format(determine_ip())
+
+if is_development_env():
+    allowed_origin = "*"
+
 app = Flask(__name__, static_url_path="")
 CORS(app, origins=allowed_origin)
 socketio = SocketIO(app, max_http_buffer_size=2000)
@@ -48,10 +51,16 @@ METHODS = ["GET", "POST"]
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
-def run_server(addr: str, port: int) -> None:
+def run_server(addr: str, port: int, token: str) -> None:
     """Run webserver on specified scheme, address and port."""
-    app.secret_key = uuid.uuid4().hex
+    app.secret_key = token
     socketio.init_app(app, cors_allowed_origins=f"http://{addr}:{port}")
+
+    cors_allowed_origins = f"http://{addr}:{port}"
+    if is_development_env():
+        cors_allowed_origins = "*"
+
+    socketio.init_app(app, cors_allowed_origins=cors_allowed_origins)
     socketio.run(app, host=addr, port=port)
 
 
@@ -78,10 +87,18 @@ def require_api_token(func: Callable) -> Any:
 
     @wraps(func)
     def check_token(*args: str, **kwargs: str) -> Any:
-        if not request.headers.get("Authorization", None):
-            return "Access denied", 403
-        if request.headers.get("Authorization", None) != app.secret_key:
-            return "Access denied", 403
+        """Validate that correct token was provided."""
+        provided_token = request.headers.get(
+            "Authorization",
+            request.args.to_dict().get("token", None),
+        )
+
+        if not app.secret_key == provided_token:
+            return (
+                "Invalid token, please use the URL displayed by the server on startup",
+                403,
+            )
+
         return func(*args, **kwargs)
 
     return check_token
@@ -108,12 +125,6 @@ def serve_from_filesystem(path: str) -> Any:
         return str(err), 403
 
 
-@app.route("/token", methods=["GET"])
-def serve_token() -> Any:
-    """Get token."""
-    return jsonify({"token": app.secret_key})
-
-
 @app.route("/api/<path:subpath>", methods=METHODS)
 @cross_origin(origins=allowed_origin)
 @require_api_token
@@ -133,7 +144,6 @@ def handle_api_call(subpath: str) -> Any:
 
 @app.route("/api/<path:subpath>", methods=["OPTIONS"])
 @cross_origin(origins=allowed_origin)
-@require_api_token
 def allow_api_call(subpath: str) -> Any:
     """Allow for API access."""
     return "OK"

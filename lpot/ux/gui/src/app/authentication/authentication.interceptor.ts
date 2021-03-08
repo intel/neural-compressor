@@ -25,46 +25,19 @@ import { ModelService } from '../services/model.service';
 @Injectable()
 export class AuthenticationInterceptor implements HttpInterceptor {
 
-  token;
-
   constructor(
     private modelService: ModelService
   ) { }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    if (localStorage.getItem('token')) {
-      this.token = localStorage.getItem('token');
+    let headers = new HttpHeaders({
+      'Authorization': this.modelService.getToken(),
+    });
 
-      let headers = new HttpHeaders({
-        'Authorization': this.token,
-      });
+    const modifiedReq = request.clone({
+      headers: headers
+    });
 
-      const modifiedReq = request.clone({
-        headers: headers
-      });
-
-      return next.handle(modifiedReq);
-
-    } else if (request.url.includes('token')) {
-
-      return next.handle(request);
-
-    } else {
-      this.modelService.getToken()
-        .subscribe(response => {
-          this.modelService.setToken(response['token']);
-          this.token = response['token'];
-
-          let headers = new HttpHeaders({
-            'Authorization': this.token,
-          });
-
-          const modifiedReq = request.clone({
-            headers: headers
-          });
-
-          return next.handle(modifiedReq);
-        });
-    }
+    return next.handle(modifiedReq);
   }
 }

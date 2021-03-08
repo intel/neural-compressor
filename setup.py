@@ -28,6 +28,7 @@ setup(
         "lpot.ux": [
             "web/static/*.*",
             "web/static/assets/*.*",
+            "web/static/assets/fonts/*.*",
             "utils/configs/*.json",
             "utils/configs/predefined_configs/tensorflow/*.yaml",
             "utils/templates/*.txt",

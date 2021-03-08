@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Get available models from Model Zoo."""
+"""Get available models from Examples."""
 
 from typing import Any, Dict, List, Optional
 
@@ -38,7 +38,7 @@ def list_models(data: dict) -> List[Dict[str, Any]]:
 
 
 def get_available_models(workspace_path: Optional[str]) -> List[Dict[str, Any]]:
-    """Get available models from Model Zoo."""
+    """Get available models from Examples."""
     model_list = []
     full_list = load_model_config()
     for framework in SUPPORTED_FRAMEWORKS:
@@ -95,6 +95,6 @@ def validate_model_list(model_list: List[dict]) -> None:
     """Check if model list is valid."""
     if not model_list:
         raise ClientErrorException(
-            "Model Zoo requires installed TensorFlow in specific version. "
+            "Examples require installed TensorFlow in specific version. "
             "Please install TensorFlow in one of following versions: 2.0.x, 2.3.x or 2.4.x.",
         )

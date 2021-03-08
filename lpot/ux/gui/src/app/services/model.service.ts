@@ -26,17 +26,18 @@ export class ModelService {
   myModels = [];
   workspacePath: string;
   workspacePathChange: Subject<boolean> = new Subject<boolean>();
+  token;
 
   constructor(
     private http: HttpClient
   ) { }
 
-  getToken() {
-    return this.http.get(this.baseUrl + 'token');
+  getToken(): string {
+    return this.token;
   }
 
   setToken(token: string) {
-    localStorage.setItem('token', token);
+    this.token = token;
   }
 
   setWorkspacePath(path: string) {

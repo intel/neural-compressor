@@ -87,7 +87,7 @@ def is_model_file(path: str) -> bool:
 
 def is_dataset_file(path: str) -> bool:
     """Check if given path is for a dataset of supported framework."""
-    dataset_extensions = ["record"]
+    dataset_extensions = ["record", "tf_record"]
 
     extension = get_file_extension(path)
 
@@ -117,12 +117,12 @@ def get_model_zoo_config_path(
     model_name: str,
     model_dict: Dict[str, Any],
 ) -> str:
-    """Get predefined config for model from Model Zoo."""
+    """Get predefined config for model from Examples."""
     if workspace_path is None:
         return ""
     model_dir = os.path.join(
         workspace_path,
-        "model_zoo",
+        "examples",
         framework,
         domain,
         model_name,
@@ -144,12 +144,12 @@ def get_model_zoo_model_path(
     model_name: str,
     model_dict: Dict[str, Any],
 ) -> str:
-    """Get path for model from Model Zoo."""
+    """Get path for model from Examples."""
     if workspace_path is None:
         return ""
     model_dir = os.path.join(
         workspace_path,
-        "model_zoo",
+        "examples",
         framework,
         domain,
         model_name,
@@ -372,3 +372,8 @@ def determine_ip() -> str:
         sock.close()
 
     return ip
+
+
+def is_development_env() -> bool:
+    """Return true if LPOT_MODE is development else false."""
+    return os.environ.get("LPOT_MODE") == "development"

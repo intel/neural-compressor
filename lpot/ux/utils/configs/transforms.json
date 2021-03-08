@@ -68,11 +68,6 @@
                 ]
             },
             {
-                "name": "Compose",
-                "help": null,
-                "value": null
-            },
-            {
                 "name": "CropResize",
                 "help": null,
                 "params": [
@@ -321,6 +316,22 @@
                 "name": "ToArray",
                 "help": null,
                 "value": null
+            },
+            {
+                "name": "SquadV1",
+                "help": null,
+                "params": [
+                    {
+                        "name": "label_file",
+                        "help": "Label file path.",
+                        "value": "/path/to/dev-v1.1.json"
+                    },
+                    {
+                        "name": "vocab_file",
+                        "help": "Vocab file path.",
+                        "value": "/path/to/vocab.txt"
+                    }
+                ]
             }
         ]
     },
@@ -349,11 +360,6 @@
                         "value": []
                     }
                 ]
-            },
-            {
-                "name": "Compose",
-                "help": null,
-                "value": null
             },
             {
                 "name": "CropResize",

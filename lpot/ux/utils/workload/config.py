@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Configuration module."""
+from collections import OrderedDict
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
@@ -212,50 +213,63 @@ class Config(JsonSerializer):
 
     def set_transform(self, transform: List[Dict[str, Any]]) -> None:
         """Set transforms metrics in config."""
+        self.set_postprocess_transform(transform)
         if (
             self.quantization
             and self.quantization.calibration
             and self.quantization.calibration.dataloader
         ):
             self.quantization.calibration.dataloader.transform.clear()
-            for single_transform in transform:
-                trans_obj = Transform(
-                    single_transform["name"],
-                    single_transform["params"],
-                )
-                self.quantization.calibration.dataloader.transform[
-                    single_transform["name"]
-                ] = deepcopy(trans_obj)
-
+            self.process_transform(
+                self.quantization.calibration.dataloader.transform,
+                transform,
+            )
         if (
             self.evaluation
             and self.evaluation.accuracy
             and self.evaluation.accuracy.dataloader
         ):
             self.evaluation.accuracy.dataloader.transform.clear()
-            for single_transform in transform:
-                trans_obj = Transform(
-                    single_transform["name"],
-                    single_transform["params"],
-                )
-                self.evaluation.accuracy.dataloader.transform[
-                    single_transform["name"]
-                ] = deepcopy(trans_obj)
-
+            self.process_transform(
+                self.evaluation.accuracy.dataloader.transform,
+                transform,
+            )
         if (
             self.evaluation
             and self.evaluation.performance
             and self.evaluation.performance.dataloader
         ):
             self.evaluation.performance.dataloader.transform.clear()
+            self.process_transform(
+                self.evaluation.performance.dataloader.transform,
+                transform,
+            )
+
+    @staticmethod
+    def process_transform(config: OrderedDict, transform: List[Dict[str, Any]]) -> None:
+        """Process transformation."""
+        for single_transform in transform:
+            if single_transform["name"] == "SquadV1":
+                continue
+            trans_obj = Transform(
+                single_transform["name"],
+                single_transform["params"],
+            )
+            config[single_transform["name"]] = deepcopy(trans_obj)
+
+    def set_postprocess_transform(self, transform: List[Dict[str, Any]]) -> None:
+        """Set postprocess transformation."""
+        if (
+            self.evaluation
+            and self.evaluation.accuracy
+            and self.evaluation.accuracy.postprocess
+        ):
             for single_transform in transform:
-                trans_obj = Transform(
-                    single_transform["name"],
-                    single_transform["params"],
-                )
-                self.evaluation.performance.dataloader.transform[
-                    single_transform["name"]
-                ] = deepcopy(trans_obj)
+                if single_transform["name"] == "SquadV1":
+                    self.evaluation.accuracy.postprocess.transform = {  # type: ignore
+                        single_transform["name"]: single_transform["params"],
+                    }
+                    break
 
     def set_quantization_approach(self, approach: str) -> None:
         """Update quantization approach in config."""

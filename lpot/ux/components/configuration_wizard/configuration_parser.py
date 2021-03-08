@@ -18,7 +18,6 @@ from collections.abc import Iterable
 from typing import Any, Dict, List, Type, Union
 
 from lpot.ux.utils.exceptions import ClientErrorException
-from lpot.ux.utils.logger import log
 
 
 class ConfigurationParser:
@@ -27,7 +26,7 @@ class ConfigurationParser:
     def __init__(self) -> None:
         """Initialize configuration type parser."""
         self.transform_types: Dict[str, List[str]] = {
-            "str": ["interpolation", "dtype"],
+            "str": ["interpolation", "dtype", "label_file", "vocab_file"],
             "int": [
                 "x",
                 "y",
@@ -60,6 +59,7 @@ class ConfigurationParser:
                 "style_folder",
                 "image_format",
                 "dtype",
+                "label_file",
             ],
             "int": ["buffer_size", "num_parallel_reads", "num_cores"],
             "list<int>": ["resize_shape"],
@@ -162,7 +162,7 @@ class ConfigurationParser:
             elif isinstance(required_type, list):
                 return parse_list_value(value, required_type[0])
         except ValueError as err:
-            log.warning(f"Cannot cast {value}. {str(err)}")
+            raise ClientErrorException(f"Cannot cast {value}. {str(err)}")
         return value
 
 
@@ -193,7 +193,7 @@ def parse_bool_value(value: Any) -> bool:
         elif value in false_options:
             return False
         else:
-            raise ClientErrorException(
+            raise ValueError(
                 f"Supported values boolean values are: "
                 f"True ({true_options}), False ({false_options})",
             )

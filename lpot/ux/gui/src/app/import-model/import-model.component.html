@@ -214,39 +214,39 @@
             </a>
           </h3>
           <mat-card>
-            <ng-container *ngFor="let transformItem of transformationParams; let index = index">
-              <br>
-              <span class="inline">
-                <mat-form-field class="form-field" appearance="fill">
-                  <mat-label>transform {{ index }}</mat-label>
-                  <mat-select [(ngModel)]="transformItem['name']" [ngModelOptions]="{standalone: true}"
-                    (selectionChange)="setDefaultTransformationParam($event, index)">
-                    <mat-option *ngFor="let transformation of transformations" [value]="transformation.name"
-                      matTooltipPosition="right" [matTooltip]="transformation.help">
-                      {{ transformation.name }}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </span>
-              <span class="inline">
-                <ng-container *ngIf="isArray(transformItem['params'])">
-                  <ng-container *ngFor="let param of transformItem['params']">
-                    <mat-form-field class="form-field" appearance="fill">
-                      <mat-label>{{ param.name }}</mat-label>
-                      <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
-                        matTooltipPosition="right" [matTooltip]="param.help">
-                    </mat-form-field>
+            <ng-container *ngFor="let transformItem of transformationParams; let index = index; let last = last">
+              <mat-card>
+                <span class="inline">
+                  <mat-form-field class="form-field" appearance="fill">
+                    <mat-label>transform {{ index }}</mat-label>
+                    <mat-select [(ngModel)]="transformItem['name']" [ngModelOptions]="{standalone: true}"
+                      (selectionChange)="setDefaultTransformationParam($event, index)">
+                      <mat-option *ngFor="let transformation of transformations" [value]="transformation.name"
+                        matTooltipPosition="right" [matTooltip]="transformation.help">
+                        {{ transformation.name }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <ng-container *ngIf="isArray(transformItem['params'])">
+                    <ng-container *ngFor="let param of transformItem['params']">
+                      <mat-form-field class="form-field" appearance="fill">
+                        <mat-label>{{ param.name }}</mat-label>
+                        <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                          matTooltipPosition="right" [matTooltip]="param.help">
+                      </mat-form-field>
+                    </ng-container>
                   </ng-container>
-                </ng-container>
-              </span>
-              <button mat-icon-button color="warn" class="browse" (click)="removeTransformation(index)"
-                matTooltip="Remove this transformation">
-                &#x2573;
-              </button>
+                  <button mat-icon-button color="warn" class="browse" (click)="removeTransformation(index)"
+                    matTooltip="Remove this transformation">
+                    &#x2573;
+                  </button>
+                  <button *ngIf="last" mat-raised-button color="primary" class="browse"
+                    (click)="addNewTransformation()">
+                    &#65291; Add new transformation
+                  </button>
+                </span>
+              </mat-card>
             </ng-container>
-            <button mat-raised-button color="primary" class="browse" (click)="addNewTransformation()">
-              &#65291; Add new transformation
-            </button>
             <br>
           </mat-card>
         </ng-container>

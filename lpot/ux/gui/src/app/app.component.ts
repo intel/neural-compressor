@@ -27,11 +27,8 @@ export class AppComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.modelService.getToken()
-      .subscribe(response => {
-        this.modelService.setToken(response['token']);
-        this.tokenIsSet = true;
-      })
+    this.modelService.setToken(window.location.search.replace('?token=', ''));
+    this.tokenIsSet = true;
   }
 
 }

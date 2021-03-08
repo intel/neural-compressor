@@ -1,4 +1,4 @@
-# Model Zoo endpoints
+# Examples endpoints
 
 ## Table of contents
 - [List models](#list-models)
@@ -88,9 +88,9 @@
 
 ## Download model
 
-Endpoint that enable downloading models for Model Zoo.
+Endpoint that enable downloading models for Examples.
 
-It will create new directory: `${workspace_path}/model_zoo/${framework}/${domain}/${model}` and put downloaded there. 
+It will create new directory: `${workspace_path}/examples/${framework}/${domain}/${model}` and put downloaded there. 
 
 ### Path
 `/api/download_model`
@@ -120,9 +120,9 @@ It will create new directory: `${workspace_path}/model_zoo/${framework}/${domain
 
 ## Download config
 
-Endpoint that enable downloading config for models from Model Zoo.
+Endpoint that enable downloading config for models from Examples.
 
-It will create new directory: `${workspace_path}/model_zoo/${framework}/${domain}/${model}` and put downloaded config there. 
+It will create new directory: `${workspace_path}/examples/${framework}/${domain}/${model}` and put downloaded config there. 
 
 ### Path
 `/api/download_config`

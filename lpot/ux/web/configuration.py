@@ -21,10 +21,12 @@ from typing import Dict
 
 from numpy.random import randint
 
+from lpot.utils.utility import singleton
 from lpot.ux.utils.exceptions import NotFoundException
 from lpot.ux.utils.utils import determine_ip
 
 
+@singleton
 class Configuration:
     """Configuration object for UX server."""
 

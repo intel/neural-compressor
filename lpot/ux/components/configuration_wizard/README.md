@@ -1,6 +1,6 @@
 # Configuration for predefined models
 
-* Show "Predefined model zoo"
+* Show "Predefined examples"
 * select a model from the table, import the model
 * Show hardware enviroment
 * import dataset from UX frontend to host

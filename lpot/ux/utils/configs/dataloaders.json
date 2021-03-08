@@ -522,6 +522,24 @@
                 "name": "custom",
                 "help": "Create your own dataset. After you choose this option code template will be generated on the server.",
                 "value": ""
+            },
+            {
+                "name": "bert",
+                "help": "Dataset for bert.",
+                "value": "",
+                "show_dataset_location": true,
+                "params": [
+                    {
+                        "name": "root",
+                        "help": null,
+                        "value": ""
+                    },
+                    {
+                        "name": "label_file",
+                        "help": "Label file path.",
+                        "value": "/path/to/dev-v1.1.json"
+                    }
+                ]
             }
         ]
     }

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Download model from Model Zoo."""
+"""Download model from Examples."""
 
 import os
 import tarfile
@@ -24,7 +24,7 @@ import requests
 from lpot.ux.utils.consts import github_info
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.utils import load_model_config
+from lpot.ux.utils.utils import is_development_env, load_model_config
 from lpot.ux.web.communication import MessageQueue
 
 
@@ -72,7 +72,7 @@ class Downloader:
 
         self.download_dir = os.path.join(
             self.workspace_path,
-            "model_zoo",
+            "examples",
             self.framework,
             self.domain,
             self.model,
@@ -93,7 +93,6 @@ class Downloader:
 
         url, headers = self.get_yaml_url(
             yaml_relative_location,
-            mode=os.environ.get("LPOT_MODE"),
         )
 
         download_path = os.path.join(
@@ -130,7 +129,7 @@ class Downloader:
 
         self.download_dir = os.path.join(
             self.workspace_path,
-            "model_zoo",
+            "examples",
             self.framework,
             self.domain,
             self.model,
@@ -285,11 +284,9 @@ class Downloader:
     def get_yaml_url(
         self,
         yaml_relative_location: str,
-        mode: Optional[str] = None,
     ) -> Tuple[str, dict]:
         """Get url for yaml config download."""
-        log.debug(f"Mode: {mode}")
-        if mode and mode == "development":
+        if is_development_env():
             from urllib.parse import quote_plus
 
             file_path = quote_plus(
