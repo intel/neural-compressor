@@ -443,15 +443,41 @@ class TestConf(unittest.TestCase):
               dataset:
                 dummy:
                   shape: [[224,224], [256,256]]
-                  high: [128., 127.]
-                  low: [0.1, 1.2]
+                  high: [128., 127]
+                  low: 1
                   dtype: ['float32', 'int8']
         '''
         helper(test)
         cfg = conf.Conf('fake_conf.yaml').usr_cfg
-        shape_cfg = cfg['quantization']['calibration']['dataloader']['dataset']['dummy']['shape']
-        self.assertTrue(isinstance(shape_cfg[0], tuple))
-        self.assertTrue(isinstance(shape_cfg, list)) 
+        dataset = cfg['quantization']['calibration']['dataloader']['dataset']['dummy']
+        self.assertTrue(isinstance(dataset['shape'][0], tuple))
+        self.assertTrue(isinstance(dataset['shape'], list))
+        self.assertTrue(isinstance(dataset['high'][1], float))
+        self.assertTrue(isinstance(dataset['high'][0], float))
+        self.assertTrue(isinstance(dataset['low'], float))
+
+        test = '''
+        model:
+          name: test
+          framework: tensorflow
+
+        quantization:
+          calibration:
+            sampling_size: 20
+            dataloader:
+              batch_size: 1
+              dataset:
+                dummy:
+                  shape: [224,224]
+                  high: 128
+                  low: 0.1
+                  dtype: ['float32', 'int8']
+        '''
+        helper(test)
+        cfg = conf.Conf('fake_conf.yaml').usr_cfg
+        dataset = cfg['quantization']['calibration']['dataloader']['dataset']['dummy']
+        self.assertTrue(isinstance(dataset['shape'], tuple))
+        self.assertTrue(isinstance(dataset['high'], float)) 
 
         test = '''
         model:

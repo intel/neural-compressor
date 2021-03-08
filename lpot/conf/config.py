@@ -69,6 +69,24 @@ def input_to_list_float(data):
     assert isinstance(data, list)
     return [float(d) for d in data]
 
+def input_int_to_float(data):
+    if isinstance(data, str):
+        # used for '123.68, 116.78, 103.94' style
+        if ',' in data:
+            data = data.split(',')
+        # used for '123.68 116.78 103.94' style
+        else:
+            data = data.split()
+
+        if len(data) == 1:
+            return float(data[0].strip())
+        else:
+            return [float(s.strip()) for s in data]
+    elif isinstance(data, list):
+        return [float(s) for s in data]
+    elif isinstance(data, int):
+        return float(data)
+
 def input_to_list_int(data):
     if isinstance(data, str):
         return [int(s.strip()) for s in data.split(',')]
@@ -280,10 +298,14 @@ dataset_schema = Schema({
         'shape': And(Or(str, list), Use(list_to_tuple)), 
         Optional('low'): Or(
             float,
-            And(list, lambda s: all(isinstance(i, float) for i in s))),
+            And(int, Use(input_int_to_float)),
+            And(list, Use(input_int_to_float)),
+            And(str, Use(input_int_to_float))),
         Optional('high'): Or(
             float,
-            And(list, lambda s: all(isinstance(i, float) for i in s))),
+            And(int, Use(input_int_to_float)),
+            And(list, Use(input_int_to_float)),
+            And(str, Use(input_int_to_float))),
         Optional('dtype'): And(Or(str, list), Use(input_to_list)),
         Optional('label'): bool,
     },
