@@ -47,7 +47,10 @@ class Metric(JsonSerializer):
     @acc_fp32.setter
     def acc_fp32(self, value: str) -> None:
         """Set accuracy fp32 from value."""
-        self._acc_fp32 = round(float(value), DIGITS)
+        float_value = float(value)
+        if float_value > 1:
+            float_value /= 100
+        self._acc_fp32 = round(float_value, DIGITS)
 
     @property
     def acc_int8(self) -> Optional[float]:
@@ -57,7 +60,10 @@ class Metric(JsonSerializer):
     @acc_int8.setter
     def acc_int8(self, value: str) -> None:
         """Set accuracy int8 from value."""
-        self._acc_int8 = round(float(value), DIGITS)
+        float_value = float(value)
+        if float_value > 1:
+            float_value /= 100
+        self._acc_int8 = round(float_value, DIGITS)
 
     @property
     def perf_latency_fp32(self) -> Optional[float]:

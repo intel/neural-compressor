@@ -2,7 +2,9 @@
 <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
   [style.display]="showSpinner ? 'block' : 'none'">
 </mat-spinner>
-<button mat-raised-button color="accent" [routerLink]="['/config-wizard']">&#65291; Create low precision model</button>
+<button mat-raised-button color="accent" [routerLink]="['/config-wizard']" queryParamsHandling="preserve">
+  &#65291; Create low precision model
+</button>
 <br>
 <br>
 <table *ngIf="modelList && modelList[0]">

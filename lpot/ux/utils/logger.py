@@ -15,5 +15,5 @@
 """Ux Logger module."""
 import logging
 
-log = logging.getLogger("main")
-log.setLevel(level=logging.INFO)
+log = logging.getLogger()
+log.setLevel(level=logging.CRITICAL)

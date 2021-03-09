@@ -22,7 +22,7 @@ const routes: Routes = [
   { path: 'config-wizard', component: ImportModelComponent },
   { path: 'my-models', component: ModelListComponent },
   { path: 'model-zoo', component: PredefinedModelsComponent },
-  { path: '', redirectTo: '/my-models', pathMatch: 'full' },
+  { path: '', redirectTo: 'my-models', pathMatch: 'full' },
 ];
 
 @NgModule({

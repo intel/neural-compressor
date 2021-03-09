@@ -150,7 +150,7 @@
           <span *ngIf="showDatasetLocation['quantization']" class="inline">
             <mat-form-field class="form-field long" appearance="fill">
               <mat-label>dataset location *</mat-label>
-              <input formControlName="datasetLocationQuantization" matInput>
+              <input formControlName="datasetLocationQuantization" matInput (change)="useForEvaluation()">
             </mat-form-field>
             <button mat-raised-button color="primary" class="browse"
               (click)="openDialog('datasetLocationQuantization', 'datasets')">
@@ -167,7 +167,10 @@
           </a>
         </mat-card>
         <h3>Evaluation</h3>
-        <mat-card>
+        <mat-checkbox [checked]="true" (change)="calibrationDataChange($event.checked)">Use the same data as calibration
+        </mat-checkbox>
+
+        <mat-card *ngIf="!useCalibrationData">
           <span class="inline">
             <mat-form-field class="form-field" appearance="fill">
               <mat-label>provided dataset</mat-label>
@@ -299,7 +302,7 @@
     </form>
     <br>
     <div>
-      <button mat-raised-button color="warn" routerLink="/my-models">
+      <button mat-raised-button color="warn" routerLink="/my-models" queryParamsHandling="preserve">
         &#x2573; Cancel
       </button>
       <button mat-raised-button matStepperNext>
@@ -308,7 +311,7 @@
       </button>
       <button mat-raised-button color="accent"
         [disabled]="firstFormGroup.status === 'INVALID' || secondFormGroup.status === 'INVALID'" routerLink="/my-models"
-        (click)="addModel()">
+        (click)="addModel()" queryParamsHandling="preserve">
         <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
         Finish
       </button>
@@ -411,7 +414,7 @@
       </mat-card>
       <br>
       <div>
-        <button mat-raised-button color="warn" routerLink="/my-models">
+        <button mat-raised-button color="warn" routerLink="/my-models" queryParamsHandling="preserve">
           &#x2573; Cancel
         </button>
         <button mat-raised-button matStepperPrevious>
@@ -420,7 +423,7 @@
         </button>
         <button mat-raised-button color="accent"
           [disabled]="firstFormGroup.status === 'INVALID' || secondFormGroup.status === 'INVALID'"
-          routerLink="/my-models" (click)="addModel()">
+          routerLink="/my-models" (click)="addModel()" queryParamsHandling="preserve">
           <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
           Finish
         </button>

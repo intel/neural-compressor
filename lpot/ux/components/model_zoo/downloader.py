@@ -241,7 +241,6 @@ class Downloader:
                     "id": self.request_id,
                 },
             )
-            log.warning(message)
             return
 
     def unpack_archive(self, archive_path: str, filename: str) -> str:

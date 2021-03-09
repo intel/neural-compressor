@@ -18,11 +18,11 @@
 </mat-toolbar>
 
 <nav mat-tab-nav-bar>
-  <a mat-tab-link [routerLink]="'/my-models'" routerLinkActive="active">
+  <a mat-tab-link [routerLink]="'/my-models'" routerLinkActive="active" queryParamsHandling="preserve">
     <img class="icon" src="./../../assets/001b-home-outlined.svg">
     My models
   </a>
-  <a mat-tab-link [routerLink]="'/model-zoo'" routerLinkActive="active">
+  <a mat-tab-link [routerLink]="'/model-zoo'" routerLinkActive="active" queryParamsHandling="preserve">
     <img class="icon" src="./../../assets/008b-plus-outlined.svg">
     Examples
   </a>

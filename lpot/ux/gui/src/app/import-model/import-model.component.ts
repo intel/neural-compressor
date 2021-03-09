@@ -62,6 +62,7 @@ export class ImportModelComponent implements OnInit {
   saved = false;
   id: string;
   showSpinner = false;
+  useCalibrationData = true;
 
   constructor(
     private _formBuilder: FormBuilder,
@@ -247,10 +248,12 @@ export class ImportModelComponent implements OnInit {
       if (Array.isArray(this.metricParams[0].value)) {
         this.metricParam = this.metricParams[0].value[0];
       }
+    } else {
+      this.metricParam = null;
     }
   }
 
-  setDefaultDataLoaderParam(event, section: string) {
+  setDefaultDataLoaderParam(event, section: 'quantization' | 'evaluation') {
     const parameters = this.dataLoaders.find(x => x.name === event.value).params;
     this.dataLoaderParams[section] = [];
     if (Array.isArray(parameters)) {
@@ -262,6 +265,10 @@ export class ImportModelComponent implements OnInit {
       })
     }
     this.showDatasetLocation[section] = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
+    if (section === 'quantization' && this.useCalibrationData) {
+      this.secondFormGroup.controls['datasetLocationEvaluation'].clearValidators();
+      this.secondFormGroup.controls['datasetLocationEvaluation'].updateValueAndValidity();
+    }
     const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
     if (this.showDatasetLocation[section]) {
       this.secondFormGroup.controls[controlName].setValidators([Validators.required]);
@@ -272,7 +279,7 @@ export class ImportModelComponent implements OnInit {
     }
   }
 
-  setDefaultTransformationParam(event, index) {
+  setDefaultTransformationParam(event, index: number) {
     this.transformationParams[index]['params'] = this.transformations.find(x => x.name === event.value).params;
   }
 
@@ -311,7 +318,7 @@ export class ImportModelComponent implements OnInit {
               this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
               if (Array.isArray(this.transformationParams[index]['params'])) {
                 this.transformationParams[index]['params'].forEach(param => {
-                  param.value = resp['config']['quantization'].calibration.dataloader.transform[name][param.name];
+                  param.value = transform[name][param.name];
                 });
               }
             });
@@ -342,6 +349,24 @@ export class ImportModelComponent implements OnInit {
         error => {
           this.openErrorDialog(error);
         });
+  }
+
+  calibrationDataChange(copied: boolean) {
+    this.useCalibrationData = copied;
+    if (copied) {
+      this.secondFormGroup.get('dataLoaderEvaluation').setValue(this.secondFormGroup.get('dataLoaderQuantization').value);
+      this.secondFormGroup.get('datasetLocationEvaluation').setValue(this.secondFormGroup.get('datasetLocationQuantization').value);
+      this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
+    } else {
+      this.secondFormGroup.get('dataLoaderEvaluation').reset();
+      this.secondFormGroup.get('datasetLocationEvaluation').setValue('');
+    }
+  }
+
+  useForEvaluation() {
+    if (this.useCalibrationData) {
+      this.secondFormGroup.get('datasetLocationEvaluation').setValue(this.secondFormGroup.get('datasetLocationQuantization').value);
+    }
   }
 
   addModel() {
@@ -396,11 +421,8 @@ export class ImportModelComponent implements OnInit {
         random_seed: this.secondFormGroup.get('randomSeed').value
       },
       evaluation: {
-        dataset_path: this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location',
-        dataloader: {
-          name: this.secondFormGroup.get('dataLoaderEvaluation').value,
-          params: this.dataLoaderParams['evaluation'] ? this.getParams(this.dataLoaderParams['evaluation']) : null,
-        },
+        dataset_path: this.getEvaluationDatasetPath(),
+        dataloader: this.getEvaluationDataloader(),
         metric: this.secondFormGroup.get('metric').value,
         metric_param: this.metricParam,
         batch_size: this.secondFormGroup.get('batchSize').value,
@@ -414,6 +436,26 @@ export class ImportModelComponent implements OnInit {
       }
     }
     return model;
+  }
+
+  getEvaluationDatasetPath() {
+    if (this.useCalibrationData) {
+      return this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location'
+    }
+    return this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location'
+  }
+
+  getEvaluationDataloader() {
+    if (this.useCalibrationData) {
+      return {
+        name: this.secondFormGroup.get('dataLoaderQuantization').value,
+        params: this.dataLoaderParams['quantization'] ? this.getParams(this.dataLoaderParams['quantization']) : null
+      };
+    }
+    return {
+      name: this.secondFormGroup.get('dataLoaderEvaluation').value,
+      params: this.dataLoaderParams['evaluation'] ? this.getParams(this.dataLoaderParams['evaluation']) : null
+    };
   }
 
   getBoundaryNodes(type: 'input' | 'output') {
@@ -465,6 +507,9 @@ export class ImportModelComponent implements OnInit {
     dialogRef.afterClosed().subscribe(chosenFile => {
       if (chosenFile) {
         this[form].get(fieldName).setValue(chosenFile);
+        if (fieldName === 'datasetLocationQuantization' && this.useCalibrationData) {
+          this.secondFormGroup.get('datasetLocationEvaluation').setValue(chosenFile);
+        }
       }
     });;
   }

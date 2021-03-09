@@ -18,10 +18,11 @@ import json
 import os
 import re
 import socket
+from functools import wraps
 from importlib import import_module
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from lpot.ux.utils.exceptions import (
     AccessDeniedException,
@@ -47,11 +48,23 @@ framework_extensions = {
 support_boundary_nodes = ["tensorflow"]
 
 
+def deprecated(func: Callable) -> Any:
+    """Signal deprecated function."""
+
+    @wraps(func)
+    def report_deprecated(*args: str, **kwargs: str) -> Any:
+        log.warning(f"Call to deprecated function {func.__name__}.")
+        return func(*args, **kwargs)
+
+    return report_deprecated
+
+
 def is_hidden(path: str) -> bool:
     """Check if path is for hidden filesystem entry."""
     return "." == os.path.basename(path)[0]
 
 
+@deprecated
 def get_dataset_path(framework: str, domain: str) -> str:
     """Get dataset path for specified framework and domain."""
     dataset = dataset_locations.get(framework, {}).get(domain, {})

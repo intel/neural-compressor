@@ -149,16 +149,16 @@ class Proc(object):
                 log.debug(msg)
             else:
                 log.error(msg)
-                log.warning("...")
+                log.critical("...")
                 for line in self.tail:
-                    log.warning(f"\t{line.strip()}")
+                    log.critical(f"\t{line.strip()}")
                 relative_output_path = re.sub(
                     r"^.*stages/",
                     "stages/",
                     self.output_path,
                 )
-                log.warning(f"\tMore in file: {relative_output_path}")
-                log.warning("...")
+                log.critical(f"\tMore in file: {relative_output_path}")
+                log.critical("...")
 
             return proc
 

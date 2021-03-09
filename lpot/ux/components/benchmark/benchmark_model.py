@@ -15,9 +15,8 @@
 """Generic benchmark script."""
 
 import argparse
+import logging as log
 from typing import Any, Dict, List
-
-from lpot.ux.utils.logger import log
 
 try:
     import tensorflow as tf

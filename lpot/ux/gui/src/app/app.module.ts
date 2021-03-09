@@ -45,6 +45,7 @@ import { DialogComponent } from './dialog/dialog.component';
 import { FileComponent } from './file/file.component';
 import { FileBrowserComponent } from './file-browser/file-browser.component';
 import { AuthenticationInterceptor } from './authentication/authentication.interceptor';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @NgModule({
   declarations: [
@@ -69,6 +70,7 @@ import { AuthenticationInterceptor } from './authentication/authentication.inter
     MatExpansionModule,
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
