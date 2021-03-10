@@ -34,6 +34,14 @@ logger.debug("reduce range:")
 logger.debug(REDUCE_RANGE)
 
 
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:
+        assert False, 'Got an unknow version of torch: {}'.format(e)
+    return torch_version
+
+
 def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
     """Convert tune configure to quantization config for each op.
 
@@ -229,7 +237,7 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
                                 reduce_range=(REDUCE_RANGE and scheme == 'asym'))
 
 
-def _propagate_qconfig(model, op_qcfgs):
+def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None):
     """Propagate qconfig through the module hierarchy and assign `qconfig`
        attribute on each leaf module
 
@@ -239,16 +247,28 @@ def _propagate_qconfig(model, op_qcfgs):
                          quantization configuration, qconfig applies to all submodules of a
                          given module unless qconfig for the submodules are specified (when
                          the submodule already has qconfig attribute)
+        is_qat_convert (bool): flag that specified this function is used to QAT prepare.
+        white_list (list): list of quantizable op types in pytorch
     Return:
         None, module is modified inplace with qconfig attached
     """
     fallback_ops = []
-    WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-        - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+    version = get_torch_version()
+    if version < '1.7' and white_list is None:
+        white_list = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
+            - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+    elif white_list is None:
+        white_list = torch.quantization.quantization_mappings.get_qconfig_propagation_list() \
+            - torch.quantization.quantization_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+
     for k, v in op_qcfgs.items():
         if v is None and k[1] != 'QuantStub' \
                 and k[1] != 'DeQuantStub':
-            fallback_ops.append(k[0])
+            if is_qat_convert:
+                op_qcfg = {k[0]: v}
+                _propagate_qconfig_recursively(model, '', op_qcfg, white_list=white_list)
+            else:
+                fallback_ops.append(k[0])
         else:
             if v is None:
                 weights_observer = _observer('minmax', 'asym',
@@ -258,10 +278,10 @@ def _propagate_qconfig(model, op_qcfgs):
                 v = torch.quantization.QConfig(
                     activation=activation_observer, weight=weights_observer)
             op_qcfg = {k[0]: v}
-            _propagate_qconfig_recursively(model, '', op_qcfg, white_list=WHITE_LIST)
+            _propagate_qconfig_recursively(model, '', op_qcfg, white_list=white_list)
 
-    if fallback_ops:
-        _fallback_quantizable_ops_recursively(model, '', fallback_ops)
+    if fallback_ops and not is_qat_convert:
+        _fallback_quantizable_ops_recursively(model, '', fallback_ops, white_list=white_list)
 
 
 def _propagate_qconfig_recursively(model, prefix, op_qcfg, white_list, qconfig_parent=None):
@@ -313,13 +333,14 @@ def _find_quantized_op_num(model, white_list, op_count=0):
     return quantize_op_num
 
 
-def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
+def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_list=None):
     """Handle all fallback ops(fp32 ops)
 
     Args:
         model (object): input model
         prefix (string): the prefix of op name
         fallback_ops (list): list of fallback ops(fp32 ops)
+        white_list (list): list of quantizable op types in pytorch
 
     Returns:
         None
@@ -394,13 +415,11 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
             r = self.module.add_relu(x, y)
             return self.quant(r)
 
-    WHITE_LIST = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-        - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
     for name, child in model.named_children():
         op_name = prefix + name
         if op_name in fallback_ops:
             child.qconfig = None
-            quantize_op_num = _find_quantized_op_num(model, white_list=WHITE_LIST)
+            quantize_op_num = _find_quantized_op_num(model, white_list=white_list)
             if quantize_op_num == 1:
                 found = False
                 for name_tmp, child_tmp in model.named_children():
@@ -417,7 +436,7 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops):
                     child, observer=_observer)
         else:
             _fallback_quantizable_ops_recursively(
-                child, op_name + '.', fallback_ops)
+                child, op_name + '.', fallback_ops, white_list=white_list)
 
 
 @adaptor_registry
@@ -430,6 +449,8 @@ class TemplateAdaptor(Adaptor):
     """
     def __init__(self, framework_specific_info):
         super(TemplateAdaptor, self).__init__(framework_specific_info)
+
+        self.version = get_torch_version()
 
         # set torch random seed
         random_seed = framework_specific_info['random_seed']
@@ -444,9 +465,16 @@ class TemplateAdaptor(Adaptor):
         self.query_handler = None
 
         if framework_specific_info['approach'] == "post_training_static_quant":
-            self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+            if self.version < '1.7':
+                self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+            else:
+                self.q_mapping = \
+                    torch.quantization.quantization_mappings.get_static_quant_module_mappings()
         elif framework_specific_info['approach'] == "quant_aware_training":
-            self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+            if self.version < '1.7':
+                self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+            else:
+                self.q_mapping = torch.quantization.quantization_mappings.get_qat_module_mappings()
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
 
@@ -536,12 +564,6 @@ class PyTorchAdaptor(TemplateAdaptor):
         }
         """
 
-        if framework_specific_info['approach'] == "post_training_static_quant":
-            self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
-        elif framework_specific_info['approach'] == "quant_aware_training":
-            self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
-        else:
-            assert False, "Unsupport quantization approach: {}".format(self.approach)
         self.tune_cfg = None
         if self.device == "cpu":
             query_config_file = "pytorch_cpu.yaml"
@@ -552,9 +574,14 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
 
-        self.white_list = \
-            torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-            - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+        if self.version < '1.7':
+            self.white_list = \
+                torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
+                - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+        else:
+            self.white_list = \
+                torch.quantization.quantization_mappings.get_qconfig_propagation_list() \
+                - torch.quantization.quantization_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
 
         # for tensorboard
         self.dump_times = 0
@@ -570,13 +597,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                          'nni.LinearReLU']
         self.fused_dict = {}
 
-        if framework_specific_info['approach'] == "post_training_static_quant":
-            self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
-        elif framework_specific_info['approach'] == "quant_aware_training":
-            self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
-        else:
-            assert False, "Unsupport quantization approach: {}".format(self.approach)
-
     def model_calibration(self, q_model, dataloader, iterations=1):
         assert iterations > 0
         with torch.no_grad():
@@ -584,14 +604,17 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if isinstance(input, dict):
                     if self.device == "gpu":
                         for inp in input.keys():
-                            input[inp] = input[inp].to("dpcpp")
+                            input[inp] = input[inp].to("dpcpp") \
+                                if isinstance(input[inp], torch.Tensor) else input[inp]
                     output = q_model(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
                     if self.device == "gpu":
-                        input = [inp.to("dpcpp") for inp in input]
+                        input = [inp.to("dpcpp")
+                                 if isinstance(inp, torch.Tensor) else inp
+                                 for inp in input]
                     output = q_model(*input)
                 else:
-                    if self.device == "gpu":
+                    if self.device == "gpu" and isinstance(input, torch.Tensor):
                         input = input.to("dpcpp")
                     output = q_model(input)
                 if idx >= iterations - 1:
@@ -621,19 +644,30 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.tune_cfg = tune_cfg
         op_cfgs = _cfg_to_qconfig(
             tune_cfg, (self.approach == 'quant_aware_training'))
-        _propagate_qconfig(q_model.model, op_cfgs)
-        # sanity check common API misusage
-        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
-            logger.warn("None of the submodule got qconfig applied. Make sure you "
-                        "passed correct configuration through `qconfig_dict` or "
-                        "by assigning the `.qconfig` attribute directly on submodules")
-        torch.quantization.add_observer_(q_model.model)
+        if self.version < '1.7' or self.approach == 'post_training_static_quant':
+            _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list)
+            # sanity check common API misusage
+            if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
+                logger.warn("None of the submodule got qconfig applied. Make sure you "
+                            "passed correct configuration through `qconfig_dict` or "
+                            "by assigning the `.qconfig` attribute directly on submodules")
 
         if self.approach == 'post_training_static_quant':
+            torch.quantization.add_observer_(q_model.model)
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model.model, dataloader, iterations)
         elif self.approach == 'quant_aware_training':
-            torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
+            if self.version >= '1.7':
+                _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True,
+                                   white_list=self.white_list)
+                torch.quantization.convert(q_model.model, mapping=self.q_mapping,
+                                           inplace=True, remove_qconfig=False)
+                _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list)
+                torch.quantization.add_observer_(q_model.model, self.white_list,
+                                                 set(self.q_mapping.values()))
+            else:
+                torch.quantization.add_observer_(q_model.model)
+                torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
             if q_func is None:
                 assert False, "quantization aware training mode requires q_function to train"
             else:
@@ -687,14 +721,16 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if isinstance(input, dict):
                     if self.device == "gpu":
                         for inp in input.keys():
-                            input[inp] = input[inp].to("dpcpp")
+                            input[inp] = input[inp].to("dpcpp") \
+                                if isinstance(input[inp], torch.Tensor) else input[inp]
                     output = model_(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
                     if self.device == "gpu":
-                        input = [inp.to("dpcpp") for inp in input]
+                        input = [inp.to("dpcpp")
+                                 if isinstance(inp, torch.Tensor) else inp for inp in input]
                     output = model_(*input)
                 else:
-                    if self.device == "gpu":
+                    if self.device == "gpu" and isinstance(input, torch.Tensor):
                         input = input.to("dpcpp")
                     output = model_(input)
                 if self.device == "gpu":
@@ -871,7 +907,9 @@ class PyTorchAdaptor(TemplateAdaptor):
             # TODO: Add test
             if white_list is None:
                 white_list = \
-                    torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+                   torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
+                   if self.version < '1.7' else \
+                   torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
             module_qconfig = qconfig_dict.get(type(module), qconfig_parent)
             module_qconfig = qconfig_dict.get(prefix, module_qconfig)
@@ -925,10 +963,13 @@ class PyTorchAdaptor(TemplateAdaptor):
             return model
 
         # create properties
-        white_list = self.white_list | \
-            (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
-             set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
-             set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
+        if self.version < '1.7':
+            white_list = self.white_list | \
+                (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
+                 set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
+                 set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
+        else:
+            white_list = torch.quantization.get_compare_output_module_list()
 
         model = copy.deepcopy(model) if self.is_baseline else model
         model.model.qconfig = torch.quantization.QConfig(
@@ -1129,15 +1170,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
             for idx, (input, label) in enumerate(dataloader):
                 if isinstance(input, dict):
                     for inp in input.keys():
-                        input[inp] = input[inp].to(ipex.DEVICE)
+                        input[inp] = input[inp].to(ipex.DEVICE) \
+                            if isinstance(input[inp], torch.Tensor) else input[inp]
                     with ipex.AutoMixPrecision(conf, running_mode='calibration'):
                         output = q_model(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
-                    input = [inp.to(ipex.DEVICE) for inp in input]
+                    input = [inp.to(ipex.DEVICE)
+                             if isinstance(inp, torch.Tensor) else inp for inp in input]
                     with ipex.AutoMixPrecision(conf, running_mode='calibration'):
                         output = q_model(*input)
                 else:
-                    input = input.to(ipex.DEVICE)  # pylint: disable=no-member
+                    if isinstance(input, torch.Tensor):
+                        input = input.to(ipex.DEVICE)  # pylint: disable=no-member
                     with ipex.AutoMixPrecision(conf, running_mode='calibration'):
                         output = q_model(input)
                 if idx >= iterations - 1:
@@ -1169,7 +1213,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
             except:
                 logger.info("This model can't convert to Script model")
                 q_model = model_.model.eval().to(ipex.DEVICE)
-
         self._cfg_to_qconfig(tune_cfg)
 
         if self.approach == 'post_training_static_quant':
@@ -1278,15 +1321,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
 
                 if isinstance(input, dict):
                     for inp in input.keys():
-                        input[inp] = input[inp].to(ipex.DEVICE)
+                        input[inp] = input[inp].to(ipex.DEVICE) \
+                            if isinstance(input[inp], torch.Tensor) else input[inp]
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
                         output = model_(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
-                    input = [inp.to(ipex.DEVICE) for inp in input]
+                    input = [inp.to(ipex.DEVICE)
+                             if isinstance(inp, torch.Tensor) else inp for inp in input]
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
                         output = model_(*input)
                 else:
-                    input = input.to(ipex.DEVICE) # pylint: disable=no-member
+                    if isinstance(input, torch.Tensor):
+                        input = input.to(ipex.DEVICE)  # pylint: disable=no-member
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
                         output = model_(input)
                 label = label.to(ipex.DEVICE)
@@ -1368,7 +1414,7 @@ class PyTorchQuery(QueryBackendCapability):
         import torch
 
         super().__init__()
-        self.version = torch.__version__.split('+')[0]
+        self.version = get_torch_version()
         self.cfg = local_config_file
         self.cur_config = None
         self._one_shot_query()
@@ -1385,12 +1431,10 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary]: the content for specific version.
         """
         # default_config = None
-        position = self.version.rfind('.')
-        version = float(self.version[:position])
         for sub_data in data:
             if sub_data['version']['name'] == 'default':
                 return sub_data
-            if version >= float(sub_data['version']['name']):
+            if self.version >= sub_data['version']['name']:
                 return sub_data
 
     def _one_shot_query(self):

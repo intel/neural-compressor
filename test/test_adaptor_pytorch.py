@@ -330,7 +330,8 @@ class TestPytorchAdaptor(unittest.TestCase):
               fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
-        lpot_torch._fallback_quantizable_ops_recursively(model.model, '', fallback_ops)
+        lpot_torch._fallback_quantizable_ops_recursively(
+            model.model, '', fallback_ops, white_list=self.adaptor.white_list)
         torch.quantization.add_observer_(model.model)
         model.model(x)
         torch.quantization.convert(model.model, self.adaptor.q_mapping, inplace=True)
