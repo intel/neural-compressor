@@ -1,7 +1,7 @@
 Intel® Low Precision Optimization Tool
 ======================================
 
-Intel® Low Precision Optimization Tool (Intel® LPOT) is an open-source Python library that delivers a unified low-precision inference interface across multiple Intel-optimized DL frameworks on both CPUs and GPUs. It supports automatic accuracy-driven tuning strategies, along with additional objectives such as optimizing for performance, model size, and memory footprint. It also provides easy extension capability for new backends, tuning strategies, metrics, and objectives.
+Intel® Low Precision Optimization Tool (Intel® LPOT) is an open-source Python* library that delivers a unified low-precision inference interface across multiple Intel-optimized DL frameworks on both CPUs and GPUs. It supports automatic accuracy-driven tuning strategies, along with additional objectives such as optimizing for performance, model size, and memory footprint. It also provides easy extension capability for new backends, tuning strategies, metrics, and objectives.
 
 > **Note**
 >
@@ -28,17 +28,19 @@ Supported Intel optimized DL frameworks are:
 # Installation
 
 The Intel® LPOT library is released as part of
-[Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+[Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html) (AI Kit).
 The AI Kit provides a consolidated package of Intel's latest deep learning and
 machine optimizations all in one place for ease of development.  Along with
 LPOT, the AI Kit includes Intel-optimized versions of deep learning frameworks
-(TensorFlow, PyTorch) and high performing Python libraries to streamline
+(such as TensorFlow and PyTorch) and high performing Python libraries to streamline
 end-to-end data science and AI workflows on Intel architectures.
 
-You can also download and install just the LPOT library using one of
-the methods described below.
-
 ## Install for Linux
+
+You can install just the LPOT library from binary or source, or you can get
+the Intel optimized framework together with the LPOT
+library by installing the Intel® oneAPI AI Analytics Toolkit.
+
 ### Install from binary
 
   ```Shell
@@ -57,14 +59,18 @@ the methods described below.
   pip install -r requirements.txt
   python setup.py install
   ```
-### Install Intel oneAPI AI Analytics Toolkit
+### Install from AI Kit
 
-The Intel® oneAPI AI Analytics Toolkit is distributed through many common channels,
+The AI Kit, which includes the LPOT
+library, is distributed through many common channels,
 including from Intel's website, YUM, APT, Anaconda, and more.
 [Select and download](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html)
 the AI Kit distribution package that's best suited for you and follow the
 [Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html)
 for post-installation instructions.
+
+|[Download AI Kit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/) |[AI Kit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) |
+|---|---|
 
 ## Install for Windows
 ### Install from binary
