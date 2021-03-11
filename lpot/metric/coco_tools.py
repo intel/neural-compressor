@@ -57,13 +57,10 @@ then evaluation (in multi-class mode) can be invoked as follows:
 
 """
 from collections import OrderedDict
-from lpot.utils.utility import LazyImport
 import copy
 import time
 import numpy as np
-
-tf = LazyImport('tensorflow')
-pycocotools = LazyImport('pycocotools')
+from ..utils import logger
 
 from pycocotools import coco
 from pycocotools import cocoeval
@@ -121,7 +118,7 @@ class COCOWrapper(coco.COCO):
         results = coco.COCO()
         results.dataset['images'] = [img for img in self.dataset['images']]
 
-        tf.compat.v1.logging.info(
+        logger.info(
             'Loading and preparing annotation results...')
         tic = time.time()
 
@@ -145,7 +142,7 @@ class COCOWrapper(coco.COCO):
                 ann['bbox'] = mask.toBbox(ann['segmentation'])
                 ann['id'] = idx + 1
                 ann['iscrowd'] = 0
-        tf.compat.v1.logging.info('DONE (t=%0.2fs)', (time.time() - tic))
+        logger.info('DONE (t=%0.2fs)', (time.time() - tic))
 
         results.dataset['annotations'] = annotations
         results.createIndex()
