@@ -602,7 +602,7 @@ class ONNXRTTopK(BaseMetric):
             return self.num_correct / self.num_sample
 
 
-@metric_registry('COCOmAP', 'tensorflow')
+@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowCOCOMAP(BaseMetric):
     """The class of calculating mAP metric
 

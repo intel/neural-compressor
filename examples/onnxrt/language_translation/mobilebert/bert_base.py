@@ -233,7 +233,7 @@ if __name__ == "__main__":
                         default=128,
                         help='max seq length')
     parser.add_argument('--model_name_or_path', type=str,
-                        default='mobilebert-uncased',
+                        default='google/mobilebert-uncased',
                         help='model name or path')
     parser.add_argument('--data_dir', type=str,
                         help='datseset path')

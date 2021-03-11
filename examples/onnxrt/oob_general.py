@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     from lpot.data.datasets.dummy_dataset import DummyDataset
     from lpot.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
-    dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype=dtypes)
+    dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype=dtypes, label=True)
     dummy_dataloader = ONNXRTDataLoader(dummy_dataset, batch_size=args.eval_batch_size)
 
     def eval_func(model):

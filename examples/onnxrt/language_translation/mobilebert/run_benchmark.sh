@@ -58,7 +58,7 @@ function define_mode {
 function run_benchmark {
     if [ "${topology}" = "mobilebert_MRPC" ];then
       task_name='mrpc'
-      model_name_or_path='mobilebert-uncased'
+      model_name_or_path='google/mobilebert-uncased'
     fi
     python bert_base.py --model_path ${input_model} \
                         --data_dir ${dataset_location} \
