@@ -42,10 +42,7 @@ export class ModelListComponent implements OnInit {
           if (result['status'] === 'success') {
             this.updateResult(result, 'start');
           } else {
-            this.openErrorDialog({
-              error: 'tuning started',
-              message: result['data']['message'],
-            });
+            this.openErrorDialog(result['data']['message']);
           }
         }
       });
@@ -58,10 +55,7 @@ export class ModelListComponent implements OnInit {
             const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
             if (index !== -1) {
               this.modelList[index]['status'] = result['status'];
-              this.openErrorDialog({
-                error: 'tuning finished',
-                message: result['data']['message'],
-              });
+              this.openErrorDialog(result['data']['message']);
             }
           }
         }
@@ -72,10 +66,7 @@ export class ModelListComponent implements OnInit {
           if (result['status'] === 'success') {
             const index = this.modelList.indexOf(this.modelList.find(model => model.id === result['data']['id']));
           } else {
-            this.openErrorDialog({
-              error: 'benchmark started',
-              message: result['data']['message'],
-            });
+            this.openErrorDialog(result['data']['message']);
           }
         }
       });
@@ -89,10 +80,7 @@ export class ModelListComponent implements OnInit {
               this.modelList[index]['perf_throughput_fp32'] = result['data']['perf_throughput_fp32'];
               this.modelList[index]['perf_throughput_int8'] = result['data']['perf_throughput_int8'];
             } else {
-              this.openErrorDialog({
-                error: 'benchmark finished',
-                message: result['data']['message'],
-              });
+              this.openErrorDialog(result['data']['message']);
             }
           }
         }

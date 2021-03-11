@@ -19,7 +19,6 @@ import os
 import re
 import socket
 from functools import wraps
-from importlib import import_module
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -30,6 +29,7 @@ from lpot.ux.utils.exceptions import (
     NotFoundException,
 )
 from lpot.ux.utils.logger import log
+from lpot.ux.utils.proc import Proc
 
 dataset_locations = {
     "tensorflow": {
@@ -234,11 +234,20 @@ def check_module(module_name: str) -> None:
 
 def get_module_version(module_name: str) -> str:
     """Check module version. Raise exception when not found."""
-    check_module(module_name)
+    version = None
     if module_name == "onnxrt":
         module_name = "onnx"
-    module = import_module(module_name)
-    version = getattr(module, "__version__")
+    command = [
+        "python",
+        "-c",
+        f"import {module_name} as module; print(module.__version__)",
+    ]
+    proc = Proc()
+    proc.run(args=command)
+    if proc.is_ok:
+        for line in proc.output:
+            version = line
+    proc.remove_logs()
     if version is None:
         raise ClientErrorException(f"Could not found version of {module_name} module.")
     return version

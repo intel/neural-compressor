@@ -29,4 +29,8 @@ export class ErrorComponent implements OnInit {
   ngOnInit() {
   }
 
+  typeOf(obj: any): string {
+    return typeof obj;
+  }
+
 }

@@ -135,8 +135,8 @@ export class ImportModelComponent implements OnInit {
             this.getPossibleValues();
             this.frameworkVersion = result['data']['framework_version'];
             ['inputs', 'outputs'].forEach(param => {
+              this[param] = result['data'][param];
               if (result['data'][param]) {
-                this[param] = result['data'][param];
                 const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
                 if (nonCustomParams.length === 1) {
                   this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);

@@ -5,7 +5,10 @@
   </h1>
 
   <div mat-dialog-content>
-    <p>{{ data.message }}</p>
-    <p>{{ data.error }}</p>
+    <p *ngIf="typeOf(data) === 'string'">{{ data }}</p>
+    <ng-container *ngIf="data.error">
+      <p *ngIf="typeOf(data.error) === 'string'">{{ data.error }}</p>
+      <p *ngIf="typeOf(data.error) !== 'string'">{{ data.statusText }}</p>
+    </ng-container>
   </div>
 </div>
