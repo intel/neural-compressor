@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: ssd_resnet50_v1
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: image_tensor
   outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
@@ -28,7 +28,7 @@ quantization:                                        # optional. tuning constrai
         COCORecord:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
-        ParseDecodeCoco:
+        ParseDecodeCoco: {}
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
     activation:
       algorithm: minmax
@@ -38,7 +38,7 @@ quantization:                                        # optional. tuning constrai
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric: 
-      COCOmAP:
+      COCOmAP: {}
     configs:                                         # optional. if not specified, use all cores in 1 socket.
       cores_per_instance: 28
       num_of_instance: 1
@@ -49,7 +49,7 @@ evaluation:                                          # optional. used to config 
         COCORecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
-        ParseDecodeCoco: 
+        ParseDecodeCoco: {}
   performance:
     iteration: 100
     configs:
@@ -62,7 +62,8 @@ evaluation:                                          # optional. used to config 
         COCORecord:
           root: /path/to/evaluation/dataset 
       transform:
-        ParseDecodeCoco:
+        ParseDecodeCoco: {}
+
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.

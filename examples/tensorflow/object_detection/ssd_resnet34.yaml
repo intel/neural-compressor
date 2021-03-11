@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: ssd_resnet34
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: image
   outputs: detection_bboxes,detection_scores,detection_classes
 
@@ -28,8 +28,8 @@ quantization:                                        # optional. tuning constrai
         COCORaw:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation raw image folder
       transform:
-        AlignImageChannel:
-        Rescale:
+        AlignImageChannel: {}
+        Rescale: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
@@ -58,8 +58,8 @@ evaluation:                                          # optional. used to config 
         COCORaw:
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation raw image datafolder
       transform:
-        AlignImageChannel:
-        Rescale:
+        AlignImageChannel: {}
+        Rescale: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
@@ -79,8 +79,8 @@ evaluation:                                          # optional. used to config 
         COCORaw:
           root: /path/to/evaluation/dataset
       transform:
-        AlignImageChannel:
-        Rescale:
+        AlignImageChannel: {}
+        Rescale: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]

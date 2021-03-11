@@ -42,6 +42,7 @@ evaluation:
           root: /path/to/eval.tf_record
           label_file: /path/to/dev-v1.1.json
       batch_size: 64
+
 quantization:            
   calibration:
     sampling_size: 500

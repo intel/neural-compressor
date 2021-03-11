@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: imagenet
-  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 device: gpu
 
@@ -30,8 +30,8 @@ quantization:                                        # optional. tuning constrai
       transform:
         RandomResizedCrop:
           size: 224
-        RandomHorizontalFlip:
-        ToTensor:
+        RandomHorizontalFlip: {}
+        ToTensor: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
@@ -56,7 +56,7 @@ evaluation:                                          # optional. required if use
           size: 256
         CenterCrop:
           size: 224
-        ToTensor:
+        ToTensor: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
@@ -75,7 +75,7 @@ evaluation:                                          # optional. required if use
           size: 256
         CenterCrop:
           size: 224
-        ToTensor:
+        ToTensor: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]

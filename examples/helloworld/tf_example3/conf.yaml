@@ -15,18 +15,18 @@
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: inception_v1
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 20                            # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 20                                # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:
       batch_size: 1
       dataset:
         ImageRecord:
-          root: /path/to/imagenet/         # NOTE: modify to calibration dataset location if needed
+          root: /path/to/imagenet/                   # NOTE: modify to calibration dataset location if needed
       transform:
-        ParseDecodeImagenet:
+        ParseDecodeImagenet: {}
         BilinearImagenet: 
           height: 224
           width: 224
@@ -45,9 +45,9 @@ evaluation:                                          # optional. required if use
       last_batch: discard 
       dataset:
         ImageRecord:
-          root: /path/to/imagenet/          # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
+        ParseDecodeImagenet: {}
         BilinearImagenet: 
           height: 224
           width: 224

@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: mobilenet_v2
-  framework: onnxrt_qlinearops                        # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: onnxrt_qlinearops                       # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.                          
@@ -50,7 +50,7 @@ evaluation:                                          # optional. required if use
       batch_size: 32
       dataset:
         ImageFolder:
-          root: /path/to/calibration/dataset/         # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/calibration/dataset/        # NOTE: modify to evaluation dataset location if needed
       transform:
         ResizeCropImagenet: 
           height: 224
@@ -66,7 +66,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1 
       dataset:
         ImageFolder:
-          root: /path/to/calibration/dataset/         # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/calibration/dataset/        # NOTE: modify to evaluation dataset location if needed
       transform:
         ResizeCropImagenet: 
           height: 224

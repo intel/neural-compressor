@@ -187,7 +187,7 @@ In examples directory, there is a ssd_resnet50_v1.yaml. We could remove most of 
 ```yaml
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: ssd_resnet50_v1
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: image_tensor
   outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
