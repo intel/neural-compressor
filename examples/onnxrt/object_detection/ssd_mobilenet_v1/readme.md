@@ -14,9 +14,9 @@ Please refer to [Converting SSDMobilenet To ONNX Tutorial](https://github.com/on
 To evaluate the model, run `main.py` with the path to the model:
 
 ```bash
-bash run_tuning.sh --input_model path/to/model  # model path as *.onnx
-                   --config ssd_mobilenet_v1.yaml 
-                   --output_model path/to/save
+bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+                   --config=ssd_mobilenet_v1.yaml \ 
+                   --output_model=path/to/save
 ```
 
 

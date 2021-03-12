@@ -7,7 +7,7 @@ This document is used to list steps of reproducing TensorFlow style transfer Int
 ## Prerequisite
 
 ### 1. Installation
-```Shell
+```shell
 # Install Intel® Low Precision Optimization Tool
 pip instal lpot
 ```
@@ -48,7 +48,7 @@ tar -xvzf arbitrary_style_transfer.tar.gz ./model
 ```
 
 ## Run Command
-  ```Shell
+  ```shell
   python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --model_dir=./model --precision=quantized
   ```
 

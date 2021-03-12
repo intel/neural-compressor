@@ -15,7 +15,7 @@ pip install -r requirements.txt
 2. Config dataloader in conf.ymal
 The configuration will help user to create a dataloader of Imagenet and it will do Bilinear resampling to resize the image to 224x224. It also creates a TopK metric function for evaluation.  
 
-```
+```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 20, 50                            # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
@@ -50,7 +50,7 @@ evaluation:                                          # optional. required if use
 
 3. Run quantizaiton
 * In order to do quanzation for slim models, we need to get graph from slim .ckpt first. 
-```
+```python
     import lpot
     quantizer = lpot.Quantization('./conf.yaml')
 

@@ -361,7 +361,7 @@ The easiest way to run inference is to simply use these commands.
 If you wish to manually specify the configuration(s) used for inference, use the following commands:
 
 For each of the desired configurations, run:
-```
+```bash
 nnUNet_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -t TASK_NAME_OR_ID -m CONFIGURATION --save_npz
 ```
 

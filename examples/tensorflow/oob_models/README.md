@@ -68,9 +68,6 @@ List models names can get with open_model_zoo:
 |	ssd-resnet34 300x300	|	https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/ssd_resnet34_fp32_bs1_pretrained_model.pb	|
 
 
-
-
-
 # Run
 ## run tuning
 

@@ -284,7 +284,7 @@ top1, top5 = evaluate(myModel, criterion, data_loader_test, neval_batches=num_ev
 print('Evaluation accuracy on %d images, %2.2f'%(num_eval_batches * eval_batch_size, top1.avg))
 ```
 Output:
-```
+```python
 QConfig(activation=functools.partial(<class 'torch.quantization.observer.MinMaxObserver'>, reduce_range=True), weight=functools.partial(<class 'torch.quantization.observer.MinMaxObserver'>, dtype=torch.qint8, qscheme=torch.per_tensor_symmetric))
 Post Training Quantization Prepare: Inserting Observers
 

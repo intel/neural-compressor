@@ -14,61 +14,67 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 ### 1. Installation
 
-```Shell
+```shell
 pip install -r requirements.txt
 ```
 
 ### 2. Prepare Dataset
 
-Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
+
+```bash
+ls /path/to/imagenet
+train  val
+```
+
 
 # Run
 
 ### 1. ResNet50
 
-```Shell
+```shell
 cd examples/pytorch/image_recognition/imagenet/cpu/ptq
 python main.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
 
 ### 2. ResNet18
 
-```Shell
+```shell
 cd examples/pytorch/image_recognition/imagenet/cpu/ptq
 python main.py -t -a resnet18 --pretrained /path/to/imagenet
 ```
 
 ### 3. ResNext101_32x8d
 
-```Shell
+```shell
 cd examples/pytorch/image_recognition/imagenet/cpu/ptq
 python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
 ```
 
 ### 4. InceptionV3
 
-```Shell
+```shell
 cd examples/pytorch/image_recognition/imagenet/cpu/ptq
 python main.py -t -a inception_v3 --pretrained /path/to/imagenet
 ```
 
 ### 5. Mobilenet_v2
 
-```Shell
+```shell
 cd examples/pytorch/image_recognition/imagenet/cpu/ptq
 python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
 ```
 
 ### 6. ResNet50 dump tensors for debug
 
-```Shell
+```shell
   cd examples/pytorch/image_recognition/imagenet/cpu/ptq
   python main_dump_tensors.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
 
 ### 7. ResNet50 With Intel PyTorch Extension
 
-```Shell
+```shell
   cd examples/pytorch/image_recognition/imagenet/cpu/PTQ
   python main.py -t -a resnet50 -j 0 --pretrained --ipex /path/to/imagenet
 ```
@@ -118,6 +124,8 @@ with torch.no_grad():
             output = new_model(input.to(ipex.DEVICE))
 ```
 
+Please refer to [Sample code](./main.py).
+
 Examples of enabling LPOT auto tuning on PyTorch ResNet
 =======================================================
 
@@ -137,7 +145,7 @@ As ResNet18/50/101 series are typical classification models, use Top-K as metric
 
 In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
-```
+```yaml
 model:
   name: imagenet_ptq
   framework: pytorch
@@ -221,7 +229,7 @@ The related code please refer to examples/pytorch/image_recognition/imagenet/cpu
 
 After prepare step is done, we just need update main.py like below.
 
-```
+```python
 model.eval()
 model.module.fuse_model()
 from lpot import Quantization, common
@@ -236,7 +244,7 @@ The quantizer() function will return a best quantized model during timeout const
 
 LPOT can dump every layer output tensor which you specify in evaluation. You just need to add some setting to yaml configure file as below:
 
-```
+```yaml
 tensorboard: true
 ```
 
@@ -244,20 +252,20 @@ The default value of "tensorboard" is "off".
 
 For example:
 
-```
+```bash
 sh run_tuning_dump_tensor.sh --topology=resnet18 --dataset_location=<Dataset>
 ```
 
 A "./runs" folder will be generated, for example
 
-```
+```bash
 ls runs/eval/
 tune_0_acc0.73  tune_1_acc0.71 tune_2_acc0.72
 ```
 
 "tune_0_acc0.73" means FP32 baseline is accuracy 0.73, and the best tune result is tune_2 with accuracy 0.72. You may want to compare them in tensorboard. It will demonstrate the output tensor and weight of each op in "Histogram", you can also find the tune config of each tuning run in "Text":
 
-```
+```bash
 tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.72
 ```
 
@@ -267,7 +275,7 @@ tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:
 
 Add 'backend' field to Yaml Configure and the same for other fields.
 
-```python
+```yaml
   model:
   name: imagenet
   framework: pytorch_ipex 

@@ -31,11 +31,10 @@ Intel® Low Precision Optimization Tool can support op-wise BF16 precision for T
 
 # How to use it
 
-> BF16 Convert in TensorFlow, it is a relatively new feature. And its enable requires the cooperation of software and hardware. For hardware, it need the CPU support `avx512_bf16` instruction set. And for software, it needs the `intel-tensorflow` has support `BF16` with oneDNN backend. We also support force enable it by using set the environment variable `FORCE_BF16=1`. But without above 2 sides support, the poor performance or other problems may occur.
+> BF16 support has enabled in `intel-tensorflow` [`2.3.0`](https://pypi.org/project/intel-tensorflow/2.3.0/)/[`2.4.0`](https://pypi.org/project/intel-tensorflow/2.4.0/)/[`1.15.0up1`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1)/[`1.15.0up2`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2) and `intel-tensorflow-avx512` [`2.3.0`](https://pypi.org/project/intel-tensorflow-avx512/2.3.0/)/[`2.4.0`](https://pypi.org/project/intel-tensorflow-avx512/2.4.0/). On hardware side, it need the CPU support `avx512_bf16` instruction set. We also support force enable it for debug usage by using set the environment variable `FORCE_BF16=1`. But without above 2 sides support, the poor performance or other problems may expect.
 
- For now, if we want try this feature, we can follow below steps.
+For now this feature will be auto enabled in the env with `intel-tensorflow` `>=2.3.0` and `avx512_bf16` instruction set support plantform. To get better ferformance with `BF16` datatype, the `intel-tensorflow-avx512` is recommended, or build intel tensorflow (take [tag `v1.15.0up2`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2) as example) from source code by using below command,  
 
-1. Build TensorFlow by using below command, we test this feature on `intel-tensorflow 2.3.0` by `pip install` and Intel TensorFlow [tag `v1.15.0up1`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1) by source code build with below command.
 ```shell
 bazel build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=0 --copt=-O3 --copt=-Wformat --copt=-Wformat-security \
         --copt=-fstack-protector --copt=-fPIC --copt=-fpic --linkopt=-znoexecstack --linkopt=-zrelro \
@@ -45,6 +44,4 @@ bazel build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=0 --copt=-O3 --copt=-Wformat --cop
 ./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/
 ```
 
-2. Install the wheel into your test python environment.
-
-3. Add `bf16` in `weight` and `activation dtype` of `yaml` config file . By default, it has been added. For now, the `Basic` strategy is the only one strategy support multiple fall back data type.
+By default, `BF16` has been added into activation and weight supported datatype if the tensorflow version and CPU meet the requirements. We can disable it in `yaml` config file by specifying the datatype for activation and weight. For now, only the `Basic` strategy `BF16` support has been tested. 

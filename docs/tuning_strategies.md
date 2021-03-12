@@ -44,6 +44,10 @@ quantization-related parameters for model-wise and op-wise:
 ```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
+  recipes:
+    scale_propagation_max_pooling: True              # optional. default value is True.
+    scale_propagation_concat: True                   # optional. default value is True.
+    first_conv_or_matmul_quantization: True          # optional. default value is True.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
@@ -91,7 +95,7 @@ by changing the `exit_policy`:
 ```yaml
 tuning:
   strategy:
-    name: basic                                      # optional. default value is basic. other values are bayesian, mse...
+    name: basic                                      # optional. default value is basic. other values are bayesian, mse.
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
   objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
@@ -99,7 +103,7 @@ tuning:
   exit_policy:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
     max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
-
+    performance_only: False                          # optional. max tune times. default value is False which means only generate fully quantized model.
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 ```
@@ -112,11 +116,11 @@ tuning:
 three steps. First, `Basic` strategy tries all model-wise tuning configs to
 get the best quantized model. If none of the model-wise tuning configs meet
 the accuracy loss criteria, Basic applies the second step. In this step, it
-performs high-precision `OP` (`FP32`, `BF16` ...) fallbacks one-by-one based
-on the best model-wise tuning config, and records the impact of each `OP` on
+performs high-precision OP (`FP32`, `BF16` ...) fallbacks one-by-one based
+on the best model-wise tuning config, and records the impact of each OP on
 accuracy and then sorts accordingly. In the final step, Basic tries to
-incrementally fallback multiple `OPs` to high precision according to the
-sorted `OP` list that is generated in the second step until the accuracy
+incrementally fallback multiple OPs to high precision according to the
+sorted OP list that is generated in the second step until the accuracy
 goal is achieved.
 
 #### Usage
@@ -138,14 +142,16 @@ tuning:
 #### Design
 
 `Bayesian` optimization is a sequential design strategy for the global
-optimization of black-box functions. This strategy takes the [Bayesian
+optimization of black-box functions. This strategy comes from the [Bayesian
 optimization](https://github.com/fmfn/BayesianOptimization) package and
-changes it to a discrete version that complies with the strategy standard of
+changed it to a discrete version that complied with the strategy standard of
 Intel® Low Precision Optimization Tool. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
 the prior/posterior distribution over the black-box function with the tuning
 history, and then finds the tuning configuration that maximizes the expected
-improvement. For now, the Bayesian strategy just tunes op-wise quantize
-configs; it does not include fallback-datatype configs.
+improvement. For now, `Bayesian` just focus on op-wise quantize configs tuning 
+without fallback phase. In order to obtain a quantized model with good accuracy 
+and better performance in a short time, we don't add datatype as a tuning 
+parameter into `Bayesian`.
 
 #### Usage
 
@@ -260,7 +266,7 @@ tuning:
 `Exhaustive` strategy is used to sequentially traverse all possible tuning
 configurations in a tuning space. From the perspective of the impact on
 performance, we currently only traverse all possible quantize tuning
-configs. Fallback datatypes are not included.
+configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
 
 #### Usage
 
@@ -309,7 +315,7 @@ Intel® Low Precision Optimization Tool supports new strategy extension by imple
 
 for example, user can implement a `Abc` strategy like below:
 
-```
+```python
 @strategy_registry
 class AbcTuneStrategy(TuneStrategy):
     def __init__(self, model, conf, q_dataloader, q_func=None,

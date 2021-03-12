@@ -122,6 +122,28 @@ class Benchmark(object):
 
     @b_dataloader.setter
     def b_dataloader(self, dataloader):
+        """Set Data loader for benchmark, It is iterable and the batched data 
+           should consists of a tuple like (input, label) or yield (input, _), 
+           when b_dataloader is set, user can configure postprocess(optional) and metric 
+           in yaml file or set postprocess and metric cls for evaluation.
+           Or just get performance without label in dataloader and configure postprocess/metric.
+
+           Args:
+               dataloader(generator): user are supported to set a user defined dataloader
+                                      which meet the requirements that can yield tuple of
+                                      (input, label)/(input, _) batched data.
+                                      Another good practice is to use lpot.common.DataLoader
+                                      to initialize a lpot dataloader object.
+                                      Notice lpot.common.DataLoader is just a wrapper of the
+                                      information needed to build a dataloader, it can't yield
+                                      batched data and only in this setter method 
+                                      a 'real' eval_dataloader will be created, 
+                                      the reason is we have to know the framework info
+                                      and only after the Quantization object created then
+                                      framework infomation can be known. Future we will support
+                                      creating iterable dataloader from lpot.common.DataLoader
+
+        """
         from .common import _generate_common_dataloader
         self._b_dataloader = _generate_common_dataloader(dataloader, self.framework)
 
@@ -131,6 +153,19 @@ class Benchmark(object):
 
     @model.setter
     def model(self, user_model):
+        """Set the user model and dispatch to framework specific internal model object
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
+                       Best practice is to set from a initialized lpot.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be auto inferenced,
+                       but sometimes auto inferenced inputs/outputs will not meet your requests,
+                       set them manually in config yaml file. Another corner case is slim model 
+                       of tensorflow, be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+        
+        """
         from .common import Model as LpotModel
         from .model import MODELS
         if not isinstance(user_model, LpotModel):
@@ -157,6 +192,20 @@ class Benchmark(object):
 
     @metric.setter
     def metric(self, user_metric):
+        """Set metric class and lpot will initialize this class when evaluation
+           lpot have many built-in metrics, but user can set specific metric through
+           this api. The metric class should take the outputs of the model or 
+           postprocess(if have) as inputs, lpot built-in metric always take 
+           (predictions, labels) as inputs for update,
+           and user_metric.metric_cls should be sub_class of lpot.metric.BaseMetric.
+
+        Args:
+            user_metric(lpot.common.Metric): user_metric should be object initialized from
+                                             lpot.common.Metric, in this method the 
+                                             user_metric.metric_cls will be registered to
+                                             specific frameworks and initialized.
+                                              
+        """
         from .common import Metric as LpotMetric
         assert isinstance(user_metric, LpotMetric), \
             'please initialize a lpot.common.Metric and set....'
@@ -178,6 +227,18 @@ class Benchmark(object):
 
     @postprocess.setter
     def postprocess(self, user_postprocess):
+        """Set postprocess class and lpot will initialize this class when evaluation. 
+           The postprocess class should take the outputs of the model as inputs, and
+           output (predictions, labels) as inputs for metric update.
+           user_postprocess.postprocess_cls should be sub_class of lpot.data.BaseTransform.
+
+        Args:
+            user_postprocess(lpot.common.Postprocess): 
+                user_postprocess should be object initialized from lpot.common.Postprocess,
+                in this method the user_postprocess.postprocess_cls will be 
+                registered to specific frameworks and initialized.
+
+        """
         from .common import Postprocess as LpotPostprocess
         assert isinstance(user_postprocess, LpotPostprocess), \
             'please initialize a lpot.common.Postprocess and set....'

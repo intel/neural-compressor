@@ -180,12 +180,12 @@ output_logits = model.logits(output_features) # 1x1000
 
 - See [examples/imagenet_logits.py](https://github.com/Cadene/pretrained-models.pytorch/blob/master/examples/imagenet_logits.py) to compute logits of classes appearance over a single image with a pretrained model on imagenet.
 
-```
+```shell
 $ python examples/imagenet_logits.py -h
 > nasnetalarge, resnet152, inceptionresnetv2, inceptionv4, ...
 ```
 
-```
+```shell
 $ python examples/imagenet_logits.py -a nasnetalarge --path_img data/cat.jpg
 > 'nasnetalarge': data/cat.jpg' is a 'tiger cat' 
 ```
@@ -194,7 +194,7 @@ $ python examples/imagenet_logits.py -a nasnetalarge --path_img data/cat.jpg
 
 - See [examples/imagenet_eval.py](https://github.com/Cadene/pretrained-models.pytorch/blob/master/examples/imagenet_eval.py) to evaluate pretrained models on imagenet valset. 
 
-```
+```shell
 $ python examples/imagenet_eval.py /local/common-data/imagenet_2012/images -a nasnetalarge -b 20 -e
 > * Acc@1 82.693, Acc@5 96.13
 ```
@@ -550,7 +550,7 @@ print(output.size())               # (1,2048)
 
 ### Hand porting of ResNet152
 
-```
+```shell
 th pretrainedmodels/fbresnet/resnet152_dump.lua
 python pretrainedmodels/fbresnet/resnet152_load.py
 ```

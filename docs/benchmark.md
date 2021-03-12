@@ -48,18 +48,21 @@ in this example config you can see there is 2 sub-fields named 'accuracy' and 'p
 
 ## use user specific dataloader to run benchmark
 
-In this case, you should config your dataloader and lpot will construct an evaluation function to run the benchmarking.
+In this case, you should config your dataloader and lpot will construct an evaluation function to run the benchmarking. User can also register postprocess transform and metric to get the accuracy.
 
 ```python
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
-from lpot import Benchmark
+from lpot import Benchmark, common
 evaluator = Benchmark(config.yaml)
-evaluator.dataloader(dataset, batch_size=batch_size)
-results = evaluator(model=input_model)
+evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
+# user can also register postprocess and metric, this is optional
+evaluator.postprocess = common.Postprocess(postprocess_cls)
+evaluator.metric = common.Metric(metric_cls)
+results = evaluator()
 
 ```
 
-###Examples
+### Examples
 
 [Benchamrk example](../examples/tensorflow/image_recognition/run_benchmark.sh).
 

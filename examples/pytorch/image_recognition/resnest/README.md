@@ -14,29 +14,34 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 ### 1. Installation
 
-  ```Shell
-  cd examples/pytorch/image_recognition/resnest
-  pip install -r requirements.txt
-  python setup.py install
+```Shell
+cd examples/pytorch/image_recognition/resnest
+pip install -r requirements.txt
+python setup.py install
 
-  ```
+```
 
 ### 2. Prepare Dataset
 
-  Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet. The dir include below folder:
+
+```bash
+ls /path/to/imagenet
+train  val
+```
 
 
 # Run
 
 ### 1. ResNest50
 
-  ```Shell
-  cd examples/pytorch/image_recognition/resnest
-  python -u scripts/torch/verify.py --tune --model resnest50 --batch-size what_you_want --workers 1 --no-cuda --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/resnest
+python -u scripts/torch/verify.py --tune --model resnest50 --batch-size what_you_want --workers 1 --no-cuda --pretrained /path/to/imagenet
+```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNest
-=======================================================
+===========================================================================================
 
 This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
 
@@ -52,10 +57,9 @@ As ResNest series are typical classification models, use Top-K as metric which i
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
-
-```
+```yaml
 #conf.yaml
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: resnest
@@ -141,7 +145,7 @@ The related code changes please refer to examples/pytorch/image_recognition/resn
 
 After prepare step is done, we just need update main.py like below.
 
-```
+```python
 model.fuse_model()
 from lpot import Quantization, common
 quantizer = Quantization("./conf.yaml")

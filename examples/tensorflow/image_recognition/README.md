@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning zoo result.
+This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via LPOT.
 
 > **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
@@ -11,7 +11,8 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 ### 1. Installation
   Recommend python 3.6 or higher version.
 
-  ```Shell
+  ```shell
+  cd examples/tensorflow/image_recognition
   pip install -r requirements.txt
   ```
 
@@ -79,7 +80,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb
   ```
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet50_v1.yaml \
       --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
@@ -93,7 +94,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
   ```
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet50_v1_5.yaml \
           --input_model=/PATH/TO/resnet50_v1.pb --output_model=./lpot_resnet50_v15.pb
@@ -106,7 +107,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet101_fp32_pretrained_model.pb
   ```
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet101.yaml \
       --input_model=/PATH/TO/resnet101_fp32_pretrained_model.pb \
@@ -120,7 +121,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
   ```
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=mobilenet_v1.yaml \
       --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb \
@@ -129,7 +130,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 5. MobileNet V2*
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=mobilenet_v2.yaml \
       --input_model=/PATH/TO/frozen_mobilenet_v2.pb \
@@ -138,7 +139,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 6. Inception V1*
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v1.yaml \
       --input_model=/PATH/TO/frozen_inception_v1.pb \
@@ -147,7 +148,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 7. Inception V2*
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v2.yaml \
       --input_model=/PATH/TO/frozen_inception_v2.pb \
@@ -161,7 +162,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/inceptionv3_fp32_pretrained_model.pb
   ```
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v3.yaml \
       --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb \
@@ -175,7 +176,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/inceptionv4_fp32_pretrained_model.pb
   ```
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v4.yaml \
       --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb \
@@ -184,7 +185,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 10. Inception ResNet V2*
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_resnet_v2.yaml \
       --input_model=/PATH/TO/frozen_inception_resnet_v2.pb \
@@ -193,7 +194,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 11. VGG 16*
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=vgg16.yaml \
           --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./lpot_vgg16.pb
@@ -201,7 +202,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 12. VGG 19*
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=vgg19.yaml \
           --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./lpot_vgg19.pb
@@ -209,7 +210,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 13. ResNet v2 50
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet_v2_50.yaml \
           --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./lpot_resnetv2_50.pb
@@ -217,7 +218,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 14. ResNet v2 101
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet_v2_101.yaml \
           --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./lpot_resnetv2_101.pb
@@ -225,7 +226,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 15. ResNet v2 152
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet_v2_152.yaml \
       --input_model=/PATH/TO/frozen_resnetv2_152.pb \
@@ -234,7 +235,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 16. Densenet-121
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet121.yaml \
           --input_model=/PATH/TO/densenet121.pb --output_model=./lpot_densenet121
@@ -242,7 +243,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 17. Densenet-161
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet161.yaml \
           --input_model=/PATH/TO/densenet161.pb --output_model=./lpot_densenet161
@@ -250,7 +251,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 18. Densenet-169
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet169.yaml \
           --input_model=/PATH/TO/densenet169.pb --output_model=./lpot_densenet169
@@ -258,7 +259,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 
 ### 19. Nasnet-mobile
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=nasnet_mobile.yaml \
           --input_model=/PATH/TO/frozen_nasnet_mobile.pb --output_model=./lpot_nasnet_mobile
@@ -287,7 +288,7 @@ As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which
 In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
 
 
-```
+```yaml
 # resnet50_v1_5.yaml
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
@@ -353,9 +354,9 @@ tuning:
 
 ```
 
-Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
+Here we choose topk which is built-in metric and set accuracy criterion as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as long as a tuning config meet accuracy target.
 
-### prepare
+### preparation
 
 There are three preparation steps in here:
 1. Prepare environment
@@ -373,7 +374,7 @@ wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
 ```
 ### code update
 
-After completed preparation steps, we just need add a tuning part in `eval_classifier_optimized_graph` class.
+After completed preparation steps, we just need to add below tuning part in `eval_classifier_optimized_graph` class.
 
 ```python
   def auto_tune(self):
@@ -382,9 +383,10 @@ After completed preparation steps, we just need add a tuning part in `eval_class
     Returns:
         graph: it will return a quantized pb
     """
-    from lpot import Quantization
+    from lpot import Quantization, common
     quantizer = Quantization(self.args.config)
-    q_model = quantizer(self.args.input_graph)
+    quantizer.model = common.Model(self.args.input_graph)
+    q_model = quantizer()
     return q_model
 ```
 
@@ -392,4 +394,4 @@ Finally, add one line in `__main__` function of `eval_image_-classifier_inferenc
 ```python
 q_graph = evaluate_opt_graph.auto_tune()
 ```
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model within timeout constrain.

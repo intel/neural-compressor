@@ -7,7 +7,7 @@ This document is used to list steps of reproducing TensorFlow Intel® Low Precis
 ## Prerequisite
 
 ### 1. Installation
-```Shell
+```shell
 # Install Intel® Low Precision Optimization Tool
 pip instal lpot
 ```
@@ -61,7 +61,7 @@ bash prepare_model.sh --output_dir=./model
   python freeze_estimator_to_pb.py --input_model=./model --output_model=./bert_fp32.pb
   ```
 ## Run Command
-  ```Shell
+  ```shell
   python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --mode=tune
   ```
 

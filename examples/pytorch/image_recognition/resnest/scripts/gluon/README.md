@@ -16,7 +16,7 @@ pip install --no-cache mpi4py
 - Unfortunately ,this is required for training using MXNet Gluon. Please follow the [GluonCV tutorial](https://gluon-cv.mxnet.io/build/examples_datasets/recordio.html) to prepare the data.
 - Copy the data into ramdisk (optional):
 	
-	```
+	```bash
 	cd ~/
 	sudo mkdir -p /media/ramdisk
 	sudo mount -t tmpfs -o size=200G tmpfs /media/ramdisk

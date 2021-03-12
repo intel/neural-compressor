@@ -11,7 +11,7 @@ python ./open_model_zoo/tools/downloader/downloader.py --name rfcn-resnet101-coc
 
 2. Run quantizaiton
 We will create a dummy dataloader and only need to add the following lines for quantization to create an int8 model.
-```
+```python
     import lpot
     quantizer = lpot.Quantization('./conf.yaml')
     
@@ -23,7 +23,7 @@ We will create a dummy dataloader and only need to add the following lines for q
 
 ```
 * Run quantization and evaluation:
-```
+```shell
     python test.py
 ``` 
 

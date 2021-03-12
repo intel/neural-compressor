@@ -21,7 +21,7 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
 ### 1. Installation
   Recommend python 3.6 or higher version.
 
-  ```Shell
+  ```shell
   # Install dependency
   pip install -r requirements.txt
   ```
@@ -37,7 +37,7 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
 
 # Run
 
-  ```Shell
+  ```shell
   cd examples/pytorch/recommendation
   python -u dlrm_s_pytorch_tune.py --arch-sparse-feature-size=128 --arch-mlp-bot="13-512-256-128" \
         --arch-mlp-top="1024-1024-512-256-1" --max-ind-range=40000000 --data-generation=dataset \
@@ -66,7 +66,7 @@ As DLRM's matrics is 'f1', so customer should provide evaluation function 'eval_
 
 ### Write Yaml config file
 In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
-```
+```yaml
 model:
   name: dlrm
   framework: pytorch
@@ -94,7 +94,7 @@ The related code changes please refer to examples/pytorch/recommendation/dlrm_s_
 
 ### code update
 After prepare step is done, we just need update run_squad_tune.py and run_glue_tune.py like below
-```
+```python
 class DLRM_DataLoader(object):
     def __init__(self, loader=None):
         self.loader = loader
@@ -104,7 +104,7 @@ class DLRM_DataLoader(object):
             yield (X_test, lS_o_test, lS_i_test), T
 ```
 
-```
+```python
 eval_dataloader = DLRM_DataLoader(test_ld)
 fuse_list = []
 for i in range(0, len(dlrm.bot_l), 2):

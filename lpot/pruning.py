@@ -104,51 +104,6 @@ class Pruning(object):
 
               For this usage, model, q_dataloader and eval_func parameters are mandotory.
 
-        Args:
-            model (object):                        For PyTorch model, it's torch.nn.model
-                                                   instance.
-            q_dataloader (generator):              Data loader for calibration. It is iterable
-                                                   and should yield a tuple (input, label) for
-                                                   calibration dataset containing label,
-                                                   or yield (input, _) for label-free calibration
-                                                   dataset. The input could be a object, list,
-                                                   tuple or dict, depending on user implementation,
-                                                   as well as it can be taken as model input.
-            q_func (function, optional):           Training function for pruning.
-                                                   This function takes "model" as input parameter
-                                                   and executes entire training process with self
-                                                   contained training hyper-parameters. If this
-                                                   parameter specified, eval_dataloader parameter
-                                                   plus metric defined in yaml, or eval_func
-                                                   parameter should also be specified at same time.
-            eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                                   and should yield a tuple of (input, label).
-                                                   The input could be a object, list, tuple or
-                                                   dict, depending on user implementation,
-                                                   as well as it can be taken as model input.
-                                                   The label should be able to take as input of
-                                                   supported metrics. If this parameter is
-                                                   not None, user needs to specify pre-defined
-                                                   evaluation metrics through configuration file
-                                                   and should set "eval_func" paramter as None.
-                                                   Tuner will combine model, eval_dataloader
-                                                   and pre-defined metrics to run evaluation
-                                                   process.
-            eval_func (function, optional):        The evaluation function provided by user.
-                                                   This function takes model as parameter,
-                                                   and evaluation dataset and metrics should be
-                                                   encapsulated in this function implementation
-                                                   and outputs a higher-is-better accuracy scalar
-                                                   value.
-
-                                                   The pseudo code should be something like:
-
-                                                   def eval_func(model):
-                                                        input, label = dataloader()
-                                                        output = model(input)
-                                                        accuracy = metric(output, label)
-                                                        return accuracy
-
         Returns:
             pruned model: best pruned model found, otherwise return None
 
@@ -181,6 +136,13 @@ class Pruning(object):
 
     @model.setter
     def model(self, user_model):
+        """Only support PyTorch model, it's torch.nn.model instance.
+
+        Args:
+           user_model: user are supported to set model from original PyTorch model format
+                       Best practice is to set from a initialized lpot.common.Model.
+
+        """
         from .common import Model as LpotModel
         if not isinstance(user_model, LpotModel):
             logger.warning('force convert user raw model to lpot model, \
@@ -206,5 +168,15 @@ class Pruning(object):
         
     @q_func.setter
     def q_func(self, user_q_func):
+        """Training function for pruning. 
+
+        Args:
+            user_q_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If q_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func 
+                         to make evaluation of the model executed.
+        """
         logger.warning('q_func is to be deprecated, please construct q_dataloader....')
         self._calib_func = user_q_func

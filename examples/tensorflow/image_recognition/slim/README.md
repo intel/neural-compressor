@@ -11,7 +11,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 ### 1. Installation
   Recommend python 3.6 or higher version.
 
-  ```Shell
+  ```shell
   pip install -r requirements.txt
   
   ```
@@ -57,7 +57,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 1. resnet_v1_50
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=resnet_v1_50.yaml \
       --input_model=/PATH/TO/resnet_v1_50.ckpt \
@@ -66,7 +66,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 2. resnet_v1_101
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet101.yaml \
           --input_model=/PATH/TO/resnet_v1_101.ckpt \
@@ -75,7 +75,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 3. resnet_v1_152
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=resnet_v1_152.yaml \
           --input_model=/PATH/TO/resnet_v1_152.ckpt \
@@ -85,7 +85,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 4. resnet_v2_50
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet_v2_50.yaml \
           --input_model=/PATH/TO/resnet_v2_50.ckpt \
@@ -95,7 +95,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 5. resnet_v2_101
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet_v2_101.yaml \
           --input_model=/PATH/TO/resnet_v2_101.ckpt \
@@ -105,7 +105,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 6. resnet_v2_152
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet_v2_152.yaml \
           --input_model=/PATH/TO/resnet_v2_152.ckpt \
@@ -115,7 +115,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 7. inception_v1
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../inception_v1.yaml \
           --input_model=/PATH/TO/inception_v1.ckpt \
@@ -125,7 +125,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 8. inception_v2
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../inception_v2.yaml \
       --input_model=/PATH/TO/inception_v2.ckpt \
@@ -134,7 +134,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 9. inception_v3
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=inception_v3.yaml \
       --input_model=/PATH/TO/inception_v3.ckpt \
@@ -143,7 +143,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 10. inception_v4
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../inception_v4.yaml \
       --input_model=/PATH/TO/inception_v4.ckpt \
@@ -152,7 +152,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 11. vgg16
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../vgg16.yaml \
           --input_model=/PATH/TO/vgg_16.ckpt \
@@ -161,7 +161,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 ### 12. vgg19
 
-  ```Shell
+  ```shell
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../vgg19.yaml \
           --input_model=/PATH/TO/vgg_19.ckpt \
@@ -191,7 +191,7 @@ As Inception V1 is a typical image recognition model, use Top-K as metric which 
 In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
 
 
-```
+```yaml
 # inceptionv1.yaml
 
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.

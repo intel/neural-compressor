@@ -239,7 +239,7 @@ Users have reported that a Python 3 Anaconda install in Windows works. I have no
 PyTorch versions 1.2. 1.3.1, 1.4 have been tested with this code.
 
 I've tried to keep the dependencies minimal, the setup is as per the PyTorch default install instructions for Conda:
-```
+```shell
 conda create -n torch-env
 conda activate torch-env
 conda install -c pytorch pytorch torchvision cudatoolkit=10
@@ -249,7 +249,7 @@ conda install -c pytorch pytorch torchvision cudatoolkit=10
 
 Models can be accessed via the PyTorch Hub API
 
-```
+```python
 >>> torch.hub.list('rwightman/gen-efficientnet-pytorch')
 ['efficientnet_b0', ...]
 >>> model = torch.hub.load('rwightman/gen-efficientnet-pytorch', 'efficientnet_b0', pretrained=True)
@@ -261,19 +261,19 @@ Models can be accessed via the PyTorch Hub API
 This package can be installed via pip.
 
 Install (after conda env/install):
-```
+```shell
 pip install geffnet
 ```
 
 Eval use:
-```
+```python
 >>> import geffnet
 >>> m = geffnet.create_model('mobilenetv3_rw', pretrained=True)
 >>> m.eval()
 ```
 
 Train use:
-```
+```python
 >>> import geffnet
 >>> # models can also be created by using the entrypoint directly
 >>> m = geffnet.efficientnet_b2(pretrained=True, drop_rate=0.25, drop_connect_rate=0.2)
@@ -281,7 +281,7 @@ Train use:
 ```
 
 Create in a nn.Sequential container, for fast.ai, etc:
-```
+```python
 >>> import geffnet
 >>> m = geffnet.mixnet_l(pretrained=True, drop_rate=0.25, drop_connect_rate=0.2, as_sequential=True)
 ```
@@ -291,7 +291,7 @@ Create in a nn.Sequential container, for fast.ai, etc:
 Scripts to export models to ONNX and then to Caffe2 are included, along with a Caffe2 script to verify.
 
 As an example, to export the MobileNet-V3 pretrained model and then run an Imagenet validation:
-```
+```shell
 python onnx_export.py --model tf_mobilenetv3_large_100 ./mobilenetv3_100.onnx
 python onnx_optimize.py ./mobilenetv3_100.onnx --output ./mobilenetv3_100-opt.onnx
 python onnx_to_caffe.py ./mobilenetv3_100-opt.onnx --c2-prefix mobilenetv3

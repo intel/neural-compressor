@@ -14,48 +14,52 @@ This document describes the step-by-step instructions for reproducing PyTorch Bl
 
 ## 1. Installation
 
-  ```Shell
-  cd examples/pytorch/image_recognition/resnest
-  pip install -r requirements.txt
-  pip install torch==1.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-  python setup.py install
-
-  ```
+```Shell
+cd examples/pytorch/distill-bert
+pip install -r requirements.txt
+pip install torch==1.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+```
 
 ## 2. Prepare model and Dataset
 
-  Download [BERT-Base, Uncased](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip) and
-  [GLUE MRPC Benchmark Datasets]( https://github.com/nyu-mll/GLUE-baselines) 
-  
-### model
-  ```Shell
-  mkdir models/ && mv uncased_L-12_H-768_A-12.zip models/
-  cd models/ && unzip uncased_L-12_H-768_A-12.zip
+Download [BERT-Base, Uncased](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip) and
+[GLUE MRPC Benchmark Datasets](https://github.com/nyu-mll/GLUE-baselines)
 
-  # train blend CNN from scratch
-  python classify.py --model_config config/blendcnn/mrpc/train.json
-  ```
-  After below steps, you can find the pre-trained model weights ***model_final.pt*** at `./models/`
+### model
+
+```Shell
+mkdir models/ && mv uncased_L-12_H-768_A-12.zip models/
+cd models/ && unzip uncased_L-12_H-768_A-12.zip
+
+# train blend CNN from scratch
+python classify.py --model_config config/blendcnn/mrpc/train.json
+```
+
+After below steps, you can find the pre-trained model weights ***model_final.pt*** at `./models/`
+
 ### dataset
-  After downloads dataset, you need to put dataset at `./MRPC/`, list this:
-  ```Shell
-  ls MRPC/
-  dev_ids.tsv  dev.tsv  test.tsv  train.tsv
-  ```
+
+After downloads dataset, you need to put dataset at `./MRPC/`, list this:
+
+```Shell
+ls MRPC/
+dev_ids.tsv  dev.tsv  test.tsv  train.tsv
+```
+
 ## Run
 
 ### blendcnn
 
-  ```Shell
-  ./run_tuning.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
- 
-  ./run_benchmark.sh --int8=true --mode=benchmark --batch_size=32
-  ./run_benchmark.sh --int8=False --mode=benchmark --batch_size=32 --input_model=/PATH/TO/FP32_MODEL
+```Shell
+./run_tuning.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
 
-  ```
+./run_benchmark.sh --int8=true --mode=benchmark --batch_size=32
+./run_benchmark.sh --int8=False --mode=benchmark --batch_size=32 --input_model=/PATH/TO/FP32_MODEL
+
+```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNest
-=======================================================
+===========================================================================================
 
 This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
 
@@ -71,13 +75,12 @@ As ResNest series are typical classification models, use Top-K as metric which i
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
-
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
 ```
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: blendcnn
-  framework: pytorch         
+  framework: pytorch       
 
 tuning:
   accuracy_criterion:
@@ -97,8 +100,7 @@ PyTorch quantization requires two manual steps:
 1. Add QuantStub and DeQuantStub for all quantizable ops.
 2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu.
 
-It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to develop a code to automatically do that.
-
+It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to develop a code to automatically do that.(Please refer [sample code](./models.py))
 
 ### code update
 
@@ -115,4 +117,4 @@ quantizer.eval_func = eval_func
 q_model = quantizer()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.(Please refer [sample code](./classify.py))

@@ -7,8 +7,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobil
 
 2. Update the root of dataset in conf.ymal
 The configuration will will create a TopK metric function for evaluation and configure the batch size, instance number and core number for performacne measurement.    
-```
-
+```yaml
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:
@@ -45,18 +44,18 @@ evaluation:                                          # optional. required if use
 
 3. Run quantizaiton
 We only need to add the following lines for quantization to create an int8 model.
-```
+```python
     import lpot
     quantizer = lpot.Quantization('./conf.yaml')
     quantized_model = quantizer('./mobilenet_v1_1.0_224_frozen.pb')
 ```
 * Run quantization and evaluation:
-```
+```shell
     python test.py
 ``` 
 
 4. Run benchmark accoridng to config
-```
+```python
      # Optional, run benchmark 
     from lpot import Benchmark, common
     evaluator = Benchmark('./conf.yaml')

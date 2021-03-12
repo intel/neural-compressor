@@ -1,14 +1,14 @@
 Introduction
 =========================================
 
-Intel® Low Precision Optimization Tool is an open-source Python library designed to help users quickly deploy low-precision inference solutions on popular deep learning (DL) frameworks such as TensorFlow\*, PyTorch\*, MXNet and ONNX Runtime. It automatically optimizes low-precision recipes for deep learning models in order to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria.
+Intel® Low Precision Optimization Tool is an open-source Python library designed to help users quickly deploy low-precision inference solutions on popular deep learning (DL) frameworks such as TensorFlow, PyTorch, MXNet and ONNX Runtime. It automatically optimizes low-precision recipes for deep learning models in order to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria.
 
 
 # User-facing API
 
 The API is intended to unify low-precision quantization interfaces cross multiple DL frameworks for the best out-of-the-box experiences.
 
-The API consists of three components:
+The API consists of below componenets:
 
 ### quantization-related APIs
 ```python
@@ -16,7 +16,35 @@ class Quantization(object):
     def __init__(self, conf_fname):
         ...
 
-    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None):
+    def __call__(self):
+        ...
+
+    @property
+    def calib_dataloader(self):
+        ...
+
+    @property
+    def eval_dataloader(self):
+        ...
+
+    @property
+    def model(self):
+        ...
+
+    @property
+    def metric(self):
+        ...
+
+    @property
+    def postprocess(self, user_postprocess):
+        ...
+
+    @property
+    def q_func(self):
+        ...
+
+    @property
+    def eval_func(self):
         ...
 
 ```
@@ -28,11 +56,55 @@ The `conf_fname` parameter used in the class initialization is the path to user 
 
 > Note that most fields in the yaml templates are optional. View the [HelloWorld Yaml](../examples/helloworld/tf_example2/conf.yaml) example for reference.
 
-For TensorFlow backend, LPOT supports passing the path of keras model, frozen pb, checkpoint, saved model as the input of `model` parameter of `Quantization()`.
+```python
+# Typical Launcher code
+from lpot import Quantization, common
 
-For PyTorch backend, LPOT supports the instance of `torch.nn.model` as the input of `model` parameter of `Quantization()`.
+# optional if LPOT built-in dataset could be used as model input.
+class dataset():
+  def __init__(self):
+      ...
 
-For MXNet backend, LPOT supports the instance of `mxnet.symbol.Symbol` and `gluon.HybirdBlock` as the input of `model` parameter of `Quantization()`.
+  def __getitem__(self):
+      ...
+
+  def len(self):
+      ...
+
+# optional if LPOT built-in metric could be used to do accuracy evaluation on model output
+class custom_metric():
+    def __init__(self):
+        ...
+
+    def update(self, predict, lable):
+        ...
+
+    def result(self):
+        ...
+
+quantizer = Quantization(conf.yaml)
+quantizer.model = common.Model('/path/to/model')
+# optional if LPOT built-in dataset could be used as model input
+quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=32)
+# optional if LPOT built-in dataset could be used as model input
+quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=32)
+# optional if LPOT built-in metric could be used to do accuracy evaluation on model output
+quantizer.metric = common.Metric(custom_metric) 
+q_model = quantizer()
+q_model.save('/path/to/output/dir') 
+```
+
+`model` attribute in `Quantization` class is an abstraction of model formats cross different frameworks. LPOT supports passing the path of `keras model`, `frozen pb`, `checkpoint`, `saved model`, `torch.nn.model`, `mxnet.symbol.Symbol`, `gluon.HybirdBlock`, and `onnx model` to instantiate a `lpot.common.Model()` class and set to `quantizer.model`.
+
+`calib_dataloader` and `eval_dataloader` attribute in `Quantization` class is used to setup a calibration dataloader by code. It is optional to set if user sets corresponding fields in yaml.
+
+`metric` attribute in `Quantization` class is used to setup a custom metric by code. It is optional to set if user finds LPOT built-in metric could be used with their model and sets corresponding fields in yaml.
+
+`postprocess` attribute in `Quantization` class is not necessary in most of usage cases. It will only be needed when user wants to use LPOT built-in metric but model output could not directly be handled by LPOT built-in metrics. In this case, user could register a transform to convert model output to expected one required by LPOT built-in metric.
+
+`q_func` attribute in `Quantization` class is only for `Quantization Aware Training` case, in which user need to register a function that takes `model` as input parameter and executes entire training process with self contained training hyper-parameters. 
+
+`eval_func` attribute in `Quantization` class is reserved for special case. If user have had a evaluation function when train a model, user just needs to implement a `calib_dataloader` and leave `eval_dataloader` as None, modify this evaluation function to take `model` as input parameter and return a higher-is-better scaler. In some scenarios, it may reduce developement effort.
 
 
 ### pruning-related APIs (POC)
@@ -53,9 +125,41 @@ class Pruning(object):
     def on_epoch_end(self):
         ...
 
-    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None):
+    def __call__(self):
+        ...
+
+    @property
+    def calib_dataloader(self):
+        ...
+
+    @property
+    def eval_dataloader(self):
+        ...
+
+    @property
+    def model(self):
+        ...
+
+    @property
+    def metric(self):
+        ...
+
+    @property
+    def postprocess(self, user_postprocess):
+        ...
+
+    @property
+    def q_func(self):
+        ...
+
+    @property
+    def eval_func(self):
         ...
 ```
+
+This API is used to do sparsity pruning. Currently it is Proof-of-Concept, LPOT only supports `magnitude pruning` on PyTorch.
+
+For how to use this API, please refer to [Pruning Document](./pruning.md)
 
 ### benchmarking-related APIs
 ```python
@@ -63,80 +167,11 @@ class Benchmark(object):
     def __init__(self, conf_fname):
         ...
 
-    def __call__(self, model, b_dataloader=None, b_func=None):
+    def __call__(self):
         ...
 ```
 
-# Quantization API Usage
+This API is used to measure the model performance and accuarcy. 
 
-Essentially Intel® Low Precision Optimization Tool constructs the quantization process by asking user to provide three components, `dataloader`, `model` and `metric`, through code or yaml configuration.
+For how to use this API, please refer to [Benchmark Document](./benchmark.md)
 
-## dataloader
-
-User can implement `dataloader` component by filling code into below:
-
-```python
-class dataset(object):
-  def __init__(self, *args):
-      # initialize dataset related info here
-      ...
-
-  def __getitem__(self, index):
-      # return a tuple containing 1 image and 1 label
-      # exclusive with __iter__() magic method
-      ...
-
-  def __iter__(self):
-      # return a tuple containing 1 image and 1 label
-      # exclusive with __getitem__() magic method
-      ...
-
-  def __len__(self):
-      # return total length of dataset
-      ...
-```
-
-or by user yaml configuration through setting up `dataloader` field in `calibration` and `quantization` section of yaml file with LPOT build-in dataset/dataloader/transform.
-
-## metric
-User can implement `metric` component by filling code into below:
-```python
-from lpot.metric.metric import Metric
-class metric(Metric):
-  def __init__(self, *args):
-      # initialize metric related info here
-      ...
-
-  def update(self, predict, label):
-      # metric evaluation per mini-batch
-      ...
-
-  def reset(self):
-      # reset variable if needed
-      ...
-
-  def result(self):
-      # calculate the whole batch final evaluation result
-      # return a float value which is higher-is-better.
-      ...
-```
-or by user yaml configuration through setting up `accuracy` field in `evaluation` section of yaml file with LPOT build-in metrics.
-
-## run quantization on model
-
-If `dataloader` and `metric` component get configured by code, the quantization process would start with below lines:
-
-```python
-quantizer = Quantization('/path/to/user.yaml')
-dataloader = tuner.dataloader(dataset, batch_size=100)
-quantizer.metric('metric', metric)
-q_model = quantizer('/path/to/model', q_dataloader = dataloader, eval_dataloader = dataloader)
-```
-
-If `dataloader` and `metric` components get fully configured by yaml, the quantization process would start with below lines:
-
-```python
-quantizer = Quantization('/path/to/user.yaml')
-q_model = quantizer('/path/to/model')
-```
-Examples of this usage are at [TensorFlow Classification Models](../examples/tensorflow/image_recognition/README.md).

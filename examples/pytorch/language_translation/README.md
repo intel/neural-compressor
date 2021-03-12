@@ -21,7 +21,7 @@ Recommend python 3.6 or higher version.
 
 #### Install dependency
 
-```
+```shell
 pip install -r requirements.txt
 ```
 
@@ -29,7 +29,7 @@ pip install -r requirements.txt
 
 You will need a C++14 compiler. Also, we highly recommend installing an Anaconda environment. You will get a high-quality BLAS library (MKL) and you get controlled dependency versions regardless of your Linux distro.
 
-```Shell
+```bash
 # Install Dependencies
 conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi
 # Install pytorch from source
@@ -44,7 +44,7 @@ python setup.py install
 
 #### Install BERT model
 
-```Shell
+```bash
 cd examples/pytorch/language_translation
 python setup.py install
 ```
@@ -234,7 +234,7 @@ Please download [WikiText-2 dataset](https://blog.einstein.ai/the-wikitext-long-
 
 ### BERT glue task
 
-```Shell
+```bash
 export GLUE_DIR=/path/to/glue
 export TASK_NAME=MRPC
 
@@ -258,7 +258,7 @@ Where output_dir is path of checkpoint which be created by fine tuning.
 
 ### BERT SQuAD
 
-```Shell
+```bash
 cd examples/pytorch/language_translation
 
 python examples/run_squad_tune.py \
@@ -278,7 +278,7 @@ Where output_dir is path of checkpoint which be created by fine tuning.
 
 ### GPT WikiText
 
-```Shell
+```bash
 export TRAIN_FILE=/path/to/dataset/wiki.train.raw
 export TEST_FILE=/path/to/dataset/wiki.test.raw
 
@@ -311,6 +311,7 @@ Where output_dir is path of checkpoint which be created by fine tuning.
       --data_dir $GLUE_DIR/$TASK_NAME \
       --max_seq_length 128 \
       --per_gpu_eval_batch_size=8  \
+      --tune \
       --output_dir /path/to/roberta/checkpoint/dir
 ```
 
@@ -332,6 +333,7 @@ Where output_dir is path of checkpoint which be created by fine tuning.
       --data_dir $GLUE_DIR/$TASK_NAME \
       --max_seq_length 128 \
       --per_gpu_eval_batch_size=8  \
+      --tune \
       --output_dir /path/to/camembert/checkpoint/dir
 ```
 
@@ -356,7 +358,7 @@ As BERT's matricses are 'f1', 'acc_and_f1', mcc', 'spearmanr', 'acc', so custome
 
 In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
 
-```
+```yaml
 model:
   name: bert
   framework: pytorch
@@ -390,7 +392,7 @@ The related code changes please refer to examples/pytorch/bert/transformers/mode
 
 After prepare step is done, we just need update run_squad_tune.py and run_glue_tune.py like below
 
-```
+```python
 if args.tune:
     def eval_func_for_lpot(model):
         result, _ = evaluate(args, model, tokenizer)

@@ -1,13 +1,22 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow ssd_resnet50_v1 tuning zoo result.
-
+This document is used to list steps of reproducing TensorFlow Object Detection models tuning results.
+Currently, we've enabled below models.
+ * ssd_resnet50_v1
+ * ssd_resnet34
+ * ssd_mobilenet_v1
+ * fastrcnn_inception_resnet_v2
+ * fastrcnn_resnet101
+ * maskrcnn_inception_v2
 
 ## Prerequisite
 
+
 ### 1. Installation
-```Shell
+Recommend python 3.6 or higher version.
+
+```shell
 # Install Intel® Low Precision Optimization Tool
 pip instal lpot
 ```
@@ -16,10 +25,10 @@ pip instal lpot
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../README.md).
-
-### 3. Install Additional Dependency packages
+### 3. Installation Dependency packages
 ```shell
-cd examples/tensorflow/object_detection && pip install -r requirements.txt
+cd examples/tensorflow/object_detection
+pip install -r requirements.txt
 ```
 
 ### 4. Install Protocol Buffer Compiler
@@ -65,13 +74,13 @@ optional arguments:
 
 #### Manual approach
 
-##### Ssd_resnet50_v1
+##### ssd_resnet50_v1
 ```shell
 wget http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
 tar -xvzf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz -C /tmp
 ```
 
-##### Ssd_mobilenet_V1
+##### ssd_mobilenet_V1
 
 ```shell
 wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz
@@ -104,9 +113,7 @@ tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 wget --no-check-certificate https://zenodo.org/record/3345892/files/tf_ssd_resnet34_22.1.zip?download=1 -o ssd_resnet34.zip
 unzip ssd_resnet34.zip
 ```
-You need to install intel-tensoeflow==2.4.0 to enable ssd_resnet34 model.   
-
-Please refer `https://software.intel.com/content/www/us/en/develop/articles/intel-optimization-for-tensorflow-installation-guide.html#build_from_source` to build intel-tensorflow==2.4.0 from source.
+You need to install intel-tensoeflow==2.4.0 to enable ssd_resnet34 model.
 
 ## Run Command
 
@@ -114,7 +121,7 @@ Now we support both pb and ckpt formats.
 
 ### For PB model
   
-  ```Shell
+  ```shell
   # The cmd of running ssd_resnet50_v1
   bash run_tuning.sh --topology=ssd_resnet50_v1 --dataset_location=/path/to/dataset/coco_val.record --input_model=/tmp/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet50_v1-tune.pb
   ```
@@ -222,12 +229,14 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need update infer_detections.py like below.
 ```python
-from lpot import Quantization
+from lpot import Quantization,common
 
 quantizer = Quantization(args.config)
-q_model = quantizer(args.input_graph,
-                    q_dataloader=infer,
-                    eval_func=infer.accuracy_check)
+quantizer.model = common.Model(args.input_graph)
+quantizer.calib_dataloader = infer
+quantizer.eval_dataloader = infer
+quantizer.eval_func = infer.accuracy_check
+q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model during timeout constrain.

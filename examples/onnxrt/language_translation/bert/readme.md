@@ -10,7 +10,7 @@ onnxruntime: 1.6.0+
 ### Prepare dataset
 download the GLUE data with `prepare_data.sh` script.
 ```shell
-. prepare_dataset.sh --data_dir='/path/to/glue_data' --tasks='MRPC'
+bash prepare_data.sh --data_dir='/path/to/glue_data' --task_name='MRPC'
 ```
 
 ### Prepare model
@@ -21,18 +21,20 @@ Run the `prepare_model.sh` script
 
 Usage:
 ```shell
-export TASK_NAME=MRPC
+export TASK_NAME=mrpc
 
-bash prepare_model.sh --input_dir=./MPRC --task_name=$TASK_NAME --output_model=path/to/model
+bash prepare_model.sh --input_dir=./MRPC \
+                      --task_name=$TASK_NAME \
+                      --output_model=path/to/model # model path as *.onnx
 ```
 
 ### Evaluating
 To evaluate the model, run `bert_base.py` with the path to the model:
 
 ```bash
-bash run_tuning.sh --topology=distilbert_base_MRPC 
-                   --dataset_location=$GLUE_DIR/$TASK_NAME 
-                   --input_model=path/to/model # model path as *.onnx
+bash run_tuning.sh --topology=distilbert_base_MRPC \ 
+                   --dataset_location=$GLUE_DIR/$TASK_NAME \ 
+                   --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```
 

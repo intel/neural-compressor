@@ -56,7 +56,7 @@ class TensorflowTransforms(Transforms):
             "CropToBoundingBox": TensorflowWrapFunction(tf.image.crop_to_bounding_box),
             "RandomHorizontalFlip": TensorflowWrapFunction(tf.image.random_flip_left_right),
             "RandomVerticalFlip": TensorflowWrapFunction(tf.image.random_flip_up_down),
-            "DecodeImage": TensorflowWrapFunction(tf.io.decode_image),
+            "DecodeImage": TensorflowWrapFunction(tf.io.decode_jpeg),
             "EncodeJpeg": TensorflowWrapFunction(tf.io.encode_jpeg),
         }
         # update the registry transforms

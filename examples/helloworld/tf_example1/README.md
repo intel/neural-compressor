@@ -7,7 +7,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobil
 
 2. Update the root of dataset in conf.ymal
 The configuration will create a dataloader of Imagenet and it will do Bilinear resampling to resize the image to 224x224. And it will create a TopK metric function for evaluation.   
-```
+```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 20                            # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
@@ -46,13 +46,13 @@ evaluation:                                          # optional. required if use
 
 3. Run quantizaiton
 We only need to add the following lines for quantization to create an int8 model.
-```
+```python
     import lpot
     quantizer = lpot.Quantization('./conf.yaml')
     quantized_model = quantizer('./mobilenet_v1_1.0_224_frozen.pb')
 ```
 * Run quantization and evaluation:
-```
+```shell
     python test.py
 ``` 
 

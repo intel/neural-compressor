@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 tuning zoo result.
+This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1/ResNet152_v1/Squeezenet1.0/MobileNet1.0/MobileNetv2_1.0/Inceptionv3 tuning zoo result.
 
 
 # Prerequisite
@@ -12,6 +12,7 @@ This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1
   pip install -r requirements.txt
 
   ```
+> Note: Supported MXNet [Version](../../../README.md).
 
 ### 2. Prepare Dataset
   You can use `prepare_dataset.sh` to download dataset for this example. like below:

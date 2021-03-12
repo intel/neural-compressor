@@ -14,18 +14,18 @@ This document describes the step-by-step instructions for reproducing PyTorch YO
 
 ### 1. Installation
 
-  ```Shell
+  ```shell
   pip install -r requirements.txt
   ```
 
 ### 2. Prepare Dataset
-  ```
+  ```bash
   cd examples/pytorch/object_detection/yolo_v3/data/
   bash get_coco_dataset.sh
   ```
 
 ### 3. Prepare Weights
-  ```
+  ```bash
   cd examples/pytorch/object_detection/yolo_v3/weights/
   bash download_weights.sh
   ```
@@ -33,7 +33,7 @@ This document describes the step-by-step instructions for reproducing PyTorch YO
 
 # Run
 
-  ```Shell
+  ```shell
   cd examples/pytorch/object_detection/yolo_v3/
   python test.py --weights_path weights/yolov3.weights -t
   ```
@@ -58,7 +58,7 @@ Here we integrate PyTorch YOLO V3 with Intel® Low Precision Optimization Tool b
 In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
 
 
-```
+```yaml
 #conf.yaml
 
 framework:
@@ -86,7 +86,7 @@ The related code please refer to examples/pytorch/object_detection/yolo_v3/model
 
 After prepare step is done, we just need update test.py like below.
 
-```
+```python
 class yolo_dataLoader(object):
     def __init__(self, loader=None, model_type=None, device='cpu'):
         self.loader = loader

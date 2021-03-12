@@ -14,35 +14,39 @@ This document describes the step-by-step instructions for reproducing PyTorch Ef
 
 ### 1. Installation
 
-  ```Shell
-  cd examples/pytorch/image_recognition/efficientnet
-  pip install -r requirements.txt
-  python setup.py install
-  ```
+```Shell
+cd examples/pytorch/image_recognition/efficientnet
+pip install -r requirements.txt
+python setup.py install
+```
 
 ### 2. Prepare Dataset
 
-  Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet. The dir include below folder:
 
+```bash
+ls /path/to/imagenet
+train  val
+```
 
 # Run
 
 ### 1. Efficientnet_b0
 
-  ```Shell
-  cd examples/pytorch/image_recognition/efficientnet
-  python validate.py --tune --model efficientnet_b0 --no-cuda --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/efficientnet
+python validate.py --tune --model efficientnet_b0 --no-cuda --pretrained /path/to/imagenet
+```
 
 ### 2. Mobilenetv3_rw
 
-  ```Shell
-  cd examples/pytorch/image_recognition/efficientnet
-  python validate.py --tune --model mobilenetv3_rw --no-cuda --pretrained /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/efficientnet
+python validate.py --tune --model mobilenetv3_rw --no-cuda --pretrained /path/to/imagenet
+```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
-=======================================================
+==========================================================================================
 
 This is a tutorial of how to enable a PyTorch classification model.
 
@@ -58,10 +62,9 @@ As Efficientnet series are typical classification models, use Top-K as metric wh
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
-
-```
+```yaml
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: efficientnet_b0
   framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
@@ -143,7 +146,7 @@ The related code please refer to examples/pytorch/image_recognition/efficientnet
 
 After prepare step is done, we just need update main.py like below.
 
-```
+```python
 model.eval()
 model.fuse_model()
 from lpot import Quantization, common
@@ -152,4 +155,4 @@ quantizer.model = common.Model(model)
 q_model = quantizer()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer() function will return a best quantized model during timeout constrain.(Please refer [sample code](./validate.py))

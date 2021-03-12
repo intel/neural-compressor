@@ -9,7 +9,7 @@ It is the responsibility of the user to bring the raw data into the appropriate 
 the rest ;-) For more information on the required raw data format, see [here](dataset_conversion.md).
 
     Example tree structure:
-    ```
+    ```bash
     nnUNet_raw_data_base/nnUNet_raw_data/Task002_Heart
     ├── dataset.json
     ├── imagesTr
@@ -57,7 +57,7 @@ choice. If you do not see the file, that may be because it is hidden by default.
 ensure that you see it. In rare cases it may not be present and you can simply create it with `touch /home/fabian/.bashrc`.
 
 Once the file is open in a text editor, add the following lines to the bottom:
-```
+```bash
 export nnUNet_raw_data_base="/media/fabian/nnUNet_raw"
 export nnUNet_preprocessed="/media/fabian/nnUNet_preprocessed"
 export RESULTS_FOLDER="/media/fabian/nnUNet_trained_models"
@@ -74,7 +74,7 @@ etc and it should print out the correct folder.
 The method above sets the paths permanently (until you delete the lines from your .bashrc) on your system. If you wish 
 to set them only temporarily, you can run the export commands in your terminal:
 
-```
+```bash
 export nnUNet_raw_data_base="/media/fabian/nnUNet_raw"
 export nnUNet_preprocessed="/media/fabian/nnUNet_preprocessed"
 export RESULTS_FOLDER="/media/fabian/nnUNet_trained_models"

@@ -18,7 +18,13 @@
 from ..data import DATALOADERS
 
 class DataLoader(object):
-    """common DataLoader just collect the infos to construct a DataLoader
+    """This class is just a wrapper of the information needed to build a dataloader,
+       it can't yield batched data and only in this Quantization/Benchmark object's 
+       setter method a 'real' calib_dataloader will be created, 
+       the reason is we have to know the framework info
+       and only after the Quantization/Benchmark object created then
+       framework infomation can be known. Future we will support
+       creating iterable dataloader from lpot.common.DataLoader
     """
 
     def __init__(self, dataset, batch_size=1, collate_fn=None,

@@ -1,4 +1,4 @@
-mxnet-mkl==1.6.0
+mxnet
 gluoncv
 lpot
 

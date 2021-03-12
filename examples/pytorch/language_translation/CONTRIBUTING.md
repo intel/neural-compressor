@@ -44,7 +44,7 @@ Did not find it? :( So we can act quickly on it, please follow these steps:
 To get the OS and software versions, execute the following code and copy-paste
 the output:
 
-```
+```python
 import platform; print("Platform", platform.platform())
 import sys; print("Python", sys.version)
 import torch; print("PyTorch", torch.__version__)

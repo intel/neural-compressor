@@ -110,13 +110,13 @@ def _post_eval_hook(self, model, **args):
 1. Add "tensorboard: true" in yaml file.
 2. Run quantization tuning, a "./runs" folder will be generated in working folder.
 3. Start tensorboard:
-```
+```shell
    tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.80,tune_1:././runs/eval/tune_1_acc0.79  
 ```
 
 # Examples
 
-```
+```shell
   examples/pytorch/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh 
 ```
 
@@ -135,13 +135,13 @@ See lpot/adaptor/tensorflow.py evaluate() function for details.
 
 1. Add "tensorboard: true" in yaml file.
 2. Run quantization tuning, a "./runs" folder will be generated in working folder. For example: 
-   ```
+   ```shell
    ls ./runs/eval  
    baseline_acc_0.776  tune_1_acc_0.095 
    ```
    The baseline_acc_0.776 folder contains the FP32 event log and 0.776 is the FP32 accuracy. tune_1_acc_0.095 contains the evaluation event log of the first run of tuning.  
 3. Start tensorboard:
-   ```
+   ```shell
    tensorboard --bind_all --logdir_spec baseline:./runs_v3/eval/baseline_acc_0.776/,tune_1:./runs_v3/eval/tune_1_acc_0.095/ 
    ```
 
@@ -149,7 +149,7 @@ See lpot/adaptor/tensorflow.py evaluate() function for details.
 
 
 1.  Add "tensorboard: true" into examples/tensorflow/image_recognition/inceptionv3.yaml. In order to demonstrate the usage of TensorBoard, please remove the following lines which is added to skip the quantization of 'v0/cg/conv0/conv2d/Conv2D' to avoid a known limitation.
-```
+```yaml
     op_wise: {
              'v0/cg/conv0/conv2d/Conv2D': {
                'activation':  {'dtype': ['fp32']},
@@ -157,12 +157,12 @@ See lpot/adaptor/tensorflow.py evaluate() function for details.
            }
 ```
 2. Run tuning:
-```
+```shell
 bash run_tuning.sh --topology=inception_v3 --dataset_location=<imagenet> \
           --input_model=./inceptionv3_fp32_pretrained_model.pb --output_model=./lpot_inceptionv3.pb --config=./inceptionv3_dump_tensor.yaml 
 ```
 3. Start TensorBoard
-```
+```shell
 tensorboard --bind_all --logdir_spec baseline:./runs_v3/eval/baseline_acc_0.776/,tune_1:./runs_v3/eval/tune_1_acc_0.095/
 ```
 

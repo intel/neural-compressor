@@ -14,38 +14,44 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 ### 1. Installation
 
-  ```Shell
-  pip install -r requirements.txt
-  ```
+```Shell
+pip install -r requirements.txt
+```
 
 ### 2. Prepare Dataset
 
-  Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
+
+```bash
+ls /path/to/imagenet
+train  val
+```
 
 
 # Run
 
 ### 1. ResNet50
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/qat
-  python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
-  ```
-  For ResNet50 model, we can get int8 0.7614 accuracy vs fp32 0.7613.
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/qat
+python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
+```
+
+For ResNet50 model, we can get int8 0.7614 accuracy vs fp32 0.7613.
 
 ### 2. ResNet18
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/qat
-  python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/qat
+python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
+```
 
 ### 3. ResNext101_32x8d
 
-  ```Shell
-  cd examples/pytorch/image_recognition/imagenet/cpu/qat
-  python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/imagenet/cpu/qat
+python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
+```
 
 Examples Of Enabling ILiT Auto Tuning On PyTorch ResNet
 =======================================================
@@ -63,10 +69,9 @@ As ResNet18/50/101 series are typical classification models, use Top-K as metric
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
-
-```
+```yaml
 #conf.yaml
 
 model:
@@ -107,7 +112,7 @@ The related code please refer to examples/pytorch/image_recognition/imagenet/cpu
 
 After prepare step is done, we just need update main.py like below.
 
-```
+```python
 def training_func_for_lpot(model):
     epochs = 8
     iters = 30

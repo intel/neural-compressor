@@ -14,28 +14,35 @@ This document describes the step-by-step instructions for reproducing PyTorch Pe
 
 ### 1. Installation
 
-  ```Shell
-  # Install
-  cd examples/pytorch/image_recognition/peleenet
-  pip install -r requirements.txt
-  ```
+```Shell
+# Install
+cd examples/pytorch/image_recognition/peleenet
+pip install -r requirements.txt
+```
 
 ### 2. Prepare Dataset
 
-  Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet. The dir include below folder:
+
+```bash
+ls /path/to/imagenet
+train  val
+```
+
 
 ### 3. Prepare pretrained model
-  Download [weights](https://github.com/Robert-JunWang/PeleeNet/tree/master/weights) to examples/pytorch/image_recognition/peleenet/weights.
+
+Download [weights](https://github.com/Robert-JunWang/PeleeNet/tree/master/weights) to examples/pytorch/image_recognition/peleenet/weights.
 
 # Run
 
-  ```Shell
-  cd examples/pytorch/image_recognition/peleenet
-  python main.py --tune --pretrained -j 1 /path/to/imagenet
-  ```
+```Shell
+cd examples/pytorch/image_recognition/peleenet
+python main.py --tune --pretrained -j 1 /path/to/imagenet
+```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
-=======================================================
+==========================================================================================
 
 This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
 
@@ -44,19 +51,16 @@ This is a tutorial of how to enable a PyTorch classification model with Intel® 
 Intel® Low Precision Optimization Tool supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
-
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
-
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
 As PeleeNet are typical classification models, use Top-K as metric and imagenet dataset which are built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch PeleeNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
-
-```
+```yaml
 #conf.yaml
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: peleenet
@@ -142,7 +146,7 @@ The related code changes please refer to examples/pytorch/image_recognition/pele
 
 After prepare step is done, we just need update main.py like below.
 
-```
+```python
 model.module.fuse()
 from lpot import Quantization, common
 quantizer = Quantization("./conf.yaml")

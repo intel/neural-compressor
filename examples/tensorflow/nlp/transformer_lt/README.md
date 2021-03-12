@@ -6,20 +6,20 @@ This document is used to list steps of reproducing TensorFlow Intel® Low Precis
 ## Prerequisite
 
 ### 1. Installation
-```Shell
+```shell
 # Install Intel® Low Precision Optimization Tool
 pip install lpot
 ```
 
 ### 2. Install Intel Tensorflow
-```Shell
+```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../README.md).
 
 ### 3. Prepare Dataset & Pretrained model
 
-```Shell
+```shell
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_2_0/transformer-lt-official-fp32-inference.tar.gz
 tar -zxvf transformer-lt-official-fp32-inference.tar.gz
 cd transformer-lt-official-fp32-inference
@@ -38,7 +38,7 @@ bash prepare_dataset_model.sh
 
 ## Run Command
 
-```Shell
+```shell
 python main.py --input_graph=/path/to/fp32_graphdef.pb --inputs_file=/path/to/newstest2014.en --reference_file=/path/to/newstest2014.de --vocab_file=/path/tp/vocab.txt --config=./transformer_lt.yaml --tune
 ```
 

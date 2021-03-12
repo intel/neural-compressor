@@ -98,60 +98,6 @@ class Quantization(object):
 
               For this usage, model, calib_dataloader and eval_func parameters are mandotory.
 
-        Args:
-            model (object):                        For Tensorflow model, it could be a path
-                                                   to frozen pb,loaded graph_def object or
-                                                   a path to ckpt/savedmodel folder.
-                                                   For PyTorch model, it's torch.nn.model
-                                                   instance.
-                                                   For MXNet model, it's mxnet.symbol.Symbol
-                                                   or gluon.HybirdBlock instance.
-            calib_dataloader (generator):              Data loader for calibration, mandatory for
-                                                   post-training quantization. It is iterable
-                                                   and should yield a tuple (input, label) for
-                                                   calibration dataset containing label,
-                                                   or yield (input, _) for label-free calibration
-                                                   dataset. The input could be a object, list,
-                                                   tuple or dict, depending on user implementation,
-                                                   as well as it can be taken as model input.
-            calib_func (function, optional):       Training function for Quantization-Aware
-                                                   Training. It is optional and only takes effect
-                                                   when user choose "quant_aware_training"
-                                                   approach in yaml.
-                                                   This function takes "model" as input parameter
-                                                   and executes entire training process with self
-                                                   contained training hyper-parameters. If this
-                                                   parameter specified, eval_dataloader parameter
-                                                   plus metric defined in yaml, or eval_func
-                                                   parameter should also be specified at same time.
-            eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                                   and should yield a tuple of (input, label).
-                                                   The input could be a object, list, tuple or
-                                                   dict, depending on user implementation,
-                                                   as well as it can be taken as model input.
-                                                   The label should be able to take as input of
-                                                   supported metrics. If this parameter is
-                                                   not None, user needs to specify pre-defined
-                                                   evaluation metrics through configuration file
-                                                   and should set "eval_func" paramter as None.
-                                                   Tuner will combine model, eval_dataloader
-                                                   and pre-defined metrics to run evaluation
-                                                   process.
-            eval_func (function, optional):        The evaluation function provided by user.
-                                                   This function takes model as parameter,
-                                                   and evaluation dataset and metrics should be
-                                                   encapsulated in this function implementation
-                                                   and outputs a higher-is-better accuracy scalar
-                                                   value.
-
-                                                   The pseudo code should be something like:
-
-                                                   def eval_func(model):
-                                                        input, label = dataloader()
-                                                        output = model(input)
-                                                        accuracy = metric(output, label)
-                                                        return accuracy
-
         Returns:
             quantized model: best qanitized model found, otherwise return None
 
@@ -225,6 +171,30 @@ class Quantization(object):
 
     @calib_dataloader.setter
     def calib_dataloader(self, dataloader):
+        """Set Data loader for calibration, mandatory for post-training quantization. 
+           It is iterable and the batched data should consists of a tuple like
+           (input, label) if the calibration dataset containing label, or yield (input, _) 
+           for label-free calibration dataset, the input in the batched data will be used for 
+           model inference, so it should satisfy the input format of specific model. 
+           In calibration process, label of data loader will not be used and 
+           neither the postprocess and metric. User only need to set 
+           calib_dataloader when calib_dataloader can not be configured from yaml file. 
+
+           Args:
+               dataloader(generator): user are supported to set a user defined dataloader
+                                      which meet the requirements that can yield tuple of
+                                      (input, label)/(input, _) batched data.
+                                      Another good practice is to use lpot.common.DataLoader
+                                      to initialize a lpot dataloader object.
+                                      Notice lpot.common.DataLoader is just a wrapper of the
+                                      information needed to build a dataloader, it can't yield
+                                      batched data and only in this setter method 
+                                      a 'real' calib_dataloader will be created, 
+                                      the reason is we have to know the framework info
+                                      and only after the Quantization object created then
+                                      framework infomation can be known. Future we will support
+                                      creating iterable dataloader from lpot.common.DataLoader
+        """
         from .common import _generate_common_dataloader
         self._calib_dataloader = _generate_common_dataloader(
             dataloader, self.framework)
@@ -235,6 +205,28 @@ class Quantization(object):
 
     @eval_dataloader.setter
     def eval_dataloader(self, dataloader):
+        """Set Data loader for evaluation, It is iterable and the batched data 
+           should consists of a tuple like (input, label), when eval_dataloader is set,
+           user should configure postprocess(optional) and metric in yaml file or set
+           postprocess and metric cls. Notice evaluation dataloader will be used to 
+           generate data for model inference, make sure the input data can be feed to model.
+
+           Args:
+               dataloader(generator): user are supported to set a user defined dataloader
+                                      which meet the requirements that can yield tuple of
+                                      (input, label)/(input, _) batched data.
+                                      Another good practice is to use lpot.common.DataLoader
+                                      to initialize a lpot dataloader object.
+                                      Notice lpot.common.DataLoader is just a wrapper of the
+                                      information needed to build a dataloader, it can't yield
+                                      batched data and only in this setter method 
+                                      a 'real' eval_dataloader will be created, 
+                                      the reason is we have to know the framework info
+                                      and only after the Quantization object created then
+                                      framework infomation can be known. Future we will support
+                                      creating iterable dataloader from lpot.common.DataLoader
+
+        """
         from .common import _generate_common_dataloader
         self._eval_dataloader = _generate_common_dataloader(
             dataloader, self.framework)
@@ -245,6 +237,19 @@ class Quantization(object):
 
     @model.setter
     def model(self, user_model):
+        """Set the user model and dispatch to framework specific internal model object
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
+                       Best practice is to set from a initialized lpot.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be auto inferenced,
+                       but sometimes auto inferenced inputs/outputs will not meet your requests,
+                       set them manually in config yaml file. Another corner case is slim model 
+                       of tensorflow, be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+        
+        """
         from .common import Model as LpotModel
         from .model import MODELS
         if not isinstance(user_model, LpotModel):
@@ -271,6 +276,20 @@ class Quantization(object):
 
     @metric.setter
     def metric(self, user_metric):
+        """Set metric class and lpot will initialize this class when evaluation
+           lpot have many built-in metrics, but user can set specific metric through
+           this api. The metric class should take the outputs of the model or 
+           postprocess(if have) as inputs, lpot built-in metric always take 
+           (predictions, labels) as inputs for update,
+           and user_metric.metric_cls should be sub_class of lpot.metric.BaseMetric.
+
+        Args:
+            user_metric(lpot.common.Metric): user_metric should be object initialized from
+                                             lpot.common.Metric, in this method the 
+                                             user_metric.metric_cls will be registered to
+                                             specific frameworks and initialized.
+                                              
+        """
         from .common import Metric as LpotMetric
         assert isinstance(user_metric, LpotMetric), \
             'please initialize a lpot.common.Metric and set....'
@@ -291,6 +310,18 @@ class Quantization(object):
 
     @postprocess.setter
     def postprocess(self, user_postprocess):
+        """Set postprocess class and lpot will initialize this class when evaluation. 
+           The postprocess class should take the outputs of the model as inputs, and
+           output (predictions, labels) as inputs for metric update.
+           user_postprocess.postprocess_cls should be sub_class of lpot.data.BaseTransform.
+
+        Args:
+            user_postprocess(lpot.common.Postprocess): 
+                user_postprocess should be object initialized from lpot.common.Postprocess,
+                in this method the user_postprocess.postprocess_cls will be 
+                registered to specific frameworks and initialized.
+
+        """
         from .common import Postprocess as LpotPostprocess
         assert isinstance(user_postprocess, LpotPostprocess), \
             'please initialize a lpot.common.Postprocess and set....'
@@ -316,6 +347,18 @@ class Quantization(object):
         
     @q_func.setter
     def q_func(self, user_q_func):
+        """Training function for Quantization-Aware Training. 
+           It is optional and only takes effect when user choose 
+           "quant_aware_training" approach in yaml.
+
+        Args:
+            user_q_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If q_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func 
+                         to make evaluation of the model executed.
+        """
         logger.warning('q_func is to be deprecated, please construct q_dataloader....')
         self._calib_func = user_q_func
 
@@ -326,6 +369,23 @@ class Quantization(object):
         
     @eval_func.setter
     def eval_func(self, user_eval_func):
+        """ The evaluation function provided by user.
+
+        Args:
+            user_eval_func: This function takes model as parameter,
+                            and evaluation dataset and metrics should be
+                            encapsulated in this function implementation
+                            and outputs a higher-is-better accuracy scalar
+                            value.
+
+                            The pseudo code should be something like:
+
+                            def eval_func(model):
+                                 input, label = dataloader()
+                                 output = model(input)
+                                 accuracy = metric(output, label)
+                                 return accuracy
+        """
         logger.warning('eval_func is to be deprecated, please construct eval_dataloader....')
         self._eval_func = user_eval_func
 

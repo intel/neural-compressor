@@ -14,12 +14,13 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad tu
   pip install lpot
 
   # Install MXNet
-  pip install mxnet-mkl==1.6.0
+  pip install mxnet
   
   # Install gluonnlp
   pip install gluonnlp
 
   ```
+> Note: Supported MXNet [Version](../../../README.md).
 
 ### 2. Dataset
 

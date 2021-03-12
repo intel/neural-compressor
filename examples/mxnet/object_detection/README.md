@@ -8,10 +8,10 @@ This document describes the step-by-step instructions for reproducing MXNet SSD-
 # Prerequisite
 ### 1. Installation
 
-  ```Shell
+  ```shell
   pip install -r requirements.txt
   ```
-
+> Note: Supported MXNet [Version](../../../README.md).
 ### 2. Prepare Dataset
 
   If you want to use VOC2007 dataset, download [VOC2007](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/index.html) Raw image to the directory **~/.mxnet/datasets/voc** (Note:this path is unchangeable per original inference script requirement)
@@ -107,7 +107,7 @@ As this example use VOC/COCO dataset, use VOCMApMetrics/COCOEval as metric which
 In examples directory, there is a template.yaml. We could remove most of items and only keep mandatory items for tuning.
 
 
-```
+```yaml
 # conf.yaml
 
 model:                                           

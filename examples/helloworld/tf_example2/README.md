@@ -10,7 +10,7 @@ This is Hello World to demonstrate how to quick start with Intel® Low Precision
 ## Prerequisite
 
 ### 1. Installation
-```Shell
+```shell
 # Install Intel® Low Precision Optimization Tool
 pip install lpot
 ```
@@ -20,13 +20,13 @@ pip install intel-tensorflow==2.3.0
 ```
 
 ### 3. Prepare FP32 model
-```
+```shell
 cd <WORK_DIR>/examples/helloworld
 python train.py
 ```
 ## Run Command
   # The cmd of quantization and predict with the quantized model 
-  ```Shell
+  ```shell
   python test.py 
   ```
 ## Introduction 
@@ -35,7 +35,7 @@ This exmaple can demonstrate the steps to do quantization on Keras generated sav
 
 ### 2.Define a customer dataloader for mnist  
 
-```
+```python
 class Dataset(object):
   def __init__(self):
       (train_images, train_labels), (test_images,
@@ -54,7 +54,7 @@ class Dataset(object):
 
 ### 3.Define a customized metric  
 This customized metric will caculate accuracy.
-```
+```python
 import lpot
 from lpot.metric import Metric
 class MyMetric(Metric):
@@ -83,7 +83,7 @@ class MyMetric(Metric):
 
 ```
 ### 4.Use the customized data loader and metric for quantization 
-```
+```python
 import lpot
 quantizer = lpot.Quantization('./conf.yaml')
 dataset = Dataset()
@@ -95,7 +95,7 @@ q_model = quantizer('../models/simple_model', q_dataloader = dataloader, eval_da
 
 ### 5. Run quantized model
 please get the input and output op name from lpot_workspace/tensorflow/hello_world/deploy.yaml
-```
+```yaml
 model:
   name: hello_world
   framework: tensorflow
@@ -105,7 +105,7 @@ model:
   - output
 ```
 Run inference on the quantized model
-```
+```python
 import tensorflow as tf
 with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
      tf.compat.v1.import_graph_def(q_model.as_graph_def(), name='')

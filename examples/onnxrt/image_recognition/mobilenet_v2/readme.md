@@ -33,9 +33,9 @@ torch.onnx.export(model,               # model being run
 To evaluate the model, run `main.py` with the path to the model:
 
 ```bash
-bash run_tuning.sh --input_model path/to/model  # model path as *.onnx
-                   --config mobilenet_v2.yaml 
-                   --output_model path/to/save
+bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+                   --config=mobilenet_v2.yaml \ 
+                   --output_model=path/to/save
 ```
 ### Advanced 
 Usually we need to bind the program to specific cores like 4 cores to get performance under real production environments.   

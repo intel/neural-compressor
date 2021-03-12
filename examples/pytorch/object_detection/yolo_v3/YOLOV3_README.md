@@ -45,7 +45,7 @@ Uses pretrained weights to make predictions on images. Below table displays the 
 <p align="center"><img src="assets/messi.png" width="480"\></p>
 
 ## Train
-```
+```bash
 $ train.py [-h] [--epochs EPOCHS] [--batch_size BATCH_SIZE]
                 [--gradient_accumulations GRADIENT_ACCUMULATIONS]
                 [--model_def MODEL_DEF] [--data_config DATA_CONFIG]
@@ -59,7 +59,7 @@ $ train.py [-h] [--epochs EPOCHS] [--batch_size BATCH_SIZE]
 
 #### Example (COCO)
 To train on COCO using a Darknet-53 backend pretrained on ImageNet run: 
-```
+```bash
 $ python3 train.py --data_config config/coco.data  --pretrained_weights weights/darknet53.conv.74
 ```
 

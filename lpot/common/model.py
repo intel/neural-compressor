@@ -19,5 +19,18 @@ class Model(object):
     """common Model just collect the infos to construct a Model
     """
     def __init__(self, root, **kwargs):
+        """Wrap raw framework model format or path with specific infos
+
+        Args:
+            root:   raw model format. For Tensorflow model, could be path to frozen pb file, 
+                    path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras 
+                    model object. For PyTorch model, it's torch.nn.model instance.
+                    For MXNet model, it's mxnet.symbol.Symbol or gluon.HybirdBlock instance.
+            kwargs: specific model format will rely on extra infomation to build the model 
+                    a. estimator: need input_fn to initialize the Model, it will look like this 
+                                  when initialize an estimator model:
+                                  model = Model(estimator_object, input_fn=estimator_input_fn)
+                   
+        """
         self.root = root
         self.kwargs = kwargs

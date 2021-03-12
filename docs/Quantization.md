@@ -4,16 +4,9 @@ Quantization refers to processes that enable lower precision inference and train
 
 Quantization methods include the following three classes:
 
-* Post-Training Quantization (PTQ)
-* Quantization-Aware Training (QAT)
-* Dynamic Quantization
+* [Post-Training Quantization (PTQ)](./PTQ.md)
+* [Quantization-Aware Training (QAT)](./QAT.md)
+* [Dynamic Quantization](./dynamic_quantization.md)
 
-Intel® Low Precision Optimization Tool currently supports PTQ and QAT. Using MobileNetV2 as an example, this document provides tutorials for both. It also provides helper functions for evaluation.
+> NOTE: Dynamic Quantization currently is only supported with onnxruntime backend.
 
-Dynamic Quantization currently is only supported with onnxruntime backend, please refer to [dynamic quantization](./dynamic_quantization.md) for details.
-
->Note: These quantization tutorials use [PyTorch examples](https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html#model-architecture) as allowed by PyTorch's [License](https://github.com/pytorch/pytorch/blob/master/LICENSE). Refer to [PyTorch](https://github.com/pytorch/tutorials/blob/master/advanced_source/static_quantization_tutorial.py) for updates.
-
-
-* See also [PTQ](PTQ.md)
-* See also [QAT](QAT.md)

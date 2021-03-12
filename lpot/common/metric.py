@@ -19,6 +19,11 @@ class Metric(object):
     """common Metric just collect the infos to construct a Metric
     """
     def __init__(self, metric_cls, name='user_metric', **kwargs):
+        """The metric class should take the outputs of the model as the metric's inputs,
+           lpot built-in metric always take (predictions, labels) as inputs, it's
+           recommended to design metric_cls to take (predictions, labels) as inputs.
+           metric_cls should be sub_class of lpot.metric.BaseMetric.
+        """
         self.metric_cls = metric_cls
         self.name = name
         self.kwargs = kwargs
