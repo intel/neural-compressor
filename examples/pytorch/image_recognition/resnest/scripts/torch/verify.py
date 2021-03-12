@@ -161,7 +161,7 @@ def main():
             if args.cuda:
                 data, target = data.cuda(), target.cuda()
             with torch.no_grad():
-                output = model(data)
+                output = new_model(data)
                 if batch_idx >= warmup:
                     batch_time.update(time.time() - end)
                 acc1, acc5 = accuracy(output, target, topk=(1, 5))
