@@ -38,11 +38,7 @@ class Tuning:
         self.instances: int = 1
         self.cores_per_instance: int = HWInfo().cores // self.instances
 
-        model_output_name = workload.model_name + "_int8.pb"
-        self.model_output_path = os.path.join(
-            workload_path,
-            model_output_name,
-        )
+        self.model_output_path = workload.model_output_path
         self.config_path = workload.config_path
 
         self.script_path = os.path.join(os.path.dirname(__file__), "tune_model.py")

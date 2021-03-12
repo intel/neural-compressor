@@ -62,14 +62,16 @@ def tune_model(
     framework: str,
 ) -> None:
     """Execute tuning."""
-    from lpot.quantization import Quantization
+    from lpot import Quantization, common
 
     if framework == "onnxrt":
         import onnx
 
         input_graph = onnx.load(input_graph)
+
     quantizer = Quantization(config)
-    quantized_model = quantizer(input_graph)
+    quantizer.model = common.Model(input_graph)
+    quantized_model = quantizer()
     quantized_model.save(output_graph)
 
 

@@ -98,6 +98,7 @@ def generate_template(workload: Workload, workdir: Workdir, type: str) -> None:
     correct_paths = {
         "config_path": workload.config_path,
         "model_path": workload.model_path,
+        "model_output_path": workload.model_output_path,
     }
 
     generated_template_path = os.path.join(workload.workload_path, "code_template.py")

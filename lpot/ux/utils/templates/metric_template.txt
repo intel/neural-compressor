@@ -1,9 +1,9 @@
 # Define a customized Metric function
-import lpot
-from lpot.metric import Metric
+from lpot import Quantization, common
+from lpot.metric import BaseMetric
 
 
-class MyMetric(Metric):
+class MyMetric(BaseMetric):
     def __init__(self, *args):
         pass
 
@@ -17,6 +17,8 @@ class MyMetric(Metric):
         pass
 
 # Quantize with customized dataloader and metric
-quantizer = lpot.Quantization('{{config_path}}')
-quantizer.metric('my_metric', MyMetric)
-q_model = quantizer('{{model_path}}')
+quantizer = Quantization('{{config_path}}')
+quantizer.model = common.Model('{{model_path}}')
+quantizer.metric = common.Metric(metric_cls=MyMetric, name='my_metric')
+quantized_model = quantizer()
+quantized_model.save('{{model_output_path}}')

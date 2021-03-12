@@ -1,4 +1,4 @@
-import lpot
+from lpot import Quantization, common
 
 class Dataset(object):
     def __init__(self, *args):
@@ -17,7 +17,9 @@ class Dataset(object):
         # rather than above two methods.
         pass
 
-quantizer = lpot.Quantization('{{config_path}}')
+quantizer = Quantization('{{config_path}}')
+quantizer.model = common.Model('{{model_path}}')
 dataset = Dataset()
-dataloader = quantizer.dataloader(dataset, batch_size=1)
-q_model = quantizer('{{model_path}}', q_dataloader = dataloader, eval_dataloader = dataloader)
+quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
+quantized_model = quantizer()
+quantized_model.save('{{model_output_path}}')

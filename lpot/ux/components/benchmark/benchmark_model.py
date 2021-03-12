@@ -65,7 +65,7 @@ def benchmark_model(
     datatype: str = "",
 ) -> List[Dict[str, Any]]:
     """Execute benchmark."""
-    from lpot import Benchmark
+    from lpot import Benchmark, common
 
     benchmark_results = []
 
@@ -73,8 +73,10 @@ def benchmark_model(
         import onnx
 
         input_graph = onnx.load(input_graph)
+
     evaluator = Benchmark(config)
-    results = evaluator(model=input_graph)
+    evaluator.model = common.Model(input_graph)
+    results = evaluator()
     for mode, result in results.items():
         if benchmark_mode == mode:
             log.info(f"Mode: {mode}")

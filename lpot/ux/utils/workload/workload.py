@@ -22,7 +22,11 @@ from typing import Any, Dict
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.utils import get_framework_from_path, get_predefined_config_path
+from lpot.ux.utils.utils import (
+    get_file_extension,
+    get_framework_from_path,
+    get_predefined_config_path,
+)
 from lpot.ux.utils.workload.config import Config
 
 
@@ -69,11 +73,20 @@ class Workload(JsonSerializer):
                 f"{self.model_name}_{self.id}",
             ),
         )
+
         self.set_workspace()
         self.config_name = "config.yaml"
         self.config_path = os.path.join(
             self.workload_path,
             self.config_name,
+        )
+
+        model_output_name = (
+            self.model_name + "_int8." + get_file_extension(self.model_path)
+        )
+        self.model_output_path = os.path.join(
+            self.workload_path,
+            model_output_name,
         )
 
         self.eval_dataset_path: str = data.get("eval_dataset_path", "")
