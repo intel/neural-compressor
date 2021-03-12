@@ -314,7 +314,10 @@ if __name__ == "__main__":
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from lpot.quantization import Quantization
+        from lpot import Quantization, common
         quantize = Quantization(args.config)
-        q_model = quantize(model, q_dataloader=eval_dataloader, eval_func=eval_func)
+        quantize.model = common.Model(model)
+        quantize.calib_dataloader = eval_dataloader
+        quantize.eval_func = eval_func
+        q_model = quantize()
         q_model.save(args.output_model)

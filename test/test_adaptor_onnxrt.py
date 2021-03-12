@@ -163,26 +163,22 @@ class TestAdaptorONNXRT(unittest.TestCase):
         _ = FRAMEWORKS[framework](framework_specific_info)
 
     def test_quantizate(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
         for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
-            dataloader = quantizer.dataloader(dataset)
-            q_model = quantizer(
-                self.rn50_model,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(self.rn50_model)
+            q_model = quantizer()
             eval_func(q_model)
         for fake_yaml in ["non_MSE_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
-            dataloader = quantizer.dataloader(dataset)
-            q_model = quantizer(
-                self.mb_v2_model,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(self.mb_v2_model)
+            q_model = quantizer()
             eval_func(q_model)
 
 

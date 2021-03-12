@@ -15,21 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+class Postprocess(object):
+# class Transform(object):
+    """common Postprocess just collect the infos to construct a Postprocess
+    """
+    def __init__(self, postprocess_cls, name='user_postprocess', **kwargs):
+        self.postprocess_cls = postprocess_cls
+        self.name = name
+        self.kwargs = kwargs
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
-from .transforms import TRANSFORMS, BaseTransform, transform_registry
-from .dataloaders import DATALOADERS
-from .filters import FILTERS, Filter, filter_registry
-
-__all__ = [
-    "DATALOADERS",
-    "DATASETS",
-    "Dataset",
-    "IterableDataset",
-    "dataset_registry",
-    "TRANSFORMS",
-    "BaseTransform",
-    "transform_registry",
-    "FILTERS",
-    "Filter",
-    "filter_registry",]

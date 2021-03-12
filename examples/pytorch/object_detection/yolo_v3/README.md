@@ -117,14 +117,17 @@ def eval_func(model):
     return AP.mean()
 model.eval()
 model.fuse_model()
-from lpot import Quantization
+from lpot import Quantization, common
 dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
 dataloader = torch.utils.data.DataLoader(
     dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn
 )
 lpot_dataloader = yolo_dataLoader(dataloader)
 quantizer = Quantization("./conf.yaml")
-q_model = quantizer(model, q_dataloader=lpot_dataloader, eval_func=eval_func)
+quantizer.model = common.Model(model)
+quantizer.calib_dataloader = lpot_dataloader
+quantizer.eval_func = eval_func
+q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model during timeout constrain.

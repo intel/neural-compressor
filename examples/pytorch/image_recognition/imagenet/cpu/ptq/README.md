@@ -79,9 +79,10 @@ python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
   After tuning with LPOT, we can get LPOT.model:
 
 ```
-from lpot import Quantization
+from lpot import Quantization, common
 quantizer = Quantization("./conf.yaml")
-lpot_model = quantizer(model)
+quantizer.model = common.Model(model)
+lpot_model = quantizer()
 ```
 
 Here, lpot_model is LPOT model class, so it has "save" API:
@@ -223,9 +224,10 @@ After prepare step is done, we just need update main.py like below.
 ```
 model.eval()
 model.module.fuse_model()
-from lpot import Quantization
+from lpot import Quantization, common
 quantizer = Quantization("./conf.yaml")
-q_model = quantizer(model)
+quantizer.model = common.Model(model)
+q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model during timeout constrain.
@@ -274,9 +276,10 @@ Add 'backend' field to Yaml Configure and the same for other fields.
 2. Tuning With LPOT
 
 ```python
-  from lpot import Quantization
+  from lpot import Quantization, common
   quantizer = Quantization("./conf_ipex.yaml")
-  lpot_model = quantizer(model)
+  quantizer.model = common.Model(model)
+  lpot_model = quantizer()
   lpot_model.save("Path_to_save_configure_file")
 ```
 

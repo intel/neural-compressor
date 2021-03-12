@@ -109,38 +109,36 @@ class TestQuantization(unittest.TestCase):
             print("Error while deleting file ")
 
     def test_run_tpe_one_trial(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
 
     def test_run_tpe_max_trials(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
 
     def test_loss_calculation(self):
         from lpot.strategy.tpe import TpeTuneStrategy
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        model = quantizer.model(self.constant_graph)
-        testObject = TpeTuneStrategy(model, quantizer.conf, dataloader)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+
+        testObject = TpeTuneStrategy(quantizer.model, quantizer.conf, quantizer.calib_dataloader)
         testObject._calculate_loss_function_scaling_components(0.01, 2, testObject.loss_function_config)
         # check if latency difference between min and max corresponds to 10 points of loss function
         tmp_val = testObject.calculate_loss(0.01, 2, testObject.loss_function_config)

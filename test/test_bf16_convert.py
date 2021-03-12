@@ -281,18 +281,16 @@ class TestBF16Convert(unittest.TestCase):
 
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
-        from lpot import Quantization
 
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (1, 224, 224, 3), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quant_model = quantizer(
-            self.test_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.test_graph
+        output_graph = quantizer()
         cast_op_count = 0
-        for node in quant_model.graph_def.node:
+        for node in output_graph.graph_def.node:
             if node.op == 'Cast':
                 cast_op_count += 1
         self.assertTrue(cast_op_count >= 1)
@@ -334,22 +332,23 @@ class TestBF16Convert(unittest.TestCase):
         quant_data = (q_data, label)
         evl_data = (q_data, label)
 
-        from lpot import Quantization
+        from lpot import Quantization, common
 
-        with tf.Graph().as_default() as g:
-            tf.import_graph_def(graph_def, name='')
-            quantizer = Quantization('fake_bf16_rnn.yaml')
+        quantizer = Quantization('fake_bf16_rnn.yaml')
+        quantizer.calib_dataloader = common.DataLoader(
+            dataset=list(zip(quant_data[0], quant_data[1])))
+        quantizer.eval_dataloader = common.DataLoader(
+            dataset=list(zip(evl_data[0], evl_data[1])))
+        quantizer.model = graph_def
+        quantized_model = quantizer()
 
-            q_dataloader = quantizer.dataloader(dataset=list(zip(quant_data[0], quant_data[1])))
-            e_dataloader = quantizer.dataloader(dataset=list(zip(evl_data[0], evl_data[1])))
-            quantized_model = quantizer(g, q_dataloader=q_dataloader, eval_dataloader=e_dataloader)
-
-            convert_to_bf16_flag = False
-            for i in quantized_model.graph_def.node:
-              if i.name == 'lstm/while/MatMul_3' and i.attr['T'].type == dtypes.bfloat16.as_datatype_enum:
-                convert_to_bf16_flag = True
-            
-            self.assertEqual(convert_to_bf16_flag, True)
+        convert_to_bf16_flag = False
+        for i in quantized_model.graph_def.node:
+          if i.name == 'lstm/while/MatMul_3' and \
+              i.attr['T'].type == dtypes.bfloat16.as_datatype_enum:
+            convert_to_bf16_flag = True
+        
+        self.assertEqual(convert_to_bf16_flag, True)
 
 
 if __name__ == "__main__":

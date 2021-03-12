@@ -55,7 +55,6 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
         g = tf.Graph()
         with g.as_default():
-            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -69,14 +68,14 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
+                from lpot import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
-                dataloader = quantizer.dataloader(dataset, batch_size=2)
-                output_graph = quantizer(
-                    float_graph_def,
-                    q_dataloader=dataloader,
-                    eval_dataloader=dataloader
-                )
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer()
+
                 for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndReluAndRequantize':
                         found_quantized_matmul = True
@@ -94,19 +93,18 @@ class TestGraphMatMulFusion(unittest.TestCase):
         z = tf.nn.relu(z,  name='op_to_store')
 
         with tf.Session() as sess:
-            from lpot import Quantization
 
             sess.run(z, feed_dict={x: x_data, y: y_data})
             float_graph_def = sess.graph.as_graph_def()
 
+            from lpot import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
-            dataloader = quantizer.dataloader(dataset, batch_size=2)
-            output_graph = quantizer(
-                float_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+            quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+            quantizer.model = float_graph_def
+            output_graph = quantizer()
+
             found_quantized_matmul = False
             for i in output_graph.graph_def.node:
                 if i.op == 'QuantizeV2' and i.name == 'MatMul_eightbit_quantize_x' and i.attr["T"].type == dtypes.quint8:
@@ -119,7 +117,6 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def test_matmul_biasadd_requantize_dequantize_fusion(self):
         g = tf.Graph()
         with g.as_default():
-            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -136,14 +133,13 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
+                    from lpot import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
-                    dataloader = quantizer.dataloader(dataset, batch_size=2)
-                    output_graph = quantizer(
-                        float_graph_def,
-                        q_dataloader=dataloader,
-                        eval_dataloader=dataloader
-                    )
+                    quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                    quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                    quantizer.model = float_graph_def
+                    output_graph = quantizer()
 
                     for i in output_graph.graph_def.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
@@ -155,7 +151,6 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def test_matmul_biasadd_requantize_dequantize_last_fusion(self):
         g = tf.Graph()
         with g.as_default():
-            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -171,14 +166,13 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
+                    from lpot import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
-                    dataloader = quantizer.dataloader(dataset, batch_size=2)
-                    output_graph = quantizer(
-                        float_graph_def,
-                        q_dataloader=dataloader,
-                        eval_dataloader=dataloader
-                    )
+                    quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                    quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                    quantizer.model = float_graph_def
+                    output_graph = quantizer()
 
                     for i in output_graph.graph_def.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
@@ -190,7 +184,6 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def test_disable_matmul_fusion(self):
         g = tf.Graph()
         with g.as_default():
-            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -204,14 +197,13 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
+                from lpot import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
-                dataloader = quantizer.dataloader(dataset, batch_size=2)
-                output_graph = quantizer(
-                    float_graph_def,
-                    q_dataloader=dataloader,
-                    eval_dataloader=dataloader
-                )
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer()
 
                 for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
@@ -223,7 +215,6 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def test_matmul_biasadd_requantize_dequantize_fusion_with_softmax(self):
         g = tf.Graph()
         with g.as_default():
-            from lpot import Quantization
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
@@ -247,14 +238,13 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
+                    from lpot import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
-                    dataloader = quantizer.dataloader(dataset, batch_size=2)
-                    output_graph = quantizer(
-                        float_graph_def,
-                        q_dataloader=dataloader,
-                        eval_dataloader=dataloader
-                    )
+                    quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                    quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                    quantizer.model = float_graph_def
+                    output_graph = quantizer()
 
                     count=0
                     for i in output_graph.model.node:

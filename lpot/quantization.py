@@ -20,15 +20,12 @@ import pickle
 import random
 import numpy as np
 from .conf.config import Conf
-from .conf.dotdict import deep_set, DotDict
+from .conf.dotdict import deep_get, deep_set, DotDict
 from .strategy import STRATEGIES
-from .metric import METRICS
 from .utils import logger
 from .utils.create_obj_from_config import create_dataloader
-from .data import DataLoader as DATALOADER
-from .data import DATASETS, TRANSFORMS
-from .model import MODELS
-from .model import Model as LpotModel
+from .model import BaseModel as LpotModel
+
 
 class Quantization(object):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -58,8 +55,13 @@ class Quantization(object):
         random.seed(seed)
         np.random.seed(seed)
 
-    def __call__(self, model=None, q_dataloader=None, q_func=None, eval_dataloader=None,
-                 eval_func=None):
+        self._model = None
+        self._calib_dataloader = None
+        self._calib_func = None
+        self._eval_dataloader = None
+        self._eval_func = None
+
+    def __call__(self):
         """The main entry point of automatic quantization tuning.
 
            This interface works on all the DL frameworks that lpot supports
@@ -77,14 +79,14 @@ class Quantization(object):
               with dataset as input parameter to create lpot dataloader before calling this
               function.
 
-              After that, User specifies fp32 "model", calibration dataset "q_dataloader"
+              After that, User specifies fp32 "model", calibration dataset "calib_dataloader"
               and evaluation dataset "eval_dataloader".
               The calibrated and quantized model is evaluated with "eval_dataloader"
               with evaluation metrics specified in the configuration file. The evaluation tells
               the tuner whether the quantized model meets the accuracy criteria. If not,
               the tuner starts a new calibration and tuning flow.
 
-              For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
+              For this usage, model, calib_dataloader and eval_dataloader parameters are mandotory.
 
            c) Partial yaml configuration: User specifies dataloaders used in calibration phase
               by code.
@@ -94,7 +96,7 @@ class Quantization(object):
               The "eval_func" tells the tuner whether the quantized model meets
               the accuracy criteria. If not, the Tuner starts a new calibration and tuning flow.
 
-              For this usage, model, q_dataloader and eval_func parameters are mandotory.
+              For this usage, model, calib_dataloader and eval_func parameters are mandotory.
 
         Args:
             model (object):                        For Tensorflow model, it could be a path
@@ -104,7 +106,7 @@ class Quantization(object):
                                                    instance.
                                                    For MXNet model, it's mxnet.symbol.Symbol
                                                    or gluon.HybirdBlock instance.
-            q_dataloader (generator):              Data loader for calibration, mandatory for
+            calib_dataloader (generator):              Data loader for calibration, mandatory for
                                                    post-training quantization. It is iterable
                                                    and should yield a tuple (input, label) for
                                                    calibration dataset containing label,
@@ -112,7 +114,7 @@ class Quantization(object):
                                                    dataset. The input could be a object, list,
                                                    tuple or dict, depending on user implementation,
                                                    as well as it can be taken as model input.
-            q_func (function, optional):           Training function for Quantization-Aware
+            calib_func (function, optional):       Training function for Quantization-Aware
                                                    Training. It is optional and only takes effect
                                                    when user choose "quant_aware_training"
                                                    approach in yaml.
@@ -155,58 +157,26 @@ class Quantization(object):
 
         """
         cfg = self.conf.usr_cfg
-        if model is None:
-            assert cfg.model.root is not None, 'root field in model field of the yaml' \
-                'file should be configured if model not transfered through calling'
-            root = cfg.model.root
-            model = self.model(root)
-        elif not isinstance(model, LpotModel):
-            model = self.model(model)
+        
+        assert isinstance(self._model, LpotModel), 'need set your Model for quantization....'
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
-        if eval_func is None:
-            if eval_dataloader is None:
-                eval_dataloader_cfg = cfg.evaluation.accuracy.dataloader if \
-                                      cfg.evaluation and cfg.evaluation.accuracy else None
-
+        if self._eval_func is None:
+            if self._eval_dataloader is None:
+                eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
                 if eval_dataloader_cfg is None:
-                    self.eval_func = self._fake_eval_func
-                    self.eval_dataloader = None
+                    self._eval_func = self._fake_eval_func
                 else:
-                    self.eval_dataloader = create_dataloader(self.framework, \
+                    self._eval_dataloader = create_dataloader(self.framework, \
                                                              eval_dataloader_cfg)
-                    self.eval_func = None
-            else:
-                assert hasattr(eval_dataloader, 'batch_size'), \
-                       "eval_dataloader must have batch_size attribute!"
-                assert hasattr(eval_dataloader, '__iter__') or \
-                       hasattr(eval_dataloader, '__getitem__'), \
-                       "eval_dataloader must implement __iter__ or __getitem__ magic method!"
-                self.eval_dataloader = eval_dataloader
-                self.eval_func = None
-        else:
-            self.eval_dataloader =None
-            self.eval_func = eval_func
 
-        if q_func is None:
-            if q_dataloader is None:
-                calib_dataloader_cfg = cfg.quantization.calibration.dataloader
+        if self._calib_func is None:
+            if self._calib_dataloader is None:
+                calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
                 assert calib_dataloader_cfg is not None, \
                        "dataloader field of calibration field of quantization section " \
-                       "in yaml file should be configured as q_dataloader is None!"
-                self.calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
-                self.q_func = None
-            else:
-                assert hasattr(q_dataloader, 'batch_size'), \
-                       "q_dataloader must have batch_size attribute!"
-                assert hasattr(q_dataloader, '__iter__') or \
-                       hasattr(q_dataloader, '__getitem__'), \
-                       "q_dataloader must implement __iter__ or __getitem__ magic method!"
-                self.calib_dataloader = q_dataloader
-                self.q_func = None
-        else:
-            self.calib_dataloader =None
-            self.q_func = q_func
+                       "in yaml file should be configured as calib_dataloader is None!"
+                self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
 
         strategy = cfg.tuning.strategy.name.lower()
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
@@ -223,12 +193,12 @@ class Quantization(object):
                 _resume = pickle.load(f).__dict__
 
         self.strategy = STRATEGIES[strategy](
-            model,
+            self._model,
             self.conf,
-            self.calib_dataloader,
-            self.q_func,
-            self.eval_dataloader,
-            self.eval_func,
+            self._calib_dataloader,
+            self._calib_func,
+            self._eval_dataloader,
+            self._eval_func,
             _resume)
 
         self.strategy.traverse()
@@ -246,16 +216,42 @@ class Quantization(object):
         return self.strategy.best_qmodel
 
     def dataset(self, dataset_type, *args, **kwargs):
+        from .data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)
 
-    def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
-                   sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
-        return DATALOADER(framework=self.framework, dataset=dataset,
-                          batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
-                          sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
-                          pin_memory=pin_memory)
+    @property
+    def calib_dataloader(self):
+        return self._calib_dataloader
 
-    def model(self, root, **kwargs):
+    @calib_dataloader.setter
+    def calib_dataloader(self, dataloader):
+        from .common import _generate_common_dataloader
+        self._calib_dataloader = _generate_common_dataloader(
+            dataloader, self.framework)
+
+    @property
+    def eval_dataloader(self):
+        return self._eval_dataloader
+
+    @eval_dataloader.setter
+    def eval_dataloader(self, dataloader):
+        from .common import _generate_common_dataloader
+        self._eval_dataloader = _generate_common_dataloader(
+            dataloader, self.framework)
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        from .common import Model as LpotModel
+        from .model import MODELS
+        if not isinstance(user_model, LpotModel):
+            logger.warning('force convert user raw model to lpot model, \
+                better initialize lpot.common.Model and set....')
+            user_model = LpotModel(user_model)
+
         framework_model_info = {}
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':
@@ -265,24 +261,71 @@ class Quantization(object):
                  'output_tensor_names': cfg.model.outputs,
                  'workspace_path': cfg.tuning.workspace.path})
 
-        return MODELS[self.framework](root, framework_model_info, **kwargs)
+        self._model = MODELS[self.framework](\
+            user_model.root, framework_model_info, **user_model.kwargs)
 
-    def metric(self, name, metric_cls, **kwargs):
-        metric_cfg = {name : {**kwargs}}
+    @property
+    def metric(self):
+        logger.warning('metric not support getter....')
+        return None
+
+    @metric.setter
+    def metric(self, user_metric):
+        from .common import Metric as LpotMetric
+        assert isinstance(user_metric, LpotMetric), \
+            'please initialize a lpot.common.Metric and set....'
+
+        metric_cfg = {user_metric.name : {**user_metric.kwargs}}
+        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
+            logger.warning('already set metric in yaml file, will override it...')
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+        from .metric import METRICS
         metrics = METRICS(self.framework)
-        metrics.register(name, metric_cls)
+        metrics.register(user_metric.name, user_metric.metric_cls)
 
-    def postprocess(self, name, postprocess_cls, **kwargs):
-        postprocess_cfg = {name : {**kwargs}}
+    @property
+    def postprocess(self, user_postprocess):
+        logger.warning('postprocess not support getter....')
+        return None
+
+    @postprocess.setter
+    def postprocess(self, user_postprocess):
+        from .common import Postprocess as LpotPostprocess
+        assert isinstance(user_postprocess, LpotPostprocess), \
+            'please initialize a lpot.common.Postprocess and set....'
+        postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
+        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
+            logger.warning('already set postprocess in yaml file, will override it...')
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
+        from .data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
-        postprocesses.register(name, postprocess_cls)
-        logger.info("{} registered to postprocess".format(name))
+        postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
+        logger.info("{} registered to postprocess".format(user_postprocess.name))
 
     # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
     # fake eval func is created to do quantization once without tuning
     def _fake_eval_func(self, model):
         return 1.
+
+    # BELOW API TO BE DEPRECATED!
+    @property
+    def q_func(self):
+        logger.warning('q_func not support getter....')
+        return None
+        
+    @q_func.setter
+    def q_func(self, user_q_func):
+        logger.warning('q_func is to be deprecated, please construct q_dataloader....')
+        self._calib_func = user_q_func
+
+    @property
+    def eval_func(self):
+        logger.warning('eval_func not support getter....')
+        return None
+        
+    @eval_func.setter
+    def eval_func(self, user_eval_func):
+        logger.warning('eval_func is to be deprecated, please construct eval_dataloader....')
+        self._eval_func = user_eval_func
 

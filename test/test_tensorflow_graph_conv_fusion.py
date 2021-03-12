@@ -79,16 +79,13 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
-
+            from lpot import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
             found_conv_fusion = True
 
             for i in output_graph.graph_def.node:
@@ -119,16 +116,13 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
-
+            from lpot import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
             found_conv_fusion = True
 
             for i in output_graph.graph_def.node:
@@ -165,16 +159,15 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
 
+            from lpot import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
@@ -216,16 +209,15 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
 
+            from lpot import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             quantize_v2_count = 0
             for i in output_graph.graph_def.node:
                 if i.op == 'QuantizeV2':
@@ -263,16 +255,15 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
 
+            from lpot import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             quantize_v2_count = 0
             for i in output_graph.graph_def.node:
                 if i.op == 'QuantizeV2':

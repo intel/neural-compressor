@@ -66,15 +66,15 @@ def main(_):
 
       from lpot import Quantization
       quantizer = Quantization(args.config)
-      model = quantizer.model(args.input_graph)
-      q_model = quantizer(model)
+      quantizer.model = args.input_graph
+      q_model = quantizer()
       q_model.save(args.output_graph)
 
   if args.benchmark:
       from lpot import Benchmark
       evaluator = Benchmark(args.config)
-      model = evaluator.model(args.input_graph)
-      results = evaluator(model=model)
+      evaluator.model = args.input_graph
+      results = evaluator()
       for mode, result in results.items():
           acc, batch_size, result_list = result
           latency = np.array(result_list).mean() / batch_size

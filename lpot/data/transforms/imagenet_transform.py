@@ -32,13 +32,13 @@
 
 import numpy as np
 from lpot.utils.utility import LazyImport
-from .transform import transform_registry, Transform
+from .transform import transform_registry, BaseTransform
 tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')
 
 @transform_registry(transform_type="ParseDecodeImagenet", \
                     process="preprocess", framework="tensorflow")
-class ParseDecodeImagenetTransform(Transform):
+class ParseDecodeImagenetTransform(BaseTransform):
 
   def __call__(self, sample):
     # Dense features in Example proto.
@@ -64,7 +64,7 @@ class ParseDecodeImagenetTransform(Transform):
 
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="tensorflow")
-class TensorflowResizeCropImagenetTransform(Transform):
+class TensorflowResizeCropImagenetTransform(BaseTransform):
   def __init__(self, height, width, random_crop=False, resize_side=256, \
                random_flip_left_right=False, mean_value=[0.0,0.0,0.0], scale=1.0):
 
@@ -122,7 +122,7 @@ class TensorflowResizeCropImagenetTransform(Transform):
 
 @transform_registry(transform_type="QuantizedInput", \
                     process="preprocess", framework="tensorflow")
-class QuantizedInput(Transform):
+class QuantizedInput(BaseTransform):
   def __init__(self, dtype, scale=None):
     self.dtype_map = {'uint8': tf.uint8, 'int8': tf.int8}
     assert dtype in self.dtype_map.keys(), \
@@ -144,7 +144,7 @@ class QuantizedInput(Transform):
 
 @transform_registry(transform_type="LabelShift", \
                     process="postprocess", framework="tensorflow")
-class LabelShift(Transform):
+class LabelShift(BaseTransform):
   def __init__(self, label_shift=0):
     self.label_shift = label_shift
 
@@ -155,7 +155,7 @@ class LabelShift(Transform):
 
 @transform_registry(transform_type="BilinearImagenet", \
                     process="preprocess", framework="tensorflow")
-class BilinearImagenetTransform(Transform):
+class BilinearImagenetTransform(BaseTransform):
   def __init__(self, height, width, central_fraction=0.875,
                mean_value=[0.0,0.0,0.0], scale=1.0):
 
@@ -190,7 +190,7 @@ class BilinearImagenetTransform(Transform):
 
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops")
-class ONNXResizeCropImagenetTransform(Transform):
+class ONNXResizeCropImagenetTransform(BaseTransform):
   def __init__(self, height, width, random_crop=False, resize_side=256, \
                mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225]):
 

@@ -8,6 +8,7 @@ import mxnet.gluon.nn as nn
 
 sys.path.append('..')
 import lpot
+from lpot import common
 
 def get_mlp_sym():
     data = mx.symbol.Variable('data')
@@ -136,9 +137,10 @@ class TestAdaptorMXNet(unittest.TestCase):
             calib_data = mx.io.NDArrayIter(data=data, label=labels, batch_size=shape[0])
 
             fp32_model = (self.mlp_model, arg_params, aux_params)
-            qmodel = self.quantizer_1(fp32_model,
-                                      q_dataloader=calib_data,
-                                      eval_dataloader=calib_data)
+            self.quantizer_1.model = common.Model(fp32_model)
+            self.quantizer_1.calib_dataloader = calib_data
+            self.quantizer_1.eval_dataloader = calib_data
+            qmodel = self.quantizer_1()
             self.assertIsInstance(qmodel.model[0], mx.symbol.Symbol)
 
     def test_conv_model_quantization(self):
@@ -159,12 +161,15 @@ class TestAdaptorMXNet(unittest.TestCase):
             calib_data = mx.io.NDArrayIter(data=data, batch_size=shape[0])
 
             fp32_model = (self.conv_model, arg_params, aux_params)
-            qmodel = self.quantizer_2(fp32_model, q_dataloader=calib_data, \
-                                      eval_dataloader=calib_data, eval_func=eval_func)
+            self.quantizer_2.model = common.Model(fp32_model)
+            self.quantizer_2.calib_dataloader = calib_data
+            self.quantizer_2.eval_dataloader = calib_data
+            self.quantizer_2.eval_func = eval_func
+            qmodel = self.quantizer_2()
             # test inspected_tensor
             inspect_tensor = self.quantizer_2.strategy.adaptor.inspect_tensor
-            fp32_model = self.quantizer_2.model(fp32_model)
-            inspected_tensor = inspect_tensor(fp32_model, calib_data,
+            self.quantizer_2.model = fp32_model
+            inspected_tensor = inspect_tensor(self.quantizer_2.model, calib_data,
                                               op_list=[('sg_mkldnn_conv_bn_act_0_output', 'CONV'),
                                                        ('data', 'input')],
                                               iteration_list=[0, 2, 4])
@@ -201,7 +206,10 @@ class TestAdaptorMXNet(unittest.TestCase):
 
         valid_dataset = mx.gluon.data.vision.datasets.FashionMNIST(train=False)
         q_dataloader = Quant_dataloader(valid_dataset)
-        qmodel = self.quantizer_1(net, q_dataloader=q_dataloader, eval_func=eval_func)
+        self.quantizer_1.model = common.Model(net)
+        self.quantizer_1.calib_dataloader = q_dataloader
+        self.quantizer_1.eval_func = eval_func
+        qmodel = self.quantizer_1()
         self.assertIsInstance(qmodel.model, mx.gluon.HybridBlock)
 
 if __name__ == "__main__":

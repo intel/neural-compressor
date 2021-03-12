@@ -284,7 +284,7 @@ if __name__ == "__main__":
 
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from lpot import Quantization
+        from lpot import Quantization, common
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.yaml, "./config_tmp.yaml", list(inputs.keys()), outputs)
@@ -292,12 +292,12 @@ if __name__ == "__main__":
         quantizer = Quantization("./config_tmp.yaml")
         # generate dummy data
         dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
-                                low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        data_loader = quantizer.dataloader(dataset=dataset,
-                                           batch_size=batch_size,
-                                           collate_fn=oob_collate_data_func)
-        model = quantizer.model(args.model_path)
-        q_model = quantizer(model, q_dataloader=data_loader)
+                                    low=1.0, high=20.0, dtype=inputs_dtype, label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset=dataset,
+                                                       batch_size=batch_size,
+                                                       collate_fn=oob_collate_data_func)
+        quantizer.model = args.model_path
+        q_model = quantizer()
         q_model.save(args.output_path)
 
     else:

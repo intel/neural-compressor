@@ -252,10 +252,10 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         model.eval()
         model.module.fuse_model()
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization("./conf.yaml")
-        model = quantizer.model(model)
-        q_model = quantizer(model)
+        quantizer.model = common.Model(model)
+        q_model = quantizer()
         return
 
     for epoch in range(args.start_epoch, args.epochs):

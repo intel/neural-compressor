@@ -32,12 +32,12 @@
 
 import numpy as np
 from lpot.utils.utility import LazyImport
-from .transform import transform_registry, Transform
+from .transform import transform_registry, BaseTransform
 tf = LazyImport('tensorflow')
 
 @transform_registry(transform_type="ParseDecodeCoco", \
                     process="preprocess", framework="tensorflow")
-class ParseDecodeCocoTransform(Transform):
+class ParseDecodeCocoTransform(BaseTransform):
     def __call__(self, sample):
         # Dense features in Example proto.
         feature_map = {

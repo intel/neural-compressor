@@ -124,16 +124,15 @@ class TestConfigRegex(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             found_fp32_conv = False
             found_quantized_conv = False
             for i in output_graph.graph_def.node:
@@ -178,16 +177,15 @@ class TestConfigRegex(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_with_invalid_cfg.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             found_fp32_conv = False
             found_quantized_conv = False
             for i in output_graph.graph_def.node:

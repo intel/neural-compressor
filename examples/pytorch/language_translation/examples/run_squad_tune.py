@@ -687,13 +687,15 @@ def main():
                 dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 eval_task = "squad"
-                from lpot import Quantization
+                from lpot import Quantization, common
                 quantizer = Quantization(args.config)
                 dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task,
                                             model_type=args.model_type)
-                test_dataloader = quantizer.dataloader(dataset, batch_size=args.eval_batch_size)
-                model = quantizer.model(model)
-                q_model = quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
+                quantizer.model = common.Model(model)
+                quantizer.calib_dataloader = common.DataLoader(
+                    dataset, batch_size=args.eval_batch_size)
+                quantizer.eval_func = eval_func_for_lpot
+                q_model = quantizer()
                 q_model.save(args.tuned_checkpoint)
                 exit(0)
 

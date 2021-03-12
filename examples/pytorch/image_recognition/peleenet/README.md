@@ -144,9 +144,10 @@ After prepare step is done, we just need update main.py like below.
 
 ```
 model.module.fuse()
-from lpot import Quantization
+from lpot import Quantization, common
 quantizer = Quantization("./conf.yaml")
-q_model = quantizer(model)
+quantizer.model = common.Model(model)
+q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model during timeout constrain.

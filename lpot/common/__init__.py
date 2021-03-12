@@ -15,21 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .model import Model
+from .dataloader import DataLoader, _generate_common_dataloader
+from .postprocess import Postprocess
+from .metric import Metric
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
-from .transforms import TRANSFORMS, BaseTransform, transform_registry
-from .dataloaders import DATALOADERS
-from .filters import FILTERS, Filter, filter_registry
+__all__ = ['Model', 'DataLoader', 'Postprocess', 'Metric', '_generate_common_dataloader']
 
-__all__ = [
-    "DATALOADERS",
-    "DATASETS",
-    "Dataset",
-    "IterableDataset",
-    "dataset_registry",
-    "TRANSFORMS",
-    "BaseTransform",
-    "transform_registry",
-    "FILTERS",
-    "Filter",
-    "filter_registry",]
+

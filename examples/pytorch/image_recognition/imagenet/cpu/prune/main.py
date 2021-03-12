@@ -171,9 +171,8 @@ def main_worker(gpu, args):
         return
 
     if args.prune:
-        from lpot import Pruning
+        from lpot import Pruning, common
         prune = Pruning(args.config)
-        model = prune.model(model)
 
         def training_func_for_lpot(model):
             epochs = 16
@@ -205,8 +204,10 @@ def main_worker(gpu, args):
             validate(val_loader, model, criterion, args)
 
             return
-        q_model = prune(model, q_dataloader=None, q_func=training_func_for_lpot,
-                        eval_dataloader=val_loader)
+        prune.model = common.Model(model)
+        prune.eval_dataloader = val_loader
+        prune.q_func = training_func_for_lpot
+        q_model = prune()
         return
 
 

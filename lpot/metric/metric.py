@@ -144,7 +144,7 @@ def metric_registry(metric_type, framework):
     return decorator_metric
 
 
-class Metric(object):
+class BaseMetric(object):
     def __init__(self, metric, single_output=False):
         self._metric_cls = metric
         self._single_output = single_output
@@ -169,7 +169,7 @@ class Metric(object):
     def metric(self):
         return self._metric
 
-class WrapPyTorchMetric(Metric):
+class WrapPyTorchMetric(BaseMetric):
 
     def update(self, preds, labels=None, sample_weight=None):
         if self._single_output:
@@ -185,7 +185,7 @@ class WrapPyTorchMetric(Metric):
         return self._metric.compute()
 
 
-class WrapMXNetMetric(Metric):
+class WrapMXNetMetric(BaseMetric):
 
     def update(self, preds, labels=None, sample_weight=None):
         preds = mx.nd.array(preds)
@@ -199,7 +199,7 @@ class WrapMXNetMetric(Metric):
         acc_name, acc = self._metric.get()
         return acc
 
-class WrapONNXRTMetric(Metric):
+class WrapONNXRTMetric(BaseMetric):
 
     def update(self, preds, labels=None, sample_weight=None):
         preds = np.array(preds)
@@ -282,7 +282,7 @@ def _shape_validate(preds, labels):
     return preds, labels
 
 @metric_registry('topk', 'mxnet')
-class MxnetTopK(Metric):
+class MxnetTopK(BaseMetric):
     """The class of calculating topk metric, which usually is used in classification.
 
     Args:
@@ -325,7 +325,7 @@ class MxnetTopK(Metric):
             return self.num_correct / self.num_sample
 
 @metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
-class F1(Metric):
+class F1(BaseMetric):
     def __init__(self):
         self._score_list = []
 
@@ -369,7 +369,7 @@ def _accuracy_type_check(preds, labels):
    return update_type
 
 @metric_registry('Accuracy', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
-class Accuracy(Metric):
+class Accuracy(BaseMetric):
     def __init__(self):
         self.pred_list = []
         self.label_list = []
@@ -433,7 +433,7 @@ class PyTorchLoss():
         return self._sum.item() / self._num_examples
         
 @metric_registry('Loss', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
-class Loss(Metric):
+class Loss(BaseMetric):
     def __init__(self):
         self.sample = 0
         self.sum = 0
@@ -451,7 +451,7 @@ class Loss(Metric):
         return self.sum / self.sample
 
 @metric_registry('MAE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
-class MAE(Metric):
+class MAE(BaseMetric):
     def __init__(self, compare_label=True):
         self.label_list = []
         self.pred_list = []
@@ -477,7 +477,7 @@ class MAE(Metric):
             return 1 / (aes_sum / aes_size + 0.001)
 
 @metric_registry('RMSE', 'tensorflow, mxnet, onnxrt_qlinearops, onnxrt_integerops')
-class RMSE(Metric):
+class RMSE(BaseMetric):
     def __init__(self, compare_label=True):
         self.mse = MSE(compare_label)
 
@@ -491,7 +491,7 @@ class RMSE(Metric):
         return np.sqrt(self.mse.result())
 
 @metric_registry('MSE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
-class MSE(Metric):
+class MSE(BaseMetric):
     def __init__(self, compare_label=True):
         self.label_list = []
         self.pred_list = []
@@ -517,7 +517,7 @@ class MSE(Metric):
             return 1 / (squares_sum / squares_size + 0.001)
 
 @metric_registry('topk', 'tensorflow')
-class TensorflowTopK(Metric):
+class TensorflowTopK(BaseMetric):
     """The class of calculating topk metric, which usually is used in classification.
 
     Args:
@@ -559,7 +559,7 @@ class TensorflowTopK(Metric):
             return self.num_correct / self.num_sample
 
 @metric_registry('topk', 'onnxrt_qlinearops, onnxrt_integerops')
-class ONNXRTTopK(Metric):
+class ONNXRTTopK(BaseMetric):
     """The class of calculating topk metric, which usually is used in classification.
 
     Args:
@@ -603,7 +603,7 @@ class ONNXRTTopK(Metric):
 
 
 @metric_registry('COCOmAP', 'tensorflow')
-class TensorflowCOCOMAP(Metric):
+class TensorflowCOCOMAP(BaseMetric):
     """The class of calculating mAP metric
 
     """
@@ -723,7 +723,7 @@ class TensorflowCOCOMAP(Metric):
             return box_metrics['DetectionBoxes_Precision/mAP']
 
 @metric_registry('SquadF1', 'tensorflow')
-class SquadF1(Metric):
+class SquadF1(BaseMetric):
     def __init__(self):
         self._score_list = []
 

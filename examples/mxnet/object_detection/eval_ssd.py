@@ -103,7 +103,7 @@ def get_dataloader(val_dataset, data_shape, batch_size, num_workers):
     #     val_dataset.transform(SSDDefaultValTransform(width, height)), batchify_fn=batchify_fn,
     #     batch_size=batch_size, shuffle=False, last_batch='rollover', num_workers=num_workers)
     from lpot import data
-    val_loader = data.DataLoader('mxnet',
+    val_loader = data.DATALOADERS['mxnet'](
         val_dataset.transform(SSDDefaultValTransform(width, height)),
         collate_fn=batchify_fn, batch_size=batch_size, last_batch='rollover', num_workers=num_workers)
     return val_loader
@@ -270,10 +270,13 @@ if __name__ == '__main__':
 
     if args.tune:
         # Doing auto-tuning here
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization("./ssd.yaml")
-        model = quantizer.model(net)
-        q_model = quantizer(model, q_dataloader=val_data, eval_dataloader=val_data, eval_func=eval_func)
+        quantizer.model = common.Model(net)
+        quantizer.calib_dataloader = val_data
+        quantizer.eval_dataloader = val_data
+        quantizer.eval_func = eval_func
+        q_model = quantizer()
         q_model.save(args.output_graph)
         sys.exit()
 

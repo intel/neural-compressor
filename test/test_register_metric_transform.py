@@ -43,25 +43,29 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from lpot import Benchmark, Quantization
+        from lpot import Benchmark, Quantization, common
         from lpot.data.transforms.imagenet_transform import LabelShift
         from lpot.metric.metric import TensorflowTopK
+
         evaluator = Benchmark('fake_yaml.yaml')
-        evaluator.postprocess('label_benchmark', LabelShift, label_shift=1) 
-        evaluator.metric('topk_benchmark', TensorflowTopK)
-        dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        result = evaluator(self.pb_path, dataloader)
+        evaluator.postprocess = common.Postprocess(LabelShift, 'label_benchmark', label_shift=1) 
+        evaluator.metric = common.Metric(TensorflowTopK, 'topk_benchmark')
+        evaluator.b_dataloader = common.DataLoader(dataset=list(zip(images, labels)))
+        evaluator.model = self.pb_path
+        result = evaluator()
         acc, batch_size, result_list = result['accuracy']
         self.assertEqual(acc, 0.0)
 
         quantizer = Quantization('fake_yaml.yaml')
-        quantizer.postprocess('label_quantize', LabelShift, label_shift=1) 
-        quantizer.metric('topk_quantize', TensorflowTopK)
+        quantizer.postprocess = common.Postprocess(LabelShift, 'label_quantize', label_shift=1) 
+        quantizer.metric = common.Metric(TensorflowTopK, 'topk_quantize')
 
         evaluator = Benchmark('fake_yaml.yaml')
-        evaluator.metric('topk_second', TensorflowTopK)
-        dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        result = evaluator(self.pb_path, dataloader)
+        evaluator.metric = common.Metric(TensorflowTopK, 'topk_second')
+
+        evaluator.b_dataloader = common.DataLoader(dataset=list(zip(images, labels)))
+        evaluator.model = self.pb_path
+        result = evaluator()
         acc, batch_size, result_list = result['accuracy']
         self.assertEqual(acc, 0.0)
 

@@ -58,8 +58,9 @@ We only need to add the following lines for quantization to create an int8 model
 4. Run benchmark accoridng to config
 ```
      # Optional, run benchmark 
-    from lpot import Benchmark
+    from lpot import Benchmark, common
     evaluator = Benchmark('./conf.yaml')
-    results = evaluator(model=quantized_model)
+    evaluator.model = common.Model(quantized_model)
+    results = evaluator()
  
 ```

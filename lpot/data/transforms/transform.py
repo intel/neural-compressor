@@ -26,7 +26,7 @@ tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 cv2 = LazyImport('cv2')
 
-class BaseTransforms(object):
+class Transforms(object):
     def __init__(self, process, concat_general=True):
         transform_map = {"preprocess": self._get_preprocess,
                          "postprocess": self._get_postprocess,
@@ -49,7 +49,7 @@ class BaseTransforms(object):
         raise NotImplementedError
 
 
-class TensorflowTransforms(BaseTransforms):
+class TensorflowTransforms(Transforms):
 
     def _get_preprocess(self):
         preprocess = {
@@ -76,7 +76,7 @@ class TensorflowTransforms(BaseTransforms):
         return general
 
 
-class MXNetTransforms(BaseTransforms):
+class MXNetTransforms(Transforms):
     def _get_preprocess(self):
         preprocess = {
             'ToTensor': PytorchMxnetWrapFunction(
@@ -106,7 +106,7 @@ class MXNetTransforms(BaseTransforms):
         return general
 
 
-class PyTorchTransforms(BaseTransforms):
+class PyTorchTransforms(Transforms):
     def _get_preprocess(self):
         preprocess = {
             "ToTensor": PytorchMxnetWrapFunction(
@@ -141,7 +141,7 @@ class PyTorchTransforms(BaseTransforms):
         general.update(PYTORCH_TRANSFORMS["general"])
         return general
 
-class ONNXRTQLTransforms(BaseTransforms):
+class ONNXRTQLTransforms(Transforms):
     def _get_preprocess(self):
         preprocess = {}
         preprocess.update(ONNXRT_QL_TRANSFORMS["preprocess"])
@@ -158,7 +158,7 @@ class ONNXRTQLTransforms(BaseTransforms):
         return general
 
 
-class ONNXRTITTransforms(BaseTransforms):
+class ONNXRTITTransforms(Transforms):
     def _get_preprocess(self):
         preprocess = {}
         preprocess.update(ONNXRT_IT_TRANSFORMS["preprocess"])
@@ -247,7 +247,7 @@ def transform_registry(transform_type, process, framework):
     return decorator_transform
 
 
-class Transform(object):
+class BaseTransform(object):
     """The base class for transform. __call__ method is needed when write user specific transform
 
     """
@@ -263,7 +263,7 @@ class TensorflowWrapFunction(object):
     def __call__(self, **kwargs):
         return TensorflowTransform(self.transform_func, **kwargs)
 
-class TensorflowTransform(Transform):
+class TensorflowTransform(BaseTransform):
     def __init__(self, transform_func, **kwargs):
         self.kwargs = kwargs
         self.transform_func = transform_func
@@ -280,7 +280,7 @@ class PytorchMxnetWrapFunction(object):
     def __call__(self, **args):
         return PytorchMxnetTransform(self.transform_func(**args))
 
-class PytorchMxnetTransform(Transform):
+class PytorchMxnetTransform(BaseTransform):
     def __init__(self, transform_func):
         self.transform_func = transform_func
 
@@ -309,7 +309,7 @@ interpolation_mxnet_map = {
 
 @transform_registry(transform_type="Compose", process="general", \
                  framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow")
-class ComposeTransform(Transform):
+class ComposeTransform(BaseTransform):
     def __init__(self, transform_list):
         self.transform_list = transform_list
 
@@ -320,7 +320,7 @@ class ComposeTransform(Transform):
 
 @transform_registry(transform_type="Transpose", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
-class Transpose(Transform):
+class Transpose(BaseTransform):
     def __init__(self, perm):
         self.perm = perm
 
@@ -340,7 +340,7 @@ class MXNetTranspose(Transpose):
 
 @transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
-class RandomVerticalFlip(Transform):
+class RandomVerticalFlip(BaseTransform):
     def __call__(self, sample):
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
@@ -349,7 +349,7 @@ class RandomVerticalFlip(Transform):
 
 @transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
-class RandomHorizontalFlip(Transform):
+class RandomHorizontalFlip(BaseTransform):
     def __call__(self, sample):
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
@@ -358,7 +358,7 @@ class RandomHorizontalFlip(Transform):
 
 @transform_registry(transform_type="ToArray", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, pytorch, mxnet")
-class ToArray(Transform):
+class ToArray(BaseTransform):
     def __call__(self, sample):
         from PIL import Image
         image, label = sample
@@ -372,7 +372,7 @@ class ToArray(Transform):
 
 @transform_registry(transform_type="Cast",
                     process="general", framework="tensorflow")
-class CastTFTransform(Transform):
+class CastTFTransform(BaseTransform):
     def __init__(self, dtype='float32'):
         dtype_map = {'int8': tf.int8, 'uint8': tf.uint8, 'uint16': tf.uint16, 
                      'uint32':tf.uint32, 'uint64': tf.uint64, 'int16': tf.int16, 
@@ -393,7 +393,7 @@ class CastTFTransform(Transform):
 
 @transform_registry(transform_type="CenterCrop",
                     process="preprocess", framework="tensorflow")
-class CenterCropTFTransform(Transform):
+class CenterCropTFTransform(BaseTransform):
     def __init__(self, size):
         if isinstance(size, int):
             self.size = size, size
@@ -420,7 +420,7 @@ class CenterCropTFTransform(Transform):
 
 @transform_registry(transform_type="Resize",
                     process="preprocess", framework="tensorflow")
-class ResizeTFTransform(Transform):
+class ResizeTFTransform(BaseTransform):
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
@@ -441,7 +441,7 @@ class ResizeTFTransform(Transform):
 
 @transform_registry(transform_type="Resize", process="preprocess", \
                         framework="pytorch")
-class ResizePytorchTransform(Transform):
+class ResizePytorchTransform(BaseTransform):
     def __init__(self, size, interpolation='bilinear'):
         self.size = size
         if interpolation in interpolation_pytorch_map.keys():
@@ -457,7 +457,7 @@ class ResizePytorchTransform(Transform):
 
 @transform_registry(transform_type="RandomCrop",
                     process="preprocess", framework="tensorflow")
-class RandomCropTFTransform(Transform):
+class RandomCropTFTransform(BaseTransform):
     def __init__(self, size):
         if isinstance(size, int):
             self.size = size, size
@@ -493,7 +493,7 @@ class RandomCropTFTransform(Transform):
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
                         framework="pytorch")
-class RandomResizedCropPytorchTransform(Transform):
+class RandomResizedCropPytorchTransform(BaseTransform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), 
                         interpolation='bilinear'):    
         self.size = size
@@ -516,7 +516,7 @@ class RandomResizedCropPytorchTransform(Transform):
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
                         framework="mxnet")
-class RandomResizedCropMXNetTransform(Transform):
+class RandomResizedCropMXNetTransform(BaseTransform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), 
                         interpolation='bilinear'):    
         if isinstance(size, int):
@@ -546,7 +546,7 @@ class RandomResizedCropMXNetTransform(Transform):
 
 @transform_registry(transform_type="RandomResizedCrop",
                     process="preprocess", framework="tensorflow")
-class RandomResizedCropTFTransform(Transform):
+class RandomResizedCropTFTransform(BaseTransform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
@@ -626,7 +626,7 @@ class RandomResizedCropTFTransform(Transform):
 
 @transform_registry(transform_type="Normalize", process="preprocess", 
                         framework="tensorflow")
-class NormalizeTFTransform(Transform):
+class NormalizeTFTransform(BaseTransform):
     def __init__(self, mean=[0.0], std=[1.0]):
         self.mean = mean
         self.std = std
@@ -647,7 +647,7 @@ class NormalizeTFTransform(Transform):
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
                 framework='tensorflow')
-class RescaleTFTransform(Transform):
+class RescaleTFTransform(BaseTransform):
     def __call__(self, sample):
         image, label = sample
         image = tf.cast(image, tf.float32) / 255.
@@ -655,7 +655,7 @@ class RescaleTFTransform(Transform):
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
                 framework='onnxrt_qlinearops, onnxrt_integerops')
-class RescaleTransform(Transform):
+class RescaleTransform(BaseTransform):
     def __call__(self, sample):
         image, label = sample
         if isinstance(image, np.ndarray):
@@ -664,7 +664,7 @@ class RescaleTransform(Transform):
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
     framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops')
-class AlignImageChannelTransform(Transform):
+class AlignImageChannelTransform(BaseTransform):
     """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
         [H,W,3]->[H,W]. 
         Input image must be np.ndarray.
@@ -690,14 +690,14 @@ class AlignImageChannelTransform(Transform):
 
 @transform_registry(transform_type="ToNDArray", process="preprocess", \
                 framework="mxnet")
-class ToNDArrayTransform(Transform):
+class ToNDArrayTransform(BaseTransform):
     def __call__(self, sample):
         image, label = sample
         image = mx.nd.array(image)
         return image, label
 
 @transform_registry(transform_type="Resize", process="preprocess", framework="mxnet")
-class ResizeMXNetTransform(Transform):
+class ResizeMXNetTransform(BaseTransform):
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
@@ -721,7 +721,7 @@ class ResizeMXNetTransform(Transform):
 
 @transform_registry(transform_type="Resize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
-class ResizeTransform(Transform):
+class ResizeTransform(BaseTransform):
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
@@ -746,7 +746,7 @@ class ResizeTransform(Transform):
 
 @transform_registry(transform_type="CropResize", process="preprocess", \
                 framework="tensorflow")
-class CropResizeTFTransform(Transform):
+class CropResizeTFTransform(BaseTransform):
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation not in ['bilinear', 'nearest']:
             raise ValueError('Unsupported interpolation type!')
@@ -784,7 +784,7 @@ class CropResizeTFTransform(Transform):
         return (image, label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", framework="pytorch")
-class PyTorchCropResizeTransform(Transform):
+class PyTorchCropResizeTransform(BaseTransform):
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_pytorch_map.keys():
             self.interpolation = interpolation_pytorch_map[interpolation]
@@ -804,7 +804,7 @@ class PyTorchCropResizeTransform(Transform):
         return (transformer(image), label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", framework="mxnet")
-class MXNetCropResizeTransform(Transform):
+class MXNetCropResizeTransform(BaseTransform):
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_mxnet_map.keys():
             self.interpolation = interpolation_mxnet_map[interpolation]
@@ -824,7 +824,7 @@ class MXNetCropResizeTransform(Transform):
 
 @transform_registry(transform_type="CropResize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
-class CropResizeTransform(Transform):
+class CropResizeTransform(BaseTransform):
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_map.keys():
             self.interpolation = interpolation_map[interpolation]
@@ -851,7 +851,7 @@ class CropResizeTransform(Transform):
 
 @transform_registry(transform_type="CenterCrop", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
-class CenterCropTransform(Transform):
+class CenterCropTransform(BaseTransform):
     def __init__(self, size):
         if isinstance(size, int):
             self.height, self.width = size, size
@@ -878,7 +878,7 @@ class CenterCropTransform(Transform):
         return (image, label)
 
 @transform_registry(transform_type="Normalize", process="preprocess", framework="mxnet")
-class MXNetNormalizeTransform(Transform):
+class MXNetNormalizeTransform(BaseTransform):
     def __init__(self, mean=[0.0], std=[1.0]):
         self.mean = mean
         self.std = std
@@ -909,7 +909,7 @@ class PyTorchNormalizeTransform(MXNetNormalizeTransform):
 
 @transform_registry(transform_type="Normalize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
-class NormalizeTransform(Transform):
+class NormalizeTransform(BaseTransform):
     def __init__(self, mean=[0.0], std=[1.0]):
         self.mean = mean
         self.std = std
@@ -925,7 +925,7 @@ class NormalizeTransform(Transform):
 
 @transform_registry(transform_type="RandomCrop", process="preprocess", \
                 framework="mxnet, onnxrt_qlinearops, onnxrt_integerops")
-class RandomCropTransform(Transform):
+class RandomCropTransform(BaseTransform):
     def __init__(self, size):
         if isinstance(size, int):
             self.height, self.width = size, size
@@ -953,7 +953,7 @@ class RandomCropTransform(Transform):
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
-class RandomResizedCropTransform(Transform):
+class RandomResizedCropTransform(BaseTransform):
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
@@ -1321,7 +1321,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
 
 @transform_registry(transform_type="SquadV1", \
                 process="postprocess", framework="tensorflow")
-class SquadV1PostTransform(Transform):
+class SquadV1PostTransform(BaseTransform):
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
 

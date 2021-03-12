@@ -52,7 +52,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning(self):
-        from lpot import Pruning
+        from lpot import Pruning, common
         prune = Pruning('fake.yaml')
  
         dummy_dataset = PyTorchDummyDataset([tuple([100, 3, 256, 256])])
@@ -82,8 +82,10 @@ class TestPruning(unittest.TestCase):
                 prune.on_epoch_end()
         dummy_dataset = PyTorchDummyDataset(tuple([100, 3, 256, 256]), label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        model = prune.model(self.model)
-        _ = prune(model, q_func=training_func_for_lpot, eval_dataloader=dummy_dataloader)
+        prune.model = common.Model(self.model)
+        prune.q_func = training_func_for_lpot
+        prune.eval_dataloader = dummy_dataloader
+        _ = prune()
 
 
 if __name__ == "__main__":

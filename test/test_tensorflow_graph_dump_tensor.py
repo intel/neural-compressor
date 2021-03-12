@@ -169,17 +169,14 @@ class TestGraphDumpToDisk(unittest.TestCase):
     def test_dump_tensor_to_disk(self):
         import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
-
-        dataloader = quantizer.dataloader(dataset)
-        output_graph = quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
 
         with open(self.calibration_log_path) as f:
             data = f.readlines()

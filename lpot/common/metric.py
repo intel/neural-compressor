@@ -15,21 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+class Metric(object):
+    """common Metric just collect the infos to construct a Metric
+    """
+    def __init__(self, metric_cls, name='user_metric', **kwargs):
+        self.metric_cls = metric_cls
+        self.name = name
+        self.kwargs = kwargs
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
-from .transforms import TRANSFORMS, BaseTransform, transform_registry
-from .dataloaders import DATALOADERS
-from .filters import FILTERS, Filter, filter_registry
-
-__all__ = [
-    "DATALOADERS",
-    "DATASETS",
-    "Dataset",
-    "IterableDataset",
-    "dataset_registry",
-    "TRANSFORMS",
-    "BaseTransform",
-    "transform_registry",
-    "FILTERS",
-    "Filter",
-    "filter_registry",]

@@ -134,10 +134,10 @@ def main():
     model.fuse_model()
 
     if args.tune:
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization("./conf.yaml")
-        model = quantizer.model(model)
-        q_model = quantizer(model)
+        quantizer.model = common.Model(model)
+        q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
         exit(0)
 

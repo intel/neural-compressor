@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .transform import TRANSFORMS, Transform, transform_registry
+from .transform import TRANSFORMS, BaseTransform, transform_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -26,4 +26,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["TRANSFORMS", "Transform", "transform_registry"]
+__all__ = ["TRANSFORMS", "BaseTransform", "transform_registry"]

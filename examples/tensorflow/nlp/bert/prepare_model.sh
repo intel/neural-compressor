@@ -37,8 +37,8 @@ function init_params {
     done
 }
 
-# convert dataset
-function convert_dataset {
+# convert model
+function convert_model {
     if [ ! -d ${OUTPUT_DIR} ]; then
         echo '${OUTPUT_DIR} already exists, please check...'
     fi

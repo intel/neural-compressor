@@ -274,11 +274,12 @@ def main_worker(gpu, ngpus_per_node, args):
 
             return
         model.module.fuse_model()
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization(args.config)
-        model = quantizer.model(model)
-        q_model = quantizer(model, q_dataloader=None, q_func=training_func_for_lpot,
-                             eval_dataloader=val_loader)
+        quantizer.model = common.Model(model)
+        quantizer.q_func = training_func_for_lpot
+        quantizer.eval_dataloader = val_loader
+        q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
         return
 

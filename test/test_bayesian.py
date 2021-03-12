@@ -256,28 +256,24 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_run_bayesian_one_trial(self):
-        from lpot import Quantization
 
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        output_graph = quantizer()
 
     def test_run_bayesian_max_trials(self):
-        from lpot import Quantization
 
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
-        dataset = quantizer.dataset('dummy', (1, 224, 224, 3), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.test_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.test_graph
+        output_graph = quantizer()
 
     def test_bayesian_opt_class(self):
         from lpot.strategy.bayesian import BayesianOptimization

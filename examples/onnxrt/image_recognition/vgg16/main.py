@@ -68,10 +68,10 @@ if __name__ == "__main__":
     sys.path.append('/home2/yuwenzho/lpot-onnx-vgg/LowPrecisionInferenceTool')
     model = onnx.load(args.model_path)
     if args.benchmark:
-        from lpot import Benchmark
+        from lpot import Benchmark, common
         evaluator = Benchmark(args.config)
-        model = evaluator.model(model)
-        results = evaluator(model=model)
+        evaluator.model = common.Model(model)
+        results = evaluator()
         for mode, result in results.items():
             acc, batch_size, result_list = result
             latency = np.array(result_list).mean() / batch_size
@@ -83,17 +83,18 @@ if __name__ == "__main__":
             print('Throughput: {:.3f} images/sec'.format(batch_size * 1./ latency))
 
     if args.tune:
-        from lpot.quantization import Quantization
+        from lpot import Quantization, common
 
         quantize = Quantization(args.config)
-        model = quantize.model(model)
-        q_model = quantize(model)
+        quantize.model = common.Model(model)
+        q_model = quantize()
         q_model.save(args.output_model)
         
         if args.benchmark:
             from lpot import Benchmark
             evaluator = Benchmark(args.config)
-            results = evaluator(model=q_model)
+            evaluator.model = common.Model(q_model)
+            results = evaluator()
             for mode, result in results.items():
                 acc, batch_size, result_list = result
                 latency = np.array(result_list).mean() / batch_size

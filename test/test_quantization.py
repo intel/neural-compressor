@@ -175,37 +175,31 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        output_graph = quantizer()
 
     def test_resume(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        q_model = quantizer(
-                      self.constant_graph,
-                      q_dataloader=dataloader,
-                      eval_dataloader=dataloader
-                      )
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        output_graph = quantizer()
 
     def test_autodump(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml3.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        q_model = quantizer(
-                      self.constant_graph,
-                      q_dataloader=dataloader,
-                      eval_dataloader=dataloader
-                      )
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        output_graph = quantizer()
 
 if __name__ == "__main__":
     unittest.main()

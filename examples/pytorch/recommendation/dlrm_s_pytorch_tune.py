@@ -902,10 +902,12 @@ if __name__ == "__main__":
         dlrm.bot_l.append(DeQuantStub())
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization("./conf.yaml")
-        dlrm = quantizer.model(dlrm)
-        q_model = quantizer(dlrm, eval_dataloader, eval_func=eval_func)
+        quantizer.model = common.Model(dlrm)
+        quantizer.calib_dataloader = eval_dataloader
+        quantizer.eval_func = eval_func
+        q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
         exit(0)
 

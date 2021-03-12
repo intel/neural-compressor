@@ -30,7 +30,6 @@ import pandas as pd
 from utils import tokenizer
 from utils.tokenizer import Subtokenizer
 from utils import metrics
-from lpot.data import DataLoader
 
 flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
@@ -139,8 +138,9 @@ def eval_func(infer_graph, iteration=-1):
     output_tensor = infer_graph.get_tensor_by_name(\
         'model/Transformer/strided_slice_19:0')
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    dataloader = DataLoader('tensorflow', ds, batch_size=FLAGS.batch_size, 
-                                                            collate_fn=collate_fn)
+    from lpot.data import DATALOADERS
+    dataloader = DATALOADERS['tensorflow'](ds, batch_size=FLAGS.batch_size, 
+                                           collate_fn=collate_fn)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -225,15 +225,14 @@ class Dataset(object):
 def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.mode == 'tune':
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization(FLAGS.config)
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-        q_dataloader = quantizer.dataloader(ds, collate_fn=collate_fn,
-                                                    batch_size=FLAGS.batch_size)
-        model = quantizer.model(graph)
-        q_model = quantizer(model,
-                            q_dataloader=q_dataloader,
-                            eval_func=eval_func)
+        quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, \
+                                                 batch_size=FLAGS.batch_size)
+        quantizer.model = common.Model(graph)
+        quantizer.eval_func = eval_func
+        q_model = quantizer()
         try:
             q_model.save(FLAGS.output_model)
         except Exception as e:

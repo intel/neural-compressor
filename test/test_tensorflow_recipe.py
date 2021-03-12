@@ -273,16 +273,15 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_disable_first_quantization.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             found_fp32_conv = False
 
             for i in output_graph.graph_def.node:
@@ -314,16 +313,15 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_enable_first_quantization.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             found_fp32_conv = False
 
             for i in output_graph.graph_def.node:
@@ -359,16 +357,15 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_enable_scale_propagation.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
             max_freezed_out = []
             for i in output_graph.graph_def.node:
               if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
@@ -402,16 +399,14 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_disable_scale_propagation.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:
@@ -447,16 +442,14 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_enable_scale_unification.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 128, 16), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:
@@ -492,16 +485,14 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization
+            from lpot import Quantization, common
 
             quantizer = Quantization('fake_yaml_disable_scale_unification.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            output_graph = quantizer(
-                output_graph_def,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:

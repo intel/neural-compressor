@@ -100,16 +100,14 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.parse_graph()
 
         float_graph_def = g.dump_graph()
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)
-        dataloader = quantizer.dataloader(dataset, batch_size=2)
-        output_graph = quantizer(
-            float_graph_def,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+        quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+        quantizer.model = float_graph_def
+        output_graph = quantizer()
         self.assertGreater(len(output_graph.graph_def.node), 0)
 
     def test_invalid_input_output_config(self):
@@ -118,16 +116,14 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.parse_graph()
 
         float_graph_def = g.dump_graph()
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml_2.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)
-        dataloader = quantizer.dataloader(dataset, batch_size=2)
-        model = quantizer(
-            float_graph_def,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+        quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+        quantizer.model = float_graph_def
+        model = quantizer()
         # will detect the right inputs/outputs
         self.assertNotEqual(model.input_node_names, ['x'])
         self.assertNotEqual(model.output_node_names, ['op_to_store'])

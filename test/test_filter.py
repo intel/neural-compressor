@@ -2,7 +2,7 @@ import unittest
 import tensorflow as tf
 import numpy as np
 import os
-from lpot.data import FILTERS, TRANSFORMS, DATASETS, DataLoader
+from lpot.data import FILTERS, TRANSFORMS, DATASETS, DATALOADERS
 from lpot.utils.create_obj_from_config import create_dataset, get_preprocess, create_dataloader
 
 class TestCOCOFilter(unittest.TestCase):
@@ -61,14 +61,14 @@ class TestCOCOFilter(unittest.TestCase):
         datasets = DATASETS('tensorflow')
         dataset = datasets['COCORecord']('test.record', \
             transform=preprocess, filter=filter)
-        dataloader = DataLoader(dataset=dataset, framework='tensorflow', batch_size=1)
+        dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (1,2,4))
 
         dataset2 = create_dataset(
             'tensorflow', {'COCORecord':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, {'LabelBalance':{'size':2}})
-        dataloader2 = DataLoader(dataset=dataset2, framework='tensorflow', batch_size=1)
+        dataloader2 = DATALOADERS['tensorflow'](dataset=dataset2, batch_size=1)
         for (inputs, labels) in dataloader2:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (1,2,4))

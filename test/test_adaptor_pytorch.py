@@ -8,7 +8,7 @@ import os
 from lpot.adaptor import FRAMEWORKS
 from lpot.model import MODELS
 import lpot.adaptor.pytorch as lpot_torch
-from lpot import Quantization
+from lpot import Quantization, common
 import shutil
 import copy
 import numpy as np
@@ -257,13 +257,12 @@ class TestPytorchAdaptor(unittest.TestCase):
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-            dataloader = quantizer.dataloader(dataset)
-            q_model = quantizer(
-                model,
-                q_func=q_func if fake_yaml == 'qat_yaml.yaml' else None,
-                q_dataloader=dataloader,
-                eval_dataloader=dataloader
-            )
+            quantizer.model = common.Model(model)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            if fake_yaml == 'qat_yaml.yaml':
+                quantizer.q_func = q_func
+            q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights by lpot.utils
             saved_model = load("./saved", model)
@@ -271,9 +270,11 @@ class TestPytorchAdaptor(unittest.TestCase):
         from lpot import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
         # Load configure and weights by lpot.model
-        new_model = MODELS['pytorch'](model, {"workspace_path": "./saved"})
-        results = evaluator(model=new_model, b_dataloader=dataloader)
-        fp32_results = evaluator(model=model, b_dataloader=dataloader)
+        evaluator.model = common.Model(model)
+        evaluator.b_dataloader = common.DataLoader(dataset)
+        results = evaluator()
+        evaluator.model = common.Model(model)
+        fp32_results = evaluator()
         self.assertTrue((fp32_results['accuracy'][0] - results['accuracy'][0]) < 0.01)
 
     def test_tensor_dump(self):
@@ -281,18 +282,13 @@ class TestPytorchAdaptor(unittest.TestCase):
         model.model.eval().fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            model,
-            eval_func=eval_func,
-            q_dataloader=dataloader,
-        )
+        quantizer.model = common.Model(model.model)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_func = eval_func
+        quantizer()
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
-        quantizer(
-            model,
-            eval_dataloader=dataloader,
-            q_dataloader=dataloader,
-        )
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer()
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
 
     def test_floatfunctions_fallback(self):
@@ -360,12 +356,10 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         model = MODELS['pytorch_ipex'](model)
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        lpot_model = quantizer(
-            model,
-            eval_dataloader=dataloader,
-            q_dataloader=dataloader,
-        )
+        quantizer.model = common.Model(model)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        lpot_model = quantizer()
         lpot_model.save("./saved")
         new_model = MODELS['pytorch_ipex'](model.model, {"workspace_path": "./saved"})
         new_model.model.to(ipex.DEVICE)
@@ -375,7 +369,9 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
             script_model = torch.jit.trace(new_model.model, torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
         from lpot import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
-        results = evaluator(model=script_model, b_dataloader=dataloader)
+        evaluator.model = common.Model(script_model)
+        evaluator.b_dataloader = common.DataLoader(dataset)
+        results = evaluator()
 
 
 if __name__ == "__main__":

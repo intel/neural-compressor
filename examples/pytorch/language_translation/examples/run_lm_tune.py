@@ -666,15 +666,17 @@ def main():
                 model.to(args.device)
                 model.eval()
 
-                from lpot import Quantization
+                from lpot import Quantization, common
                 quantizer = Quantization(args.config)
                 eval_dataset = WikiDataset(tokenizer, args, file_path=args.eval_data_file if evaluate else args.train_data_file, block_size=args.block_size)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 # Note that DistributedSampler samples randomly
                 eval_sampler = SequentialSampler(eval_dataset)
                 eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-                model = quantizer.model(model)
-                q_model = quantizer(model, eval_dataloader, eval_func=eval_func_for_lpot)
+                quantizer.model = common.Model(model)
+                quantizer.calib_dataloader = eval_dataloader
+                quantizer.eval_func = eval_func_for_lpot
+                q_model = quantizer()
                 q_model.save(args.tuned_checkpoint)
                 exit(0)
 

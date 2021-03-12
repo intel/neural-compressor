@@ -902,9 +902,13 @@ if __name__ == '__main__':
     elif args.tune:
         # lpot auto-tuning
         dev_dataloader = gen_dataset()
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization("./bert.yaml")
-        q_model = quantizer(net, q_dataloader=dev_dataloader, eval_dataloader=dev_dataloader, eval_func=eval_func)
+        quantizer.model = common.Model(net)
+        quantizer.calib_dataloader = dev_dataloader
+        quantizer.eval_dataloader = dev_dataloader
+        quantizer.eval_func = eval_func
+        q_model = quantizer()
         q_model.save(args.output_dir)
     elif model_parameters or deploy:
         evaluate()

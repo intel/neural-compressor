@@ -153,9 +153,10 @@ After prepare step is done, we just need update imagenet_eval.py like below
 if args.tune:
         model.eval()
         model.module.fuse_model()
-        from lpot import Quantization
+        from lpot import Quantization, common
         quantizer = Quantization("./conf.yaml")
-        q_model = quantizer(model)
+        quantizer.model = common.Model(model)
+        q_model = quantizer()
         return
 ```
 # Original SE_ResNext README

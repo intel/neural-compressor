@@ -64,16 +64,14 @@ class TestTensorflowConcat(unittest.TestCase):
     def test_tensorflow_concat_quantization(self):
 
         output_graph_def = read_graph(self.pb_path)
-        from lpot import Quantization
 
+        from lpot import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', shape=(100, 299,299, 3), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        output_graph = quantizer(
-            output_graph_def,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        dataset = quantizer.dataset('dummy', shape=(100, 299, 299, 3), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = output_graph_def
+        output_graph = quantizer()
         found_quantized_concat_node = False
 
         target_concat_node_name = 'v0/cg/incept_v3_a0/concat_eightbit_quantized_concatv2'

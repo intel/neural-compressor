@@ -309,7 +309,7 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
             'estimator': estimator_session,
             'slim': slim_session,}
 
-class Model(object):
+class BaseModel(object):
 
     @abstractmethod
     def save(self, root, *args, **kwargs):
@@ -321,7 +321,7 @@ class TensorflowModel(object):
         model_type = get_model_type(model)
         return TENSORFLOW_MODELS[model_type](model, framework_specific_info, **kwargs)
 
-class TensorflowBaseModel(Model):
+class TensorflowBaseModel(BaseModel):
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self.framework_specific_info = framework_specific_info
         input_tensor_names = deep_get(framework_specific_info, 'input_tensor_names', [])
@@ -460,7 +460,7 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'keras': TensorflowBaseModel,}
 
 
-class PyTorchBaseModel(Model):
+class PyTorchBaseModel(BaseModel):
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self._model = model
         self.tune_cfg = None
@@ -645,7 +645,7 @@ class PyTorchIpexModel(PyTorchBaseModel):
         except IOError as e:
             logger.error("Unable to save configure file and weights. %s" % e)
 
-class MXNetModel(Model):
+class MXNetModel(BaseModel):
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self._model = model
         self.framework_specific_info = framework_specific_info
@@ -675,7 +675,7 @@ class MXNetModel(Model):
             mx.nd.save(root + '-0000.params', save_dict)
             logger.info('Saving symbol into file at %s' % root)
 
-class ONNXModel(Model):
+class ONNXModel(BaseModel):
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self._model = model
         self.framework_specific_info = framework_specific_info

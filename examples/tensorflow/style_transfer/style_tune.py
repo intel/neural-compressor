@@ -26,7 +26,7 @@ import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
 from lpot import Quantization
-from lpot.data import DataLoader, DATASETS
+from lpot.data import DATALOADERS, DATASETS
 from lpot.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
@@ -125,8 +125,8 @@ def main(args=None):
           with tf.Graph().as_default() as graph:
               tf.import_graph_def(frozen_graph, name='')
               quantizer = Quantization(FLAGS.config)
-              model = quantizer.model(graph)
-              quantized_model = quantizer(model)
+              quantizer.model = graph
+              quantized_model = quantizer()
               quantized_model.save(FLAGS.output_model)
               frozen_graph= quantized_model.graph_def
 
@@ -143,8 +143,7 @@ def main(args=None):
       else: 
           dataset = DATASETS('tensorflow')['dummy']( \
               shape=[(200, 256, 256, 3), (200, 256, 256, 3)], label=True) 
-      dataloader = DataLoader('tensorflow', \
-          dataset=dataset, batch_size=FLAGS.batch_size)
+      dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
       tf.import_graph_def(frozen_graph, name='')
       style_transfer(sess, dataloader, FLAGS.precision)
 

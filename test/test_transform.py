@@ -3,7 +3,7 @@ import numpy as np
 import random
 import unittest
 import os
-from lpot.data import TRANSFORMS, DataLoader
+from lpot.data import TRANSFORMS, DATALOADERS
 from lpot.utils.create_obj_from_config import get_postprocess, create_dataset
 from lpot.utils.utility import LazyImport
 from PIL import Image
@@ -749,7 +749,7 @@ class TestImagenetTransform(unittest.TestCase):
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
             'tensorflow', {'TFRecordDataset':{'root':'test.record'}}, {'ParseDecodeImagenet':{}}, None)
-        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1)
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0][0], 10)
@@ -791,7 +791,7 @@ class TestCOCOTransform(unittest.TestCase):
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
             'tensorflow', {'COCORecord':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, None)
-        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1)
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (1,1,4))

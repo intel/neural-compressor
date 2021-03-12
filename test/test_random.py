@@ -113,28 +113,24 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_ru_random_one_trial(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
 
     def test_ru_random_max_trials(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import os
 import numpy as np
 import shutil
 from lpot.utils.create_obj_from_config import create_dataset, create_dataloader
-from lpot.data import DATASETS, DataLoader
+from lpot.data import DATASETS, DATALOADERS
 from PIL import Image
 
 class TestBuiltinDataloader(unittest.TestCase):
@@ -390,7 +390,7 @@ class TestDataloader(unittest.TestCase):
                 for i in range(100):
                     yield np.zeros([256, 256, 3])
         dataset = iter_dataset()
-        data_loader = DataLoader('tensorflow', dataset)
+        data_loader = DATALOADERS['tensorflow'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
@@ -405,7 +405,7 @@ class TestDataloader(unittest.TestCase):
         im.save('val/test.jpg')
         args = {'ImageFolder': {'root': './val'}}
         ds = create_dataset('onnxrt_qlinearops', args, None, None)
-        dataloader = DataLoader('onnxrt_qlinearops', ds)
+        dataloader = DATALOADERS['onnxrt_qlinearops'](ds)
         for image, label in dataloader:
             self.assertEqual(image[0].size, (100,100))
         shutil.rmtree('val')
@@ -442,7 +442,7 @@ class TestDataloader(unittest.TestCase):
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
             'tensorflow', {'TFRecordDataset':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, None)
-        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1)
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(labels[0].shape, (1,1,4))
         os.remove('test.record')
@@ -521,19 +521,19 @@ class TestDataloader(unittest.TestCase):
 
         args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
         ds = create_dataset('tensorflow', args, None, None)
-        dataloader = DataLoader('tensorflow', ds)
+        dataloader = DATALOADERS['tensorflow'](ds)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
 
         trans_args = {'Transpose': {'perm': [2, 0, 1]}}
         ds = create_dataset('tensorflow', args, trans_args, None)
-        dataloader = DataLoader('tensorflow', ds)
+        dataloader = DATALOADERS['tensorflow'](ds)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (3,100,100))
 
         args = {'COCORaw': {'root': './', 'img_dir': '', 'anno_dir': 'anno.json'}}
         ds = create_dataset('onnxrt_qlinearops', args, None, None)
-        dataloader = DataLoader('onnxrt_qlinearops', ds)
+        dataloader = DATALOADERS['onnxrt_qlinearops'](ds)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
 
@@ -552,7 +552,7 @@ class TestDataloader(unittest.TestCase):
                 return np.stack(batch)
             else:
                 return batch
-        dataloader = DataLoader('mxnet', ds, collate_fn=collate)
+        dataloader = DATALOADERS['mxnet'](ds, collate_fn=collate)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
 
@@ -569,7 +569,7 @@ class TestDataloader(unittest.TestCase):
                 return np.stack(batch)
             else:
                 return batch
-        dataloader = DataLoader('pytorch', dataset=ds, collate_fn=collate)
+        dataloader = DATALOADERS['pytorch'](dataset=ds, collate_fn=collate)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100,100,3))
 
@@ -605,7 +605,7 @@ class TestDataloader(unittest.TestCase):
 
         eval_dataset = create_dataset(
             'tensorflow', {'ImageRecord':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
-        dataloader = DataLoader(dataset=eval_dataset, framework='tensorflow', batch_size=1) 
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1) 
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels.shape, (1, 1))
@@ -663,7 +663,7 @@ class TestDataloader(unittest.TestCase):
         datasets = DATASETS('tensorflow')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
         
-        data_loader = DataLoader('tensorflow', dataset)
+        data_loader = DATALOADERS['tensorflow'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
@@ -698,7 +698,7 @@ class TestDataloader(unittest.TestCase):
 
     def test_tensorflow_list_dict(self):
         dataset = [{'a':1, 'b':2, 'c':3, 'd':4}, {'a':5, 'b':6, 'c':7, 'd':8}]
-        data_loader = DataLoader('tensorflow', dataset)
+        data_loader = DATALOADERS['tensorflow'](dataset)
 
         iterator = iter(data_loader)
         data = next(iterator)
@@ -720,7 +720,7 @@ class TestDataloader(unittest.TestCase):
     #     dataset = np.array(dataset)
     #     import tensorflow as tf
     #     dataset = tf.data.Dataset.from_tensors(dataset)
-    #     data_loader = DataLoader('tensorflow', dataset)
+    #     data_loader = DATALOADERS['tensorflow'](dataset)
  
     #     iterator = iter(data_loader)
     #     data = next(iterator)
@@ -731,7 +731,7 @@ class TestDataloader(unittest.TestCase):
         dataset = datasets['dummy'](shape=[(4, 256, 256, 3), (4, 1)], \
             high=[10., 10.], low=[0., 0.])
         
-        data_loader = DataLoader('pytorch', dataset)
+        data_loader = DATALOADERS['pytorch'](dataset)
         iterator = iter(data_loader)
         data, label = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
@@ -745,7 +745,7 @@ class TestDataloader(unittest.TestCase):
         datasets = DATASETS('mxnet')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
         
-        data_loader = DataLoader('mxnet', dataset)
+        data_loader = DATALOADERS['mxnet'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
@@ -762,7 +762,7 @@ class TestDataloader(unittest.TestCase):
         datasets = DATASETS('onnxrt_qlinearops')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
         
-        data_loader = DataLoader('onnxrt_qlinearops', dataset)
+        data_loader = DATALOADERS['onnxrt_qlinearops'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
@@ -776,7 +776,7 @@ class TestDataloader(unittest.TestCase):
         datasets = DATASETS('onnxrt_integerops')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
 
-        data_loader = DataLoader('onnxrt_integerops', dataset)
+        data_loader = DATALOADERS['onnxrt_integerops'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))

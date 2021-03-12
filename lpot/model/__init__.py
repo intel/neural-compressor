@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .model import MODELS, Model
+from .model import MODELS, BaseModel
 
-__all__ = ["MODELS", "Model"]
+__all__ = ["MODELS", "BaseModel"]
 

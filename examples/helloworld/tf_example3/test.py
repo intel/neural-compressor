@@ -7,6 +7,7 @@ tf.compat.v1.disable_eager_execution()
 def main():
 
     import lpot
+    from lpot import common
     quantizer = lpot.Quantization('./conf.yaml')
 
     # Get graph from slim checkpoint
@@ -20,8 +21,8 @@ def main():
 
     
     # Do quantization
-    model = quantizer.model('./inception_v1.ckpt')
-    quantized_model = quantizer(model)
+    quantizer.model = common.Model('./inception_v1.ckpt')
+    quantized_model = quantizer()
   
      
 if __name__ == "__main__":

@@ -28,6 +28,14 @@ tar -zxvf transformer_lt_official_fp32_pretrained_model.tar.gz
 
 Dataset is in data folder, pretrained model is in graph folder.
 
+#### Automatic dataset & model download
+Run the `prepare_dataset_model.sh` script located in `examples/tensorflow/nlp/transformer_lt`.
+
+```shell
+cd examples/tensorflow/nlp/transformer_lt
+bash prepare_dataset_model.sh
+```
+
 ## Run Command
 
 ```Shell

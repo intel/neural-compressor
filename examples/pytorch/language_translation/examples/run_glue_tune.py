@@ -670,15 +670,17 @@ def main():
                         from torch.utils import mkldnn as mkldnn_utils
                         model = mkldnn_utils.to_mkldnn(model)
                         print(model)
-                    from lpot import Quantization
+                    from lpot import Quantization, common
                     quantizer = Quantization(args.config)
                     if eval_task != "squad":
                         eval_task = 'classifier'
                     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                                      task=eval_task, model_type=args.model_type)
-                    test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-                    model = quantizer.model(model)
-                    q_model = quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
+                    quantizer.model = common.Model(model)
+                    quantizer.calib_dataloader = common.DataLoader(
+                                                 eval_dataset, batch_size=args.eval_batch_size)
+                    quantizer.eval_func = eval_func_for_lpot
+                    q_model = quantizer()
                     q_model.save(args.tuned_checkpoint)
                 exit(0)
 

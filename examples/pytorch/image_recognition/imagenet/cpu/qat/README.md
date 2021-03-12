@@ -133,9 +133,12 @@ def training_func_for_lpot(model):
             model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
     return
 model.module.fuse_model()
-from lpot import Quantization
+from lpot import Quantization, common
 quantizer = Quantization("./conf.yaml")
-q_model = quantizer(model, q_dataloader=None, q_func=training_func_for_lpot, eval_dataloader=val_loader)
+quantizer.model = common.Model(model)
+quantizer.q_func = training_func_for_lpot
+quantizer.eval_dataloader = val_loader
+q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model during timeout constrain.

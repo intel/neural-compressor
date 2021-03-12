@@ -163,19 +163,21 @@ class TestObjective(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
         from lpot.utils.utility import get_size
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 256, 256, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        q_model = quantizer(self.constant_graph,
-                            q_dataloader=dataloader,
-                            eval_dataloader=dataloader)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
 
-        q_model_1 = quantizer(self.constant_graph_1,
-                              q_dataloader=dataloader,
-                              eval_dataloader=dataloader)
+        q_model = quantizer()
+
+        quantizer.model = self.constant_graph_1
+
+        q_model_1 = quantizer()
 
         self.assertTrue((get_size(q_model_1.sess.graph) - get_size(q_model.sess.graph)) > 0)
 

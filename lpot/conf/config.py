@@ -496,7 +496,7 @@ schema = Schema({
             },
         },
         Optional('performance'): {
-            Optional('warmup', default=10): int,
+            Optional('warmup', default=5): int,
             Optional('iteration', default=-1): int,
             Optional('configs'): configs_schema,
             Optional('dataloader'): dataloader_schema,

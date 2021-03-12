@@ -405,14 +405,17 @@ if args.tune:
         return acc
     eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    from lpot import Quantization
+    from lpot import Quantization, common
     quantizer = Quantization("./conf.yaml")
     if eval_task != "squad":
         eval_task = 'classifier'
     eval_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                      task=eval_task, model_type=args.model_type)
-    test_dataloader = quantizer.dataloader(eval_dataset, batch_size=args.eval_batch_size)
-    q_model = quantizer(model, test_dataloader, eval_func=eval_func_for_lpot)
+    quantizer.model = common.Model(model)
+    quantizer.calib_dataloader = common.DataLoader(
+        eval_dataset, batch_size=args.eval_batch_size)
+    quantizer.eval_func = eval_func_for_lpot
+    q_model = quantizer()
     q_model.save("PATH to saved model")
     exit(0)
 ```

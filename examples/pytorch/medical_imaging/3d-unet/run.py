@@ -149,7 +149,7 @@ def eval_func(model):
 
 sys.path.insert(0, os.path.join(os.getcwd(), "nnUnet"))
 from nnunet.training.model_restore import load_model_and_checkpoint_files
-from lpot import Quantization
+from lpot import Quantization, common
 import pickle
 
 def main():
@@ -183,9 +183,11 @@ def main():
 
     if args.tune:
         quantizer = Quantization('conf.yaml')
+        quantizer.model = common.Model(model)
+        quantizer.eval_func = eval_func
         calib_dl = CalibrationDL()
-        model = quantizer.model(model)
-        q_model = quantizer(model, q_dataloader = calib_dl, eval_func=eval_func)
+        quantizer.calib_dataloader = calib_dl
+        q_model = quantizer()
         q_model.save('./lpot_workspace')
         exit(0)
 

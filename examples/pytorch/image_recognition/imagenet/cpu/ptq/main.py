@@ -285,15 +285,15 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
 
     if args.tune:
-        from lpot import Quantization
+        from lpot import Quantization, common
         if args.ipex:
             quantizer = Quantization("./conf_ipex.yaml")
         else:
             model.eval()
             model.fuse_model()
             quantizer = Quantization("./conf.yaml")
-        model = quantizer.model(model)
-        q_model = quantizer(model)
+        quantizer.model = common.Model(model)
+        q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
         return
 

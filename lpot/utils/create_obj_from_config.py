@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from ..metric import METRICS
-from ..data import DATASETS, TRANSFORMS, FILTERS, DataLoader
+from ..data import DATASETS, TRANSFORMS, FILTERS, DATALOADERS
 from collections import OrderedDict
 import copy
 
@@ -81,8 +81,8 @@ def create_dataloader(framework, dataloader_cfg):
                                   copy.deepcopy(dataloader_cfg['transform']),
                                   copy.deepcopy(dataloader_cfg['filter']),)
 
-    return DataLoader(dataset=eval_dataset, framework=framework, 
-                batch_size=batch_size, last_batch=last_batch)
+    return DATALOADERS[framework](dataset=eval_dataset, batch_size=batch_size, \
+        last_batch=last_batch)
 
 def create_eval_func(framework, dataloader, adaptor, \
                      metric_cfg, postprocess_cfg=None, \

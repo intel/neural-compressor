@@ -184,12 +184,10 @@ class eval_classifier_optimized_graph:
         infer_graph = load_graph(self.args.input_graph)
         quantizer = Quantization(self.args.config)
         if self.args.calib_data:
-            model = quantizer.model(infer_graph)
-            calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
-            q_model = quantizer(model,
-                                q_dataloader=calib_dataloader,
-                                eval_func=self.eval_inference,
-                                eval_dataloader=None)
+            quantizer.model = infer_graph
+            quantizer.calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
+            quantizer.eval_func = self.eval_inference
+            q_model = quantizer()
             return q_model
         else:
             print("Please provide calibration dataset!")

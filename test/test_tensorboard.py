@@ -188,16 +188,15 @@ class TestTensorboard(unittest.TestCase):
         shutil.rmtree("runs/", ignore_errors=True)
 
     def test_run_basic_one_trial(self):
-        from lpot import Quantization
+        from lpot import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (1, 224, 224, 3), label=True)
-        dataloader = quantizer.dataloader(dataset)
-        quantizer(
-            self.constant_graph,
-            q_dataloader=dataloader,
-            eval_dataloader=dataloader
-        )
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer()
+
         self.assertTrue(True if len(os.listdir("./runs/eval")) > 2 else False)
 
 if __name__ == "__main__":

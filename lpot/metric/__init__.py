@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .metric import METRICS, Metric, metric_registry
+from .metric import METRICS, BaseMetric, metric_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -26,4 +26,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["METRICS", "Metric", "metric_registry"]
+__all__ = ["METRICS", "BaseMetric", "metric_registry"]

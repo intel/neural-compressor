@@ -109,10 +109,11 @@ if __name__ == "__main__":
         return evaluate_onnxrt(model, dummy_dataloader, reference)
 
     if args.benchmark:
-        from lpot import Benchmark
+        from lpot import Benchmark, common
         evaluator = Benchmark(args.config)
-        model = evaluator.model(model)
-        results = evaluator(model=model, b_dataloader=dummy_dataloader)
+        evaluator.model = common.Model(model)
+        evaluator.b_dataloader = dummy_dataloader
+        results = evaluator()
         for mode, result in results.items():
             acc, batch_size, result_list = result
             latency = np.array(result_list).mean() / batch_size
@@ -125,11 +126,10 @@ if __name__ == "__main__":
     
     if args.tune:
 
-        from lpot.quantization import Quantization
+        from lpot import Quantization, common
         quantize = Quantization(args.config)
-        model = quantize.model(model)
-        q_model = quantize(
-            model, 
-            q_dataloader=dummy_dataloader,
-            eval_dataloader=dummy_dataloader)
-        onnx.save(q_model, args.output_model)
+        quantize.model = common.Model(model)
+        quantize.calib_dataloader = dummy_dataloader
+        quantize.eval_dataloader = dummy_dataloader
+        q_model = quantize()
+        q_model.save(args.output_model)

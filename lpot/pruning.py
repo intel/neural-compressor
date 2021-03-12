@@ -20,9 +20,7 @@ from .conf.config import Conf
 from .policy import POLICIES
 from .utils import logger
 from .utils.utility import singleton
-from .model import Model as LpotModel
-from .model import MODELS
-
+from .model import BaseModel as LpotModel
 
 @singleton
 class Pruning(object):
@@ -43,6 +41,8 @@ class Pruning(object):
         self.conf = Conf(conf_fname)
         self.cfg = self.conf.usr_cfg
         self.framework = self.cfg.model.framework.lower()
+        self._model = None
+        self._calib_func = None
 
     def on_epoch_begin(self, epoch):
         """ called on the begining of epochs"""
@@ -67,8 +67,7 @@ class Pruning(object):
         logger.info(stats)
         logger.info(sparsity)
 
-    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
-                 eval_func=None):
+    def __call__(self):
         """The main entry point of pruning.
 
            This interface currently only works on pytorch
@@ -162,10 +161,8 @@ class Pruning(object):
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
-        if not isinstance(model, LpotModel):
-            model = self.model(model)
+        assert isinstance(self._model, LpotModel), 'need set lpot Model for quantization....'
 
-        self._model = model
         policies = {}
         for policy in POLICIES:
             for name in self.cfg["pruning"][policy]:
@@ -176,9 +173,19 @@ class Pruning(object):
             print(policy_spec)
             self.policies.append(POLICIES[policy_spec["policy_name"]](
                 self._model, policy_spec["policy_spec"], self.cfg))
-        return q_func(model.model)
+        return self._calib_func(self._model.model)
 
-    def model(self, root, **kwargs):
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        from .common import Model as LpotModel
+        if not isinstance(user_model, LpotModel):
+            logger.warning('force convert user raw model to lpot model, \
+                better initialize lpot.common.Model and set....')
+            user_model = LpotModel(user_model)
         framework_model_info = {}
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':
@@ -188,4 +195,16 @@ class Pruning(object):
                  'output_tensor_names': cfg.model.outputs,
                  'workspace_path': cfg.tuning.workspace.path})
 
-        return MODELS[self.framework](root, framework_model_info, **kwargs)
+        from .model import MODELS
+        self._model = MODELS[self.framework](\
+            user_model.root, framework_model_info, **user_model.kwargs)
+
+    @property
+    def q_func(self):
+        logger.warning('q_func not support getter....')
+        return None
+        
+    @q_func.setter
+    def q_func(self, user_q_func):
+        logger.warning('q_func is to be deprecated, please construct q_dataloader....')
+        self._calib_func = user_q_func
