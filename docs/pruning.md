@@ -53,4 +53,12 @@ def p_func(model):
         # pruner.on_epoch_end(epoch=epoch)
         evaluate(model)
 ```
-Note the commented lines are how pruner do model transformation.
+Note the commented lines are how pruner do model transformation. Then users can use LPOT like the following:
+```python
+from lpot import Pruning, common
+prune = Pruning(args.config)
+prune.model = common.Model(model)
+prune.eval_dataloader = val_loader
+prune.q_func = p_func
+q_model = prune()
+```
