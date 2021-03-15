@@ -3,8 +3,8 @@ Sparsity is a a measure of how many percents of elements in a tensor are exact z
 [^1]: https://nervanasystems.github.io/distiller/pruning.html 
 [^2]: acceleration needs sparse compute kernels which are WIP
 
-The <a href="https://en.wikipedia.org/wiki/Lp_space#When_p_=_0">\(l_0\)-"norm" function</a> measures how many zero-elements are in a tensor <em>x</em>:
-\[\lVert x \rVert_0\;=\;|x_1|^0 + |x_2|^0 + ... + |x_n|^0 \]
+The <a href="https://en.wikipedia.org/wiki/Lp_space#When_p_=_0"><img src="http://latex.codecogs.com/svg.latex?\l_{1}&space;" title="http://latex.codecogs.com/svg.latex?\l_{1} " />-"norm" function</a> measures how many zero-elements are in a tensor <em>x</em>:
+<img src="http://latex.codecogs.com/svg.latex?\left|\left|&space;x\right|&space;\right|_{0}\doteq&space;\left|x_{1}&space;\right|^{0}&plus;&space;\left|x_{2}&space;\right|^{0}&plus;...&plus;\left|x_{n}&space;\right|^{0}&space;" title="http://latex.codecogs.com/svg.latex?\left|\left| x\right| \right|_{0}\doteq \left|x_{1} \right|^{0}+ \left|x_{2} \right|^{0}+...+\left|x_{n} \right|^{0} " />
 In other words, an element contributes either a value of 1 or 0 to \(l_0\).  Anything but an exact zero contributes a value of 1 - that's pretty cool. Sometimes it helps to think about density, the number of non-zero elements (NNZ) and sparsity's complement:
 \[
 density = 1 - sparsity
