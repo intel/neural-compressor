@@ -23,7 +23,7 @@ from flask import Flask
 from flask import Request as WebRequest
 from flask import Response as WebResponse
 from flask import jsonify, request, send_file
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 from flask_socketio import SocketIO
 
 from lpot.ux.utils.exceptions import (
@@ -31,18 +31,13 @@ from lpot.ux.utils.exceptions import (
     ClientErrorException,
     NotFoundException,
 )
-from lpot.ux.utils.utils import determine_ip, is_development_env, verify_file_path
+from lpot.ux.utils.utils import is_development_env, verify_file_path
 from lpot.ux.web.communication import MessageQueue, Request
+from lpot.ux.web.configuration import Configuration
 from lpot.ux.web.router import Router
 
-allowed_origin = r"http://{}:*".format(determine_ip())
-
-if is_development_env():
-    allowed_origin = "*"
-
 app = Flask(__name__, static_url_path="")
-CORS(app, origins=allowed_origin)
-socketio = SocketIO(app, max_http_buffer_size=2000)
+socketio = SocketIO()
 router = Router()
 
 METHODS = ["GET", "POST"]
@@ -51,17 +46,30 @@ METHODS = ["GET", "POST"]
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
-def run_server(addr: str, port: int, token: str) -> None:
+def run_server(configuration: Configuration) -> None:
     """Run webserver on specified scheme, address and port."""
-    app.secret_key = token
-    socketio.init_app(app, cors_allowed_origins=f"http://{addr}:{port}")
+    addr = configuration.ip
+    port = configuration.port
+    token = configuration.token
 
-    cors_allowed_origins = f"http://{addr}:{port}"
+    cors_allowed_origins = f"{configuration.scheme}://{addr}:{port}"
     if is_development_env():
         cors_allowed_origins = "*"
 
-    socketio.init_app(app, cors_allowed_origins=cors_allowed_origins)
-    socketio.run(app, host=addr, port=port)
+    app.secret_key = token
+    CORS(app, origins=cors_allowed_origins)
+    socketio.init_app(
+        app,
+        cors_allowed_origins=cors_allowed_origins,
+        max_http_buffer_size=2000,
+    )
+
+    args = {}
+    if configuration.is_tls_used():
+        args["certfile"] = configuration.tls_certificate
+        args["keyfile"] = configuration.tls_key
+
+    socketio.run(app, host=addr, port=port, **args)
 
 
 @app.after_request
@@ -111,7 +119,6 @@ def root() -> Any:
 
 
 @app.route("/file/<path:path>", methods=METHODS)
-@cross_origin(origins=allowed_origin)
 @require_api_token
 def serve_from_filesystem(path: str) -> Any:
     """Serve any file from filesystem."""
@@ -126,7 +133,6 @@ def serve_from_filesystem(path: str) -> Any:
 
 
 @app.route("/api/<path:subpath>", methods=METHODS)
-@cross_origin(origins=allowed_origin)
 @require_api_token
 def handle_api_call(subpath: str) -> Any:
     """Handle API access."""
@@ -143,7 +149,6 @@ def handle_api_call(subpath: str) -> Any:
 
 
 @app.route("/api/<path:subpath>", methods=["OPTIONS"])
-@cross_origin(origins=allowed_origin)
 def allow_api_call(subpath: str) -> Any:
     """Allow for API access."""
     return "OK"

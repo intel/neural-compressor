@@ -16,6 +16,8 @@
 """Configuration module for UX server."""
 
 import argparse
+import logging
+import secrets
 import socket
 from typing import Dict
 
@@ -38,6 +40,11 @@ class Configuration:
         self.ip = determine_ip()
         args = self.get_command_line_args()
         self.port = self.determine_port(args)
+        self.log_level = self.determine_log_level(args)
+        self.token = secrets.token_hex(16)
+        self.tls_certificate = args.get("certfile")
+        self.tls_key = args.get("keyfile")
+        self.scheme = "https" if self.is_tls_used() else "http"
 
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
@@ -47,6 +54,25 @@ class Configuration:
             "--port",
             type=int,
             help="port number to listen on",
+        )
+        parser.add_argument(
+            "--verbose",
+            "-v",
+            action="count",
+            default=0,
+            help="verbosity of logging output, use -vv and -vvv for even more logs",
+        )
+        parser.add_argument(
+            "--certfile",
+            type=str,
+            default=None,
+            help="TLS Certificate to use",
+        )
+        parser.add_argument(
+            "--keyfile",
+            type=str,
+            default=None,
+            help="TLS private key to use",
         )
         return vars(parser.parse_args())
 
@@ -95,3 +121,25 @@ class Configuration:
             s.close()
 
         return False
+
+    def determine_log_level(self, args: Dict) -> int:
+        """Determine log level based on parameters given."""
+        verbosity_mapping = [
+            logging.CRITICAL,
+            logging.WARNING,
+            logging.INFO,
+            logging.DEBUG,
+        ]
+        verbosity: int = args.get("verbose")  # type:ignore
+        try:
+            return verbosity_mapping[verbosity]
+        except IndexError:
+            return logging.DEBUG
+
+    def get_url(self) -> str:
+        """Return URL to access application."""
+        return f"{self.scheme}://{self.ip}:{self.port}/?token={self.token}"
+
+    def is_tls_used(self) -> bool:
+        """Return if tls is requested."""
+        return self.tls_certificate is not None and self.tls_key is not None

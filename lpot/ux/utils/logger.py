@@ -17,3 +17,9 @@ import logging
 
 log = logging.getLogger()
 log.setLevel(level=logging.CRITICAL)
+
+
+def change_log_level(log_level: int) -> None:
+    """Change log level."""
+    global log
+    log.setLevel(level=log_level)

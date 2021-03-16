@@ -17,9 +17,9 @@
 """WSGI Web Server."""
 
 import sys
-import uuid
 
 from lpot.ux.utils.exceptions import NotFoundException
+from lpot.ux.utils.logger import change_log_level
 from lpot.ux.web.configuration import Configuration
 from lpot.ux.web.server import run_server
 
@@ -32,15 +32,10 @@ def main() -> None:
         print(str(e))
         sys.exit(1)
 
-    address = configuration.ip
-    port = configuration.port
-    token = uuid.uuid4().hex
+    change_log_level(configuration.log_level)
+    print(f"Visit {configuration.get_url()} in your browser to access the UX.")
 
-    print(
-        f"Visit http://{address}:{port}/?token={token} in your browser to access the UX.",
-    )
-
-    run_server(address, port, token)
+    run_server(configuration)
 
 
 if __name__ == "__main__":

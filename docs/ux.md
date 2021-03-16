@@ -61,4 +61,13 @@ Having a Model Configuration created, you can:
       - "Accuracy" section will display comparison in accuracy metric between original and tuned model,
       - "Model size" will compare sizes of both models
       - when automatic benchmarking is finished, "Throughput" will show performance gain from tuning 
-  
+
+# Advanced options
+## TLS connection encryption
+
+You can provide your own certificate and key to the server in order to use TLS encrypted communication between UI and server.
+
+Add two parameters to server start command:
+```
+lpot_ux --certfile path_to_cert.crt --keyfile path_to_private_key.key
+```
