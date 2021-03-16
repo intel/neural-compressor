@@ -65,6 +65,7 @@ LPOT supports builtin preprocessing methods on diffrent framework backend. Pleae
 | CropResize(x, y, width, height, size, interpolation) | **x** (int):Left boundary of the cropping area <br> **y** (int):Top boundary of the cropping area <br> **width** (int):Width of the cropping area <br> **height** (int):Height of the cropping area <br> **size** (list or int): resize to new size after cropping <br> **interpolation** (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' | Crop the input image with given location and resize it | CropResize: <br> &ensp;&ensp; x: 0 <br> &ensp;&ensp; y: 5 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; size: [100, 100] # or size: 100 <br> &ensp;&ensp; interpolation: bilinear |
 | RandomHorizontalFlip() | None | Horizontally flip the given image randomly | RandomHorizontalFlip: {} |
 | RandomVerticalFlip() | None | Vertically flip the given image randomly | RandomVerticalFlip: {} |
+| ToArray() | None | Convert NDArray to numpy array | ToArray: {} |
 | ToTensor() | None | Converts an image NDArray or batch of image NDArray to a tensor NDArray | ToTensor: {} |
 | Cast(dtype) | **dtype** (str, default ='float32') :The target data type | Convert image to given dtype | Cast: <br> &ensp;&ensp; dtype: float32 |
 | Transpose(perm) | **perm** (list): A permutation of the dimensions of input image | Transpose image according perm | Transpose: <br> &ensp;&ensp; perm: [1, 2, 0] |
