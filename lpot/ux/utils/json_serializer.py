@@ -53,20 +53,19 @@ class JsonSerializer:
 
                 serialized_list = []
                 for item in value:
-                    if issubclass(type(item), JsonSerializer):
-                        # pylint: disable=maybe-no-member
-                        serialized_list.append(item.serialize(serialization_type))
+                    serialized_item = self.serialize_item(item)
+                    if serialized_item is not None:
+                        serialized_list.append(serialized_item)
                 result[variable_name] = serialized_list
             else:
-                if issubclass(type(value), JsonSerializer):
-                    # pylint: disable=maybe-no-member
-                    result[variable_name] = value.serialize(serialization_type)
-                else:
-                    result[variable_name] = self.serialize_item(value)
+                serialized_item = self.serialize_item(value)
+                if serialized_item is not None:
+                    result[variable_name] = serialized_item
 
         return result
 
-    def serialize_item(self, value: Any) -> Any:
+    @staticmethod
+    def serialize_item(value: Any, serialization_type: str = "default") -> Any:
         """
         Serialize objects that don't support json dump.
 
@@ -79,6 +78,15 @@ class JsonSerializer:
         For all other cases it should return serializable object i.e. str, int float
 
         :param value: Any type
+        :param serialization_type: serialization type
         :return: Value that can be handled by json.dump
         """
+        if issubclass(type(value), JsonSerializer):
+            # pylint: disable=maybe-no-member
+            serialized_value = value.serialize(serialization_type)
+            if (
+                isinstance(serialized_value, dict) and not serialized_value
+            ):  # Ignore empty objects
+                return None
+            return serialized_value
         return value

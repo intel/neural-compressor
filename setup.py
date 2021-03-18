@@ -30,7 +30,7 @@ setup(
             "web/static/assets/*.*",
             "web/static/assets/fonts/*.*",
             "utils/configs/*.json",
-            "utils/configs/predefined_configs/tensorflow/*.yaml",
+            "utils/configs/predefined_configs/**/*.yaml",
             "utils/templates/*.txt",
         ],
     },

@@ -13,7 +13,7 @@
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Md5 } from 'ts-md5';
+import { sha256 } from 'js-sha256';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { ModelService } from '../services/model.service';
@@ -145,9 +145,8 @@ export class PredefinedModelsComponent implements OnInit {
 
   saveWorkload(model) {
     let workload = {};
-    const id = new Md5();
     const dateTime = Date.now();
-    workload['id'] = String(id.appendStr(String(dateTime)).end());
+    workload['id'] = sha256(String(dateTime));
     workload['config_path'] = model['yaml'];
     workload['dataset_path'] = model['dataset_path'];
     workload['model_path'] = model['model_path'];

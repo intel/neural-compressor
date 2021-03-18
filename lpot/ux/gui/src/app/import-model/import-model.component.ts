@@ -14,12 +14,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModelService, NewModel } from '../services/model.service';
-import { Md5 } from 'ts-md5/dist/md5';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { MatDialog } from '@angular/material/dialog';
 import { SocketService } from '../services/socket.service';
 import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { ErrorComponent } from '../error/error.component';
+import { sha256 } from 'js-sha256';
 
 @Component({
   selector: 'app-import-model',
@@ -72,9 +72,8 @@ export class ImportModelComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    const id = new Md5();
     const dateTime = Date.now();
-    this.id = String(id.appendStr(String(dateTime)).end());
+    this.id = sha256(String(dateTime));
 
     this.setDefaultValues();
 
