@@ -53,13 +53,17 @@ function init_params {
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --benchmark"
-        batch_size=16384
+        default_bs=16384
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd=" -i ${iters} --benchmark "
-        batch_size=16
+        default_bs=16
     else
         echo "Error: No such mode: ${mode}"
         exit 1
+    fi
+
+    if [[ ${batch_size} == '' ]]; then
+        batch_size=$default_bs
     fi
 
     if [[ ${int8} == "true" ]]; then
