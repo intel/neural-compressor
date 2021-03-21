@@ -20,7 +20,7 @@ import os
 from abc import abstractmethod
 from lpot.utils.utility import LazyImport, compute_sparsity
 from lpot.utils import logger
-from lpot.conf.dotdict import deep_get
+from lpot.conf.dotdict import deep_get, deep_set
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -333,6 +333,9 @@ class TensorflowBaseModel(BaseModel):
         self.sess, self._input_tensor_names, self._output_tensor_names = \
             create_session_with_input_output(
                 model, input_tensor_names, output_tensor_names, **kwargs)
+
+        deep_set(framework_specific_info, 'input_tensor_names', self._input_tensor_names)
+        deep_set(framework_specific_info, 'output_tensor_names', self._output_tensor_names)
 
         # sess_global_initialize(self.sess)
         self.iter_op = None 
