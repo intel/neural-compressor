@@ -42,13 +42,13 @@ def get_torch_version():
     return torch_version
 
 
-def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
+def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
     """Convert tune configure to quantization config for each op.
 
         Args:
             tune_cfg (dict): dictionary of tune configure for each op
-            is_insert_fakequant (bool, optional): specify if the module to insert is
-                                                  fake quantization module.
+            observer_type (str, optional): specify observer type, Default is 'ptq_static',
+                                           options: 'ptq_dynamic', 'qat'.
 
         Returns:
             op_qcfgs (dict): dictionary of quantization configure for each op
@@ -91,44 +91,55 @@ def _cfg_to_qconfig(tune_cfg, is_insert_fakequant=False):
         if value['activation']['dtype'] == 'fp32':
             if 'weight' in value:
                 assert (value['weight']['dtype'] == 'fp32')
-            op_qcfgs[key] = None
+            op_qcfgs[key[0]] = None
         else:
-            weights_fake_quantize = None
-            weights_observer = None
             if 'weight' in value:
                 weight = value['weight']
                 scheme = weight['scheme']
                 granularity = weight['granularity']
                 algorithm = weight['algorithm']
                 dtype = weight['dtype']
-                if is_insert_fakequant:
+                if observer_type == 'quant_aware_training':
                     weights_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
                 else:
                     weights_observer = _observer(algorithm, scheme, granularity, dtype)
+            else:
+                if observer_type == 'quant_aware_training':
+                    weights_fake_quantize = torch.quantization.default_per_channel_weight_observer
+                else:
+                    weights_observer = torch.quantization.default_per_channel_weight_observer
 
             activation = value['activation']
             scheme = activation['scheme']
             granularity = activation['granularity']
             algorithm = activation['algorithm']
             dtype = activation['dtype']
-            if is_insert_fakequant:
+            if observer_type == 'quant_aware_training':
                 activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
             else:
-                activation_observer = _observer(algorithm, scheme, granularity, dtype)
+                activation_observer = \
+                    _observer(algorithm, scheme, granularity, dtype, observer_type)
 
-            if is_insert_fakequant:
+            if observer_type == 'quant_aware_training':
                 qconfig = torch.quantization.QConfig(
                     activation=activation_fake_quantize, weight=weights_fake_quantize)
-            else:
+            elif observer_type == 'post_training_static_quant':
                 qconfig = torch.quantization.QConfig(
                     activation=activation_observer, weight=weights_observer)
+            else:
+                version = get_torch_version()
+                if version < '1.6':
+                    qconfig = torch.quantization.QConfigDynamic(weight=weights_observer)
+                else:
+                    qconfig = torch.quantization.QConfigDynamic(
+                        activation=activation_observer, weight=weights_observer)
 
-            op_qcfgs[key] = qconfig
+            op_qcfgs[key[0]] = qconfig
 
     return op_qcfgs
 
 
-def _observer(algorithm, scheme, granularity, dtype):
+def _observer(algorithm, scheme, granularity, dtype, observer_type='ptq_static'):
     """Construct an observer module, In forward, observer will update the statistics of
        the observed Tensor. And they should provide a `calculate_qparams` function
        that computes the quantization parameters given the collected statistics.
@@ -139,10 +150,13 @@ def _observer(algorithm, scheme, granularity, dtype):
         granularity (string): What granularity to computing the quantization parameters,
                               per channel or per tensor.
         dtype (string): Quantized data type
+        observer_type (string): Observer type, default is 'ptq_static'.
 
     Returns:
         oberser (object)
     """
+    if observer_type == 'ptq_dynamic':
+        return torch.quantization.MinMaxDynamicQuantObserver
     if algorithm == 'minmax':
         if granularity == 'per_channel':
             observer = torch.quantization.PerChannelMinMaxObserver
@@ -247,7 +261,8 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None):
                          quantization configuration, qconfig applies to all submodules of a
                          given module unless qconfig for the submodules are specified (when
                          the submodule already has qconfig attribute)
-        is_qat_convert (bool): flag that specified this function is used to QAT prepare.
+        is_qat_convert (bool): flag that specified this function is used to QAT prepare 
+                               for pytorch 1.7 or above.
         white_list (list): list of quantizable op types in pytorch
     Return:
         None, module is modified inplace with qconfig attached
@@ -255,42 +270,29 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None):
     fallback_ops = []
     version = get_torch_version()
     if version < '1.7' and white_list is None:
-        white_list = torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-            - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+        white_list = \
+            torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
     elif white_list is None:
-        white_list = torch.quantization.quantization_mappings.get_qconfig_propagation_list() \
-            - torch.quantization.quantization_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+        white_list = \
+            torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
     for k, v in op_qcfgs.items():
-        if v is None and k[1] != 'QuantStub' \
-                and k[1] != 'DeQuantStub':
-            if is_qat_convert:
-                op_qcfg = {k[0]: v}
-                _propagate_qconfig_recursively(model, '', op_qcfg, white_list=white_list)
-            else:
-                fallback_ops.append(k[0])
-        else:
-            if v is None:
-                weights_observer = _observer('minmax', 'asym',
-                                             'per_channel', 'int8')
-                activation_observer = _observer('minmax', 'sym',
-                                                'per_tensor', 'uint8')
-                v = torch.quantization.QConfig(
-                    activation=activation_observer, weight=weights_observer)
-            op_qcfg = {k[0]: v}
-            _propagate_qconfig_recursively(model, '', op_qcfg, white_list=white_list)
+        if v is None and not is_qat_convert:
+            fallback_ops.append(k)
+
+    _propagate_qconfig_recursively(model, '', op_qcfgs, white_list=white_list)
 
     if fallback_ops and not is_qat_convert:
         _fallback_quantizable_ops_recursively(model, '', fallback_ops, white_list=white_list)
 
 
-def _propagate_qconfig_recursively(model, prefix, op_qcfg, white_list, qconfig_parent=None):
+def _propagate_qconfig_recursively(model, prefix, op_qcfgs, white_list, qconfig_parent=None):
     """This is a helper function for `propagate_qconfig`
 
     Args:
         model (object): input model
         prefix (string): prefix of op name
-        op_qcfg (dict): dictionary that maps from name or type of submodule to
+        op_qcfgs (dict): dictionary that maps from name or type of submodule to
                         quantization configuration
         white_list (list): list of quantizable op types in pytorch
         qconfig_parent (object, optional): qconfig of parent module
@@ -301,13 +303,14 @@ def _propagate_qconfig_recursively(model, prefix, op_qcfg, white_list, qconfig_p
     for name, child in model.named_children():
         model_qconfig = qconfig_parent
         op_name = prefix + name
-        if op_name in op_qcfg:
-            child.qconfig = op_qcfg[op_name]
-            model_qconfig = op_qcfg[op_name]
-        elif model_qconfig is not None and type(child) in white_list:
-            child.qconfig = model_qconfig
+        if op_name in op_qcfgs:
+            child.qconfig = op_qcfgs[op_name]
+            model_qconfig = op_qcfgs[op_name]
+        elif type(child) in white_list:
+            child.qconfig = model_qconfig \
+                if model_qconfig is not None else torch.quantization.default_per_channel_qconfig
         _propagate_qconfig_recursively(
-            child, op_name + '.', op_qcfg, white_list, model_qconfig)
+            child, op_name + '.', op_qcfgs, white_list, model_qconfig)
 
 
 def _find_quantized_op_num(model, white_list, op_count=0):
@@ -474,7 +477,15 @@ class TemplateAdaptor(Adaptor):
             if self.version < '1.7':
                 self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
             else:
-                self.q_mapping = torch.quantization.quantization_mappings.get_qat_module_mappings()
+                self.q_mapping = \
+                    torch.quantization.quantization_mappings.get_qat_module_mappings()
+        elif framework_specific_info['approach'] == "post_training_dynamic_quant":
+            if self.version < '1.7':
+                self.q_mapping = \
+                    torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+            else:
+                self.q_mapping = \
+                    torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
 
@@ -505,7 +516,9 @@ class TemplateAdaptor(Adaptor):
         """
         quantizable_ops = []
         self._get_quantizable_ops_recursively(model.model, '', quantizable_ops)
-        capability = self.query_handler.get_quantization_capability()['int8']
+        capability = self.query_handler.get_quantization_capability()['dynamic'] \
+            if self.approach == "post_training_dynamic_quant" else \
+            self.query_handler.get_quantization_capability()['int8']
 
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
@@ -576,12 +589,14 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         if self.version < '1.7':
             self.white_list = \
-                torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-                - torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+                torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
+                if self.approach == 'post_training_dynamic_quant' else \
+                torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
         else:
             self.white_list = \
-                torch.quantization.quantization_mappings.get_qconfig_propagation_list() \
-                - torch.quantization.quantization_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST
+                torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
+                if self.approach == 'post_training_dynamic_quant' else \
+                torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
         # for tensorboard
         self.dump_times = 0
@@ -642,9 +657,9 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
-        op_cfgs = _cfg_to_qconfig(
-            tune_cfg, (self.approach == 'quant_aware_training'))
-        if self.version < '1.7' or self.approach == 'post_training_static_quant':
+        self.tune_cfg["approach"] = self.approach
+        op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
+        if self.version < '1.7' or self.approach != 'quant_aware_training':
             _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list)
             # sanity check common API misusage
             if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
@@ -674,7 +689,10 @@ class PyTorchAdaptor(TemplateAdaptor):
                 q_func(q_model.model)
             q_model.model.eval()
 
-        torch.quantization.convert(q_model.model, inplace=True)
+        if self.approach == 'quant_aware_training':
+            torch.quantization.convert(q_model.model, inplace=True)
+        else:
+            torch.quantization.convert(q_model.model, mapping=self.q_mapping, inplace=True)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
 
         if self.is_baseline:
@@ -763,15 +781,14 @@ class PyTorchAdaptor(TemplateAdaptor):
         """
 
         for name, child in model.named_children():
-            op_name = prefix + name
-            if type(child) in self.white_list:
+            op_name = prefix + '.' + name if prefix != '' else name
+            if type(child) in self.white_list and not isinstance(child, torch.nn.Sequential):
                 quantizable_ops.append((
                     op_name, self.unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in self.unify_op_type_mapping else
                     str(child.__class__.__name__)))
             else:
-                self._get_quantizable_ops_recursively(
-                    child, op_name + '.', quantizable_ops)
+                self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
     def _pre_eval_hook(self, model):
         """The function is used to do some preprocession before evaluation phase.
@@ -911,12 +928,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                    if self.version < '1.7' else \
                    torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
-            module_qconfig = qconfig_dict.get(type(module), qconfig_parent)
-            module_qconfig = qconfig_dict.get(prefix, module_qconfig)
-            module_qconfig = getattr(module, 'qconfig', module_qconfig)
-
             if type(module) in white_list:
-                module.qconfig = module_qconfig
+                module.qconfig = qconfig_parent
             for name, child in module.named_children():
                 module_prefix = prefix + '.' + name if prefix else name
                 if is_fused_module(module):
@@ -929,7 +942,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                    _fused = False
 
                 _propagate_qconfig_helper(child, qconfig_dict, white_list,
-                                          module_qconfig, module_prefix, fused=_fused)
+                                          qconfig_parent, module_prefix, fused=_fused)
 
         def _prepare(model, inplace=True, op_list=[], white_list=None):
             """The model will be attached with observer or fake quant modules, and qconfig
@@ -949,7 +962,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                 model = copy.deepcopy(model)
             _propagate_qconfig_helper(model,
                                       qconfig_dict={},
-                                      white_list=white_list)
+                                      white_list=white_list,
+                                      qconfig_parent=model.qconfig)
             # sanity check common API misusage
             if not any(
                     hasattr(m, 'qconfig') and m.qconfig
@@ -973,7 +987,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         model = copy.deepcopy(model) if self.is_baseline else model
         model.model.qconfig = torch.quantization.QConfig(
-            weight=torch.quantization.default_weight_observer,
+            weight=torch.quantization.default_debug_observer,
             activation=_RecordingObserver)
         _prepare(model.model, op_list=None, white_list=white_list)
 

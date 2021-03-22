@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig
+from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig, get_torch_version
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
@@ -54,15 +54,34 @@ def load(checkpoint_dir, model):
     with open(tune_cfg_file, 'r') as f:
         tune_cfg = yaml.safe_load(f)
 
-    op_cfgs = _cfg_to_qconfig(tune_cfg)
+    version = get_torch_version()
+    if tune_cfg['approach'] != "post_training_dynamic_quant":
+        if version < '1.7':
+            q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+        else:
+            q_mapping = \
+                torch.quantization.quantization_mappings.get_static_quant_module_mappings()
+    else:
+        if version < '1.7':
+            q_mapping = \
+                torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+        else:
+            q_mapping = \
+                torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings()
+
+    if tune_cfg['approach'] == "post_training_dynamic_quant":
+        op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
+    else:
+        op_cfgs = _cfg_to_qconfig(tune_cfg)
     _propagate_qconfig(q_model, op_cfgs)
     # sanity check common API misusage
     if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
         logger.warn("None of the submodule got qconfig applied. Make sure you "
                     "passed correct configuration through `qconfig_dict` or "
                     "by assigning the `.qconfig` attribute directly on submodules")
-    add_observer_(q_model)
-    q_model = convert(q_model, inplace=True)
+    if tune_cfg['approach'] != "post_training_dynamic_quant":
+        add_observer_(q_model)
+    q_model = convert(q_model, mapping=q_mapping, inplace=True)
     weights = torch.load(weights_file)
     q_model.load_state_dict(weights)
     return q_model

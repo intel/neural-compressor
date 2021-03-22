@@ -70,6 +70,35 @@ def build_ptq_yaml():
         f.write(fake_yaml)
 
 
+def build_dynamic_yaml():
+    fake_yaml = '''
+        model:
+          name: imagenet
+          framework: pytorch
+
+        quantization:
+          approach: post_training_dynamic_quant
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+          performance:
+            warmup: 5
+            iteration: 10
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+          workspace:
+            path: saved
+        '''
+    with open('dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
+
+
 def build_ipex_yaml():
     fake_yaml = '''
         model:
@@ -212,6 +241,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_ptq_yaml()
+        build_dynamic_yaml()
         build_qat_yaml()
         build_dump_tensors_yaml()
 
@@ -252,7 +282,7 @@ class TestPytorchAdaptor(unittest.TestCase):
 
         model = copy.deepcopy(self.model)
 
-        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
+        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml', 'dynamic_yaml.yaml']:
             if fake_yaml == 'ptq_yaml.yaml':
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
@@ -288,6 +318,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         quantizer()
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
         quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.eval_func = None
         quantizer()
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
 
@@ -354,7 +385,6 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
     def test_tuning_ipex(self):
         from lpot import Quantization
         model = torchvision.models.resnet18()
-        model = MODELS['pytorch_ipex'](model)
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         quantizer.model = common.Model(model)
@@ -362,12 +392,10 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         lpot_model = quantizer()
         lpot_model.save("./saved")
-        new_model = MODELS['pytorch_ipex'](model.model, {"workspace_path": "./saved"})
-        new_model.model.to(ipex.DEVICE)
         try:
-            script_model = torch.jit.script(new_model.model)
+            script_model = torch.jit.script(model.to(ipex.DEVICE))
         except:
-            script_model = torch.jit.trace(new_model.model, torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
+            script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
         from lpot import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         evaluator.model = common.Model(script_model)

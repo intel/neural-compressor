@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: '1.6'
+    name: '1.7'
 
   precisions: &default_precisions
     names: int8, uint8, fp32
@@ -31,7 +31,111 @@
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
     fp32: ['*'] # '*' means all op types
   
-  capabilities: &default_capabilities
+  capabilities: &1_7_capabilities
+    int8: &cap_s8_1_7 {
+          'Conv1d': &cap_s8_1_7_Conv1d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl', 'minmax']
+                        },
+                    },
+          'Linear': *cap_s8_1_7_Conv1d,
+          'Conv2d': *cap_s8_1_7_Conv1d,
+          'Conv3d': *cap_s8_1_7_Conv1d,
+          'QuantStub': {
+            'activation': {
+                        'dtype': ['uint8'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl']
+                        }
+                    },
+          }
+    uint8: *cap_s8_1_7
+    dynamic: &cap_dynamic_s8_1_7 {
+          'Linear': &cap_dynamic_s8_1_7_Linear {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'LSTM': *cap_dynamic_s8_1_7_Linear,
+          'LSTMCell': *cap_dynamic_s8_1_7_Linear,
+          'RNNCell': *cap_dynamic_s8_1_7_Linear,
+          'GRUCell': *cap_dynamic_s8_1_7_Linear,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          }
+
+  patterns:
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv1d + BN1d',
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        ]
+    int8: &ref_1_7_s8 [
+        'Conv1d + BN1d',
+        'Conv2d + BN2d',
+        'Conv3d + BN3d',
+        'Conv1d + BN1d + Relu',
+        'Conv2d + BN2d + Relu',
+        'Conv3d + BN3d + Relu',
+        'Conv1d + Relu',
+        'Conv2d + Relu',
+        'Conv3d + Relu',
+        'Linear + Relu',
+        'BN2d + Relu',
+        'BN3d + Relu',
+        ]
+    uint8: *ref_1_7_s8
+
+-
+  version:
+    name: '1.6'
+
+  precisions:
+    << : *default_precisions
+
+  ops:
+    # For PyTorch, quantizable op list is provided by torch/quantization/quantization_mappings.py
+    int8: ['BatchNorm2d', 'BatchNorm3d', 'ReLU', 'ReLU6', 'QuantStub', 'FloatFunctional',
+           'BNReLU2d', 'BNReLU3d']
+    uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
+            'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
+            'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &1_6_capabilities
     int8: &cap_s8_1_6 {
           'Conv1d': &cap_s8_1_6_Conv1d {
             'weight': {
@@ -68,6 +172,31 @@
                     },
           }
     uint8: *cap_s8_1_6
+    dynamic: &cap_dynamic_s8_1_6 {
+          'Linear': &cap_dynamic_s8_1_6_Linear {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'LSTM': *cap_dynamic_s8_1_6_Linear,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          }
 
   patterns:
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
@@ -106,7 +235,7 @@
     fp32: ['*'] # '*' means all op types
   
   capabilities:
-    << : *default_capabilities
+    << : *1_6_capabilities
 
   patterns:
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
@@ -132,9 +261,9 @@
     int8: ['ReLU', 'QuantStub']
     uint8: ['Conv2d', 'Linear', 'ReLU', 'QuantStub']
     fp32: ['*'] # '*' means all op types
-  
+
   capabilities:
-    << : *default_capabilities
+    << : *1_6_capabilities
 
   patterns:
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
