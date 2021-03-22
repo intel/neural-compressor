@@ -149,7 +149,38 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))
         tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
         self.assertEqual(tf_result[0][0][0].dtype, 'int64')
- 
+        mx_func = TestSameTransfoms.mx_trans['Cast'](**args)
+        mx_result = mx_func((TestSameTransfoms.mx_img, None))
+        self.assertEqual(mx_result[0][0][0].dtype, np.int64)
+        ox_func = TestSameTransfoms.ox_trans['Cast'](**args)
+        ox_result = ox_func((TestSameTransfoms.img, None))
+        self.assertEqual(ox_result[0][0][0].dtype, 'int64')
+
+        totensor = TestSameTransfoms.pt_trans['ToTensor']()
+        cast = TestSameTransfoms.pt_trans['Cast'](**args)
+        pt_func = TestSameTransfoms.pt_trans['Compose']([totensor, cast])
+        pt_result = pt_func((TestSameTransfoms.pt_img, None))
+        self.assertEqual(pt_result[0][0][0].dtype, torch.int64)
+
+    def testCropToBoundingBox(self):
+        args = {'offset_height':2, 'offset_width':2, 'target_height':5, 'target_width':5}
+        pt_func = TestSameTransfoms.pt_trans['CropToBoundingBox'](**args)
+        pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
+        self.assertEqual(pt_result.size, (5,5))
+
+        ox_func = TestSameTransfoms.ox_trans['CropToBoundingBox'](**args)
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
+        self.assertEqual(ox_result.shape, (5,5,3))
+
+        mx_func = TestSameTransfoms.mx_trans['CropToBoundingBox'](**args)
+        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
+        self.assertEqual(mx_result.shape, (5,5,3))
+
+        tf_func = TestSameTransfoms.tf_trans['CropToBoundingBox'](**args)
+        tf_result = tf_func((TestSameTransfoms.img, None))
+        tf_result = tf_result[0].eval(session=tf.compat.v1.Session())
+        self.assertEqual(tf_result.shape, (5,5,3))
+
     def testNormalize(self):
         args = {}
         normalize = TestSameTransfoms.pt_trans['Normalize'](**args)
@@ -176,10 +207,15 @@ class TestSameTransfoms(unittest.TestCase):
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         mx_func = TestSameTransfoms.mx_trans['Transpose'](**args)
         mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
+        pt_transpose = TestSameTransfoms.pt_trans['Transpose'](**args)
+        pt_totensor = TestSameTransfoms.pt_trans['ToTensor']()
+        pt_compose = TestSameTransfoms.pt_trans['Compose']([pt_totensor, pt_transpose])
+        pt_result = pt_compose((TestSameTransfoms.pt_img, None))[0]
  
         self.assertEqual(tf_result.shape, (3,10,10))
         self.assertEqual(ox_result.shape, (3,10,10))
         self.assertEqual(mx_result.shape, (3,10,10))
+        self.assertEqual(pt_result.shape, (10,3,10))
 
     def testCenterCrop(self):
         args = {'size':[4,4]}
@@ -488,7 +524,10 @@ class TestAlignImageChannel(unittest.TestCase):
         cls.img1 = np.random.random_sample([100,100,3]) * 255
         cls.img2 = np.random.random_sample([100,100]) * 255
         cls.img3 = np.random.random_sample([100,100,4]) * 255
-
+        cls.pt_img1 = Image.fromarray(cls.img1.astype(np.uint8))
+        cls.pt_img2 = Image.fromarray(cls.img2.astype(np.uint8))
+        cls.pt_img3 = Image.fromarray(cls.img3.astype(np.uint8))
+ 
     def testTensorflow(self):
         transforms = TRANSFORMS('tensorflow', 'preprocess')
         align = transforms['AlignImageChannel'](**{'dim':1})
@@ -531,6 +570,46 @@ class TestAlignImageChannel(unittest.TestCase):
         with self.assertRaises(ValueError):
             transforms['AlignImageChannel'](**{'dim':5})
 
+    def testPyTorch(self):
+        transforms = TRANSFORMS('pytorch', 'preprocess')
+        align = transforms['AlignImageChannel'](**{'dim':1})
+        image, _ = align((TestAlignImageChannel.pt_img1, None))
+        self.assertEqual(image.mode, 'L')
+
+        align = transforms['AlignImageChannel'](**{'dim':1})
+        image, _ = align((TestAlignImageChannel.pt_img2, None))
+        self.assertEqual(image.mode, 'L')
+
+        align = transforms['AlignImageChannel'](**{'dim':3})
+        image, _ = align((TestAlignImageChannel.pt_img3, None))
+        self.assertEqual(image.mode, 'RGB')
+
+        with self.assertRaises(ValueError):
+            align = transforms['AlignImageChannel'](**{'dim':2})
+
+        with self.assertRaises(ValueError):
+            transforms['AlignImageChannel'](**{'dim':5})
+
+    def testMXNet(self):
+        transforms = TRANSFORMS('mxnet', 'preprocess')
+        align = transforms['AlignImageChannel'](**{'dim':1})
+        image, _ = align((TestAlignImageChannel.img1.astype(np.uint8), None))
+        self.assertEqual(image.shape[-1], 1)
+
+        align = transforms['AlignImageChannel'](**{'dim':1})
+        image, _ = align((TestAlignImageChannel.img2.astype(np.uint8), None))
+        self.assertEqual(image.shape[-1], 1)
+
+        align = transforms['AlignImageChannel'](**{'dim':3})
+        image, _ = align((TestAlignImageChannel.img3.astype(np.uint8), None))
+        self.assertEqual(image.shape[-1], 3)
+
+        align = transforms['AlignImageChannel'](**{'dim':2})
+        self.assertRaises(ValueError, align, 
+                (TestAlignImageChannel.img1.astype(np.uint8), None))
+
+        with self.assertRaises(ValueError):
+            transforms['AlignImageChannel'](**{'dim':5})
 
 class TestToArray(unittest.TestCase):
     def testParse(self):

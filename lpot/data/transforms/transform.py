@@ -318,6 +318,47 @@ class ComposeTransform(BaseTransform):
             sample = transform(sample)
         return sample
 
+@transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
+        framework="pytorch")
+class CropToBoundingBox(BaseTransform):
+    def __init__(self, offset_height, offset_width, target_height, target_width):
+        self.offset_height = offset_height
+        self.offset_width = offset_width
+        self.target_height = target_height
+        self.target_width = target_width
+
+    def __call__(self, sample):
+        image, label = sample
+        image = torchvision.transforms.functional.crop(
+                    image,
+                    self.offset_height,
+                    self.offset_width,
+                    self.target_height,
+                    self.target_width)
+        return (image, label)
+
+@transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
+        framework="mxnet")
+class MXNetCropToBoundingBox(CropToBoundingBox):
+    def __call__(self, sample):
+        image, label = sample
+        image = mx.image.fixed_crop(
+                    image,
+                    self.offset_height,
+                    self.offset_width,
+                    self.target_height,
+                    self.target_width)
+        return (image, label)
+
+@transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
+                framework="onnxrt_qlinearops, onnxrt_integerops")
+class ONNXRTCropToBoundingBox(CropToBoundingBox):
+    def __call__(self, sample):
+        image, label = sample
+        image = image[self.offset_height : self.offset_height+self.target_height, 
+                      self.offset_width : self.offset_width+self.target_width, :] 
+        return (image, label)
+
 @transform_registry(transform_type="Transpose", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
 class Transpose(BaseTransform):
@@ -336,6 +377,14 @@ class MXNetTranspose(Transpose):
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
         image = mx.ndarray.transpose(image, self.perm)
+        return (image, label)
+
+@transform_registry(transform_type="Transpose", process="preprocess", framework="pytorch")
+class PyTorchTranspose(Transpose):
+    def __call__(self, sample):
+        image, label = sample
+        assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
+        image = image.permute(self.perm)
         return (image, label)
 
 @transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
@@ -390,6 +439,38 @@ class CastTFTransform(BaseTransform):
         image = tf.image.convert_image_dtype(image, dtype=self.dtype)
         return (image, label)
 
+@transform_registry(transform_type="Cast",
+                    process="general", framework="onnxrt_qlinearops, onnxrt_integerops")
+class CastONNXTransform(BaseTransform):
+    def __init__(self, dtype='float32'):
+        dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64, 
+                     'uint16': np.uint16, 'int32': np.int32, 'uint32': np.uint32, 
+                     'int64': np.int64, 'uint64': np.uint64, 'float32': np.float32, 
+                     'float16': np.float16, 'float64': np.float64, 'bool': np.bool, 
+                     'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
+
+        assert dtype in dtype_map.keys(), 'Unknown dtype'
+        self.dtype = dtype_map[dtype]
+
+    def __call__(self, sample):
+        image, label = sample
+        image = image.astype(self.dtype)
+        return (image, label)
+ 
+@transform_registry(transform_type="Cast", process="general", framework="pytorch")
+class CastPyTorchTransform(BaseTransform):
+    def __init__(self, dtype='float32'):
+        dtype_map = {'int8': torch.int8, 'uint8': torch.uint8, 'complex128': torch.complex128,
+                     'int32':torch.int32, 'int64':torch.int64, 'complex64': torch.complex64, 
+                     'bfloat16':torch.bfloat16, 'float64':torch.float64, 'bool': torch.bool, 
+                     'float16':torch.float16, 'int16':torch.int16, 'float32': torch.float32}
+        assert dtype in dtype_map.keys(), 'Unknown dtype'
+        self.dtype = dtype_map[dtype]
+
+    def __call__(self, sample):
+        image, label = sample
+        image = image.type(self.dtype)
+        return (image, label)
 
 @transform_registry(transform_type="CenterCrop",
                     process="preprocess", framework="tensorflow")
@@ -663,7 +744,7 @@ class RescaleTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
-    framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+    framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet')
 class AlignImageChannelTransform(BaseTransform):
     """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
         [H,W,3]->[H,W]. 
@@ -686,6 +767,30 @@ class AlignImageChannelTransform(BaseTransform):
                 image = np.expand_dims(image, axis=-1)
             else:
                 raise ValueError('Unsupport conversion!')
+        return (image, label)
+
+@transform_registry(transform_type='AlignImageChannel', process="preprocess", \
+    framework='pytorch')
+class PyTorchAlignImageChannel(BaseTransform):
+    """ Align image channel, now just support [H,W,4]->[H,W,3] and
+        [H,W,3]->[H,W]. 
+        Input image must be PIL Image.
+    """
+    def __init__(self, dim=3):
+        if dim != 1 and dim != 3:
+            raise ValueError('Unsupport image dim!')
+        self.dim = dim
+
+    def __call__(self, sample):
+        from PIL import Image
+        image, label = sample
+        assert isinstance(image, Image.Image), 'Input image must be PIL Image'
+        if self.dim == 3:
+            image = image.convert('RGB')
+        elif self.dim == 1:
+            image = image.convert('L')
+        else:
+            raise ValueError('Unsupport conversion!')
         return (image, label)
 
 @transform_registry(transform_type="ToNDArray", process="preprocess", \

@@ -176,6 +176,12 @@ filter_schema = Schema({
 })
 
 transform_schema = Schema({
+    Optional('CropToBoundingBox'): {
+        'offset_height': int,
+        'offset_width': int,
+        'target_height': int,
+        'target_width': int
+    },
     Optional('Cast'): {
         Optional('dtype'): str
     },
