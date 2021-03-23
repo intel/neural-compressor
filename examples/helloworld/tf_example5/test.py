@@ -13,7 +13,7 @@ def main():
      # Optional, run benchmark 
     from lpot import Benchmark
     evaluator = Benchmark('./conf.yaml')
-    evaluator.model = common.Model(quantized_model)
+    evaluator.model = common.Model(quantized_model.graph_def)
     results = evaluator()
     batch_size = 1
     for mode, result in results.items():

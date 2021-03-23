@@ -2,7 +2,6 @@ import tensorflow as tf
 import time
 import numpy as np
 from tensorflow import keras
-from lpot.data import DATASETS, DataLoader
 from lpot import common
 
 tf.compat.v1.disable_eager_execution()

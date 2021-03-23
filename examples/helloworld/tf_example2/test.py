@@ -18,8 +18,8 @@ class Dataset(object):
 # Define a customized Metric function 
 import lpot
 from lpot import common
-from lpot.metric import Metric
-class MyMetric(Metric):
+from lpot.metric import BaseMetric
+class MyMetric(BaseMetric):
   def __init__(self, *args):
       self.pred_list = []
       self.label_list = []
@@ -56,7 +56,7 @@ q_model = quantizer()
 # Optional, run quantized model
 import tensorflow as tf
 with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
-     tf.compat.v1.import_graph_def(q_model.as_graph_def(), name='')
+     tf.compat.v1.import_graph_def(q_model.graph_def, name='')
      styled_image = sess.run(['output:0'], feed_dict={'input:0':dataset.test_images})
      print("Inference is done.")
 
