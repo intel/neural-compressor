@@ -61,11 +61,23 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
                     fetch_collection.node_list.value.append(fetch) # pylint: disable=no-member
                 meta_graph.collection_def["train_op"].CopyFrom( # pylint: disable=no-member
                                                     fetch_collection) # pylint: disable=no-member
+                
             config = config_pb2.ConfigProto()
             convert = rewriter_config_pb2.RewriterConfig.NCHW_TO_NHWC # pylint: disable=no-member
             config.graph_options.rewrite_options.CopyFrom( # pylint: disable=no-member
                 rewriter_config_pb2.RewriterConfig(
+                    disable_model_pruning=True,
+                    constant_folding=rewriter_config_pb2.RewriterConfig.OFF,
+                    dependency_optimization=rewriter_config_pb2.RewriterConfig.OFF,
+                    memory_optimization=rewriter_config_pb2.RewriterConfig.NO_MEM_OPT,
+                    arithmetic_optimization=rewriter_config_pb2.RewriterConfig.OFF,
+                    shape_optimization=rewriter_config_pb2.RewriterConfig.OFF,
+                    loop_optimization=rewriter_config_pb2.RewriterConfig.OFF,
+                    function_optimization=rewriter_config_pb2.RewriterConfig.OFF,
+                    remapping=rewriter_config_pb2.RewriterConfig.OFF,
+                    implementation_selector=rewriter_config_pb2.RewriterConfig.OFF,
                     cpu_layout_conversion=convert))
+
             optimized_graph = tf_optimizer.OptimizeGraph(config, meta_graph)
             return optimized_graph
         else:
