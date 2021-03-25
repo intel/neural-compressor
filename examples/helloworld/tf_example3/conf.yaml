@@ -21,7 +21,7 @@ quantization:                                        # optional. tuning constrai
   calibration:
     sampling_size: 20                                # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:
-      batch_size: 1
+      batch_size: 10
       dataset:
         ImageRecord:
           root: /path/to/imagenet/                   # NOTE: modify to calibration dataset location if needed
@@ -41,7 +41,7 @@ evaluation:                                          # optional. required if use
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
-      batch_size: 1 
+      batch_size: 32 
       last_batch: discard 
       dataset:
         ImageRecord:
