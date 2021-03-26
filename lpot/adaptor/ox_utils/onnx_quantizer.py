@@ -32,7 +32,7 @@ from onnx import onnx_pb as onnx_proto
 from onnxruntime import SessionOptions, InferenceSession, GraphOptimizationLevel
 
 from onnxruntime.quantization.quant_utils import QuantizationMode, QuantizedValueType, \
-                                 QuantizedInitializer, QuantizedValue, quantization_modes
+                                 QuantizedInitializer, QuantizedValue
 from onnxruntime.quantization.quant_utils import find_by_name, get_elem_index, get_mul_node, \
                                 generate_identified_filename, attribute_to_kwarg, type_to_name
 from onnxruntime.quantization.quant_utils import QuantType, onnx_domain, __producer__, __version__
@@ -108,9 +108,6 @@ class ONNXQuantizer:
         self.new_nodes = []
 
         self.opset_version = self.check_opset_version()
-
-        if not self.mode in quantization_modes:
-            raise ValueError('unsupported quantization mode {}'.format(self.mode))
 
         # QuantizeRange tensor name and zero tensor name for scale and zero point calculation.
         # Used when static is False

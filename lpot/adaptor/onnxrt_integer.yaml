@@ -66,6 +66,17 @@
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                         }
-                    },
+                    }
           }
+-
+  version:
+    name: 'default'
 
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    <<: *common_capabilities

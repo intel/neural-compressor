@@ -28,7 +28,7 @@
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
-    int8: &ref_2_4 {
+    int8: &ref_1_6 {
           'FusedConv': &key_1_6_0 {
             'weight': {
                         'dtype': ['int8', 'fp32'],
@@ -62,4 +62,19 @@
                         }
                     },
           }
+-
+  version:
+    name: '1.7.0'
 
+  precisions: 
+    <<: *common_precisions
+
+  ops: &ops_1_7
+    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
+        'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split']
+    fp32: ['*'] # '*' means all op types
+
+  capabilities:
+    <<: *common_capabilities
+-
