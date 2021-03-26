@@ -133,7 +133,8 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```python
         from lpot.quantization import Quantization
         quantizer = Quantization('./bert.yaml')
-        q_model = quantizer(FLAGS.input_model)
+        quantizer.model = FLAGS.input_model
+        q_model = quantizer()
         q_model.save(FLAGS.output_model)
 
 ```
@@ -141,7 +142,8 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```python
         from lpot import Benchmark
         evaluator = Benchmark('./bert.yaml')
-        results = evaluator(model=FLAGS.input_model)
+        evaluator.model = FLAGS.input_model
+        results = evaluator()
         for mode, result in results.items():
             acc, batch_size, result_list = result
             latency = np.array(result_list).mean() / batch_size

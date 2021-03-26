@@ -114,7 +114,9 @@ After prepare step is done, we just need add 2 lines to get the quantized model.
 from lpot import Quantization
 
 quantizer = Quantization(args.config)
-q_model = quantizer(graph, eval_func=eval_func)
+quantizer.model = graph
+quantizer.eval_func = eval_func
+q_model = quantizer()
 ```
 
 The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model during timeout constrain.

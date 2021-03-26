@@ -64,8 +64,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    import sys
-    sys.path.append('/home2/yuwenzho/lpot-onnx-vgg/LowPrecisionInferenceTool')
     model = onnx.load(args.model_path)
     if args.benchmark:
         from lpot import Benchmark, common

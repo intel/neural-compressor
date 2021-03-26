@@ -153,7 +153,11 @@ After preparation is done, we just need update main.py like below.
     # Doing auto-tuning here
     from lpot import Quantization
     quantizer = Quantization("./ssd.yaml")
-    quantizer(net, q_dataloader=val_data, eval_dataloader=val_dataset, eval_func=eval_func)
+    quantizer.model = common.Model(net)
+    quantizer.calib_dataloader = val_data
+    quantizer.eval_dataloader = val_data
+    quantizer.eval_func = eval_func
+    q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model under timeout constrain.

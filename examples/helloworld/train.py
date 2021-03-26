@@ -37,7 +37,7 @@ def main():
 
     # # Train model
     model.fit(x={"input": train_images}, y={"output": train_labels}, epochs=1)
-    model.save("./models/simple_model")
+    model.save("./models/saved_model")
 
     # Convert Keras model to ConcreteFunction
     full_model = tf.function(lambda x: model(x))
@@ -49,8 +49,8 @@ def main():
  
     # Generate frozen pb
     tf.io.write_graph(graph_or_graph_def=frozen_model.graph,
-                       logdir="./frozen_models",
-                       name="simple_frozen_graph.pb",
+                       logdir="./models",
+                       name="frozen_graph.pb",
                        as_text=False)
 
     return
