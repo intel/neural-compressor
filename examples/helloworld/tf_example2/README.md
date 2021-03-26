@@ -87,9 +87,11 @@ class MyMetric(Metric):
 import lpot
 quantizer = lpot.Quantization('./conf.yaml')
 dataset = Dataset()
-quantizer.metric('hello_metric', MyMetric) 
-dataloader = quantizer.dataloader(dataset, batch_size=1)
-q_model = quantizer('../models/simple_model', q_dataloader = dataloader, eval_dataloader = dataloader)
+quantizer.metric = common.Metric(MyMetric, 'hello_metric')
+quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
+quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
+quantizer.model = common.Model('../models/saved_model')
+q_model = quantizer()
 
 ```
 
@@ -108,7 +110,7 @@ Run inference on the quantized model
 ```python
 import tensorflow as tf
 with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
-     tf.compat.v1.import_graph_def(q_model.as_graph_def(), name='')
+     tf.compat.v1.import_graph_def(q_model.graph_def, name='')
      styled_image = sess.run(['output:0'], feed_dict={'input:0':dataset.test_images})
      print("Inference is done.")
 ```

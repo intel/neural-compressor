@@ -52,6 +52,7 @@ evaluation:                                          # optional. required if use
 * In order to do quanzation for slim models, we need to get graph from slim .ckpt first. 
 ```python
     import lpot
+    from lpot import common
     quantizer = lpot.Quantization('./conf.yaml')
 
     # Get graph from slim checkpoint
@@ -68,7 +69,8 @@ evaluation:                                          # optional. required if use
             arg_scope, images, **kwargs)
     
     # Do quantization
-    quantized_model = quantizer(graph)
+    quantizer.model = common.Model('./inception_v1.ckpt')
+    quantized_model = quantizer()
  
 ```
 

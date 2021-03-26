@@ -112,9 +112,11 @@ After prepare step is done, we add tune code to generate quantized model.
     from lpot.adaptor.tf_utils.util import write_graph
     quantizer = Quantization(FLAGS.config)
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    q_dataloader = quantizer.dataloader(ds, collate_fn=collate_fn, batch_size=FLAGS.batch_size)
-    q_model = quantizer(graph, q_dataloader=q_dataloader, eval_func=eval_func)
-    write_graph(q_model.as_graph_def(), FLAGS.output_model)
+    quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, batch_size=FLAGS.batch_size)
+    quantizer.model = common.Model(graph)
+    quantizer.eval_func = eval_func
+    q_model = quantizer()
+    q_model.save(FLAGS.output_model)
 ```
 
 The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model under time constraint.

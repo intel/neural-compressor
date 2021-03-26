@@ -50,7 +50,7 @@ dataset = Dataset()
 quantizer.metric = common.Metric(MyMetric, 'hello_metric')
 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
-quantizer.model = common.Model('../models/simple_model')
+quantizer.model = common.Model('../models/saved_model')
 q_model = quantizer()
 
 # Optional, run quantized model
