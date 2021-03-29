@@ -112,7 +112,7 @@ python setup.py install
 * [Introduction](docs/introduction.md) explains Intel® Low Precision Optimization Tool's API.
 * [Transform](docs/transform.md) introduces how to utilize LPOT buildin data processing and how to develop a custom data processing method. 
 * [Dataset](docs/dataset.md) introudces how to utilize LPOT buildin dataset and how to develop a custom dataset.
-* [Metric](docs/metrics.md) introduces how to utilize LPOT buildin metrics and how to develop a custom metric.
+* [Metric](docs/metric.md) introduces how to utilize LPOT buildin metrics and how to develop a custom metric.
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples. 
 * [Examples](examples) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: [TensorFlow](examples/tensorflow), [PyTorch](examples/pytorch), [MXNet](examples/mxnet) and [ONNX Runtime](examples/onnxrt).
 * [UX](docs/ux.md) is a web based system to simplify Intel® Low Precision Optimization Tool usage.
@@ -477,6 +477,10 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
 # Known Issues
 
 The MSE tuning strategy does not work with the PyTorch adaptor layer. This strategy requires a comparison between the FP32 and INT8 tensors to decide which op impacts the final quantization accuracy. The PyTorch adaptor layer does not implement this inspect tensor interface. Therefore, do not choose the MSE tuning strategy for PyTorch models.
+
+# Incompatible Changes
+
+[LPOT v1.2](https://github.com/intel/lpot/tree/v1.2) introduces incompatible changes in user facing APIs. Please refer to [incompatible changes](./docs/incompatible_changes.md) to know which incompatible changes are made in v1.2.
 
 # Support
 

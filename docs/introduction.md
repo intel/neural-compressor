@@ -60,23 +60,23 @@ The `conf_fname` parameter used in the class initialization is the path to user 
 # Typical Launcher code
 from lpot import Quantization, common
 
-# optional if LPOT built-in dataset could be used as model input.
-class dataset():
-  def __init__(self):
+# optional if LPOT built-in dataset could be used as model input in yaml
+class dataset(object):
+  def __init__(self, *args):
       ...
 
-  def __getitem__(self):
+  def __getitem__(self, idx):
       ...
 
   def len(self):
       ...
 
-# optional if LPOT built-in metric could be used to do accuracy evaluation on model output
-class custom_metric():
+# optional if LPOT built-in metric could be used to do accuracy evaluation on model output in yaml
+class custom_metric(object):
     def __init__(self):
         ...
 
-    def update(self, predict, lable):
+    def update(self, predict, label):
         ...
 
     def result(self):
@@ -84,11 +84,13 @@ class custom_metric():
 
 quantizer = Quantization(conf.yaml)
 quantizer.model = common.Model('/path/to/model')
-# optional if LPOT built-in dataset could be used as model input
-quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=32)
-# optional if LPOT built-in dataset could be used as model input
-quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=32)
-# optional if LPOT built-in metric could be used to do accuracy evaluation on model output
+# below two lines are optional if LPOT built-in dataset is used as model calibration input in yaml
+cal_dl = dataset('/path/to/calibration/dataset')
+quantizer.calib_dataloader = common.DataLoader(cal_dl, batch_size=32)
+# below two lines are optional if LPOT built-in dataset is used as model evaluation input in yaml
+dl = dataset('/path/to/evaluation/dataset')
+quantizer.eval_dataloader = common.DataLoader(dl, batch_size=32)
+# optional if LPOT built-in metric could be used to do accuracy evaluation in yaml
 quantizer.metric = common.Metric(custom_metric) 
 q_model = quantizer()
 q_model.save('/path/to/output/dir') 

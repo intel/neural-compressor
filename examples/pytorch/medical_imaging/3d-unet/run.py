@@ -167,7 +167,8 @@ def main():
             print("Loading file {:}".format(file_name))
             with open(os.path.join('build/calib_preprocess/', "{:}.pkl".format(file_name)), "rb") as f:
                 self.loaded_files[sample_id] = pickle.load(f)[0]
-            return torch.from_numpy(self.loaded_files[sample_id][np.newaxis,...]).float(), None
+            # note that calibration phase does not care label, here we return 0 for label free case.
+            return self.loaded_files[sample_id], 0
     
         def __len__(self):
             self.count = len(self.preprocess_files)
@@ -185,8 +186,7 @@ def main():
         quantizer = Quantization('conf.yaml')
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func
-        calib_dl = CalibrationDL()
-        quantizer.calib_dataloader = calib_dl
+        quantizer.calib_dataloader = common.DataLoader(CalibrationDL())
         q_model = quantizer()
         q_model.save('./lpot_workspace')
         exit(0)
