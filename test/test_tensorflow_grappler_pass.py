@@ -27,8 +27,13 @@ class TestGrapplerPass(unittest.TestCase):
             with tf.Session() as sess:
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
+                opt_cfg = {
+                    'pruning': True,
+                    'shape': True, 'dependency': True, 'debug_stripper': True, 'loop': True,
+                    'constfold': True, 'arithmetic': True
+                }
                 optimized_graph = GrapplerOptimizer(
-                    float_graph_def, ['op_to_store']).do_transformation()
+                    float_graph_def, ['op_to_store'], opt_cfg).do_transformation()
                 identity_count = 0
                 for i in optimized_graph.node:
                     if i.op == 'Identity':

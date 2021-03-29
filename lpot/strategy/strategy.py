@@ -139,6 +139,7 @@ class TuneStrategy(object):
                 {"inputs": self.cfg.model.inputs,
                  "outputs": self.cfg.model.outputs,
                  'workspace_path': self.cfg.tuning.workspace.path,
+                 'optimization': self.cfg.quantization.optimization,
                  'recipes': self.cfg.quantization.recipes})
         if framework == 'mxnet' or framework == 'pytorch':
             framework_specific_info.update({"q_dataloader": q_dataloader})

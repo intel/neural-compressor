@@ -19,6 +19,8 @@ def build_fake_yaml():
           outputs: op_to_store
         device: cpu
         quantization:
+          optimization:
+            arithmetic: False
           model_wise:
             weight:
                 granularity: per_tensor
@@ -52,6 +54,8 @@ def build_fake_yaml_kl():
           outputs: op_to_store
         device: cpu
         quantization:
+          optimization:
+            arithmetic: False                                 # optional. grappler arithmetic optimizer,default value is True.
           model_wise:
             activation:
                 algorithm: kl

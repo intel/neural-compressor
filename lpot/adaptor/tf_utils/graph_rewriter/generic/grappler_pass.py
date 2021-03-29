@@ -29,10 +29,12 @@ import tensorflow as tf
 class GrapplerOptimizer(GraphRewriterBase):
     """A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph.
     """
-    def __init__(self, model, outputs):
+    def __init__(self, model, outputs, opt_cfg):
         super().__init__(model)
         self.outputs = outputs
-
+        self.opt_cfg = opt_cfg
+        self.generic_optimizer = ('pruning', 'shape', 'dependency', 'debug_stripper', 'loop')
+        self.tf_2_optimizer = ('constfold', 'arithmetic')
     @dump_elapsed_time("Pass GrapplerOptimizer")
     def do_transformation(self):
         try:
@@ -47,10 +49,15 @@ class GrapplerOptimizer(GraphRewriterBase):
                 meta_graph.collection_def["train_op"].CopyFrom(fetch_collection)
                 config = config_pb2.ConfigProto()
                 rewriter_config = config.graph_options.rewrite_options
-                rewriter_config.optimizers.append('pruning')
-                rewriter_config.optimizers.append('dependency')
-                rewriter_config.optimizers.append('debug_stripper')
-                rewriter_config.optimizers.append('loop')
+                for optimizer in self.generic_optimizer:
+                    if optimizer in self.opt_cfg and self.opt_cfg[optimizer]:
+                        rewriter_config.optimizers.append(optimizer)
+
+                if tf.version.VERSION >= '2.1.0':
+                    for optimizer in self.tf_2_optimizer:
+                        if optimizer in self.opt_cfg and self.opt_cfg[optimizer]:
+                            rewriter_config.optimizers.append(optimizer)
+
                 rewriter_config.min_graph_nodes = -1
 
                 optimized_graph = tf_optimizer.OptimizeGraph(config, meta_graph)

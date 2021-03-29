@@ -34,8 +34,9 @@ from .fuse_gelu import FuseGeluOptimizer
 from .grappler_pass import GrapplerOptimizer
 
 class PreOptimization():
-    def __init__(self, model):
+    def __init__(self, model, optimization):
         self.model = model
+        self.optimization = optimization
         self.output_node_names = model.output_node_names
         self.input_node_names = model.input_node_names
         if model.iter_op is not None:
@@ -77,7 +78,7 @@ class PreOptimization():
             self.model.graph_def, self.output_node_names).do_transformation()
 
         self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, self.output_node_names).do_transformation()
+            self._tmp_graph_def, self.output_node_names, self.optimization).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def, protected_nodes=self.output_node_names).do_transformation()

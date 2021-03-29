@@ -23,6 +23,14 @@ device: cpu                                          # optional. default value i
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.
+  optimization:
+    pruning: True                                    # optional. grappler pruning optimizer, default value is True.
+    shape: True                                      # optional. grappler shape optimizer,default value is True.
+    constfold: True                                  # optional. grappler constant folding optimizer, default value is True.
+    arithmetic: True                                 # optional. grappler arithmetic optimizer,default value is True.
+    dependency: True                                 # optional. grappler dependency optimizer,default value is True.
+    debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
+    loop: True                                       # optional. grappler loop optimizer,default value is True.
   recipes:
     scale_propagation_max_pooling: True              # optional. default value is True.
     scale_propagation_concat: True                   # optional. default value is True.

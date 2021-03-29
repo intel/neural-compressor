@@ -48,6 +48,7 @@ class TensorFlowAdaptor(Adaptor):
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = self.framework_specific_info['recipes']
+        self.optimization = self.framework_specific_info['optimization']
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         
@@ -458,7 +459,7 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
-        self.pre_optimizer_handle = PreOptimization(model)
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
