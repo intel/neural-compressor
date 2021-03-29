@@ -15,7 +15,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Bl
 ## 1. Installation
 
 ```Shell
-cd examples/pytorch/distill-bert
+cd examples/pytorch/blendcnn
 pip install -r requirements.txt
 pip install torch==1.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
@@ -80,7 +80,7 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: blendcnn
-  framework: pytorch       
+  framework: pytorch     
 
 tuning:
   accuracy_criterion:
