@@ -32,17 +32,11 @@ quantization:                                        # optional. tuning constrai
           size: 1
       transform:
         ParseDecodeCoco: {}
-  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
-    activation:
-      algorithm: minmax
-    weight:
-      granularity: per_tensor
-      algorithm: minmax
-  op_wise: {
-          'FirstStageFeatureExtractor/InceptionV2/InceptionV2/Conv2d_1a_7x7/separable_conv2d': {
-            'activation':  {'dtype': ['fp32']},
-            }
-          }
+  #op_wise: {
+  #        'FirstStageFeatureExtractor/InceptionV2/InceptionV2/Conv2d_1a_7x7/separable_conv2d': {
+  #          'activation':  {'dtype': ['fp32']},
+  #          }
+  #        }
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
