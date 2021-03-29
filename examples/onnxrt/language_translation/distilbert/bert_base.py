@@ -301,7 +301,7 @@ if __name__ == "__main__":
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         quantize.calib_dataloader = eval_dataloader

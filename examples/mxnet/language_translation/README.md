@@ -130,7 +130,7 @@ After prepare step is done, we just need update main.py like below.
 ```python
     # Intel® Low Precision Optimization Tool auto-tuning
     calib_data = dev_data_list[0][1]
-    from lpot import Quantization, common
+    from lpot.experimental import Quantization, common
     quantizer = Quantization("./bert.yaml")
     quantizer.model = common.Model(model)
     quantizer.calib_dataloader = calib_data

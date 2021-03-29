@@ -188,7 +188,7 @@ class TestTensorboard(unittest.TestCase):
         shutil.rmtree("runs/", ignore_errors=True)
 
     def test_run_basic_one_trial(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (1, 224, 224, 3), label=True)

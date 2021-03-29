@@ -50,14 +50,14 @@ class eval_classifier_optimized_graph:
       """ This is lpot function include tuning and benchmark option """
 
       if self.args.tune:
-          from lpot import Quantization, common
+          from lpot.experimental import Quantization, common
           quantizer = Quantization(self.args.config)
           quantizer.model = common.Model(self.args.input_graph)
           q_model = quantizer()
           q_model.save(self.args.output_graph)
 
       if self.args.benchmark:
-          from lpot import Benchmark, common
+          from lpot.experimental import Benchmark, common
           evaluator = Benchmark(self.args.config)
           evaluator.model = common.Model(self.args.input_graph)
           results = evaluator()

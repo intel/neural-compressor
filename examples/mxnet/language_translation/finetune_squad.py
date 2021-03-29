@@ -902,7 +902,7 @@ if __name__ == '__main__':
     elif args.tune:
         # lpot auto-tuning
         dev_dataloader = gen_dataset()
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization("./bert.yaml")
         quantizer.model = common.Model(net)
         quantizer.calib_dataloader = dev_dataloader

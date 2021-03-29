@@ -17,7 +17,7 @@ class Dataset(object):
 
 # Define a customized Metric function 
 import lpot
-from lpot import common
+from lpot.experimental import common
 from lpot.metric import BaseMetric
 class MyMetric(BaseMetric):
   def __init__(self, *args):
@@ -47,11 +47,10 @@ class MyMetric(BaseMetric):
 # Quantize with customized dataloader and metric
 quantizer = lpot.Quantization('./conf.yaml')
 dataset = Dataset()
-quantizer.metric = common.Metric(MyMetric, 'hello_metric')
-quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
-quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
-quantizer.model = common.Model('../models/saved_model')
-q_model = quantizer()
+quantizer.metric('helll_metric', MyMetric)
+dataloader = quantizer.dataloader(dataset, batch_size=1)
+q_model = quantizer('../models/simple_model', \
+    q_dataloader=dataloader, eval_dataloader=dataloader)
 
 # Optional, run quantized model
 import tensorflow as tf

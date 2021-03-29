@@ -225,7 +225,7 @@ class Dataset(object):
 def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.mode == 'tune':
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization(FLAGS.config)
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
         quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, \

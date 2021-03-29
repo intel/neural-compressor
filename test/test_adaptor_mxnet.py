@@ -8,7 +8,7 @@ import mxnet.gluon.nn as nn
 
 sys.path.append('..')
 import lpot
-from lpot import common
+from lpot.experimental import common
 
 def get_mlp_sym():
     data = mx.symbol.Variable('data')

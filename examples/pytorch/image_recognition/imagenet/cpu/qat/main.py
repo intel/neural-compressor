@@ -274,7 +274,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
             return
         model.module.fuse_model()
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization(args.config)
         quantizer.model = common.Model(model)
         quantizer.q_func = training_func_for_lpot

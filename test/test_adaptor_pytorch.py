@@ -8,7 +8,7 @@ import os
 from lpot.adaptor import FRAMEWORKS
 from lpot.model import MODELS
 import lpot.adaptor.pytorch as lpot_torch
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 import shutil
 import copy
 import numpy as np
@@ -299,7 +299,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             # Load configure and weights by lpot.utils
             saved_model = load("./saved", model)
             eval_func(saved_model)
-        from lpot import Benchmark
+        from lpot.experimental import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
         # Load configure and weights by lpot.model
         evaluator.model = common.Model(model)
@@ -385,7 +385,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
     def test_tuning_ipex(self):
-        from lpot import Quantization
+        from lpot.experimental import Quantization
         model = torchvision.models.resnet18()
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
@@ -398,7 +398,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
             script_model = torch.jit.script(model.to(ipex.DEVICE))
         except:
             script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from lpot import Benchmark
+        from lpot.experimental import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         evaluator.model = common.Model(script_model)
         evaluator.b_dataloader = common.DataLoader(dataset)

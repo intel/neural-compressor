@@ -42,7 +42,7 @@ def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
     if FLAGS.mode == 'benchmark':
-        from lpot import Benchmark
+        from lpot.experimental import Benchmark
         evaluator = Benchmark(FLAGS.config)
         evaluator.model = FLAGS.input_model
         results = evaluator()

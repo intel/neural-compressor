@@ -670,7 +670,7 @@ def main():
                         from torch.utils import mkldnn as mkldnn_utils
                         model = mkldnn_utils.to_mkldnn(model)
                         print(model)
-                    from lpot import Quantization, common
+                    from lpot.experimental import Quantization, common
                     quantizer = Quantization(args.config)
                     if eval_task != "squad":
                         eval_task = 'classifier'

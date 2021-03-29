@@ -100,7 +100,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.parse_graph()
 
         float_graph_def = g.dump_graph()
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)
@@ -116,7 +116,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.parse_graph()
 
         float_graph_def = g.dump_graph()
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml_2.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)

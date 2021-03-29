@@ -151,7 +151,7 @@ After preparation is done, we just need update main.py like below.
 ```python
 
     # Doing auto-tuning here
-    from lpot import Quantization
+    from lpot.experimental import Quantization
     quantizer = Quantization("./ssd.yaml")
     quantizer.model = common.Model(net)
     quantizer.calib_dataloader = val_data

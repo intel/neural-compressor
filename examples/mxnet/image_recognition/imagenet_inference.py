@@ -311,7 +311,7 @@ if __name__ == '__main__':
             **combine_mean_std)
 
         if args.tune:
-            from lpot import Quantization, common
+            from lpot.experimental import Quantization, common
             # loading model
             fp32_model = load_model(symbol_file, param_file, logger)
 

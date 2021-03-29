@@ -282,7 +282,7 @@ class TestBF16Convert(unittest.TestCase):
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -332,7 +332,7 @@ class TestBF16Convert(unittest.TestCase):
         quant_data = (q_data, label)
         evl_data = (q_data, label)
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
 
         quantizer = Quantization('fake_bf16_rnn.yaml')
         quantizer.calib_dataloader = common.DataLoader(

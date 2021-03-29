@@ -65,7 +65,7 @@ class TestTensorflowConcat(unittest.TestCase):
 
         output_graph_def = read_graph(self.pb_path)
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 299, 299, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)

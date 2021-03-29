@@ -407,7 +407,7 @@ if args.tune:
         return acc
     eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    from lpot import Quantization, common
+    from lpot.experimental import Quantization, common
     quantizer = Quantization("./conf.yaml")
     if eval_task != "squad":
         eval_task = 'classifier'

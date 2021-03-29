@@ -109,7 +109,7 @@ if __name__ == "__main__":
         return evaluate_onnxrt(model, dummy_dataloader, reference)
 
     if args.benchmark:
-        from lpot import Benchmark, common
+        from lpot.experimental import Benchmark, common
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(model)
         evaluator.b_dataloader = dummy_dataloader
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     
     if args.tune:
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         quantize.calib_dataloader = dummy_dataloader

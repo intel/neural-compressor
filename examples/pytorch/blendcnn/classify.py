@@ -197,16 +197,12 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
 
         if args.tune:
             import lpot
-            from lpot import common
             # lpot tune
             model.load_state_dict(torch.load(args.input_model))
-            eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
+            dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
             quantizer = lpot.Quantization(args.tuned_yaml)
-            quantizer.model = common.Model(model)
-            quantizer.calib_dataloader = eval_dataloader
-            quantizer.eval_func = eval_func
-            q_model = quantizer()
+            q_model = quantizer(model, q_dataloader=dataloader, eval_func=eval_func)
             q_model.save(args.tuned_checkpoint)
 
         elif args.int8:

@@ -146,7 +146,7 @@ After prepare step is done, we just need update main.py like below.
 
 ```python
 model.module.fuse()
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 q_model = quantizer()

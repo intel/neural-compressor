@@ -163,7 +163,7 @@ class TestObjective(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         from lpot.utils.utility import get_size
 
         quantizer = Quantization('fake_yaml.yaml')

@@ -5,16 +5,14 @@ import numpy as np
 def main():
 
     import lpot
-    from lpot import common
     quantizer = lpot.Quantization('./conf.yaml')
-    quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
-    quantized_model = quantizer()
+    model_path = "./mobilenet_v1_1.0_224_frozen.pb"
+    quantized_model = quantizer(model_path)
 
      # Optional, run benchmark 
     from lpot import Benchmark
     evaluator = Benchmark('./conf.yaml')
-    evaluator.model = common.Model(quantized_model.graph_def)
-    results = evaluator()
+    results = evaluator(quantized_model)
     batch_size = 1
     for mode, result in results.items():
        acc, batch_size, result_list = result

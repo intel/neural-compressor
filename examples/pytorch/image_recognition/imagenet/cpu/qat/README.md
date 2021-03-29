@@ -136,7 +136,7 @@ def training_func_for_lpot(model):
             model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
     return
 model.module.fuse_model()
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 quantizer.q_func = training_func_for_lpot

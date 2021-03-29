@@ -105,7 +105,7 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_ru_mse_one_trial(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -114,7 +114,7 @@ class TestQuantization(unittest.TestCase):
         quantizer()
 
     def test_ru_mse_max_trials(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)

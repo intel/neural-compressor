@@ -52,7 +52,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning(self):
-        from lpot import Pruning, common
+        from lpot.experimental import Pruning, common
         prune = Pruning('fake.yaml')
  
         dummy_dataset = PyTorchDummyDataset([tuple([100, 3, 256, 256])])

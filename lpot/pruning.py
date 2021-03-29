@@ -16,11 +16,9 @@
 # limitations under the License.
 
 
-from .conf.config import Conf
-from .policy import POLICIES
 from .utils import logger
 from .utils.utility import singleton
-from .model import BaseModel as LpotModel
+from .experimental import Pruning as ExpPruning
 
 @singleton
 class Pruning(object):
@@ -38,36 +36,26 @@ class Pruning(object):
     """
 
     def __init__(self, conf_fname):
-        self.conf = Conf(conf_fname)
-        self.cfg = self.conf.usr_cfg
-        self.framework = self.cfg.model.framework.lower()
-        self._model = None
-        self._calib_func = None
+        self.exp_pruner = ExpPruning(conf_fname)
 
     def on_epoch_begin(self, epoch):
         """ called on the begining of epochs"""
-        for policy in self.policies:
-            policy.on_epoch_begin(epoch)
+        self.exp_pruner.on_epoch_begin(epoch)
 
     def on_batch_begin(self, batch_id):
         """ called on the begining of batches"""
-        for policy in self.policies:
-            policy.on_batch_begin(batch_id)
+        self.exp_pruner.on_batch_begin(batch_id)
 
     def on_batch_end(self):
         """ called on the end of batches"""
-        for policy in self.policies:
-            policy.on_batch_end()
+        self.exp_pruner.on_batch_end()
 
     def on_epoch_end(self):
         """ called on the end of epochs"""
-        for policy in self.policies:
-            policy.on_epoch_end()
-        stats, sparsity = self._model.report_sparsity()
-        logger.info(stats)
-        logger.info(sparsity)
+        self.exp_pruner.on_epoch_end()
 
-    def __call__(self):
+    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
+                 eval_func=None):
         """The main entry point of pruning.
 
            This interface currently only works on pytorch
@@ -104,79 +92,62 @@ class Pruning(object):
 
               For this usage, model, q_dataloader and eval_func parameters are mandotory.
 
+        Args:
+            model (object):                        For PyTorch model, it's torch.nn.model
+                                                   instance.
+            q_dataloader (generator):              Data loader for calibration. It is iterable
+                                                   and should yield a tuple (input, label) for
+                                                   calibration dataset containing label,
+                                                   or yield (input, _) for label-free calibration
+                                                   dataset. The input could be a object, list,
+                                                   tuple or dict, depending on user implementation,
+                                                   as well as it can be taken as model input.
+            q_func (function, optional):           Training function for pruning.
+                                                   This function takes "model" as input parameter
+                                                   and executes entire training process with self
+                                                   contained training hyper-parameters. If this
+                                                   parameter specified, eval_dataloader parameter
+                                                   plus metric defined in yaml, or eval_func
+                                                   parameter should also be specified at same time.
+            eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
+                                                   and should yield a tuple of (input, label).
+                                                   The input could be a object, list, tuple or
+                                                   dict, depending on user implementation,
+                                                   as well as it can be taken as model input.
+                                                   The label should be able to take as input of
+                                                   supported metrics. If this parameter is
+                                                   not None, user needs to specify pre-defined
+                                                   evaluation metrics through configuration file
+                                                   and should set "eval_func" paramter as None.
+                                                   Tuner will combine model, eval_dataloader
+                                                   and pre-defined metrics to run evaluation
+                                                   process.
+            eval_func (function, optional):        The evaluation function provided by user.
+                                                   This function takes model as parameter,
+                                                   and evaluation dataset and metrics should be
+                                                   encapsulated in this function implementation
+                                                   and outputs a higher-is-better accuracy scalar
+                                                   value.
+
+                                                   The pseudo code should be something like:
+
+                                                   def eval_func(model):
+                                                        input, label = dataloader()
+                                                        output = model(input)
+                                                        accuracy = metric(output, label)
+                                                        return accuracy
+
         Returns:
             pruned model: best pruned model found, otherwise return None
 
         """
-        framework_specific_info = {'device': self.cfg.device,
-                                   'approach': self.cfg.quantization.approach,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'q_dataloader': None}
-        if self.framework == 'tensorflow':
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+        logger.warning('This API is going to be deprecated, please import '
+            'lpot.experimental.Pruning, set the attributes about '
+            'dataloader and metric, then use new __call__ method')
+        self.exp_pruner.model = model
+        if q_dataloader or eval_dataloader or eval_func:
+            logger.warning('Pruning will do nothing with param '
+                           'q_dataloader/eval_dataloader/eval_func')
+        self.exp_pruner.q_func = q_func 
+        return self.exp_pruner()
 
-        assert isinstance(self._model, LpotModel), 'need set lpot Model for quantization....'
-
-        policies = {}
-        for policy in POLICIES:
-            for name in self.cfg["pruning"][policy]:
-                policies[name] = {"policy_name": policy,
-                                  "policy_spec": self.cfg["pruning"][policy][name]}
-        self.policies = []
-        for name, policy_spec in policies.items():
-            print(policy_spec)
-            self.policies.append(POLICIES[policy_spec["policy_name"]](
-                self._model, policy_spec["policy_spec"], self.cfg))
-        return self._calib_func(self._model.model)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, user_model):
-        """Only support PyTorch model, it's torch.nn.model instance.
-
-        Args:
-           user_model: user are supported to set model from original PyTorch model format
-                       Best practice is to set from a initialized lpot.common.Model.
-
-        """
-        from .common import Model as LpotModel
-        if not isinstance(user_model, LpotModel):
-            logger.warning('force convert user raw model to lpot model, \
-                better initialize lpot.common.Model and set....')
-            user_model = LpotModel(user_model)
-        framework_model_info = {}
-        cfg = self.conf.usr_cfg
-        if self.framework == 'tensorflow':
-            framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': cfg.model.inputs,
-                 'output_tensor_names': cfg.model.outputs,
-                 'workspace_path': cfg.tuning.workspace.path})
-
-        from .model import MODELS
-        self._model = MODELS[self.framework](\
-            user_model.root, framework_model_info, **user_model.kwargs)
-
-    @property
-    def q_func(self):
-        logger.warning('q_func not support getter....')
-        return None
-        
-    @q_func.setter
-    def q_func(self, user_q_func):
-        """Training function for pruning. 
-
-        Args:
-            user_q_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If q_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func 
-                         to make evaluation of the model executed.
-        """
-        logger.warning('q_func is to be deprecated, please construct q_dataloader....')
-        self._calib_func = user_q_func

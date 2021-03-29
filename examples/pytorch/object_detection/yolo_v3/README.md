@@ -117,7 +117,7 @@ def eval_func(model):
     return AP.mean()
 model.eval()
 model.fuse_model()
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
 dataloader = torch.utils.data.DataLoader(
     dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn

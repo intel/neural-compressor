@@ -383,7 +383,7 @@ After completed preparation steps, we just need to add below tuning part in `eva
     Returns:
         graph: it will return a quantized pb
     """
-    from lpot import Quantization, common
+    from lpot.experimental import Quantization, common
     quantizer = Quantization(self.args.config)
     quantizer.model = common.Model(self.args.input_graph)
     q_model = quantizer()

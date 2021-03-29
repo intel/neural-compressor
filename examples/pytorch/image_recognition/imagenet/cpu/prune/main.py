@@ -171,7 +171,7 @@ def main_worker(gpu, args):
         return
 
     if args.prune:
-        from lpot import Pruning, common
+        from lpot.experimental import Pruning, common
         prune = Pruning(args.config)
 
         def training_func_for_lpot(model):
