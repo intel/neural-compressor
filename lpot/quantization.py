@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from .utils import logger
-from .data import DATALOADERS, DATASETS
+from .experimental.data import DATALOADERS, DATASETS
 from .experimental import Quantization as ExpQuantization
 
 class Quantization(object):

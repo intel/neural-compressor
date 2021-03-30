@@ -23,8 +23,8 @@ import sys
 import numpy as np
 import pandas as pd
 import unicodedata
-from lpot.metric import bleu_util as metrics
-from lpot.metric.metric import metric_registry
+from .bleu_util import compute_bleu
+from .metric import metric_registry
 
 class UnicodeRegex(object):
     def __init__(self):
@@ -68,5 +68,5 @@ class BLEU(object):
         self.translations.extend(pred)
 
     def result(self):
-        return metrics.compute_bleu(self.labels, self.translations) * 100
+        return compute_bleu(self.labels, self.translations) * 100
 

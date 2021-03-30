@@ -23,7 +23,7 @@ import re
 import argparse
 import json
 import sys
-from ..utils import logger
+from lpot.utils import logger
 
 def normalize_answer(s):
     """Lower text and remove punctuation, articles and extra whitespace."""

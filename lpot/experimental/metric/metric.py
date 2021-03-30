@@ -18,7 +18,7 @@
 from abc import abstractmethod
 from collections import Counter
 from lpot.utils.utility import LazyImport, singleton
-from ..utils import logger
+from lpot.utils import logger
 from sklearn.metrics import accuracy_score
 import numpy as np
 

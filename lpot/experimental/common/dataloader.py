@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from lpot.data import DATALOADERS
+from ..data import DATALOADERS
 
 class DataLoader(object):
     """This class is just a wrapper of the information needed to build a dataloader,

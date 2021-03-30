@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from .utils import logger
-from .data import DATALOADERS
+from .experimental.data import DATALOADERS
 from .experimental import Benchmark as ExpBenchmark
 
 class Benchmark(object):

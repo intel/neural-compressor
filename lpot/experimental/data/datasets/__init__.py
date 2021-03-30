@@ -19,6 +19,8 @@ from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
+import lpot.data.datasets
+
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
 for f in modules:

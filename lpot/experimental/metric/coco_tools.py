@@ -60,7 +60,7 @@ from collections import OrderedDict
 import copy
 import time
 import numpy as np
-from ..utils import logger
+from lpot.utils import logger
 
 from pycocotools import coco
 from pycocotools import cocoeval

@@ -18,7 +18,7 @@
 import collections
 import numpy as np
 from lpot.utils.utility import LazyImport
-from lpot.data.dataloaders.base_dataloader import BaseDataLoader
+from .base_dataloader import BaseDataLoader
 mx = LazyImport('mxnet')
 
 class MXNetDataLoader(BaseDataLoader):

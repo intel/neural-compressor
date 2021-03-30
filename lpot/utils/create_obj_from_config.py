@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..metric import METRICS
-from ..data import DATASETS, TRANSFORMS, FILTERS, DATALOADERS
+from lpot.experimental.metric import METRICS
+from lpot.experimental.data import DATASETS, TRANSFORMS, FILTERS, DATALOADERS
 from collections import OrderedDict
 import copy
 

@@ -32,7 +32,7 @@
 
 import numpy as np
 from lpot.utils.utility import LazyImport
-from lpot.experimental.data.transform import transform_registry, BaseTransform
+from lpot.experimental.data.transforms import transform_registry, BaseTransform
 
 tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')

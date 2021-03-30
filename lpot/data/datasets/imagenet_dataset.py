@@ -33,7 +33,7 @@ import os
 from PIL import Image
 from lpot.utils.utility import LazyImport
 from lpot.utils import logger
-from lpot.experimental.data.dataset import dataset_registry, IterableDataset, Dataset
+from lpot.experimental.data.datasets import dataset_registry, IterableDataset, Dataset
 tf = LazyImport('tensorflow')
 
 # BELOW API TO BE DEPRECATED!
