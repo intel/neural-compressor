@@ -49,7 +49,6 @@ class Benchmark(object):
             framework_specific_info.update({"inputs": cfg.model.inputs, \
                                             "outputs": cfg.model.outputs, \
                                             "recipes": cfg.model.recipes, \
-                                            "optimization": cfg.model.optimization, \
                                             'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})

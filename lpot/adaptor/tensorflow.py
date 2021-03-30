@@ -48,7 +48,6 @@ class TensorFlowAdaptor(Adaptor):
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = self.framework_specific_info['recipes']
-        self.optimization = self.framework_specific_info['optimization']
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         
@@ -61,6 +60,7 @@ class TensorFlowAdaptor(Adaptor):
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "tensorflow.yaml"))
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
+        self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -737,6 +737,9 @@ class TensorflowQuery(QueryBackendCapability):
             return [i.strip() for i in self.cur_config['precisions']['valid_mixed_precisions']]
 
         return [i.strip() for i in self.get_precisions().split(',')]
+
+    def get_grappler_optimization_cfg(self):
+        return self.cur_config['grappler_optimization']
 
     def get_eightbit_patterns(self):
         """Get eightbit op wise sequences information.

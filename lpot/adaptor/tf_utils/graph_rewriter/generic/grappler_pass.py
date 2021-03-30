@@ -35,6 +35,7 @@ class GrapplerOptimizer(GraphRewriterBase):
         self.opt_cfg = opt_cfg
         self.generic_optimizer = ('pruning', 'shape', 'dependency', 'debug_stripper', 'loop')
         self.tf_2_optimizer = ('constfold', 'arithmetic')
+
     @dump_elapsed_time("Pass GrapplerOptimizer")
     def do_transformation(self):
         try:
@@ -53,7 +54,7 @@ class GrapplerOptimizer(GraphRewriterBase):
                     if optimizer in self.opt_cfg and self.opt_cfg[optimizer]:
                         rewriter_config.optimizers.append(optimizer)
 
-                if tf.version.VERSION >= '2.1.0':
+                if tf.version.VERSION >= '2.3.0':
                     for optimizer in self.tf_2_optimizer:
                         if optimizer in self.opt_cfg and self.opt_cfg[optimizer]:
                             rewriter_config.optimizers.append(optimizer)

@@ -137,53 +137,14 @@
         'MatMul + BiasAdd',
   ]
 
--
-  version:
-    name: '2.3.0'
-  
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
--
-  version:
-    name: '2.2.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
--
-  version:
-    name: '2.1.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
+  grappler_optimization: &common_grappler_optimization
+    pruning: True                                   # optional. grappler pruning optimizer,default value is True.
+    shape: True                                      # optional. grappler shape optimizer,default value is True.
+    constfold: True                                  # optional. grappler constant folding optimizer, default value is True.
+    arithmetic: True                                 # optional. grappler arithmetic optimizer,default value is True.
+    dependency: True                                 # optional. grappler dependency optimizer,default value is True.
+    debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
+    loop: True                                       # optional. grappler loop optimizer,default value is True.
 
 -
   version:
@@ -272,6 +233,71 @@
         'MatMul + BiasAdd',
   ]
 
+  grappler_optimization: &default_grappler_optimization
+    pruning: True                                   # optional. grappler pruning optimizer,default value is False.
+    shape: True                                      # optional. grappler shape optimizer,default value is True.
+    dependency: True                                 # optional. grappler dependency optimizer,default value is True.
+    debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
+    loop: True                                       # optional. grappler loop optimizer,default value is True.
+
+
+-
+  version:
+    name: '2.3.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+  grappler_optimization:
+    << : *common_grappler_optimization
+
+-
+  version:
+    name: '2.2.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+  grappler_optimization:
+    << : *default_grappler_optimization
+
+-
+  version:
+    name: '2.1.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+  grappler_optimization:
+    << : *default_grappler_optimization
+
 -
   version:
     name: '2.0.1'
@@ -287,6 +313,9 @@
 
   patterns:
     << : *default_patterns
+
+  grappler_optimization:
+    << : *default_grappler_optimization
 
 -
   version:
@@ -304,6 +333,9 @@
   patterns:
     << : *default_patterns
 
+  grappler_optimization:
+    << : *default_grappler_optimization
+
 -
   version:
     name: '1.15.0-up2'
@@ -319,6 +351,9 @@
 
   patterns:
     << : *common_patterns
+
+  grappler_optimization:
+    << : *default_grappler_optimization
 
 -
   version:
@@ -336,6 +371,9 @@
   patterns:
     << : *common_patterns
 
+  grappler_optimization:
+    << : *default_grappler_optimization
+
 -
   version:
     name: '1.15.2'
@@ -352,6 +390,9 @@
   patterns:
     << : *default_patterns
 
+  grappler_optimization:
+    << : *default_grappler_optimization
+
 -
   version:
     name: '1.15.0'
@@ -367,3 +408,6 @@
 
   patterns:
     << : *default_patterns
+
+  grappler_optimization:
+    << : *default_grappler_optimization

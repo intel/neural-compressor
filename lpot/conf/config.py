@@ -371,15 +371,6 @@ schema = Schema({
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True},
-                                      'optimization': {
-                                                      'pruning': True,
-                                                      'shape': True,
-                                                      'constfold': True,
-                                                      'arithmetic': True,
-                                                      'dependency': True,
-                                                      'debug_stripper': True,
-                                                      'loop': True,
-                                                      },
                                       'model_wise': {'weight': {}, 'activation': {}}}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -403,30 +394,6 @@ schema = Schema({
             Optional('scale_propagation_concat', default=True):
                     And(bool, lambda s: s in [True, False]),
             Optional('first_conv_or_matmul_quantization', default=True):
-                    And(bool, lambda s: s in [True, False]),
-        },
-        Optional('optimization', default={
-                                         'pruning': True,
-                                         'shape': True,
-                                         'constfold': True,
-                                         'arithmetic': True,
-                                         'dependency': True,
-                                         'debug_stripper': True,
-                                         'loop': True,
-                                         }): {
-            Optional('pruning', default=True):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('shape', default=True):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('constfold', default=True):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('arithmetic', default=True):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('dependency', default=True):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('debug_stripper', default=True):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('loop', default=True):
                     And(bool, lambda s: s in [True, False]),
         },
         Optional('model_wise', default={'weight': {}, 'activation': {}}): {

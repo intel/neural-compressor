@@ -19,8 +19,6 @@ def build_fake_yaml():
           outputs: op_to_store
         device: cpu
         quantization:
-          optimization:
-            arithmetic: False
           model_wise:
             weight:
                 granularity: per_tensor
@@ -91,8 +89,7 @@ def build_fake_model():
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [2, 2, 1, 1],
                                                  initializer=tf.compat.v1.random_normal_initializer())
-        conv_bias = tf.compat.v1.get_variable("bias", [1],
-                                              initializer=tf.compat.v1.random_normal_initializer())
+
         beta = tf.compat.v1.get_variable(name='beta',
                                          shape=[1],
                                          initializer=tf.compat.v1.random_normal_initializer())
@@ -101,11 +98,12 @@ def build_fake_model():
                                           initializer=tf.compat.v1.random_normal_initializer())
 
         x = tf.nn.relu(x)
-        pool = tf.nn.max_pool(x, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
-        conv1 = tf.nn.conv2d(pool, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name='last')
-        conv_bias = tf.nn.bias_add(conv1, conv_bias)
+        conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name='last')
+        conv_bias = tf.compat.v1.layers.batch_normalization(conv1)
         x = tf.nn.relu(conv_bias)
-        final_node = tf.nn.relu(x, name='op_to_store')
+        pool = tf.nn.max_pool(x, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+
+        final_node = tf.nn.relu(pool, name='op_to_store')
         sess.run(tf.compat.v1.global_variables_initializer())
         constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(
             sess=sess,
@@ -124,7 +122,6 @@ class TestGraphDumpToDisk(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
-
         build_fake_yaml()
         build_fake_yaml_kl()
         self.kl_log_path = os.path.join(os.getcwd(), 'saved/kl.log')
