@@ -16,10 +16,10 @@
 # limitations under the License.
 
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
-from .transforms import TRANSFORMS, BaseTransform, transform_registry
-from .dataloaders import DATALOADERS
-from .filters import FILTERS, Filter, filter_registry
+from ..experimental.data.datasets import DATASETS, Dataset, IterableDataset, dataset_registry
+from ..experimental.data.transforms import TRANSFORMS, BaseTransform, transform_registry
+from ..experimental.data.dataloaders import DATALOADERS
+from ..experimental.data.filters import FILTERS, Filter, filter_registry
 
 __all__ = [
     "DATALOADERS",

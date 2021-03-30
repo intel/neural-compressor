@@ -346,6 +346,10 @@ class TensorflowBaseModel(BaseModel):
     def graph_def(self):
         return self.sess.graph.as_graph_def()
 
+    @property
+    def graph(self):
+        return self.sess.graph
+
     @graph_def.setter
     def graph_def(self, graph_def):
         self.sess.close()
@@ -425,6 +429,10 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         self.sess, self._input_tensor_names, self._output_tensor_names = \
             create_session_with_input_output(self.model, \
                 self._input_tensor_names, self._output_tensor_names)
+
+    @property
+    def graph(self):
+        return self.sess.graph
 
     def save(self, root):
         if root is not self.model:

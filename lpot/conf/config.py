@@ -233,6 +233,17 @@ transform_schema = Schema({
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0))
     },
+    Optional('ToArray'): Or({}, None),
+    Optional('QuantizedInput'): {
+        Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
+        Optional('scale'): And(float, lambda s: s > 0),
+    },
+    Optional('Transpose'): {
+        'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
+    },
+    # THIS API IS TO BE DEPRECATED!
+    Optional('ParseDecodeImagenet'): Or({}, None),
+    Optional('ParseDecodeCoco'): Or({}, None),
     Optional('BilinearImagenet'): {
         'height': And(int, lambda s: s > 0),
         'width': And(int, lambda s: s > 0),
@@ -249,16 +260,6 @@ transform_schema = Schema({
         Optional('random_flip_left_right'): bool,
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float
-    },
-    Optional('ParseDecodeImagenet'): Or({}, None),
-    Optional('ParseDecodeCoco'): Or({}, None),
-    Optional('ToArray'): Or({}, None),
-    Optional('QuantizedInput'): {
-        Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
-        Optional('scale'): And(float, lambda s: s > 0),
-    },
-    Optional('Transpose'): {
-        'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
     },
 })
 
@@ -339,6 +340,10 @@ dataset_schema = Schema({
         Optional('crop_ratio'): float,
         Optional('resize_shape'): And(Or(str, list), Use(input_to_list_int)),
         Optional('image_format'): str,
+    },
+    # TO BE DEPRECATED!
+    Optional('Imagenet'): {
+        'root': str,
     },
 })
 

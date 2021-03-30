@@ -15,6 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..experimental.metric import METRICS, BaseMetric, metric_registry
 
-__all__ = ["METRICS", "BaseMetric", "metric_registry"]
+from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
+from .transforms import TRANSFORMS, BaseTransform, transform_registry
+from .dataloaders import DATALOADERS
+from .filters import FILTERS, Filter, filter_registry
+
+__all__ = [
+    "DATALOADERS",
+    "DATASETS",
+    "Dataset",
+    "IterableDataset",
+    "dataset_registry",
+    "TRANSFORMS",
+    "BaseTransform",
+    "transform_registry",
+    "FILTERS",
+    "Filter",
+    "filter_registry",]

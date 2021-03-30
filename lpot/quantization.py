@@ -154,7 +154,10 @@ class Quantization(object):
         elif eval_func is not None:
             self.exp_quantizer.eval_func = eval_func 
 
-        return self.exp_quantizer()
+        if self.exp_quantizer.framework == 'tensorflow':
+            return self.exp_quantizer().graph
+        else:
+            return self.exp_quantizer().model
 
     def dataset(self, dataset_type, *args, **kwargs):
         return DATASETS(self.exp_quantizer.framework)[dataset_type](*args, **kwargs)
