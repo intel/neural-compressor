@@ -139,7 +139,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
     return op_qcfgs
 
 
-def _observer(algorithm, scheme, granularity, dtype, observer_type='ptq_static'):
+def _observer(algorithm, scheme, granularity, dtype, observer_type='post_training_static_quant'):
     """Construct an observer module, In forward, observer will update the statistics of
        the observed Tensor. And they should provide a `calculate_qparams` function
        that computes the quantization parameters given the collected statistics.
@@ -150,12 +150,12 @@ def _observer(algorithm, scheme, granularity, dtype, observer_type='ptq_static')
         granularity (string): What granularity to computing the quantization parameters,
                               per channel or per tensor.
         dtype (string): Quantized data type
-        observer_type (string): Observer type, default is 'ptq_static'.
+        observer_type (string): Observer type, default is 'post_training_static_quant'.
 
     Returns:
         oberser (object)
     """
-    if observer_type == 'ptq_dynamic':
+    if observer_type == 'post_training_dynamic_quant' and get_torch_version() >= '1.6':
         return torch.quantization.MinMaxDynamicQuantObserver
     if algorithm == 'minmax':
         if granularity == 'per_channel':
@@ -251,7 +251,8 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
                                 reduce_range=(REDUCE_RANGE and scheme == 'asym'))
 
 
-def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None):
+def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
+                       approach='post_training_static_quant'):
     """Propagate qconfig through the module hierarchy and assign `qconfig`
        attribute on each leaf module
 
@@ -276,14 +277,15 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None):
         white_list = \
             torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
-    for k, v in op_qcfgs.items():
-        if v is None and not is_qat_convert:
-            fallback_ops.append(k)
-
     _propagate_qconfig_recursively(model, '', op_qcfgs, white_list=white_list)
 
-    if fallback_ops and not is_qat_convert:
-        _fallback_quantizable_ops_recursively(model, '', fallback_ops, white_list=white_list)
+    if approach != 'post_training_dynamic_quant':
+        for k, v in op_qcfgs.items():
+            if v is None and not is_qat_convert:
+                fallback_ops.append(k)
+
+        if fallback_ops and not is_qat_convert:
+            _fallback_quantizable_ops_recursively(model, '', fallback_ops, white_list=white_list)
 
 
 def _propagate_qconfig_recursively(model, prefix, op_qcfgs, white_list, qconfig_parent=None):
@@ -660,7 +662,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.tune_cfg["approach"] = self.approach
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
         if self.version < '1.7' or self.approach != 'quant_aware_training':
-            _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list)
+            _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list,
+                               approach=self.approach)
             # sanity check common API misusage
             if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
                 logger.warn("None of the submodule got qconfig applied. Make sure you "
