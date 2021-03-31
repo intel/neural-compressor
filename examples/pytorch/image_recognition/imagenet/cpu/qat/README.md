@@ -5,10 +5,9 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 > **Note**
 >
-> PyTorch quantization implementation in imperative path has limitation on automatically execution.
-> It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> ILiT requires users to complete these two manual steps before triggering auto-tuning process.
-> For details, please refer to https://pytorch.org/docs/stable/quantization.html
+> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
+> * LPOT requires users to complete these two manual steps before triggering auto-tuning process.
+>   For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
 
@@ -26,7 +25,6 @@ Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagen
 ls /path/to/imagenet
 train  val
 ```
-
 
 # Run
 
@@ -53,7 +51,7 @@ cd examples/pytorch/image_recognition/imagenet/cpu/qat
 python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
 ```
 
-Examples Of Enabling ILiT Auto Tuning On PyTorch ResNet
+Examples Of Enabling LPOT Auto Tuning On PyTorch ResNet
 =======================================================
 
 This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
