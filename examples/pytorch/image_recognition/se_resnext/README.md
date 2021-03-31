@@ -5,10 +5,8 @@ This document is used to list steps of reproducing PyTorch se_resnext tuning zoo
 
 > **Note**
 >
-> 1. PyTorch quantization implementation in imperative path has limitation on automatically execution.
->    It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
->    Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
->    For details, please refer to https://pytorch.org/docs/stable/quantization.html
+> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
+> * Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
 
@@ -43,7 +41,6 @@ Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagen
 ls /path/to/imagenet
 train  val
 ```
-
 
 # Run
 
@@ -148,7 +145,7 @@ tuning:
 
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited time for a tuning config meet accuracy target.
 
-> **Note** : lpot does NOT support "mse" tuning strategy for pytorch framework
+> **Note** : LPOT does NOT support "mse" tuning strategy for pytorch framework
 
 ### Prepare
 

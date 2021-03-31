@@ -1,44 +1,45 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with Intel® Low Precision Optimization Tool.
+This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with Intel® Low Precision Optimization Tool(LPOT).
 
 > **Note**
 >
 > PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> ILiT requires users to complete these two manual steps before triggering auto-tuning process.
+> LPOT requires users to complete these two manual steps before triggering auto-tuning process.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
 
 ### 1. Installation
 
-  ```shell
-  pip install -r requirements.txt
-  ```
+```shell
+pip install -r requirements.txt
+```
 
 ### 2. Prepare Dataset
-  ```bash
-  cd examples/pytorch/object_detection/yolo_v3/data/
-  bash get_coco_dataset.sh
-  ```
+
+```bash
+cd examples/pytorch/object_detection/yolo_v3/data/
+bash get_coco_dataset.sh
+```
 
 ### 3. Prepare Weights
-  ```bash
-  cd examples/pytorch/object_detection/yolo_v3/weights/
-  bash download_weights.sh
-  ```
 
+```bash
+cd examples/pytorch/object_detection/yolo_v3/weights/
+bash download_weights.sh
+```
 
 # Run
 
-  ```shell
-  cd examples/pytorch/object_detection/yolo_v3/
-  python test.py --weights_path weights/yolov3.weights -t
-  ```
+```shell
+cd examples/pytorch/object_detection/yolo_v3/
+python test.py --weights_path weights/yolov3.weights -t
+```
 
-Examples Of Enabling ILiT Auto Tuning On PyTorch YOLOV3
+Examples Of Enabling LPOT Auto Tuning On PyTorch YOLOV3
 =======================================================
 
 This is a tutorial of how to enable a PyTorch model with Intel® Low Precision Optimization Tool.
@@ -55,8 +56,7 @@ Here we integrate PyTorch YOLO V3 with Intel® Low Precision Optimization Tool b
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
-
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
 
 ```yaml
 #conf.yaml

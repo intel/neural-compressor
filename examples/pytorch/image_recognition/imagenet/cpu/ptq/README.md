@@ -5,10 +5,9 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 > **Note**
 >
-> PyTorch quantization implementation in imperative path has limitation on automatically execution.
-> It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> LPOT has no capability to solve this framework limitation. LPOT supposes user have done these two steps before invoking LPOT interface.
-> For details, please refer to https://pytorch.org/docs/stable/quantization.html
+> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
+> * LPOT supposes user have done these two steps before invoking LPOT interface.
+>   For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
 
@@ -26,7 +25,6 @@ Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagen
 ls /path/to/imagenet
 train  val
 ```
-
 
 # Run
 
