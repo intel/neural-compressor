@@ -280,9 +280,11 @@ class TestPytorchAdaptor(unittest.TestCase):
     def test_quantization_saved(self):
         from lpot.utils.pytorch import load
 
-        model = copy.deepcopy(self.model)
-
-        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml', 'dynamic_yaml.yaml']:
+        for fake_yaml in ['dynamic_yaml.yaml', 'qat_yaml.yaml', 'ptq_yaml.yaml']:
+            if fake_yaml == 'dynamic_yaml.yaml':
+                model = torchvision.models.resnet18()
+            else:
+                model = copy.deepcopy(self.model)
             if fake_yaml == 'ptq_yaml.yaml':
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
