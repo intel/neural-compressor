@@ -18,10 +18,9 @@
 
 import os
 import copy
-import yaml
 import logging
 from collections import OrderedDict
-
+import yaml
 import numpy as np
 from .adaptor import adaptor_registry, Adaptor
 from .query import QueryBackendCapability
@@ -97,13 +96,23 @@ class ONNXRTAdaptor(Adaptor):
         return model
 
     def _get_quantize_params(self, model, dataloader, q_config):
-        from .ox_utils.onnx_calibrate import calibrate
+        from .ox_utils.onnxrt_mid import ONNXRTAugment
         black_nodes = [node for node in q_config if q_config[node]=='fp32']
         white_nodes = [node for node in q_config if q_config[node]!='fp32']
-        quantize_params = calibrate(model, dataloader, self.quantizable_op_types, \
-                  black_nodes=black_nodes, white_nodes=white_nodes, \
-                  augmented_model_path=os.path.join(self.work_space, 'augmented_model.onnx'))
+        augment = ONNXRTAugment(model, dataloader, self.quantizable_op_types, \
+                  os.path.join(self.work_space, 'augmented_model.onnx'), \
+                  black_nodes=black_nodes, white_nodes=white_nodes)
+        quantize_params = augment.dump_calibration()
         return quantize_params
+
+    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+        '''The function is used by tune strategy class for dumping tensor info.
+        '''
+        from .ox_utils.onnxrt_mid import ONNXRTAugment
+        augment = ONNXRTAugment(model, dataloader, op_list, \
+                  os.path.join(self.work_space, 'augmented_model.onnx'), \
+                  iterations=iteration_list)
+        return augment.dump_calibration()
 
     def _pre_optimize(self, model, level=1):
         # TODO hardcoded to GraphOptimizationLevel.ORT_ENABLE_EXTENDED
@@ -111,7 +120,7 @@ class ONNXRTAdaptor(Adaptor):
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        session = ort.InferenceSession(model.model.SerializeToString(), sess_options)
+        _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         model.model = self._replace_gemm_with_matmul(tmp_model).model
         self.pre_optimized_model = model
@@ -235,8 +244,12 @@ class ONNXRTAdaptor(Adaptor):
                         node_config[tensor]['algorithm'] = algorithm
                     if 'scheme' not in config:
                         node_config[tensor]['scheme'] = scheme
-                    node_config[tensor]['dtype'] = onnx_proto.TensorProto.INT8 \
-                             if config['dtype'] == "int8" else onnx_proto.TensorProto.UINT8
+                    if config['dtype'] == "int8":
+                        node_config[tensor]['dtype'] = \
+                                  onnx_proto.TensorProto.INT8 # pylint: disable=no-member
+                    else:
+                        node_config[tensor]['dtype'] = \
+                                 onnx_proto.TensorProto.UINT8 # pylint: disable=no-member
                 nodes_config[op.name] = node_config
 
         return nodes_config
@@ -254,7 +267,7 @@ class ONNXRTAdaptor(Adaptor):
         return quantizable_op_types
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, 
+                 metric=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """The function is for evaluation if no given eval func
 
@@ -319,7 +332,7 @@ class ONNXRTAdaptor(Adaptor):
                     metric.reset()
                     results = [np.array(result) for result in results]
                     if fp32_baseline:
-                        np.savez(os.path.join(self.work_space,"output_tensors", "fp32.npz"), 
+                        np.savez(os.path.join(self.work_space,"output_tensors", "fp32.npz"),
                             *results)
                         metric.update(results, results)
                     else:
@@ -348,7 +361,7 @@ class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
         self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
         self.backend = "qlinearops"
-        super(ONNXRT_QLinearOpsAdaptor, self).__init__(framework_specific_info)
+        super().__init__(framework_specific_info)
 
 
 @adaptor_registry
@@ -363,13 +376,11 @@ class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
         self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "onnxrt_integer.yaml"))
         self.backend = "integerops"
-        super(ONNXRT_IntegerOpsAdaptor, self).__init__(framework_specific_info)
+        super().__init__(framework_specific_info)
 
 class ONNXRTQuery(QueryBackendCapability):
 
     def __init__(self, local_config_file=None):
-        import onnxruntime as ort
-        
         super().__init__()
         self.version = ort.__version__
         self.cfg = local_config_file
@@ -462,4 +473,3 @@ class ONNXRTQuery(QueryBackendCapability):
         assert precision in list(self.cur_config['ops'].keys())
 
         return self.cur_config['ops'][precision]
-

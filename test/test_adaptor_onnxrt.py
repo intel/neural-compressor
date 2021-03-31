@@ -8,7 +8,7 @@ import yaml
 import onnx
 
 from lpot.adaptor import FRAMEWORKS
-
+from lpot.data import DATASETS, DATALOADERS
 
 def build_static_yaml():
     fake_yaml = """
@@ -129,6 +129,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
     mb_v2_model = torchvision.models.mobilenet_v2()
     rn50_export_path = "rn50.onnx"
     rn50_model = torchvision.models.resnet50()
+ 
+    datasets = DATASETS('onnxrt_qlinearops')
+    cv_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
+    cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
 
     @classmethod
     def setUpClass(self):
@@ -160,23 +164,22 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                                        'onnxrt',
                                                        'imagenet')}
         framework = "onnxrt_qlinearops"
-        _ = FRAMEWORKS[framework](framework_specific_info)
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv"])
 
     def test_quantizate(self):
         from lpot import Quantization, common
         for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = self.cv_dataloader
+            quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = common.Model(self.rn50_model)
             q_model = quantizer()
             eval_func(q_model)
         for fake_yaml in ["non_MSE_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), low=0., high=1., label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = self.cv_dataloader
+            quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = common.Model(self.mb_v2_model)
             q_model = quantizer()
             eval_func(q_model)
