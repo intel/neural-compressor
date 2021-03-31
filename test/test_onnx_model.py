@@ -6,7 +6,6 @@ import numpy as np
 
 sys.path.append('..')
 from lpot.adaptor.ox_utils.onnx_model import ONNXModel
-from lpot.adaptor.ox_utils.onnx_calibrate import CalibrationDataReader
 
 def get_onnx_model():
     model = torchvision.models.resnet18()
@@ -21,35 +20,6 @@ def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     init = numpy_helper.from_array(tensor, input_name)
     return init  
 
-class TestDataReader(CalibrationDataReader):
-    '''for test purpose'''
-    def __init__(self):
-        pass
-    def get_next(self):
-        return None
-
-class TestDataReaderSecond(CalibrationDataReader):
-    '''for test purpose'''
-    def __init__(self):
-        self.preprocess_flag = True
-        self.enum_data_dicts = []
-
-    def get_next(self):
-        if self.preprocess_flag:
-            self.preprocess_flag = False
-            nhwc_data_list = []
-            nhwc_data_list.append(np.array([[[[0.45,0.60,0.75]],
-                                            [[0.25,0.50,0.75]],
-                                            [[0.90,0.70,0.50]]]]).astype(np.float32))
-            nhwc_data_list.append(np.array([[[[0.62,0.94,0.38]],
-                                            [[0.70,0.13,0.07]],
-                                            [[0.89,0.75,0.84]]]]).astype(np.float32))
-            nhwc_data_list.append(np.array([[[[0.64,0.24,0.97]],
-                                            [[0.82,0.58,0.27]],
-                                            [[0.019,0.34,0.02]]]]).astype(np.float32))
-            input_name = 'input0'
-            self.enum_data_dicts = iter([{input_name: nhwc_data} for nhwc_data in nhwc_data_list])
-        return next(self.enum_data_dicts, None)
 
 class TestOnnxModel(unittest.TestCase):
     def setUp(self):

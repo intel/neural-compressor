@@ -8,12 +8,9 @@ from onnx import helper, TensorProto, numpy_helper
 
 
 sys.path.append('..')
-# from lpot.data.dataloaders.onnx_dataloader import ONNXDataLoader
-# from lpot.data.datasets.imagenet_dataset import ImagenetDataset
-# from lpot.data.transforms.imagenet_transform import ResizeCropImagenetTransform
-from lpot.adaptor.ox_utils.onnx_calibrate import ONNXCalibrater, CalibrationDataReader, calibrate
 from lpot.data.datasets.dataset import Dataset
-
+from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+from lpot.data import DATASETS, DATALOADERS
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''
@@ -23,35 +20,44 @@ def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     init = numpy_helper.from_array(tensor, input_name)
     return init  
 
-class TestDataReader(CalibrationDataReader):
-    '''for test purpose'''
-    def __init__(self):
-        pass
-    def get_next(self):
-        return None
+def create_cv_session():
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
+    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 3, 3])
+    b_value = np.random.randn(1, 1, 3, 3).astype(np.float32)
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [1, 1, 3, 3],
+                                b_value.reshape(9).tolist())
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
+    conv_node = onnx.helper.make_node('Conv', ['A', 'B'], ['C'],
+                                      name='Conv',
+                                      kernel_shape=[3, 3],
+                                      pads=[1, 1, 1, 1])
+    relu_node = onnx.helper.make_node('Relu', ['C'], ['D'], name='Relu')
+    graph = helper.make_graph([conv_node, relu_node], 'test_graph_1', [A, B], [D], [B_init])
+    model = helper.make_model(graph)
 
-class TestDataReaderSecond(CalibrationDataReader):
-    '''for test purpose'''
-    def __init__(self):
-        self.preprocess_flag = True
-        self.enum_data_dicts = []
+    datasets = DATASETS('onnxrt_qlinearops')
+    dataset = datasets['dummy'](shape=(1, 1, 5, 5), label=True)
+    dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
+    return model, dataloader
 
-    def get_next(self):
-        if self.preprocess_flag:
-            self.preprocess_flag = False
-            nhwc_data_list = []
-            nhwc_data_list.append(np.array([[[[0.45,0.60,0.75]],
-                                            [[0.25,0.50,0.75]],
-                                            [[0.90,0.70,0.50]]]]).astype(np.float32))
-            nhwc_data_list.append(np.array([[[[0.62,0.94,0.38]],
-                                            [[0.70,0.13,0.07]],
-                                            [[0.89,0.75,0.84]]]]).astype(np.float32))
-            nhwc_data_list.append(np.array([[[[0.64,0.24,0.97]],
-                                            [[0.82,0.58,0.27]],
-                                            [[0.019,0.34,0.02]]]]).astype(np.float32))
-            input_name = 'input0'
-            self.enum_data_dicts = iter([{input_name: nhwc_data} for nhwc_data in nhwc_data_list])
-        return next(self.enum_data_dicts, None)
+def create_nlp_session():
+    a_value = np.random.randn(100, 4).astype(np.float32)
+    A_init = helper.make_tensor('A', TensorProto.FLOAT, [100, 4],
+                                a_value.reshape(400).tolist())
+    b_value = np.random.randint(2, size=(10)).astype(np.int32)
+    B_init = helper.make_tensor('B', TensorProto.INT32, [10],
+                                b_value.reshape(10).tolist())
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [100, 4])
+    B = helper.make_tensor_value_info('B', TensorProto.INT32, [10])
+    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [10, 4])
+    node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='Gather')
+    graph = helper.make_graph([node], 'test_graph_1', [A, B], [C], [A_init, B_init])
+    model = helper.make_model(graph)
+
+    datasets = DATASETS('onnxrt_qlinearops')
+    dataset = datasets['dummy'](shape=(100, 4), label=True)
+    dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
+    return model, dataloader 
 
 class TestDataset(Dataset):
     """Configuration for Imagenet dataset."""
@@ -77,17 +83,49 @@ class TestDataset(Dataset):
         data = self.data_list[index]
         return data
 
-class TestCalibrate(unittest.TestCase):
+class TestAugment(unittest.TestCase):
 
     work_space = './onnxrt_calib_test' 
-
+    augment_path = "./onnxrt_calib_test/aug.onnx"
+    
     @classmethod
     def setUpClass(cls):
         os.makedirs(cls.work_space)
+        cls.cv_session = create_cv_session()
+        cls.nlp_session = create_nlp_session()
 
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.work_space, ignore_errors=True)
+
+    def test_dump_tensor(self):
+        model, dataloader = self.cv_session
+        augment = ONNXRTAugment(model, dataloader, 
+                                ["Conv", "Relu"], 
+                                self.augment_path,
+                                iterations=[0])
+        dumped_tensors = augment.dump_tensor()
+        assert len(dumped_tensors) == 1
+        assert "A" in dumped_tensors[0] and "B" in dumped_tensors[0]
+        assert "C" in dumped_tensors[0] and "D" in dumped_tensors[0]
+
+        model, dataloader = self.nlp_session
+        augment = ONNXRTAugment(model, dataloader, 
+                                ["Gather"], 
+                                self.augment_path,
+                                iterations=[0])
+        dumped_tensors = augment.dump_tensor()
+        assert len(dumped_tensors) == 1
+        assert "A" in dumped_tensors[0] and "C" in dumped_tensors[0]
+
+    def test_dump_calibration(self):
+        model, dataloader = self.cv_session
+        augment = ONNXRTAugment(model,
+                                dataloader, ["Conv", "Relu"],
+                                self.augment_path,
+                                iterations=[0])
+        calib_params = augment.dump_calibration()
+        assert "A" in calib_params and "B" in calib_params and "D" in calib_params and "C" in calib_params
 
     def test_augment_graph(self):
 
@@ -115,10 +153,12 @@ class TestCalibrate(unittest.TestCase):
         
 
         # Augmenting graph
-        data_reader = TestDataReader()
+        data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_1.onnx')
-        calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul'], [], [], augmented_model_path)
-        augmented_model = calibrater.augment_graph()
+        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul'], augmented_model_path)
+        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment.augment_graph()
+        augmented_model = augment.augmented_model
         onnx.save(augmented_model, augmented_model_path)
 
         # Checking if each added ReduceMin and ReduceMax node and its output exists
@@ -159,10 +199,12 @@ class TestCalibrate(unittest.TestCase):
         test_model = onnx.load(test_model_path)
 
         # Augmenting graph
-        data_reader = TestDataReader()
+        data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_2.onnx')
-        calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul'], [], [], augmented_model_path)
-        augmented_model = calibrater.augment_graph()
+        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul'], augmented_model_path)
+        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment.augment_graph()
+        augmented_model = augment.augmented_model
         onnx.save(augmented_model, augmented_model_path)
         
 
@@ -208,10 +250,12 @@ class TestCalibrate(unittest.TestCase):
         test_model = onnx.load(test_model_path)
 
         # Augmenting graph
-        data_reader = TestDataReader()
+        data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_3.onnx')
-        calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul'], [], [], augmented_model_path)
-        augmented_model = calibrater.augment_graph()
+        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul'], augmented_model_path)
+        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment.augment_graph()
+        augmented_model = augment.augmented_model
         onnx.save(augmented_model, augmented_model_path)
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
@@ -252,10 +296,12 @@ class TestCalibrate(unittest.TestCase):
         test_model = onnx.load(test_model_path)
 
         # Augmenting graph
-        data_reader = TestDataReader()
+        data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_4.onnx')
-        calibrater = ONNXCalibrater(test_model, data_reader, ['Conv', 'MatMul', 'Attention'], [], [], augmented_model_path)
-        augmented_model = calibrater.augment_graph()
+        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul', 'Attention'], augmented_model_path)
+        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment.augment_graph()
+        augmented_model = augment.augmented_model
         onnx.save(augmented_model, augmented_model_path)
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
@@ -320,15 +366,13 @@ class TestCalibrate(unittest.TestCase):
         test_model = onnx.load(test_model_path)
         data_reader = TestDataset()
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
-        calibrater = ONNXCalibrater(test_model, data_reader,['Conv', 'MatMul'], [], [], augmented_model_path)
-        augmented_model = calibrater.augment_graph()
-        onnx.save(augmented_model, augmented_model_path)
+        augment = ONNXRTAugment(test_model, data_reader,['Conv', 'MatMul'], augmented_model_path)
 
         #test calculation of quantization params
         #TO_DO: check rmin/rmax
-        dict_for_quantization = calibrater.get_intermediate_outputs()
-        quantization_params_dict = calibrater.calculate_quantization_params(dict_for_quantization)
-        
+        quantization_params_dict = augment.dump_calibration()
+        node_output_names, output_dicts_list = augment.get_intermediate_outputs()
+        dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary
         self.assertEqual(len(quantization_params_dict), 11)
         
