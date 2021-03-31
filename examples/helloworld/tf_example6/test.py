@@ -4,16 +4,15 @@ tf.compat.v1.disable_eager_execution()
 import numpy as np
 def main():
 
-    from lpot.experimental import Quantization,  common
+    from lpot import Quantization
     quantizer = Quantization('./conf.yaml')
-    quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
-    quantized_model = quantizer()
+    quantized_model = quantizer("./mobilenet_v1_1.0_224_frozen.pb")
 
      # Optional, run benchmark 
-    from lpot.experimental import Benchmark
+    from lpot import Benchmark
+    import pdb; pdb.set_trace()
     evaluator = Benchmark('./conf.yaml')
-    evaluator.model = common.Model(quantized_model.graph_def)
-    results = evaluator()
+    results = evaluator(quantized_model)
     batch_size = 1
     for mode, result in results.items():
        acc, batch_size, result_list = result

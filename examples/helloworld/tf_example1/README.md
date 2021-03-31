@@ -47,8 +47,8 @@ evaluation:                                          # optional. required if use
 3. Run quantizaiton
 We only need to add the following lines for quantization to create an int8 model.
 ```python
-    import lpot
-    quantizer = lpot.Quantization('./conf.yaml')
+    from lpot.experimental import Quantization, common
+    quantizer = Quantization('./conf.yaml')
     quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
     quantized_model = quantizer()
 ```

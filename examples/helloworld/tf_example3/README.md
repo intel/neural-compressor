@@ -30,8 +30,8 @@ quantization:                                        # optional. tuning constrai
           height: 224
           width: 224
 ......
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -51,9 +51,8 @@ evaluation:                                          # optional. required if use
 3. Run quantizaiton
 * In order to do quanzation for slim models, we need to get graph from slim .ckpt first. 
 ```python
-    import lpot
-    from lpot import common
-    quantizer = lpot.Quantization('./conf.yaml')
+    from lpot.experimental import Quantization,  common
+    quantizer = Quantization('./conf.yaml')
 
     # Get graph from slim checkpoint
     from tf_slim.nets import inception

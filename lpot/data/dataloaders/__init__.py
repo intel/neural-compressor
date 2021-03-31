@@ -15,23 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from .dataloaders import DataLoader
-from ..experimental.data.datasets import DATASETS, Dataset, IterableDataset, dataset_registry
-from ..experimental.data.transforms import TRANSFORMS, BaseTransform, transform_registry
-from ..experimental.data.dataloaders import DATALOADERS
-from ..experimental.data.filters import FILTERS, Filter, filter_registry
+from .dataloader import DataLoader
 
 __all__ = [
     "DataLoader",
-    "DATALOADERS",
-    "DATASETS",
-    "Dataset",
-    "IterableDataset",
-    "dataset_registry",
-    "TRANSFORMS",
-    "BaseTransform",
-    "transform_registry",
-    "FILTERS",
-    "Filter",
-    "filter_registry",]
+]

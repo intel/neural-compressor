@@ -6,9 +6,12 @@ tf.compat.v1.disable_eager_execution()
 
 def main():
 
-    import lpot
-    quantizer = lpot.Quantization('./conf.yaml')
-    quantized_model = quantizer('./inception_v1.ckpt')
+    from lpot.experimental import Quantization,  common
+    quantizer = Quantization('./conf.yaml')
+
+    # Do quantization
+    quantizer.model = common.Model('./inception_v1.ckpt')
+    quantized_model = quantizer()
   
      
 if __name__ == "__main__":

@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from .utils import logger
 from .experimental.data import DATALOADERS, DATASETS
 from .experimental import Quantization as ExpQuantization
@@ -149,15 +150,19 @@ class Quantization(object):
         elif q_func is not None:
             self.exp_quantizer.q_func = q_func
 
-        if eval_dataloader is not None:
-            self.exp_quantizer.eval_dataloader = eval_dataloader
-        elif eval_func is not None:
+        if eval_func is not None:
             self.exp_quantizer.eval_func = eval_func 
+        elif eval_dataloader is not None:
+            self.exp_quantizer.eval_dataloader = eval_dataloader
 
         if self.exp_quantizer.framework == 'tensorflow':
             return self.exp_quantizer().graph
-        else:
-            return self.exp_quantizer().model
+        lpot_model = self.exp_quantizer()
+        if self.exp_quantizer.framework == 'pytorch':
+            saved_path = os.path.abspath(os.path.join(os.path.expanduser(
+                self.exp_quantizer.conf.usr_cfg.tuning.workspace.path), 'checkpoint'))
+            lpot_model.save(saved_path)
+        return lpot_model.model
 
     def dataset(self, dataset_type, *args, **kwargs):
         return DATASETS(self.exp_quantizer.framework)[dataset_type](*args, **kwargs)

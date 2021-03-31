@@ -45,6 +45,7 @@ evaluation:                                          # optional. required if use
 3. Run quantizaiton
 We only need to add the following lines for quantization to create an int8 model.
 ```python
+    from lpot import Quantization
     quantizer = Quantization('./conf.yaml')
     quantized_model = quantizer('./mobilenet_v1_1.0_224_frozen.pb')
 ```
@@ -56,9 +57,8 @@ We only need to add the following lines for quantization to create an int8 model
 4. Run benchmark accoridng to config
 ```python
      # Optional, run benchmark 
-    from lpot.experimental import Quantization,  Benchmark, common
+    from lpot import Benchmark
     evaluator = Benchmark('./conf.yaml')
-    evaluator.model = common.Model(quantized_model)
-    results = evaluator()
+    results = evaluator(quantized_model)
  
 ```
