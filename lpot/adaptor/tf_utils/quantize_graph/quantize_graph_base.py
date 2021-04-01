@@ -240,7 +240,9 @@ class QuantizeNodeBase():
             [quantized_output_name, min_max_inputs[0], min_max_inputs[1]])
         helper.set_attr_dtype(dequantize_node, "T", dtype)
         helper.set_attr_string(dequantize_node, "mode",
-                               b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
+                               b"MIN_FIRST" if self.is_asymmetric or \
+                                   (not self.per_channel and dtype == dtypes.qint8)
+                               else b"SCALED")
         self.add_output_graph_node(dequantize_node)
 
     def eightbitize_single_input_tensor_node(self, original_node,
