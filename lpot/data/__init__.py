@@ -17,6 +17,8 @@
 
 
 from .dataloaders import DataLoader
+import lpot.data.datasets
+import lpot.data.transforms
 from ..experimental.data.datasets import DATASETS, Dataset, IterableDataset, dataset_registry
 from ..experimental.data.transforms import TRANSFORMS, BaseTransform, transform_registry
 from ..experimental.data.dataloaders import DATALOADERS

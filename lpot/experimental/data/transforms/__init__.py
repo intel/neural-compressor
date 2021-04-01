@@ -19,8 +19,6 @@ from .transform import TRANSFORMS, BaseTransform, transform_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
-import lpot.data.transforms
-
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
 for f in modules:

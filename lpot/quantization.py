@@ -17,7 +17,7 @@
 
 import os
 from .utils import logger
-from .experimental.data import DATALOADERS, DATASETS
+from .data import DATALOADERS, DATASETS
 from .experimental import Quantization as ExpQuantization
 
 class Quantization(object):
