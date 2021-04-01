@@ -62,7 +62,7 @@ def tune_model(
     framework: str,
 ) -> None:
     """Execute tuning."""
-    from lpot import Quantization, common
+    from lpot.experimental import Quantization, common
 
     if framework == "onnxrt":
         import onnx

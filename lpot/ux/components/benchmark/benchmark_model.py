@@ -65,7 +65,7 @@ def benchmark_model(
     datatype: str = "",
 ) -> List[Dict[str, Any]]:
     """Execute benchmark."""
-    from lpot import Benchmark, common
+    from lpot.experimental import Benchmark, common
 
     benchmark_results = []
 
