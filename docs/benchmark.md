@@ -21,7 +21,7 @@ evaluation:                                          # optional. required if use
           size: 256
         CenterCrop:
           size: 224
-        ToTensor:
+        ToTensor: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
@@ -39,7 +39,7 @@ evaluation:                                          # optional. required if use
           size: 256
         CenterCrop:
           size: 224
-        ToTensor:
+        ToTensor: {}
         Normalize:
           mean: [0.485, 0.456, 0.406]
 ```
@@ -52,7 +52,7 @@ In this case, you should config your dataloader and lpot will construct an evalu
 
 ```python
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
-from lpot import Benchmark, common
+from lpot.experimental import Benchmark, common
 evaluator = Benchmark(config.yaml)
 evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
 # user can also register postprocess and metric, this is optional

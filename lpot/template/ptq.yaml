@@ -28,7 +28,7 @@ quantization:                                        # optional. tuning constrai
     scale_propagation_concat: True                   # optional. default value is True.
     first_conv_or_matmul_quantization: True          # optional. default value is True.
   calibration:
-    sampling_size: 1000, 2000                        # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 1000, 2000                        # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
       dataset:
         TFRecordDataset:

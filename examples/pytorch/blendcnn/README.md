@@ -107,10 +107,13 @@ It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to dev
 After prepare step is done, we just need update classify.py like below.
 
 ```
-import lpot
+from lpot.experimental import Quantization
 dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
-quantizer = lpot.Quantization(args.lpot_yaml)
-q_model = quantizer(model, q_dataloader=dataloader, eval_func=eval_func)
+quantizer = Quantization(args.lpot_yaml)
+quantizer.model = model
+quantizer.calib_dataloader = dataloader
+quantizer.eval_func = eval_func
+q_model = quantizer()
 ```
 
 The quantizer() function will return a best quantized model during timeout constrain.(Please refer [sample code](./classify.py))

@@ -27,7 +27,7 @@ LPOT has added built-in supports on popular dataloader/dataset and metric to eas
 
 LPOT also supports register custom dataset and custom metric by code. 
 
-As for model, LPOT abstract a common API, named as [lpot.common.Model](../lpot/common/model.py), to cover the case in which model, weight, and other necessary info, are separately stored. Please refer to [model](./model.md) to know how to use it.
+As for model, LPOT abstract a common API, named as [lpot.experimental.common.Model](../lpot/experimental/common/model.py), to cover the case in which model, weight, and other necessary info, are separately stored. Please refer to [model](./model.md) to know how to use it.
 
 Postprocess is treat as a specical transform by LPOT which is only needed when model output is mismatching with the expected input of LPOT built-in metrics. if user is using custom metric, the postprocess is not needed indeed as custom metric implementation need ensure it can handle model output correctly. On the other hand, the postprocess logic becomes part of custom metric implementation.
 
@@ -35,10 +35,10 @@ Below is an example of how to enable LPOT on TensorFlow mobilenet_v1 with built-
 
 ```python
 # main.py
-import lpot
-quantizer = lpot.Quantization('./conf.yaml')
-model = quantizer.model("./mobilenet_v1_1.0_224_frozen.pb")
-quantized_model = quantizer(model)
+from lpot.experimental import Quantization, common
+quantizer = Quantization('./conf.yaml')
+quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
+quantized_model = quantizer()
 ```
 
 ```yaml
@@ -82,8 +82,7 @@ If user wants to use a dataset or metric which does not support by LPOT built-in
 
 ```python
 # main.py
-import lpot
-from lpot.metric import BaseMetric
+from lpot.experimental import Quantization, common
 
 class Dataset(object):
   def __init__(self):
@@ -97,7 +96,7 @@ class Dataset(object):
       return len(self.test_images)
 
 # Define a customized Metric function 
-class MyMetric(BaseMetric):
+class MyMetric(object):
   def __init__(self, *args):
       self.pred_list = []
       self.label_list = []
@@ -116,19 +115,19 @@ class MyMetric(BaseMetric):
       return correct_num / self.samples
 
 # Quantize with customized dataloader and metric
-quantizer = lpot.Quantization('./conf.yaml')
+quantizer = Quantization('./conf.yaml')
 dataset = Dataset()
-quantizer.metric = lpot.common.Metric(MyMetric)
-quantizer.calib_dataloader = lpot.common.DataLoader(dataset, batch_size=1)
-quantizer.eval_dataloader = lpot.common.DataLoader(dataset, batch_size=1)
-quantizer.model = lpot.common.Model('../models/simple_model')
+quantizer.metric = common.Metric(MyMetric)
+quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
+quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
+quantizer.model = common.Model('../models/simple_model')
 q_model = quantizer()
 ```
 Note: 
 
-In the customized dataset, the `__getitem__()` interface must be implemented. It returns the (image, label) pair.
+In the customized dataset, the `__getitem__()` interface must be implemented and return single sample and label. In this example, it returns the (image, label) pair. User could return (image, 0) for label-free case.
 
-In the customized metric, the update() function records the predict result of each mini-batch, the result() function would be invoked by LPOT at the end of evaluation to return a higher-is-better scalar to reflect model accuracy.
+In the customized metric, the update() function records the predict result of each mini-batch, the result() function would be invoked by LPOT at the end of evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from customerized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
 
 ```yaml
 # conf.yaml

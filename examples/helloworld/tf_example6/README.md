@@ -1,6 +1,6 @@
-tf_example5 example
+tf_example6 example
 =====================
-This example is used to demonstrate how to config benchmark in yaml for performance measuremnt.
+This example is used to demonstrate how to use default user-facing APIs to quantize a model.
 
 1. Download the FP32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
@@ -9,21 +9,21 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobil
 The configuration will will create a TopK metric function for evaluation and configure the batch size, instance number and core number for performacne measurement.    
 ```yaml
 evaluation:                                          # optional. required if user doesn't provide eval_func in Quantization.
- accuracy:                                          # optional. required if user doesn't provide eval_func in Quantization.
+ accuracy:                                           # optional. required if user doesn't provide eval_func in Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
       batch_size: 32 
       dataset:
         ImageRecord:
-          root: /path/to/imagenet/          # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
+        ParseDecodeImagenet: {}
         BilinearImagenet: 
           height: 224
           width: 224
 
- performance:                                       # optional. used to benchmark performance of passing model.
+ performance:                                        # optional. used to benchmark performance of passing model.
     configs:
       cores_per_instance: 4
       num_of_instance: 7
@@ -32,9 +32,9 @@ evaluation:                                          # optional. required if use
       last_batch: discard 
       dataset:
         ImageRecord:
-          root: /path/to/imagenet/          # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
+        ParseDecodeImagenet: {}
         ResizeCropImagenet: 
           height: 224
           width: 224

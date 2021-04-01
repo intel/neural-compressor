@@ -140,13 +140,13 @@ class Pruning(object):
 
         Args:
            user_model: user are supported to set model from original PyTorch model format
-                       Best practice is to set from a initialized lpot.common.Model.
+                       Best practice is to set from a initialized lpot.experimental.common.Model.
 
         """
         from .common import Model as LpotModel
         if not isinstance(user_model, LpotModel):
             logger.warning('force convert user raw model to lpot model, \
-                better initialize lpot.common.Model and set....')
+                better initialize lpot.experimental.common.Model and set....')
             user_model = LpotModel(user_model)
         framework_model_info = {}
         cfg = self.conf.usr_cfg

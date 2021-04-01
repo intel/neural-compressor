@@ -55,8 +55,7 @@ class Dataset(object):
 ### 3.Define a customized metric  
 This customized metric will caculate accuracy.
 ```python
-from lpot.metric import Metric
-class MyMetric(Metric):
+class MyMetric(object):
   def __init__(self, *args):
       self.pred_list = []
       self.label_list = []
