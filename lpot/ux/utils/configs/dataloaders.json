@@ -131,7 +131,7 @@
                     {
                         "name": "label",
                         "help": "Whether to return 0 as label",
-                        "value": "False"
+                        "value": "True"
                     }
                 ]
             },
