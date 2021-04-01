@@ -69,11 +69,22 @@ def load(checkpoint_dir, model):
             q_mapping = \
                 torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings()
 
+    if version < '1.7':
+        white_list = \
+            torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
+            if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
+            torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+    else:
+        white_list = \
+            torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
+            if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
+            torch.quantization.quantization_mappings.get_qconfig_propagation_list()
+
     if tune_cfg['approach'] == "post_training_dynamic_quant":
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
     else:
         op_cfgs = _cfg_to_qconfig(tune_cfg)
-    _propagate_qconfig(q_model, op_cfgs)
+    _propagate_qconfig(q_model, op_cfgs, white_list=white_list, approach=tune_cfg['approach'])
     # sanity check common API misusage
     if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
         logger.warn("None of the submodule got qconfig applied. Make sure you "
