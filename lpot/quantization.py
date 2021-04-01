@@ -155,9 +155,9 @@ class Quantization(object):
         elif eval_dataloader is not None:
             self.exp_quantizer.eval_dataloader = eval_dataloader
 
-        if self.exp_quantizer.framework == 'tensorflow':
-            return self.exp_quantizer().graph
         lpot_model = self.exp_quantizer()
+        if self.exp_quantizer.framework == 'tensorflow':
+            return lpot_model.graph if lpot_model else None
         if self.exp_quantizer.framework == 'pytorch':
             saved_path = os.path.abspath(os.path.join(os.path.expanduser(
                 self.exp_quantizer.conf.usr_cfg.tuning.workspace.path), 'checkpoint'))

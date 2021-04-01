@@ -329,7 +329,7 @@ class TensorflowBaseModel(BaseModel):
         self.workspace_path = deep_get(framework_specific_info, 'workspace_path', './')
         self.kwargs = copy.deepcopy(kwargs)
         kwargs.update({'name': deep_get(framework_specific_info, 'name')})
-        self.model = model
+        # self.model = model
         self.sess, self._input_tensor_names, self._output_tensor_names = \
             create_session_with_input_output(
                 model, input_tensor_names, output_tensor_names, **kwargs)
@@ -341,6 +341,10 @@ class TensorflowBaseModel(BaseModel):
         self.iter_op = None 
         if 'MakeIterator' in [node.op for node in self.sess.graph.as_graph_def().node]:
             self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
+
+    @property
+    def model(self):
+        return self.sess.graph
 
     @property
     def graph_def(self):

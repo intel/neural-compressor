@@ -179,9 +179,11 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
 
-        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
-            self.fp32_preds_as_label = True
-            results = []
+        if metric: 
+            metric.reset()
+            if hasattr(metric, "compare_label") and not metric.compare_label:
+                self.fp32_preds_as_label = True
+                results = []
 
         origin_output_tensor_names = model.output_tensor_names
         model.output_tensor_names = outputs
@@ -235,7 +237,6 @@ class TensorFlowAdaptor(Adaptor):
 
         if self.fp32_preds_as_label:
             from .tf_utils.util import collate_tf_preds
-            metric.reset()
             if fp32_baseline:
                 results = collate_tf_preds(self.fp32_results)
                 metric.update(results, results)
