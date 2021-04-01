@@ -608,7 +608,7 @@ class TensorflowCOCOMAP(BaseMetric):
 
     """
     def __init__(self, anno_path=None):
-        from lpot.metric.coco_label_map import category_map
+        from .coco_label_map import category_map
         if anno_path:
             import os
             import json
@@ -631,7 +631,7 @@ class TensorflowCOCOMAP(BaseMetric):
             [cat for cat in self.category_map]) #index
 
     def update(self, predicts, labels, sample_weight=None):
-        from lpot.metric.coco_tools import ExportSingleImageGroundtruthToCoco,\
+        from .coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
         bbox, str_label,int_label, image_id = labels
         detection = {}
@@ -690,7 +690,7 @@ class TensorflowCOCOMAP(BaseMetric):
         self.annotation_id = 1
 
     def result(self):
-        from lpot.metric.coco_tools import COCOWrapper, COCOEvalWrapper
+        from .coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
             logger.warning("sample num is 0 can't calculate mAP")
             return 0

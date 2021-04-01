@@ -196,13 +196,16 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
         # print(f"Accuracy: {total_accuracy}")
 
         if args.tune:
-            import lpot
+            from lpot.experimental import Quantization
             # lpot tune
             model.load_state_dict(torch.load(args.input_model))
             dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
-            quantizer = lpot.Quantization(args.tuned_yaml)
-            q_model = quantizer(model, q_dataloader=dataloader, eval_func=eval_func)
+            quantizer = Quantization(args.tuned_yaml)
+            quantizer.calib_dataloader = dataloader
+            quantizer.model = model
+            quantizer.eval_func = eval_func
+            q_model = quantizer()
             q_model.save(args.tuned_checkpoint)
 
         elif args.int8:
