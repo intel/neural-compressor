@@ -226,15 +226,19 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, mea
         except tf.errors.OutOfRangeError:
             break
 
-    def collate_fn(results):
+    preds = collate_tf_preds(preds)
+    return preds
+
+def collate_tf_preds(results):
+    batch = results[0]
+    if isinstance(batch, list):
         results = zip(*results)
         collate_results = []
         for output in results:
            collate_results.append(np.concatenate(output))
-        return collate_results
-
-    preds = collate_fn(preds)
-    return preds
+    elif isinstance(batch, np.ndarray):
+        collate_results = np.concatenate(results)
+    return collate_results
 
 def get_input_node_names(graph_def):
     g = GraphAnalyzer()

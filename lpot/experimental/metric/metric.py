@@ -115,7 +115,6 @@ class METRICS(object):
         assert name not in self.metrics.keys(), 'registered metric name already exists.'
         self.metrics.update({name: metric_cls})
 
-
 def metric_registry(metric_type, framework):
     """The class decorator used to register all Metric subclasses.
        cross framework metric is supported by add param as framework='tensorflow, \
@@ -263,8 +262,8 @@ def _topk_shape_validate(preds, labels):
     return preds, labels
 
 def _shape_validate(preds, labels):
-    assert type(preds) in [int, list], 'preds must be in int or list'
-    assert type(labels) in [int, list], 'labels must be in int or list'
+    assert type(preds) in [int, list, np.ndarray], 'preds must be in int or list, ndarray'
+    assert type(labels) in [int, list, np.ndarray], 'labels must be in int or list, ndarray'
     if isinstance(preds, int):
         preds = [np.array([preds])]
     elif isinstance(preds[0], int):
@@ -471,10 +470,7 @@ class MAE(BaseMetric):
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
         assert aes_size, "predictions shouldn't be none"
-        if self.compare_label:
-            return aes_sum / aes_size
-        else:
-            return 1 / (aes_sum / aes_size + 0.001)
+        return aes_sum / aes_size
 
 @metric_registry('RMSE', 'tensorflow, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
@@ -511,10 +507,7 @@ class MSE(BaseMetric):
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
         assert squares_size, "predictions should't be None"
-        if self.compare_label:
-            return squares_sum / squares_size
-        else:
-            return 1 / (squares_sum / squares_size + 0.001)
+        return squares_sum / squares_size
 
 @metric_registry('topk', 'tensorflow')
 class TensorflowTopK(BaseMetric):

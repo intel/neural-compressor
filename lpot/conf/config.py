@@ -446,7 +446,7 @@ schema = Schema({
     },
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
-        'accuracy_criterion': {'relative': 0.01},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
@@ -460,6 +460,7 @@ schema = Schema({
         Optional('accuracy_criterion', default={'relative': 0.01}): {
             Optional('relative'): And(Or(str, float), Use(percent_to_float)),
             Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
+            Optional('higher_is_better', default=True): bool,
         },
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
         Optional('exit_policy', default={'timeout': 0,
