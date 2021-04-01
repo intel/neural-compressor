@@ -232,7 +232,8 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,
-                               "q_dataloader": None}
+                               "q_dataloader": None,
+                               "workspace_path": "./"}
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
@@ -248,6 +249,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('ptq_yaml.yaml')
+        os.remove('dynamic_yaml.yaml')
         os.remove('qat_yaml.yaml')
         os.remove('dump_yaml.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
@@ -309,7 +311,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         fp32_results = evaluator()
         self.assertTrue((fp32_results['accuracy'][0] - results['accuracy'][0]) < 0.01)
 
-    def test_tensor_dump(self):
+    def test_tensorboard(self):
         model = copy.deepcopy(self.lpot_model)
         model.model.eval().fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
@@ -323,6 +325,22 @@ class TestPytorchAdaptor(unittest.TestCase):
         quantizer.eval_func = None
         quantizer()
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
+
+    def test_tensor_dump(self):
+        model = copy.deepcopy(self.lpot_model)
+        model.model.eval().fuse_model()
+        quantizer = Quantization('ptq_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataloader = common.DataLoader(dataset)
+        dataloader = common._generate_common_dataloader(dataloader, 'pytorch')
+        self.adaptor.inspect_tensor(
+            model, dataloader, op_list=['conv1', 'layer1.0.conv1'],
+            iteration_list=[1, 2], weights=True, save_to_disk=True)
+        load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
+        a = load_array('dump_tensor/activation_iter1.npz')
+        w = load_array('dump_tensor/weight.npz')
+        self.assertTrue(w['conv1/weight'].shape[0] == a['conv1.output0'].shape[1])
+        shutil.rmtree('./dump_tensor', ignore_errors=True)
 
     def test_floatfunctions_fallback(self):
         class ModelWithFunctionals(torch.nn.Module):

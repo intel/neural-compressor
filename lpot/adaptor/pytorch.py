@@ -19,6 +19,7 @@ import copy
 import os
 from collections import OrderedDict
 import yaml
+from functools import partial
 from lpot.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo
@@ -308,9 +309,10 @@ def _propagate_qconfig_recursively(model, prefix, op_qcfgs, white_list, qconfig_
         if op_name in op_qcfgs:
             child.qconfig = op_qcfgs[op_name]
             model_qconfig = op_qcfgs[op_name]
-        elif type(child) in white_list:
-            child.qconfig = model_qconfig \
-                if model_qconfig is not None else torch.quantization.default_per_channel_qconfig
+        elif type(child) in white_list and type(child) != torch.nn.Sequential:
+            if model_qconfig is None:
+                model_qconfig = torch.quantization.default_per_channel_qconfig
+            child.qconfig = model_qconfig
         _propagate_qconfig_recursively(
             child, op_name + '.', op_qcfgs, white_list, model_qconfig)
 
@@ -466,6 +468,7 @@ class TemplateAdaptor(Adaptor):
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.benchmark = framework_specific_info['benchmark'] \
             if 'benchmark' in framework_specific_info else False
+        self.workspace_path = framework_specific_info['workspace_path']
         self.is_baseline = True if not self.benchmark else False
         self.query_handler = None
 
@@ -809,7 +812,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         for name, child in model.named_children():
             op_name = prefix + '.' + name if prefix != '' else name
-            if type(child) in self.white_list and not isinstance(child, torch.nn.Sequential):
+            if type(child) in self.white_list and type(child) != torch.nn.Sequential:
                 quantizable_ops.append((
                     op_name, self.unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in self.unify_op_type_mapping else
@@ -817,7 +820,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             else:
                 self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
-    def _pre_eval_hook(self, model):
+    def _pre_eval_hook(self, model, op_list=None, iteration_list=None):
         """The function is used to do some preprocession before evaluation phase.
            Here, it used to add hook for dump output tensor for quantizable ops.
 
@@ -828,6 +831,35 @@ class PyTorchAdaptor(TemplateAdaptor):
               model (object): model with hook
         """
         from abc import ABCMeta
+
+        def _with_args(cls_or_self, **kwargs):
+            r"""Wrapper that allows creation of class factories.
+
+            This can be useful when there is a need to create classes with the same
+            constructor arguments, but different instances.
+
+            Example::
+
+                >>> Foo.with_args = classmethod(_with_args)
+                >>> foo_builder = Foo.with_args(a=3, b=4).with_args(answer=42)
+                >>> foo_instance1 = foo_builder()
+                >>> foo_instance2 = foo_builder()
+                >>> id(foo_instance1) == id(foo_instance2)
+                False
+            """
+            class _PartialWrapper(object):
+                def __init__(self, p):
+                    self.p = p
+
+                def __call__(self, *args, **keywords):
+                    return self.p(*args, **keywords)
+
+                def __repr__(self):
+                    return self.p.__repr__()
+
+                with_args = _with_args
+            r = _PartialWrapper(partial(cls_or_self, **kwargs))
+            return r
 
         ABC = ABCMeta(str("ABC"), (object, ),
                       {})  # compatible with Python 2 *and* 3:
@@ -842,21 +874,27 @@ class PyTorchAdaptor(TemplateAdaptor):
             def __init__(self, iteration_list=None, **kwargs):
                 super(_RecordingObserver, self).__init__(**kwargs)
                 self.output_tensors_dict = OrderedDict()
-                self.current_iter = 0
+                self.current_iter = 1
                 self.iteration_list = iteration_list
 
             def forward(self, x):
-                if (self.iteration_list is None and self.current_iter == 0) or \
+                if (self.iteration_list is None and self.current_iter == 1) or \
                     (self.iteration_list is not None and
                      self.current_iter in self.iteration_list):
-                    self.output_tensors_dict[self.current_iter] = x.to("cpu") \
-                        if x.device != "cpu" else x.clone()
+                    if type(x) is tuple or type(x) is list:
+                        self.output_tensors_dict[self.current_iter] = \
+                            [i.to("cpu") if i.device != 'cpu' else i.clone() for i in x]
+                    else:
+                        self.output_tensors_dict[self.current_iter] = \
+                            x.to("cpu") if x.device != "cpu" else x.clone()
                 self.current_iter += 1
                 return x
 
             @torch.jit.export
             def get_tensor_value(self):
                 return self.output_tensors_dict
+
+            with_args = classmethod(_with_args)
 
         def _observer_forward_hook(module, input, output):
             """Forward hook that calls observer on the output
@@ -888,24 +926,21 @@ class PyTorchAdaptor(TemplateAdaptor):
             """
             for name, child in module.named_children():
                 op_name = name if prefix == "" else prefix + "." + name
-                if isinstance(child, torch.nn.quantized.FloatFunctional):
-                    if hasattr(child,
-                               'qconfig') and child.qconfig is not None and (
-                                   op_list is None or op_name in op_list):
+                if isinstance(child, torch.nn.quantized.FloatFunctional) and \
+                             (op_list is None or op_name in op_list):
+                    if hasattr(child, 'qconfig') and child.qconfig is not None and (
+                            op_list is None or op_name in op_list):
                         child.activation_post_process = \
                             child.qconfig.activation()
+                elif hasattr(child, 'qconfig') and child.qconfig is not None and \
+                        (op_list is None or op_name in op_list):
+                    # observer and hook will be gone after we swap the module
+                    child.add_module(
+                        'activation_post_process',
+                        child.qconfig.activation())
+                    child.register_forward_hook(_observer_forward_hook)
                 else:
                     _add_observer_(child, op_list, op_name)
-
-            # Insert observers only for leaf nodes
-            if hasattr(module, 'qconfig') and module.qconfig is not None and \
-                    len(module._modules) == 0 and not isinstance(module, torch.nn.Sequential) and \
-                    (op_list is None or prefix in op_list):
-                # observer and hook will be gone after we swap the module
-                module.add_module(
-                    'activation_post_process',
-                    module.qconfig.activation())
-                module.register_forward_hook(_observer_forward_hook)
 
         def is_fused_module(module):
             """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -955,21 +990,21 @@ class PyTorchAdaptor(TemplateAdaptor):
                    if self.version < '1.7' else \
                    torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
-            if type(module) in white_list:
+            if type(module) in white_list and type(module) != torch.nn.Sequential:
                 module.qconfig = qconfig_parent
-            for name, child in module.named_children():
-                module_prefix = prefix + '.' + name if prefix else name
-                if is_fused_module(module):
-                   if prefix in self.fused_dict:
-                      self.fused_dict[prefix] = [self.fused_dict[prefix], module_prefix]
-                   else:
-                      self.fused_dict[prefix] = module_prefix
-                   _fused = True
-                else:
-                   _fused = False
-
-                _propagate_qconfig_helper(child, qconfig_dict, white_list,
-                                          qconfig_parent, module_prefix, fused=_fused)
+                for name, child in module.named_children():
+                    module_prefix = prefix + '.' + name if prefix else name
+                    if is_fused_module(module):
+                        if prefix in self.fused_dict:
+                            self.fused_dict[prefix] = [self.fused_dict[prefix], module_prefix]
+                        else:
+                            self.fused_dict[prefix] = module_prefix
+            else:
+                module.qconfig = None
+                for name, child in module.named_children():
+                    module_prefix = prefix + '.' + name if prefix else name
+                    _propagate_qconfig_helper(child, qconfig_dict, white_list,
+                                              qconfig_parent, module_prefix)
 
         def _prepare(model, inplace=True, op_list=[], white_list=None):
             """The model will be attached with observer or fake quant modules, and qconfig
@@ -1015,8 +1050,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         model = copy.deepcopy(model) if self.is_baseline else model
         model.model.qconfig = torch.quantization.QConfig(
             weight=torch.quantization.default_debug_observer,
-            activation=_RecordingObserver)
-        _prepare(model.model, op_list=None, white_list=white_list)
+            activation=_RecordingObserver.with_args(iteration_list=iteration_list))
+        _prepare(model.model, op_list=op_list, white_list=white_list)
 
         return model
 
@@ -1032,9 +1067,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         """
         op = op_name[:op_name.rfind('.')]
         if op in self.fused_dict and op_name[op_name.rfind('.')+1:].isdigit():
-           return True
+            return True
         else:
-           return False
+            return False
 
     def is_fused_op(self, op_name):
         """This is a helper function for `_post_eval_hook`
@@ -1048,9 +1083,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         """
         op = op_name[:op_name.rfind('.')]
         if op in self.fused_dict:
-           return True
+            return True
         else:
-           return False
+            return False
 
     def is_last_fused_child(self, op_name):
         """This is a helper function for `_post_eval_hook`
@@ -1064,9 +1099,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         """
         op = op_name[:op_name.rfind('.')]
         if op_name in self.fused_dict[op][-1]:
-           return True
+            return True
         else:
-           return False
+            return False
 
     def _post_eval_hook(self, model, **args):
         """The function is used to do some post process after complete evaluation.
@@ -1084,9 +1119,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         model = model.model
 
         if args is not None and 'accuracy' in args:
-           accuracy = args['accuracy']
+            accuracy = args['accuracy']
         else:
-           accuracy = ''
+            accuracy = ''
 
         if self.dump_times == 0:
             writer = SummaryWriter('runs/eval/baseline' +
@@ -1149,13 +1184,13 @@ class PyTorchAdaptor(TemplateAdaptor):
                 continue
 
             op = key[:key.rfind('.')]
-            if self.is_fused_child(op) == True:
-               # fused child tensorboard tag will be merge
-               weight = key[key.rfind('.')+1:]
-               op = op[:op.rfind('.')] + '/' + weight
+            if self.is_fused_child(op) is True:
+                # fused child tensorboard tag will be merge
+                weight = key[key.rfind('.')+1:]
+                op = op[:op.rfind('.')] + '/' + weight
             else:
-               weight = key[key.rfind('.')+1:]
-               op = key[:key.rfind('.')] + '/' + weight
+                weight = key[key.rfind('.')+1:]
+                op = key[:key.rfind('.')] + '/' + weight
 
             # To merge ._packed_params
             op = op.replace('._packed_params', '')
@@ -1175,6 +1210,76 @@ class PyTorchAdaptor(TemplateAdaptor):
     def save(self, model, path=None):
         pass
 
+    def inspect_tensor(self, model, dataloader, op_list=None, iteration_list=None,
+                       weights=False, save_to_disk=False):
+        from torch.quantization import get_observer_dict
+        import numpy as np
+        new_model = copy.deepcopy(model)
+        assert min(iteration_list) > 0, \
+            "Iteration number should great zero, 1 means first iteration."
+        iterations = max(iteration_list) if iteration_list is not None else -1
+        new_model = self._pre_eval_hook(new_model, op_list=op_list, iteration_list=iteration_list)
+        self.evaluate(new_model, dataloader, iteration=iterations)
+        observer_dict = {}
+        ret = {}
+        ret['activations'] = []
+        get_observer_dict(new_model.model, observer_dict)
+        if iteration_list is None:
+            iteration_list = [1]
+        for i in iteration_list:
+            summary = OrderedDict()
+            for key in observer_dict:
+                if isinstance(observer_dict[key],
+                              torch.nn.modules.linear.Identity):
+                    continue
+                op_name = key.replace(".activation_post_process", "")
+                value = observer_dict[key].get_tensor_value()[i]
+                if type(value) is list:
+                    for index in range(len(value)):
+                        summary[op_name + ".output" + str(index)] = \
+                            torch.dequantize(value[index]).numpy() \
+                            if value[index].is_quantized else value[index].numpy()
+                else:
+                    summary[op_name + ".output0"] = \
+                        torch.dequantize(value[index]).numpy() \
+                        if value.is_quantized else value.numpy()
+
+            if save_to_disk:
+                dump_dir = os.path.join(self.workspace_path, 'dump_tensor')
+                os.makedirs(dump_dir, exist_ok=True)
+                np.savez(os.path.join(dump_dir, 'activation_iter{}.npz'.format(i)), **summary)
+
+            ret['activations'].append(summary)
+
+        if weights:
+            ret['weights'] = {}
+            state_dict = new_model.model.state_dict()
+            for key in state_dict:
+                if not isinstance(state_dict[key], torch.Tensor):
+                    continue
+
+                op = key[:key.rfind('.')]
+                if self.is_fused_child(op) is True:
+                    # fused child tensorboard tag will be merge
+                    weight = key[key.rfind('.')+1:]
+                    op = op[:op.rfind('.')] + '/' + weight
+                else:
+                    weight = key[key.rfind('.')+1:]
+                    op = key[:key.rfind('.')] + '/' + weight
+
+                # To merge ._packed_params
+                op = op.replace('._packed_params', '')
+
+                ret['weights'][op] = torch.dequantize(state_dict[key]).numpy() \
+                    if state_dict[key].is_quantized else state_dict[key].numpy()
+
+            if save_to_disk:
+                np.savez(os.path.join(dump_dir, 'weight.npz'), **ret['weights'])
+        else:
+            ret['weights'] = None
+
+        return ret
+
 
 @adaptor_registry
 class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
@@ -1193,7 +1298,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
 
-        self.workspace_path = framework_specific_info['workspace_path']
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))

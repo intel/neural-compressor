@@ -100,7 +100,8 @@ class Adaptor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[],
+                       weights=False, save_to_disk=False):
         '''The function is used by tune strategy class for dumping tensor info.
 
            Args:
@@ -135,7 +136,7 @@ class Adaptor(object):
         return model, 1.
 
     @abstractmethod
-    def _pre_eval_hook(self, model):
+    def _pre_eval_hook(self, model, *args, **kwargs):
         '''The function is used to do some preprocession before evaluation phase.
 
         Return:
@@ -144,7 +145,7 @@ class Adaptor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def _post_eval_hook(self, model, **args):
+    def _post_eval_hook(self, model, *args, **kwargs):
         '''The function is used to do some post process after complete evaluation.
         '''
         raise NotImplementedError
