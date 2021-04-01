@@ -84,7 +84,7 @@ class COCORaw(Dataset):
         import os
         import numpy as np
         from pycocotools.coco import COCO
-        from lpot.metric.coco_label_map import category_map
+        from lpot.experimental.metric.coco_label_map import category_map
         self.image_list = []
         self.transform = transform
         self.filter = filter

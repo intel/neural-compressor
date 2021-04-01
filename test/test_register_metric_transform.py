@@ -44,8 +44,8 @@ class TestRegisterMetric(unittest.TestCase):
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
         from lpot import Benchmark, Quantization
-        from lpot.data.transforms.imagenet_transform import LabelShift
-        from lpot.metric.metric import TensorflowTopK
+        from lpot.experimental.data.transforms.imagenet_transform import LabelShift
+        from lpot.experimental.metric.metric import TensorflowTopK
 
         evaluator = Benchmark('fake_yaml.yaml')
 
@@ -68,7 +68,6 @@ class TestRegisterMetric(unittest.TestCase):
         acc, batch_size, result_list = result['accuracy']
         self.assertEqual(acc, 0.0)
 
-        
 
 if __name__ == "__main__":
     unittest.main()

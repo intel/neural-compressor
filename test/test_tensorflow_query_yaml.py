@@ -43,6 +43,5 @@ class TestTFQueryYaml(unittest.TestCase):
         self.assertEqual([['AvgPool']] in internal_patterns, True)
         self.assertEqual([['MatMul'], ('BiasAdd',), ('Relu',)] in internal_patterns, True)
 
-
 if __name__ == '__main__':
     unittest.main()
