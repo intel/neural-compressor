@@ -43,12 +43,6 @@ class PyTorchMetrics(object):
                 torch_ignite.metrics.Accuracy),
             "Loss": WrapPyTorchMetric(
                 PyTorchLoss),
-            "MAE": WrapPyTorchMetric(
-                torch_ignite.metrics.MeanAbsoluteError),
-            "RMSE": WrapPyTorchMetric(
-                torch_ignite.metrics.RootMeanSquaredError),
-            "MSE": WrapPyTorchMetric(
-                torch_ignite.metrics.MeanSquaredError),
         }
         self.metrics.update(PYTORCH_METRICS)
 
@@ -449,7 +443,7 @@ class Loss(BaseMetric):
     def result(self):
         return self.sum / self.sample
 
-@metric_registry('MAE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MAE(BaseMetric):
     def __init__(self, compare_label=True):
         self.label_list = []
@@ -472,7 +466,7 @@ class MAE(BaseMetric):
         assert aes_size, "predictions shouldn't be none"
         return aes_sum / aes_size
 
-@metric_registry('RMSE', 'tensorflow, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
     def __init__(self, compare_label=True):
         self.mse = MSE(compare_label)
@@ -486,7 +480,7 @@ class RMSE(BaseMetric):
     def result(self):
         return np.sqrt(self.mse.result())
 
-@metric_registry('MSE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MSE(BaseMetric):
     def __init__(self, compare_label=True):
         self.label_list = []

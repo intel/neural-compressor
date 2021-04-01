@@ -491,6 +491,10 @@ class TemplateAdaptor(Adaptor):
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
 
+        self.fp32_results = []
+        self.fp32_preds_as_label = False
+
+
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
@@ -734,7 +738,13 @@ class PyTorchAdaptor(TemplateAdaptor):
             if self.is_baseline:
                 model_.to("dpcpp")
 
+        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
+            self.fp32_preds_as_label = True
+            results = []
+
         with torch.no_grad():
+            if metric:
+                metric.reset()
             for idx, (input, label) in enumerate(dataloader):
                 if measurer is not None:
                     measurer.start()
@@ -760,10 +770,24 @@ class PyTorchAdaptor(TemplateAdaptor):
                     measurer.end()
                 if postprocess is not None:
                     output, label = postprocess((output, label))
-                if metric is not None:
+                if metric is not None and not self.fp32_preds_as_label:
                     metric.update(output, label)
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if fp32_baseline else \
+                        results.append(output)
                 if idx + 1 == iteration:
                     break
+
+        if self.fp32_preds_as_label:
+            from .torch_utils.util import collate_torch_preds
+            if fp32_baseline:
+                results = collate_torch_preds(self.fp32_results)
+                metric.update(results, results)
+            else:
+                reference = collate_torch_preds(self.fp32_results)
+                results = collate_torch_preds(results)
+                metric.update(results, reference)
+
         acc = metric.result() if metric is not None else 0
 
         if tensorboard:
