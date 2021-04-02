@@ -145,7 +145,8 @@ class Objective(object):
         self.higher_is_better = True
         for k, v in accuracy_criterion.items(): 
             if k in ['relative', 'absolute']:
-                assert float(v) < 1 and float(v) > -1
+                if k == 'relative':
+                    assert float(v) < 1 and float(v) > -1
                 self.relative = True if k == 'relative' else False
                 self.acc_goal = float(v)
             elif k == 'higher_is_better':
@@ -181,7 +182,7 @@ class Objective(object):
                 else base_acc + float(self.acc_goal)
 
         if last_measure == 0 or perf < last_measure:
-            return acc < acc_target if self.higher_is_better else acc >= acc_target
+            return acc >= acc_target if self.higher_is_better else acc < acc_target
         else:
             return False
 
