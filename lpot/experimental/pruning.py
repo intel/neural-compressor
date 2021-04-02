@@ -145,8 +145,8 @@ class Pruning(object):
         """
         from .common import Model as LpotModel
         if not isinstance(user_model, LpotModel):
-            logger.warning('force convert user raw model to lpot model, \
-                better initialize lpot.experimental.common.Model and set....')
+            logger.warning('force convert user raw model to lpot model, ' +
+                'better initialize lpot.experimental.common.Model and set....')
             user_model = LpotModel(user_model)
         framework_model_info = {}
         cfg = self.conf.usr_cfg

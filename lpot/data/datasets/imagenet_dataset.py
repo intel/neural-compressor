@@ -88,10 +88,10 @@ class ONNXRTImagenetDataset(Dataset):
 
     def __init__(self, root, subset='val', num_cores=28, transform=None, filter=None):
         self.val_dir = os.path.join(root, subset)
-        assert os.path.exists(self.val_dir), "find no val dir in dataset path, please \
-            makesure there are train/val subfolders"
+        assert os.path.exists(self.val_dir), "find no val dir in {}".format(root) + \
+            "please make sure there are train/val subfolders"
         import glob
-        logger.warning('This api is going to be deprecated, '
+        logger.warning('This api is going to be deprecated, ' + \
                        'please use ImageRecord instead')
 
         self.transform = transform
