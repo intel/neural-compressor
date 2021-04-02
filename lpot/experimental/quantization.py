@@ -192,8 +192,9 @@ class Quantization(object):
                                       a 'real' calib_dataloader will be created, 
                                       the reason is we have to know the framework info
                                       and only after the Quantization object created then
-                                      framework infomation can be known. Future we will support
-                                      creating iterable dataloader from lpot.experimental.common.DataLoader
+                                      framework infomation can be known.
+                                      Future we will support creating iterable dataloader
+                                      from lpot.experimental.common.DataLoader
         """
         from .common import _generate_common_dataloader
         self._calib_dataloader = _generate_common_dataloader(
