@@ -116,8 +116,9 @@ class Quantization(object):
                     self._eval_dataloader = create_dataloader(self.framework, \
                                                              eval_dataloader_cfg)
 
+        approach_cfg = deep_get(cfg, 'quantization.approach')
         if self._calib_func is None:
-            if self._calib_dataloader is None:
+            if self._calib_dataloader is None and approach_cfg != 'post_training_dynamic_quant':
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
                 assert calib_dataloader_cfg is not None, \
                        "dataloader field of calibration field of quantization section " \
