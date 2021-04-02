@@ -123,8 +123,10 @@ def list_to_tuple(data):
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
         data = float(data.strip('%')) / 100
+    if isinstance(data, int):
+        data = float(data)
     else:
-        assert isinstance(data, float), 'This field should be float or percent string'
+        assert isinstance(data, float), 'This field should be float, int or percent string'
     return data
 
 policy_schema = Schema({
@@ -459,7 +461,7 @@ schema = Schema({
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
             Optional('relative'): And(Or(str, float), Use(percent_to_float)),
-            Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
+            Optional('absolute'): And(Or(str, int, float), Use(percent_to_float)),
             Optional('higher_is_better', default=True): bool,
         },
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
