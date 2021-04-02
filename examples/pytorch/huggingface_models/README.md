@@ -90,6 +90,28 @@ python run_glue_tune.py \
 where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
 Where output_dir is path of checkpoint which be created by fine tuning.
 
+### seq2seq task
+
+```bash
+export TASK_NAME=translation_en_to_ro
+
+python run_seq2seq_tune.py \
+    --model_name_or_path /path/to/checkpoint/dir \
+    --task $TASK_NAME \
+    --data_dir /path/to/data/dir \
+    --output_dir /path/to/checkpoint/dir \
+    --overwrite_output_dir \
+    --predict_with_generate \
+    --tune \
+    --tuned_checkpoint /path/to/checkpoint/dir
+```
+
+Where task name can be one of summarization_{summarization dataset name},translation_{language}\_to\_{language}.
+
+Where summarization dataset can be one of xsum,billsum etc.
+
+Where output_dir is path of checkpoint which be created by fine tuning.
+
 
 Examples of enabling Intel® Low Precision Optimization Tool
 ============================================================
@@ -169,6 +191,46 @@ if training_args.tune:
     exit(0)
 ```
 
+For seq2seq task,We need update run_seq2seq_tune.py like below
+
+```python
+if training_args.tune:
+  def eval_func_for_lpot(model):
+      trainer.model = model
+      results = trainer.evaluate(
+          eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
+      )
+      assert data_args.task.startswith("summarization") or data_args.task.startswith("translation") , "data_args.task should startswith summarization or translation"
+      if data_args.task.startswith("summarization"):
+          task_metrics_keys = ['val_gen_len','val_loss','val_rouge1','val_rouge2','val_rougeL','val_rougeLsum','val_samples_per_second']
+          rouge = 0
+          for key in task_metrics_keys:
+              if key in results.keys():
+                  logger.info("Finally Eval {}:{}".format(key, results[key]))
+                  if 'rouge' in key:
+                      rouge += results[key]
+          return rouge/4
+      if data_args.task.startswith("translation"):
+          task_metrics_keys = ['val_bleu','val_samples_per_second']
+          for key in task_metrics_keys:
+              if key in results.keys():
+                  logger.info("Finally Eval {}:{}".format(key, results[key]))
+                  if 'bleu' in key:
+                      bleu = results[key]
+          return bleu
+  from lpot import Quantization, common
+  quantizer = Quantization("./conf.yaml")
+  quantizer.model = common.Model(model)
+  quantizer.calib_dataloader = common.DataLoader(
+                                          eval_dataset, 
+                                          batch_size=training_args.eval_batch_size,
+                                          collate_fn=Seq2SeqDataCollator_lpot(tokenizer, data_args, training_args.tpu_num_cores)
+                                          )
+  quantizer.eval_func = eval_func_for_lpot
+  q_model = quantizer()
+  q_model.save(training_args.tuned_checkpoint)
+  exit(0)
+```
 # Original BERT README
 
 Please refer [BERT README](BERT_README.md) and [README](examples/test-classification/README.md)
