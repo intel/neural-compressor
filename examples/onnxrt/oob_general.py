@@ -100,8 +100,8 @@ if __name__ == "__main__":
         input_shapes = [shape.split('x') for shape in input_shapes]
         shapes = [tuple([args.benchmark_nums] + [int(dim) for dim in shape]) for shape in input_shapes]
 
-    from lpot.data.datasets.dummy_dataset import DummyDataset
-    from lpot.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
+    from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
+    from lpot.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
     dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype=dtypes, label=True)
     dummy_dataloader = ONNXRTDataLoader(dummy_dataset, batch_size=args.eval_batch_size)
 

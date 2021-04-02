@@ -264,8 +264,8 @@ if __name__ == "__main__":
     if args.benchmark:
         model = onnx.load(args.model_path)
         
-        from lpot.data.datasets.dummy_dataset import DummyDataset
-        from lpot.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
+        from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
+        from lpot.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
         shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, args.max_seq_length)
         dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
         dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
