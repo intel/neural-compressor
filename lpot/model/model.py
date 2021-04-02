@@ -329,7 +329,7 @@ class TensorflowBaseModel(BaseModel):
         self.workspace_path = deep_get(framework_specific_info, 'workspace_path', './')
         self.kwargs = copy.deepcopy(kwargs)
         kwargs.update({'name': deep_get(framework_specific_info, 'name')})
-        # self.model = model
+        self._model = model
         self.sess, self._input_tensor_names, self._output_tensor_names = \
             create_session_with_input_output(
                 model, input_tensor_names, output_tensor_names, **kwargs)
@@ -427,11 +427,11 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
     @graph_def.setter
     def graph_def(self, graph_def):
         temp_saved_model_path = os.path.join(self.workspace_path, 'temp_saved_model')
-        replace_graph_def_of_saved_model(self.model, temp_saved_model_path, graph_def)
-        self.model = temp_saved_model_path
+        replace_graph_def_of_saved_model(self._model, temp_saved_model_path, graph_def)
+        self._model = temp_saved_model_path
         self.sess.close()
         self.sess, self._input_tensor_names, self._output_tensor_names = \
-            create_session_with_input_output(self.model, \
+            create_session_with_input_output(self._model, \
                 self._input_tensor_names, self._output_tensor_names)
 
     @property
@@ -439,12 +439,12 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         return self.sess.graph
 
     def save(self, root):
-        if root is not self.model:
+        if root is not self._model:
             assert os.path.isdir(root), 'please supply the path to save the model....'
             import shutil
-            file_names = os.listdir(self.model)
+            file_names = os.listdir(self._model)
             for f in file_names:
-                shutil.move(os.path.join(self.model, f), root)
+                shutil.move(os.path.join(self._model, f), root)
 
 # class TensorflowKerasModel(TensorflowBaseModel):
 # 

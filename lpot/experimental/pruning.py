@@ -157,7 +157,7 @@ class Pruning(object):
                  'output_tensor_names': cfg.model.outputs,
                  'workspace_path': cfg.tuning.workspace.path})
 
-        from .model import MODELS
+        from ..model import MODELS
         self._model = MODELS[self.framework](\
             user_model.root, framework_model_info, **user_model.kwargs)
 

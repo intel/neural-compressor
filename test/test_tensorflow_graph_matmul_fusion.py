@@ -247,7 +247,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     output_graph = quantizer()
 
                     count=0
-                    for i in output_graph.model.node:
+                    for i in output_graph.model.as_graph_def().node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
                             count += 1
                     found_quantized_matmul = bool(count > 1)

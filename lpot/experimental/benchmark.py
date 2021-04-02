@@ -132,16 +132,19 @@ class Benchmark(object):
                dataloader(generator): user are supported to set a user defined dataloader
                                       which meet the requirements that can yield tuple of
                                       (input, label)/(input, _) batched data.
-                                      Another good practice is to use lpot.experimental.common.DataLoader
+                                      Another good practice is to use 
+                                      lpot.experimental.common.DataLoader
                                       to initialize a lpot dataloader object.
-                                      Notice lpot.experimental.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
+                                      Notice lpot.experimental.common.DataLoader 
+                                      is just a wrapper of the information needed to 
+                                      build a dataloader, it can't yield
                                       batched data and only in this setter method 
                                       a 'real' eval_dataloader will be created, 
                                       the reason is we have to know the framework info
                                       and only after the Quantization object created then
-                                      framework infomation can be known. Future we will support
-                                      creating iterable dataloader from lpot.experimental.common.DataLoader
+                                      framework infomation can be known.
+                                      Future we will support creating iterable dataloader 
+                                      from lpot.experimental.common.DataLoader
 
         """
         from .common import _generate_common_dataloader
@@ -157,12 +160,15 @@ class Benchmark(object):
 
         Args:
            user_model: user are supported to set model from original framework model format
-                       (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
-                       Best practice is to set from a initialized lpot.experimental.common.Model.
-                       If tensorflow model is used, model's inputs/outputs will be auto inferenced,
-                       but sometimes auto inferenced inputs/outputs will not meet your requests,
-                       set them manually in config yaml file. Another corner case is slim model 
-                       of tensorflow, be careful of the name of model configured in yaml file,
+                       (eg, tensorflow frozen_pb or path to a saved model),
+                       but not recommended. Best practice is to set from a initialized
+                       lpot.experimental.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be 
+                       auto inferenced, but sometimes auto inferenced 
+                       inputs/outputs will not meet your requests,
+                       set them manually in config yaml file.
+                       Another corner case is slim model of tensorflow,
+                       be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
         
         """
@@ -200,10 +206,11 @@ class Benchmark(object):
            and user_metric.metric_cls should be sub_class of lpot.metric.BaseMetric.
 
         Args:
-            user_metric(lpot.experimental.common.Metric): user_metric should be object initialized from
-                                             lpot.experimental.common.Metric, in this method the 
-                                             user_metric.metric_cls will be registered to
-                                             specific frameworks and initialized.
+            user_metric(lpot.experimental.common.Metric):
+                user_metric should be object initialized from
+                lpot.experimental.common.Metric, in this method the 
+                user_metric.metric_cls will be registered to
+                specific frameworks and initialized.
                                               
         """
         from .common import Metric as LpotMetric
@@ -234,7 +241,8 @@ class Benchmark(object):
 
         Args:
             user_postprocess(lpot.experimental.common.Postprocess): 
-                user_postprocess should be object initialized from lpot.experimental.common.Postprocess,
+                user_postprocess should be object initialized from
+                lpot.experimental.common.Postprocess,
                 in this method the user_postprocess.postprocess_cls will be 
                 registered to specific frameworks and initialized.
 
