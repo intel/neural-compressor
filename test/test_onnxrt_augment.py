@@ -8,7 +8,7 @@ from onnx import helper, TensorProto, numpy_helper
 
 
 sys.path.append('..')
-from lpot.data.datasets.dataset import Dataset
+from lpot.experimental.data.datasets.dataset import Dataset
 from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
 from lpot.data import DATASETS, DATALOADERS
 

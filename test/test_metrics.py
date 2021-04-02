@@ -2,8 +2,8 @@
 import numpy as np
 import unittest
 from lpot.metric import METRICS
-from lpot.metric.f1 import evaluate
-from lpot.metric import bleu
+from lpot.experimental.metric.f1 import evaluate
+from lpot.experimental.metric import bleu
 
 class TestMetrics(unittest.TestCase):
     def testBLEU(self):

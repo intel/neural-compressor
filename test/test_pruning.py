@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data.datasets.dummy_dataset import PyTorchDummyDataset
-from lpot.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from lpot.experimental.data.datasets.dummy_dataset import PyTorchDummyDataset
+from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
     fake_yaml = """
