@@ -296,9 +296,12 @@ class TensorFlowAdaptor(Adaptor):
                 continue
 
             is_perchannel = False
+            weight_bit = 7.0
             if 'weight' in tuning_cfg['op'][each_op_info]:
                 is_perchannel = tuning_cfg['op'][each_op_info]['weight'][
                     'granularity'] == 'per_channel'
+                weight_bit = tuning_cfg['op'][each_op_info]['weight']['bit']
+
             algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
 
             is_asymmetric = False
@@ -306,7 +309,8 @@ class TensorFlowAdaptor(Adaptor):
                 is_asymmetric = tuning_cfg['op'][each_op_info]['activation']['scheme'] == 'asym'
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
                                                                algorithm,
-                                                               is_asymmetric)
+                                                               is_asymmetric,
+                                                               weight_bit)
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         int8_sum_count = 0
@@ -510,7 +514,6 @@ class TensorFlowAdaptor(Adaptor):
         logger.info("Start to run inspect_tensor..")
         quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         from .tf_utils.graph_converter import GraphConverter
-
         converter = GraphConverter(self.pre_optimized_model \
                                         if self.pre_optimized_model else model,
                                    qt_config=self.quantize_config,

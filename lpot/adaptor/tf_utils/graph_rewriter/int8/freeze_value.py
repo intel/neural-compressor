@@ -161,7 +161,8 @@ class FreezeValueTransformer(GraphRewriterBase):
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             new_node.attr["value"].CopyFrom(
                 attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(float(value), dtypes.float32, [])))
+                    tensor=tensor_util.make_tensor_proto(float(value),
+                    dtypes.float32, [])))
             output_node_name = self.graph_info[node_name].outputs[0]
             self.cur_graph.replace_const_node(new_node,
                                               [Helper.node_name_from_input(output_node_name)],
@@ -185,7 +186,8 @@ class FreezeValueTransformer(GraphRewriterBase):
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             min_node.attr["value"].CopyFrom(
                 attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(float(value[0]), dtypes.float32, [])))
+                    tensor=tensor_util.make_tensor_proto(float(value[0]),
+                    dtypes.float32, [])))
 
             max_node = node_def_pb2.NodeDef()
             max_node.op = "HostConst" if self.device == "gpu" else "Const"
@@ -195,7 +197,8 @@ class FreezeValueTransformer(GraphRewriterBase):
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             max_node.attr["value"].CopyFrom(
                 attr_value_pb2.AttrValue(
-                    tensor=tensor_util.make_tensor_proto(float(value[1]), dtypes.float32, [])))
+                    tensor=tensor_util.make_tensor_proto(float(value[1]),
+                    dtypes.float32, [])))
             output_node_name = self.graph_info[node_name].outputs[0]
             self.cur_graph.replace_const_node(min_node,
                                               [Helper.node_name_from_input(output_node_name)],

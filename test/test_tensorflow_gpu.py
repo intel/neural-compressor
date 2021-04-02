@@ -23,7 +23,7 @@ class TestTensorflowGpu(unittest.TestCase):
         input_graph_def = read_graph(self.pb_path)
         output_node_names = ['MobilenetV1/Predictions/Reshape_1']
         op_wise_config = {
-            'MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D': (False, 'minmax', False)}
+            'MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D': (False, 'minmax', False, 7.0)}
         tf.compat.v1.disable_eager_execution()
 
         converter = QuantizeGraphForIntel(

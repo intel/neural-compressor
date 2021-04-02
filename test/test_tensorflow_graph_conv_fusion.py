@@ -280,9 +280,9 @@ class TestGraphConvFusion(unittest.TestCase):
     outputs = ['predict']
 
     op_wise_config = {
-        "v0/resnet_v13/conv14/conv2d/Conv2D": (False, 'minmax', False),
-        "v0/resnet_v13/conv11/conv2d/Conv2D": (False, 'minmax', False),
-        "v0/resnet_v17/conv27/conv2d/Conv2D": (False, 'minmax', False)
+        "v0/resnet_v13/conv14/conv2d/Conv2D": (False, 'minmax', False, 7.0),
+        "v0/resnet_v13/conv11/conv2d/Conv2D": (False, 'minmax', False, 7.0),
+        "v0/resnet_v17/conv27/conv2d/Conv2D": (False, 'minmax', False, 7.0)
     }
 
     @classmethod

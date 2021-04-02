@@ -35,7 +35,7 @@ class TestConvAddRelu(unittest.TestCase):
 
             outputs = [relu.name.split(':')[0]]
             op_wise_config = {
-                "Conv2D": (False, 'minmax', False),
+                "Conv2D": (False, 'minmax', False, 7.0),
             }
 
             fold_graph_def = QuantizeGraphForIntel(output_graph_def, outputs,

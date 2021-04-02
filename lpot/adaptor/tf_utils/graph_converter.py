@@ -327,7 +327,7 @@ class GraphConverter:
                         input_graph=sorted_graph,
                         patterns=self.int8_sequences[node_op],
                         remove_redundant_quant_flag=True,
-                        op_wise_cfg=(False, "minmax", False),
+                        op_wise_cfg=(False, "minmax", False, 7.0),
                         start_node_name=op_name,
                         device=self.device).get_longest_fuse()
 

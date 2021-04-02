@@ -79,6 +79,7 @@ class QuantizeNodeBase():
         self.patterns =  kwargs['patterns']
         self.remove_redundant_quant_flag = kwargs['remove_redundant_quant_flag']
         self.per_channel, self.is_asymmetric = kwargs['op_wise_cfg'][0], kwargs['op_wise_cfg'][2]
+        self.weight_bit = kwargs['op_wise_cfg'][3]
         self.start_node_name = kwargs['start_node_name']
         self.device = kwargs['device']
         self.enable_s8 = bool(tf.version.VERSION >= '2.1.0' or \
@@ -567,9 +568,11 @@ class QuantizeNodeBase():
         max_name = base_name + "max"
         float_tensor = tensor_util.MakeNdarray(input_node.attr["value"].tensor)
         epsilon = 1e-4  # Needs to be set empirically if accuracy is not satisfactory
+        range_coefficent = 127 / (2 ** self.weight_bit - 1)
         if parent in ("Conv2D", "MatMul"):
             if per_channel:
                 ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
+                ranges *= range_coefficent
                 min_value = -ranges
                 max_value = ranges
                 # nudging min-max values outside epsilon radius around zero
@@ -580,6 +583,8 @@ class QuantizeNodeBase():
             else:
                 min_value = np.min(float_tensor.flatten())
                 max_value = np.max(float_tensor.flatten())
+                min_value *= range_coefficent
+                max_value *= range_coefficent
                 # Same processing of min-max as in quantize_weight_eightbit
                 # function.
                 if min_value > 0.0:

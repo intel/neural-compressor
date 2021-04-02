@@ -151,7 +151,11 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         Optional('algorithm', default=None): And(
             list,
-            lambda s: all(i in ['minmax', 'kl'] for i in s))
+            lambda s: all(i in ['minmax', 'kl'] for i in s)),
+        Optional('bit', default=None):  And(
+            Or(float, list),
+            Use(input_to_list_float),
+            lambda s: all(0.0 < i <= 7.0 for i in s))
     },
     Optional('activation', default=None): {
         Optional('granularity', default=None): And(
@@ -371,7 +375,8 @@ schema = Schema({
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True},
-                                      'model_wise': {'weight': {}, 'activation': {}}}): {
+                                      'model_wise': {'weight': {'bit': [7.0]}, 
+                                                     'activation': {}}}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
             # TODO check if framework support dynamic quantize
@@ -396,8 +401,8 @@ schema = Schema({
             Optional('first_conv_or_matmul_quantization', default=True):
                     And(bool, lambda s: s in [True, False]),
         },
-        Optional('model_wise', default={'weight': {}, 'activation': {}}): {
-            Optional('weight', default=None): {
+        Optional('model_wise', default={'weight': {'bit': [7.0]}, 'activation': {}}): {
+            Optional('weight', default= {'bit': [7.0]}): {
                 Optional('granularity', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -414,6 +419,11 @@ schema = Schema({
                     Or(str, list),
                     Use(input_to_list),
                     lambda s: all(i in ['minmax', 'kl'] for i in s)),
+                Optional('bit', default=[7.0]):  And(
+                    Or(float, list),
+                    Use(input_to_list_float),
+                    lambda s: all(0.0 < i <= 7.0 for i in s))
+
             },
             Optional('activation', default=None): {
                 Optional('granularity', default=None): And(
@@ -586,7 +596,8 @@ class Conf(object):
                 elif dst[key] == src[key] or src[key] is None:
                     pass  # same leaf value
                 else:
-                    value = [value for value in src[key] if value in dst[key]]
+                    value = [value for value in src[key]
+                             if value in dst[key] or isinstance(value, float)]
                     if value != []:
                         dst[key] = value
             else:
@@ -611,7 +622,7 @@ class Conf(object):
             for part, params in config.items():
                 temp_str = temp_str + part
                 for _, param in params.items():
-                    temp_str += param
+                    temp_str += str(param)
                 temp_str += '_'
             temp_set.add(temp_str)
         return len(temp_set)
