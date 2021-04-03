@@ -18,6 +18,7 @@
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import tensor_util
 
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
@@ -253,6 +254,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
         weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[weight_name].node
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -336,6 +338,16 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             self.output_graph = graph_pb2.GraphDef()
             fusion_name = ''.join(matched_rule)
             if fusion_name in self.fusion_mapping:
+                if fusion_name.find('Conv2DAddRelu') != -1:
+                    for input_name in self.node_name_mapping[matched_node_name[1]].node.input:
+                        input_node_name = helper.node_name_from_input(input_name)
+                        if input_node_name != matched_node_name[0]:
+                            add_const_input_node = self.node_name_mapping[input_node_name].node
+                            add_node_content = tensor_util.MakeNdarray(
+                                add_const_input_node.attr["value"].tensor)
+                            if add_node_content.ndim != 1:
+                                fusion_name = 'Conv2D'
+                                matched_node_name = matched_node_name[:1]
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
                 self.logger.info("Unknown match {}".format(fusion_name))

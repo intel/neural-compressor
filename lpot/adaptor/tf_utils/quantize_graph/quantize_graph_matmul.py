@@ -49,6 +49,11 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = self.input_graph
             return
 
+        for i in self.node_name_mapping:
+            if weight_node.name in self.node_name_mapping[i].output:
+                self.output_graph = self.input_graph
+                return
+
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
@@ -110,6 +115,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         if weight_node.op != 'Const':
             self.output_graph = self.input_graph
             return
+
+        for i in self.node_name_mapping:
+            if weight_node.name in self.node_name_mapping[i].output:
+                self.output_graph = self.input_graph
+                return
+
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)

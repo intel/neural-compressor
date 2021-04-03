@@ -241,9 +241,7 @@ class QuantizeNodeBase():
             [quantized_output_name, min_max_inputs[0], min_max_inputs[1]])
         helper.set_attr_dtype(dequantize_node, "T", dtype)
         helper.set_attr_string(dequantize_node, "mode",
-                               b"MIN_FIRST" if self.is_asymmetric or \
-                                   (not self.per_channel and dtype == dtypes.qint8)
-                               else b"SCALED")
+                               b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
         self.add_output_graph_node(dequantize_node)
 
     def eightbitize_single_input_tensor_node(self, original_node,
@@ -276,16 +274,15 @@ class QuantizeNodeBase():
                 #     self.output_node_maps[input_node_name].attr["T"].type
                 # ) if self.output_node_maps[
                 #     input_node_name].op == "Dequantize" else dtypes.quint8
-
-                if self.output_node_maps[input_node_name].op == "Dequantize":
+                if self.node_name_mapping[original_node].node.op == "MatMul":
+                    # mkl ops _MklQuantizedMatMulWithBiasAndRelu|AndRequantize
+                    # requires the T1 data type as quint8
+                    dtype = dtypes.quint8
+                elif self.output_node_maps[input_node_name].op == "Dequantize":
                     dtype = dtypes.DType(
                         self.output_node_maps[input_node_name].attr["T"].type)
                 elif self._find_relu_node(
                         self.node_name_mapping[original_node].node):
-                    dtype = dtypes.quint8
-                elif self.node_name_mapping[original_node].node.op == "MatMul":
-                    # mkl ops _MklQuantizedMatMulWithBiasAndRelu|AndRequantize
-                    # requires the T1 data type as quint8
                     dtype = dtypes.quint8
                 else:
                     dtype = dtypes.qint8
@@ -293,7 +290,6 @@ class QuantizeNodeBase():
                 dtype = dtypes.quint8 if self._find_relu_node(
                     self.node_name_mapping[original_node].node
                 ) else dtypes.qint8
-
             quantize_input_name, min_input_name, max_input_name = (
                 self._eightbitize_input_to_node(namespace_prefix,
                                                 each_input_name,
@@ -322,14 +318,11 @@ class QuantizeNodeBase():
 
         reshape_dims_node = helper.create_constant_node(
             reshape_dims_name, -1, dtypes.int32, [1])
-        if control_input_names:
-            reshape_dims_node.input.append("^" + control_input_names)
 
         self.add_output_graph_node(reshape_dims_node)
         reduction_dims_node = helper.create_constant_node(
             reduction_dims_name, 0, dtypes.int32, [1])
-        if control_input_names:
-            reduction_dims_node.input.append("^" + control_input_names)
+
         self.add_output_graph_node(reduction_dims_node)
         return reshape_dims_name, reduction_dims_name
 

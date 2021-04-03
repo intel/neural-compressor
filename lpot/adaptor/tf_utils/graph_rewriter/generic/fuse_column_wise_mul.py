@@ -55,12 +55,13 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
                     weights_node.attr['value'].tensor.tensor_shape.dim[3].size
             else:
                 weights_col = weights_node.attr['value'].tensor.tensor_shape.dim[1].size
+
             mul_value_node_tensor = mul_value_node.attr['value'].tensor
             weights_node_tensor = weights_node.attr['value'].tensor
             if len(mul_value_node_tensor.tensor_shape.dim
                    ) != 1 or mul_value_node_tensor.tensor_shape.dim[0].size != weights_col:
                 self.logger.debug("Invalid Mul OP fusion.")
-                return None
+                return self.model
 
             mul_value_node_list = [i for i in tensor_util.MakeNdarray(mul_value_node_tensor).flat]
             new_weights = []
