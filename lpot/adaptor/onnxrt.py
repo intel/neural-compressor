@@ -115,9 +115,9 @@ class ONNXRTAdaptor(Adaptor):
         return augment.dump_calibration()
 
     def _pre_optimize(self, model, level=1):
-        # TODO hardcoded to GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options = ort.SessionOptions()
-        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
+        level = self.query_handler.get_graph_optimization() # pylint: disable=no-member 
+        sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
         _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
@@ -264,6 +264,7 @@ class ONNXRTAdaptor(Adaptor):
     def _query_quantizable_op_types(self):
         quantizable_op_types = self.query_handler.get_op_types_by_precision( \
                                   precision='int8') # pylint: disable=no-member
+
         return quantizable_op_types
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
@@ -443,15 +444,6 @@ class ONNXRTQuery(QueryBackendCapability):
         """
         return self.cur_config['ops']
 
-    def get_fuse_patterns(self):
-        """Get supported patterns by low precisions.
-
-        Returns:
-            [dictionary list]: A list composed of dictionary which key is precision
-            and value is the supported patterns.
-        """
-        return self.cur_config['patterns']
-
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
 
@@ -473,3 +465,14 @@ class ONNXRTQuery(QueryBackendCapability):
         assert precision in list(self.cur_config['ops'].keys())
 
         return self.cur_config['ops'][precision]
+
+    def get_graph_optimization(self):
+        """ Get onnxruntime graph optimization level"""
+        optimization_levels = {'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+                               'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+                               'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+                               'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
+        level = self.cur_config['graph_optimization']['level']
+        assert level in optimization_levels, "the optimization choices \
+                                              are {}".format(optimization_levels.keys()) 
+        return optimization_levels[level]

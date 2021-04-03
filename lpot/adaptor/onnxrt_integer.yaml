@@ -26,7 +26,7 @@
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
-    int8: &ref_2_4 {
+    int8: &ref_1_6 {
           'Conv': &key_1_6_0 {
             'weight': {
                         'dtype': ['uint8', 'fp32'],
@@ -68,6 +68,9 @@
                         }
                     }
           }
+
+  graph_optimization: &default_optimization # from onnxruntime graph_optimization_level
+    level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']    
 -
   version:
     name: 'default'
@@ -80,3 +83,6 @@
 
   capabilities:
     <<: *common_capabilities
+
+  graph_optimization:
+    <<: *default_optimization

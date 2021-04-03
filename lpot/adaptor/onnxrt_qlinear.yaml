@@ -62,6 +62,9 @@
                         }
                     },
           }
+
+  graph_optimization: &default_optimization  # from onnxruntime graph_optimization_level
+      level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
 -
   version:
     name: '1.7.0'
@@ -77,4 +80,7 @@
 
   capabilities:
     <<: *common_capabilities
+
+  graph_optimization: 
+    <<: *default_optimization
 -
