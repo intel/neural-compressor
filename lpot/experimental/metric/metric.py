@@ -589,12 +589,12 @@ class ONNXRTTopK(BaseMetric):
             return self.num_correct / self.num_sample
 
 
-@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
-class TensorflowCOCOMAP(BaseMetric):
+@metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+class TensorflowMAP(BaseMetric):
     """The class of calculating mAP metric
 
     """
-    def __init__(self, anno_path=None):
+    def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0):
         from .coco_label_map import category_map
         if anno_path:
             import os
@@ -616,6 +616,9 @@ class TensorflowCOCOMAP(BaseMetric):
         self.category_map = category_map
         self.category_id_set = set(
             [cat for cat in self.category_map]) #index
+        self.iou_thrs = iou_thrs
+        self.map_points = map_points
+
 
     def update(self, predicts, labels, sample_weight=None):
         from .coco_tools import ExportSingleImageGroundtruthToCoco,\
@@ -698,7 +701,9 @@ class TensorflowCOCOMAP(BaseMetric):
                 self.detection_list)
             box_evaluator = COCOEvalWrapper(coco_wrapped_groundtruth,
                                                  coco_wrapped_detections,
-                                                 agnostic_mode=False)
+                                                 agnostic_mode=False,
+                                                 iou_thrs = self.iou_thrs,
+                                                 map_points = self.map_points)
             box_metrics, box_per_category_ap = box_evaluator.ComputeMetrics(
                 include_metrics_per_category=False, all_metrics_per_category=False)
             box_metrics.update(box_per_category_ap)
@@ -708,6 +713,26 @@ class TensorflowCOCOMAP(BaseMetric):
             }
 
             return box_metrics['DetectionBoxes_Precision/mAP']
+
+@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+class TensorflowCOCOMAP(TensorflowMAP):
+    """The class of calculating COCOmAP metric
+
+    """
+    def __init__(self, anno_path=None, iou_thrs=None, map_points=None):
+        super(TensorflowCOCOMAP, self).__init__(anno_path, iou_thrs, map_points)
+        self.iou_thrs = '0.5:0.05:0.95'
+        self.map_points = 101
+
+@metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+class TensorflowVOCMAP(TensorflowMAP):
+    """The class of calculating VOCmAP metric
+
+    """
+    def __init__(self, anno_path=None, iou_thrs=None, map_points=None):
+        super(TensorflowVOCMAP, self).__init__(anno_path, iou_thrs, map_points)
+        self.iou_thrs = 0.5
+        self.map_points = 0
 
 @metric_registry('SquadF1', 'tensorflow')
 class SquadF1(BaseMetric):

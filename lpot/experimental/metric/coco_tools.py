@@ -167,7 +167,10 @@ class COCOEvalWrapper(cocoeval.COCOeval):
                  groundtruth=None,
                  detections=None,
                  agnostic_mode=False,
-                 iou_type='bbox'):
+                 iou_type='bbox',
+                 iou_thrs=None,
+                 map_points=None):
+
         """COCOEvalWrapper constructor.
 
     Note that for the area-based metrics to be meaningful, detection and
@@ -188,6 +191,21 @@ class COCOEvalWrapper(cocoeval.COCOeval):
                                    iouType=iou_type)
         if agnostic_mode:
             self.params.useCats = 0
+        if iou_thrs == '0.5:0.05:0.95':
+          self.params.iouThrs = np.linspace(.5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, \
+            endpoint=True)
+        elif isinstance(iou_thrs, float):
+          self.params.iouThrs = [iou_thrs]
+
+        if map_points == 101:
+          self.params.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .01)) + 1, \
+            endpoint=True)
+        if map_points == 11:
+          self.params.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .1)) + 1, \
+            endpoint=True)
+        if map_points == 0:
+          self.params.recThrs = [-1]
+
 
     def GetCategory(self, category_id):
         """Fetches dictionary holding category information given category id.
@@ -206,6 +224,139 @@ class COCOEvalWrapper(cocoeval.COCOeval):
     def GetCategoryIdList(self):
         """Returns list of valid category ids."""
         return self.params.catIds
+
+    def accumulate(self, p = None):
+        '''
+        Accumulate per image evaluation results and store the result in self.eval
+        :param p: input params for evaluation
+        :return: None
+        '''
+        print('Accumulating evaluation results...')
+        tic = time.time()
+        if not self.evalImgs:
+            print('Please run evaluate() first')
+        # allows input customized parameters
+        if p is None:
+            p = self.params
+        p.catIds = p.catIds if p.useCats == 1 else [-1]
+        T           = len(p.iouThrs)
+        R           = len(p.recThrs)
+        K           = len(p.catIds) if p.useCats else 1
+        A           = len(p.areaRng)
+        M           = len(p.maxDets)
+        precision   = -np.ones((T,R,K,A,M)) # -1 for the precision of absent categories
+        recall      = -np.ones((T,K,A,M))
+        scores      = -np.ones((T,R,K,A,M))
+
+        # create dictionary for future indexing
+        _pe = self._paramsEval
+        print('-pe', _pe)
+        catIds = _pe.catIds if _pe.useCats else [-1]
+        setK = set(catIds)
+        setA = set(map(tuple, _pe.areaRng))
+        setM = set(_pe.maxDets)
+        setI = set(_pe.imgIds)
+        # get inds to evaluate
+        k_list = [n for n, k in enumerate(p.catIds)  if k in setK]
+        m_list = [m for n, m in enumerate(p.maxDets) if m in setM]
+        a_list = [n for n, a in enumerate(map(lambda x: tuple(x), p.areaRng)) if a in setA]
+        i_list = [n for n, i in enumerate(p.imgIds)  if i in setI]
+        I0 = len(_pe.imgIds)
+        A0 = len(_pe.areaRng)
+        # retrieve E at each category, area range, and max number of detections
+        for k, k0 in enumerate(k_list):
+            Nk = k0*A0*I0
+            for a, a0 in enumerate(a_list):
+                Na = a0*I0
+                for m, maxDet in enumerate(m_list):
+                    E = [self.evalImgs[Nk + Na + i] for i in i_list]
+                    E = [e for e in E if not e is None]
+                    if len(E) == 0: continue
+                    dtScores = np.concatenate([e['dtScores'][0:maxDet] for e in E])
+
+                    # different sorting method generates slightly different results.
+                    # mergesort is used to be consistent as Matlab implementation.
+                    inds = np.argsort(-dtScores, kind='mergesort')
+                    dtScoresSorted = dtScores[inds]
+
+                    dtm  = np.concatenate([e['dtMatches'][:,0:maxDet] for e in E], axis=1)[:,inds]
+                    dtIg = np.concatenate([e['dtIgnore'][:,0:maxDet]  for e in E], axis=1)[:,inds]
+                    gtIg = np.concatenate([e['gtIgnore'] for e in E])
+                    npig = np.count_nonzero(gtIg==0 )
+                    if npig == 0: continue
+                    tps = np.logical_and(               dtm,  np.logical_not(dtIg) )
+                    fps = np.logical_and(np.logical_not(dtm), np.logical_not(dtIg) )
+
+                    tp_sum = np.cumsum(tps, axis=1).astype(dtype=np.float)
+                    fp_sum = np.cumsum(fps, axis=1).astype(dtype=np.float)
+                    for t, (tp, fp) in enumerate(zip(tp_sum, fp_sum)):
+                        tp = np.array(tp)
+                        fp = np.array(fp)
+                        nd = len(tp)
+                        rc = tp / npig
+                        pr = tp / (fp+tp+np.spacing(1))
+
+                        # calculate precision
+                        if R == 1:
+                          rc = np.concatenate(([0.], rc, [1.]))
+                          pr = np.concatenate(([0.], pr, [0.]))
+
+                          # compute the precision envelope
+                          for i in range(pr.size - 1, 0, -1):
+                              pr[i - 1] = np.maximum(pr[i - 1], pr[i])
+
+                          # to calculate area under PR curve, look for points
+                          # where X axis (recall) changes value
+                          change_point = np.where(rc[1:] != rc[:-1])[0]
+                          # and sum (\Delta recall) * recall
+                          res = np.sum((rc[change_point + 1] - rc[change_point]) \
+                            * pr[change_point + 1])
+                          precision[t,:,k,a,m] = np.array([res])
+                        else:
+                          q  = np.zeros((R,))
+
+                          # numpy is slow without cython optimization for accessing elements
+                          # use python array gets significant speed improvement
+                          pr = pr.tolist(); q = q.tolist()
+
+                          for i in range(nd-1, 0, -1):
+                            if pr[i] > pr[i-1]:
+                                pr[i-1] = pr[i]
+
+                          inds = np.searchsorted(rc, p.recThrs, side='left')
+                          try:
+                            for ri, pi in enumerate(inds):
+                              q[ri] = pr[pi]
+                          except:
+                            pass  
+                          precision[t,:,k,a,m] = np.array(q)
+                        
+                        # calculate recall
+                        if nd:
+                          recall[t,k,a,m] = rc[-1]
+                        else:
+                          recall[t,k,a,m] = 0
+
+                        # calculate score
+                        ss = np.zeros((R,))
+                        inds = np.searchsorted(rc, p.recThrs, side='left')
+                        try:
+                          for ri, pi in enumerate(inds):
+                            ss[ri] = dtScoresSorted[pi]
+                        except:
+                          pass  
+                        scores[t,:,k,a,m] = np.array(ss)
+        # exit(0)
+        self.eval = {
+            'params': p,
+            'counts': [T, R, K, A, M],
+            'precision': precision,
+            'recall':   recall,
+            'scores': scores,
+        }
+        toc = time.time()
+        print('DONE (t={:0.2f}s).'.format( toc-tic))
+
 
     def ComputeMetrics(self,
                        include_metrics_per_category=False,

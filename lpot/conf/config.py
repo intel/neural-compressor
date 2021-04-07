@@ -493,7 +493,17 @@ schema = Schema({
         Optional('accuracy'): {
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
+                Optional('mAP'): {
+                    Optional('anno_path'): str,
+                    Optional('iou_thrs', default=0.5): 
+                            Or(And(str, lambda s: s in ['0.5:0.05:0.95']), 
+                               And(float, lambda s: s <= 1.0 and s >= 0.0)),
+                    Optional('map_points', default=0): And(int, lambda s: s in [0, 11, 101])
+                },
                 Optional('COCOmAP'): {
+                    Optional('anno_path'): str
+                },
+                Optional('VOCmAP'): {
                     Optional('anno_path'): str
                 },
                 Optional('SquadF1'): Or({}, None), 

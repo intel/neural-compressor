@@ -90,6 +90,28 @@ class TestCOCO(unittest.TestCase):
         with self.assertRaises(ValueError):
             summary_metrics, _ = evaluator.ComputeMetrics(True, True)
 
+        iou_thrs = '0.5:0.05:0.95'
+        map_points = 101
+        evaluator = COCOEvalWrapper(groundtruth, detections, iou_thrs=iou_thrs, map_points=map_points)
+        evaluator.evaluate()
+        evaluator.accumulate()
+        self.assertEqual(evaluator.eval['counts'], [10, 101, 3, 4, 3])
+
+        iou_thrs = 0.5
+        map_points = 11
+        evaluator = COCOEvalWrapper(groundtruth, detections, iou_thrs=iou_thrs, map_points=map_points)
+        evaluator.evaluate()
+        evaluator.accumulate()
+        self.assertEqual(evaluator.eval['counts'], [1, 11, 3, 4, 3])
+
+        iou_thrs = 0.5
+        map_points = 0
+        evaluator = COCOEvalWrapper(groundtruth, detections, iou_thrs=iou_thrs, map_points=map_points)
+        evaluator.evaluate()
+        evaluator.accumulate()
+        self.assertEqual(evaluator.eval['counts'], [1, 1, 3, 4, 3])
+
+
 
     def testExportSingleImageDetectionBoxesToCoco(self):
         with self.assertRaises(ValueError):
