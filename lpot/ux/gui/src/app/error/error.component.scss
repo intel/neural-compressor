@@ -107,3 +107,28 @@ table {
   position: relative;
   top: 3px;
 }
+
+.sidenav-container {
+  min-height: 500px;
+  background-color: white !important;
+}
+
+.sidenav {
+  padding: 10px;
+  background-color: $lighter-gray1;
+}
+
+.hw-info-button {
+  float: right;
+  position: fixed;
+  top: 75px;
+  right: 20px;
+  z-index: 10;
+}
+
+.hw-info-img {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  top: -2px;
+}

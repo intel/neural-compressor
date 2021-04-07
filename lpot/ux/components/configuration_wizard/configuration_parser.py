@@ -107,10 +107,7 @@ class ConfigurationParser:
                         "transform",
                         param_name,
                     )
-                    if (
-                        transform.get("name") == "RandomResizedCrop"
-                        and param_name == "scale"
-                    ):
+                    if transform.get("name") == "RandomResizedCrop" and param_name == "scale":
                         param_type = [float]
                     transform["params"].update(
                         {param_name: self.parse_value(value, param_type)},
@@ -171,9 +168,7 @@ def parse_list_value(value: Any, required_type: Union[Type, List[Type]]) -> List
     if isinstance(required_type, list):
         return parse_multidim_list(value, required_type[0])
     if isinstance(value, str):
-        return [
-            required_type(element.strip("")) for element in value.strip("[]").split(",")
-        ]
+        return [required_type(element.strip("")) for element in value.strip("[]").split(",")]
     elif isinstance(value, Iterable):
         return [required_type(item) for item in value]
     elif callable(required_type):

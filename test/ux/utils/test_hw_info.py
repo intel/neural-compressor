@@ -27,6 +27,38 @@ class TestHWInfo(unittest.TestCase):
         """Hardware Info tests constructor."""
         super().__init__(*args, **kwargs)
 
+    def test_HWInfo_type(self) -> None:
+        """Test if hardware info collects."""
+        hw_info_expected_types = {
+            "bios_version": str,
+            "cores": int,
+            "cores_per_socket": int,
+            "hyperthreading_enabled": bool,
+            "ip": str,
+            "kernel": str,
+            "max_cpu_freq": str,
+            "min_cpu_freq": str,
+            "platform": str,
+            "sockets": int,
+            "system": str,
+            "threads_per_socket": int,
+            "total_memory": str,
+            "turboboost_enabled": (bool, str),
+        }
+        hw_info = HWInfo()
+        hw_info_dict = vars(hw_info)
+        self.assertSetEqual(set(hw_info_dict.keys()), set(hw_info_expected_types.keys()))
+        for key, value in hw_info_dict.items():
+            if key in hw_info_expected_types:
+                expected_type = hw_info_expected_types[key]
+                if isinstance(expected_type, (type, tuple)):
+                    if isinstance(value, expected_type):
+                        continue
+            raise Exception(
+                f"Wrong type for key: {key} value: {value}. "
+                f"Recived {type(value)}, expected {hw_info_expected_types.get(key)}.",
+            )
+
     @patch("psutil.cpu_count")
     def test_cores_num(self, mock_cpu_count: MagicMock) -> None:
         """Test if hw info uses psutil cpu_count to get number of cores."""

@@ -8,8 +8,14 @@ Intel® Low Precision Optimization Tool UX
    ```
 1. Server prints information how to access the Web UI.
 
-   Use a modern web browser to visit address given by the server.
+   Example message looks like:
+   ```text
+   LPOT UX Server started.
+   Setup port forwarding from your local port 5000 to 5000 on this machine.
+   Then open address http://localhost:5000/?token=338174d13706855fc6924cec7b3a8ae8
+   ```
 
+   Please make sure that requested port forwarding is set up (depending on your OS), then open address in your web browser
 
 # My Models list
 This view lists all Model Configurations defined on given server. 

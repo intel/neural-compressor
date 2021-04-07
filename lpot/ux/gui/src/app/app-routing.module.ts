@@ -13,6 +13,7 @@
 // limitations under the License.
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { GraphComponent } from './graph/graph.component';
 import { ImportModelComponent } from './import-model/import-model.component';
 import { ModelListComponent } from './model-list/model-list.component';
 import { PredefinedModelsComponent } from './predefined-models/predefined-models.component';

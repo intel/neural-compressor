@@ -49,9 +49,7 @@ class Benchmark:
             and workload.config.evaluation.performance.dataloader
             and workload.config.evaluation.performance.dataloader.batch_size
         ):
-            self.batch_size = (
-                workload.config.evaluation.performance.dataloader.batch_size
-            )
+            self.batch_size = workload.config.evaluation.performance.dataloader.batch_size
 
         if not os.path.exists(self.model_path):
             raise ClientErrorException("Could not found model in specified path.")

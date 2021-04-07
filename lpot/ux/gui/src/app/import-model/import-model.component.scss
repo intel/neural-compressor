@@ -27,6 +27,12 @@ button {
   top: -5px;
 }
 
+.fixed-height {
+  position: relative;
+  top: 5px;
+  max-height: 36px !important;
+}
+
 .spinner {
   position: relative;
   top: 10px;
@@ -93,4 +99,8 @@ button {
   position: relative;
   top: -2px;
   margin-right: 5px;
+}
+
+.custom-option {
+  font-family: IntelOneBd;
 }

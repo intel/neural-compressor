@@ -46,6 +46,10 @@ import { FileComponent } from './file/file.component';
 import { FileBrowserComponent } from './file-browser/file-browser.component';
 import { AuthenticationInterceptor } from './authentication/authentication.interceptor';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { GraphComponent } from './graph/graph.component';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
+import { MatSidenavModule } from '@angular/material/sidenav';
+
 
 @NgModule({
   declarations: [
@@ -58,7 +62,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     ModelListPipe,
     DialogComponent,
     FileComponent,
-    FileBrowserComponent
+    FileBrowserComponent,
+    GraphComponent
   ],
   imports: [
     BrowserModule,
@@ -76,11 +81,13 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatInputModule,
     MatMenuModule,
     MatSelectModule,
+    MatSidenavModule,
     MatProgressSpinnerModule,
     MatStepperModule,
     MatTabsModule,
     MatToolbarModule,
     MatTooltipModule,
+    NgxGraphModule,
     ReactiveFormsModule,
   ],
   providers: [

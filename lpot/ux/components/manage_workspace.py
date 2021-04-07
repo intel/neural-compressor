@@ -55,3 +55,10 @@ def get_workloads_list(data: dict) -> Dict[str, Any]:
     workdir = Workdir(workspace_path=workspace_path)
 
     return workdir.map_to_response()
+
+
+def delete_workload(data: dict) -> Dict[str, Any]:
+    """Delete workload based on ID."""
+    workdir = Workdir(workspace_path=os.environ["HOME"])
+    workdir.delete_workload(data["request_id"])
+    return {"message": "SUCCESS"}

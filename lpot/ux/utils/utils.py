@@ -23,11 +23,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from lpot.ux.utils.exceptions import (
-    AccessDeniedException,
-    ClientErrorException,
-    NotFoundException,
-)
+from lpot.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.proc import Proc
 
@@ -178,7 +174,7 @@ def get_model_zoo_model_path(
     return ""
 
 
-def load_json(path: str) -> dict:
+def _load_json_as_dict(path: str) -> dict:
     """Load json file and convert it into dict.
 
     :param path: path to json file
@@ -186,10 +182,26 @@ def load_json(path: str) -> dict:
     :return: dict
     :rtype: dict
     """
-    with open(path) as json_data:
+    with open(path, "r") as json_data:
         data = json.load(json_data)
+    if isinstance(data, dict):
+        return data
+    return {}
 
-    return data
+
+def _load_json_as_list(path: str) -> list:
+    """Load json file and convert it into list.
+
+    :param path: path to json file
+    :type path: str
+    :return: dict
+    :rtype: dict
+    """
+    with open(path, "r") as json_data:
+        data = json.load(json_data)
+    if isinstance(data, list):
+        return data
+    return []
 
 
 def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
@@ -264,8 +276,7 @@ def get_size(path: str, unit: str = "MB", add_unit: bool = False) -> Union[str, 
     unit_modifier = supported_units.get(unit, None)
     if unit_modifier is None:
         raise Exception(
-            "Unit not supported. Select one of following: "
-            + str(supported_units.keys()),
+            "Unit not supported. Select one of following: " + str(supported_units.keys()),
         )
     root_dir = Path(path)
     if root_dir.is_file():
@@ -280,63 +291,52 @@ def get_size(path: str, unit: str = "MB", add_unit: bool = False) -> Union[str, 
 
 def load_model_config() -> Dict[str, Any]:
     """Load model configs from json."""
-    with open(
-        os.path.join(
-            os.path.dirname(__file__),
-            "configs",
-            "models.json",
-        ),
-        "r",
-    ) as f:
-        models_config = json.load(f)
-    if isinstance(models_config, dict):
-        return models_config
-    return {}
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        "models.json",
+    )
+    return _load_json_as_dict(json_path)
 
 
 def load_dataloader_config() -> List[Dict[str, Any]]:
     """Load dataloader configs from json."""
-    with open(
-        os.path.join(
-            os.path.dirname(__file__),
-            "configs",
-            "dataloaders.json",
-        ),
-        "r",
-    ) as f:
-        dataloaders_config = json.load(f)
-    if isinstance(dataloaders_config, list):
-        return dataloaders_config
-    return []
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        "dataloaders.json",
+    )
+    return _load_json_as_list(json_path)
 
 
 def load_transforms_config() -> List[Dict[str, Any]]:
-    """Load dataloader configs from json."""
-    with open(
-        os.path.join(
-            os.path.dirname(__file__),
-            "configs",
-            "transforms.json",
-        ),
-        "r",
-    ) as f:
-        dataloaders_config = json.load(f)
-    if isinstance(dataloaders_config, list):
-        return dataloaders_config
-    return []
+    """Load transforms configs from json."""
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        "transforms.json",
+    )
+    return _load_json_as_list(json_path)
+
+
+def load_transforms_filter_config() -> Dict[str, Any]:
+    """Load meaningful transforms configs from json."""
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        "transforms_filter.json",
+    )
+    return _load_json_as_dict(json_path)
 
 
 def load_help_lpot_params(parameter: str) -> Dict[str, Any]:
     """Load help info from json for metrics, objectives and strategies."""
-    with open(
-        os.path.join(os.path.dirname(__file__), "configs", f"{parameter}.json"),
-        "r",
-    ) as f:
-        config = json.load(f)
-    if isinstance(config, dict):
-        return config
-    else:
-        return {}
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        f"{parameter}.json",
+    )
+    return _load_json_as_dict(json_path)
 
 
 def replace_with_values(param: dict, file_path: str) -> None:
@@ -399,3 +399,22 @@ def determine_ip() -> str:
 def is_development_env() -> bool:
     """Return true if LPOT_MODE is development else false."""
     return os.environ.get("LPOT_MODE") == "development"
+
+
+def filter_transforms(
+    transforms: List[dict],
+    framework: str,
+    domain: str,
+) -> List[dict]:
+    """Collect only meaningful transform for specified framework and domain."""
+    filtered_transforms = []
+    transforms_filter = load_transforms_filter_config()
+    domain_transforms = transforms_filter.get(framework, {}).get(domain, [])
+    if len(domain_transforms) == 0:
+        return transforms
+
+    for transform in transforms:
+        if transform.get("name") in domain_transforms:
+            filtered_transforms.append(transform)
+
+    return filtered_transforms

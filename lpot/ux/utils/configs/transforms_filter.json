@@ -1,0 +1,76 @@
+{
+  "tensorflow": {
+    "image_recognition": [
+      "AlignImageChannel",
+      "BilinearImagenet",
+      "Cast",
+      "CenterCrop",
+      "CropResize",
+      "CropToBoundingBox",
+      "DecodeImage",
+      "LabelShift",
+      "Normalize",
+      "ParseDecodeImagenet",
+      "QuantizedInput",
+      "RandomCrop",
+      "RandomHorizontalFlip",
+      "RandomResizedCrop",
+      "RandomVerticalFlip",
+      "Rescale",
+      "Resize",
+      "ResizeCropImagenet",
+      "ToArray",
+      "Transpose"
+    ],
+    "object_detection": [
+      "AlignImageChannel",
+      "Cast",
+      "CenterCrop",
+      "CropResize",
+      "CropToBoundingBox",
+      "DecodeImage",
+      "Normalize",
+      "ParseDecodeCoco",
+      "RandomCrop",
+      "RandomHorizontalFlip",
+      "RandomResizedCrop",
+      "RandomVerticalFlip",
+      "Rescale",
+      "Resize",
+      "ToArray",
+      "Transpose"
+    ],
+    "nlp": [
+      "SquadV1"
+    ]
+  },
+  "onnxrt": {
+    "image_recognition": [
+      "AlignImageChannel",
+      "CenterCrop",
+      "CropResize",
+      "Normalize",
+      "RandomCrop",
+      "RandomHorizontalFlip",
+      "RandomResizedCrop",
+      "RandomVerticalFlip",
+      "Rescale",
+      "Resize",
+      "ResizeCropImagenet",
+      "ToArray"
+    ],
+    "object_detection": [
+      "AlignImageChannel",
+      "CenterCrop",
+      "CropResize",
+      "Normalize",
+      "RandomCrop",
+      "RandomHorizontalFlip",
+      "RandomResizedCrop",
+      "RandomVerticalFlip",
+      "Rescale",
+      "Resize",
+      "ToArray"
+    ]
+  }
+}

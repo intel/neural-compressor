@@ -106,8 +106,7 @@ class Tuning(JsonSerializer):
                 raise ValueError
         except ValueError:
             raise ClientErrorException(
-                "The timeout value is not valid. "
-                "Timeout should be non negative integer.",
+                "The timeout value is not valid. " "Timeout should be non negative integer.",
             )
         if self.exit_policy:
             self.exit_policy.timeout = timeout
@@ -122,8 +121,7 @@ class Tuning(JsonSerializer):
                 raise ValueError
         except ValueError:
             raise ClientErrorException(
-                "The max trials value is not valid. "
-                "Max trials should be non negative integer.",
+                "The max trials value is not valid. " "Max trials should be non negative integer.",
             )
         if self.exit_policy:
             self.exit_policy.max_trials = max_trials
@@ -136,7 +134,6 @@ class Tuning(JsonSerializer):
             random_seed = int(random_seed)
         except ValueError:
             raise ClientErrorException(
-                "The random seed value is not valid. "
-                "Random seed should be an integer.",
+                "The random seed value is not valid. " "Random seed should be an integer.",
             )
         self.random_seed = random_seed

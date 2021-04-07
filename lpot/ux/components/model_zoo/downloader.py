@@ -60,9 +60,7 @@ class Downloader:
 
         model_config = load_model_config()
         model_info = (
-            model_config.get(self.framework, {})
-            .get(self.domain, {})
-            .get(self.model, None)
+            model_config.get(self.framework, {}).get(self.domain, {}).get(self.model, None)
         )
 
         if model_info is None:
@@ -117,9 +115,7 @@ class Downloader:
         """Find model resource and initialize downloading."""
         model_config = load_model_config()
         model_info = (
-            model_config.get(self.framework, {})
-            .get(self.domain, {})
-            .get(self.model, None)
+            model_config.get(self.framework, {}).get(self.domain, {}).get(self.model, None)
         )
 
         if model_info is None:
@@ -262,9 +258,7 @@ class Downloader:
             t.extractall(self.download_dir)
 
         else:
-            message = (
-                "Could unpack an archive. Supported archive types are zip and tar.gz."
-            )
+            message = "Could unpack an archive. Supported archive types are zip and tar.gz."
             self.mq.post_error(
                 "unpack_finish",
                 {"message": message, "code": 404, "id": self.request_id},

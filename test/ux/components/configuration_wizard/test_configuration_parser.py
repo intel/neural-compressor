@@ -18,9 +18,7 @@
 import unittest
 from typing import Any, Dict, List, Optional, Union
 
-from lpot.ux.components.configuration_wizard.configuration_parser import (
-    ConfigurationParser,
-)
+from lpot.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
 from lpot.ux.utils.exceptions import ClientErrorException
 
 

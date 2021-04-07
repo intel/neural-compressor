@@ -18,11 +18,7 @@ import inspect
 import os
 import unittest
 
-from lpot.ux.utils.exceptions import (
-    AccessDeniedException,
-    ClientErrorException,
-    NotFoundException,
-)
+from lpot.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
 from lpot.ux.utils.utils import (
     check_module,
     get_dataset_path,

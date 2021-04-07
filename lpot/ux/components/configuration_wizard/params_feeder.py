@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Union
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.utils import (
     check_module,
+    filter_transforms,
     framework_extensions,
     is_model_file,
     load_dataloader_config,
@@ -151,10 +152,15 @@ class Feeder:
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
+        domain = self.config.get("domain", None)
+        transforms = []
         for fw_transforms in load_transforms_config():
             if fw_transforms.get("name") == framework:
-                return fw_transforms.get("params", [])
-        return []
+                transforms = fw_transforms.get("params", [])
+                break
+        if domain is not None:
+            transforms = filter_transforms(transforms, framework, domain)
+        return transforms
 
     @staticmethod
     def get_objectives() -> List[dict]:

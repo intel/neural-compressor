@@ -1,62 +1,79 @@
-<h1> Predefined model list</h1>
-<p>
-  You can add predefined model to <a href="/my-models">My models</a> list only if you get config and model files and
-  set the dataset location.
-  <a href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
-    <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
-  </a>
-</p>
-<mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
-  [style.display]="showSpinner ? 'block' : 'none'">
-</mat-spinner>
-<table *ngIf="modelList[0]">
-  <tr>
-    <td class="header">framework</td>
-    <td class="header">domain</td>
-    <td class="header">model</td>
-    <td class="header">yaml</td>
-    <td class="header">model <br> location</td>
-    <td class="header">dataset location</td>
-    <td class="header"></td>
-  </tr>
-  <tr *ngFor="let model of modelList; let index = index">
-    <td class="cell">{{ model['framework'] }}</td>
-    <td class="cell">{{ model['domain'] }}</td>
-    <td class="cell">{{ model['model'] }}</td>
-    <td class="cell" align="center">
-      <p *ngIf="model['yaml']" class="form-field">
-        {{ getFileNameFromPath(model['yaml']) }}
-      </p>
-      <button *ngIf="!model['yaml'] && !showSpinnerConfig[index]" mat-icon-button color="primary"
-        (click)="downloadConfig(model, index)" matTooltip="Download config .yaml file">
-        <img src="./../../assets/160b-download-outlined-blue.svg">
-      </button>
-      <mat-spinner *ngIf="showSpinnerConfig[index]" [diameter]="25"></mat-spinner>
-    </td>
-    <td class="cell" align="center">
-      <p *ngIf="model['model_path']" class="form-field">
-        {{ getFileNameFromPath(model['model_path']) }}
-      </p>
-      <button *ngIf="!model['model_path'] && !showSpinnerModel[index]" mat-icon-button color="primary"
-        (click)="downloadModel(model, index)" matTooltip="Download the model">
-        <img src="./../../assets/160b-download-outlined-blue.svg">
-      </button>
-      <mat-spinner *ngIf="showSpinnerModel[index]" [diameter]="25"></mat-spinner>
-    </td>
-    <td class="cell">
-      <mat-form-field class="form-field">
-        <input matInput class="input" placeholder="set location" [(ngModel)]="model['dataset_path']">
-      </mat-form-field>
-      <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasets', index)">
-        <img src="./../../assets/050a-folder-solid-white.svg">
-        Choose dataset
-      </button>
-    </td>
-    <td class="cell" [ngClass]="model['added'] ? 'success' : null">
-      <button *ngIf="!model['added']" mat-flat-button color="accent" [disabled]="!isModelFilled(model)"
-        (click)="saveWorkload(model)">&#65291;
-        Add to my models</button>
-      <p *ngIf="model['added']">Model successfully added.</p>
-    </td>
-  </tr>
-</table>
+<mat-drawer-container class="sidenav-container">
+  <mat-drawer #drawer class="sidenav" mode="side" position="end">
+    <table>
+      <tr *ngFor="let info of systemInfo() | keyvalue">
+        <td class="header">{{ info.key | modelList }}</td>
+        <td class="cell">{{ info.value }}</td>
+      </tr>
+    </table>
+  </mat-drawer>
+
+  <button type="button" mat-raised-button class="hw-info-button" color="primary" (click)="drawer.toggle()">
+    <img class="hw-info-img" src="./../../assets/004a-information-solid.svg">
+    System info
+  </button>
+
+  <h1> Predefined model list</h1>
+  <p>
+    You can add predefined model to <a href="/my-models">My models</a> list only if you get config and model files and
+    set the dataset location.
+    <a href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
+      <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
+    </a>
+  </p>
+  <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+    [style.display]="showSpinner ? 'block' : 'none'">
+  </mat-spinner>
+  <table *ngIf="modelList[0]">
+    <tr>
+      <td class="header">framework</td>
+      <td class="header">domain</td>
+      <td class="header">model</td>
+      <td class="header">yaml</td>
+      <td class="header">model <br> location</td>
+      <td class="header">dataset location</td>
+      <td class="header"></td>
+    </tr>
+    <tr *ngFor="let model of modelList; let index = index">
+      <td class="cell">{{ model['framework'] }}</td>
+      <td class="cell">{{ model['domain'] }}</td>
+      <td class="cell">{{ model['model'] }}</td>
+      <td class="cell" align="center">
+        <p *ngIf="model['yaml']" class="form-field">
+          {{ getFileNameFromPath(model['yaml']) }}
+        </p>
+        <button *ngIf="!model['yaml'] && !showSpinnerConfig[index]" mat-icon-button color="primary"
+          (click)="downloadConfig(model, index)" matTooltip="Download config .yaml file">
+          <img src="./../../assets/160b-download-outlined-blue.svg">
+        </button>
+        <mat-spinner *ngIf="showSpinnerConfig[index]" [diameter]="25"></mat-spinner>
+      </td>
+      <td class="cell" align="center">
+        <p *ngIf="model['model_path']" class="form-field">
+          {{ getFileNameFromPath(model['model_path']) }}
+        </p>
+        <button *ngIf="!model['model_path'] && !showSpinnerModel[index]" mat-icon-button color="primary"
+          (click)="downloadModel(model, index)" matTooltip="Download the model">
+          <img src="./../../assets/160b-download-outlined-blue.svg">
+        </button>
+        <mat-spinner *ngIf="showSpinnerModel[index]" [diameter]="25"></mat-spinner>
+      </td>
+      <td class="cell">
+        <mat-form-field class="form-field">
+          <input matInput class="input" placeholder="set location" [(ngModel)]="model['dataset_path']">
+        </mat-form-field>
+        <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasets', index)">
+          <img src="./../../assets/050a-folder-solid-white.svg">
+          Choose dataset
+        </button>
+      </td>
+      <td class="cell" [ngClass]="model['added'] ? 'success' : null">
+        <button *ngIf="!model['added']" mat-flat-button color="accent" [disabled]="!isModelFilled(model)"
+          (click)="saveWorkload(model)">&#65291;
+          Add to my models</button>
+        <p *ngIf="model['added']">Model successfully added.</p>
+      </td>
+    </tr>
+  </table>
+
+</mat-drawer-container>

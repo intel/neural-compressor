@@ -27,6 +27,7 @@ export class ModelService {
   workspacePath: string;
   workspacePathChange: Subject<boolean> = new Subject<boolean>();
   token;
+  systemInfo = {};
 
   constructor(
     private http: HttpClient
@@ -48,10 +49,25 @@ export class ModelService {
     );
   }
 
+  getSystemInfo() {
+
+    this.http.get(
+      this.baseUrl + 'api/system_info'
+    ).subscribe(resp =>
+      this.systemInfo = resp
+    );
+  }
+
   getDefaultPath(name: string) {
     return this.http.post(
       this.baseUrl + 'api/get_default_path',
       { name: name }
+    );
+  }
+
+  getModelGraph(path: string) {
+    return this.http.get(
+      this.baseUrl + 'api/model_graph' + '?path=' + path
     );
   }
 

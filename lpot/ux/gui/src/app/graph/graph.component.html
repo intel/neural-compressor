@@ -1,0 +1,69 @@
+<mat-sidenav-container [hasBackdrop]="false">
+  <mat-sidenav #sidenav class="sidenav">
+    <div *ngIf="nodeDetails" (click)="close()">
+      <div class="node-header"
+        [ngStyle]="{'background-color': customColor[nodeDetails.label] ? customColor[nodeDetails.label] : '#000864', 'border-radius':'0.5rem', 'height': '94%', 'margin': '10px'}">
+        {{ nodeDetails.label }}
+      </div>
+      <div style="padding: 0.4rem">
+        <p class="bold">
+          {{ nodeDetails.properties.name }}
+        </p>
+        <p>
+          <ng-container *ngFor="let attribute of nodeDetails.attributes">
+            <ng-container *ngFor="let attr of attribute | keyvalue">
+              {{ attr.key }} : {{ attr.value}} <br />
+            </ng-container>
+            <br />
+          </ng-container>
+        </p>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <div class="graph-container">
+      <ngx-graph class="chart-container" [view]="[1200,1200]" [showMiniMap]="true" [miniMapMaxHeight]="1100"
+        [links]="edges" [nodes]="nodes" [draggingEnabled]="false" [enableZoom]="true" [autoZoom]="true"
+        [layoutSettings]="layoutSettings" [panToNode$]="panToNodeObservable">
+
+        <ng-template #defsTemplate>
+          <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+            <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+          </svg:marker>
+        </ng-template>
+
+        <ng-template #nodeTemplate let-node>
+          <svg:g class="node" (click)="getDetails(node); sidenav.open()">
+            <svg:foreignObject width="350" height="60" class="node-container"
+              [ngStyle]="{'border': customColor[node.label] ? '2px solid' + customColor[node.label] : '2px solid #000864' }">
+              <xhtml:div>
+                <div class="node-header"
+                  [ngStyle]="{'background-color': customColor[node.label] ? customColor[node.label] : '#000864'}">
+                  {{ node.label }}
+                </div>
+                <div style="padding: 0.4rem;">
+                  <p class="node-text">
+                    {{ node.properties.name }}
+                  </p>
+                </div>
+              </xhtml:div>
+            </svg:foreignObject>
+          </svg:g>
+        </ng-template>
+
+        <ng-template #linkTemplate let-link>
+          <svg:g class="edge">
+            <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
+            <svg:text class="edge-label" text-anchor="middle">
+              <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline"
+                startOffset="50%">
+                {{link.label}}
+              </textPath>
+            </svg:text>
+          </svg:g>
+        </ng-template>
+      </ngx-graph>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

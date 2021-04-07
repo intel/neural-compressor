@@ -20,7 +20,7 @@ from typing import Any, List
 from lpot.ux.utils.json_serializer import JsonSerializer
 
 
-class TestSubClass(JsonSerializer):
+class SubClassToTest(JsonSerializer):
     """Test sub class for json serializer tests."""
 
     def __init__(self) -> None:
@@ -29,7 +29,7 @@ class TestSubClass(JsonSerializer):
         self.some_variable: str = "value"
 
 
-class TestClass(JsonSerializer):
+class ClassToTest(JsonSerializer):
     """Test class for json serializer tests."""
 
     def __init__(self) -> None:
@@ -42,12 +42,23 @@ class TestClass(JsonSerializer):
         self.empty_list: List = []
         self.some_list: List[Any] = ["a", 1]
         self._private_var: int = 1
-        self.sub = TestSubClass()
-        subclass1 = TestSubClass()
+        self.sub = SubClassToTest()
+        subclass1 = SubClassToTest()
         subclass1.some_variable = "this is subclass1 variable"
-        subclass2 = TestSubClass()
+        subclass2 = SubClassToTest()
         subclass2.some_variable = "this is subclass2 variable"
-        self.sub_list: List[TestSubClass] = [subclass1, subclass2]
+        self.sub_list: List[SubClassToTest] = [subclass1, subclass2]
+        self.empty_dict: dict = {}
+        self.dict_with_empty_values = {
+            "foo": None,
+            "bar": None,
+        }
+        self.dict_with_some_empty_values = {
+            "foo": None,
+            "bar": 12,
+            "baz": None,
+            "donk": 42,
+        }
 
 
 class TestJsonSerializer(unittest.TestCase):
@@ -59,7 +70,7 @@ class TestJsonSerializer(unittest.TestCase):
 
     def test_serialization(self) -> None:
         """Test if path is correctly recognized as hidden."""
-        test_object = TestClass()
+        test_object = ClassToTest()
         result = test_object.serialize()
         expected = {
             "string": "some string",
@@ -76,6 +87,10 @@ class TestJsonSerializer(unittest.TestCase):
                     "some_variable": "this is subclass2 variable",
                 },
             ],
+            "dict_with_some_empty_values": {
+                "bar": 12,
+                "donk": 42,
+            },
         }
         self.assertEqual(type(result), dict)
         self.assertDictEqual(result, expected)  # type: ignore

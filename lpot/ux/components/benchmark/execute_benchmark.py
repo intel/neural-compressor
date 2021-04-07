@@ -25,7 +25,7 @@ from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.parser import Parser
 from lpot.ux.utils.templates.workdir import Workdir
-from lpot.ux.utils.utils import load_json
+from lpot.ux.utils.utils import _load_json_as_dict
 from lpot.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -67,7 +67,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
     workdir = Workdir(request_id=request_id, overwrite=False)
     try:
         workload_path = workdir.workload_path
-        workload_data = load_json(
+        workload_data = _load_json_as_dict(
             os.path.join(workload_path, "workload.json"),
         )
     except Exception as err:

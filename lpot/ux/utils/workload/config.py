@@ -71,11 +71,7 @@ class Config(JsonSerializer):
 
     def remove_dataloader(self) -> None:
         """Remove datalader."""
-        if (
-            self.evaluation
-            and self.evaluation.accuracy
-            and self.evaluation.accuracy.dataloader
-        ):
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.dataloader:
             self.evaluation.accuracy.dataloader = None
         if (
             self.evaluation
@@ -92,11 +88,7 @@ class Config(JsonSerializer):
 
     def remove_accuracy_metric(self) -> None:
         """Remove accuracy metric in config."""
-        if (
-            self.evaluation
-            and self.evaluation.accuracy
-            and self.evaluation.accuracy.metric
-        ):
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.metric:
             self.evaluation.accuracy.metric = None
             self.evaluation.accuracy = None
 
@@ -105,11 +97,7 @@ class Config(JsonSerializer):
         dataset = {
             dataloader.get("name", "Unknown"): dataloader.get("params", {}),
         }
-        if (
-            self.evaluation
-            and self.evaluation.accuracy
-            and self.evaluation.accuracy.dataloader
-        ):
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.dataloader:
             self.evaluation.accuracy.dataloader.set_dataset(deepcopy(dataset))
         else:
             log.warning("Could not set accuracy dataloader.")
@@ -203,11 +191,7 @@ class Config(JsonSerializer):
 
     def set_accuracy_metric(self, metric: dict) -> None:
         """Update accuracy metric in config."""
-        if (
-            self.evaluation
-            and self.evaluation.accuracy
-            and self.evaluation.accuracy.metric
-        ):
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.metric:
             self.evaluation.accuracy.metric.name = metric.get("metric", None)
             self.evaluation.accuracy.metric.param = metric.get("metric_param", None)
 
@@ -224,11 +208,7 @@ class Config(JsonSerializer):
                 self.quantization.calibration.dataloader.transform,
                 transform,
             )
-        if (
-            self.evaluation
-            and self.evaluation.accuracy
-            and self.evaluation.accuracy.dataloader
-        ):
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.dataloader:
             self.evaluation.accuracy.dataloader.transform.clear()
             self.process_transform(
                 self.evaluation.accuracy.dataloader.transform,
@@ -259,11 +239,7 @@ class Config(JsonSerializer):
 
     def set_postprocess_transform(self, transform: List[Dict[str, Any]]) -> None:
         """Set postprocess transformation."""
-        if (
-            self.evaluation
-            and self.evaluation.accuracy
-            and self.evaluation.accuracy.postprocess
-        ):
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.postprocess:
             for single_transform in transform:
                 if single_transform["name"] == "SquadV1":
                     self.evaluation.accuracy.postprocess.transform = {  # type: ignore

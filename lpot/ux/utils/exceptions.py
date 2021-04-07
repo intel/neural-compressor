@@ -32,3 +32,9 @@ class ClientErrorException(Exception):
     """Generic user error."""
 
     pass
+
+
+class InternalException(Exception):
+    """Internal application exception."""
+
+    pass

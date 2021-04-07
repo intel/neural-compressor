@@ -19,9 +19,7 @@ import os
 from shutil import copy
 from typing import Any, Dict, List, Union
 
-from lpot.ux.components.configuration_wizard.configuration_parser import (
-    ConfigurationParser,
-)
+from lpot.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import replace_with_values
 from lpot.ux.utils.workload.config import Config

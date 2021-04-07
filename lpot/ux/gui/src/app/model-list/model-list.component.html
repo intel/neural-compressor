@@ -1,123 +1,140 @@
-<br>
-<mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
-  [style.display]="showSpinner ? 'block' : 'none'">
-</mat-spinner>
-<button mat-raised-button color="accent" [routerLink]="['/config-wizard']" queryParamsHandling="preserve">
-  &#65291; Create low precision model
-</button>
-<br>
-<br>
-<table *ngIf="modelList && modelList[0]">
-  <tr>
-    <td class="header" rowspan="2">RUN</td>
-    <td class="header" rowspan="2">Status</td>
-    <td class="header" colspan="4">Model</td>
-    <td class="header" colspan="3">Accuracy</td>
-    <td class="header" colspan="3">Throughput [sample/sec]</td>
-    <td class="header" colspan="3">Model size [MB]</td>
-    <td class="header" rowspan="2">Model generation time [sec]</td>
-    <td class="header" rowspan="2">Config</td>
-    <td class="header" rowspan="2">Console output</td>
-    <td class="header" colspan="2" rowspan="2">Code template</td>
-  </tr>
-  <tr>
-    <td class="header" colspan="2">FP32</td>
-    <td class="header" colspan="2">INT8</td>
-    <td class="header" colspan="1">FP32</td>
-    <td class="header" colspan="1">INT8</td>
-    <td class="header" colspan="1">Accuracy diff</td>
-    <td class="header" colspan="1">FP32</td>
-    <td class="header" colspan="1">INT8</td>
-    <td class="header" colspan="1">Perf speedup</td>
-    <td class="header" colspan="1">FP32</td>
-    <td class="header" colspan="1">INT8</td>
-    <td class="header" colspan="1">Ratio</td>
-  </tr>
-  <tr *ngFor="let model of modelList; let index = index" [matTooltip]="getTooltip(model.execution_details)"
-    [matTooltipPosition]="'right'">
-    <td class="cell">
-      <img *ngIf="model['status'] === 'wip'" [matTooltip]="'Rerun this configuration'"
-        src="./../../assets/088a-start-solid-gray.svg">
-      <img *ngIf="model['status'] !== 'wip'" class="icon-button" [matTooltip]="'Rerun this configuration'"
-        (click)="tune(model)" src="./../../assets/088a-start-solid.svg">
-    </td>
-    <td class="cell center">
-      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
-        src="./../../assets/010a-passed-completed-solid.svg">
-      <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
-        src="./../../assets/009a-close-solid.svg">
-      <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Tuning is running"
-        *ngIf="model['status'] === 'wip'" [diameter]="25">
-      </mat-spinner>
-    </td>
-    <td class="cell">
-      {{ model['model_path'] ? getFileName(model['model_path']) : null }}
-    </td>
-    <td class="cell clipboard">
-      <img *ngIf="model['model_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
-        matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
-        (click)="copyToClipboard(model['model_path'])">
-    </td>
-    <td class="cell">
-      {{ model['model_output_path'] ? getFileName(model['model_output_path']) : null }}
-    </td>
-    <td class="cell clipboard">
-      <img *ngIf="model['model_output_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
-        matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
-        (click)="copyToClipboard(model['model_output_path'])">
-    </td>
-    <td class="cell pale-blue align-right">
-      {{ model['acc_fp32'] ? (model['acc_fp32'] * 100 | number: '1.2-2') + '%' : null }}
-    </td>
-    <td class="cell pale-blue align-right">
-      {{ model['acc_int8'] ? (model['acc_int8'] * 100 | number: '1.2-2') + '%' : null }}
-    </td>
-    <td class="cell pale-blue align-right">
-      {{ model['acc_fp32'] && model['acc_int8'] ?
-      (((model['acc_int8'] - model['acc_fp32']) * 100 / model['acc_fp32']) | number: '1.2-2') + '%' : null }}
-    </td>
-    <td class="cell align-right">
-      {{ model['perf_throughput_fp32'] ? (model['perf_throughput_fp32'] | number: '1.0-0') : null }}
-    </td>
-    <td class="cell align-right">
-      {{ model['perf_throughput_int8'] ? (model['perf_throughput_int8'] | number: '1.0-0') : null }}
-    </td>
-    <td class="cell align-right">
-      {{ model['perf_throughput_fp32'] && model['perf_throughput_int8'] ?
-      ((model['perf_throughput_int8'] / model['perf_throughput_fp32']) | number: '1.1-1') + 'x' : null }}
-    </td>
-    <td class="cell align-right">
-      {{ model['size_fp32'] }}
-    </td>
-    <td class="cell align-right">
-      {{ model['size_int8'] }}
-    </td>
-    <td class="cell align-right">
-      {{ model['size_fp32'] && model['size_int8'] ?
-      ((model['size_fp32'] / model['size_int8']) | number: '1.1-1') + 'x' : null }}
-    </td>
-    <td class="cell align-right">
-      {{ model['tuning_time'] }}
-    </td>
-    <td class="cell">
-      <button class="file-button" (click)="openDialog(model['config_path'], 'config')">
-        Show config
-      </button>
-    </td>
-    <td class="cell">
-      <button class="file-button" (click)="openDialog(model['log_path'], 'output')">
-        Show output
-      </button>
-    </td>
-    <td class="cell">
-      <button *ngIf="model['code_template_path']" class="file-button"
-        (click)="openDialog(model['code_template_path'], 'config')">
-        Show code template
-      </button>
-    </td>
-    <td class="cell clipboard">
-      <img *ngIf="model['code_template_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
-        matTooltip="Copy code template path to clipboard" matTooltipPosition="after"
-        (click)="copyToClipboard(model['code_template_path'])">
-    </td>
-</table>
+<mat-drawer-container class="sidenav-container">
+  <mat-drawer #drawer class="sidenav" mode="side" position="end">
+    <table>
+      <tr *ngFor="let info of systemInfo() | keyvalue">
+        <td class="header">{{ info.key | modelList }}</td>
+        <td class="cell">{{ info.value }}</td>
+      </tr>
+    </table>
+  </mat-drawer>
+
+  <button type="button" mat-raised-button class="hw-info-button" color="primary" (click)="drawer.toggle()">
+    <img class="hw-info-img" src="./../../assets/004a-information-solid.svg">
+    System info
+  </button>
+
+  <br>
+  <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+    [style.display]="showSpinner ? 'block' : 'none'">
+  </mat-spinner>
+  <button mat-raised-button color="accent" [routerLink]="['/config-wizard']" queryParamsHandling="preserve">
+    &#65291; Create low precision model
+  </button>
+  <br>
+  <br>
+  <table *ngIf="modelList && modelList[0]">
+    <tr>
+      <td class="header" rowspan="2">RUN</td>
+      <td class="header" rowspan="2">Status</td>
+      <td class="header" colspan="4">Model</td>
+      <td class="header" colspan="3">Accuracy</td>
+      <td class="header" colspan="3">Throughput [sample/sec]</td>
+      <td class="header" colspan="3">Model size [MB]</td>
+      <td class="header" rowspan="2">Model generation time [sec]</td>
+      <td class="header" rowspan="2">Config</td>
+      <td class="header" rowspan="2">Console output</td>
+      <td class="header" colspan="2" rowspan="2">Code template</td>
+    </tr>
+    <tr>
+      <td class="header" colspan="2">FP32</td>
+      <td class="header" colspan="2">INT8</td>
+      <td class="header" colspan="1">FP32</td>
+      <td class="header" colspan="1">INT8</td>
+      <td class="header" colspan="1">Accuracy diff</td>
+      <td class="header" colspan="1">FP32</td>
+      <td class="header" colspan="1">INT8</td>
+      <td class="header" colspan="1">Perf speedup</td>
+      <td class="header" colspan="1">FP32</td>
+      <td class="header" colspan="1">INT8</td>
+      <td class="header" colspan="1">Ratio</td>
+    </tr>
+    <tr *ngFor="let model of modelList; let index = index" [matTooltip]="getTooltip(model.execution_details)"
+      [matTooltipPosition]="'right'">
+      <td class="cell">
+        <img *ngIf="model['status'] === 'wip'" [matTooltip]="'Rerun this configuration'"
+          src="./../../assets/088a-start-solid-gray.svg">
+        <img *ngIf="model['status'] !== 'wip'" class="icon-button" [matTooltip]="'Rerun this configuration'"
+          (click)="tune(model)" src="./../../assets/088a-start-solid.svg">
+      </td>
+      <td class="cell center">
+        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
+          src="./../../assets/010a-passed-completed-solid.svg">
+        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
+          src="./../../assets/009a-close-solid.svg">
+        <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Tuning is running"
+          *ngIf="model['status'] === 'wip'" [diameter]="25">
+        </mat-spinner>
+      </td>
+      <td class="cell">
+        {{ model['model_path'] ? getFileName(model['model_path']) : null }}
+      </td>
+      <td class="cell clipboard">
+        <img *ngIf="model['model_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
+          matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+          (click)="copyToClipboard(model['model_path'])">
+      </td>
+      <td class="cell">
+        {{ model['model_output_path'] ? getFileName(model['model_output_path']) : null }}
+      </td>
+      <td class="cell clipboard">
+        <img *ngIf="model['model_output_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
+          matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+          (click)="copyToClipboard(model['model_output_path'])">
+      </td>
+      <td class="cell pale-blue align-right">
+        {{ model['acc_fp32'] ? (model['acc_fp32'] * 100 | number: '1.2-2') + '%' : null }}
+      </td>
+      <td class="cell pale-blue align-right">
+        {{ model['acc_int8'] ? (model['acc_int8'] * 100 | number: '1.2-2') + '%' : null }}
+      </td>
+      <td class="cell pale-blue align-right">
+        {{ model['acc_fp32'] && model['acc_int8'] ?
+        (((model['acc_int8'] - model['acc_fp32']) * 100 / model['acc_fp32']) | number: '1.2-2') + '%' : null }}
+      </td>
+      <td class="cell align-right">
+        {{ model['perf_throughput_fp32'] ? (model['perf_throughput_fp32'] | number: '1.0-0') : null }}
+      </td>
+      <td class="cell align-right">
+        {{ model['perf_throughput_int8'] ? (model['perf_throughput_int8'] | number: '1.0-0') : null }}
+      </td>
+      <td class="cell align-right">
+        {{ model['perf_throughput_fp32'] && model['perf_throughput_int8'] ?
+        ((model['perf_throughput_int8'] / model['perf_throughput_fp32']) | number: '1.1-1') + 'x' : null }}
+      </td>
+      <td class="cell align-right">
+        {{ model['size_fp32'] }}
+      </td>
+      <td class="cell align-right">
+        {{ model['size_int8'] }}
+      </td>
+      <td class="cell align-right">
+        {{ model['size_fp32'] && model['size_int8'] ?
+        ((model['size_fp32'] / model['size_int8']) | number: '1.1-1') + 'x' : null }}
+      </td>
+      <td class="cell align-right">
+        {{ model['tuning_time'] }}
+      </td>
+      <td class="cell">
+        <button class="file-button" (click)="openDialog(model['config_path'], 'config')">
+          Show config
+        </button>
+      </td>
+      <td class="cell">
+        <button class="file-button" (click)="openDialog(model['log_path'], 'output')">
+          Show output
+        </button>
+      </td>
+      <td class="cell">
+        <button *ngIf="model['code_template_path']" class="file-button"
+          (click)="openDialog(model['code_template_path'], 'config')">
+          Show code template
+        </button>
+      </td>
+      <td class="cell clipboard">
+        <img *ngIf="model['code_template_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
+          matTooltip="Copy code template path to clipboard" matTooltipPosition="after"
+          (click)="copyToClipboard(model['code_template_path'])">
+      </td>
+  </table>
+
+</mat-drawer-container>

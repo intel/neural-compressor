@@ -74,6 +74,10 @@ export class PredefinedModelsComponent implements OnInit {
       });
   }
 
+  systemInfo() {
+    return this.modelService.systemInfo;
+  }
+
   listModelZoo() {
     this.modelService.listModelZoo()
       .subscribe(

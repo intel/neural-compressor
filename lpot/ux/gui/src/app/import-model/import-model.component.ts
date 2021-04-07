@@ -20,6 +20,7 @@ import { SocketService } from '../services/socket.service';
 import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { ErrorComponent } from '../error/error.component';
 import { sha256 } from 'js-sha256';
+import { GraphComponent } from '../graph/graph.component';
 
 @Component({
   selector: 'app-import-model',
@@ -62,7 +63,9 @@ export class ImportModelComponent implements OnInit {
   saved = false;
   id: string;
   showSpinner = false;
+  showGraphSpinner = false;
   useCalibrationData = true;
+  fileBrowserParams = ['label_file', 'vocab_file'];
 
   constructor(
     private _formBuilder: FormBuilder,
@@ -94,6 +97,7 @@ export class ImportModelComponent implements OnInit {
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value && this.firstFormGroup.get('modelDomain').value) {
           this.getConfig();
+          this.getPossibleTransformations();
         }
       }
       );
@@ -230,13 +234,16 @@ export class ImportModelComponent implements OnInit {
       .subscribe(
         resp => this.dataLoaders = resp['dataloader'],
         error => this.openErrorDialog(error));
-    this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value })
-      .subscribe(
-        resp => this.transformations = resp['transform'],
-        error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('strategy', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
         resp => this.tunings = resp['strategy'],
+        error => this.openErrorDialog(error));
+  }
+
+  getPossibleTransformations() {
+    this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value, domain: this.firstFormGroup.get('modelDomain').value })
+      .subscribe(
+        resp => this.transformations = resp['transform'],
         error => this.openErrorDialog(error));
   }
 
@@ -303,30 +310,34 @@ export class ImportModelComponent implements OnInit {
             this.secondFormGroup.get('approach').setValue(resp['config']['quantization'].approach);
             this.transformationParams = [];
             let transform = {};
-            if (resp['config']['quantization'].calibration.dataloader.transform) {
+            if (resp['config']['quantization'].calibration.dataloader && resp['config']['quantization'].calibration.dataloader.transform) {
               transform = resp['config']['quantization'].calibration.dataloader.transform;
-            } else if (resp['config']['evaluation'].dataloader && resp['config']['evaluation'].dataloader.transform) {
+            } else if (resp['config']['evaluation'] && resp['config']['evaluation'].dataloader && resp['config']['evaluation'].dataloader.transform) {
               transform = resp['config']['evaluation'].dataloader.transform;
-            } else if (resp['config']['evaluation'].accuracy && resp['config']['evaluation'].accuracy.postprocess.transform) {
+            } else if (resp['config']['evaluation'] && resp['config']['evaluation'].accuracy && resp['config']['evaluation'].accuracy.postprocess.transform) {
               transform = resp['config']['evaluation'].accuracy.postprocess.transform;
             }
             this.secondFormGroup.get('transform').setValue(transform);
             const transformNames = Object.keys(transform);
             transformNames.forEach((name, index) => {
               this.addNewTransformation(name);
-              this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
-              if (Array.isArray(this.transformationParams[index]['params'])) {
-                this.transformationParams[index]['params'].forEach(param => {
-                  param.value = transform[name][param.name];
-                });
+              if (this.transformations.find(x => x.name === name)) {
+                this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
+                if (Array.isArray(this.transformationParams[index]['params'])) {
+                  this.transformationParams[index]['params'].forEach(param => {
+                    param.value = transform[name][param.name];
+                  });
+                }
               }
             });
 
-            const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
-            this.secondFormGroup.get('dataLoaderQuantization').setValue(dataLoader);
-            this.secondFormGroup.get('dataLoaderEvaluation').setValue(dataLoader);
-            this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderQuantization'), 'quantization');
-            this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
+            if (resp['config']['quantization'].calibration.dataloader) {
+              const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
+              this.secondFormGroup.get('dataLoaderQuantization').setValue(dataLoader);
+              this.secondFormGroup.get('dataLoaderEvaluation').setValue(dataLoader);
+              this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderQuantization'), 'quantization');
+              this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
+            }
           }
 
           if (resp['config']['evaluation']) {
@@ -489,7 +500,20 @@ export class ImportModelComponent implements OnInit {
     return newObj;
   }
 
-  openDialog(fieldName: string, filter: 'models' | 'datasets' | 'directories') {
+  showGraph() {
+    this.showGraphSpinner = true;
+    this.modelService.getModelGraph(this.firstFormGroup.get('modelLocation').value)
+      .subscribe(graph => {
+        this.showGraphSpinner = false;
+        this.dialog.open(GraphComponent, {
+          data: {
+            graph
+          }
+        });
+      });
+  }
+
+  openDialog(fieldName: string, filter: 'models' | 'datasets' | 'directories', paramFile?) {
     let form = 'firstFormGroup';
     if (filter === 'datasets') {
       form = 'secondFormGroup';
@@ -498,16 +522,24 @@ export class ImportModelComponent implements OnInit {
       width: '60%',
       height: '60%',
       data: {
-        path: this[form].get(fieldName).value ? this[form].get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
+        path: this[form].get(fieldName) && this[form].get(fieldName).value ? this[form].get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
         filter: filter
       }
     });
 
     dialogRef.afterClosed().subscribe(chosenFile => {
       if (chosenFile) {
-        this[form].get(fieldName).setValue(chosenFile);
-        if (fieldName === 'datasetLocationQuantization' && this.useCalibrationData) {
-          this.secondFormGroup.get('datasetLocationEvaluation').setValue(chosenFile);
+        if (paramFile) {
+          if (paramFile === 'evaluation' || paramFile === 'quantization') {
+            this.dataLoaderParams[paramFile].find(x => x.name === fieldName).value = chosenFile;
+          } else {
+            paramFile.find(x => x.name === fieldName).value = chosenFile;
+          }
+        } else {
+          this[form].get(fieldName).setValue(chosenFile);
+          if (fieldName === 'datasetLocationQuantization' && this.useCalibrationData) {
+            this.secondFormGroup.get('datasetLocationEvaluation').setValue(chosenFile);
+          }
         }
       }
     });;

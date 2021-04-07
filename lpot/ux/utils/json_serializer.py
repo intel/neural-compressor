@@ -15,7 +15,9 @@
 """JsonSerializer module."""
 
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
+
+from lpot.ux.utils.logger import log
 
 
 class JsonSerializer:
@@ -47,22 +49,66 @@ class JsonSerializer:
                 continue
 
             variable_name = re.sub(r"^_", "", key)
-            if isinstance(value, list):
-                if len(value) == 0:
-                    continue
+            getter_value = value
+            try:
+                getter_value = getattr(self, variable_name)
+            except AttributeError:
+                log.warning(f"Found f{key} attribute without {variable_name} getter.")
 
-                serialized_list = []
-                for item in value:
-                    serialized_item = self.serialize_item(item)
-                    if serialized_item is not None:
-                        serialized_list.append(serialized_item)
-                result[variable_name] = serialized_list
-            else:
-                serialized_item = self.serialize_item(value)
-                if serialized_item is not None:
-                    result[variable_name] = serialized_item
+            serialized_value = self._serialize_value(
+                getter_value,
+                serialization_type,
+            )
+
+            if serialized_value is not None:
+                result[variable_name] = serialized_value
 
         return result
+
+    def _serialize_value(self, value: Any, serialization_type: str) -> Any:
+        """Serialize single value."""
+        if isinstance(value, list):
+            return self._serialize_list(value, serialization_type)
+        if isinstance(value, dict):
+            return self._serialize_dict(value, serialization_type)
+        else:
+            return self.serialize_item(value, serialization_type)
+
+    def _serialize_list(
+        self,
+        value: list,
+        serialization_type: str,
+    ) -> Optional[List[Any]]:
+        """Serialize list."""
+        serialized_list = []
+
+        for item in value:
+            serialized_item = self.serialize_item(item, serialization_type)
+            if serialized_item is not None:
+                serialized_list.append(serialized_item)
+
+        if len(serialized_list) == 0:
+            return None
+
+        return serialized_list
+
+    def _serialize_dict(
+        self,
+        value: dict,
+        serialization_type: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Serialize dict."""
+        serialized_dict = {}
+
+        for key in value.keys():
+            serialized_item = self.serialize_item(value[key], serialization_type)
+            if serialized_item is not None:
+                serialized_dict[key] = serialized_item
+
+        if len(serialized_dict.keys()) == 0:
+            return None
+
+        return serialized_dict
 
     @staticmethod
     def serialize_item(value: Any, serialization_type: str = "default") -> Any:
@@ -84,9 +130,7 @@ class JsonSerializer:
         if issubclass(type(value), JsonSerializer):
             # pylint: disable=maybe-no-member
             serialized_value = value.serialize(serialization_type)
-            if (
-                isinstance(serialized_value, dict) and not serialized_value
-            ):  # Ignore empty objects
+            if isinstance(serialized_value, dict) and not serialized_value:  # Ignore empty objects
                 return None
             return serialized_value
         return value

@@ -1,0 +1,53 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+@import './../../variables.scss';
+
+.node {
+  cursor: pointer;
+  font-family: IntelClearBd;
+
+  :hover {
+    background-color: #E9E9E9;
+  }
+}
+
+.bold {
+  font-family: IntelClearBd;
+}
+
+.node-container {
+  border-radius: 0.5rem;
+  background-color: white;
+}
+
+.node-header {
+  font-size: 150%;
+  text-align: center;
+  color: white !important;
+}
+
+.node-text {
+  position: relative;
+  top: -5px;
+}
+
+.sidenav {
+  background-color: white !important;
+  min-height: 10%;
+  max-height: 30%;
+  width: 40%;
+  margin-top: 30%;
+  box-shadow: none;
+  border-radius: 0.5rem;
+}

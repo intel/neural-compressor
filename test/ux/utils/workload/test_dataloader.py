@@ -16,13 +16,7 @@
 
 import unittest
 
-from lpot.ux.utils.workload.dataloader import (
-    Dataloader,
-    Dataset,
-    Filter,
-    LabelBalance,
-    Transform,
-)
+from lpot.ux.utils.workload.dataloader import Dataloader, Dataset, Filter, LabelBalance, Transform
 
 
 class TestDatasetConfig(unittest.TestCase):

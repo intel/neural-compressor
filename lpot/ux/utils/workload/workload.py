@@ -81,9 +81,7 @@ class Workload(JsonSerializer):
             self.config_name,
         )
 
-        model_output_name = (
-            self.model_name + "_int8." + get_file_extension(self.model_path)
-        )
+        model_output_name = self.model_name + "_int8." + get_file_extension(self.model_path)
         self.model_output_path = os.path.join(
             self.workload_path,
             model_output_name,

@@ -25,7 +25,6 @@ from numpy.random import randint
 
 from lpot.utils.utility import singleton
 from lpot.ux.utils.exceptions import NotFoundException
-from lpot.ux.utils.utils import determine_ip
 
 
 @singleton
@@ -37,14 +36,13 @@ class Configuration:
 
     def __init__(self) -> None:
         """Set the variables."""
-        self.ip = determine_ip()
+        self.server_address = "localhost"
         args = self.get_command_line_args()
-        self.port = self.determine_port(args)
+        self.server_port = self.determine_server_port(args)
+        self.gui_port = self.determine_gui_port(args)
         self.log_level = self.determine_log_level(args)
         self.token = secrets.token_hex(16)
-        self.tls_certificate = args.get("certfile")
-        self.tls_key = args.get("keyfile")
-        self.scheme = "https" if self.is_tls_used() else "http"
+        self.scheme = "http"
 
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
@@ -53,7 +51,13 @@ class Configuration:
             "-p",
             "--port",
             type=int,
-            help="port number to listen on",
+            help="server port number to listen on",
+        )
+        parser.add_argument(
+            "-P",
+            "--gui_port",
+            type=int,
+            help="port number for GUI",
         )
         parser.add_argument(
             "--verbose",
@@ -62,21 +66,9 @@ class Configuration:
             default=0,
             help="verbosity of logging output, use -vv and -vvv for even more logs",
         )
-        parser.add_argument(
-            "--certfile",
-            type=str,
-            default=None,
-            help="TLS Certificate to use",
-        )
-        parser.add_argument(
-            "--keyfile",
-            type=str,
-            default=None,
-            help="TLS private key to use",
-        )
         return vars(parser.parse_args())
 
-    def determine_port(self, args: Dict) -> int:
+    def determine_server_port(self, args: Dict) -> int:
         """
         Return port to be used by the server.
 
@@ -109,12 +101,23 @@ class Configuration:
             f"Unable to find a free port in {len(ports)} attempts, exiting.",
         )
 
+    def determine_gui_port(self, args: Dict) -> int:
+        """
+        Return port to be used by the GUI client.
+
+        Will return self.server_port unless specified in configuration.
+        """
+        command_line_port = args.get("gui_port")
+        if command_line_port is not None:
+            return command_line_port
+        return self.server_port
+
     def is_port_taken(self, port: int) -> bool:
         """Return if given port is already in use."""
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-            s.bind((self.ip, port))
+            s.bind((self.server_address, port))
         except socket.error:
             return True
         finally:
@@ -138,8 +141,4 @@ class Configuration:
 
     def get_url(self) -> str:
         """Return URL to access application."""
-        return f"{self.scheme}://{self.ip}:{self.port}/?token={self.token}"
-
-    def is_tls_used(self) -> bool:
-        """Return if tls is requested."""
-        return self.tls_certificate is not None and self.tls_key is not None
+        return f"{self.scheme}://{self.server_address}:{self.gui_port}/?token={self.token}"

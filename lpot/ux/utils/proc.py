@@ -109,9 +109,7 @@ class Proc(object):
         self.time_stop = self.time_start
         self.return_code = None
         self.ignore_exit_codes = (
-            ignore_exit_codes
-            if ignore_exit_codes and isinstance(ignore_exit_codes, list)
-            else [0]
+            ignore_exit_codes if ignore_exit_codes and isinstance(ignore_exit_codes, list) else [0]
         )
 
         try:

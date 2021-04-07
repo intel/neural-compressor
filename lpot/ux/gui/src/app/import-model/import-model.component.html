@@ -9,14 +9,23 @@
       <form [formGroup]="firstFormGroup">
         <ng-template matStepLabel>Basic parameters</ng-template>
 
-        <mat-form-field class="form-field long" appearance="fill">
-          <mat-label>model</mat-label>
-          <input required formControlName="modelLocation" matInput>
-        </mat-form-field>
-        <button mat-raised-button color="primary" class="browse" (click)="openDialog('modelLocation', 'models')">
-          <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
-          Choose file
-        </button>
+        <span class="spinner-wrapper">
+          <mat-form-field class="form-field long" appearance="fill">
+            <mat-label>model</mat-label>
+            <input required formControlName="modelLocation" matInput>
+          </mat-form-field>
+          <button mat-raised-button color="primary" class="fixed-height"
+            (click)="openDialog('modelLocation', 'models')">
+            <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
+            Choose file
+          </button>
+          <button mat-raised-button color="accent" class="fixed-height" (click)="showGraph()"
+            [disabled]="!firstFormGroup.get('modelLocation').value">
+            <img class="icon" src="./../../assets/298a-workflow-process-solid.svg">
+            Show graph
+          </button>
+          <mat-spinner *ngIf="showGraphSpinner" class="spinner" [diameter]="25"></mat-spinner>
+        </span>
         <br>
         <div class="spinner-wrapper">
           <mat-form-field class="form-field" appearance="fill">
@@ -59,6 +68,7 @@
               <mat-label>input *</mat-label>
               <mat-select formControlName="input" multiple>
                 <mat-option *ngFor="let input of inputs" [value]="input"
+                  [ngClass]="input === 'custom' ? 'custom-option' : null"
                   [disabled]="order['input'][0] === 'custom' && input !== 'custom'"
                   (onSelectionChange)="boundaryNodesChanged($event.source.value, 'input')">
                   {{ input }}
@@ -82,6 +92,7 @@
               <mat-label>output *</mat-label>
               <mat-select formControlName="output" multiple>
                 <mat-option *ngFor="let output of outputs" [value]="output"
+                  [ngClass]="output === 'custom' ? 'custom-option' : null"
                   [disabled]="order['output'][0] === 'custom' && output !== 'custom'"
                   (onSelectionChange)="boundaryNodesChanged($event.source.value, 'output')">
                   {{ output }}
@@ -130,7 +141,7 @@
               <mat-select formControlName="dataLoaderQuantization"
                 (selectionChange)="setDefaultDataLoaderParam($event, 'quantization')">
                 <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
-                  [matTooltip]="dataLoader.help">
+                  [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
                   {{ dataLoader.name }}
                 </mat-option>
               </mat-select>
@@ -144,6 +155,11 @@
                   <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
                     matTooltipPosition="right" [matTooltip]="param.help">
                 </mat-form-field>
+                <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
+                  (click)="openDialog(param.name, 'datasets', 'quantization')">
+                  <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                  Choose file
+                </button>
               </ng-container>
             </ng-container>
           </span>
@@ -177,7 +193,7 @@
               <mat-select formControlName="dataLoaderEvaluation"
                 (selectionChange)="setDefaultDataLoaderParam($event, 'evaluation')">
                 <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
-                  [matTooltip]="dataLoader.help">
+                  [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
                   {{ dataLoader.name }}
                 </mat-option>
               </mat-select>
@@ -191,6 +207,11 @@
                   <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
                     matTooltipPosition="right" [matTooltip]="param.help">
                 </mat-form-field>
+                <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
+                  (click)="openDialog(param.name, 'datasets', 'evaluation')">
+                  <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                  Choose file
+                </button>
               </ng-container>
             </ng-container>
           </span>
@@ -225,7 +246,8 @@
                     <mat-select [(ngModel)]="transformItem['name']" [ngModelOptions]="{standalone: true}"
                       (selectionChange)="setDefaultTransformationParam($event, index)">
                       <mat-option *ngFor="let transformation of transformations" [value]="transformation.name"
-                        matTooltipPosition="right" [matTooltip]="transformation.help">
+                        [ngClass]="transformation.name === 'custom' ? 'custom-option' : null" matTooltipPosition="right"
+                        [matTooltip]="transformation.help">
                         {{ transformation.name }}
                       </mat-option>
                     </mat-select>
@@ -237,14 +259,18 @@
                         <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
                           matTooltipPosition="right" [matTooltip]="param.help">
                       </mat-form-field>
+                      <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
+                        class="browse" (click)="openDialog(param.name, 'datasets', transformItem['params'])">
+                        <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                        Choose file
+                      </button>
                     </ng-container>
                   </ng-container>
                   <button mat-icon-button color="warn" class="browse" (click)="removeTransformation(index)"
                     matTooltip="Remove this transformation">
                     &#x2573;
                   </button>
-                  <button *ngIf="last" mat-raised-button color="primary" class="browse"
-                    (click)="addNewTransformation()">
+                  <button *ngIf="last" mat-raised-button color="accent" class="browse" (click)="addNewTransformation()">
                     &#65291; Add new transformation
                   </button>
                 </span>
@@ -264,7 +290,7 @@
           <mat-label>metric</mat-label>
           <mat-select formControlName="metric" (selectionChange)="setDefaultMetricParam($event)">
             <mat-option *ngFor="let metric of metrics" [value]="metric.name" matTooltipPosition="right"
-              [matTooltip]="metric.help">
+              [ngClass]="metric.name === 'custom' ? 'custom-option' : null" [matTooltip]="metric.help">
               {{ metric.name }}
             </mat-option>
           </mat-select>

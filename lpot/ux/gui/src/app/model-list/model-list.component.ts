@@ -88,6 +88,10 @@ export class ModelListComponent implements OnInit {
     this.getAllModels();
   }
 
+  systemInfo() {
+    return this.modelService.systemInfo;
+  }
+
   getAllModels() {
     this.modelService.getDefaultPath('workspace')
       .subscribe(

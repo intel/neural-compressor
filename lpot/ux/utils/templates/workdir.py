@@ -18,9 +18,11 @@ import glob
 import json
 import logging
 import os
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from lpot.ux.utils.exceptions import InternalException, NotFoundException
 from lpot.ux.utils.templates.metric import Metric
 from lpot.ux.utils.workload.workloads_list import WorkloadInfo
 
@@ -38,7 +40,7 @@ class Workdir:
         overwrite: bool = True,
     ) -> None:
         """Initialize workdir class."""
-        self.workdir_path = os.path.join(os.environ["HOME"], ".lpot")
+        self.workdir_path = os.path.join(os.environ.get("HOME", ""), ".lpot")
         self.ensure_working_path_exists()
         self.workloads_json = os.path.join(self.workdir_path, "workloads_list.json")
         self.request_id = request_id
@@ -61,9 +63,7 @@ class Workdir:
                 None,
             ).get(request_id, None)
         ):
-            self.workload_path = self.workloads_data["workloads"][request_id][
-                "workload_path"
-            ]
+            self.workload_path = self.workloads_data["workloads"][request_id]["workload_path"]
         elif workspace_path and request_id:
             workload_name = request_id
             if model_path:
@@ -157,9 +157,7 @@ class Workdir:
         self.workloads_data["workloads"][request_id].get(
             "execution_details",
             {},
-        ).update(
-            execution_details,
-        )
+        ).update(execution_details)
         self.dump()
 
     def get_active_workspace(self) -> str:
@@ -228,3 +226,21 @@ class Workdir:
             .get("code_template_path", None)
         )
         return path
+
+    def delete_workload(self, workload_id: str) -> None:
+        """Delete workload by ID."""
+        if workload_id in self.workloads_data.get("workloads", {}):
+            try:
+                workload = self.workloads_data.get("workloads", {}).get(workload_id, {})
+                workload_path = workload.get("workload_path", None)
+                del self.workloads_data.get("workloads", {})[workload_id]
+                self.dump()
+                if workload_path:
+                    shutil.rmtree(workload_path)
+            except Exception as e:
+                raise InternalException(
+                    f"Error while removing workload {workload_id}:\n{str(e)}",
+                )
+
+        else:
+            raise NotFoundException(f"Can't find workload ID {workload_id}.")

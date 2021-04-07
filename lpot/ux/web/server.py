@@ -29,9 +29,11 @@ from flask_socketio import SocketIO
 from lpot.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
+    InternalException,
     NotFoundException,
 )
-from lpot.ux.utils.utils import is_development_env, verify_file_path
+from lpot.ux.utils.logger import log
+from lpot.ux.utils.utils import verify_file_path
 from lpot.ux.web.communication import MessageQueue, Request
 from lpot.ux.web.configuration import Configuration
 from lpot.ux.web.router import Router
@@ -48,13 +50,12 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 def run_server(configuration: Configuration) -> None:
     """Run webserver on specified scheme, address and port."""
-    addr = configuration.ip
-    port = configuration.port
+    addr = configuration.server_address
+    server_port = configuration.server_port
+    gui_port = configuration.gui_port
     token = configuration.token
 
-    cors_allowed_origins = f"{configuration.scheme}://{addr}:{port}"
-    if is_development_env():
-        cors_allowed_origins = "*"
+    cors_allowed_origins = f"{configuration.scheme}://{addr}:{gui_port}"
 
     app.secret_key = token
     CORS(app, origins=cors_allowed_origins)
@@ -64,12 +65,7 @@ def run_server(configuration: Configuration) -> None:
         max_http_buffer_size=2000,
     )
 
-    args = {}
-    if configuration.is_tls_used():
-        args["certfile"] = configuration.tls_certificate
-        args["keyfile"] = configuration.tls_key
-
-    socketio.run(app, host=addr, port=port, **args)
+    socketio.run(app, host=addr, port=server_port)
 
 
 @app.after_request
@@ -146,6 +142,9 @@ def handle_api_call(subpath: str) -> Any:
         return str(err), 403
     except NotFoundException as err:
         return str(err), 404
+    except InternalException as err:
+        log.critical(err)
+        return str(err), 500
 
 
 @app.route("/api/<path:subpath>", methods=["OPTIONS"])

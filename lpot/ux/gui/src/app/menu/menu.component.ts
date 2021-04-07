@@ -35,6 +35,7 @@ export class MenuComponent implements OnInit {
 
   ngOnInit() {
     this.getWorkspace();
+    this.modelService.getSystemInfo();
   }
 
   getWorkspace() {

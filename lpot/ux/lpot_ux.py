@@ -33,7 +33,13 @@ def main() -> None:
         sys.exit(1)
 
     change_log_level(configuration.log_level)
-    print(f"Visit {configuration.get_url()} in your browser to access the UX.")
+    print(
+        "LPOT UX Server started.\n"
+        "Setup port forwarding from "
+        f"your local port {configuration.gui_port} to "
+        f"{configuration.server_port} on this machine.\n"
+        f"Then open address {configuration.get_url()}",
+    )
 
     run_server(configuration)
 
