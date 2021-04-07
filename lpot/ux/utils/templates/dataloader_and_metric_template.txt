@@ -16,8 +16,8 @@ class Dataset(object):
         pass
 
 # Define a customized Metric function
-from lpot import Quantization, common
-from lpot.metric import BaseMetric
+from lpot.experimental import Quantization, common
+from lpot.experimental.metric import BaseMetric
 
 
 class MyMetric(BaseMetric):

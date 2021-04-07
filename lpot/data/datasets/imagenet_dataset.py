@@ -30,89 +30,87 @@
 # limitations under the License.
 # ==============================================================================
 import os
-import re
-import numpy as np
 from PIL import Image
 from lpot.utils.utility import LazyImport
-from .dataset import dataset_registry, IterableDataset, Dataset
+from lpot.utils import logger
+from lpot.experimental.data.datasets import dataset_registry, IterableDataset, Dataset
 tf = LazyImport('tensorflow')
-mx = LazyImport('mxnet')
-torch = LazyImport('torch')
 
-@dataset_registry(dataset_type="ImagenetRaw", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops", dataset_format='')
-class ImagenetRaw(Dataset):
-    """Configuration for Imagenet Raw dataset."""
-    def __init__(self, data_path, image_list, transform=None, filter=None):
-        self.image_list = []
-        self.label_list = []
-        self.data_path = data_path
+# BELOW API TO BE DEPRECATED!
+@dataset_registry(dataset_type="Imagenet", framework="tensorflow", dataset_format='')
+class TensorflowImagenetDataset(IterableDataset):
+    """Configuration for Imagenet dataset."""
+
+    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
+
+        assert subset in ('validation', 'train'), \
+            'only support subset (validation, train)'
+        logger.warning('This api is going to be deprecated, '
+                       'please use ImageRecord instead')
+
+        from tensorflow.python.platform import gfile
+        glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
+        file_names = gfile.Glob(glob_pattern)
+        if not file_names:
+            raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
+
+        from tensorflow.python.data.experimental import parallel_interleave
+        ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
+        ds = ds.apply(
+          parallel_interleave(
+            tf.data.TFRecordDataset, cycle_length=num_cores))
+
+        ds = ds.map(transform, num_parallel_calls=None)
+
+        ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
+        return ds
+
+    def __iter__(self):
+        ds_iterator = tf.compat.v1.data.make_one_shot_iterator(self)
+        iter_tensors = ds_iterator.get_next()
+        from tensorflow.python.framework.errors_impl import OutOfRangeError
+        data_config = tf.compat.v1.ConfigProto()
+        data_config.use_per_session_threads = 1
+        data_config.intra_op_parallelism_threads = 1
+        data_config.inter_op_parallelism_threads = 16
+        with tf.compat.v1.Session(config=data_config) as sess:
+            while True:
+                try:
+                    outputs = sess.run(iter_tensors)
+                    yield outputs
+                except OutOfRangeError:
+                    return
+
+@dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
+                   onnxrt_integerops", dataset_format='')
+class ONNXRTImagenetDataset(Dataset):
+    """Configuration for Imagenet dataset."""
+
+    def __init__(self, root, subset='val', num_cores=28, transform=None, filter=None):
+        self.val_dir = os.path.join(root, subset)
+        assert os.path.exists(self.val_dir), "find no val dir in {}".format(root) + \
+            "please make sure there are train/val subfolders"
+        import glob
+        logger.warning('This api is going to be deprecated, ' + \
+                       'please use ImageRecord instead')
+
         self.transform = transform
-        not_found = 0
-        if image_list is None:
-            # by default look for val_map.txt
-            image_list = os.path.join(data_path, "val_map.txt")
-
-        with open(image_list, 'r') as f:
-            for s in f:
-                image_name, label = re.split(r"\s+", s.strip())
-                src = os.path.join(data_path, image_name)
-                if not os.path.exists(src):
-                    # if the image does not exists ignore it
-                    not_found += 1
-                    continue
-                self.image_list.append(src)
-                self.label_list.append(int(label))
-
-        if not self.image_list:
-            raise ValueError("no images in image list found")
-        if not_found > 0:
-            print("reduced image list, %d images not found", not_found)
-
-    def __getitem__(self, index):
-        image_path, label = self.image_list[index], self.label_list[index]
-        with Image.open(image_path) as image:
-            image = np.array(image)
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            return (image, label)
+        self.image_list = []
+        files = glob.glob(os.path.join(self.val_dir, '*'))
+        files.sort()
+        for idx, file in enumerate(files):
+            imgs = glob.glob(os.path.join(file, '*'))
+            for img in imgs:
+                self.image_list.append((img, idx))
 
     def __len__(self):
         return len(self.image_list)
 
-@dataset_registry(dataset_type="ImagenetRaw", framework="pytorch", dataset_format='')
-class PytorchImagenetRaw(ImagenetRaw):
     def __getitem__(self, index):
-        image_path, label = self.image_list[index], self.label_list[index]
-        with Image.open(image_path) as image:
-            image = image.convert('RGB')
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            image = np.array(image)
-            return (image, label)
-
-@dataset_registry(dataset_type="ImagenetRaw", framework="mxnet", dataset_format='')
-class MXNetImagenetRaw(ImagenetRaw):
-    def __getitem__(self, index):
-        image_path, label = self.image_list[index], self.label_list[index]
-        image = mx.image.imread(image_path)
+        from PIL import Image
+        sample = self.image_list[index]
+        image = Image.open(sample[0])
         if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
-
-@dataset_registry(dataset_type="ImagenetRaw", framework="tensorflow", 
-                    dataset_format='')
-class TensorflowImagenetRaw(ImagenetRaw):
-    def __getitem__(self, index):
-        image_path, label = self.image_list[index], self.label_list[index]
-        with Image.open(image_path) as image:
-            image = np.array(image)
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            if type(image).__name__ == 'Tensor':
-                with tf.compat.v1.Session() as sess:
-                    image = sess.run(image)
-            elif type(image).__name__ == 'EagerTensor':
-                image = image.numpy()
+            image, label = self.transform((image, sample[1]))
             return (image, label)
-       
+

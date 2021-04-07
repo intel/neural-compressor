@@ -213,7 +213,7 @@ class Feeder:
             check_module("ignite")
         else:
             check_module(framework)
-        from lpot.metric.metric import framework_metrics
+        from lpot.experimental.metric.metric import framework_metrics
 
         help_dict = load_help_lpot_params("metrics")
         if framework == "onnxrt":

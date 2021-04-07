@@ -140,7 +140,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```
 #### Benchmark
 ```python
-        from lpot import Benchmark
+        from lpot.experimental import Benchmark
         evaluator = Benchmark('./bert.yaml')
         evaluator.model = FLAGS.input_model
         results = evaluator()

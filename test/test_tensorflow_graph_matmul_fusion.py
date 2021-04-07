@@ -68,7 +68,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot import Quantization, common
+                from lpot.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -97,7 +97,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             sess.run(z, feed_dict={x: x_data, y: y_data})
             float_graph_def = sess.graph.as_graph_def()
 
-            from lpot import Quantization, common
+            from lpot.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -133,7 +133,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from lpot import Quantization, common
+                    from lpot.experimental import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -166,7 +166,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from lpot import Quantization, common
+                    from lpot.experimental import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -197,7 +197,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot import Quantization, common
+                from lpot.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -238,7 +238,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from lpot import Quantization, common
+                    from lpot.experimental import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -247,7 +247,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     output_graph = quantizer()
 
                     count=0
-                    for i in output_graph.model.node:
+                    for i in output_graph.model.as_graph_def().node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
                             count += 1
                     found_quantized_matmul = bool(count > 1)

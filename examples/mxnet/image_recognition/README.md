@@ -142,7 +142,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 After prepare step is done, we just need update imagenet_inference.py like below.
 
 ```python
-    from lpot import Quantization, common
+    from lpot.experimental import Quantization, common
     fp32_model = load_model(symbol_file, param_file, logger)
     quantizer = Quantization("./cnn.yaml")
     quantizer.model = common.Model(fp32_model)

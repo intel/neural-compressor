@@ -52,6 +52,9 @@ class ONNXRTAdaptor(Adaptor):
         self.quantizable_op_types = self._query_quantizable_op_types()
         self.evaluate_nums = 0
 
+        self.fp32_results = []
+        self.fp32_preds_as_label = False
+
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataLoader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
@@ -287,12 +290,13 @@ class ONNXRTAdaptor(Adaptor):
         """
         session = ort.InferenceSession(input_graph.model.SerializeToString(), None)
         len_outputs = len(session.get_outputs())
+
         if metric:
-            if hasattr(metric, "compare_label"):
-                if not metric.compare_label:
-                    results = [[] for _ in range(len_outputs)]
-                    if not os.path.exists(os.path.join(self.work_space, "output_tensors")):
-                        os.makedirs(os.path.join(self.work_space, "output_tensors"))
+            metric.reset()
+            if hasattr(metric, "compare_label") and not metric.compare_label:
+                self.fp32_preds_as_label = True
+                results = []
+
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -312,37 +316,28 @@ class ONNXRTAdaptor(Adaptor):
                 for i in range(len_inputs):
                     ort_inputs.update({inputs_names[i]: batch[i]})
                 predictions = session.run(None, ort_inputs)
-            if metric:
-                if hasattr(metric, "compare_label"):
-                    if not metric.compare_label:
-                        for i in range(len_outputs):
-                            results[i].append(predictions[i])
+
+            if self.fp32_preds_as_label:
+                self.fp32_results.append(predictions) if fp32_baseline else \
+                    results.append(predictions)
 
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
-            if metric is not None:
-                if not hasattr(metric, "compare_label"):
-                    metric.update(predictions, labels)
-                elif hasattr(metric, "compare_label") and metric.compare_label:
-                    metric.update(predictions, labels)
+            if metric is not None and not self.fp32_preds_as_label:
+                metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
-        if metric:
-            if hasattr(metric, "compare_label"):
-                if not metric.compare_label:
-                    metric.reset()
-                    results = [np.array(result) for result in results]
-                    if fp32_baseline:
-                        np.savez(os.path.join(self.work_space,"output_tensors", "fp32.npz"),
-                            *results)
-                        metric.update(results, results)
-                    else:
-                        np.savez(os.path.join(self.work_space,"output_tensors", "int8.npz"),
-                            *results)
-                        reference_file = np.load(os.path.join(self.work_space, "output_tensors", \
-                                     "fp32.npz"), allow_pickle=True)
-                        reference = [reference_file[key] for key in reference_file]
-                        metric.update(reference, results)
+
+        if self.fp32_preds_as_label:
+            from .ox_utils.util import collate_preds
+            if fp32_baseline:
+                results = collate_preds(self.fp32_results)
+                metric.update(results, results)
+            else:
+                reference = collate_preds(self.fp32_results)
+                results = collate_preds(results)
+                metric.update(results, reference)
+
         acc = metric.result() if metric is not None else 0
         return acc
 

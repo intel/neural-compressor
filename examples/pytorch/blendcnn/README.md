@@ -107,12 +107,11 @@ It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to dev
 After prepare step is done, we just need update classify.py like below.
 
 ```
-import lpot
-from lpot import common
-eval_dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
-quantizer = lpot.Quantization(args.lpot_yaml)
-quantizer.model = common.Model(model)
-quantizer.calib_dataloader = eval_dataloader
+from lpot.experimental import Quantization
+dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
+quantizer = Quantization(args.lpot_yaml)
+quantizer.model = model
+quantizer.calib_dataloader = dataloader
 quantizer.eval_func = eval_func
 q_model = quantizer()
 ```

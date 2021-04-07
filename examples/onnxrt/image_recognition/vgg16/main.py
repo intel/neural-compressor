@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     model = onnx.load(args.model_path)
     if args.benchmark:
-        from lpot import Benchmark, common
+        from lpot.experimental import Benchmark, common
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(model)
         results = evaluator()
@@ -81,7 +81,7 @@ if __name__ == "__main__":
             print('Throughput: {:.3f} images/sec'.format(batch_size * 1./ latency))
 
     if args.tune:
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
 
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         q_model.save(args.output_model)
         
         if args.benchmark:
-            from lpot import Benchmark
+            from lpot.experimental import Benchmark
             evaluator = Benchmark(args.config)
             evaluator.model = common.Model(q_model)
             results = evaluator()

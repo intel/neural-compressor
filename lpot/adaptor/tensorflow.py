@@ -48,6 +48,7 @@ class TensorFlowAdaptor(Adaptor):
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = self.framework_specific_info['recipes']
+        self.optimization = deep_get(self.framework_specific_info, 'optimization', {})
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         
@@ -61,6 +62,9 @@ class TensorFlowAdaptor(Adaptor):
             os.path.dirname(__file__), "tensorflow.yaml"))
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
+
+        self.fp32_results = []
+        self.fp32_preds_as_label = False
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -176,10 +180,11 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
 
-        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
-            results = [[] for _ in range(len(outputs))]
-            if not os.path.exists(os.path.join(self.work_dir, "output_tensors")):
-                os.makedirs(os.path.join(self.work_dir, "output_tensors"))
+        if metric: 
+            metric.reset()
+            if hasattr(metric, "compare_label") and not metric.compare_label:
+                self.fp32_preds_as_label = True
+                results = []
 
         origin_output_tensor_names = model.output_tensor_names
         model.output_tensor_names = outputs
@@ -206,13 +211,10 @@ class TensorFlowAdaptor(Adaptor):
             else:
                 predictions = model.sess.run(output_tensor, feed_dict)
 
-            if metric and hasattr(metric, "compare_label") and not metric.compare_label:
-                if isinstance(predictions, list):
-                    result = [np.array(value) for value in predictions.values()]
-                else:
-                    result = [predictions]
-                for i in range(len(outputs)):
-                    results[i].append(result[i])
+            if self.fp32_preds_as_label:
+                self.fp32_results.append(predictions) if fp32_baseline else \
+                    results.append(predictions)
+
             # Inspect node output, just get 1st iteration output tensors for now
             if idx == 0 and tensorboard:
                 for index, node_name in enumerate(outputs):
@@ -229,28 +231,21 @@ class TensorFlowAdaptor(Adaptor):
                     predictions = predictions[:len(origin_output_tensor_names)]
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
-            if metric is not None:
-                if not hasattr(metric, "compare_label"):
-                    metric.update(predictions, labels)
-                elif hasattr(metric, "compare_label") and metric.compare_label:
-                    metric.update(predictions, labels)
+            if metric is not None and not self.fp32_preds_as_label:
+                metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
-        if metric:
-            if hasattr(metric, "compare_label") and not metric.compare_label:
-                results = [np.array(result) for result in results]
-                metric.reset()
-                if fp32_baseline:
-                    np.savez(os.path.join(self.work_dir, "output_tensors", "fp32.npz"),
-                        *results)
-                    metric.update(results, results)
-                else:
-                    np.savez(os.path.join(self.work_dir, "output_tensors", "int8.npz"),
-                        *results)
-                    reference_file = np.load(os.path.join(self.work_dir, "output_tensors", \
-                                    "fp32.npz"), allow_pickle=True)
-                    reference = [reference_file[key] for key in reference_file]
-                    metric.update(reference, results)
+
+        if self.fp32_preds_as_label:
+            from .tf_utils.util import collate_tf_preds
+            if fp32_baseline:
+                results = collate_tf_preds(self.fp32_results)
+                metric.update(results, results)
+            else:
+                reference = collate_tf_preds(self.fp32_results)
+                results = collate_tf_preds(results)
+                metric.update(results, reference)
+
         acc = metric.result() if metric is not None else 0
         if tensorboard:
             new_dir = temp_dir + "_acc_" + str(acc)

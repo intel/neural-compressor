@@ -666,7 +666,7 @@ def main():
                 model.to(args.device)
                 model.eval()
 
-                from lpot import Quantization, common
+                from lpot.experimental import Quantization, common
                 quantizer = Quantization(args.config)
                 eval_dataset = WikiDataset(tokenizer, args, file_path=args.eval_data_file if evaluate else args.train_data_file, block_size=args.block_size)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)

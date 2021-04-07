@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .dataloader import DATALOADERS
+from .dataloader import DataLoader
 
-__all__ = ["DATALOADERS"]
+__all__ = [
+    "DataLoader",
+]

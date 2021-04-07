@@ -1,7 +1,7 @@
 """Tests for coco_tools. """
 import unittest
 import numpy as np
-from lpot.metric.coco_tools import *
+from lpot.experimental.metric.coco_tools import *
 
 class TestCOCO(unittest.TestCase):
     @classmethod

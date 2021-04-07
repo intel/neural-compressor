@@ -16,8 +16,7 @@ class Dataset(object):
       return len(self.test_images)
 
 # Define a customized Metric function 
-import lpot
-from lpot import common
+from lpot.experimental import Quantization,  common
 from lpot.metric import BaseMetric
 class MyMetric(BaseMetric):
   def __init__(self, *args):
@@ -45,7 +44,7 @@ class MyMetric(BaseMetric):
 
 
 # Quantize with customized dataloader and metric
-quantizer = lpot.Quantization('./conf.yaml')
+quantizer = Quantization('./conf.yaml')
 dataset = Dataset()
 quantizer.metric = common.Metric(MyMetric, 'hello_metric')
 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)

@@ -27,6 +27,7 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from lpot.utils import logger
 from .graph_rewriter.graph_util import GraphAnalyzer
+from lpot.model.model import TensorflowModel as LpotModel
 
 def disable_random(seed=1):
     """A Decorator to disable tf random seed.
@@ -225,15 +226,19 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, mea
         except tf.errors.OutOfRangeError:
             break
 
-    def collate_fn(results):
+    preds = collate_tf_preds(preds)
+    return preds
+
+def collate_tf_preds(results):
+    batch = results[0]
+    if isinstance(batch, list):
         results = zip(*results)
         collate_results = []
         for output in results:
            collate_results.append(np.concatenate(output))
-        return collate_results
-
-    preds = collate_fn(preds)
-    return preds
+    elif isinstance(batch, np.ndarray):
+        collate_results = np.concatenate(results)
+    return collate_results
 
 def get_input_node_names(graph_def):
     g = GraphAnalyzer()
@@ -314,3 +319,11 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
 
     return tf.compat.v1.graph_util.extract_sub_graph(cur_graph.dump_graph(),
                                                      output_node_names)
+
+# THIS API IS TO BE DEPRECATED!
+def get_graph_def(model, outputs=[], auto_input_output=False):
+    if not isinstance(model, LpotModel): 
+        framework_info = {'output_tensor_names': outputs}
+        model = LpotModel(model, framework_info)
+    return model.graph_def
+

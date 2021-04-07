@@ -2,8 +2,8 @@
 import numpy as np
 import unittest
 from lpot.metric import METRICS
-from lpot.metric.f1 import evaluate
-from lpot.metric import bleu
+from lpot.experimental.metric.f1 import evaluate
+from lpot.experimental.metric import bleu
 
 class TestMetrics(unittest.TestCase):
     def testBLEU(self):
@@ -449,15 +449,6 @@ class TestMetrics(unittest.TestCase):
         mse = metrics['MSE'](compare_label=False)
         mse.update(predicts1, labels1)
         mse_result = mse.result()
-        self.assertEqual(mse_result, 1/(0.75+0.001))
-        mse.update(predicts2, labels2)
-        mse_result = mse.result()
-        self.assertEqual(mse_result, 1/(0.625+0.001))
-        
-        metrics = METRICS('onnxrt_qlinearops')
-        mse = metrics['MSE']()        
-        mse.update(predicts1, labels1)
-        mse_result = mse.result()
         self.assertEqual(mse_result, 0.75)
         mse.update(predicts2, labels2)
         mse_result = mse.result()
@@ -467,19 +458,11 @@ class TestMetrics(unittest.TestCase):
         mse = metrics['MSE'](compare_label=False)
         mse.update(predicts1, labels1)
         mse_result = mse.result()
-        self.assertEqual(mse_result, 1/(0.75+0.001))
-        mse.update(predicts2, labels2)
-        mse_result = mse.result()
-        self.assertEqual(mse_result, 1/(0.625+0.001))
-
-        metrics = METRICS('tensorflow')
-        mse = metrics['MSE']()
-        mse.update(predicts1, labels1)
-        mse_result = mse.result()
         self.assertEqual(mse_result, 0.75)
         mse.update(predicts2, labels2)
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.625)
+
 
         metrics = METRICS('mxnet')
         mse = metrics['MSE']()
@@ -518,19 +501,6 @@ class TestMetrics(unittest.TestCase):
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.25)
 
-        metrics = METRICS('tensorflow')
-        mae = metrics['MAE'](compare_label=False)
-        mae.update(predicts1, labels1)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 1/(0.75+0.001))
-        mae.update(0, 1)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 1/(0.8+0.001))
-        mae.reset()
-        mae.update(predicts2, labels2)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 1/(0.25+0.001))
-        
         metrics = METRICS('pytorch')
         mae = metrics['MAE']()
         mae.update(predicts1, labels1)
@@ -558,14 +528,6 @@ class TestMetrics(unittest.TestCase):
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.5)
 
-        metrics = METRICS('onnxrt_qlinearops')
-        mae = metrics['MAE'](compare_label=False)
-        mae.update(predicts1, labels1)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 1/(0.75+0.001))
-        mae.update(predicts2, labels2)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 1/(0.5+0.001))
 
     def test_rmse(self):
         predicts1 = [1, 0, 0, 1]
@@ -583,16 +545,6 @@ class TestMetrics(unittest.TestCase):
         rmse_result = rmse.result()
         self.assertAlmostEqual(rmse_result, np.sqrt(0.75))
 
-        metrics = METRICS('tensorflow')
-        rmse = metrics['RMSE'](compare_label=False)
-        rmse.update(predicts1, labels1)
-        rmse_result = rmse.result()
-        self.assertEqual(rmse_result, np.sqrt(1/(0.25+0.001)))
-        rmse.reset()
-        rmse.update(predicts2, labels2)
-        rmse_result = rmse.result()
-        self.assertAlmostEqual(rmse_result, np.sqrt(1/(0.75+0.001)))
-
         metrics = METRICS('pytorch')
         rmse = metrics['RMSE']()
         rmse.update(predicts1, labels1)
@@ -619,15 +571,6 @@ class TestMetrics(unittest.TestCase):
         rmse.update(predicts2, labels2)
         rmse_result = rmse.result()
         self.assertAlmostEqual(rmse_result, np.sqrt(0.5))
-
-        metrics = METRICS('onnxrt_qlinearops')
-        rmse = metrics['RMSE'](compare_label=False)
-        rmse.update(predicts1, labels1)
-        rmse_result = rmse.result()
-        self.assertEqual(rmse_result, np.sqrt(1/(0.25+0.001)))
-        rmse.update(predicts2, labels2)
-        rmse_result = rmse.result()
-        self.assertAlmostEqual(rmse_result, np.sqrt(1/(0.5+0.001)))
 
     def test_loss(self):
         metrics = METRICS('pytorch')

@@ -138,15 +138,20 @@ class Objective(object):
     """
 
     def __init__(self, accuracy_criterion, is_measure=False):
-        assert isinstance(
-            accuracy_criterion,
-            dict) and len(accuracy_criterion) == 1
-        k, v = list(accuracy_criterion.items())[0]
-        assert k in ['relative', 'absolute']
-        assert float(v) < 1 and float(v) > -1
 
-        self.acc_goal = float(v)
-        self.relative = True if k == 'relative' else False
+        assert isinstance(accuracy_criterion, dict), 'accuracy criterian should be dict'
+        assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
+            'accuracy criterion should set relative or absolute'
+        self.higher_is_better = True
+        for k, v in accuracy_criterion.items(): 
+            if k in ['relative', 'absolute']:
+                if k == 'relative':
+                    assert float(v) < 1 and float(v) > -1
+                self.relative = True if k == 'relative' else False
+                self.acc_goal = float(v)
+            elif k == 'higher_is_better':
+                self.higher_is_better = bool(v)
+
         self.baseline = None
         self.val = None
         self.is_measure = is_measure
@@ -158,7 +163,6 @@ class Objective(object):
 
         Args:
             last (tuple): The tuple of last metric.
-            accuracy_criterion (float): The allowed accuracy absolute loss.
             baseline (tuple): The tuple saving FP32 baseline.
         """
         acc, perf = self.val
@@ -169,11 +173,16 @@ class Objective(object):
             last_measure = 0
 
         base_acc, _ = baseline
+        
+        if self.relative:
+            acc_target = base_acc * (1 - float(self.acc_goal)) if self.higher_is_better \
+                else base_acc * (1 + float(self.acc_goal))
+        else:
+            acc_target =  base_acc - float(self.acc_goal) if self.higher_is_better \
+                else base_acc + float(self.acc_goal)
 
-        acc_target = base_acc - float(self.acc_goal) if not self.relative \
-            else base_acc * (1 - float(self.acc_goal))
-        if acc >= acc_target and (last_measure == 0 or perf < last_measure):
-            return True
+        if last_measure == 0 or perf < last_measure:
+            return acc >= acc_target if self.higher_is_better else acc < acc_target
         else:
             return False
 

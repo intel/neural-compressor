@@ -115,7 +115,7 @@ class TestTFQueryYaml(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization, common
+            from lpot.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml_grappler.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)

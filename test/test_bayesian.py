@@ -257,7 +257,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_run_bayesian_one_trial(self):
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -267,7 +267,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_run_bayesian_max_trials(self):
 
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)

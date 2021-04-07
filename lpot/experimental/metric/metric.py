@@ -18,7 +18,7 @@
 from abc import abstractmethod
 from collections import Counter
 from lpot.utils.utility import LazyImport, singleton
-from ..utils import logger
+from lpot.utils import logger
 from sklearn.metrics import accuracy_score
 import numpy as np
 
@@ -43,12 +43,6 @@ class PyTorchMetrics(object):
                 torch_ignite.metrics.Accuracy),
             "Loss": WrapPyTorchMetric(
                 PyTorchLoss),
-            "MAE": WrapPyTorchMetric(
-                torch_ignite.metrics.MeanAbsoluteError),
-            "RMSE": WrapPyTorchMetric(
-                torch_ignite.metrics.RootMeanSquaredError),
-            "MSE": WrapPyTorchMetric(
-                torch_ignite.metrics.MeanSquaredError),
         }
         self.metrics.update(PYTORCH_METRICS)
 
@@ -114,7 +108,6 @@ class METRICS(object):
     def register(self, name, metric_cls):
         assert name not in self.metrics.keys(), 'registered metric name already exists.'
         self.metrics.update({name: metric_cls})
-
 
 def metric_registry(metric_type, framework):
     """The class decorator used to register all Metric subclasses.
@@ -263,8 +256,8 @@ def _topk_shape_validate(preds, labels):
     return preds, labels
 
 def _shape_validate(preds, labels):
-    assert type(preds) in [int, list], 'preds must be in int or list'
-    assert type(labels) in [int, list], 'labels must be in int or list'
+    assert type(preds) in [int, list, np.ndarray], 'preds must be in int or list, ndarray'
+    assert type(labels) in [int, list, np.ndarray], 'labels must be in int or list, ndarray'
     if isinstance(preds, int):
         preds = [np.array([preds])]
     elif isinstance(preds[0], int):
@@ -450,7 +443,7 @@ class Loss(BaseMetric):
     def result(self):
         return self.sum / self.sample
 
-@metric_registry('MAE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MAE(BaseMetric):
     def __init__(self, compare_label=True):
         self.label_list = []
@@ -471,12 +464,9 @@ class MAE(BaseMetric):
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
         assert aes_size, "predictions shouldn't be none"
-        if self.compare_label:
-            return aes_sum / aes_size
-        else:
-            return 1 / (aes_sum / aes_size + 0.001)
+        return aes_sum / aes_size
 
-@metric_registry('RMSE', 'tensorflow, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
     def __init__(self, compare_label=True):
         self.mse = MSE(compare_label)
@@ -490,7 +480,7 @@ class RMSE(BaseMetric):
     def result(self):
         return np.sqrt(self.mse.result())
 
-@metric_registry('MSE', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MSE(BaseMetric):
     def __init__(self, compare_label=True):
         self.label_list = []
@@ -511,10 +501,7 @@ class MSE(BaseMetric):
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
         assert squares_size, "predictions should't be None"
-        if self.compare_label:
-            return squares_sum / squares_size
-        else:
-            return 1 / (squares_sum / squares_size + 0.001)
+        return squares_sum / squares_size
 
 @metric_registry('topk', 'tensorflow')
 class TensorflowTopK(BaseMetric):
@@ -608,7 +595,7 @@ class TensorflowCOCOMAP(BaseMetric):
 
     """
     def __init__(self, anno_path=None):
-        from lpot.metric.coco_label_map import category_map
+        from .coco_label_map import category_map
         if anno_path:
             import os
             import json
@@ -631,7 +618,7 @@ class TensorflowCOCOMAP(BaseMetric):
             [cat for cat in self.category_map]) #index
 
     def update(self, predicts, labels, sample_weight=None):
-        from lpot.metric.coco_tools import ExportSingleImageGroundtruthToCoco,\
+        from .coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
         bbox, str_label,int_label, image_id = labels
         detection = {}
@@ -690,7 +677,7 @@ class TensorflowCOCOMAP(BaseMetric):
         self.annotation_id = 1
 
     def result(self):
-        from lpot.metric.coco_tools import COCOWrapper, COCOEvalWrapper
+        from .coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
             logger.warning("sample num is 0 can't calculate mAP")
             return 0

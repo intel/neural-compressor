@@ -55,9 +55,7 @@ class Dataset(object):
 ### 3.Define a customized metric  
 This customized metric will caculate accuracy.
 ```python
-import lpot
-from lpot.metric import Metric
-class MyMetric(Metric):
+class MyMetric(object):
   def __init__(self, *args):
       self.pred_list = []
       self.label_list = []
@@ -84,8 +82,7 @@ class MyMetric(Metric):
 ```
 ### 4.Use the customized data loader and metric for quantization 
 ```python
-import lpot
-quantizer = lpot.Quantization('./conf.yaml')
+quantizer = Quantization('./conf.yaml')
 dataset = Dataset()
 quantizer.metric = common.Metric(MyMetric, 'hello_metric')
 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)

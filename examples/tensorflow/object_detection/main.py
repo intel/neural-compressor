@@ -42,14 +42,14 @@ class eval_object_detection_optimized_graph(object):
         
     def run(self):
         if self.args.tune:
-            from lpot import Quantization
+            from lpot.experimental import Quantization
             quantizer = Quantization(self.args.config)
             quantizer.model = self.args.input_graph
             q_model = quantizer()
             q_model.save(self.args.output_model)
                 
         if self.args.benchmark:
-            from lpot import Benchmark
+            from lpot.experimental import Benchmark
             evaluator = Benchmark(self.args.config)
             evaluator.model = self.args.input_graph
             results = evaluator()

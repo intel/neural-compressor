@@ -8,10 +8,25 @@ Intel® Low Precision Optimization Tool is an open-source Python library designe
 
 The API is intended to unify low-precision quantization interfaces cross multiple DL frameworks for the best out-of-the-box experiences.
 
-The API consists of below componenets:
+> **NOTE**
+>
+> LPOT is keeping improving the user-facing APIs for better user experience. 
+>
+> Now there are two sets of user-facing APIs. One is the default one supported from LPOT v1.0 for backward compatibility. Another one is the new APIs in lpot.experimental package.
+> We recommend user to use the one in lpot.experimental. All of examples have been updated to use this experimental APIs.
+>
+> The major differences between the default use-facing APIs and the experiemntal APIs are:
+>   1. The experimental APIs abstract `lpot.experimental.common.Model` concept to cover those cases whose weight and graph files are stored seperately.
+>   2. The experimental APIs unifiy the calling style of `Quantization`, `Pruning`, and `Benchmark` class by setting model, calibration dataloader, evaluation dataloader, metric through class attributes rather than passing as function inputs.
+>   3. The experimental APIs refine LPOT built-in transforms/datasets/metrics by unifying the APIs cross different framework backends.
+
+## Experimental user-facing APIs
+
+The experimental user-facing APIs consist of below components:
 
 ### quantization-related APIs
 ```python
+# lpot.experimental.Quantization
 class Quantization(object):
     def __init__(self, conf_fname):
         ...
@@ -48,7 +63,7 @@ class Quantization(object):
         ...
 
 ```
-The `conf_fname` parameter used in the class initialization is the path to user yaml configuration file. This is a yaml file that is used to control the entire tuning behavior.
+The `conf_fname` parameter used in the class initialization is the path to user yaml configuration file. This is a yaml file that is used to control the entire tuning behavior on the model.
 
 > **LPOT User YAML Syntax**
 >
@@ -58,7 +73,7 @@ The `conf_fname` parameter used in the class initialization is the path to user 
 
 ```python
 # Typical Launcher code
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 
 # optional if LPOT built-in dataset could be used as model input in yaml
 class dataset(object):
@@ -66,6 +81,7 @@ class dataset(object):
       ...
 
   def __getitem__(self, idx):
+      # return single sample and label tuple without collate. label should be 0 for label-free case
       ...
 
   def len(self):
@@ -77,9 +93,13 @@ class custom_metric(object):
         ...
 
     def update(self, predict, label):
+        # metric update per mini-batch
         ...
 
     def result(self):
+        # final metric calculation invoked only once after all mini-batch are evaluated
+        # return a scalar to lpot for accuracy-driven tuning.
+        # by default the scalar is higher-is-better. if not, set tuning.accuracy_criterion.higher_is_better to false in yaml.
         ...
 
 quantizer = Quantization(conf.yaml)
@@ -96,7 +116,7 @@ q_model = quantizer()
 q_model.save('/path/to/output/dir') 
 ```
 
-`model` attribute in `Quantization` class is an abstraction of model formats cross different frameworks. LPOT supports passing the path of `keras model`, `frozen pb`, `checkpoint`, `saved model`, `torch.nn.model`, `mxnet.symbol.Symbol`, `gluon.HybirdBlock`, and `onnx model` to instantiate a `lpot.common.Model()` class and set to `quantizer.model`.
+`model` attribute in `Quantization` class is an abstraction of model formats cross different frameworks. LPOT supports passing the path of `keras model`, `frozen pb`, `checkpoint`, `saved model`, `torch.nn.model`, `mxnet.symbol.Symbol`, `gluon.HybirdBlock`, and `onnx model` to instantiate a `lpot.experimental.common.Model()` class and set to `quantizer.model`.
 
 `calib_dataloader` and `eval_dataloader` attribute in `Quantization` class is used to setup a calibration dataloader by code. It is optional to set if user sets corresponding fields in yaml.
 
@@ -131,32 +151,13 @@ class Pruning(object):
         ...
 
     @property
-    def calib_dataloader(self):
-        ...
-
-    @property
-    def eval_dataloader(self):
-        ...
-
-    @property
     def model(self):
-        ...
-
-    @property
-    def metric(self):
-        ...
-
-    @property
-    def postprocess(self, user_postprocess):
         ...
 
     @property
     def q_func(self):
         ...
 
-    @property
-    def eval_func(self):
-        ...
 ```
 
 This API is used to do sparsity pruning. Currently it is Proof-of-Concept, LPOT only supports `magnitude pruning` on PyTorch.
@@ -171,9 +172,32 @@ class Benchmark(object):
 
     def __call__(self):
         ...
+
+    @property
+    def model(self):
+        ...
+
+    @property
+    def metric(self):
+        ...
+
+    @property
+    def b_dataloader(self):
+        ...
+
+    @property
+    def postprocess(self, user_postprocess):
+        ...
 ```
 
 This API is used to measure the model performance and accuarcy. 
 
 For how to use this API, please refer to [Benchmark Document](./benchmark.md)
 
+## Default user-facing APIs
+
+The default user-facing APIs would exist for backward compatiblity from v1.0 release. User could refer to [v1.1 API](https://github.com/intel/lpot/blob/v1.1/docs/introduction.md) to understand how default user-facing APIs work.
+
+A [HelloWorld example](../examples/helloworld/tf_example6) using default user-facing APIs is provided for user reference.
+
+Full examples using default user-facing APIs could be found at [here](https://github.com/intel/lpot/tree/v1.1/examples).

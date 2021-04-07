@@ -175,7 +175,7 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -184,7 +184,7 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_resume(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -193,13 +193,14 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_autodump(self):
-        from lpot import Quantization, common
+        # test auto_dump using old api
+        from lpot import Quantization
         quantizer = Quantization('fake_yaml3.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
+        dataloader = quantizer.dataloader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer(self.constant_graph, \
+                                 q_dataloader=dataloader, eval_dataloader=dataloader)
 
 if __name__ == "__main__":
     unittest.main()

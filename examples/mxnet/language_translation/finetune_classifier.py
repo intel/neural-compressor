@@ -752,7 +752,7 @@ if __name__ == '__main__':
         # lpot auto-tuning
         if only_inference:
             calib_data = dev_data_list[0][1]
-            from lpot import Quantization, common
+            from lpot.experimental import Quantization, common
             quantizer = Quantization("./bert.yaml")
             quantizer.model = common.Model(model)
             quantizer.calib_dataloader = calib_data 

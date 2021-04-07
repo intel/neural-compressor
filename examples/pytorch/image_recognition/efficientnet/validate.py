@@ -121,7 +121,7 @@ def main():
         model.eval()
         model.fuse_model()
         conf_yaml = "conf_" + args.model + ".yaml"
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization(conf_yaml)
         quantizer.model = common.Model(model)
         q_model = quantizer()

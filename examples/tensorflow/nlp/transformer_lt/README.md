@@ -108,7 +108,7 @@ In this case we calibrate and quantize the model, and use our calibration datalo
 After prepare step is done, we add tune code to generate quantized model.
 
 ```python
-    from lpot import Quantization
+    from lpot.experimental import Quantization
     from lpot.adaptor.tf_utils.util import write_graph
     quantizer = Quantization(FLAGS.config)
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)

@@ -5,6 +5,7 @@ import numpy as np
 import shutil
 from lpot.utils.create_obj_from_config import create_dataset, create_dataloader
 from lpot.data import DATASETS, DATALOADERS
+from lpot.data.dataloaders.dataloader import DataLoader
 from PIL import Image
 
 class TestBuiltinDataloader(unittest.TestCase):
@@ -318,6 +319,12 @@ class TestImagenetRaw(unittest.TestCase):
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (24,24,3))
             break
+        # test old api
+        eval_dataset = create_dataset('onnxrt_integerops', {'Imagenet':{'root':'./'}}, None, None)
+        dataloader = DataLoader('onnxrt_integerops', dataset=eval_dataset, batch_size=1) 
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (100,100,3))
+            break
 
 class TestImageFolder(unittest.TestCase):
     @classmethod
@@ -605,7 +612,16 @@ class TestDataloader(unittest.TestCase):
 
         eval_dataset = create_dataset(
             'tensorflow', {'ImageRecord':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
+
         dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1) 
+        for (inputs, labels) in dataloader:
+            self.assertEqual(inputs.shape, (1,100,100,3))
+            self.assertEqual(labels.shape, (1, 1))
+
+        # test old api
+        eval_dataset = create_dataset(
+            'tensorflow', {'Imagenet':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
+        dataloader = DataLoader('tensorflow', dataset=eval_dataset, batch_size=1) 
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels.shape, (1, 1))

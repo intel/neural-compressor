@@ -285,7 +285,7 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
 
     if args.tune:
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         if args.ipex:
             quantizer = Quantization("./conf_ipex.yaml")
         else:

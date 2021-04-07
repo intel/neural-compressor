@@ -10,12 +10,12 @@ The configuration will create a dataloader of Imagenet and it will do Bilinear r
 ```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 20                            # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 20                                # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
       batch_size: 1
       dataset:
         ImageRecord:
-          root: <DATASET>/TF_imagenet/val/         # NOTE: modify to calibration dataset location if needed
+          root: <DATASET>/TF_imagenet/val/           # NOTE: modify to calibration dataset location if needed
       transform:
         ParseDecodeImagenet:
         BilinearImagenet: 
@@ -35,7 +35,7 @@ evaluation:                                          # optional. required if use
       batch_size: 32
       dataset:
         ImageRecord:
-          root: <DATASET>/TF_imagenet/val/          # NOTE: modify to evaluation dataset location if needed
+          root: <DATASET>/TF_imagenet/val/           # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet:
         BilinearImagenet: 
@@ -47,8 +47,8 @@ evaluation:                                          # optional. required if use
 3. Run quantizaiton
 We only need to add the following lines for quantization to create an int8 model.
 ```python
-    import lpot
-    quantizer = lpot.Quantization('./conf.yaml')
+    from lpot.experimental import Quantization, common
+    quantizer = Quantization('./conf.yaml')
     quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
     quantized_model = quantizer()
 ```

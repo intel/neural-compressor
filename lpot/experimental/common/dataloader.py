@@ -24,7 +24,7 @@ class DataLoader(object):
        the reason is we have to know the framework info
        and only after the Quantization/Benchmark object created then
        framework infomation can be known. Future we will support
-       creating iterable dataloader from lpot.common.DataLoader
+       creating iterable dataloader from lpot.experimental.common.DataLoader
     """
 
     def __init__(self, dataset, batch_size=1, collate_fn=None,

@@ -412,7 +412,7 @@ def main():
                     acc = result[key]
                     break
             return acc
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         calibration_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                          task="classifier", model_type=config.model_type)

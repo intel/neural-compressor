@@ -64,14 +64,14 @@ def main(_):
 
   if args.tune:
 
-      from lpot import Quantization
+      from lpot.experimental import Quantization
       quantizer = Quantization(args.config)
       quantizer.model = args.input_graph
       q_model = quantizer()
       q_model.save(args.output_graph)
 
   if args.benchmark:
-      from lpot import Benchmark
+      from lpot.experimental import Benchmark
       evaluator = Benchmark(args.config)
       evaluator.model = args.input_graph
       results = evaluator()

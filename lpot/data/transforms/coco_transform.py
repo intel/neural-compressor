@@ -32,9 +32,10 @@
 
 import numpy as np
 from lpot.utils.utility import LazyImport
-from .transform import transform_registry, BaseTransform
+from lpot.experimental.data.transforms import transform_registry, BaseTransform
 tf = LazyImport('tensorflow')
 
+# BELOW IS TO BE DEPRECATED!
 @transform_registry(transform_type="ParseDecodeCoco", \
                     process="preprocess", framework="tensorflow")
 class ParseDecodeCocoTransform(BaseTransform):

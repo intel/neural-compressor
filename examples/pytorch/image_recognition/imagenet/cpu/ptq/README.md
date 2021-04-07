@@ -83,7 +83,7 @@ python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
   After tuning with LPOT, we can get LPOT.model:
 
 ```
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 lpot_model = quantizer()
@@ -230,7 +230,7 @@ After prepare step is done, we just need update main.py like below.
 ```python
 model.eval()
 model.module.fuse_model()
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 q_model = quantizer()
@@ -282,7 +282,7 @@ Add 'backend' field to Yaml Configure and the same for other fields.
 2. Tuning With LPOT
 
 ```python
-  from lpot import Quantization, common
+  from lpot.experimental import Quantization, common
   quantizer = Quantization("./conf_ipex.yaml")
   quantizer.model = common.Model(model)
   lpot_model = quantizer()

@@ -15,22 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import collections
 import numpy as np
 from lpot.utils.utility import LazyImport
-from lpot.data.dataloaders.base_dataloader import BaseDataLoader
-mx = LazyImport('mxnet')
+from .base_dataloader import BaseDataLoader
+torch = LazyImport('torch')
 
-class MXNetDataLoader(BaseDataLoader):
+class PyTorchDataLoader(BaseDataLoader):
+
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory):
         drop_last = False if last_batch == 'rollover' else True
-        return mx.gluon.data.DataLoader(
-                dataset, 
-                batch_size=batch_size, 
-                batchify_fn=collate_fn,
-                last_batch=last_batch,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                sampler=sampler,
-                batch_sampler=batch_sampler)
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_size=batch_size,
+            collate_fn=collate_fn,
+            drop_last=drop_last,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            sampler=sampler,
+            batch_sampler=batch_sampler)

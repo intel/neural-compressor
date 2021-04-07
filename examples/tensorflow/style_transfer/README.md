@@ -111,7 +111,7 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need add 2 lines to get the quantized model.
 ```python
-from lpot import Quantization
+from lpot.experimental import Quantization
 
 quantizer = Quantization(args.config)
 quantizer.model = graph

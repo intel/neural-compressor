@@ -123,8 +123,10 @@ def list_to_tuple(data):
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
         data = float(data.strip('%')) / 100
+    if isinstance(data, int):
+        data = float(data)
     else:
-        assert isinstance(data, float), 'This field should be float or percent string'
+        assert isinstance(data, float), 'This field should be float, int or percent string'
     return data
 
 policy_schema = Schema({
@@ -237,6 +239,17 @@ transform_schema = Schema({
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0))
     },
+    Optional('ToArray'): Or({}, None),
+    Optional('QuantizedInput'): {
+        Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
+        Optional('scale'): And(float, lambda s: s > 0),
+    },
+    Optional('Transpose'): {
+        'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
+    },
+    # THIS API IS TO BE DEPRECATED!
+    Optional('ParseDecodeImagenet'): Or({}, None),
+    Optional('ParseDecodeCoco'): Or({}, None),
     Optional('BilinearImagenet'): {
         'height': And(int, lambda s: s > 0),
         'width': And(int, lambda s: s > 0),
@@ -253,16 +266,6 @@ transform_schema = Schema({
         Optional('random_flip_left_right'): bool,
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float
-    },
-    Optional('ParseDecodeImagenet'): Or({}, None),
-    Optional('ParseDecodeCoco'): Or({}, None),
-    Optional('ToArray'): Or({}, None),
-    Optional('QuantizedInput'): {
-        Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
-        Optional('scale'): And(float, lambda s: s > 0),
-    },
-    Optional('Transpose'): {
-        'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
     },
 })
 
@@ -343,6 +346,10 @@ dataset_schema = Schema({
         Optional('crop_ratio'): float,
         Optional('resize_shape'): And(Or(str, list), Use(input_to_list_int)),
         Optional('image_format'): str,
+    },
+    # TO BE DEPRECATED!
+    Optional('Imagenet'): {
+        'root': str,
     },
 })
 
@@ -450,7 +457,7 @@ schema = Schema({
     },
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
-        'accuracy_criterion': {'relative': 0.01},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
@@ -463,7 +470,8 @@ schema = Schema({
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
             Optional('relative'): And(Or(str, float), Use(percent_to_float)),
-            Optional('absolute'): And(Or(str, float), Use(percent_to_float)),
+            Optional('absolute'): And(Or(str, int, float), Use(percent_to_float)),
+            Optional('higher_is_better', default=True): bool,
         },
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
         Optional('exit_policy', default={'timeout': 0,

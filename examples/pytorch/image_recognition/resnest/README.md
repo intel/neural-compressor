@@ -65,7 +65,7 @@ model:                                               # mandatory. lpot uses this
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 300                               # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 300                               # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
       batch_size: 30
       dataset:
@@ -145,7 +145,7 @@ After prepare step is done, we just need update main.py like below.
 
 ```python
 model.fuse_model()
-from lpot import Quantization, common
+from lpot.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 q_model = quantizer()

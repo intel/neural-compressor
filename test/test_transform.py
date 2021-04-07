@@ -766,7 +766,7 @@ class TestBertSquad(unittest.TestCase):
         cls.vocab_file = 'bert/vocab.txt'
 
     def testSquadV1PostAndF1(self):
-        from lpot.data.transforms.transform import SquadV1PostTransform
+        from lpot.experimental.data.transforms.transform import SquadV1PostTransform
         squad_post = SquadV1PostTransform(self.label_file, self.vocab_file) 
         unique_ids=np.arange(1000000000, 1000010833) 
         start_logits=np.ones((10833, 384), np.float32)
@@ -781,7 +781,7 @@ class TestBertSquad(unittest.TestCase):
 
         labels = get_labels(self.label_file)
         preds, labels = squad_post((preds, labels))
-        from lpot.metric.metric import SquadF1
+        from lpot.experimental.metric.metric import SquadF1
         squad_metric = SquadF1()
         squad_metric.update(preds, labels)
         result = squad_metric.result()
@@ -789,13 +789,13 @@ class TestBertSquad(unittest.TestCase):
         squad_metric.reset()
 
     def testBertDataLoader(self):
-        from lpot.data.datasets.bert_dataset import TensorflowBertDataset
+        from lpot.experimental.data.datasets.bert_dataset import TensorflowBertDataset
         fake_record='fake.tf_record'
         bert_dataset = TensorflowBertDataset(fake_record, self.label_file) 
         self.assertEqual(len(bert_dataset), 1)
         get_record, _ = bert_dataset[0]
         self.assertEqual(fake_record, get_record)
-        from lpot.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
+        from lpot.experimental.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
         bert_dataloader = TensorflowDataLoader(bert_dataset, batch_size=1)
         iterator = iter(bert_dataloader)
         (get_record, batch_size), _ = next(iterator)

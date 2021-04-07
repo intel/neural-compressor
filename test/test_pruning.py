@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data.datasets.dummy_dataset import PyTorchDummyDataset
-from lpot.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from lpot.experimental.data.datasets.dummy_dataset import PyTorchDummyDataset
+from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
     fake_yaml = """
@@ -52,7 +52,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning(self):
-        from lpot import Pruning, common
+        from lpot.experimental import Pruning, common
         prune = Pruning('fake.yaml')
  
         dummy_dataset = PyTorchDummyDataset([tuple([100, 3, 256, 256])])

@@ -168,7 +168,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv"])
 
     def test_quantizate(self):
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader

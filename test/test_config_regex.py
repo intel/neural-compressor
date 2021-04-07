@@ -124,7 +124,7 @@ class TestConfigRegex(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization, common
+            from lpot.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
@@ -177,7 +177,7 @@ class TestConfigRegex(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot import Quantization, common
+            from lpot.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml_with_invalid_cfg.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)

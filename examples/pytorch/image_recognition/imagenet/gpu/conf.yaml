@@ -21,7 +21,7 @@ device: gpu
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 150                               # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 150                               # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
       batch_size: 30
       dataset:

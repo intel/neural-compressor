@@ -202,7 +202,7 @@ model:                                               # mandatory. lpot uses this
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 5, 10                             # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 5, 10                             # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
       dataset:
         ImageRecord:
@@ -277,7 +277,7 @@ This tool support tune and benchmark the model, when in the tune phase, make sur
 
 ```python
 
-    from lpot import Quantization
+    from lpot.experimental import Quantization
     from lpot.adaptor.tf_utils.util import get_slim_graph
     quantizer = Quantization(self.args.config)
     slim_graph = get_slim_graph(args.input_graph, model_func, arg_scope, images, **kwargs)
@@ -289,7 +289,7 @@ when in benchmark phase:
 
 ```python
 
-    from lpot import Benchmark
+    from lpot.experimental import Benchmark
     evaluator = Benchmark(args.config)
     results = evaluator(model=args.input_graph)
 ```

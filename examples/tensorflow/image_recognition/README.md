@@ -299,7 +299,7 @@ model:                                               # mandatory. lpot uses this
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 5, 10                             # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 5, 10                             # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
       dataset:
         ImageRecord:
@@ -383,7 +383,7 @@ After completed preparation steps, we just need to add below tuning part in `eva
     Returns:
         graph: it will return a quantized pb
     """
-    from lpot import Quantization, common
+    from lpot.experimental import Quantization, common
     quantizer = Quantization(self.args.config)
     quantizer.model = common.Model(self.args.input_graph)
     q_model = quantizer()

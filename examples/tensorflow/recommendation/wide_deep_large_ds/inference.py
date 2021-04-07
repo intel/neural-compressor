@@ -180,7 +180,7 @@ class eval_classifier_optimized_graph:
         Returns:
             graph: it will return a quantized pb
         """
-        from lpot import Quantization
+        from lpot.experimental import Quantization
         infer_graph = load_graph(self.args.input_graph)
         quantizer = Quantization(self.args.config)
         if self.args.calib_data:
