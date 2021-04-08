@@ -363,10 +363,11 @@ dataloader_schema = Schema({
 
 configs_schema = Schema({
     Optional('cores_per_instance'): And(int, lambda s: s > 0),
-    Optional('num_of_instance'): And(int, lambda s: s > 0),
+    Optional('num_of_instance', default=1): And(int, lambda s: s > 0),
     Optional('inter_num_of_threads'): And(int, lambda s: s > 0),
     Optional('intra_num_of_threads'): And(int, lambda s: s > 0),
     Optional('kmp_blocktime'): And(int, lambda s: s >= 0),
+    Optional('kmp_affinity', default='granularity=fine,verbose,compact,1,0'): str,
 })
 
 schema = Schema({

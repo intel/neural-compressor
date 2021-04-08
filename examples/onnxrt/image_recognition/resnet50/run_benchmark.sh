@@ -19,6 +19,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
+      --mode=*)
+          mode=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -30,7 +33,9 @@ function run_benchmark {
     python main.py \
             --model_path ${input_model} \
             --config ${config} \
+            --mode=${mode} \
             --benchmark
+            
 }
 
 main "$@"

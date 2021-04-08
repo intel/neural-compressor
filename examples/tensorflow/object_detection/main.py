@@ -35,6 +35,7 @@ class eval_object_detection_optimized_graph(object):
                             dest='input_graph')
         arg_parser.add_argument('--config', type=str, default='')
         arg_parser.add_argument('--output_model', type=str, default='')
+        arg_parser.add_argument('--mode', type=str, default='performance')
         arg_parser.add_argument('--tune', action='store_true', default=False)
         arg_parser.add_argument('--benchmark', dest='benchmark',
                             action='store_true', help='run benchmark')
@@ -52,16 +53,7 @@ class eval_object_detection_optimized_graph(object):
             from lpot.experimental import Benchmark
             evaluator = Benchmark(self.args.config)
             evaluator.model = self.args.input_graph
-            results = evaluator()
-            for mode, result in results.items():
-                acc, batch_size, result_list = result
-                latency = np.array(result_list).mean() / batch_size
-
-                print('\n{} mode benchmark result:'.format(mode))
-                print('Accuracy is {:.3f}'.format(acc))
-                print('Batch size = {}'.format(batch_size))
-                print('Latency: {:.3f} ms'.format(latency * 1000))
-                print('Throughput: {:.3f} images/sec'.format(1./ latency))
+            evaluator(self.args.mode)
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_object_detection_optimized_graph()

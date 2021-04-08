@@ -35,7 +35,7 @@ function run_tuning {
       --input_model=${input_model} \
       --output_model=${output_model} \
       --config=${config} \
-      --mode=tune \
+      --tune \
 
 }
 

@@ -20,6 +20,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
+      --mode=*)
+          mode=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -36,7 +39,8 @@ function run_benchmark {
     python tune_squad.py \
       --config=${config} \
       --input_model=${input_model} \
-      --mode=benchmark \
+      --mode=${mode} \
+      --benchmark \
 
 }
 

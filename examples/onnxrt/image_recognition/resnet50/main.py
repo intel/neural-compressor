@@ -61,6 +61,11 @@ if __name__ == "__main__":
         type=str,
         help="output model path"
     )
+    parser.add_argument(
+        '--mode',
+        type=str,
+        help="benchmark mode of performance or accuracy"
+    )
 
     args = parser.parse_args()
 
@@ -69,16 +74,7 @@ if __name__ == "__main__":
         from lpot.experimental import Benchmark, common
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(model)
-        results = evaluator()
-        for mode, result in results.items():
-            acc, batch_size, result_list = result
-            latency = np.array(result_list).mean() / batch_size
-
-            print('\n{} mode benchmark result:'.format(mode))
-            print('Accuracy is {:.3f}'.format(acc))
-            print('Batch size = {}'.format(batch_size))
-            print('Latency: {:.3f} ms'.format(latency * 1000))
-            print('Throughput: {:.3f} images/sec'.format(batch_size * 1./ latency))
+        evaluator(args.mode)
 
     if args.tune:
         from lpot.experimental import Quantization, common
@@ -92,13 +88,4 @@ if __name__ == "__main__":
             from lpot.experimental import Benchmark
             evaluator = Benchmark(args.config)
             evaluator.model = common.Model(q_model)
-            results = evaluator()
-            for mode, result in results.items():
-                acc, batch_size, result_list = result
-                latency = np.array(result_list).mean() / batch_size
-
-                print('\n quantized model {} mode benchmark result:'.format(mode))
-                print('Accuracy is {:.3f}'.format(acc))
-                print('Batch size = {}'.format(batch_size))
-                print('Latency: {:.3f} ms'.format(latency * 1000))
-                print('Throughput: {:.3f} images/sec'.format(batch_size * 1./ latency))
+            evaluator(args.mode)

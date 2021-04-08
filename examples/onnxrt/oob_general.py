@@ -80,6 +80,8 @@ if __name__ == "__main__":
                         help='Tuning config file path')
     parser.add_argument('--output_model',type=str, default=None,
                         help='output model path and name')
+    parser.add_argument('--mode',type=str, default='performance',
+                        help='benchmark mode of performance')
     parser.add_argument('--benchmark',action='store_true', default=False,
                         help='Get benchmark performance of quantized model.')
     parser.add_argument('--benchmark_nums', type=int, default=1000,
@@ -113,17 +115,8 @@ if __name__ == "__main__":
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(model)
         evaluator.b_dataloader = dummy_dataloader
-        results = evaluator()
-        for mode, result in results.items():
-            acc, batch_size, result_list = result
-            latency = np.array(result_list).mean() / batch_size
+        evaluator(args.mode)
 
-            print('\n quantized model {} mode benchmark result:'.format(mode))
-            print('Accuracy is {:.3f}'.format(acc))
-            print('Batch size = {}'.format(batch_size))
-            print('Latency: {:.3f} ms'.format(latency * 1000))
-            print('Throughput: {:.3f} images/sec'.format(batch_size * 1./ latency))
-    
     if args.tune:
 
         from lpot.experimental import Quantization, common

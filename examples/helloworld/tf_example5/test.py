@@ -13,15 +13,8 @@ def main():
     from lpot.experimental import Benchmark
     evaluator = Benchmark('./conf.yaml')
     evaluator.model = common.Model(quantized_model.graph_def)
-    results = evaluator()
-    batch_size = 1
-    for mode, result in results.items():
-       acc, batch_size, result_list = result
-       latency = np.array(result_list).mean() / batch_size
+    evaluator(mode='performance')
 
-       print('Accuracy is {:.3f}'.format(acc))
-       print('Latency: {:.3f} ms'.format(latency * 1000))
-      
 if __name__ == "__main__":
 
     main()

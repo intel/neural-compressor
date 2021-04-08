@@ -24,37 +24,33 @@ FLAGS = flags.FLAGS
 
 ## Required parameters
 flags.DEFINE_string(
-    "input_model", None,
-    "Run inference with specified pb graph.")
+    'input_model', None, 'Run inference with specified pb graph.')
 
 flags.DEFINE_string(
-    "output_model", None,
-    "The output model of the quantized model.")
+    'output_model', None, 'The output model of the quantized model.')
 
 flags.DEFINE_string(
-    "mode", 'tune',
-    "One of three options: 'benchmark'/'tune'/'accuracy'.")
+    'mode', 'performance', 'define benchmark mode for accuracy or performance')
+
+flags.DEFINE_bool(
+    'tune', False, 'whether to tune the model')
+
+flags.DEFINE_bool(
+    'benchmark', False, 'whether to benchmark the model')
 
 flags.DEFINE_string(
-    "config", 'bert.yaml', "yaml configuration of the model")
+    'config', 'bert.yaml', 'yaml configuration of the model')
 
 def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
-    if FLAGS.mode == 'benchmark':
+    if FLAGS.benchmark:
         from lpot.experimental import Benchmark
         evaluator = Benchmark(FLAGS.config)
         evaluator.model = FLAGS.input_model
-        results = evaluator()
-        for mode, result in results.items():
-            acc, batch_size, result_list = result
-            latency = np.array(result_list).mean() / batch_size
-            print('\n{} mode benchmark result:'.format(mode))
-            print('Accuracy is {:.3f}'.format(acc))
-            print('Batch size = {}'.format(batch_size))
-            print('Latency: {:.3f} ms'.format(latency * 1000))
-            print('Throughput: {:.3f} images/sec'.format(1./ latency))
-    elif FLAGS.mode == 'tune':
+        evaluator(FLAGS.mode)
+
+    elif FLAGS.tune:
         from lpot.quantization import Quantization
         quantizer = Quantization(FLAGS.config)
         quantizer.model = FLAGS.input_model

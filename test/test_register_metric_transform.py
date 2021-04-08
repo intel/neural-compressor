@@ -31,10 +31,6 @@ class TestRegisterMetric(unittest.TestCase):
         if not os.path.exists(self.pb_path):
             os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(self.model_url, self.pb_path))
 
-    @classmethod
-    def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
-
     def test_register_metric_postprocess(self):
         import PIL.Image 
         image = np.array(PIL.Image.open(self.image_path))
@@ -51,10 +47,9 @@ class TestRegisterMetric(unittest.TestCase):
 
         evaluator.postprocess('label_benchmark', LabelShift, label_shift=1) 
         evaluator.metric('topk_benchmark', TensorflowTopK)
+        # as we supported multi instance, the result will print out instead of return
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        result = evaluator(self.pb_path, b_dataloader=dataloader)
-        acc, batch_size, result_list = result['accuracy']
-        self.assertEqual(acc, 0.0)
+        evaluator(self.pb_path, b_dataloader=dataloader)
 
         quantizer = Quantization('fake_yaml.yaml')
         quantizer.postprocess('label_quantize', LabelShift, label_shift=1) 
@@ -65,8 +60,6 @@ class TestRegisterMetric(unittest.TestCase):
 
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
         result = evaluator(self.pb_path, b_dataloader=dataloader)
-        acc, batch_size, result_list = result['accuracy']
-        self.assertEqual(acc, 0.0)
 
 
 if __name__ == "__main__":

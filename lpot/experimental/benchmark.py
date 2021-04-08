@@ -15,17 +15,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import sys
+import numpy as np
+import subprocess
+import signal
+import psutil
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..conf.config import Conf
+from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
-from ..model import BaseModel as LpotModel
+from ..model import MODELS
+from ..model import BaseModel
+from .data import TRANSFORMS
+from .metric import METRICS
+from .common import Model as LpotModel
+from .common import Metric as LpotMetric
+from .common import Postprocess as LpotPostprocess
+from .common import _generate_common_dataloader
+
+def set_env_var(env_var, value, overwrite_existing=False):
+    """Sets the specified environment variable. Only set new env in two cases:
+        1. env not exists
+        2. env already exists but overwirte_existing params set True
+    """
+    if overwrite_existing or not os.environ.get(env_var):
+        os.environ[env_var] = str(value)
+
+def set_all_env_var(conf, overwrite_existing=False):
+    # lpot only use physical cores
+    cpu_counts = psutil.cpu_count(logical=False)
+    if not conf:
+        conf = {}
+        conf['num_of_instance'] = 1
+        conf['cores_per_instance'] = cpu_counts
+    if 'cores_per_instance' in conf:
+        assert conf['cores_per_instance'] * conf['num_of_instance'] <= cpu_counts,\
+            'num_of_instance * cores_per_instance should <= cpu physical cores'
+    else:
+        assert conf['num_of_instance'] <= cpu_counts, 'num_of_instance should <= cpu counts'
+        conf['cores_per_instance'] = int(cpu_counts / conf['num_of_instance'])
+    
+    for var, value in conf.items():
+        set_env_var(var.upper(), value, overwrite_existing)
+    # a special but usually used case, directly use current process
+    if conf['num_of_instance'] == 1 and conf['cores_per_instance'] == cpu_counts:
+        set_env_var('LPOT_ENV_CONF', True, overwrite_existing=True)
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance, with the objective
        setting, user can get the data of what they configured in yaml
+       NOTICE: lpot Benchmark will use the original command to run sub process, this will
+       depend on user's code and has possibility to run unneccessary code
 
     Args:
         conf_fname (string): The path to the YAML configuration file containing accuracy goal,
@@ -38,8 +82,73 @@ class Benchmark(object):
         self.framework = self.conf.usr_cfg.model.framework.lower()
         self._model = None
         self._b_dataloader = None
+        self._results = {}
 
-    def __call__(self):
+    def __call__(self, mode='performance'):
+        cfg = self.conf.usr_cfg
+        assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
+        # use first eval config in yaml if mode from __call__not same with yaml config
+        if not mode in cfg.evaluation:
+            mode = list(cfg.evaluation.keys())[0]
+        assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
+        set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
+
+        if os.environ.get('LPOT_ENV_CONF') == 'True':
+            return self.run_instance(mode)
+        else:
+            return self.config_instance()
+
+    def config_instance(self):
+        raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
+        multi_instance_cmd = ''
+        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
+        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+        for i in range(0, num_of_instance):
+            core_list = np.arange(0, cores_per_instance) + i * cores_per_instance
+            # bind cores only allowed in linux/mac os with numactl enabled
+            prefix = self.generate_prefix(core_list)
+            instance_cmd = '{} {}'.format(prefix, raw_cmd)
+            if sys.platform in ['linux']:
+                instance_log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+                multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
+                    instance_cmd, instance_log)
+            else:
+                # (TODO) should also add log to win32 benchmark
+                multi_instance_cmd += '{} \n'.format(instance_cmd)
+        
+        multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
+        logger.info('Instance run command is\n{}'.format(multi_instance_cmd))
+        # each instance will execute single instance
+        set_env_var('LPOT_ENV_CONF', True, overwrite_existing=True)
+        if sys.platform in ['linux']:
+            p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
+        elif sys.platform in ['win32']:
+            p = subprocess.Popen(multi_instance_cmd, start_new_session=True, shell=True) # nosec
+        try:
+            p.communicate()
+        except KeyboardInterrupt:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+
+    def generate_prefix(self, core_list):
+        if sys.platform in ['linux'] and os.system('numactl --show >/dev/null 2>&1') == 0:
+            return 'OMP_NUM_THREADS={} numactl --localalloc --physcpubind={}'.format(\
+                len(core_list), ','.join(core_list.astype(str)))
+        elif sys.platform in ['win32']:
+            # (TODO) should we move the hw_info from ux?
+            from lpot.ux.utils.hw_info import get_number_of_sockets
+            num_of_socket = int(get_number_of_sockets())
+            cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+            cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
+            socket_id = int(core_list[0] // cores_per_socket)
+            # cores per socket should integral multiple of cores per instance, else not bind core
+            if cores_per_socket % cores_per_instance == 0:
+                from functools import reduce
+                hex_core = hex(reduce(lambda x, y : x | y, [1 << p for p in core_list]))
+                return 'start /b /WAIT /node {} /affinity {} CMD /c'.format(socket_id, hex_core)
+        else:
+            return ''
+
+    def run_instance(self, mode):
         cfg = self.conf.usr_cfg
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
@@ -60,58 +169,66 @@ class Benchmark(object):
                                             "q_dataloader": None,
                                             "benchmark": True})
 
-        assert isinstance(self._model, LpotModel), 'need set lpot Model for quantization....'
+        assert isinstance(self._model, BaseModel), 'need set lpot Model for quantization....'
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
-        assert cfg.evaluation is not None, 'benchmark need evaluation filed not be None'
-        results = {}
-        for mode in cfg.evaluation.keys():
-            iteration = -1 if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) is None \
-                else deep_get(cfg, 'evaluation.{}.iteration'.format(mode))
-            metric =  deep_get(cfg, 'evaluation.{}.metric'.format(mode))
-            b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
+        iteration = -1 if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) is None \
+            else deep_get(cfg, 'evaluation.{}.iteration'.format(mode))
+        metric =  deep_get(cfg, 'evaluation.{}.metric'.format(mode))
+        b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
 
-            if self._b_dataloader is None:
-                assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
-                    'dataloader field of yaml file is missing'
+        if self._b_dataloader is None:
+            assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
+                'dataloader field of yaml file is missing'
 
-                b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
-                self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
-                b_func = create_eval_func(self.framework, \
-                                          self._b_dataloader, \
-                                          adaptor, \
-                                          metric, \
-                                          b_postprocess_cfg,
-                                          iteration=iteration)
-            else:
-                b_func = create_eval_func(self.framework, \
-                                          self._b_dataloader, \
-                                          adaptor, \
-                                          metric, \
-                                          b_postprocess_cfg,
-                                          iteration=iteration)
+            b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
+            self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
+            b_func = create_eval_func(self.framework, \
+                                      self._b_dataloader, \
+                                      adaptor, \
+                                      metric, \
+                                      b_postprocess_cfg,
+                                      iteration=iteration)
+        else:
+            b_func = create_eval_func(self.framework, \
+                                      self._b_dataloader, \
+                                      adaptor, \
+                                      metric, \
+                                      b_postprocess_cfg,
+                                      iteration=iteration)
 
-            objective = cfg.tuning.objective.lower()
-            self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion, \
-                                                   is_measure=True)
+        objective = cfg.tuning.objective.lower()
+        self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion, \
+                                               is_measure=True)
 
-            val = self.objective.evaluate(b_func, self._model)
-            logger.info('{} mode benchmark done!'.format(mode))
-            # measurer contain info not only performance(eg, memory, model_size)
-            # also measurer have result list among steps
-            acc, _ = val
-            batch_size = self._b_dataloader.batch_size
-            warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
-                else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
+        val = self.objective.evaluate(b_func, self._model)
+        logger.info('{} mode benchmark done!'.format(mode))
+        # measurer contain info not only performance(eg, memory, model_size)
+        # also measurer have result list among steps
+        acc, _ = val
+        batch_size = self._b_dataloader.batch_size
+        warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
+            else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
-            assert len(self.objective.measurer.result_list()) > warmup, \
-                'itreation should larger than warmup'
+        assert len(self.objective.measurer.result_list()) > warmup, \
+            'itreation should larger than warmup'
 
-            results[mode] = acc, batch_size, \
-                            self.objective.measurer.result_list()[warmup:]
+        result_list = self.objective.measurer.result_list()[warmup:]
+        latency = np.array(result_list).mean() / batch_size
+        self._results[mode] = acc, batch_size, result_list
 
-        return results
+        logger.info('\n{} mode benchmark result:'.format(mode))
+        for i, res in enumerate(result_list):
+            logger.debug('Iteration {} result {}:'.format(i, res))
+        logger.info('Accuracy is {:.4f}'.format(acc))
+        logger.info('Batch size = {}'.format(batch_size))
+        logger.info('Latency: {:.3f} ms'.format(latency * 1000))
+        logger.info('Throughput: {:.3f} images/sec'.format(1./ latency))
+
+    @property
+    def results(self):
+        return self._results
 
     @property
     def b_dataloader(self):
@@ -144,7 +261,6 @@ class Benchmark(object):
                                       from lpot.experimental.common.DataLoader
 
         """
-        from .common import _generate_common_dataloader
         self._b_dataloader = _generate_common_dataloader(dataloader, self.framework)
 
     @property
@@ -169,8 +285,6 @@ class Benchmark(object):
                        make sure the name is in supported slim model list.
         
         """
-        from .common import Model as LpotModel
-        from ..model import MODELS
         if not isinstance(user_model, LpotModel):
             logger.warning('force convert user raw model to lpot model, ' + 
                 'better initialize lpot.experimental.common.Model and set....')
@@ -210,7 +324,6 @@ class Benchmark(object):
                 specific frameworks and initialized.
                                               
         """
-        from .common import Metric as LpotMetric
         assert isinstance(user_metric, LpotMetric), \
             'please initialize a lpot.experimental.common.Metric and set....'
 
@@ -218,9 +331,7 @@ class Benchmark(object):
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning('already set metric in yaml file, will override it...')
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        from ..conf.dotdict import DotDict
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-        from ..metric import METRICS
         metrics = METRICS(self.framework)
         metrics.register(user_metric.name, user_metric.metric_cls)
 
@@ -244,14 +355,12 @@ class Benchmark(object):
                 registered to specific frameworks and initialized.
 
         """
-        from .common import Postprocess as LpotPostprocess
         assert isinstance(user_postprocess, LpotPostprocess), \
             'please initialize a lpot.experimental.common.Postprocess and set....'
         postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
             logger.warning('already set postprocess in yaml file, will override it...')
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
-        from ..data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
         logger.info("{} registered to postprocess".format(user_postprocess.name))

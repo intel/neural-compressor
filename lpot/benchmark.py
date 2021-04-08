@@ -43,8 +43,8 @@ class Benchmark(object):
             self.exp_benchmarker.b_dataloader = b_dataloader
         elif b_func is not None:
             logger.warning('Benchmark will do nothing when you input b_func...')
-        return self.exp_benchmarker()
-
+        self.exp_benchmarker()
+        return self.exp_benchmarker.results
 
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
                    sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
