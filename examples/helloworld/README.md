@@ -9,7 +9,7 @@ The `train.py` script generates a saved model and a frozen pb at ./models for yo
 
 The following Hello World examples are available:
 
-*  Buildin dataloader and metric, with pb model: [tf_example1](../../examples/helloworld/tf_example1/README.md)
+*  Builtin dataloader and metric, with pb model: [tf_example1](../../examples/helloworld/tf_example1/README.md)
 *  Customized dataloader and metric, with Keras saved model: [tf_example2](../../examples/helloworld/tf_example2/README.md)
 *  TensorFlow slim model: [tf_example3](../../examples/helloworld/tf_example3/README.md)
 *  TensorFlow checkpoint: [tf_example4](../../examples/helloworld/tf_example4/README.md)

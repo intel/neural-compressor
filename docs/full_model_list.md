@@ -810,33 +810,24 @@ ONNX Models:
 <table>
 <thead>
   <tr>
-    <th>Framework</th>
-    <th>Version</th>
-    <th>Model</th>
-    <th>Dataset</th>
-    <th>Tuning Time (s)</th>
-    <th>Accuracy</th>
-    <th></th>
-    <th></th>
+    <th rowspan="2">Framework</th>
+    <th rowspan="2">Version</th>
+    <th rowspan="2">Model</th>
+    <th rowspan="2">Dataset</th>
+    <th colspan="3">Accuracy</th>
+  </tr>
+  <tr>
+    <td>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy</td>
+    <td>FP32 Accuracy&nbsp;&nbsp;&nbsp;Baseline</td>
+    <td>Acc Ratio&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</td>
   </tr>
 </thead>
 <tbody>
-  <tr>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td>INT8</td>
-    <td>FP32</td>
-    <td>Relative Loss: (INT8-FP32)/FP32</td>
-  </tr>
   <tr>
     <td>ONNX RT</td>
     <td>1.6.0 (opset11+)</td>
     <td>resnet50_v1_5</td>
     <td>ImageNet</td>
-    <td>1361</td>
     <td>73.60%</td>
     <td>74.00%</td>
     <td>-0.54%</td>
@@ -846,7 +837,6 @@ ONNX Models:
     <td></td>
     <td>vgg16</td>
     <td>ImageNet</td>
-    <td>2383</td>
     <td>68.86%</td>
     <td>69.44%</td>
     <td>-0.84%</td>
@@ -856,7 +846,6 @@ ONNX Models:
     <td></td>
     <td>bert_base_mrpc</td>
     <td>MRPC</td>
-    <td>30</td>
     <td>85.29%</td>
     <td>86.03%</td>
     <td>-0.85%</td>
@@ -866,7 +855,6 @@ ONNX Models:
     <td></td>
     <td>MobileBERT</td>
     <td>MRPC</td>
-    <td>44</td>
     <td>0.8603</td>
     <td>0.8627</td>
     <td>-0.28%</td>
@@ -876,7 +864,6 @@ ONNX Models:
     <td></td>
     <td>RoBERTa</td>
     <td>MRPC</td>
-    <td>76</td>
     <td>0.8873</td>
     <td>0.8946</td>
     <td>-0.82%</td>
@@ -886,7 +873,6 @@ ONNX Models:
     <td></td>
     <td>DistilBERT</td>
     <td>MRPC</td>
-    <td>42</td>
     <td>0.8505</td>
     <td>0.8456</td>
     <td>0.58%</td>
