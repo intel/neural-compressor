@@ -74,6 +74,10 @@ class PreOptimization():
         """
         self.logger.debug("Start to pre optimize input model...")
 
+        origin_model = TensorflowModel(self.model._model,
+                                       self.model.framework_specific_info,
+                                       **self.model.kwargs)
+
         self._tmp_graph_def = ConvertLayoutOptimizer(
             self.model.graph_def, self.output_node_names).do_transformation()
 
@@ -89,14 +93,15 @@ class PreOptimization():
 
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, self.input_node_names,
-                                                        self.output_node_names).do_transformation()
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, 
+            self.input_node_names, self.output_node_names).do_transformation()
 
         self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = FoldBatchNormNodesOptimizer(
+            self._tmp_graph_def).do_transformation()
 
         #TODO we should handle all control ops elegantly not bypass it.
         self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
@@ -104,8 +109,9 @@ class PreOptimization():
         self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
-        optimized_model = TensorflowModel(self._tmp_graph_def, self.model.framework_specific_info)
-        return optimized_model
+        origin_model.graph_def = self._tmp_graph_def
+
+        return origin_model
 
     def get_matched_nodes(self, patterns):
         """Searche the matched nodes with the specified patterns

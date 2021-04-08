@@ -100,9 +100,10 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
-        self._fp32_model = TensorflowModel(self.model.model,
+        self._fp32_model = TensorflowModel(self.model._model,
                                            self.model.framework_specific_info,
                                            **self.model.kwargs)
+        self._fp32_model.graph_def = self.model.graph_def
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member 
     def _inference(self, model):
@@ -177,9 +178,10 @@ class GraphConverter:
 
         self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
         # to keep temp model
-        self._tmp_model = TensorflowModel(self.model.model, \
+        self._tmp_model = TensorflowModel(self.model._model, \
                                           self.model.framework_specific_info,
                                           **self.model.kwargs)
+        self._tmp_model.graph_def = self.model.graph_def
 
     def convert(self):
         """Do convert, including:

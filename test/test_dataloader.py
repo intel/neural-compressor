@@ -326,6 +326,24 @@ class TestImagenetRaw(unittest.TestCase):
             self.assertEqual(data[0][0].shape, (100,100,3))
             break
 
+        with open('val/fake_map.txt', 'w') as f:
+            f.write('test.jpg   0 \n')
+            f.write('test2.jpg   1')
+        dataset_args = {
+            "ImagenetRaw": {'data_path':'val', 'image_list':'val/fake_map.txt'},
+        }
+        dataset = create_dataset('onnxrt_integerops', dataset_args, None, None)
+        self.assertEqual(len(dataset), 1)
+
+        with open('val/fake_map.txt', 'w') as f:
+            f.write('test2.jpg   1')
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/fake_map.txt'}},
+            'transform': None,
+            'filter': None
+        }
+        self.assertRaises(ValueError, create_dataloader, 'onnxrt_integerops', dataloader_args)
+
 class TestImageFolder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

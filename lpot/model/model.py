@@ -446,11 +446,32 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
             for f in file_names:
                 shutil.move(os.path.join(self._model, f), root)
 
-# class TensorflowKerasModel(TensorflowBaseModel):
-# 
-#     # (TODO) implement new method of concrete function or saved model
-#     def save(self, root):
-#         pass
+class TensorflowKerasModel(TensorflowBaseModel):
+
+    def save(self, root):
+        if os.path.exists(root):
+            import shutil
+            shutil.rmtree(root)
+
+        os.makedirs(root, exist_ok=True)
+        from tensorflow.python.saved_model import signature_constants
+        from tensorflow.python.saved_model import tag_constants
+        from lpot.adaptor.tf_utils.util import get_tensor_by_name
+        builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(root)
+        sigs = {}
+        with tf.compat.v1.Session(graph=tf.Graph()) as sess:
+            tf.import_graph_def(self.sess.graph.as_graph_def(), name="")
+            g = tf.compat.v1.get_default_graph()
+            inp = [get_tensor_by_name(g, x) for x in self._input_tensor_names]
+            out = [get_tensor_by_name(g, x) for x in self._output_tensor_names]
+            sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
+            tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
+                {k: v for k, v in zip(self._input_tensor_names, inp)},  
+                {k: v for k, v in zip(self._output_tensor_names, out)})
+            builder.add_meta_graph_and_variables(sess,
+                                                 [tag_constants.SERVING],
+                                                 signature_def_map=sigs)
+        builder.save()
 
 class TensorflowCheckpointModel(TensorflowBaseModel):
 
@@ -472,7 +493,7 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'estimator': TensorflowBaseModel,
                      'slim': TensorflowBaseModel,
                      'saved_model': TensorflowSavedModelModel,
-                     'keras': TensorflowBaseModel,}
+                     'keras': TensorflowKerasModel,}
 
 
 class PyTorchBaseModel(BaseModel):

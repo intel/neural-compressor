@@ -213,8 +213,11 @@ class TestTensorflowModel(unittest.TestCase):
         model = TensorflowModel('./simple_model')
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
+
+        os.makedirs('./keras_model', exist_ok=True)
+        model.save('./keras_model')
         os.system('rm -rf simple_model')
-      
+        os.system('rm -rf keras_model')
 
     def test_saved_model(self):
         
@@ -236,7 +239,9 @@ class TestTensorflowModel(unittest.TestCase):
         if os.path.exists(tmp_saved_model_path):
            os.system('rm -rf {}'.format(tmp_saved_model_path))
         os.system('mkdir -p {}'.format(tmp_saved_model_path))
-        
+       
+        self.assertTrue(isinstance(model.graph_def, tf.compat.v1.GraphDef))
+        self.assertTrue(isinstance(model.graph, tf.compat.v1.Graph))
         model.save(tmp_saved_model_path)
         # load again to make sure model can be loaded
         model = TensorflowModel(tmp_saved_model_path)
