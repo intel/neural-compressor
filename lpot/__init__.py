@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from .quantization import Quantization
+# from .graph_optimization import Graph_Optimization
 from .pruning import Pruning
 from .benchmark import Benchmark
 from .version import __version__

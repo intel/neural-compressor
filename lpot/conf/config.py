@@ -176,6 +176,29 @@ ops_schema = Schema({
     }
 })
 
+graph_optimization_schema = Schema({
+
+    Optional('precisions', default={'precisions': ['bf16', 'fp32']}): And(
+        Or(str, list),
+        Use(input_to_list),
+        lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),
+
+    Optional('op_wise', default={'weight': {}, 'activation': {}}): {
+        Optional('weight', default=None): {
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+        },
+        Optional('activation', default=None): {
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+            }
+    }
+})
+
 filter_schema = Schema({
     Optional('LabelBalance'): {
         'size': And(int, lambda s: s > 0)
@@ -457,6 +480,11 @@ schema = Schema({
             str: ops_schema
         },
     },
+
+    Optional('graph_optimization'): And(
+        graph_optimization_schema
+    ),
+
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},

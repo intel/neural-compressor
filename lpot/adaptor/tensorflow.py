@@ -390,11 +390,12 @@ class TensorFlowAdaptor(Adaptor):
         other_config = self.query_handler.get_quantization_capability()['uint8']['default']
 
         if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
-            conv_config['weight']['dtype'].append('bf16')
-            matmul_config['weight']['dtype'].append('bf16')
-            conv_config['activation']['dtype'].append('bf16')
-            matmul_config['activation']['dtype'].append('bf16')
-            other_config['activation']['dtype'].append('bf16')
+            #TODO we need to enhance below logic by introducing precision priority.
+            conv_config['weight']['dtype'].insert(-1, 'bf16')
+            matmul_config['weight']['dtype'].insert(-1, 'bf16')
+            conv_config['activation']['dtype'].insert(-1, 'bf16')
+            matmul_config['activation']['dtype'].insert(-1, 'bf16')
+            other_config['activation']['dtype'].insert(-1, 'bf16')
 
         self.quantizable_op_details = OrderedDict()
 
@@ -454,7 +455,6 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: model-wise & op-wise configuration for quantization.
         """
-        import tensorflow as tf
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         self.pre_optimizer_handle = PreOptimization(model, self.optimization)

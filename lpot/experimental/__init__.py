@@ -18,5 +18,5 @@
 from .quantization import Quantization
 from .pruning import Pruning
 from .benchmark import Benchmark
-
-__all__ = ['Quantization', 'Pruning', 'Benchmark']
+from .graph_optimization import Graph_Optimization
+__all__ = ['Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization']

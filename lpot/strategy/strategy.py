@@ -163,6 +163,8 @@ class TuneStrategy(object):
         self.objective = OBJECTIVES[objective](self.cfg.tuning.accuracy_criterion)
 
         self.capability = self.adaptor.query_fw_capability(model)
+        self.graph_optimization_mode = bool('graph_optimization' in self.cfg)
+
         self.modelwise_tune_space = conf.modelwise_tune_space(self.capability['optypewise'])
         self.opwise_tune_space = conf.opwise_tune_space(self.capability['opwise'])
         self.model_wise_tune_cfgs = OrderedDict()
@@ -180,11 +182,12 @@ class TuneStrategy(object):
         else:
             self.calib_iter = [1]
 
+        fallback_precision_list = ['fp32'] if  self.graph_optimization_mode else ['fp32', 'bf16']
         self.model_wise_quant_cfgs = OrderedDict()
         for optype in self.model_wise_tune_cfgs.keys():
             self.model_wise_quant_cfgs[optype] = []
             for cfg in self.model_wise_tune_cfgs[optype]:
-                if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
+                if cfg['activation']['dtype'] not in fallback_precision_list:
                     self.model_wise_quant_cfgs[optype].append(cfg)
         self.combined_model_wise_quant_cfgs = conf._combine_optype_quant_cfgs(
                                          self.model_wise_quant_cfgs)
@@ -196,7 +199,7 @@ class TuneStrategy(object):
             cfg_list = self.opwise_tune_cfgs[key]
             new_list = []
             for cfg in cfg_list:
-                if cfg['activation']['dtype'] not in ['fp32', 'bf16']:
+                if cfg['activation']['dtype'] not in fallback_precision_list:
                     new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 
