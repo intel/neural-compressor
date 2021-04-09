@@ -363,8 +363,7 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
-        quantize_model = self.pre_optimized_model if self.pre_optimized_model else model
-        converter = GraphConverter(quantize_model,
+        converter = GraphConverter(model,
                                    qt_config=self.quantize_config,
                                    recipes=self.recipes,
                                    int8_sequences=self.op_wise_sequences,
@@ -459,11 +458,14 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
         self.pre_optimizer_handle = PreOptimization(model, self.optimization)
+
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
+        model.graph_def = self.pre_optimized_model.graph_def
+
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
-        original_graph_node_name = [i.name for i in self.pre_optimized_model.graph_def.node]
+        original_graph_node_name = [i.name for i in model.graph_def.node]
         matched_nodes = sorted(matched_nodes, reverse=True, key=lambda i: (
             original_graph_node_name.index(i[0]), len(i[-1])))
 
@@ -494,7 +496,8 @@ class TensorFlowAdaptor(Adaptor):
 
         return capability
 
-    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[],
+                       weights=False, save_to_disk=False):
         """Collect the specified tensor's output on specified iteration.
 
         Args:
@@ -507,10 +510,8 @@ class TensorFlowAdaptor(Adaptor):
             [dict]: the key is op_name while the value is the ndarray tensor.
         """
         logger.info("Start to run inspect_tensor..")
-        quantized_model = os.path.join(os.getcwd(), "tf_quantized.pb")
         from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(self.pre_optimized_model \
-                                        if self.pre_optimized_model else model,
+        converter = GraphConverter(model,
                                    qt_config=self.quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    data_loader=dataloader)
