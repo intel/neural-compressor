@@ -19,6 +19,7 @@ from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig, get_torch_ver
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
+import torch.quantization as tq
 import yaml
 import os
 import copy
@@ -57,28 +58,39 @@ def load(checkpoint_dir, model):
     version = get_torch_version()
     if tune_cfg['approach'] != "post_training_dynamic_quant":
         if version < '1.7':
-            q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+            q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
+        elif version < '1.8':
+            q_mapping = \
+                tq.quantization_mappings.get_static_quant_module_mappings()
         else:
             q_mapping = \
-                torch.quantization.quantization_mappings.get_static_quant_module_mappings()
+                tq.quantization_mappings.get_default_static_quant_module_mappings()
     else:
         if version < '1.7':
             q_mapping = \
-                torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+                tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+        elif version < '1.8':
+            q_mapping = \
+                tq.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
             q_mapping = \
-                torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings()
-
+                tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
+        
     if version < '1.7':
         white_list = \
-            torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
+            tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+            tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+    elif version < '1.8':
+        white_list = \
+            tq.quantization_mappings.get_dynamic_quant_module_mappings() \
+            if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
+            tq.quantization_mappings.get_qconfig_propagation_list()
     else:
         white_list = \
-            torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
+            tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            torch.quantization.quantization_mappings.get_qconfig_propagation_list()
+            tq.quantization_mappings.get_default_qconfig_propagation_list()
 
     if tune_cfg['approach'] == "post_training_dynamic_quant":
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])

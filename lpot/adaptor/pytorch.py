@@ -157,14 +157,15 @@ def _observer(algorithm, scheme, granularity, dtype, observer_type='post_trainin
         oberser (object)
     """
     if observer_type == 'post_training_dynamic_quant' and get_torch_version() >= '1.6':
-        return torch.quantization.MinMaxDynamicQuantObserver
+        return torch.quantization.default_dynamic_quant_observer
     if algorithm == 'minmax':
         if granularity == 'per_channel':
             observer = torch.quantization.PerChannelMinMaxObserver
             if scheme == 'sym':
                 qscheme = torch.per_channel_symmetric
+            elif scheme == 'asym_float':
+                qscheme = torch.per_channel_affine_float_qparams
             else:
-                assert scheme == 'asym'
                 qscheme = torch.per_channel_affine
         else:
             assert granularity == 'per_tensor'
@@ -456,6 +457,7 @@ class TemplateAdaptor(Adaptor):
     """
     def __init__(self, framework_specific_info):
         super(TemplateAdaptor, self).__init__(framework_specific_info)
+        import torch.quantization as tq
 
         self.version = get_torch_version()
 
@@ -474,23 +476,32 @@ class TemplateAdaptor(Adaptor):
 
         if framework_specific_info['approach'] == "post_training_static_quant":
             if self.version < '1.7':
-                self.q_mapping = torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING
+                self.q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
+            elif self.version < '1.8':
+                self.q_mapping = \
+                    tq.quantization_mappings.get_static_quant_module_mappings()
             else:
                 self.q_mapping = \
-                    torch.quantization.quantization_mappings.get_static_quant_module_mappings()
+                    tq.quantization_mappings.get_default_static_quant_module_mappings()
         elif framework_specific_info['approach'] == "quant_aware_training":
             if self.version < '1.7':
-                self.q_mapping = torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+                self.q_mapping = tq.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+            elif self.version < '1.8':
+                self.q_mapping = \
+                    tq.quantization_mappings.get_qat_module_mappings()
             else:
                 self.q_mapping = \
-                    torch.quantization.quantization_mappings.get_qat_module_mappings()
+                    tq.quantization_mappings.get_default_qat_module_mappings()
         elif framework_specific_info['approach'] == "post_training_dynamic_quant":
             if self.version < '1.7':
                 self.q_mapping = \
-                    torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+                    tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+            elif self.version < '1.8':
+                self.q_mapping = \
+                    tq.quantization_mappings.get_dynamic_quant_module_mappings()
             else:
                 self.q_mapping = \
-                    torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings()
+                    tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
         else:
             assert False, "Unsupport quantization approach: {}".format(self.approach)
 
@@ -559,6 +570,7 @@ class PyTorchAdaptor(TemplateAdaptor):
     """
     def __init__(self, framework_specific_info):
         super(PyTorchAdaptor, self).__init__(framework_specific_info)
+        import torch.quantization as tq
         """
         # Map for swapping float module to quantized ones,
         # and this dictionary will change with different PoTorch versions
@@ -598,14 +610,19 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         if self.version < '1.7':
             self.white_list = \
-                torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
+                tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
                 if self.approach == 'post_training_dynamic_quant' else \
-                torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+                tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+        elif self.version < '1.8':
+            self.white_list = \
+                tq.quantization_mappings.get_dynamic_quant_module_mappings() \
+                if self.approach == 'post_training_dynamic_quant' else \
+                tq.quantization_mappings.get_qconfig_propagation_list()
         else:
             self.white_list = \
-                torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
+                tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
                 if self.approach == 'post_training_dynamic_quant' else \
-                torch.quantization.quantization_mappings.get_qconfig_propagation_list()
+                tq.quantization_mappings.get_default_qconfig_propagation_list()
 
         # for tensorboard
         self.dump_times = 0
@@ -1044,8 +1061,10 @@ class PyTorchAdaptor(TemplateAdaptor):
                 (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
                  set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
                  set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
-        else:
+        elif self.version < '1.8':
             white_list = torch.quantization.get_compare_output_module_list()
+        else:
+            white_list = torch.quantization.get_default_compare_output_module_list()
 
         model = copy.deepcopy(model) if self.is_baseline else model
         model.model.qconfig = torch.quantization.QConfig(

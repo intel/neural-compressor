@@ -1,0 +1,107 @@
+# These can be overriden in the .gn file or via the "gn gen" command line.
+declare_args() {
+  py_include_dirs = [ "/usr/include/x86_64-linux-gnu/python2.7",
+                      "/usr/include/python2.7" ]
+  py_ld_flags = [ "-lpython2.7" ]
+}
+
+generated_version_source_filename =
+    get_path_info(".", "gen_dir") + "/version_generated.cc"
+
+public_headers = [
+  "loadgen.h",
+  "query_sample.h",
+  "query_sample_library.h",
+  "system_under_test.h",
+  "test_settings.h",
+]
+
+lib_sources = [
+  "issue_query_controller.cc",
+  "issue_query_controller.h",
+  "loadgen.cc",
+  "logging.cc",
+  "logging.h",
+  "test_settings_internal.cc",
+  "test_settings_internal.h",
+  "utils.cc",
+  "utils.h",
+  "version.cc",
+  "version.h",
+]
+
+c_api_sources = [
+  "bindings/c_api.h",
+  "bindings/c_api.cc",
+]
+
+mlperf_loadgen_sources_no_gen = public_headers + lib_sources + c_api_sources
+mlperf_loadgen_sources = mlperf_loadgen_sources_no_gen +
+                         [ generated_version_source_filename ]
+
+source_set("mlperf_loadgen_sources_no_gen") {
+  sources = mlperf_loadgen_sources_no_gen
+}
+
+source_set("docs") {
+  sources = [ "README.md", "README_BUILD.md", "README_FAQ.md"]
+}
+
+static_library("mlperf_loadgen") {
+  sources = mlperf_loadgen_sources
+  include_dirs = [ "." ]
+  deps = [ ":generate_loadgen_version_header" ]
+}
+
+copy("public_headers_src") {
+  sources = public_headers
+  outputs = [ get_path_info(".", "gen_dir") + "/{{source_file_part}}" ]
+}
+
+copy("lib_src") {
+  sources = lib_sources
+  outputs = [ get_path_info(".", "gen_dir") + "/{{source_file_part}}" ]
+}
+
+copy("c_api_src") {
+  sources = c_api_sources
+  outputs = [ get_path_info(".", "gen_dir") + "/bindings/{{source_file_part}}" ]
+}
+
+copy("python_api_src") {
+  sources = [ "bindings/python_api.cc" ]
+  outputs = [ get_path_info(".", "gen_dir") + "/bindings/{{source_file_part}}" ]
+}
+
+# An attempt to create python module without using setuptools.
+# TODO(brianderson): Remove or fix this.
+# This compiles with the system toolchain, but not chromium's.
+# For now, use loadgen_pymodule_setup_src_lib.py instead.
+loadable_module("mlperf_loadgen_pymodule_lib") {
+  sources = [ "bindings/python_api.cc" ]
+  deps = [ ":mlperf_loadgen", "../third_party:pybind11" ]
+  configs += [ "//build/config/compiler:rtti",
+               "//build/config/compiler:exceptions",
+               "../third_party:pybind11_include", ]
+  cflags = [ "-Wno-macro-redefined" ]
+  include_dirs = [ "." ] + py_include_dirs
+  ldflags = py_ld_flags
+}
+
+source_set("setup_py_script") {
+  sources = [ "setup.py" ]
+}
+
+source_set("version_generator_script") {
+  sources = [ "version_generator.py" ]
+}
+
+action("generate_loadgen_version_header") {
+  script = "version_generator.py"
+  args = [ rebase_path(generated_version_source_filename, root_build_dir),
+           rebase_path(".") ]
+  inputs = mlperf_loadgen_sources_no_gen
+  outputs = [ generated_version_source_filename ]
+  deps = [ ":version_generator_script" ]
+}
+

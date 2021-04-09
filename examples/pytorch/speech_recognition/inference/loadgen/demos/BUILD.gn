@@ -1,0 +1,8 @@
+source_set("loadgen_demos_python") {
+  sources = [ "py_demo_multi_stream.py",
+              "py_demo_multi_stream_free.py",
+              "py_demo_offline.py",
+              "py_demo_server.py",
+              "py_demo_single_stream.py" ]
+  deps = [ "../..:loadgen_pymodule_wheel_lib" ]
+}

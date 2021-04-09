@@ -64,8 +64,14 @@
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['kl']
-                        }
-                    },
+                        },
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+                     },
           }
     uint8: *cap_s8_1_7
     dynamic: &cap_dynamic_s8_1_7 {
@@ -83,17 +89,52 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'LSTM': *cap_dynamic_s8_1_7_Linear,
-          'LSTMCell': *cap_dynamic_s8_1_7_Linear,
-          'RNNCell': *cap_dynamic_s8_1_7_Linear,
-          'GRUCell': *cap_dynamic_s8_1_7_Linear,
+          'LSTM': &cap_dynamic_s8_1_7_LSTM {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': [ 'sym', 'asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'EmbeddingBag': &cap_dynamic_s8_1_7_EmbeddingBag {
+            'weight': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym_float'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'GRU': *cap_dynamic_s8_1_7_LSTM,
+          'LSTMCell': *cap_dynamic_s8_1_7_LSTM,
+          'RNNCell': *cap_dynamic_s8_1_7_LSTM,
+          'GRUCell': *cap_dynamic_s8_1_7_LSTM,
+          'Embedding': *cap_dynamic_s8_1_7_EmbeddingBag,
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
-                        }
+                        },
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
                     },
           }
 
@@ -187,7 +228,24 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'LSTM': *cap_dynamic_s8_1_6_Linear,
+          'LSTM': &cap_dynamic_s8_1_6_LSTM {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym', 'asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'GRU': *cap_dynamic_s8_1_6_LSTM,
+          'LSTMCell': *cap_dynamic_s8_1_6_LSTM,
+          'RNNCell': *cap_dynamic_s8_1_6_LSTM,
+          'GRUCell': *cap_dynamic_s8_1_6_LSTM,
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -234,8 +292,21 @@
             'LinearReLU', 'ConvBn2d', 'ConvBnReLU2d']
     fp32: ['*'] # '*' means all op types
   
-  capabilities:
-    << : *1_6_capabilities
+  capabilities: &1_3_capabilities
+    int8: *cap_s8_1_6
+    uint8: *cap_s8_1_6
+    dynamic: &cap_dynamic_s8_1_3 {
+          'Linear': *cap_dynamic_s8_1_6_Linear,
+          'LSTM': *cap_dynamic_s8_1_6_LSTM,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          }
 
   patterns:
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
