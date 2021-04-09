@@ -114,7 +114,8 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,
-                               "q_dataloader": None}
+                               "q_dataloader": None,
+                               "workspace_path": './'}
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
