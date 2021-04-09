@@ -53,6 +53,7 @@ from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
+from tensorflow.python.framework import tensor_util
 
 TF_SUPPORTED_MAX_VERSION = '2.4.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -224,8 +225,7 @@ class GraphConverter:
             self._fp32_model.output_node_names)
 
         node_name_mapping = {
-            node.name: node
-            for node in self._tmp_graph_def.node if node.op != "Const"
+            node.name: node for node in self._tmp_graph_def.node if node.op != "Const"
         }
 
         for node in self._tmp_graph_def.node:
@@ -274,7 +274,7 @@ class GraphConverter:
         self._fp32_model.graph_def = fp32_graph_def
         return self._fp32_model
 
-    def inspect_tensor(self, original_op_list, iteration_list, work_dir):
+    def inspect_tensor(self, original_op_list, iteration_list, work_dir, save_weights):
         """dump the specified op's output tensor content
 
         Args:
@@ -284,6 +284,7 @@ class GraphConverter:
         Returns:
             dict: key is op name while value is the content saved in np.array format.
         """
+        assert iteration_list is not None, "The parameter iterations list could not be empty."
         graph_node_name_mapping = {}
         q_node_name = []
         fp32_node_name = []
@@ -297,12 +298,19 @@ class GraphConverter:
         graph_q_node_name = []
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
+        weights_tensor = {}
+
         for node in sorted_graph.node:
             node_name = node.name
             if node.op.find("Quantized") != -1:
                 node_name = node.name.split(quantized_node_name_postfix)[0]
                 graph_q_node_name.append(node_name)
             graph_node_name_mapping[node_name] = node
+
+        for node in sorted_graph.node:
+            if save_weights and node.op in ("Conv2D", "DepthwiseConv2dNative"):
+                weights_tensor[node.name] = {node.input[1]: tensor_util.MakeNdarray(
+                    graph_node_name_mapping[node.input[1]].attr['value'].tensor).flatten()}
 
         for op_info in original_op_list:
             op_name = op_info[0]
@@ -372,17 +380,22 @@ class GraphConverter:
                 dump_tensor_content[node_name] = []
             dump_tensor_content[node_name].append(node_content)
 
-        result_disk = {}
-        tensor_iter_idx = iteration_list[0] - 1 if iteration_list else 0
-        for k, v in dump_tensor_content.items():
-            if k in fp32_node_name_mapping:
-                key = fp32_node_name_mapping[k]
-                result_disk[(key, op_name_type_dict[key])] = v[tensor_iter_idx]
-            else:
-                result_key = k.split(quantized_node_name_postfix)[tensor_iter_idx]
-                result_disk[(result_key, op_name_type_dict[result_key])
-                            ] = Dequantize(v[0], q_node_scale[k])
-        return result_disk
+        activation_content = []
+        for iter_idx in iteration_list:
+            result_disk = {}
+            for k, v in dump_tensor_content.items():
+                if k in fp32_node_name_mapping:
+                    key = fp32_node_name_mapping[k]
+                    result_disk[(key, op_name_type_dict[key])] = {key: v[iter_idx - 1]}
+                else:
+                    result_key = k.split(quantized_node_name_postfix)[iter_idx - 1]
+                    result_disk[(result_key, op_name_type_dict[result_key])
+                                ] = {result_key: Dequantize(v[0], q_node_scale[k])}
+            activation_content.append(result_disk)
+        final_result = {'weight': weights_tensor, 'activation': activation_content}
+
+        return final_result
+
 
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:

@@ -141,16 +141,17 @@ class MSETuneStrategy(TuneStrategy):
             # Inspect FP32 and dequantized tensor
             if self.ordered_ops is None:
                 op_lists = self.opwise_quant_cfgs.keys()
-                fp32_tensor_dict = self.adaptor.inspect_tensor(
+                fp32_dump_content = self.adaptor.inspect_tensor(
                     self.model, self.calib_dataloader, op_lists, [1])
+                fp32_tensor_dict = fp32_dump_content['activation'][0]
                 best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
-                dequantize_tensor_dict = self.adaptor.inspect_tensor(
+                quant_dump_content = self.adaptor.inspect_tensor(
                     best_qmodel, self.calib_dataloader, op_lists, [1])
-
+                dequantize_tensor_dict = quant_dump_content['activation'][0]
                 ops_mse = {
                     op: self.mse_metric_gap(
-                        fp32_tensor_dict[op],
-                        dequantize_tensor_dict[op]) for op in fp32_tensor_dict}
+                        fp32_tensor_dict[op][op[0]],
+                        dequantize_tensor_dict[op][op[0]]) for op in fp32_tensor_dict}
                 self.ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key],
                                           reverse=True)
 

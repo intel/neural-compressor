@@ -515,7 +515,23 @@ class TensorFlowAdaptor(Adaptor):
                                    qt_config=self.quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    data_loader=dataloader)
-        return converter.inspect_tensor(op_list, iteration_list, self.work_dir)
+
+        dump_content = converter.inspect_tensor(op_list, iteration_list, self.work_dir, weights)
+
+        if save_to_disk:
+            dump_dir = os.path.join(self.work_dir, 'dump_tensor')
+            os.makedirs(dump_dir, exist_ok=True)
+            for index, value in enumerate(dump_content['activation']):
+                tmp_dict = {}
+                for k, v in value.items():
+                    tmp_dict[k[0]] = v
+                output_path = os.path.join(dump_dir, 'activation_iter{}.npz'.format(index + 1))
+                np.savez(output_path, **tmp_dict)
+
+            if weights and dump_content['weight']:
+                np.savez(os.path.join(dump_dir, 'weight.npz'), **dump_content['weight'])
+
+        return dump_content
 
     def quantize_input(self, model):
         ''' quantize the model to be able to take quantized input
