@@ -140,8 +140,8 @@
   grappler_optimization: &common_grappler_optimization
     pruning: True                                   # optional. grappler pruning optimizer,default value is True.
     shape: True                                      # optional. grappler shape optimizer,default value is True.
-    constfold: True                                  # optional. grappler constant folding optimizer, default value is True.
-    arithmetic: True                                 # optional. grappler arithmetic optimizer,default value is True.
+    constfold: False                                  # optional. grappler constant folding optimizer, default value is False.
+    arithmetic: False                                 # optional. grappler arithmetic optimizer,default value is False.
     dependency: True                                 # optional. grappler dependency optimizer,default value is True.
     debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
     loop: True                                       # optional. grappler loop optimizer,default value is True.
