@@ -91,7 +91,7 @@ class TestHWInfo(unittest.TestCase):
         hw_info = HWInfo()
         self.assertEqual(hw_info.system, "Windows 10")
 
-    @patch("platform.dist")
+    @patch("platform.dist", create=True)
     @patch("psutil.LINUX", True)
     @patch("psutil.WINDOWS", False)
     def test_get_linux_distribution(
@@ -110,7 +110,7 @@ class TestHWInfo(unittest.TestCase):
 
     @patch("platform.release")
     @patch("platform.system")
-    @patch("platform.dist")
+    @patch("platform.dist", create=True)
     @patch("psutil.LINUX", True)
     @patch("psutil.WINDOWS", False)
     def test_get_linux_distribution_without_dist(
