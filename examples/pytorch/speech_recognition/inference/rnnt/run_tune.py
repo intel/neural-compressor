@@ -121,7 +121,7 @@ def main():
 
     if args.tune:
         # Dynamic Quantization with LPOT
-        from lpot import Quantization, common
+        from lpot.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func
