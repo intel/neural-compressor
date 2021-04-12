@@ -342,6 +342,8 @@ class TensorflowBaseModel(BaseModel):
         if 'MakeIterator' in [node.op for node in self.sess.graph.as_graph_def().node]:
             self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
 
+        tf.compat.v1.get_variable_scope().reuse_variables()
+
     @property
     def model(self):
         return self.sess.graph
@@ -485,6 +487,15 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
             sess=self.sess,
             input_graph_def=graph_def,
             output_node_names=self.output_node_names)
+
+    @graph_def.setter
+    def graph_def(self, graph_def):
+        self.sess.close()
+        self.sess, self._input_tensor_names, self._output_tensor_names = \
+            create_session_with_input_output(graph_def, self._input_tensor_names, \
+                self._output_tensor_names)
+        if self.iter_op:
+            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator') 
 
 TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'graph_def': TensorflowBaseModel,

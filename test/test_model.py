@@ -101,10 +101,6 @@ def build_keras():
 class TestTensorflowModel(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.graph = build_graph()
-
-    @classmethod
     def tearDownClass(self):
         os.remove('model_test.pb')
 
@@ -112,7 +108,7 @@ class TestTensorflowModel(unittest.TestCase):
         graph = build_graph()
         self.assertRaises(ValueError, TensorflowModel, 'test')
         fwk_info = {'input_tensor_names': ['x'], 'output_tensor_names': ['op_to_store']}
-        model = TensorflowModel(self.graph.as_graph_def(), fwk_info)
+        model = TensorflowModel(graph.as_graph_def(), fwk_info)
         self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
         self.assertEqual(model.input_node_names[0], 'x')
         self.assertEqual(model.output_node_names[0], 'op_to_store')
@@ -124,6 +120,8 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(model.input_tensor[0].name, 'x:0')
         self.assertEqual(model.output_tensor[0].name, 'op_to_store:0')
 
+        with self.assertRaises(ValueError):
+            model.save('fake_path/fake_path')
         with self.assertRaises(AssertionError):
             model.input_tensor_names = []
         with self.assertRaises(AssertionError):
@@ -138,9 +136,10 @@ class TestTensorflowModel(unittest.TestCase):
 
     def test_validate_graph_node(self):
         from lpot.model.model import validate_graph_node
-        self.assertEqual(False, validate_graph_node(self.graph.as_graph_def(), []))
-        self.assertEqual(False, validate_graph_node(self.graph.as_graph_def(), ['test']))
-        self.assertEqual(True, validate_graph_node(self.graph.as_graph_def(), ['x']))
+        graph = build_graph()
+        self.assertEqual(False, validate_graph_node(graph.as_graph_def(), []))
+        self.assertEqual(False, validate_graph_node(graph.as_graph_def(), ['test']))
+        self.assertEqual(True, validate_graph_node(graph.as_graph_def(), ['x']))
 
     def test_estimator(self):
         from lpot.adaptor.tf_utils.util import get_estimator_graph
@@ -169,9 +168,11 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(len(model.output_tensor_names), 1)
         graph_def = model.graph_def
         self.assertEqual(True, isinstance(graph_def, tf.compat.v1.GraphDef))
+        model.graph_def = graph_def
         os.system('rm -rf ckpt')
 
     def test_slim(self):
+        tf.compat.v1.reset_default_graph()
         inception_ckpt_url = \
             'http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz'
         dst_path = '.lpot/slim/inception_v1_2016_08_28.tar.gz'
@@ -287,6 +288,25 @@ class TestONNXModel(unittest.TestCase):
         model.save('test.onnx')
         self.assertEqual(True, os.path.exists('test.onnx'))
         os.remove('test.onnx')
+
+class TestPyTorchModel(unittest.TestCase):
+    def testPyTorch(self):
+        import torchvision
+        from lpot.model.model import PyTorchModel, PyTorchIpexModel
+        fwk = {'workspace_path': './pytorch'}
+        ori_model = torchvision.models.mobilenet_v2()
+        pt_model = PyTorchModel(ori_model)
+        pt_model.model = ori_model
+        with self.assertRaises(AssertionError):
+            pt_model = PyTorchModel(torchvision.models.mobilenet_v2(), fwk)
+        
+        ipex_model = PyTorchIpexModel(ori_model)
+        self.assertTrue(ipex_model.model)
+        ipex_model.model = ori_model
+        with self.assertRaises(AssertionError):
+            ipex_model = PyTorchModel(torchvision.models.mobilenet_v2(), fwk)
+        ipex_model.save('./')
+        os.remove('./best_configure.json')
 
 def load_mxnet_model(symbol_file, param_file):
     symbol = mx.sym.load(symbol_file)

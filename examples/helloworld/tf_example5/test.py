@@ -13,7 +13,7 @@ def main():
     from lpot.experimental import Benchmark
     evaluator = Benchmark('./conf.yaml')
     evaluator.model = common.Model(quantized_model.graph_def)
-    evaluator(mode='performance')
+    evaluator(mode='accuracy')
 
 if __name__ == "__main__":
 
