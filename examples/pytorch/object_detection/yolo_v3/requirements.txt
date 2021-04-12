@@ -3,7 +3,7 @@ matplotlib
 tensorflow==1.15.4
 tensorboard
 terminaltables
-pillow>=8.1.0
+pillow>=8.2.0
 tqdm
 lpot
 pytorch-ignite

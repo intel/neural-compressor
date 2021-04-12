@@ -15,6 +15,6 @@ tensorboard
 scikit-learn
 pytorch-ignite
 
-pillow>=7.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
+pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
 
 rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability

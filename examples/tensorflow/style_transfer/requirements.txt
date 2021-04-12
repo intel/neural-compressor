@@ -1,2 +1,2 @@
 scikit-image
-Pillow==8.1.0
+Pillow>=8.2.0
