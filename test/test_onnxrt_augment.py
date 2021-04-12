@@ -10,6 +10,7 @@ from onnx import helper, TensorProto, numpy_helper
 sys.path.append('..')
 from lpot.experimental.data.datasets.dataset import Dataset
 from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+from lpot.adaptor.ox_utils.onnx_model import ONNXModel
 from lpot.data import DATASETS, DATALOADERS
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
@@ -28,15 +29,14 @@ def create_cv_session():
                                 b_value.reshape(9).tolist())
     D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
     conv_node = onnx.helper.make_node('Conv', ['A', 'B'], ['C'],
-                                      name='Conv',
+                                      name='conv',
                                       kernel_shape=[3, 3],
                                       pads=[1, 1, 1, 1])
-    relu_node = onnx.helper.make_node('Relu', ['C'], ['D'], name='Relu')
+    relu_node = onnx.helper.make_node('Relu', ['C'], ['D'], name='relu')
     graph = helper.make_graph([conv_node, relu_node], 'test_graph_1', [A, B], [D], [B_init])
     model = helper.make_model(graph)
 
-    datasets = DATASETS('onnxrt_qlinearops')
-    dataset = datasets['dummy'](shape=(1, 1, 5, 5), label=True)
+    dataset = TestDataset2()
     dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
     return model, dataloader
 
@@ -50,7 +50,7 @@ def create_nlp_session():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [100, 4])
     B = helper.make_tensor_value_info('B', TensorProto.INT32, [10])
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [10, 4])
-    node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='Gather')
+    node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='gather')
     graph = helper.make_graph([node], 'test_graph_1', [A, B], [C], [A_init, B_init])
     model = helper.make_model(graph)
 
@@ -75,13 +75,29 @@ class TestDataset(Dataset):
                                      [[0.019,0.34,0.02]]]]]).astype(np.float32))
         self.data_list = data_list
         
-
     def __len__(self):
         return len(self.data_list)
 
     def __getitem__(self, index):
         data = self.data_list[index]
         return data
+
+class TestDataset2(Dataset):
+    """Configuration for Imagenet dataset."""
+
+    def __init__(self):
+        data_list = []
+        data_list.append(np.random.random([1,5,5]).astype(np.float32))
+        data_list.append(np.random.random([1,5,5]).astype(np.float32))
+        data_list.append(np.random.random([1,5,5]).astype(np.float32))
+        self.data_list = data_list
+
+    def __len__(self):
+        return len(self.data_list)
+
+    def __getitem__(self, index):
+        data = self.data_list[index]
+        return data, 0
 
 class TestAugment(unittest.TestCase):
 
@@ -100,28 +116,45 @@ class TestAugment(unittest.TestCase):
 
     def test_dump_tensor(self):
         model, dataloader = self.cv_session
-        augment = ONNXRTAugment(model, dataloader, 
-                                ["Conv", "Relu"], 
+        augment = ONNXRTAugment(ONNXModel(model), 
+                                dataloader, 
+                                [], 
                                 self.augment_path,
-                                iterations=[0])
-        dumped_tensors = augment.dump_tensor()
-        assert len(dumped_tensors) == 1
-        assert "A" in dumped_tensors[0] and "B" in dumped_tensors[0]
-        assert "C" in dumped_tensors[0] and "D" in dumped_tensors[0]
+                                iterations=[0, 1],
+                                white_nodes=["conv"])
+        map_dumped_tensors = augment.dump_tensor(activation_only=True)
+        assert "conv" in map_dumped_tensors["activation"][0]
+        assert "C" in map_dumped_tensors["activation"][0]["conv"]
+        assert "conv" in map_dumped_tensors["activation"][1]
+        assert "C" in map_dumped_tensors["activation"][1]["conv"]
+
+        model, dataloader = self.cv_session
+        augment = ONNXRTAugment(ONNXModel(model),
+                                dataloader,
+                                [],
+                                self.augment_path,
+                                iterations=[0],
+                                white_nodes=["conv", "relu"])
+        map_dumped_tensors = augment.dump_tensor(activation_only=False)
+        assert "conv" in map_dumped_tensors["activation"][0]
+        assert "relu" in map_dumped_tensors["activation"][0]
+        assert "conv" in map_dumped_tensors["weight"][0]
 
         model, dataloader = self.nlp_session
-        augment = ONNXRTAugment(model, dataloader, 
-                                ["Gather"], 
+        augment = ONNXRTAugment(ONNXModel(model), 
+                                dataloader, 
+                                [], 
                                 self.augment_path,
-                                iterations=[0])
-        dumped_tensors = augment.dump_tensor()
-        assert len(dumped_tensors) == 1
-        assert "A" in dumped_tensors[0] and "C" in dumped_tensors[0]
+                                iterations=[0],
+                                white_nodes=["gather"])
+        map_dumped_tensors = augment.dump_tensor()
+        assert "gather" in map_dumped_tensors["activation"][0]
 
     def test_dump_calibration(self):
         model, dataloader = self.cv_session
-        augment = ONNXRTAugment(model,
-                                dataloader, ["Conv", "Relu"],
+        augment = ONNXRTAugment(ONNXModel(model),
+                                dataloader, 
+                                ["Conv", "Relu"],
                                 self.augment_path,
                                 iterations=[0])
         calib_params = augment.dump_calibration()
@@ -145,17 +178,12 @@ class TestAugment(unittest.TestCase):
         clip_node = onnx.helper.make_node('Clip', ['C'], ['D'], name='Clip')
         matmul_node = onnx.helper.make_node('MatMul', ['D', 'E'], ['F'], name='MatMul')
         graph = helper.make_graph([conv_node, clip_node, matmul_node], 'test_graph_1', [A, B, E], [F])
-
         model = helper.make_model(graph)
-        test_model_path = os.path.join(self.work_space, './test_model_1.onnx')
-        onnx.save(model, test_model_path)
-        test_model = onnx.load(test_model_path)
-        
 
         # Augmenting graph
         data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_1.onnx')
-        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul'], augmented_model_path)
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], augmented_model_path)
         augment.augment_nodes = ["ReduceMin", "ReduceMax"]
         augment.augment_graph()
         augmented_model = augment.augmented_model
@@ -194,14 +222,11 @@ class TestAugment(unittest.TestCase):
         conv_node_2 = onnx.helper.make_node('Conv', ['I', 'J'], ['K'], name='Conv', kernel_shape=[3, 3], pads=[1, 1, 1, 1])
         graph = helper.make_graph([conv_node_1, conv_node_2], 'test_graph_2', [G, H, J], [K])
         model = helper.make_model(graph)
-        test_model_path = os.path.join(self.work_space,'./test_model_2.onnx')
-        onnx.save(model, test_model_path)
-        test_model = onnx.load(test_model_path)
 
         # Augmenting graph
         data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_2.onnx')
-        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul'], augmented_model_path)
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], augmented_model_path)
         augment.augment_nodes = ["ReduceMin", "ReduceMax"]
         augment.augment_graph()
         augmented_model = augment.augmented_model
@@ -245,14 +270,11 @@ class TestAugment(unittest.TestCase):
         matmul_node = onnx.helper.make_node('MatMul', ['P','M'], ['Q'], name='MatMul')
         graph = helper.make_graph([relu_node, conv_node, clip_node, matmul_node], 'test_graph_3', [L, N], [Q])
         model = helper.make_model(graph)
-        test_model_path = os.path.join(self.work_space,'./test_model_3.onnx')
-        onnx.save(model, test_model_path)
-        test_model = onnx.load(test_model_path)
 
         # Augmenting graph
         data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_3.onnx')
-        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul'], augmented_model_path)
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], augmented_model_path)
         augment.augment_nodes = ["ReduceMin", "ReduceMax"]
         augment.augment_graph()
         augmented_model = augment.augmented_model
@@ -291,14 +313,11 @@ class TestAugment(unittest.TestCase):
         matmul_node = onnx.helper.make_node('MatMul', ['R', 'S'], ['T'], name='MatMul')
         graph = helper.make_graph([attention_node, matmul_node], 'test_graph_4', [Attention_weight, Attention_bias, Attention_mask, S], [T])
         model = helper.make_model(graph)
-        test_model_path = os.path.join(self.work_space,'./test_model_4.onnx')
-        onnx.save(model, test_model_path)
-        test_model = onnx.load(test_model_path)
 
         # Augmenting graph
         data_reader = None
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_4.onnx')
-        augment = ONNXRTAugment(test_model, data_reader, ['Conv', 'MatMul', 'Attention'], augmented_model_path)
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul', 'Attention'], augmented_model_path)
         augment.augment_nodes = ["ReduceMin", "ReduceMax"]
         augment.augment_graph()
         augmented_model = augment.augmented_model
@@ -321,6 +340,148 @@ class TestAugment(unittest.TestCase):
 
         print('Finished TEST_CONFIG_4')
 
+        #    QAttention
+        #        |
+        #    QuantizeLinear
+   
+        Attention_weight = helper.make_tensor_value_info('weight_quantized', TensorProto.INT8, [13,7])
+        weight_quantized = generate_input_initializer([13, 7], np.int8, 'weight_quantized')
+        Attention_bias = helper.make_tensor_value_info('bias', TensorProto.FLOAT, [13, 7])
+        bias = generate_input_initializer([13, 7], np.float32, 'bias')
+        Input_scale = helper.make_tensor_value_info('input_scale', TensorProto.FLOAT, [1])
+        input_scale = generate_input_initializer([1], np.float32, 'input_scale')
+        Weight_scale = helper.make_tensor_value_info('weight_scale', TensorProto.FLOAT, [1])
+        weight_scale = generate_input_initializer([1], np.float32, 'weight_scale')
+        Attention_mask = helper.make_tensor_value_info('mask', TensorProto.INT32, [13, 7])
+        mask = generate_input_initializer([13, 7], np.int32, 'mask')
+        Input_zo = helper.make_tensor_value_info('input_zero_point', TensorProto.INT8, [1])
+        input_zero_point = generate_input_initializer([1], np.int8, 'input_zero_point')
+        Weight_zo = helper.make_tensor_value_info('weight_zero_point', TensorProto.INT8, [1])
+        weight_zero_point = generate_input_initializer([1], np.int8, 'weight_zero_point')
+        Q_scale = helper.make_tensor_value_info('attn_output_scale', TensorProto.FLOAT, [1])
+        attn_output_scale = generate_input_initializer([1], np.float32, 'attn_output_scale')
+        Q_zo = helper.make_tensor_value_info('attn_output_zero_point', TensorProto.INT8, [1])
+        attn_output_zero_point = generate_input_initializer([1], np.int8, 'attn_output_zero_point')
+        Output = helper.make_tensor_value_info('output', TensorProto.INT8, [13,7])
+        attention_node = onnx.helper.make_node('QAttention', ['weight_quantized', 
+                                                             'bias', 
+                                                             'input_scale',
+                                                             'weight_scale',
+                                                             'mask',
+                                                             'input_zero_point',
+                                                             'weight_zero_point'], 
+                                                            ['attn_output'], name='attention_quant')
+        qlinear_node = onnx.helper.make_node('QuantizeLinear', 
+                                             ['attn_output', 'attn_output_scale', 'attn_output_zero_point'], 
+                                             ['attn_output_quantized'], 
+                                             name='attn_output_QuantizeLinear')
+        graph = helper.make_graph([attention_node, qlinear_node], 
+                                   'test_graph_5', 
+                                   [Attention_weight, 
+                                   Attention_bias, 
+                                   Input_scale,
+                                   Weight_scale,
+                                   Attention_mask,
+                                   Input_zo,
+                                   Weight_zo,
+                                   Q_scale,
+                                   Q_zo], 
+                                   [Output])
+        graph.initializer.add().CopyFrom(weight_quantized)
+        graph.initializer.add().CopyFrom(bias)
+        graph.initializer.add().CopyFrom(input_scale)
+        graph.initializer.add().CopyFrom(weight_scale)
+        graph.initializer.add().CopyFrom(mask)
+        graph.initializer.add().CopyFrom(input_zero_point)
+        graph.initializer.add().CopyFrom(weight_zero_point)
+        graph.initializer.add().CopyFrom(attn_output_scale)
+        graph.initializer.add().CopyFrom(attn_output_zero_point) 
+        model = helper.make_model(graph)
+
+        # Augmenting graph
+        data_reader = None
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, [], augmented_model_path, white_nodes=['attention'])
+        augment.augment_nodes = ['DequantizeLinear']
+        augment.already_quantized = True
+        augment.augment_graph(activation_only=True, output_only=True)
+        augmented_model = augment.augmented_model
+        onnx.save(augmented_model, augmented_model_path)
+
+        augmented_model_node_names = [node.name for node in augmented_model.graph.node]
+        augmented_model_outputs = [output.name for output in augmented_model.graph.output]
+        added_outputs = ['attn_output']
+        self.assertEqual(len(augmented_model_node_names), 2)
+        self.assertEqual(len(augmented_model_outputs), 2)
+        for output in added_outputs:
+            self.assertTrue(output in augmented_model_outputs)
+
+        print('Finished TEST_CONFIG_5')
+
+        #    QuantizeLinear
+        #        |
+        #    QLinearConv
+        #        |
+        #    DequantizeLinear
+        A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
+        A_scale = helper.make_tensor_value_info('A_scale', TensorProto.FLOAT, [1])
+        a_scale = generate_input_initializer([1], np.float32, 'A_scale')
+        A_zo = helper.make_tensor_value_info('A_zero_point', TensorProto.INT8, [1])
+        a_zero_point = generate_input_initializer([1], np.int8, 'A_zero_point')
+        B_scale = helper.make_tensor_value_info('B_scale', TensorProto.FLOAT, [1])
+        b_scale = generate_input_initializer([1], np.float32, 'B_scale')
+        B_zo = helper.make_tensor_value_info('B_zero_point', TensorProto.INT8, [1])
+        b_zero_point = generate_input_initializer([1], np.int8, 'B_zero_point')
+        C = helper.make_tensor_value_info('C', TensorProto.INT8, [1, 1, 5, 5])
+        c = generate_input_initializer([1, 1, 5, 5], np.int8, 'C')
+        C_scale = helper.make_tensor_value_info('C_scale', TensorProto.FLOAT, [1])
+        c_scale = generate_input_initializer([1], np.float32, 'C_scale')
+        C_zo = helper.make_tensor_value_info('C_zero_point', TensorProto.INT8, [1])
+        c_zero_point = generate_input_initializer([1], np.int8, 'C_zero_point')
+        E = helper.make_tensor_value_info('E', TensorProto.INT32, [1])
+        e = generate_input_initializer([1], np.int32, 'E')
+        D_scale = helper.make_tensor_value_info('D_scale', TensorProto.FLOAT, [1])
+        d_scale = generate_input_initializer([1], np.float32, 'D_scale')
+        D_zo = helper.make_tensor_value_info('D_zero_point', TensorProto.INT8, [1])
+        d_zero_point = generate_input_initializer([1], np.int8, 'D_zero_point')
+        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
+        quantize_node = onnx.helper.make_node('QuantizeLinear', ['A', 'A_scale', 'A_zero_point'], ['B'], name='A_QuantizeLinear')
+        conv_node = onnx.helper.make_node('QLinearConv', ['B', 'B_scale', 'B_zero_point', 'C', 'C_scale', 'C_zero_point', 'D_scale', 'D_zero_point', 'E'], ['D_quantized'], name='conv_quant', kernel_shape=[3, 3], pads=[1, 1, 1, 1])
+        dequantize_node = onnx.helper.make_node('DequantizeLinear', ['D_quantized', 'D_scale', 'D_zero_point'], ['D'], name='D_DequantizeLinear')
+        graph = helper.make_graph([quantize_node, conv_node, dequantize_node], 'test_graph_5', [A, A_scale, A_zo, C, C_scale, C_zo, E, D_scale, D_zo], [D])
+        graph.initializer.add().CopyFrom(a_scale)
+        graph.initializer.add().CopyFrom(a_zero_point)
+        graph.initializer.add().CopyFrom(b_scale)
+        graph.initializer.add().CopyFrom(b_zero_point)
+        graph.initializer.add().CopyFrom(c)
+        graph.initializer.add().CopyFrom(c_scale)
+        graph.initializer.add().CopyFrom(c_zero_point)
+        graph.initializer.add().CopyFrom(e)
+        graph.initializer.add().CopyFrom(d_scale)
+        graph.initializer.add().CopyFrom(d_zero_point)
+        model = helper.make_model(graph)
+
+        # Augmenting graph
+        data_reader = None
+        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_6.onnx')
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, [], augmented_model_path, white_nodes=['conv'])
+        augment.augment_nodes = ["DequantizeLinear"]
+        augment.already_quantized = True
+        augment.augment_graph(activation_only=True, output_only=True)
+        augmented_model = augment.augmented_model
+        onnx.save(augmented_model, augmented_model_path)
+
+        augmented_model_node_names = [node.name for node in augmented_model.graph.node]
+        augmented_model_outputs = [output.name for output in augmented_model.graph.output]
+        added_node_names = ['D_quantized_new_DequantizeLinear']
+        added_outputs = ['D_quantized_new_DequantizeLinear']
+        self.assertEqual(len(augmented_model_node_names), 4)
+        self.assertEqual(len(augmented_model_outputs), 2)
+        for name in added_node_names:
+            self.assertTrue(name in augmented_model_node_names)
+        for output in added_outputs:
+            self.assertTrue(output in augmented_model_outputs)
+     
     def test_quant_param_calculation(self):
         '''TEST_CONFIG_5'''
      
@@ -361,12 +522,9 @@ class TestAugment(unittest.TestCase):
         graph.initializer.add().CopyFrom(X5_bias)
         
         model = helper.make_model(graph)
-        test_model_path = os.path.join(self.work_space,'./test_model_5.onnx')
-        onnx.save(model, test_model_path)
-        test_model = onnx.load(test_model_path)
         data_reader = TestDataset()
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
-        augment = ONNXRTAugment(test_model, data_reader,['Conv', 'MatMul'], augmented_model_path)
+        augment = ONNXRTAugment(ONNXModel(model), data_reader,['Conv', 'MatMul'], augmented_model_path)
 
         #test calculation of quantization params
         #TO_DO: check rmin/rmax

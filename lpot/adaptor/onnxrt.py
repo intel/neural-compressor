@@ -39,7 +39,7 @@ class ONNXRTAdaptor(Adaptor):
     """
 
     def __init__(self, framework_specific_info):
-        super(ONNXRTAdaptor, self).__init__(framework_specific_info)
+        super().__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []
         self.logger = logger
@@ -56,20 +56,21 @@ class ONNXRTAdaptor(Adaptor):
         self.fp32_preds_as_label = False
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, tune_cfg, model, dataLoader, q_func=None):
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
            quantization.
 
         Args:
             tune_cfg (dict):     quantization config.
             model (object):      model need to do quantization.
-            dataloader (object): calibration dataset.
+            data_loader (object): calibration dataset.
             q_func (optional):   training function for quantization aware training mode,
                                  unimplement yet for onnx.
 
         Returns:
             (dict): quantized model
         """
+        assert q_func==None, "quantization aware training has not been supported on ONNXRUNTIME"
         model = self.pre_optimized_model if self.pre_optimized_model else model
         ort_version = [int(i) for i in ort.__version__.split(".")]
         if ort_version < [1, 5, 2]:
@@ -85,7 +86,7 @@ class ONNXRTAdaptor(Adaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         q_config = self._cfg_to_qconfig(tune_cfg)
         if self.static:
-            quantize_params = self._get_quantize_params(model.model, dataLoader, q_config)
+            quantize_params = self._get_quantize_params(model.model, data_loader, q_config)
         else:
             quantize_params = None
         quantizer = ONNXQuantizer(model.model,
@@ -98,24 +99,35 @@ class ONNXRTAdaptor(Adaptor):
         model.model = quantizer.model.model
         return model
 
-    def _get_quantize_params(self, model, dataloader, q_config):
+    def _get_quantize_params(self, model, data_loader, q_config):
         from .ox_utils.onnxrt_mid import ONNXRTAugment
+        from .ox_utils.onnx_model import ONNXModel
         black_nodes = [node for node in q_config if q_config[node]=='fp32']
         white_nodes = [node for node in q_config if q_config[node]!='fp32']
-        augment = ONNXRTAugment(model, dataloader, self.quantizable_op_types, \
+        augment = ONNXRTAugment(ONNXModel(model), \
+                  data_loader, self.quantizable_op_types, \
                   os.path.join(self.work_space, 'augmented_model.onnx'), \
                   black_nodes=black_nodes, white_nodes=white_nodes)
         quantize_params = augment.dump_calibration()
         return quantize_params
 
-    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[]):
+    def inspect_tensor(self, model, data_loader, op_list=[],
+                       iteration_list=[],
+                       have_weights=False,
+                       save_to_disk=False):
         '''The function is used by tune strategy class for dumping tensor info.
         '''
         from .ox_utils.onnxrt_mid import ONNXRTAugment
-        augment = ONNXRTAugment(model, dataloader, op_list, \
-                  os.path.join(self.work_space, 'augmented_model.onnx'), \
-                  iterations=iteration_list)
-        return augment.dump_calibration()
+        from .ox_utils.onnx_model import ONNXModel
+        model_wrapper = ONNXModel(model)
+        augment = ONNXRTAugment(model_wrapper, data_loader, [], \
+                  os.path.join(self.work_space, 'augment_for_inspect.onnx'), \
+                  iterations=iteration_list,
+                  white_nodes=op_list)
+        tensors = augment.dump_tensor(activation_only=not have_weights)
+        if save_to_disk:
+            np.savez(tensors, os.path.join(self.work_space, 'dumped_tensors.npz'))
+        return tensors
 
     def _pre_optimize(self, model, level=1):
         sess_options = ort.SessionOptions()
@@ -289,8 +301,6 @@ class ONNXRTAdaptor(Adaptor):
             (float) evaluation results. acc, f1 e.g.
         """
         session = ort.InferenceSession(input_graph.model.SerializeToString(), None)
-        len_outputs = len(session.get_outputs())
-
         if metric:
             metric.reset()
             if hasattr(metric, "compare_label") and not metric.compare_label:
@@ -342,6 +352,12 @@ class ONNXRTAdaptor(Adaptor):
         return acc
 
     def save(self, model, path):
+        """ save model
+
+        Args:
+            model (ModelProto): model to save
+            path (str): save path
+        """
         model.save(os.path.join(path, "best_model.onnx"))
 
 
@@ -469,5 +485,5 @@ class ONNXRTQuery(QueryBackendCapability):
                                'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
         level = self.cur_config['graph_optimization']['level']
         assert level in optimization_levels, "the optimization choices \
-                                              are {}".format(optimization_levels.keys()) 
+                                              are {}".format(optimization_levels.keys())
         return optimization_levels[level]

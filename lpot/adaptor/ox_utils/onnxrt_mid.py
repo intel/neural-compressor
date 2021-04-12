@@ -29,6 +29,7 @@ import numpy as np
 import onnx
 import onnxruntime
 from onnx import helper, TensorProto
+from .onnx_model import ONNXModel
 
 logger = logging.getLogger()
 
@@ -36,7 +37,8 @@ logger = logging.getLogger()
 class ONNXRTAugment:
     '''augment input model to dump tensor or for calibration'''
 
-    def __init__(self, model, dataloader,
+    def __init__(self, model_wrapper,
+                 dataloader,
                  dump_op_types,
                  augmented_model_path,
                  black_nodes=[],
@@ -51,70 +53,117 @@ class ONNXRTAugment:
         :param augmented_model_path: save augmented_model to this path
         :param iterations: tensor of which iteration will be collected.
         '''
-        self.model = model
+        self.model_wrapper = model_wrapper
+        self.model = model_wrapper.model
         self.dataloader = dataloader
         self.dump_op_types = dump_op_types
         self.black_nodes = black_nodes
         self.white_nodes = white_nodes
         self.augmented_model = None
         self.augmented_model_path = augmented_model_path
-        self.input_name_to_nodes = {}
         self.iterations = iterations
         self.augment_nodes = []
+        self.already_quantized = False
 
-    def augment_graph(self):
+    def augment_graph(self, activation_only=False, output_only=False):
         '''
         Adds nodes to all quantization_candidates op type nodes in
         model and ensures their outputs are stored as part of the graph output
+        :param activation_only(bool): whether to dump activation tensor only
+        :param output_only(bool): whether to dump output_only
         :return: augmented ONNX model
         '''
 
         model = copy.deepcopy(self.model)
+        model_nodes_names = [node.name for node in model.graph.node]
 
         added_nodes = []
         added_outputs = []
         tensors_to_dump = set()
 
+        for augment_node_type in self.augment_nodes:
+            if augment_node_type not in ['ReduceMin', 'ReduceMax', 'DequantizeLinear']:
+                raise ValueError("Unexpected augment_node {} only \
+                    ReduceMin/ReduceMax are supported".format(augment_node_type))
+
+        if self.already_quantized:
+            # mapping between fp32 node and int8 node
+            new_white_nodes = []
+            for white_node in self.white_nodes:
+                new_white_node = white_node + "_quant"
+                assert new_white_node in model_nodes_names, "no quantized {} \
+                                                        in the graph".format(white_node)
+                new_white_nodes.append(new_white_node)
+            self.white_nodes = new_white_nodes
+
+        initializer_names = [i.name for i in model.graph.initializer]
         for node in model.graph.node: # pylint: disable=no-member
             should_be_dump = ((node.op_type in self.dump_op_types) and
                                    (node.name not in self.black_nodes)) or \
                                    (node.name in self.white_nodes)
             if should_be_dump:
-                if node.op_type == "Attention":
-                    if len(node.input) >= 3:
-                        logger.debug("indice input {} of attention node {} is in integer format"
-                                 .format(node.input[3:], node.name))
-                        tensors_to_dump.update(node.input[:2])
+                if not output_only:
+                    if node.op_type == "Attention":
+                        if len(node.input) >= 3:
+                            logger.debug("indice input {} of attention node {} is integer"
+                                     .format(node.input[3:], node.name))
+                            tensors_to_dump.update(node.input[:2])
+                        else:
+                            tensors_to_dump.update(node.input)
+                    elif node.op_type == "Gather":
+                        logger.debug("indice input {} of gather node {} is integer"
+                                     .format(node.input[-1], node.name))
+                        tensors_to_dump.update(node.input[:-1])
                     else:
                         tensors_to_dump.update(node.input)
-                elif node.op_type == "Gather":
-                    logger.debug("indice input {} of gather node {} is in integer format"
-                                 .format(node.input[-1], node.name))
-                    tensors_to_dump.update(node.input[:-1])
                 else:
-                    tensors_to_dump.update(node.input)
+                    for input in node.input:
+                        if input in initializer_names:
+                            tensors_to_dump.add(input)
                 tensors_to_dump.update(node.output)
 
+        tensors_tmp = set()
+        if activation_only:
             for tensor in tensors_to_dump:
-                if tensor in model.graph.initializer: # pylint: disable=no-member
-                    tensors_to_dump.remove(tensor)
-
+                if tensor not in initializer_names: # pylint: disable=no-member
+                    tensors_tmp.add(tensor)
+            tensors_to_dump = tensors_tmp
 
         for tensor in tensors_to_dump:
             if self.augment_nodes:
                 for augment_node_type in self.augment_nodes:
-                    if augment_node_type not in ['ReduceMin', 'ReduceMax']:
-                        raise ValueError("Unexpected augment_node {} only \
-                               ReduceMin/ReduceMax are supported".format(augment_node_type))
-                    augment_node_name = tensor + "_" + augment_node_type
-                    augment_node = onnx.helper.make_node(augment_node_type, [tensor],
-                                                         [augment_node_name],
-                                                         augment_node_name,
-                                                         keepdims=0)
-                    added_nodes.append(augment_node)
-                    added_outputs.append(helper.make_tensor_value_info(
-                                           augment_node.output[0], # pylint: disable=no-member
-                                           TensorProto.FLOAT, ())) # pylint: disable=no-member
+                    if augment_node_type in ['ReduceMin', 'ReduceMax']:
+                        # dump tensor for calibration
+                        augment_node_name = tensor + "_" + augment_node_type
+                        augment_node = onnx.helper.make_node(augment_node_type, [tensor],
+                                                             [augment_node_name],
+                                                             augment_node_name,
+                                                             keepdims=0)
+                        added_nodes.append(augment_node)
+                        added_outputs.append(helper.make_tensor_value_info(
+                                               augment_node.output[0], # pylint: disable=no-member
+                                               TensorProto.FLOAT, ())) # pylint: disable=no-member
+                    else:
+                        # insert DequantizeLinear node as output
+                        augment_node_name = tensor + "_new_" + augment_node_type
+                        scale, zero_point = self._get_scale_zo(tensor)
+                        if scale:
+                            # the tensor is in INT8 dtype
+                            augment_node = onnx.helper.make_node(augment_node_type,
+                                                                 [tensor, scale, zero_point],
+                                                                 [augment_node_name],
+                                                                 augment_node_name,
+                                                                 keepdims=0)
+                            added_nodes.append(augment_node)
+                            added_outputs.append(helper.make_tensor_value_info(
+                                               augment_node.output[0], # pylint: disable=no-member
+                                               TensorProto.FLOAT, ())) # pylint: disable=no-member
+                        else:
+                            # the tensor is in FP32 dtype
+                            if tensor not in [t.name for t in model.graph.output]:
+                                added_tensor = helper.ValueInfoProto()
+                                added_tensor.name = tensor
+                                added_outputs.append(added_tensor)
             else:
                 if tensor not in [t.name for t in model.graph.output]:
                     added_tensor = helper.ValueInfoProto()
@@ -127,6 +176,20 @@ class ONNXRTAugment:
 
         self.augmented_model = model
         onnx.save(model, self.augmented_model_path)
+
+    def _get_scale_zo(self, tensor):
+        ''' help function to get scale and zero_point '''
+        if not tensor.endswith("_quantized"):
+            logger.info("tensor {} in the quantized graph is not quantized".format(tensor))
+            return None, None
+        scale = "_".join(tensor.split("_")[:-1] + ["scale"])
+        scale_tensor = self.model_wrapper.get_initializer(scale)
+        assert scale_tensor, "missing scale for tensor {}".format(tensor)
+        zo = "_".join(tensor.split("_")[:-1] + ["zero_point"])
+        zo_tensor = self.model_wrapper.get_initializer(zo)
+        assert zo_tensor, "missing zero point for tensor {}".format(tensor)
+
+        return scale, zo
 
     def get_intermediate_outputs(self):
         '''
@@ -236,20 +299,18 @@ class ONNXRTAugment:
         quantization_params = {}
         model = self.model
 
-        self._get_input_name_to_nodes(model)
-        self._get_output_name_to_nodes(model)
+        input_name_to_nodes = self.model_wrapper.input_name_to_nodes()
+        output_name_to_nodes = self.model_wrapper.output_name_to_node()
 
         for tensor_name in quantization_thresholds.keys():
             child = None
-            if tensor_name in self.input_name_to_nodes:
-                children = self.input_name_to_nodes[tensor_name]
+            if tensor_name in input_name_to_nodes:
+                children = input_name_to_nodes[tensor_name]
                 if len(children) == 1:
                     child = children[0]
             parent = None
-            if tensor_name in self.output_name_to_nodes:
-                parents = self.output_name_to_nodes[tensor_name]
-                if len(parents) == 1:
-                    parent = parents[0]
+            if tensor_name in output_name_to_nodes:
+                parent = output_name_to_nodes[tensor_name]
             node_thresholds = quantization_thresholds[tensor_name]
             node_params = calculate_scale_zeropoint(parent, child, node_thresholds[0],
                                                          node_thresholds[1])
@@ -257,33 +318,43 @@ class ONNXRTAugment:
 
         return quantization_params
 
-    def _get_input_name_to_nodes(self, model):
-        '''
-            Helper function to get input_name_to_nodes dictionary
-        '''
-
-        for node in model.graph.node:
-            for input_name in node.input:
-                if input_name not in self.input_name_to_nodes:
-                    self.input_name_to_nodes[input_name] = [node]
-                else:
-                    self.input_name_to_nodes[input_name].append(node)
-
-    def _get_output_name_to_nodes(self, model):
-        '''
-            Helper function to get output_name_to_nodes dictionary
-        '''
-        self.output_name_to_nodes = {}
-        for node in model.graph.node:
-            for output_name in node.output:
-                if output_name not in self.output_name_to_nodes:
-                    self.output_name_to_nodes[output_name] = [node]
-                else:
-                    self.output_name_to_nodes[output_name].append(node)
-
-    def dump_tensor(self):
-        self.augment_graph()
-        return self.get_intermediate_outputs()[1]
+    def dump_tensor(self, activation_only=True):
+        if "QuantizeLinear" in [node.op_type for node in self.model.graph.node]:
+            self.augment_nodes = ["DequantizeLinear"]
+            self.already_quantized = True
+        self.augment_graph(activation_only=activation_only, output_only=True)
+        _, output_dicts_list = self.get_intermediate_outputs()
+        output_dicts = {}
+        for output_dicts_iter in output_dicts_list:
+            for output_name in output_dicts_iter:
+                if output_name not in output_dicts:
+                    output_dicts[output_name] = []
+                output_dicts[output_name].append(output_dicts_iter[output_name])
+        iters = len(output_dicts_list)
+        map_node_activation = [{} for _ in range(iters)]
+        map_node_weight = [{} for _ in range(iters)]
+        self.white_nodes = [node.replace("_quant", "") for node in self.white_nodes]
+        augmengted_wrapper = ONNXModel(self.augmented_model)
+        map_output = augmengted_wrapper.output_name_to_node()
+        map_input = augmengted_wrapper.input_name_to_nodes()
+        model_output_names = [t.name for t in self.model.graph.output]
+        model_initializer_names = [t.name for t in self.model.graph.initializer]
+        for tensor_name, tensors in output_dicts.items():
+            if tensor_name in model_initializer_names:
+                node = map_input[tensor_name][0]
+            else:
+                node = map_output[tensor_name]
+            if tensor_name in model_output_names and node.name not in self.white_nodes:
+                continue
+            while node.name not in self.white_nodes:
+                node = augmengted_wrapper.get_parents(node, output_name_to_node=map_output)[0]
+            if tensor_name not in model_initializer_names:
+                for i in range(iters):
+                    map_node_activation[i][node.name] = {tensor_name: tensors[i]}
+            else:
+                for i in range(iters):
+                    map_node_weight[i][node.name] = {tensor_name: tensors[i]}
+        return {"weight": map_node_weight, "activation": map_node_activation}
 
 def calculate_scale_zeropoint(last_node, next_node, rmin, rmax):
     '''
