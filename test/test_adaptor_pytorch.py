@@ -199,6 +199,14 @@ def build_qat_yaml():
         f.write(fake_yaml)
 
 
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:
+        assert False, 'Got an unknow version of torch: {}'.format(e)
+    return torch_version
+
+
 def eval_func(model):
     # switch to evaluate mode
     model.eval()
@@ -368,10 +376,13 @@ class TestPytorchAdaptor(unittest.TestCase):
         fallback_ops = []
         q_capability = self.adaptor.query_fw_capability(model)
         for k, v in q_capability["opwise"].items():
-            if k[0] != "quant":
+            if k[0] != "quant" and k[0] != "dequant":
               fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
+        version = get_torch_version()
+        if version >= '1.8':
+            model.model.dequant.qconfig = torch.quantization.default_qconfig
         lpot_torch._fallback_quantizable_ops_recursively(
             model.model, '', fallback_ops, white_list=self.adaptor.white_list)
         torch.quantization.add_observer_(model.model)

@@ -376,6 +376,9 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_lis
             self.add_module('quant', torch.quantization.QuantStub(module.qconfig))
             self.add_module('dequant', torch.quantization.DeQuantStub())
             self.add_module('module', module)
+            version = get_torch_version()
+            if version >= '1.8':
+                self.dequant.qconfig = module.qconfig
             module.qconfig = None
             self.train(module.training)
 
