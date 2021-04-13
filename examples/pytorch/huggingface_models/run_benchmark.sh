@@ -72,6 +72,32 @@ function run_benchmark {
     elif [ "${topology}" = "distilbert_base_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path='distilbert-base-uncased'
+    elif [ "${topology}" = "albert_base_MRPC" ]; then
+        MAX_SEQ_LENGTH=512
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model #'albert-base-v1'
+    elif [ "${topology}" = "funnel_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model #'funnel-transformer/small'
+    elif [ "${topology}" = "bart_WNLI" ]; then
+        TASK_NAME='WNLI'
+        model_name_or_path=$input_model #'facebook/bart-large'
+    elif [ "${topology}" = "mbart_WNLI" ]; then
+        TASK_NAME='WNLI'
+        model_name_or_path=$input_model #'facebook/mbart-large-cc25'
+    elif [ "${topology}" = "t5_WMT_en_ro" ];then
+        TASK_NAME='translation_en_to_ro'
+        model_name_or_path=$input_model
+        SCRIPTS=examples/seq2seq/run_seq2seq_tune.py
+    elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
+        TASK_NAME='translation_en_to_ro'
+        model_name_or_path='Helsinki-NLP/opus-mt-en-ro'
+        SCRIPTS=examples/seq2seq/run_seq2seq_tune.py
+    elif [ "${topology}" = "pegasus_billsum" ]; then
+        TASK_NAME='summarization_billsum'
+        model_name_or_path=$input_model #'google/pegasus-billsum'
+        SCRIPTS=examples/seq2seq/run_seq2seq_tune.py
+        extra_cmd='--predict_with_generate --max_source_length 1024 --max_target_length=256 --val_max_target_length=256 --test_max_target_length=256'
     fi
 
     if [[ ${int8} == "true" ]]; then
@@ -89,6 +115,20 @@ function run_benchmark {
             --per_gpu_eval_batch_size ${batch_size} \
             --no_cuda \
             --output_dir ${input_model} \
+            --iters ${iters} \
+            ${mode_cmd} \
+            ${extra_cmd}
+    elif [ "${SCRIPTS}" = "examples/seq2seq/run_seq2seq_tune.py" ]; then
+        python -u $SCRIPTS \
+            --tuned_checkpoint ${tuned_checkpoint} \
+            --model_name_or_path ${model_name_or_path} \
+            --data_dir ${dataset_location} \
+            --task ${TASK_NAME} \
+            --do_eval \
+            --predict_with_generate \
+            --per_device_eval_batch_size ${batch_size} \
+            --output_dir ${input_model} \
+            --iters ${iters} \
             ${mode_cmd} \
             ${extra_cmd}
     fi

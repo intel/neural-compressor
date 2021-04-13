@@ -1604,6 +1604,8 @@ class Trainer:
         eval_dataset: Optional[Dataset] = None,
         ignore_keys: Optional[List[str]] = None,
         metric_key_prefix: str = "eval",
+        iters: int = 0,
+        warmup_iter: int = 0,
     ) -> Dict[str, float]:
         """
         Run evaluation and returns metrics.
@@ -1636,8 +1638,11 @@ class Trainer:
             raise ValueError("eval_dataset must implement __len__")
 
         eval_dataloader = self.get_eval_dataloader(eval_dataset)
-        start_time = time.time()
-
+        global eval_start_time 
+        n_samples = len(eval_dataset if eval_dataset is not None else self.eval_dataset)
+        tot_iters = (n_samples + eval_dataloader.batch_size - 1) // eval_dataloader.batch_size
+        warmup_iter = min(warmup_iter,tot_iters - 1,iters-1)
+        eval_start_time = time.time()
         output = self.prediction_loop(
             eval_dataloader,
             description="Evaluation",
@@ -1646,10 +1651,17 @@ class Trainer:
             prediction_loss_only=True if self.compute_metrics is None else None,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
+            iters=iters,
+            warmup_iter=warmup_iter,
         )
-
-        n_samples = len(eval_dataset if eval_dataset is not None else self.eval_dataset)
-        output.metrics.update(speed_metrics(metric_key_prefix, start_time, n_samples))
+        if warmup_iter > 0:
+            if iters < tot_iters:
+                valid_samples = (iters - warmup_iter) * eval_dataloader.batch_size
+            else:
+                valid_samples = n_samples - warmup_iter * eval_dataloader.batch_size
+        else:
+            valid_samples = n_samples
+        output.metrics.update(speed_metrics(metric_key_prefix, eval_start_time, valid_samples))
         self.log(output.metrics)
 
         if self.args.tpu_metrics_debug or self.args.debug:
@@ -1720,6 +1732,8 @@ class Trainer:
         prediction_loss_only: Optional[bool] = None,
         ignore_keys: Optional[List[str]] = None,
         metric_key_prefix: str = "eval",
+        iters: int = 0,
+        warmup_iter: int = 0,
     ) -> PredictionOutput:
         """
         Prediction/evaluation loop, shared by :obj:`Trainer.evaluate()` and :obj:`Trainer.predict()`.
@@ -1745,7 +1759,9 @@ class Trainer:
             model = model.half().to(self.args.device)
 
         batch_size = dataloader.batch_size
-        num_examples = self.num_examples(dataloader)
+        num_examples = self.num_examples(dataloader) 
+        if iters > 0 and iters < (num_examples + batch_size - 1) // batch_size:
+            num_examples = batch_size * iters
         logger.info("***** Running %s *****", description)
         logger.info("  Num examples = %d", num_examples)
         logger.info("  Batch size = %d", batch_size)
@@ -1774,9 +1790,11 @@ class Trainer:
             self._past = None
 
         self.callback_handler.eval_dataloader = dataloader
-
         for step, inputs in enumerate(dataloader):
             loss, logits, labels = self.prediction_step(model, inputs, prediction_loss_only, ignore_keys=ignore_keys)
+            if warmup_iter>0 and (step+1)==warmup_iter:
+                global eval_start_time
+                eval_start_time=time.time()
             if loss is not None:
                 losses = loss.repeat(batch_size)
                 losses_host = losses if losses_host is None else torch.cat((losses_host, losses), dim=0)
@@ -1787,7 +1805,8 @@ class Trainer:
             self.control = self.callback_handler.on_prediction_step(self.args, self.state, self.control)
 
             # Gather all tensors and put them back on the CPU if we have done enough accumulation steps.
-            if self.args.eval_accumulation_steps is not None and (step + 1) % self.args.eval_accumulation_steps == 0:
+            if (self.args.eval_accumulation_steps is not None and (step + 1) % self.args.eval_accumulation_steps == 0) \
+                    or (iters > 0 and (step + 1) >= iters):
                 eval_losses_gatherer.add_arrays(self._gather_and_numpify(losses_host, "eval_losses"))
                 if not prediction_loss_only:
                     preds_gatherer.add_arrays(self._gather_and_numpify(preds_host, "eval_preds"))
@@ -1795,7 +1814,8 @@ class Trainer:
 
                 # Set back to None to begin a new accumulation
                 losses_host, preds_host, labels_host = None, None, None
-
+            if iters > 0 and (step + 1) >= iters:
+                break
         if self.args.past_index and hasattr(self, "_past"):
             # Clean the state at the end of the evaluation loop
             delattr(self, "_past")

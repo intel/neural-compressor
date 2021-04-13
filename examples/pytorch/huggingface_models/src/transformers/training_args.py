@@ -518,6 +518,17 @@ class TrainingArguments:
     tuned_checkpoint: str = field(
         default="./",
         metadata={"help":"path to checkpoint tuned by Low Precision Optimization Tool (default: ./)."})
+    accuracy_only: bool = field(
+        default=False,
+        metadata={"help":"Whether to only test accuracy for model tuned by Low Precision Optimization Tool."})
+    iters: int = field(
+        default=0,
+        metadata={"help":"Iteration number for Low Precision Optimization Tool benchmark/accuracy test."}
+    )
+    warmup_iter: int = field(
+        default=5,
+        metadata={"help":"The first warmup_iter iters don't count time for benchmark measurement only."}
+    )
 
     def __post_init__(self):
         if self.output_dir is None and os.getenv("SM_OUTPUT_DATA_DIR") is None:

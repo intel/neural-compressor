@@ -348,14 +348,17 @@ class AlbertAttention(nn.Module):
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
 
         # Should find a better way to do this
-        w = (
-            self.dense.weight.t()
-            .view(self.num_attention_heads, self.attention_head_size, self.hidden_size)
-            .to(context_layer.dtype)
-        )
-        b = self.dense.bias.to(context_layer.dtype)
+        # w = (
+        #     self.dense.weight.t()
+        #     .view(self.num_attention_heads, self.attention_head_size, self.hidden_size)
+        #     .to(context_layer.dtype)
+        # )
+        # b = self.dense.bias.to(context_layer.dtype)
 
-        projected_context_layer = torch.einsum("bfnd,ndh->bfh", context_layer, w) + b
+        # projected_context_layer = torch.einsum("bfnd,ndh->bfh", context_layer, w) + b
+        b,f,n,d = context_layer.size()[0],context_layer.size()[1],context_layer.size()[2],context_layer.size()[3]
+        context_layer = context_layer.view(b,f,n*d)
+        projected_context_layer = self.dense(context_layer)
         projected_context_layer_dropout = self.output_dropout(projected_context_layer)
         layernormed_context_layer = self.LayerNorm(hidden_states + projected_context_layer_dropout)
         return (layernormed_context_layer, attention_probs) if output_attentions else (layernormed_context_layer,)

@@ -39,6 +39,8 @@ class Seq2SeqTrainer(Trainer):
         metric_key_prefix: str = "eval",
         max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
+        iters: int = 0,
+        warmup_iter: int = 0,
     ) -> Dict[str, float]:
         """
         Run evaluation and returns metrics.
@@ -71,7 +73,7 @@ class Seq2SeqTrainer(Trainer):
         """
         self._max_length = max_length
         self._num_beams = num_beams
-        return super().evaluate(eval_dataset, ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix)
+        return super().evaluate(eval_dataset, ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix,iters=iters,warmup_iter=warmup_iter)
 
     def predict(
         self,

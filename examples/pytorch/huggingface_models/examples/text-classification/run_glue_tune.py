@@ -424,7 +424,7 @@ def main():
         q_model.save(training_args.tuned_checkpoint)
         exit(0)
 
-    if training_args.benchmark:
+    if training_args.accuracy_only:
         if training_args.int8:
             from lpot.utils.pytorch import load
             new_model = load(
@@ -441,8 +441,44 @@ def main():
             data_collator=data_collator,
         )
         results = trainer.evaluate(eval_dataset=eval_dataset)
-        print(results)
+        bert_task_acc_keys = ['eval_f1', 'eval_accuracy', 'mcc', 'spearmanr', 'acc']
+        for key in bert_task_acc_keys:
+            if key in results.keys():
+                acc = results[key]
+                break
+        print("Accuracy: %.5f" % acc)
         print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
+        print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_gpu_eval_batch_size)
+        exit(0)
+
+    if training_args.benchmark:
+        if training_args.int8:
+            from lpot.utils.pytorch import load
+            new_model = load(
+                    os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
+        else:
+            new_model = model
+        trainer = Trainer(
+            model=new_model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            compute_metrics=compute_metrics,
+            tokenizer=tokenizer,
+            data_collator=data_collator,
+        )
+        results = trainer.evaluate(eval_dataset=eval_dataset, iters=training_args.iters,
+                                    warmup_iter=training_args.warmup_iter)
+        bert_task_acc_keys = ['eval_f1', 'eval_accuracy', 'mcc', 'spearmanr', 'acc']
+        for key in bert_task_acc_keys:
+            if key in results.keys():
+                acc = results[key]
+                break
+        print("Accuracy: %.5f" % acc)
+        print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
+        print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_gpu_eval_batch_size)
         exit(0)
 
     # Initialize our Trainer

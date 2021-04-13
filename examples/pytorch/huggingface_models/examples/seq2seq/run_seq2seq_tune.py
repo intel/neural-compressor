@@ -321,25 +321,20 @@ def main():
             results = trainer.evaluate(
                 eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
             )
-            assert data_args.task.startswith("summarization") or data_args.task.startswith("translation") , "data_args.task should startswith summarization or translation"
-            if data_args.task.startswith("summarization"):
-                task_metrics_keys = ['val_gen_len','val_loss','val_rouge1','val_rouge2','val_rougeL','val_rougeLsum','val_samples_per_second']
-                rouge = 0
-                for key in task_metrics_keys:
-                    if key in results.keys():
-                        logger.info("Finally Eval {}:{}".format(key, results[key]))
-                        if 'rouge' in key:
-                            rouge += results[key]
-                return rouge/4
-            if data_args.task.startswith("translation"):
-                task_metrics_keys = ['val_bleu','val_samples_per_second']
-                for key in task_metrics_keys:
-                    if key in results.keys():
-                        logger.info("Finally Eval {}:{}".format(key, results[key]))
-                        if 'bleu' in key:
-                            bleu = results[key]
-                return bleu
-        from lpot import Quantization, common
+            assert data_args.task.startswith("summarization") or data_args.task.startswith("translation") , \
+                "data_args.task should startswith summarization or translation"
+            task_metrics_keys = ['val_bleu','val_rouge1','val_rouge2','val_rougeL','val_rougeLsum']
+            for key in task_metrics_keys:
+                if key in results.keys():
+                    logger.info("Finally Eval {}:{}".format(key, results[key]))
+                    if 'bleu' in key:
+                        acc = results[key]
+                        break
+                    if 'rouge' in key:
+                        acc = sum([v for k,v in results.items() if "rouge" in k])/4
+                        break
+            return acc
+        from lpot.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(
@@ -353,7 +348,31 @@ def main():
         exit(0)
 
     if training_args.benchmark:
-
+        if training_args.int8:
+            from lpot.utils.pytorch import load
+            new_model = load(
+                    os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
+        else:
+            new_model = model
+        trainer.model = new_model
+        results = trainer.evaluate(
+                eval_dataset=eval_dataset,
+                metric_key_prefix="val", 
+                max_length=data_args.val_max_target_length, 
+                num_beams=data_args.eval_beams,
+                iters=training_args.iters,
+                warmup_iter=training_args.warmup_iter,
+            )
+        if data_args.task.startswith("summarization"):
+            print('Accuracy: %.4f' % (sum([v for k,v in results.items() if "rouge" in k])/4))
+        if data_args.task.startswith("translation"):
+            print('Accuracy: %.4f' % (results['val_bleu']))
+        print('Throughput: %.3f samples/sec' % (results["val_samples_per_second"]))
+        print('Latency: %.3f ms' % (1 * 1000 / results["val_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
+        exit(0) 
+    
+    if training_args.accuracy_only:
         if training_args.int8:
             from lpot.utils.pytorch import load
             new_model = load(
@@ -367,7 +386,12 @@ def main():
                 max_length=data_args.val_max_target_length, 
                 num_beams=data_args.eval_beams,
             )
-        print(results)
+        if data_args.task.startswith("summarization"):
+            print('Accuracy: %.4f' % (sum([v for k,v in results.items() if "rouge" in k])/4))
+        if data_args.task.startswith("translation"):
+            print('Accuracy: %.4f' % (results['val_bleu']))
+        print('Latency: %.3f ms' % (1 * 1000 / results["val_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
         exit(0) 
 
     # Evaluation
