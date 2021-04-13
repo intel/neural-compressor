@@ -112,7 +112,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         if best_cfg is not None:
             fallback_dtypes = []
             for data_type in ["bf16", "fp32"]:
-                for op_type, tune_space in self.modelwise_tune_space.items():
+                for _, tune_space in self.modelwise_tune_space.items():
                     if (data_type in tune_space["activation"]["dtype"] and
                         data_type not in fallback_dtypes):
                         fallback_dtypes.append(data_type)
@@ -178,7 +178,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             yield op_cfgs
 
         return
-    
+
     def traverse(self):
 
         with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
@@ -219,7 +219,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                     self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
                 else:
                     # If the eval_dataloader was not specified under the config yaml file,
-                    # We only converted the model with customized precisions.   
+                    # We only converted the model with customized precisions.
                     self.best_qmodel = self.last_qmodel
                     need_stop = True
 

@@ -18,14 +18,16 @@
 import os
 import pickle
 import random
+import yaml
+import sys
 import numpy as np
+from lpot.model.model import get_model_fwk_name
 from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel as LpotModel
-
 
 class Graph_Optimization(object):
     """Graph_Optimization class automatically searches for optimal quantization recipes for low
@@ -47,19 +49,38 @@ class Graph_Optimization(object):
 
     """
 
-    def __init__(self, conf_fname):
-        self.conf = Conf(conf_fname)
+    def __init__(self, conf_fname=None):
+        self.conf_name = conf_fname
+        self.user_model = None
+        self._model = None
+
+        self._eval_dataloader = None
+        self._eval_func = None
+
+        self._precisions = None
+        self._input = None
+        self._output = None
+        self.conf = None
+        self.__init_env(self.conf_name, self.model)
+
+    def __init_env(self, conf_fname, model_obj):
+        if self.conf:
+            logger.info('Graph optimization conf has been initialized.')
+            return
+
+        if conf_fname:
+            self.conf = Conf(conf_fname)
+        elif not conf_fname and model_obj:
+            self.gen_graph_optimization_yaml(model_obj)
+        else:
+            return
+
         cfg = self.conf.usr_cfg
         cfg.tuning.strategy.name = 'automixedprecision'
         self.framework = cfg.model.framework.lower()
         seed = cfg.tuning.random_seed
         random.seed(seed)
         np.random.seed(seed)
-
-        self._model = None
-
-        self._eval_dataloader = None
-        self._eval_func = None
 
     def __call__(self):
         """The main entry point of graph optimization process.
@@ -102,8 +123,22 @@ class Graph_Optimization(object):
             converted model: best converted model found, otherwise return None
 
         """
+
+        self.__init_env(self.conf_name, self.user_model)
+
+        framework_model_info = {}
         cfg = self.conf.usr_cfg
-        
+        if self.framework == 'tensorflow':
+            framework_model_info.update(
+                {'name': cfg.model.name,
+                 'input_tensor_names': cfg.model.inputs,
+                 'output_tensor_names': cfg.model.outputs,
+                 'workspace_path': cfg.tuning.workspace.path})
+        from ..model import MODELS
+
+        self._model = MODELS[self.framework](\
+            self.user_model.root, framework_model_info, **self.user_model.kwargs)
+
         assert isinstance(self._model, LpotModel), 'need set your Model for quantization....'
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
@@ -113,8 +148,7 @@ class Graph_Optimization(object):
                 if eval_dataloader_cfg is None:
                     self._eval_func = None
                 else:
-                    self._eval_dataloader = create_dataloader(self.framework, \
-                                                             eval_dataloader_cfg)
+                    self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         strategy = cfg.tuning.strategy.name.lower()
 
@@ -158,16 +192,58 @@ class Graph_Optimization(object):
         from .data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)
 
+    def gen_graph_optimization_yaml(self, model_obj):
+        default_yaml_template = {'model': {'framework': 'tensorflow', 'name': 'resnet50'},
+                                           'device': 'cpu',
+                                           'graph_optimization': {'precisions': ['bf16, fp32']}}
+        fwk_name = get_model_fwk_name(model_obj.root)
+        if fwk_name != 'tensorflow':
+            logger.info('Graph optimization only supports Tensorflow at current stage.')
+            sys.exit(0)
+        default_yaml_template['model']['framework'] = get_model_fwk_name(model_obj.root)
+        default_yaml_template['graph_optimization']['precisions'] = [str(self._precisions)]
+        default_yaml_template['model']['inputs'] = self._input
+        default_yaml_template['model']['outputs'] = self._output
+
+        graph_optimization_yaml_path =  '/tmp/graph_optimization.yaml'
+        with open(graph_optimization_yaml_path, 'w', encoding='utf-8') as f:
+            yaml.dump(default_yaml_template, f)
+        self.conf = Conf(graph_optimization_yaml_path)
+
+    @property
+    def precisions(self):
+        return self._precisions
+
+    @precisions.setter
+    def precisions(self, customized_precisions):
+        self._precisions = customized_precisions
+
+    @property
+    def input(self):
+        return self._input
+
+    @input.setter
+    def input(self, customized_input):
+        self._input = customized_input
+
+    @property
+    def output(self):
+        return self._output
+
+    @output.setter
+    def output(self, customized_output):
+        self._output = customized_output
+
     @property
     def eval_dataloader(self):
         return self._eval_dataloader
 
     @eval_dataloader.setter
     def eval_dataloader(self, dataloader):
-        """Set Data loader for evaluation, It is iterable and the batched data 
+        """Set Data loader for evaluation, It is iterable and the batched data
            should consists of a tuple like (input, label), when eval_dataloader is set,
            user should configure postprocess(optional) and metric in yaml file or set
-           postprocess and metric cls. Notice evaluation dataloader will be used to 
+           postprocess and metric cls. Notice evaluation dataloader will be used to
            generate data for model inference, make sure the input data can be feed to model.
 
            Args:
@@ -178,8 +254,8 @@ class Graph_Optimization(object):
                                       to initialize a lpot dataloader object.
                                       Notice lpot.common.DataLoader is just a wrapper of the
                                       information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method 
-                                      a 'real' eval_dataloader will be created, 
+                                      batched data and only in this setter method
+                                      a 'real' eval_dataloader will be created,
                                       the reason is we have to know the framework info
                                       and only after the Quantization object created then
                                       framework infomation can be known. Future we will support
@@ -204,29 +280,19 @@ class Graph_Optimization(object):
                        Best practice is to set from a initialized lpot.common.Model.
                        If tensorflow model is used, model's inputs/outputs will be auto inferred,
                        but sometimes auto inferred inputs/outputs will not meet your requests,
-                       set them manually in config yaml file. Another corner case is slim model 
+                       set them manually in config yaml file. Another corner case is slim model
                        of tensorflow, be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
-        
+
         """
         from .common import Model as LpotModel
-        from ..model import MODELS
+
         if not isinstance(user_model, LpotModel):
             logger.warning('force convert user raw model to lpot model, \
                 better initialize lpot.common.Model and set....')
-            user_model = LpotModel(user_model)
-
-        framework_model_info = {}
-        cfg = self.conf.usr_cfg
-        if self.framework == 'tensorflow':
-            framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': cfg.model.inputs,
-                 'output_tensor_names': cfg.model.outputs,
-                 'workspace_path': cfg.tuning.workspace.path})
-
-        self._model = MODELS[self.framework](\
-            user_model.root, framework_model_info, **user_model.kwargs)
+            self.user_model = LpotModel(user_model)
+        else:
+            self.user_model = user_model
 
     @property
     def metric(self):
@@ -237,17 +303,17 @@ class Graph_Optimization(object):
     def metric(self, user_metric):
         """Set metric class and lpot will initialize this class when evaluation
            lpot have many built-in metrics, but user can set specific metric through
-           this api. The metric class should take the outputs of the model or 
-           postprocess(if have) as inputs, lpot built-in metric always take 
+           this api. The metric class should take the outputs of the model or
+           postprocess(if have) as inputs, lpot built-in metric always take
            (predictions, labels) as inputs for update,
            and user_metric.metric_cls should be sub_class of lpot.metric.BaseMetric.
 
         Args:
             user_metric(lpot.common.Metric): user_metric should be object initialized from
-                                             lpot.common.Metric, in this method the 
+                                             lpot.common.Metric, in this method the
                                              user_metric.metric_cls will be registered to
                                              specific frameworks and initialized.
-                                              
+
         """
         from .common import Metric as LpotMetric
         assert isinstance(user_metric, LpotMetric), \
@@ -269,15 +335,15 @@ class Graph_Optimization(object):
 
     @postprocess.setter
     def postprocess(self, user_postprocess):
-        """Set postprocess class and lpot will initialize this class when evaluation. 
+        """Set postprocess class and lpot will initialize this class when evaluation.
            The postprocess class should take the outputs of the model as inputs, and
            output (predictions, labels) as inputs for metric update.
            user_postprocess.postprocess_cls should be sub_class of lpot.data.BaseTransform.
 
         Args:
-            user_postprocess(lpot.common.Postprocess): 
+            user_postprocess(lpot.common.Postprocess):
                 user_postprocess should be object initialized from lpot.common.Postprocess,
-                in this method the user_postprocess.postprocess_cls will be 
+                in this method the user_postprocess.postprocess_cls will be
                 registered to specific frameworks and initialized.
 
         """
@@ -297,7 +363,7 @@ class Graph_Optimization(object):
     def eval_func(self):
         logger.warning('eval_func not support getter....')
         return None
-        
+
     @eval_func.setter
     def eval_func(self, user_eval_func):
         """ The evaluation function provided by user.
@@ -319,4 +385,3 @@ class Graph_Optimization(object):
         """
         logger.warning('eval_func is to be deprecated, please construct eval_dataloader....')
         self._eval_func = user_eval_func
-

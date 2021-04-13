@@ -26,6 +26,7 @@ torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 onnx = LazyImport('onnx')
+ort = LazyImport("onnxruntime")
 yaml = LazyImport('yaml')
 json = LazyImport('json')
 
@@ -63,7 +64,51 @@ def get_model_type(model):
                     # can't use keras load
                     return 'saved_model'
 
-    raise ValueError('model {} has not recognised model type....'.format(model))
+    raise ValueError('model {} has not recognized model type....'.format(model))
+
+
+def get_model_fwk_name(model):
+    """Detect the input model belongs to which framework
+
+    Args:
+        model (string): framework name that supported by LPOT, if there's no available fwk info,
+                        then return 'NA'.
+    """
+    def _is_onnxruntime(model):
+        try:
+            ort.InferenceSession(model)
+        except:
+            return False
+        else:
+            return True
+
+    def _is_pytorch(model):
+        return isinstance(model, torch.nn.Module)
+
+    def _is_tensorflow(model):
+        try:
+            model_type= get_model_type(model)
+        except Exception as e:
+            return False
+        else:
+            return True
+
+    def _is_mxnet(model):
+        return isinstance(model, mx.gluon.HybridBlock) or \
+            (hasattr(model, '__len__') and len(model) > 1 and \
+                isinstance(model[0], mx.symbol.Symbol))
+
+    checker = {'tensorflow': _is_tensorflow,
+                'pytorch': _is_pytorch,
+                'onnxruntime': _is_onnxruntime,
+                'mxnet': _is_mxnet
+                }
+
+    for fwk_name, handler in checker.items():
+        if handler(model):
+            return fwk_name
+
+    return 'NA'
 
 def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
     model_variables_dir = os.path.join(input_model, 'variables')
@@ -178,7 +223,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         from tensorflow.python.keras.engine import keras_tensor
         if keras_tensor.keras_tensors_enabled():
             for name, tensor in kwargs.items():
-                kwargs[name] = tensor.type_spec 
+                kwargs[name] = tensor.type_spec
     full_model = tf.function(lambda **kwargs: model(kwargs.values()))
     concrete_function = full_model.get_concrete_function(**kwargs)
     frozen_model = convert_variables_to_constants_v2(concrete_function)
@@ -197,7 +242,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
     from .nets_factory import TFSlimNetsFactory
-    factory = TFSlimNetsFactory() 
+    factory = TFSlimNetsFactory()
     assert 'name' in kwargs, 'model name should be included in slim checkpoint....'
     assert kwargs['name'] in factory.default_slim_models, \
         'only support topology {}'.format(factory.default_slim_models)
@@ -338,7 +383,7 @@ class TensorflowBaseModel(BaseModel):
         deep_set(framework_specific_info, 'output_tensor_names', self._output_tensor_names)
 
         # sess_global_initialize(self.sess)
-        self.iter_op = None 
+        self.iter_op = None
         if 'MakeIterator' in [node.op for node in self.sess.graph.as_graph_def().node]:
             self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
 
@@ -363,19 +408,19 @@ class TensorflowBaseModel(BaseModel):
             create_session_with_input_output(graph_def, self._input_tensor_names, \
                 self._output_tensor_names)
         if self.iter_op:
-            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator') 
+            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
 
     @property
     def input_tensor_names(self):
         return self._input_tensor_names
-    
+
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         assert validate_graph_node(\
             self.sess.graph.as_graph_def(), tensor_to_node(tensor_names)), \
                 'tensor names should not be None or empty'
         self._input_tensor_names = tensor_names
-        
+
     @property
     def output_tensor_names(self):
         return self._output_tensor_names
@@ -386,7 +431,7 @@ class TensorflowBaseModel(BaseModel):
             self.sess.graph.as_graph_def(), tensor_to_node(tensor_names)), \
                 'tensor names should not be None or empty'
         self._output_tensor_names = tensor_names
-    
+
     # input/output node names and input/output tensor
     # come from input/output tensor names, so do not support assign these values
     @property
@@ -468,7 +513,7 @@ class TensorflowKerasModel(TensorflowBaseModel):
             out = [get_tensor_by_name(g, x) for x in self._output_tensor_names]
             sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
             tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
-                {k: v for k, v in zip(self._input_tensor_names, inp)},  
+                {k: v for k, v in zip(self._input_tensor_names, inp)},
                 {k: v for k, v in zip(self._output_tensor_names, out)})
             builder.add_meta_graph_and_variables(sess,
                                                  [tag_constants.SERVING],
@@ -495,7 +540,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
             create_session_with_input_output(graph_def, self._input_tensor_names, \
                 self._output_tensor_names)
         if self.iter_op:
-            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator') 
+            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
 
 TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'graph_def': TensorflowBaseModel,
@@ -745,6 +790,4 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch': PyTorchModel,
           'pytorch_ipex': PyTorchIpexModel,
           'onnxrt_qlinearops': ONNXModel,
-          'onnxrt_integerops': ONNXModel, }
-
-
+          'onnxrt_integerops': ONNXModel,}

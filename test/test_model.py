@@ -2,6 +2,7 @@
 import numpy as np
 import unittest
 import os
+
 from lpot.model import MODELS
 import torchvision
 import torch
@@ -10,7 +11,7 @@ import mxnet.gluon.nn as nn
 import mxnet as mx
 import tensorflow as tf
 import lpot.model.model as LpotModel
-from lpot.model.model import TensorflowModel
+from lpot.model.model import TensorflowModel, get_model_fwk_name
 
 def build_graph():
     try:
@@ -206,6 +207,8 @@ class TestTensorflowModel(unittest.TestCase):
         if tf.version.VERSION < '2.2.0':
             return
         keras_model = build_keras()
+        self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
+
         model = TensorflowModel(keras_model)
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
@@ -221,11 +224,10 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf keras_model')
 
     def test_saved_model(self):
-        
-        mobilenet_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
+        ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
         dst_path = 'saved_model.tar.gz'
         if not os.path.exists(dst_path):
-          os.system("wget {} -O {}".format(mobilenet_ckpt_url, dst_path))
+          os.system("wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
         
         os.system("tar -xvf {}".format(dst_path))
         model = TensorflowModel('ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
@@ -278,8 +280,9 @@ class TestONNXModel(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove(self.cnn_export_path)
-        
+
     def test_model(self):
+        self.assertEqual('onnxruntime', get_model_fwk_name(self.cnn_export_path))
         model = MODELS['onnxrt_integerops'](self.cnn_model)
         self.assertEqual(True, isinstance(model, LpotModel.ONNXModel))
         self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
@@ -295,6 +298,7 @@ class TestPyTorchModel(unittest.TestCase):
         from lpot.model.model import PyTorchModel, PyTorchIpexModel
         fwk = {'workspace_path': './pytorch'}
         ori_model = torchvision.models.mobilenet_v2()
+        self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
         pt_model.model = ori_model
         with self.assertRaises(AssertionError):
@@ -320,7 +324,6 @@ def load_mxnet_model(symbol_file, param_file):
     return symbol, arg_params, aux_params
 
 class TestMXNetModel(unittest.TestCase):
-    
     @classmethod
     def setUpClass(self):
         net = nn.HybridSequential()
@@ -339,8 +342,9 @@ class TestMXNetModel(unittest.TestCase):
         os.remove('test-0000.params')
         os.remove('test2-symbol.json')
         os.remove('test2-0000.params')
-        
+
     def test_model(self):
+        self.assertEqual('mxnet', get_model_fwk_name(self.net))
         model = MODELS['mxnet'](self.net)
         self.assertEqual(True, isinstance(model, LpotModel.MXNetModel))
         self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
