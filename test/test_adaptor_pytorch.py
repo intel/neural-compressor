@@ -329,7 +329,8 @@ class TestPytorchAdaptor(unittest.TestCase):
         load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
         a = load_array('dump_tensor/activation_iter1.npz')
         w = load_array('dump_tensor/weight.npz')
-        self.assertTrue(w['conv1/weight'].shape[0] == a['conv1.output0'].shape[1])
+        self.assertTrue(w['conv1'].item()['conv1.0.weight'].shape[0] ==
+                        a['conv1'].item()['conv1.output0'].shape[1])
         shutil.rmtree('./dump_tensor', ignore_errors=True)
 
     def test_floatfunctions_fallback(self):

@@ -1232,6 +1232,7 @@ class PyTorchAdaptor(TemplateAdaptor):
     def inspect_tensor(self, model, dataloader, op_list=None, iteration_list=None,
                        weights=False, save_to_disk=False):
         from torch.quantization import get_observer_dict
+        from torch import dequantize
         import numpy as np
         new_model = copy.deepcopy(model)
         assert min(iteration_list) > 0, \
@@ -1254,14 +1255,15 @@ class PyTorchAdaptor(TemplateAdaptor):
                 op_name = key.replace(".activation_post_process", "")
                 value = observer_dict[key].get_tensor_value()[i]
                 if type(value) is list:
+                    summary[op_name] = {}
                     for index in range(len(value)):
-                        summary[op_name + ".output" + str(index)] = \
-                            torch.dequantize(value[index]).numpy() \
-                            if value[index].is_quantized else value[index].numpy()
+                        summary[op_name].update(
+                            {op_name + ".output" + str(index): dequantize(value[index]).numpy()
+                             if value[index].is_quantized else value[index].numpy()})
                 else:
-                    summary[op_name + ".output0"] = \
-                        torch.dequantize(value[index]).numpy() \
-                        if value.is_quantized else value.numpy()
+                    summary[op_name] = {op_name + ".output0":
+                                        dequantize(value[index]).numpy()
+                                        if value.is_quantized else value.numpy()}
 
             if save_to_disk:
                 dump_dir = os.path.join(self.workspace_path, 'dump_tensor')
@@ -1279,18 +1281,20 @@ class PyTorchAdaptor(TemplateAdaptor):
 
                 op = key[:key.rfind('.')]
                 if self.is_fused_child(op) is True:
-                    # fused child tensorboard tag will be merge
-                    weight = key[key.rfind('.')+1:]
-                    op = op[:op.rfind('.')] + '/' + weight
-                else:
-                    weight = key[key.rfind('.')+1:]
-                    op = key[:key.rfind('.')] + '/' + weight
-
-                # To merge ._packed_params
+                    op = op[:op.rfind('.')]
                 op = op.replace('._packed_params', '')
 
-                ret['weights'][op] = torch.dequantize(state_dict[key]).numpy() \
-                    if state_dict[key].is_quantized else state_dict[key].numpy()
+                # To merge ._packed_params
+                weight_name = key.replace('._packed_params', '')
+
+                if op in ret['weights']:
+                    ret['weights'][op].update({weight_name: dequantize(state_dict[key]).numpy()
+                                              if state_dict[key].is_quantized else
+                                              state_dict[key].numpy()})
+                else:
+                    ret['weights'][op] = {weight_name: dequantize(state_dict[key]).numpy()
+                                          if state_dict[key].is_quantized else
+                                          state_dict[key].numpy()}
 
             if save_to_disk:
                 np.savez(os.path.join(dump_dir, 'weight.npz'), **ret['weights'])
