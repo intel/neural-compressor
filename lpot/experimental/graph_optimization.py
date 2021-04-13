@@ -168,8 +168,8 @@ class Graph_Optimization(object):
         self.strategy = STRATEGIES[strategy](
             self._model,
             self.conf,
-            self._eval_dataloader,
-            self._eval_func,
+            None,
+            None,
             self._eval_dataloader,
             self._eval_func,
             _resume)
