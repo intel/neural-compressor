@@ -623,55 +623,65 @@ class TensorflowMAP(BaseMetric):
     def update(self, predicts, labels, sample_weight=None):
         from .coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
-        bbox, str_label,int_label, image_id = labels
-        detection = {}
+        detections = []
         if len(predicts) == 3:
-            detection['boxes'] = np.asarray(predicts[0][0])
-            detection['scores'] = np.asarray(predicts[1][0])
-            detection['classes'] = np.asarray(predicts[2][0])
+            for bbox, score, cls in zip(*predicts):
+                detection = {}
+                detection['boxes'] = np.asarray(bbox)
+                detection['scores'] = np.asarray(score)
+                detection['classes'] = np.asarray(cls)
+                detections.append(detection)
         elif len(predicts) == 4:
-            num = int(predicts[0][0])
-            detection['boxes'] = np.asarray(predicts[1][0])[0:num]
-            detection['scores'] = np.asarray(predicts[2][0])[0:num]
-            detection['classes'] = np.asarray(predicts[3][0])[0:num]
+            for num, bbox, score, cls in zip(*predicts):
+                detection = {}
+                num = int(num)
+                detection['boxes'] = np.asarray(bbox)[0:num]
+                detection['scores'] = np.asarray(score)[0:num]
+                detection['classes'] = np.asarray(cls)[0:num]
+                detections.append(detection)
         else:
             raise ValueError("Unsupported prediction format!")
 
-        ground_truth = {}
-        ground_truth['boxes'] = np.asarray(bbox[0])
-        if len(int_label[0]) == 0:
-            # convert string label to int index
-            str_label = [
-                x if type(x) == 'str' else x.decode('utf-8')
-                for x in str_label[0]
-            ]
-            ground_truth['classes'] = np.asarray(
-                [self.category_map_reverse[x] for x in str_label])
-        elif len(str_label[0]) == 0:
-            ground_truth['classes'] = np.asarray(
-                [x for x in int_label[0]])
-        image_id = image_id[0] if type(
-            image_id[0]) == 'str' else image_id[0].decode('utf-8')
+        bboxes, str_labels,int_labels, image_ids = labels
+        labels = []
+        if len(int_labels[0]) == 0:
+            for str_label in str_labels:
+                str_label = [
+                    x if type(x) == 'str' else x.decode('utf-8')
+                    for x in str_label
+                ]
+                labels.append([self.category_map_reverse[x] for x in str_label])
+        elif len(str_labels[0]) == 0:
+            for int_label in int_labels:
+                labels.append([x for x in int_label])
 
-        if image_id in self.image_ids:
-            return
-        self.image_ids.append(image_id)
-        self.ground_truth_list.extend(
-            ExportSingleImageGroundtruthToCoco(
-                image_id=image_id,
-                next_annotation_id=self.annotation_id,
-                category_id_set=self.category_id_set,
-                groundtruth_boxes=ground_truth['boxes'],
-                groundtruth_classes=ground_truth['classes']))
-        self.annotation_id += ground_truth['boxes'].shape[0]
+        for idx, image_id in enumerate(image_ids):
+            image_id = image_id if type(
+                image_id) == 'str' else image_id.decode('utf-8')
+            if image_id in self.image_ids:
+                continue
+            self.image_ids.append(image_id)
+            
+            ground_truth = {}
+            ground_truth['boxes'] = np.asarray(bboxes[idx])
+            ground_truth['classes'] = np.asarray(labels[idx])
+            
+            self.ground_truth_list.extend(
+                ExportSingleImageGroundtruthToCoco(
+                    image_id=image_id,
+                    next_annotation_id=self.annotation_id,
+                    category_id_set=self.category_id_set,
+                    groundtruth_boxes=ground_truth['boxes'],
+                    groundtruth_classes=ground_truth['classes']))
+            self.annotation_id += ground_truth['boxes'].shape[0]
 
-        self.detection_list.extend(
-            ExportSingleImageDetectionBoxesToCoco(
-                image_id=image_id,
-                category_id_set=self.category_id_set,
-                detection_boxes=detection['boxes'],
-                detection_scores=detection['scores'],
-                detection_classes=detection['classes']))
+            self.detection_list.extend(
+                ExportSingleImageDetectionBoxesToCoco(
+                    image_id=image_id,
+                    category_id_set=self.category_id_set,
+                    detection_boxes=detections[idx]['boxes'],
+                    detection_scores=detections[idx]['scores'],
+                    detection_classes=detections[idx]['classes']))
 
     def reset(self):
         self.image_ids = []

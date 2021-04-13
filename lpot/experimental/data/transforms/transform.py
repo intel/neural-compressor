@@ -53,9 +53,6 @@ class TensorflowTransforms(Transforms):
 
     def _get_preprocess(self):
         preprocess = {
-            "CropToBoundingBox": TensorflowWrapFunction(tf.image.crop_to_bounding_box),
-            "RandomHorizontalFlip": TensorflowWrapFunction(tf.image.random_flip_left_right),
-            "RandomVerticalFlip": TensorflowWrapFunction(tf.image.random_flip_up_down),
             "DecodeImage": TensorflowWrapFunction(tf.io.decode_jpeg),
             "EncodeJpeg": TensorflowWrapFunction(tf.io.encode_jpeg),
         }
@@ -69,9 +66,7 @@ class TensorflowTransforms(Transforms):
         return postprocess
 
     def _get_general(self):
-        general = {
-            "Transpose": TensorflowWrapFunction(tf.transpose),
-        }
+        general = {}
         general.update(TENSORFLOW_TRANSFORMS["general"])
         return general
 
@@ -359,6 +354,19 @@ class ONNXRTCropToBoundingBox(CropToBoundingBox):
                       self.offset_width : self.offset_width+self.target_width, :] 
         return (image, label)
 
+@transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
+                framework="tensorflow")
+class TensorflowCropToBoundingBox(CropToBoundingBox):
+    def __call__(self, sample):
+        image, label = sample
+        if isinstance(image, tf.Tensor):
+            image = tf.image.crop_to_bounding_box(image, self.offset_height,
+                    self.offset_width, self.target_height, self.target_width)
+        else:
+            image = image[self.offset_height : self.offset_height+self.target_height, 
+                    self.offset_width : self.offset_width+self.target_width, :] 
+        return (image, label)
+
 @transform_registry(transform_type="Transpose", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
 class Transpose(BaseTransform):
@@ -369,6 +377,17 @@ class Transpose(BaseTransform):
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
         image = np.transpose(image, axes=self.perm)
+        return (image, label)
+
+@transform_registry(transform_type="Transpose", process="preprocess", framework="tensorflow")
+class TensorflowTranspose(Transpose):
+    def __call__(self, sample):
+        image, label = sample
+        assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
+        if isinstance(image, tf.Tensor):
+            image = tf.transpose(image, perm=self.perm)
+        else:
+            image = np.transpose(image, axes=self.perm)
         return (image, label)
 
 @transform_registry(transform_type="Transpose", process="preprocess", framework="mxnet")
@@ -396,6 +415,18 @@ class RandomVerticalFlip(BaseTransform):
             image = np.flipud(image)
         return (image, label)
 
+@transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
+        framework="tensorflow")
+class TensorflowRandomVerticalFlip(BaseTransform):
+    def __call__(self, sample):
+        image, label = sample
+        if isinstance(image, tf.Tensor):
+            image = tf.image.random_flip_up_down(image)
+        else:
+            if np.random.rand(1)[0] > 0.5:
+                image = np.flipud(image)
+        return (image, label)
+
 @transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
 class RandomHorizontalFlip(BaseTransform):
@@ -403,6 +434,18 @@ class RandomHorizontalFlip(BaseTransform):
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
             image = np.fliplr(image)
+        return (image, label)
+
+@transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
+        framework="tensorflow")
+class TensorflowRandomHorizontalFlip(BaseTransform):
+    def __call__(self, sample):
+        image, label = sample
+        if isinstance(image, tf.Tensor):
+            image = tf.image.random_flip_left_right(image)
+        else:
+            if np.random.rand(1)[0] > 0.5:
+                image = np.fliplr(image)
         return (image, label)
 
 @transform_registry(transform_type="ToArray", process="preprocess", \
@@ -419,42 +462,43 @@ class ToArray(BaseTransform):
             raise ValueError("Unknown image type!")
         return (image, label)
 
+np_dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64,
+           'uint16': np.uint16, 'int32': np.int32, 'uint32': np.uint32,
+           'int64': np.int64, 'uint64': np.uint64, 'float32': np.float32,
+           'float16': np.float16, 'float64': np.float64, 'bool': np.bool,
+           'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
+ 
 @transform_registry(transform_type="Cast",
                     process="general", framework="tensorflow")
 class CastTFTransform(BaseTransform):
     def __init__(self, dtype='float32'):
-        dtype_map = {'int8': tf.int8, 'uint8': tf.uint8, 'uint16': tf.uint16, 
-                     'uint32':tf.uint32, 'uint64': tf.uint64, 'int16': tf.int16, 
-                     'int32': tf.int32, 'int64':tf.int64, 'float32': tf.float32, 
-                     'float16': tf.float16, 'float64':tf.float64, 'bool': tf.bool, 
-                     'string': tf.string, 'qint8': tf.qint8, 'quint8': tf.quint8, 
-                     'qint16': tf.qint16, 'quint16': tf.quint16, 'qint32': tf.qint32, 
-                     'resource': tf.resource, 'variant': tf.variant, 'bfloat16': tf.bfloat16, 
-                     'complex64': tf.complex64, 'complex128': tf.complex128}
-        assert dtype in dtype_map.keys(), 'Unknown dtype'
-        self.dtype = dtype_map[dtype]
+        self.tf_dtype_map = {'int16': tf.int16, 'uint8': tf.uint8, 'uint16': tf.uint16,
+                        'uint32':tf.uint32, 'uint64': tf.uint64, 'complex64': tf.complex64,
+                        'int32': tf.int32, 'int64':tf.int64, 'float32': tf.float32,
+                        'float16': tf.float16, 'float64':tf.float64, 'bool': tf.bool,
+                        'string': tf.string, 'int8': tf.int8, 'complex128': tf.complex128}
+        
+        assert dtype in self.tf_dtype_map.keys(), 'Unknown dtype'
+        self.dtype = dtype
 
     def __call__(self, sample):
         image, label = sample
-        image = tf.image.convert_image_dtype(image, dtype=self.dtype)
+        if isinstance(image, tf.Tensor):
+            image = tf.image.convert_image_dtype(image, dtype=self.tf_dtype_map[self.dtype])
+        else:
+            image = image.astype(np_dtype_map[self.dtype])
         return (image, label)
 
 @transform_registry(transform_type="Cast",
                     process="general", framework="onnxrt_qlinearops, onnxrt_integerops")
 class CastONNXTransform(BaseTransform):
     def __init__(self, dtype='float32'):
-        dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64, 
-                     'uint16': np.uint16, 'int32': np.int32, 'uint32': np.uint32, 
-                     'int64': np.int64, 'uint64': np.uint64, 'float32': np.float32, 
-                     'float16': np.float16, 'float64': np.float64, 'bool': np.bool, 
-                     'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
-
-        assert dtype in dtype_map.keys(), 'Unknown dtype'
-        self.dtype = dtype_map[dtype]
+        assert dtype in np_dtype_map.keys(), 'Unknown dtype'
+        self.dtype = dtype
 
     def __call__(self, sample):
         image, label = sample
-        image = image.astype(self.dtype)
+        image = image.astype(np_dtype_map[self.dtype])
         return (image, label)
  
 @transform_registry(transform_type="Cast", process="general", framework="pytorch")
@@ -486,17 +530,21 @@ class CenterCropTFTransform(BaseTransform):
 
     def __call__(self, sample):
         image, label = sample
-        if len(image.shape) == 3:
-            height, width = image.shape[0:2]
-        elif len(image.shape) == 4:
-            height, width = image.shape[1:3]
+        if isinstance(image, tf.Tensor):
+            if len(image.shape) == 3:
+                height, width = image.shape[0:2]
+            elif len(image.shape) == 4:
+                height, width = image.shape[1:3]
+            else:
+                raise ValueError("Unknown image shape")
+            if height < self.size[0] or width < self.size[1]:
+                raise ValueError("Target size shouldn't be lager than image size")
+            y0 = (height - self.size[0]) // 2
+            x0 = (width - self.size[1]) // 2
+            image = tf.image.crop_to_bounding_box(image, y0, x0, self.size[0], self.size[1])
         else:
-            raise ValueError("Unknown image shape")
-        if height < self.size[0] or width < self.size[1]:
-            raise ValueError("Target size shouldn't be lager than image size")
-        y0 = (height - self.size[0]) // 2
-        x0 = (width - self.size[1]) // 2
-        image = tf.image.crop_to_bounding_box(image, y0, x0, self.size[0], self.size[1])
+            transform = CenterCropTransform(self.size)
+            image, label = transform(sample)
         return (image, label)
 
 @transform_registry(transform_type="Resize",
@@ -517,7 +565,11 @@ class ResizeTFTransform(BaseTransform):
 
     def __call__(self, sample):
         image, label = sample
-        image = tf.image.resize(image, self.size, method=self.interpolation)
+        if isinstance(image, tf.Tensor):
+            image = tf.image.resize(image, self.size, method=self.interpolation)
+        else:
+            image = cv2.resize(image, self.size, 
+                interpolation=interpolation_map[self.interpolation])
         return (image, label)
 
 @transform_registry(transform_type="Resize", process="preprocess", \
@@ -550,26 +602,30 @@ class RandomCropTFTransform(BaseTransform):
 
     def __call__(self, sample):
         image, label = sample
-        if len(image.shape) == 3:
-            height, width = image.shape[0:2]
-        elif len(image.shape) == 4:
-            height, width = image.shape[1:3]
-        
-        if self.size[0] > height or self.size[1] > width:
-            raise ValueError('Crop size must be smaller than image size')
+        if isinstance(image, tf.Tensor):
+            if len(image.shape) == 3:
+                height, width = image.shape[0:2]
+            elif len(image.shape) == 4:
+                height, width = image.shape[1:3]
+            
+            if self.size[0] > height or self.size[1] > width:
+                raise ValueError('Crop size must be smaller than image size')
 
-        if self.size[0] == height and self.size[1] == width:
-            return (image, label)
-        
-        height = tf.cast(height, dtype=tf.float32)
-        width = tf.cast(width, dtype=tf.float32)
-        offset_height = (height - self.size[0]) / 2
-        offset_width = (width - self.size[1]) / 2
-        offset_height = tf.cast(offset_height, dtype=tf.int32)
-        offset_width = tf.cast(offset_width, dtype=tf.int32)
+            if self.size[0] == height and self.size[1] == width:
+                return (image, label)
+            
+            height = tf.cast(height, dtype=tf.float32)
+            width = tf.cast(width, dtype=tf.float32)
+            offset_height = (height - self.size[0]) / 2
+            offset_width = (width - self.size[1]) / 2
+            offset_height = tf.cast(offset_height, dtype=tf.int32)
+            offset_width = tf.cast(offset_width, dtype=tf.int32)
 
-        image = tf.image.crop_to_bounding_box(image, offset_height, 
-                    offset_width, self.size[0], self.size[1])
+            image = tf.image.crop_to_bounding_box(image, offset_height, 
+                        offset_width, self.size[0], self.size[1])
+        else:
+            transform = RandomCropTransform(self.size)
+            image, label = transform(sample)
         return (image, label)
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
@@ -687,23 +743,27 @@ class RandomResizedCropTFTransform(BaseTransform):
 
     def __call__(self, sample):
         image, label = sample
-        y0, x0, h, w = self.get_params(image, self.scale, self.ratio)
-        squeeze = False
-        if len(image.shape) == 3:
-            squeeze = True
-            image = tf.expand_dims(image, axis=0)
-        height, width = image.shape[1:3]
-        height = tf.cast(height, dtype=tf.float32)
-        width = tf.cast(width, dtype=tf.float32)
-        box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
-        boxes = [y0/height, x0/width, (y0+h)/height, (x0+w)/width]
-        boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
-        image = tf.image.crop_and_resize(image, boxes, box_indices,
-                        self.size, self.interpolation)
-        if squeeze:
-            image = tf.squeeze(image, axis=0)
+        if isinstance(image, tf.Tensor):
+            y0, x0, h, w = self.get_params(image, self.scale, self.ratio)
+            squeeze = False
+            if len(image.shape) == 3:
+                squeeze = True
+                image = tf.expand_dims(image, axis=0)
+            height, width = image.shape[1:3]
+            height = tf.cast(height, dtype=tf.float32)
+            width = tf.cast(width, dtype=tf.float32)
+            box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
+            boxes = [y0/height, x0/width, (y0+h)/height, (x0+w)/width]
+            boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
+            image = tf.image.crop_and_resize(image, boxes, box_indices,
+                            self.size, self.interpolation)
+            if squeeze:
+                image = tf.squeeze(image, axis=0)
+        else:
+            transform = RandomResizedCropTransform(self.size, self.scale, 
+                    self.ratio, self.interpolation)
+            image, label = transform(sample)
         return (image, label)
-
 
 @transform_registry(transform_type="Normalize", process="preprocess", 
                         framework="tensorflow")
@@ -717,13 +777,17 @@ class NormalizeTFTransform(BaseTransform):
 
     def __call__(self, sample):
         image, label = sample
-        orig_dtype = image.dtype
-        mean = tf.broadcast_to(self.mean, tf.shape(input=image))
-        mean = tf.cast(mean, dtype=image.dtype)
-        std = tf.broadcast_to(self.std, tf.shape(input=image))
-        std = tf.cast(std, dtype=image.dtype)
-        image = (image - mean) / std
-        image = tf.cast(image, dtype=orig_dtype)
+        if isinstance(image, tf.Tensor):
+            orig_dtype = image.dtype
+            mean = tf.broadcast_to(self.mean, tf.shape(input=image))
+            mean = tf.cast(mean, dtype=image.dtype)
+            std = tf.broadcast_to(self.std, tf.shape(input=image))
+            std = tf.cast(std, dtype=image.dtype)
+            image = (image - mean) / std
+            image = tf.cast(image, dtype=orig_dtype)
+        else:
+            transform = NormalizeTransform(self.mean, self.std)
+            image, label = transform(sample)
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
@@ -731,7 +795,10 @@ class NormalizeTFTransform(BaseTransform):
 class RescaleTFTransform(BaseTransform):
     def __call__(self, sample):
         image, label = sample
-        image = tf.cast(image, tf.float32) / 255.
+        if isinstance(image, tf.Tensor):
+            image = tf.cast(image, tf.float32) / 255.
+        else:
+            image = image.astype('float32') / 255.
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
@@ -844,7 +911,6 @@ class ResizeTransform(BaseTransform):
     def __call__(self, sample):
         image, label = sample
         image = cv2.resize(image, self.size, interpolation=self.interpolation)
-        image = image / 255.
         if len(image.shape) == 2:
             image = np.expand_dims(image, -1)
         return (image, label)
@@ -853,7 +919,7 @@ class ResizeTransform(BaseTransform):
                 framework="tensorflow")
 class CropResizeTFTransform(BaseTransform):
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
-        if interpolation not in ['bilinear', 'nearest']:
+        if interpolation not in ['bilinear', 'nearest', 'bicubic']:
             raise ValueError('Unsupported interpolation type!')
         self.interpolation = interpolation
         self.x = x
@@ -870,22 +936,14 @@ class CropResizeTFTransform(BaseTransform):
 
     def __call__(self, sample):
         image, label = sample
-        squeeze = False
-        if len(image.shape) == 3:
-            squeeze = True
-            image = tf.expand_dims(image, axis=0)
-        h, w = image.shape[1:3]
-        h = tf.cast(h, dtype=tf.float32)
-        w = tf.cast(w, dtype=tf.float32)
-        self.y = tf.cast(self.y, dtype=tf.float32)
-        self.x = tf.cast(self.x, dtype=tf.float32)
-        box_indices = tf.range(0, image.shape[0], dtype=tf.int32)
-        boxes = [self.y/h, self.x/w, (self.y+self.height)/h, (self.x+self.width)/w]
-        boxes = tf.broadcast_to(boxes, [image.shape[0], 4])
-        image = tf.image.crop_and_resize(image, boxes, box_indices,
-                        self.size, self.interpolation)
-        if squeeze:
-            image = tf.squeeze(image, axis=0)
+        if isinstance(image, tf.Tensor):
+            image = tf.image.crop_to_bounding_box(
+                image, self.y, self.x, self.height, self.width)
+            image = tf.image.resize(image, self.size, method=self.interpolation)
+        else:
+            transform = CropResizeTransform(self.x, self.y, self.width,
+                        self.height, self.size, self.interpolation)
+            image, label = transform(sample)
         return (image, label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", framework="pytorch")
@@ -941,7 +999,7 @@ class CropResizeTransform(BaseTransform):
         self.height = height
         if isinstance(size, int):
             self.size = size, size
-        elif isinstance(size, list):
+        elif isinstance(size, list) or isinstance(size, tuple):
             if len(size) == 1:
                 self.size = size[0], size[0]
             elif len(size) == 2:
@@ -951,7 +1009,6 @@ class CropResizeTransform(BaseTransform):
         image, label = sample
         image = image[self.y:self.y+self.height, self.x:self.x+self.width, :]
         image = cv2.resize(image, self.size, interpolation=self.interpolation)
-        image = image / 255.
         return (image, label)
 
 @transform_registry(transform_type="CenterCrop", process="preprocess", \
@@ -960,7 +1017,7 @@ class CenterCropTransform(BaseTransform):
     def __init__(self, size):
         if isinstance(size, int):
             self.height, self.width = size, size
-        elif isinstance(size, list):
+        elif isinstance(size, list) or isinstance(size, tuple):
             if len(size) == 1:
                 self.height, self.width = size[0], size[0]
             elif len(size) == 2:
@@ -1034,7 +1091,7 @@ class RandomCropTransform(BaseTransform):
     def __init__(self, size):
         if isinstance(size, int):
             self.height, self.width = size, size
-        elif isinstance(size, list):
+        elif isinstance(size, list) or isinstance(size, tuple):
             if len(size) == 1:
                 self.height, self.width = size[0], size[0]
             elif len(size) == 2:
@@ -1053,7 +1110,10 @@ class RandomCropTransform(BaseTransform):
 
         rand_h = np.random.randint(0, h - self.height + 1)
         rand_w = np.random.randint(0, w - self.width + 1)
-        image = image[rand_h:rand_h + self.height, rand_w:rand_w + self.width, :]
+        if len(image.shape) == 2:
+            image = image[rand_h:rand_h + self.height, rand_w:rand_w + self.width]
+        else:
+            image = image[rand_h:rand_h + self.height, rand_w:rand_w + self.width, :]
         return (image, label)
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
@@ -1063,7 +1123,7 @@ class RandomResizedCropTransform(BaseTransform):
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
-        elif isinstance(size, list):
+        elif isinstance(size, list) or isinstance(size, tuple):
             if len(size) == 1:
                 self.size = size[0], size[0]
             elif len(size) == 2:
@@ -1116,7 +1176,6 @@ class RandomResizedCropTransform(BaseTransform):
         y0, x0, h, w = self.get_params(image, self.scale, self.ratio)
         crop_img = image[y0:y0 + h, x0:x0 + w, :]
         image = cv2.resize(crop_img, self.size, interpolation=self.interpolation)
-        image = image / 255.
         return (image, label)
 
 def _compute_softmax(scores):

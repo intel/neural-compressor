@@ -31,7 +31,10 @@ def default_collate(batch):
         batch = zip(*batch)
         return [default_collate(samples) for samples in batch]
     elif isinstance(elem, np.ndarray):
-        return np.stack(batch)
+        try:
+            return np.stack(batch)
+        except:
+            return batch
     else:
         return batch
 

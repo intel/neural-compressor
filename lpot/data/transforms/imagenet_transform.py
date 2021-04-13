@@ -108,8 +108,10 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
 
     shape = tf.shape(input=image)
     if self.random_crop:
-        y0 = np.random.uniform(low=0, high=(shape[0] - self.height +1))
-        x0 = np.random.uniform(low=0, high=(shape[1] - self.width +1))
+        y0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[0] - self.height +1), 
+                dtype=tf.dtypes.int32)
+        x0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[1] - self.width +1), 
+                dtype=tf.dtypes.int32)
     else:
         y0 = (shape[0] - self.height) // 2
         x0 = (shape[1] - self.width) // 2
@@ -181,8 +183,8 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
     image = image / 255.
     shape = image.shape
     if self.random_crop:
-        y0 = np.random.uniform(low=0, high=(shape[0] - self.height +1))
-        x0 = np.random.uniform(low=0, high=(shape[1] - self.width +1))
+        y0 = np.random.randint(low=0, high=(shape[0] - self.height +1))
+        x0 = np.random.randint(low=0, high=(shape[1] - self.width +1))
     else:
         y0 = (shape[0] - self.height) // 2
         x0 = (shape[1] - self.width) // 2

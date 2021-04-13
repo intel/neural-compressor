@@ -38,6 +38,51 @@ tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
+class ParseDecodeCoco():
+    def __call__(self, sample):    
+        # Dense features in Example proto.
+        feature_map = {
+            'image/encoded':
+            tf.compat.v1.FixedLenFeature([], dtype=tf.string, default_value=''),
+            'image/object/class/text':
+            tf.compat.v1.VarLenFeature(dtype=tf.string),
+            'image/object/class/label':
+            tf.compat.v1.VarLenFeature(dtype=tf.int64),
+            'image/source_id':tf.compat.v1.FixedLenFeature([], dtype=tf.string, default_value=''),
+        }
+        sparse_float32 = tf.compat.v1.VarLenFeature(dtype=tf.float32)
+        # Sparse features in Example proto.
+        feature_map.update({
+            k: sparse_float32
+            for k in [
+                'image/object/bbox/xmin', 'image/object/bbox/ymin',
+                'image/object/bbox/xmax', 'image/object/bbox/ymax'
+            ]
+        })
+
+        features = tf.io.parse_single_example(sample, feature_map)
+
+        xmin = tf.expand_dims(features['image/object/bbox/xmin'].values, 0)
+        ymin = tf.expand_dims(features['image/object/bbox/ymin'].values, 0)
+        xmax = tf.expand_dims(features['image/object/bbox/xmax'].values, 0)
+        ymax = tf.expand_dims(features['image/object/bbox/ymax'].values, 0)
+
+        bbox = tf.concat([ymin, xmin, ymax, xmax], 0)
+        # Force the variable number of bounding boxes into the shape
+        # [1, num_boxes, coords].
+        bbox = tf.expand_dims(bbox, 0)
+        bbox = tf.transpose(bbox, [0, 2, 1])
+
+        encoded_image = features['image/encoded']
+        image_tensor = tf.image.decode_image(encoded_image, channels=3)
+        image_tensor.set_shape([None, None, 3])
+
+        str_label = features['image/object/class/text'].values
+        int_label = features['image/object/class/label'].values
+        image_id = features['image/source_id']
+
+        return image_tensor, (bbox[0], str_label, int_label, image_id)
+
 @dataset_registry(dataset_type="COCORecord", framework="tensorflow", dataset_format='')
 class COCORecordDataset(IterableDataset):
     """Configuration for Coco dataset."""
@@ -71,11 +116,10 @@ class COCORecordDataset(IterableDataset):
         if filter is not None:
             ds = ds.filter(filter)
         ds = ds.prefetch(buffer_size=1000)
-        ds.batch(1)
         return ds
 
 @dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops", dataset_format='')
+                    onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
 class COCORaw(Dataset):
     """Configuration for Coco raw dataset."""
     def __init__(self, root, img_dir='val2017', \
@@ -116,8 +160,11 @@ class COCORaw(Dataset):
             img_file = os.path.join(img_path, img_detail['file_name'])
             if not os.path.exists(img_file) or len(bboxes) == 0:
                 continue
+
+            with Image.open(img_file) as image:
+                image = np.array(image.convert('RGB'))
             self.image_list.append(
-                (img_file, [np.array(bboxes), np.array(labels), np.array([]),\
+                (image, [np.array(bboxes), np.array(labels), np.array([]),\
                  np.array(img_detail['file_name'].encode('utf-8'))]))
 
     def __len__(self):
@@ -125,48 +172,6 @@ class COCORaw(Dataset):
 
     def __getitem__(self, index):
         sample = self.image_list[index]
-        label = sample[1]
-        with Image.open(sample[0]) as image:
-            image = np.array(image.convert('RGB'))
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            return (image, label)
-
-@dataset_registry(dataset_type="COCORaw", framework="pytorch", dataset_format='')
-class PytorchCOCORaw(COCORaw):
-    def __getitem__(self, index):
-        sample = self.image_list[index]
-        label = sample[1]
-        with Image.open(sample[0]) as image:
-            image = image.convert('RGB')
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            image = np.array(image)
-            return (image, label)
-
-@dataset_registry(dataset_type="COCORaw", framework="mxnet", dataset_format='')
-class MXNetCOCORaw(COCORaw):
-    def __getitem__(self, index):
-        sample = self.image_list[index]
-        label = sample[1]
-        image = mx.image.imread(sample[0])
         if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
-
-@dataset_registry(dataset_type="COCORaw", framework="tensorflow", dataset_format='')
-class TensorflowCOCORaw(COCORaw):
-    def __getitem__(self, index):
-        sample = self.image_list[index]
-        label = sample[1]
-        with Image.open(sample[0]) as image:
-            image = np.array(image)
-            if self.transform is not None:
-                image, label = self.transform((image, label))
-            if type(image).__name__ == 'Tensor':
-                with tf.compat.v1.Session() as sess:
-                    image = sess.run(image)
-            elif type(image).__name__ == 'EagerTensor':
-                image = image.numpy()
-            return (image, label)
-
+            sample= self.transform(sample)
+        return sample

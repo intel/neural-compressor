@@ -291,6 +291,15 @@ transform_schema = Schema({
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float
     },
+    Optional('ParseDecodeImagenet'): Or({}, None),
+    Optional('ToArray'): Or({}, None),
+    Optional('QuantizedInput'): {
+        Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
+        Optional('scale'): And(float, lambda s: s > 0),
+    },
+    Optional('Transpose'): {
+        'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
+    },
 })
 
 postprocess_schema = Schema({

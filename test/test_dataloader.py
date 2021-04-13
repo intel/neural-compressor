@@ -4,8 +4,8 @@ import os
 import numpy as np
 import shutil
 from lpot.utils.create_obj_from_config import create_dataset, create_dataloader
-from lpot.data import DATASETS, DATALOADERS
 from lpot.data.dataloaders.dataloader import DataLoader
+from lpot.data import DATASETS, DATALOADERS, TRANSFORMS
 from PIL import Image
 
 class TestBuiltinDataloader(unittest.TestCase):
@@ -149,7 +149,7 @@ class TestBuiltinDataloader(unittest.TestCase):
         
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
-            self.assertEqual(data[0][0].shape, (24,24,1))
+            self.assertEqual(data[0][0].shape, (24,24))
             break
 
         dataloader_args = {
@@ -162,7 +162,7 @@ class TestBuiltinDataloader(unittest.TestCase):
         
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
-            self.assertEqual(data[0][0].shape, (24,24,1))
+            self.assertEqual(data[0][0].shape, (24,24))
             break
 
     def test_onnx_dataset(self):
@@ -344,6 +344,30 @@ class TestImagenetRaw(unittest.TestCase):
         }
         self.assertRaises(ValueError, create_dataloader, 'onnxrt_integerops', dataloader_args)
 
+        with open('val/not_found_map.txt', 'w') as f:
+            f.write('test.jpg   0' + '\n')
+            f.write('not_found.jpg   1')
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/not_found_map.txt'}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
+        for data in dataloader:
+            self.assertEqual(data[0][0].shape, (24,24,3))
+            break
+
+        with open('val/blank.txt', 'w') as f:
+            f.write('blank.jpg   0')
+        dataloader_args = {
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/blank.txt'}},
+            'transform': None,
+            'filter': None
+        }
+        self.assertRaises(ValueError, create_dataloader, 
+                            'onnxrt_qlinearops', dataloader_args)
+
+
 class TestImageFolder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -466,9 +490,18 @@ class TestDataloader(unittest.TestCase):
         with tf.io.TFRecordWriter('test.record') as writer:
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
-            'tensorflow', {'TFRecordDataset':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, None)
+            'tensorflow', 
+            {'COCORecord':{'root':'test.record'}}, 
+            {'ParseDecodeCoco':{}, 
+            'RandomVerticalFlip': {},
+            'RandomHorizontalFlip': {},
+            'CropResize':{'x':0, 'y':0, 'width':10, 'height':10, 'size':[5,5]},
+            'Transpose':{'perm': [2, 0, 1]}
+            }, 
+            None)
         dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
-        for (inputs, labels) in dataloader:
+        for inputs, labels in dataloader:
+            self.assertEqual(inputs.shape, (1,3,5,5))
             self.assertEqual(labels[0].shape, (1,1,4))
         os.remove('test.record')
         os.remove('test.jpeg')
@@ -762,8 +795,9 @@ class TestDataloader(unittest.TestCase):
  
     def test_pytorch_dummy(self):
         datasets = DATASETS('pytorch')
+        transform = TRANSFORMS('pytorch', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=[(4, 256, 256, 3), (4, 1)], \
-            high=[10., 10.], low=[0., 0.])
+            high=[10., 10.], low=[0., 0.], transform=transform)
         
         data_loader = DATALOADERS['pytorch'](dataset)
         iterator = iter(data_loader)
@@ -777,7 +811,8 @@ class TestDataloader(unittest.TestCase):
  
     def test_mxnet_dummy(self):
         datasets = DATASETS('mxnet')
-        dataset = datasets['dummy'](shape=(4, 256, 256, 3))
+        transform = TRANSFORMS('mxnet', 'preprocess')['Resize'](**{'size':100})
+        dataset = datasets['dummy'](shape=(4, 256, 256, 3), transform=transform)
         
         data_loader = DATALOADERS['mxnet'](dataset)
         iterator = iter(data_loader)
@@ -794,7 +829,8 @@ class TestDataloader(unittest.TestCase):
  
     def test_onnxrt_qlinear_dummy(self):
         datasets = DATASETS('onnxrt_qlinearops')
-        dataset = datasets['dummy'](shape=(4, 256, 256, 3))
+        transform = TRANSFORMS('onnxrt_qlinearops', 'preprocess')['Resize'](**{'size':100})
+        dataset = datasets['dummy'](shape=(4, 256, 256, 3), transform=transform)
         
         data_loader = DATALOADERS['onnxrt_qlinearops'](dataset)
         iterator = iter(data_loader)

@@ -29,6 +29,14 @@ quantization:                                        # optional. tuning constrai
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
         ParseDecodeCoco: {}
+        Resize:
+          size: 600
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    activation:
+      algorithm: minmax
+    weight:
+      granularity: per_tensor
+      algorithm: minmax
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
@@ -41,6 +49,8 @@ evaluation:                                          # optional. used to config 
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
         ParseDecodeCoco: {}
+        Resize:
+          size: 600
   performance:
     iteration: 100
     configs:
@@ -54,6 +64,8 @@ evaluation:                                          # optional. used to config 
           root: /path/to/evaluation/dataset
       transform:
         ParseDecodeCoco: {}
+        Resize:
+          size: 600
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.

@@ -63,7 +63,7 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
         filters = FILTERS(framework)
         filter_type = list(cfg_filter.keys())[0]
         filter_dataset_type = filter_type + dataset_type
-        filter = filters[filter_dataset_type](list(cfg_filter[filter_type].values())[0])
+        filter = filters[filter_dataset_type](**cfg_filter[filter_type])
     # in this case we should prepare eval_data and calib_data sperately
     dataset = datasets[dataset_type](**data_source[dataset_type], \
             transform=preprocess, filter=filter)

@@ -21,9 +21,11 @@ import collections
 import numpy as np
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
 from .fetcher import FETCHERS
+from .default_dataloader import default_collate
 from .default_dataloader import DefaultDataLoader
 from ..datasets.bert_dataset import TensorflowBertDataset
 from .base_dataloader import BaseDataLoader
+from ..datasets.coco_dataset import COCORecordDataset
 
 tf = LazyImport('tensorflow')
 lpot = LazyImport('lpot')
@@ -57,7 +59,25 @@ class TFDataDataLoader(BaseDataLoader):
                              collate_fn=None, sampler=None, batch_sampler=None, \
                              num_workers=None, pin_memory=None):
         drop_last = False if last_batch == 'rollover' else True
-        dataset = dataset.batch(batch_size, drop_last)
+
+        def check_dynamic_shape(element_spec): 
+            if isinstance(element_spec, collections.abc.Sequence):
+                return any([check_dynamic_shape(ele) for ele in element_spec])
+            elif isinstance(element_spec, tf.TensorSpec):
+                return True if element_spec.shape.num_elements() is None else False
+            else:
+                raise ValueError('unrecognised element spec...')
+
+        def squeeze_output(output):
+            if isinstance(output, collections.abc.Sequence):
+                return [squeeze_output(ele) for ele in output]
+            elif isinstance(output, np.ndarray):
+                return np.squeeze(output, axis=0)
+            else:
+                raise ValueError('not supported output format....')
+
+        try_single_batch = check_dynamic_shape(dataset.element_spec)
+        dataset = dataset.batch(1 if try_single_batch else batch_size, drop_last)
         if tf.executing_eagerly():
             for iter_tensors in dataset:
                 yield [elem.numpy() for elem in iter_tensors]
@@ -73,12 +93,18 @@ class TFDataDataLoader(BaseDataLoader):
             from tensorflow.python.framework.errors_impl import OutOfRangeError
             while True:
                 try:
-                    outputs = data_sess.run(iter_tensors)
-                    yield outputs
+                    if not try_single_batch:
+                        outputs = data_sess.run(iter_tensors)
+                        yield outputs
+                    else:
+                        outputs = [squeeze_output(data_sess.run(iter_tensors)) \
+                            for i in range(0, batch_size) ]
+                        outputs = default_collate(outputs)
+                        yield outputs
                 except OutOfRangeError:
                     data_sess.close()
                     return
-
+            
 class TensorflowBertDataLoader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory):
@@ -112,6 +138,21 @@ class TensorflowDataLoader(BaseDataLoader):
         elif isinstance(dataset, TensorflowBertDataset):
             return TensorflowBertDataLoader(dataset, batch_size, last_batch,
                         collate_fn, sampler, batch_sampler, num_workers, pin_memory)
+        elif isinstance(dataset, COCORecordDataset):
+            def coco_collate_fn(batch):
+                elem = batch[0]
+                if isinstance(elem, list) or isinstance(elem, tuple):
+                    batch = zip(*batch)
+                    return [coco_collate_fn(samples) for samples in batch]
+                elif isinstance(elem, np.ndarray):
+                    try:
+                        return np.stack(batch)
+                    except:
+                        return batch
+                else:
+                    return batch
+            return DefaultDataLoader(dataset, batch_size, last_batch, coco_collate_fn,
+                                     sampler, batch_sampler, num_workers, pin_memory)
         else:
             return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
                                      sampler, batch_sampler, num_workers, pin_memory)
