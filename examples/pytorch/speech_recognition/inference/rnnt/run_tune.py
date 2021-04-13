@@ -117,6 +117,7 @@ def main():
             samples_per_query = int(regex_batch.findall(file_content)[0].split(': ')[1])
             samples_per_second = float(regex_thro.findall(file_content)[0].split(': ')[1])
             print('Batch size = %d' % samples_per_query)
+            print('Latency: %.3f ms' % ((1 / samples_per_second) * 1000))
             print('Throughput: %.3f samples/sec' % samples_per_second)
 
     if args.tune:

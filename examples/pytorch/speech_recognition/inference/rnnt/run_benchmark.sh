@@ -51,14 +51,14 @@ function run_benchmark {
         extra_cmd=$extra_cmd"--tuned_checkpoint ${output_dir} "
     fi
 
-    nohup python run_tune.py \
+    python run_tune.py \
                     --backend pytorch \
                     --manifest $dataset/dev-clean-wav.json \
                     --pytorch_config_toml pytorch/configs/rnnt.toml \
                     --scenario Offline \
                     --benchmark \
                     --int8 \
-                    ${extra_cmd} >test.log 2>&1 &
+                    ${extra_cmd}
 }
 
 main "$@"
