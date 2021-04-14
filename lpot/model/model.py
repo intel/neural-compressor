@@ -33,6 +33,15 @@ json = LazyImport('json')
 tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
 def get_model_type(model):
+    """Get mode type
+
+    Args:
+        model (string or model object): model path or model object
+
+    Returns:
+        type (string): model type
+    """
+ 
     from lpot.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
     if isinstance(model, tf.Graph):
         return 'graph'
@@ -111,6 +120,14 @@ def get_model_fwk_name(model):
     return 'NA'
 
 def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
+    """update graph_def of saved model
+
+    Args:
+        input_model (string): the origin input model path
+        output_model (string): output path
+        graph_def (tf.compat.v1.GraphDef): processed graph_def
+    """
+ 
     model_variables_dir = os.path.join(input_model, 'variables')
     if not os.path.exists(output_model):
         os.makedirs(output_model)
@@ -144,13 +161,33 @@ def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
 
 def create_session_with_input_output(model, input_tensor_names, \
     output_tensor_names, **kwargs):
+    """Create session
 
+    Args:
+        model (string or model object): model pah or model object
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+        
+    """
+ 
     model_type = get_model_type(model)
     sess, input_tensor_names, output_tensor_names = SESSIONS[model_type](
         model, input_tensor_names, output_tensor_names, **kwargs)
     return sess, input_tensor_names, output_tensor_names
 
 def validate_graph_node(graph_def, node_names):
+    """Validate nodes exist in the graph_def
+
+    Args:
+        graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
+        node_names (list of string): node names to be validated
+    """
+
     if len(node_names) == 0:
         return False
     all_node_name = [node.name for node in graph_def.node]
@@ -163,6 +200,17 @@ def validate_graph_node(graph_def, node_names):
 
 def validate_and_inference_input_output(graph_def, \
     input_tensor_names, output_tensor_names):
+    """validate and inference the input and output tensor names of graph_def
+
+    Args:
+        graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
+        input_tensor_names (list of string): input_tensor_names of graph_def
+        output_tensor_names (list of string): output_tensor_names of graph_def
+
+    Returns:
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
 
     from lpot.adaptor.tf_utils.util import get_input_node_names
     input_tensor_names = input_tensor_names if validate_graph_node(\
@@ -176,6 +224,19 @@ def validate_and_inference_input_output(graph_def, \
     return input_tensor_names, output_tensor_names
 
 def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with tf.compat.v1.Graph
+
+    Args:
+        model (tf.compat.v1.Graph): tf.compat.v1.Graph object 
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -187,6 +248,19 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return sess, input_tensor_names, output_tensor_names
 
 def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with tf.compat.v1.GraphDef
+
+    Args:
+        model (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object 
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     graph = tf.Graph()
     try:
         with graph.as_default():
@@ -206,6 +280,19 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_session(graph, input_tensor_names, output_tensor_names, **kwargs)
 
 def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with frozen pb
+
+    Args:
+        model (string): model path 
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     graph_def = tf.compat.v1.GraphDef()
     model = model if model.endswith('.pb') else model + '.pb'
     with open(model, 'rb') as f:
@@ -214,6 +301,19 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_tensor_names, **kwargs)
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with keras model
+
+    Args:
+        model (string or tf.keras.Model): model path or tf.keras.Model object
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     assert tf.version.VERSION > '2.1.0', 'keras model need tensorflow version > 2.1.0....'
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     if not isinstance(model, tf.keras.Model):
@@ -240,6 +340,19 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with slim model
+
+    Args:
+        model (string): model path
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
     from .nets_factory import TFSlimNetsFactory
     factory = TFSlimNetsFactory()
@@ -277,7 +390,19 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_def_session(graph_def, ['input'], output_tensor_names)
 
 def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with ckpt model
 
+    Args:
+        model (string): model path
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     assert output_tensor_names is not None and len(output_tensor_names) > 0, \
         'outputs should not be None of checkpoint....'
 
@@ -304,6 +429,20 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     return sess, input_tensor_names, output_tensor_names
 
 def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with estimator model
+
+    Args:
+        model (tf.estimator.Estimator): tf.estimator.Estimator object
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+        kwargs (dict): other required parameters, like input_fn
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     assert 'input_fn' in kwargs, 'input func should be supplied for estimator session....'
     with tf.Graph().as_default() as g:
       features, input_hooks = model._get_features_from_input_fn(
@@ -332,6 +471,19 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
       return graph_def_session(graph_def, input_tensor_names, outputs)
 
 def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with saved model
+
+    Args:
+        model (string): model path
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+ 
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -361,12 +513,35 @@ class BaseModel(object):
         raise NotImplementedError
 
 class TensorflowModel(object):
+    """Build LPOT TensorflowModel object
 
+    Args:
+        model (string or tensorflow model object): model path or model object
+        framework_specific_info (dict): 
+            information about model and framework, such as input_tensor_names, 
+            input_tensor_names, workspace_path and name
+        kwargs (dict): other required parameters, like input_fn
+
+    Returns:
+        TensorflowModel object
+    """
+ 
     def __new__(cls, model, framework_specific_info={}, **kwargs):
         model_type = get_model_type(model)
         return TENSORFLOW_MODELS[model_type](model, framework_specific_info, **kwargs)
 
 class TensorflowBaseModel(BaseModel):
+    """Build TensorflowBaseModel object
+
+    Args:
+        model (string or tensorflow model object): model path or model object
+        framework_specific_info (dict): 
+            information about model and framework, such as input_tensor_names, 
+            input_tensor_names, workspace_path and name
+        kwargs (dict): other required parameters, like input_fn
+
+    """
+ 
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self.framework_specific_info = framework_specific_info
         input_tensor_names = deep_get(framework_specific_info, 'input_tensor_names', [])
@@ -466,7 +641,7 @@ class TensorflowBaseModel(BaseModel):
         f.write(self.graph_def.SerializeToString())
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
-
+ 
     @property
     def graph_def(self):
         return self.sess.graph.as_graph_def()
@@ -649,6 +824,13 @@ class PyTorchBaseModel(BaseModel):
 
         return df, total_sparsity
 class PyTorchModel(PyTorchBaseModel):
+    """Build PyTorchModel object
+
+    Args:
+        model (onnx model): model path 
+        framework_specific_info (dict): information about model and framework
+    """
+ 
     def __init__(self, model, framework_specific_info={}, **kwargs):
         super(PyTorchModel, self).__init__(model, framework_specific_info={}, **kwargs)
 
@@ -702,6 +884,13 @@ class PyTorchModel(PyTorchBaseModel):
             logger.error("Unable to save configure file and weights. %s" % e)
 
 class PyTorchIpexModel(PyTorchBaseModel):
+    """Build PyTorchIpexModel object
+
+    Args:
+        model (onnx model): model path 
+        framework_specific_info (dict): information about model and framework, like workspace_path
+    """
+ 
     def __init__(self, model, framework_specific_info={}, **kwargs):
         super(PyTorchIpexModel, self).__init__(model, framework_specific_info={}, **kwargs)
         if bool(framework_specific_info):
@@ -738,6 +927,13 @@ class PyTorchIpexModel(PyTorchBaseModel):
             logger.error("Unable to save configure file and weights. %s" % e)
 
 class MXNetModel(BaseModel):
+    """Build MXNetModel object
+
+    Args:
+        model (mxnet model): model path 
+        framework_specific_info (dict): information about model and framework
+    """
+ 
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self._model = model
         self.framework_specific_info = framework_specific_info
@@ -768,6 +964,13 @@ class MXNetModel(BaseModel):
             logger.info('Saving symbol into file at %s' % root)
 
 class ONNXModel(BaseModel):
+    """Build ONNXModel object
+
+    Args:
+        model (onnx model): model path 
+        framework_specific_info (dict): information about model and framework
+    """
+ 
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self._model = model
         self.framework_specific_info = framework_specific_info

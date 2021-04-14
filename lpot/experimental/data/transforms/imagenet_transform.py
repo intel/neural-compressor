@@ -39,32 +39,51 @@ cv2 = LazyImport('cv2')
 @transform_registry(transform_type="QuantizedInput", \
                     process="preprocess", framework="tensorflow")
 class QuantizedInput(BaseTransform):
-  def __init__(self, dtype, scale=None):
-    self.dtype_map = {'uint8': tf.uint8, 'int8': tf.int8}
-    assert dtype in self.dtype_map.keys(), \
-        'only support cast dtype {}'.format(self.dtype_map.keys())
-    self.dtype = dtype
-    self.scale = scale
+    """Convert the dtype of input to quantize it.
 
-  def __call__(self, sample):
-    # scale is not know when tuning, in this case this transform
-    # do nothing, it's only used when scale is set
-    if self.scale == None:
-        return sample
-    image, label = sample
-    image = image * self.scale
-    if self.dtype == 'uint8':
-        image = image + 128
-    image = tf.dtypes.cast(image, dtype=self.dtype_map[self.dtype])
-    return image, label
+    Args:
+        dtype(str): desired image dtype, support 'uint8', 'int8'
+        scale(float, default=None):scaling ratio of each point in image
+
+    Returns:
+        tuple of processed image and label
+    """
+
+    def __init__(self, dtype, scale=None):
+        self.dtype_map = {'uint8': tf.uint8, 'int8': tf.int8}
+        assert dtype in self.dtype_map.keys(), \
+            'only support cast dtype {}'.format(self.dtype_map.keys())
+        self.dtype = dtype
+        self.scale = scale
+
+    def __call__(self, sample):
+        # scale is not know when tuning, in this case this transform
+        # do nothing, it's only used when scale is set
+        if self.scale == None:
+            return sample
+        image, label = sample
+        image = image * self.scale
+        if self.dtype == 'uint8':
+            image = image + 128
+        image = tf.dtypes.cast(image, dtype=self.dtype_map[self.dtype])
+        return image, label
 
 @transform_registry(transform_type="LabelShift", \
                     process="postprocess", framework="tensorflow")
 class LabelShift(BaseTransform):
-  def __init__(self, label_shift=0):
-    self.label_shift = label_shift
+    """Convert label to label - label_shift.
 
-  def __call__(self, sample):
-    images, labels = sample
-    labels = np.array(labels) - self.label_shift
-    return images, labels
+    Args:
+        label_shift(int, default=0): number of label shift
+
+    Returns:
+        tuple of processed image and label
+    """
+
+    def __init__(self, label_shift=0):
+        self.label_shift = label_shift
+
+    def __call__(self, sample):
+        images, labels = sample
+        labels = np.array(labels) - self.label_shift
+        return images, labels

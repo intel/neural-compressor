@@ -39,6 +39,12 @@ tf = LazyImport('tensorflow')
 @transform_registry(transform_type="ParseDecodeCoco", \
                     process="preprocess", framework="tensorflow")
 class ParseDecodeCocoTransform(BaseTransform):
+    """Parse features in Example proto.
+
+    Returns:
+        tuple of parsed image and labels
+    """
+
     def __call__(self, sample):
         # Dense features in Example proto.
         feature_map = {
