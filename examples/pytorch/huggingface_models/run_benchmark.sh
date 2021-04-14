@@ -98,6 +98,17 @@ function run_benchmark {
         model_name_or_path=$input_model #'google/pegasus-billsum'
         SCRIPTS=examples/seq2seq/run_seq2seq_tune.py
         extra_cmd='--predict_with_generate --max_source_length 1024 --max_target_length=256 --val_max_target_length=256 --test_max_target_length=256'
+    elif [ "${topology}" = "dialogpt_wikitext" ]; then
+        TASK_NAME='wikitext'
+        model_name_or_path=$input_model 
+        SCRIPTS=examples/language-modeling/run_clm_tune.py
+        approach="post_training_static_quant"
+        extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
+    elif [ "${topology}" = "reformer_crime_and_punishment" ]; then
+        TASK_NAME='crime_and_punish'
+        model_name_or_path=$input_model 
+        SCRIPTS=examples/language-modeling/run_clm_tune.py
+        approach="post_training_static_quant"
     fi
 
     if [[ ${int8} == "true" ]]; then
@@ -126,6 +137,17 @@ function run_benchmark {
             --task ${TASK_NAME} \
             --do_eval \
             --predict_with_generate \
+            --per_device_eval_batch_size ${batch_size} \
+            --output_dir ${input_model} \
+            --iters ${iters} \
+            ${mode_cmd} \
+            ${extra_cmd}
+    elif [ "${SCRIPTS}" = "examples/language-modeling/run_clm_tune.py" ]; then
+        python -u $SCRIPTS \
+            --tuned_checkpoint ${tuned_checkpoint} \
+            --model_name_or_path ${model_name_or_path} \
+            --dataset_name ${TASK_NAME} \
+            --do_eval \
             --per_device_eval_batch_size ${batch_size} \
             --output_dir ${input_model} \
             --iters ${iters} \

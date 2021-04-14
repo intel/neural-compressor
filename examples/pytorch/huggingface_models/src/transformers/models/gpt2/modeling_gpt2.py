@@ -48,6 +48,8 @@ from ...utils import logging
 from ...utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -809,7 +811,8 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
         # Model parallel
         self.model_parallel = False
         self.device_map = None
-
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
     @add_start_docstrings(PARALLELIZE_DOCSTRING)
     def parallelize(self, device_map=None):
         self.device_map = (
@@ -917,8 +920,9 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
         if self.model_parallel:
             torch.cuda.set_device(self.transformer.first_device)
             hidden_states = hidden_states.to(self.lm_head.weight.device)
-
+        hidden_states = self.quant(hidden_states)
         lm_logits = self.lm_head(hidden_states)
+        lm_logits = self.dequant(lm_logits)
 
         loss = None
         if labels is not None:
@@ -977,6 +981,9 @@ class GPT2DoubleHeadsModel(GPT2PreTrainedModel):
         # Model parallel
         self.model_parallel = False
         self.device_map = None
+
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def get_output_embeddings(self):
         return self.lm_head
@@ -1091,7 +1098,11 @@ class GPT2DoubleHeadsModel(GPT2PreTrainedModel):
 
         hidden_states = transformer_outputs[0]
 
+        hidden_states = self.quant(hidden_states)
         lm_logits = self.lm_head(hidden_states)
+        hidden_states = self.dequant(hidden_states)
+        lm_logits = self.dequant(lm_logits)
+
         mc_logits = self.multiple_choice_head(hidden_states, mc_token_ids).squeeze(-1)
 
         mc_loss = None
@@ -1164,6 +1175,9 @@ class GPT2ForSequenceClassification(GPT2PreTrainedModel):
         self.model_parallel = False
         self.device_map = None
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     @add_start_docstrings_to_model_forward(GPT2_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
@@ -1208,7 +1222,10 @@ class GPT2ForSequenceClassification(GPT2PreTrainedModel):
             return_dict=return_dict,
         )
         hidden_states = transformer_outputs[0]
+        hidden_states = self.quant(hidden_states)
         logits = self.score(hidden_states)
+        hideen_states = self.dequant(hidden_states)
+        logits = self.dequant(logits)
 
         if input_ids is not None:
             batch_size, sequence_length = input_ids.shape[:2]

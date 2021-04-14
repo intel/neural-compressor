@@ -41,8 +41,8 @@ from ...modeling_outputs import CausalLMOutput, MaskedLMOutput, QuestionAnswerin
 from ...modeling_utils import PreTrainedModel, apply_chunking_to_forward
 from ...utils import logging
 from .configuration_reformer import ReformerConfig
-
-
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "ReformerConfig"
@@ -355,6 +355,10 @@ class LSHSelfAttention(nn.Module, EfficientAttentionMixin):
         self.register_buffer("mask_value_float16", torch.tensor(-1e4))
         self.register_buffer("mask_value_float32", torch.tensor(-1e9))
 
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
+
     def forward(
         self,
         hidden_states,
@@ -384,10 +388,13 @@ class LSHSelfAttention(nn.Module, EfficientAttentionMixin):
             past_states = past_buckets_states[1]
 
             # get query vector
+            hidden_states = self.quant1(hidden_states)
             query_vectors = self.query_key(hidden_states)
+            hidden_states = self.dequant(hidden_states)
             query_vectors = self._split_hidden_size_dim(
                 query_vectors, self.num_attention_heads, self.attention_head_size
             )
+            query_vectors = self.dequant(query_vectors)
 
             if past_buckets is not None:
                 key_value_hidden_states, sorted_bucket_idx, buckets = self._get_relevant_hid_states_and_buckets(
@@ -422,15 +429,21 @@ class LSHSelfAttention(nn.Module, EfficientAttentionMixin):
                 query_vectors = query_vectors.unsqueeze(2).repeat(1, 1, num_hashes, 1, 1)
             else:
                 key_value_hidden_states = torch.cat([past_states, hidden_states], dim=1)
-
+                key_value_hidden_states = self.quant2(key_value_hidden_states)
                 query_key_vectors = self.query_key(key_value_hidden_states)
+                query_key_vectors = self.dequant(query_key_vectors)
                 value_vectors = self.value(key_value_hidden_states)
+                value_vectors = self.dequant(value_vectors)
 
         else:
             # project hidden_states to query_key and value
             query_vectors = None
+            hidden_states = self.quant1(hidden_states)
             query_key_vectors = self.query_key(hidden_states)
             value_vectors = self.value(hidden_states)
+            hidden_states = self.dequant(hidden_states)
+            query_key_vectors = self.dequant(query_key_vectors)
+            value_vectors = self.dequant(value_vectors)
 
         # if query key is not already split
         if not do_cached_attention or past_buckets is None:
@@ -1040,6 +1053,10 @@ class LocalSelfAttention(nn.Module, EfficientAttentionMixin):
         self.register_buffer("mask_value_float16", torch.tensor(-1e4))
         self.register_buffer("mask_value_float32", torch.tensor(-1e9))
 
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
+
     def forward(
         self,
         hidden_states,
@@ -1064,18 +1081,27 @@ class LocalSelfAttention(nn.Module, EfficientAttentionMixin):
             key_value_hidden_states = torch.cat([key_value_hidden_states, hidden_states], dim=1)
 
             # only query vector for last token
+            hidden_states = self.quant1(hidden_states)
             query_vectors = self.query(hidden_states)
+            query_vectors = self.dequant(query_vectors)
             # compute key and value for relevant chunk
+            key_value_hidden_states = self.quant2(key_value_hidden_states)
             key_vectors = self.key(key_value_hidden_states)
             value_vectors = self.value(key_value_hidden_states)
+            key_vectors = self.dequant(key_vectors)
+            value_vectors = self.dequant(value_vectors)
 
             # free memory
             del key_value_hidden_states
         else:
             # project hidden_states to query, key and value
+            hidden_states = self.quant1(hidden_states)
             query_vectors = self.query(hidden_states)
+            query_vectors = self.dequant(query_vectors)
             key_vectors = self.key(hidden_states)
+            key_vectors = self.dequant(key_vectors)
             value_vectors = self.value(hidden_states)
+            value_vectors = self.dequant(value_vectors)
 
         # split last dim into `config.num_attention_heads` and `config.attention_head_size`
         query_vectors = self._split_hidden_size_dim(query_vectors, self.num_attention_heads, self.attention_head_size)
@@ -1252,9 +1278,13 @@ class ReformerSelfOutput(nn.Module):
         self.dropout = config.hidden_dropout_prob
 
         self.dense = nn.Linear(all_head_size, config.hidden_size, bias=False)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = nn.functional.dropout(hidden_states, p=self.dropout, training=self.training)
         return hidden_states
 
@@ -1363,9 +1393,13 @@ class ReformerFeedForwardDense(nn.Module):
             self.act_fn = config.hidden_act
 
         self.dense = nn.Linear(config.hidden_size, config.feed_forward_size)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = nn.functional.dropout(hidden_states, p=self.dropout, training=self.training)
         hidden_states = self.act_fn(hidden_states)
         return hidden_states
@@ -1377,9 +1411,13 @@ class ReformerFeedForwardOutput(nn.Module):
         self.dropout = config.hidden_dropout_prob
 
         self.dense = nn.Linear(config.feed_forward_size, config.hidden_size)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = nn.functional.dropout(hidden_states, p=self.dropout, training=self.training)
         return hidden_states
 
@@ -1757,11 +1795,16 @@ class ReformerOnlyLMHead(nn.Module):
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
         self.decoder.bias = self.bias
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def forward(self, hidden_states):
         return apply_chunking_to_forward(self.forward_chunk, self.chunk_size_lm_head, self.seq_len_dim, hidden_states)
 
     def forward_chunk(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.decoder(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 
@@ -2468,14 +2511,21 @@ class ReformerClassificationHead(nn.Module):
         self.dense = nn.Linear(2 * config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, **kwargs):
         hidden_states = hidden_states[:, 0, :]  # take <s> token (equiv. to [CLS])
         hidden_states = self.dropout(hidden_states)
+        hidden_states = self.quant1(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = torch.tanh(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        hidden_states = self.quant2(hidden_states)
         hidden_states = self.out_proj(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 
@@ -2496,6 +2546,8 @@ class ReformerForQuestionAnswering(ReformerPreTrainedModel):
         self.qa_outputs = nn.Linear(2 * config.hidden_size, config.num_labels)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(REFORMER_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(
@@ -2544,8 +2596,9 @@ class ReformerForQuestionAnswering(ReformerPreTrainedModel):
         )
 
         sequence_output = reformer_outputs[0]
-
+        sequence_output = self.quant(sequence_output)
         logits = self.qa_outputs(sequence_output)
+        logits = self.dequant(logits)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)

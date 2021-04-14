@@ -116,6 +116,25 @@ Where summarization dataset can be one of xsum,billsum etc.
 
 Where output_dir is path of checkpoint which be created by fine tuning.
 
+### language modeling task
+
+```bash
+export DATASET_NAME=wikitext
+export DATASET_CONFIG_NAME=wikitext-2-raw-v1
+
+python run_clm_tune.py \
+    --model_name_or_path /path/to/checkpoint/dir \
+    --dataset_name ${DATASET_NAME} \
+    --dataset_config_name ${DATASET_CONFIG_NAME} \
+    --do_eval \
+    --tune \
+    --output_dir /path/to/checkpoint/dir \
+    --tuned_checkpoint=/path/to/checkpoint/dir \
+```
+
+Where dataset can be one of wikitext,crime_and_punish etc.
+
+Where output_dir is path of checkpoint which be created by fine tuning.
 
 Examples of enabling Intel® Low Precision Optimization Tool
 ============================================================
@@ -199,41 +218,75 @@ For seq2seq task,We need update run_seq2seq_tune.py like below
 
 ```python
 if training_args.tune:
-  def eval_func_for_lpot(model):
-      trainer.model = model
-      results = trainer.evaluate(
-          eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
-      )
-      assert data_args.task.startswith("summarization") or data_args.task.startswith("translation") , "data_args.task should startswith summarization or translation"
-      if data_args.task.startswith("summarization"):
-          task_metrics_keys = ['val_gen_len','val_loss','val_rouge1','val_rouge2','val_rougeL','val_rougeLsum','val_samples_per_second']
-          rouge = 0
-          for key in task_metrics_keys:
-              if key in results.keys():
-                  logger.info("Finally Eval {}:{}".format(key, results[key]))
-                  if 'rouge' in key:
-                      rouge += results[key]
-          return rouge/4
-      if data_args.task.startswith("translation"):
-          task_metrics_keys = ['val_bleu','val_samples_per_second']
-          for key in task_metrics_keys:
-              if key in results.keys():
-                  logger.info("Finally Eval {}:{}".format(key, results[key]))
-                  if 'bleu' in key:
-                      bleu = results[key]
-          return bleu
-  from lpot import Quantization, common
-  quantizer = Quantization("./conf.yaml")
-  quantizer.model = common.Model(model)
-  quantizer.calib_dataloader = common.DataLoader(
-                                          eval_dataset, 
-                                          batch_size=training_args.eval_batch_size,
-                                          collate_fn=Seq2SeqDataCollator_lpot(tokenizer, data_args, training_args.tpu_num_cores)
-                                          )
-  quantizer.eval_func = eval_func_for_lpot
-  q_model = quantizer()
-  q_model.save(training_args.tuned_checkpoint)
-  exit(0)
+    def eval_func_for_lpot(model):
+        trainer.model = model
+        results = trainer.evaluate(
+            eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
+        )
+        assert data_args.task.startswith("summarization") or data_args.task.startswith("translation") , \
+            "data_args.task should startswith summarization or translation"
+        task_metrics_keys = ['val_bleu','val_rouge1','val_rouge2','val_rougeL','val_rougeLsum']
+        for key in task_metrics_keys:
+            if key in results.keys():
+                logger.info("Finally Eval {}:{}".format(key, results[key]))
+                if 'bleu' in key:
+                    acc = results[key]
+                    break
+                if 'rouge' in key:
+                    acc = sum([v for k,v in results.items() if "rouge" in k])/4
+                    break
+        return acc
+    from lpot.experimental import Quantization, common
+    quantizer = Quantization("./conf.yaml")
+    quantizer.model = common.Model(model)
+    quantizer.calib_dataloader = common.DataLoader(
+                                            eval_dataset, 
+                                            batch_size=training_args.eval_batch_size,
+                                            collate_fn=Seq2SeqDataCollator_lpot(tokenizer, data_args, training_args.tpu_num_cores)
+                                            )
+    quantizer.eval_func = eval_func_for_lpot
+    q_model = quantizer()
+    q_model.save(training_args.tuned_checkpoint)
+    exit(0)
+```
+
+For language modeling task,We need update run_clm_tune.py like below
+
+```python
+if training_args.tune:
+    def eval_func_for_lpot(model_tuned):
+        trainer = Trainer(
+            model=model_tuned,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            tokenizer=tokenizer,
+            data_collator=default_data_collator,
+        )
+        eval_output = trainer.evaluate(eval_dataset=eval_dataset)
+        perplexity = math.exp(eval_output["eval_loss"])
+        results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
+                    "eval_samples_per_second":eval_output['eval_samples_per_second']}
+        clm_task_metrics_keys = ["perplexity"]
+        for key in clm_task_metrics_keys:
+            if key in results.keys():
+                logger.info("Finally Eval {}:{}".format(key, results[key]))
+                if key=="perplexity":
+                    perplexity = results[key]
+                    break
+        return 100-perplexity
+    from lpot.experimental import Quantization, common
+    quantizer = Quantization("./conf.yaml")
+    quantizer.model = common.Model(model)
+    quantizer.calib_dataloader = common.DataLoader(
+                                            eval_dataset, 
+                                            batch_size=training_args.eval_batch_size,
+                                            collate_fn=default_data_collator_lpot
+                                            )
+    quantizer.eval_func = eval_func_for_lpot
+    q_model = quantizer()
+    q_model.save(training_args.tuned_checkpoint)
+    exit(0)
 ```
 # Original BERT README
 
