@@ -30,21 +30,26 @@ class DummyDataset(Dataset):
        This Dataset is to construct a dataset from a specific shape.
        the value range is calculated from: low * stand_normal(0, 1) + high
        (TODO) construct dummy data from real dataset or iteration of data.
-       Args:
-           shape(list or tuple): support create multi shape tensors, use list of tuples
-                                 for each tuple in the list, will create a such size tensor.
-           low(list or float): low out the tensor value range from[0, 1] to [0, low]
-                                 or [low, 0] if low < 0, input type have two choices:
-                                 if list, length should be same with shape list and multiply
-                                 each member of low list with coresponding shape of tensor.
-                                 if float, will implement all tensors with same low value.
-          high(list or float):  high the tensor value by add all tensor element value high
-                                 if list, length of list should be same with shape list,
-          dtype(list or str):    support multi tensor dtype setting, eg, we may assign value
-                                 tensor with dtype fp32 and label from 1 to 1000(means classes)
-                                 if list, length of list should be same with shape list,
-                                 if str, all tensors will use same dtype. dtype support('float32',
-                                 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool')
+
+    Args: shape (list or tuple):support create multi shape tensors, use list of tuples
+                                for each tuple in the list, will create a such size tensor.
+          low (list or float, default=-128.):low out the tensor value range from [0, 1] 
+                                            to [0, low] or [low, 0] if low < 0, if float, 
+                                            will implement all tensors with same low value.  
+          high (list or float, default=127.):high the tensor value by add all tensor element
+                                            value high. If list, length of list should be 
+                                            same with shape list.
+          dtype (list or str, default='float32'):support multi tensor dtype setting. If list,
+                                                length of list should be same with shape list,
+                                                if str, all tensors will use same dtype. dtype
+                                                support 'float32', 'float16', 'uint8', 'int8',
+                                                'int32', 'int64', 'bool'.
+          label (bool, default=False):whether to return 0 as label.
+          transform (transform object, default=None): dummy dataset does not need transform.
+                                                        If transform is not None, it will ignore
+                                                        it.  
+          filter (Filter objects, default=None): filter out examples according to 
+                                                specific conditions
 
     """
     def __init__(self, shape, low=-128., high=127., dtype='float32', label=False, \

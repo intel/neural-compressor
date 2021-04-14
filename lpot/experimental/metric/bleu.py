@@ -47,15 +47,25 @@ def bleu_tokenize(string):
 
 @metric_registry('BLEU', 'tensorflow')
 class BLEU(object):
+    """Computes Bilingual Evaluation Understudy Score
+
+    BLEU score computation between labels and predictions. An approximate BLEU scoring 
+    method since we do not glue word pieces or decode the ids and tokenize the output. 
+    By default, we use ngram order of 4 and use brevity penalty. Also, this does not 
+    have beam search
+    
+    """
     def __init__(self):
         self.translations = []
         self.labels = []
 
     def reset(self):
+        """clear preds and labels storage"""
         self.translations = []
         self.labels = []
 
     def update(self, pred, label):
+        """add preds and labels to storage"""
         if len(label) != len(pred):
             raise ValueError("Reference and translation files have different number "
                              "of lines. If training only a few steps (100-200), the "
@@ -68,5 +78,6 @@ class BLEU(object):
         self.translations.extend(pred)
 
     def result(self):
+        """calculate metric"""
         return compute_bleu(self.labels, self.translations) * 100
 

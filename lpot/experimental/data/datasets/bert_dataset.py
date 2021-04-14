@@ -27,6 +27,13 @@ class PytorchBertDataset(Dataset):
        (TODO) add end to end support for easy config by yaml by adding the method of
        load examples and process method.
 
+    Args: dataset (list): list of data.
+          task (str): the task of the model, support "classifier", "squad".
+          model_type (str, default='bert'): model type, support 'distilbert', 'bert',
+                                            'xlnet', 'xlm'.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions.
     """
 
     def __init__(self, dataset, task, model_type='bert', transform=None, filter=None):
@@ -71,6 +78,18 @@ class PytorchBertDataset(Dataset):
 
 @dataset_registry(dataset_type="bert", framework="tensorflow", dataset_format='')
 class TensorflowBertDataset(Dataset):
+    """Configuration for Tensorflow Bert Dataset.
+
+    This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.
+
+    Args: root (str): path of dataset.
+          label_file (str): path of label file.
+          task (str, default='squad'): task type of model.
+          model_type (str, default='bert'): model type, support 'bert'.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions
+    """
     def __init__(self, root, label_file, task='squad', 
             model_type='bert', transform=None, filter=None):
         import json

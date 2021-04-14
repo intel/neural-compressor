@@ -249,6 +249,28 @@ def calculate_md5(fpath, chunk_size=1024*1024):
 @dataset_registry(dataset_type="CIFAR10", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class CIFAR10(Dataset):
+    """Configuration for CIFAR10 and CIFAR100 database
+
+    For CIFAR10: If download is True, it will download dataset to root/ and extract it
+                 automatically, otherwise user can download file from 
+                 https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to
+                 root/ and extract it.
+    For CIFAR100: If download is True, it will download dataset to root/ and extract it
+                  automatically, otherwise user can download file from 
+                  https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to
+                  root/ and extract it.
+
+    Args:
+        root (str): Root directory of dataset.  
+        train (bool, default=False): If True, creates dataset from train subset, 
+                                     otherwise from validation subset.
+        transform (transform object, default=None):  transform to process input data.
+        filter (Filter objects, default=None): filter out examples according to specific 
+                                               conditions.  
+        download (bool, default=True): If true, downloads the dataset from the internet 
+                                       and puts it in root directory. If dataset is already 
+                                       downloaded, it is not downloaded again.
+    """
     base_folder = 'cifar-10-batches-py'
     url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
     filename = "cifar-10-python.tar.gz"
@@ -427,6 +449,27 @@ class TensorflowCIFAR100(CIFAR100):
 @dataset_registry(dataset_type="MNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class MNIST(Dataset):
+    """Configuration for Modified National Institute of Standards and Technology database 
+       and FashionMNIST database
+
+    For MNIST: If download is True, it will download dataset to root/MNIST/, otherwise user
+               should put mnist.npz under root/MNIST/ manually.
+    For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,
+                      otherwise user should put train-labels-idx1-ubyte.gz, 
+                      train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz 
+                      and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.
+    
+    Args:
+        root (str): Root directory of dataset.  
+        train (bool, default=False): If True, creates dataset from train subset, 
+                                     otherwise from validation subset.
+        transform (transform object, default=None):  transform to process input data.
+        filter (Filter objects, default=None): filter out examples according to specific 
+                                               conditions.  
+        download (bool, default=True): If true, downloads the dataset from the internet 
+                                       and puts it in root directory. If dataset is already 
+                                       downloaded, it is not downloaded again.
+    """
     classes = ['0 - zero', '1 - one', '2 - two', '3 - three', '4 - four',
                    '5 - five', '6 - six', '7 - seven', '8 - eight', '9 - nine']
     resource = [
@@ -562,6 +605,26 @@ class TensorflowFashionMNIST(FashionMNIST):
 @dataset_registry(dataset_type="ImageFolder", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class ImageFolder(Dataset):
+    """Configuration for ImageFolder
+
+    Expects the data folder to contain subfolders representing the classes to which 
+    its images belong.
+
+    Please arrange data in this way:  
+        root/class_1/xxx.png  
+        root/class_1/xxy.png  
+        root/class_1/xxz.png  
+        ...  
+        root/class_n/123.png  
+        root/class_n/nsdf3.png  
+        root/class_n/asd932_.png  
+    Please put images of different categories into different folders.
+
+    Args: root (str): Root directory of dataset.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according to specific
+                                                 conditions
+    """
     def __init__(self, root, transform=None, filter=None):
         self.root = root
         assert os.path.exists(self.root), "Datapath doesn't exist!"
@@ -616,6 +679,15 @@ class TensorflowImageFolder(ImageFolder):
 
 @dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow", dataset_format='')
 class TensorflowTFRecordDataset(IterableDataset):
+    """Configuration for TensorflowTFRecordDataset
+
+    Root is a full path to tfrecord file, which contains the file name.
+
+    Args: root (str): filename of dataset.  
+          transform (transform object, default=None):  transform to process input data.  
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions.
+    """
     def __new__(cls, root, transform=None, filter=None):
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
@@ -631,6 +703,21 @@ class TensorflowTFRecordDataset(IterableDataset):
 
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
+    """Configuration for ImageNet database in tf record format
+
+    Please arrange data in this way:  
+        root/validation-000-of-100  
+        root/validation-001-of-100  
+        ...  
+        root/validation-099-of-100  
+    The file name needs to follow this pattern: '* - * -of- *'
+
+    Args: root (str): Root directory of dataset.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions
+    """
+
     """Configuration for Imagenet dataset."""
     def __new__(cls, root, transform=None, filter=None):
 

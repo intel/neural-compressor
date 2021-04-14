@@ -27,6 +27,14 @@ class StyleTransferDataset(Dataset):
        This Dataset is to construct a dataset from two specific image holders representing
        content image folder and style image folder.
 
+    Args: content_folder (str):Root directory of content images.
+          style_folder (str):Root directory of style images.
+          crop_ratio (float, default=0.1):cropped ratio to each side.
+          resize_shape (tuple, default=(256, 256)):target size of image.
+          image_format (str, default='jpg'): target image format.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions
     """
 
     def __init__(self, content_folder, style_folder, crop_ratio=0.1,

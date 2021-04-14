@@ -276,20 +276,18 @@ def _shape_validate(preds, labels):
 
 @metric_registry('topk', 'mxnet')
 class MxnetTopK(BaseMetric):
-    """The class of calculating topk metric, which usually is used in classification.
+    """Computes top k predictions accuracy.
 
     Args:
-        topk (dict): The dict of topk for configuration.
-
+        k (int): Number of top elements to look at for computing accuracy.
     """
-
     def __init__(self, k=1):
         self.k = k
         self.num_correct = 0
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-
+        """add preds and labels to storage"""
         preds, labels = _topk_shape_validate(preds, labels)
         preds = preds.argsort()[..., -self.k:]
         if self.k == 1:
@@ -307,10 +305,12 @@ class MxnetTopK(BaseMetric):
         self.num_sample += len(labels)
 
     def reset(self):
+        """clear preds and labels storage"""
         self.num_correct = 0
         self.num_sample = 0
 
     def result(self):
+        """calculate metric"""
         if self.num_sample == 0:
             logger.warning("sample num is 0 can't calculate topk")
             return 0
@@ -319,18 +319,24 @@ class MxnetTopK(BaseMetric):
 
 @metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class F1(BaseMetric):
+    """Computes the F1 score of a binary classification problem.
+
+    """
     def __init__(self):
         self._score_list = []
 
     def update(self, preds, labels):
+        """add preds and labels to storage"""
         from .f1 import f1_score
         result = f1_score(preds, labels)
         self._score_list.append(result)
 
     def reset(self):
+        """clear preds and labels storage"""
         self._score_list = []
 
     def result(self):
+        """calculate metric"""
         return np.array(self._score_list).mean()
 
 def _accuracy_shape_check(preds, labels):
@@ -363,12 +369,16 @@ def _accuracy_type_check(preds, labels):
 
 @metric_registry('Accuracy', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class Accuracy(BaseMetric):
+    """Computes accuracy classification score.
+
+    """
     def __init__(self):
         self.pred_list = []
         self.label_list = []
         self.sample = 0
 
     def update(self, preds, labels, sample_weight=None):
+        """add preds and labels to storage"""
         preds, labels = _accuracy_shape_check(preds, labels)
         update_type = _accuracy_type_check(preds, labels)
         if update_type == 'binary':
@@ -394,32 +404,40 @@ class Accuracy(BaseMetric):
             self.label_list.append(labels)
 
     def reset(self):
+        """clear preds and labels storage"""
         self.pred_list = []
         self.label_list = []
         self.sample = 0
 
     def result(self):
+        """calculate metric"""
         correct_num = np.sum(
             np.array(self.pred_list) == np.array(self.label_list))
         return correct_num / self.sample
 
 class PyTorchLoss():
+    """A dummy metric for directly printing loss, it calculates the average of predictions.
+
+    """
     def __init__(self):
         self._num_examples = 0
         self._device = torch.device('cpu')
         self._sum = torch.tensor(0.0, device=self._device)
 
     def reset(self):
+        """clear preds and labels storage"""
         self._num_examples = 0
         self._sum = torch.tensor(0.0, device=self._device)
 
     def update(self, output):
+        """add preds and labels to storage"""
         y_pred, y = output[0].detach(), output[1].detach()
         loss = torch.sum(y_pred)
         self._sum += loss.to(self._device)
         self._num_examples += y.shape[0]
 
     def compute(self):
+        """calculate metric"""
         if self._num_examples == 0:
             raise ValueError("Loss must have at least one example \
                                       before it can be computed.")
@@ -427,39 +445,54 @@ class PyTorchLoss():
         
 @metric_registry('Loss', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class Loss(BaseMetric):
+    """A dummy metric for directly printing loss, it calculates the average of predictions.
+
+    """
     def __init__(self):
         self.sample = 0
         self.sum = 0
 
     def update(self, preds, labels, sample_weight=None):
+        """add preds and labels to storage"""
         preds, labels = _shape_validate(preds, labels)
         self.sample += labels[0].shape[0]
         self.sum += sum([np.sum(pred) for pred in preds])
 
     def reset(self):
+        """clear preds and labels storage"""
         self.sample = 0
         self.sum = 0
 
     def result(self):
+        """calculate metric"""
         return self.sum / self.sample
 
 @metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MAE(BaseMetric):
+    """Computes Mean Absolute Error (MAE) loss.
+
+    Args:
+        compare_label (bool): Whether to compare label. False if there are no labels 
+                              and will use FP32 preds as labels. 
+    """
     def __init__(self, compare_label=True):
         self.label_list = []
         self.pred_list = []
         self.compare_label = compare_label
 
     def update(self, preds, labels, sample_weight=None):
+        """add preds and labels to storage"""
         preds, labels = _shape_validate(preds, labels)
         self.label_list.extend(labels)
         self.pred_list.extend(preds)
 
     def reset(self):
+        """clear preds and labels storage"""
         self.label_list = []
         self.pred_list = []
 
     def result(self):
+        """calculate metric"""
         aes = [abs(a-b) for (a,b) in zip(self.label_list, self.pred_list)]
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
@@ -468,35 +501,53 @@ class MAE(BaseMetric):
 
 @metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
+    """Computes Root Mean Squred Error (RMSE) loss.
+
+    Args:
+        compare_label (bool): Whether to compare label. False if there are no labels 
+                              and will use FP32 preds as labels. 
+    """
     def __init__(self, compare_label=True):
         self.mse = MSE(compare_label)
 
     def update(self, preds, labels, sample_weight=None):
+        """add preds and labels to storage"""
         self.mse.update(preds, labels, sample_weight)
 
     def reset(self):
+        """clear preds and labels storage"""
         self.mse.reset()
 
     def result(self):
+        """calculate metric"""
         return np.sqrt(self.mse.result())
 
 @metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MSE(BaseMetric):
+    """Computes Mean Squared Error (MSE) loss.
+
+    Args:
+        compare_label (bool): Whether to compare label. False if there are no labels 
+                              and will use FP32 preds as labels.  
+    """
     def __init__(self, compare_label=True):
         self.label_list = []
         self.pred_list = []
         self.compare_label = compare_label
 
     def update(self, preds, labels, sample_weight=None):
+        """add preds and labels to storage"""
         preds, labels = _shape_validate(preds, labels)
         self.pred_list.extend(preds)
         self.label_list.extend(labels)
 
     def reset(self):
+        """clear preds and labels storage"""
         self.label_list = []
         self.pred_list = []
 
     def result(self):
+        """calculate metric"""
         squares = [(a-b)**2.0 for (a,b) in zip(self.label_list, self.pred_list)]
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
@@ -505,20 +556,18 @@ class MSE(BaseMetric):
 
 @metric_registry('topk', 'tensorflow')
 class TensorflowTopK(BaseMetric):
-    """The class of calculating topk metric, which usually is used in classification.
+    """Computes top k predictions accuracy.
 
     Args:
-        topk (dict): The dict of topk for configuration.
-
+        k (int): Number of top elements to look at for computing accuracy.
     """
-
     def __init__(self, k=1):
         self.k = k
         self.num_correct = 0
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-
+        """add preds and labels to storage"""
         preds, labels = _topk_shape_validate(preds, labels)
 
         labels = labels.reshape([len(labels)])
@@ -535,10 +584,12 @@ class TensorflowTopK(BaseMetric):
         self.num_correct += correct
 
     def reset(self):
+        """clear preds and labels storage"""
         self.num_correct = 0
         self.num_sample = 0
 
     def result(self):
+        """calculate metric"""
         if self.num_sample == 0:
             logger.warning("sample num is 0 can't calculate topk")
             return 0
@@ -547,20 +598,18 @@ class TensorflowTopK(BaseMetric):
 
 @metric_registry('topk', 'onnxrt_qlinearops, onnxrt_integerops')
 class ONNXRTTopK(BaseMetric):
-    """The class of calculating topk metric, which usually is used in classification.
+    """Computes top k predictions accuracy.
 
     Args:
-        topk (dict): The dict of topk for configuration.
-
+        k (int): Number of top elements to look at for computing accuracy.
     """
-
     def __init__(self, k=1):
         self.k = k
         self.num_correct = 0
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-
+        """add preds and labels to storage"""
         preds, labels = _topk_shape_validate(preds, labels)
         preds = preds.argsort()[..., -self.k:]
         if self.k == 1:
@@ -578,10 +627,12 @@ class ONNXRTTopK(BaseMetric):
         self.num_sample += len(labels)
 
     def reset(self):
+        """clear preds and labels storage"""
         self.num_correct = 0
         self.num_sample = 0
 
     def result(self):
+        """calculate metric"""
         if self.num_sample == 0:
             logger.warning("sample num is 0 can't calculate topk")
             return 0
@@ -591,8 +642,16 @@ class ONNXRTTopK(BaseMetric):
 
 @metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowMAP(BaseMetric):
-    """The class of calculating mAP metric
+    """Computes mean average precision.
 
+    Args:
+        anno_path (str): Annotation path.
+        iou_thrs (float or str): Minimal value for intersection over union that allows to 
+                                 make decision that prediction bounding box is true positive. 
+                                 You can specify one float value between 0 to 1 or 
+                                 string "05:0.05:0.95" for standard COCO thresholds.
+        map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+                          11-point interpolated AP, 0 for area under PR curve.
     """
     def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0):
         from .coco_label_map import category_map
@@ -621,6 +680,7 @@ class TensorflowMAP(BaseMetric):
 
 
     def update(self, predicts, labels, sample_weight=None):
+        """add preds and labels to storage"""
         from .coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
         detections = []
@@ -684,12 +744,14 @@ class TensorflowMAP(BaseMetric):
                     detection_classes=detections[idx]['classes']))
 
     def reset(self):
+        """clear preds and labels storage"""
         self.image_ids = []
         self.ground_truth_list = []
         self.detection_list = []
         self.annotation_id = 1
 
     def result(self):
+        """calculate metric"""
         from .coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
             logger.warning("sample num is 0 can't calculate mAP")
@@ -726,8 +788,13 @@ class TensorflowMAP(BaseMetric):
 
 @metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowCOCOMAP(TensorflowMAP):
-    """The class of calculating COCOmAP metric
+    """Computes mean average precision using algorithm in COCO 
 
+    Args:
+        anno_path (str): Annotation path.
+        iou_thrs (float or str): Intersection over union threshold. 
+                        Set to "0.5:0.05:0.95" for standard COCO thresholds.
+        map_points (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.
     """
     def __init__(self, anno_path=None, iou_thrs=None, map_points=None):
         super(TensorflowCOCOMAP, self).__init__(anno_path, iou_thrs, map_points)
@@ -736,8 +803,12 @@ class TensorflowCOCOMAP(TensorflowMAP):
 
 @metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowVOCMAP(TensorflowMAP):
-    """The class of calculating VOCmAP metric
+    """Computes mean average precision using algorithm in VOC 
 
+    Args:
+        anno_path (str): Annotation path.
+        iou_thrs (float or str): Intersection over union threshold. Set to 0.5.
+        map_points (int): The way to calculate mAP. Set to 0 for area under PR curve.
     """
     def __init__(self, anno_path=None, iou_thrs=None, map_points=None):
         super(TensorflowVOCMAP, self).__init__(anno_path, iou_thrs, map_points)
@@ -746,16 +817,22 @@ class TensorflowVOCMAP(TensorflowMAP):
 
 @metric_registry('SquadF1', 'tensorflow')
 class SquadF1(BaseMetric):
+    """Evaluate for v1.1 of the SQuAD dataset
+
+    """
     def __init__(self):
         self._score_list = []
 
     def update(self, preds, labels, sample_weight=None):
+        """add preds and labels to storage"""
         from .evaluate_squad import evaluate
         result = evaluate(labels, preds)
         self._score_list.append(result['f1'])
 
     def reset(self):
+        """clear preds and labels storage"""
         self._score_list = []
 
     def result(self):
+        """calculate metric"""
         return np.array(self._score_list).mean()

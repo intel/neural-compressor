@@ -85,8 +85,17 @@ class ParseDecodeCoco():
 
 @dataset_registry(dataset_type="COCORecord", framework="tensorflow", dataset_format='')
 class COCORecordDataset(IterableDataset):
-    """Configuration for Coco dataset."""
+    """Configuration for Coco dataset in tf record format.
 
+    Root is a full path to tfrecord file, which contains the file name.
+    Please use Resize transform when batch_size > 1
+
+    Args: root (str): Root directory of dataset.
+          num_cores (int, default=28):The number of input Datasets to interleave from in parallel.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions.
+    """
     def __new__(cls, root, num_cores=28, transform=None, filter=filter):
         record_iterator = tf.compat.v1.python_io.tf_record_iterator(root)
         example = tf.train.SequenceExample()
@@ -121,7 +130,23 @@ class COCORecordDataset(IterableDataset):
 @dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, \
                     onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
 class COCORaw(Dataset):
-    """Configuration for Coco raw dataset."""
+    """Configuration for Coco raw dataset.
+
+    Please arrange data in this way:  
+        /root/img_dir/1.jpg  
+        /root/img_dir/2.jpg  
+        ...  
+        /root/img_dir/n.jpg  
+        /root/anno_dir  
+    Please use Resize transform when batch_size > 1
+    
+    Args: root (str): Root directory of dataset.
+          img_dir (str, default='val2017'): image file directory.
+          anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions.
+    """
     def __init__(self, root, img_dir='val2017', \
             anno_dir='annotations/instances_val2017.json', transform=None, filter=filter):
         import json

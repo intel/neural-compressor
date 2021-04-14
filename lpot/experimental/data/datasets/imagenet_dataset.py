@@ -43,7 +43,22 @@ torch = LazyImport('torch')
 @dataset_registry(dataset_type="ImagenetRaw", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class ImagenetRaw(Dataset):
-    """Configuration for Imagenet Raw dataset."""
+    """Configuration for Imagenet Raw dataset.
+
+    Please arrange data in this way:  
+        data_path/img1.jpg  
+        data_path/img2.jpg  
+        ...  
+        data_path/imgx.jpg  
+    dataset will read name and label of each image from image_list file, 
+    if user set image_list to None, it will read from data_path/val_map.txt automatically.
+
+    Args: data_path (str): Root directory of dataset.
+          image_list (str): data file, record image_names and their labels.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according to 
+                                                 specific conditions
+    """
     def __init__(self, data_path, image_list, transform=None, filter=None):
         self.image_list = []
         self.label_list = []
