@@ -51,7 +51,7 @@ def main(_):
         evaluator(FLAGS.mode)
 
     elif FLAGS.tune:
-        from lpot.quantization import Quantization
+        from lpot.experimental import Quantization
         quantizer = Quantization(FLAGS.config)
         quantizer.model = FLAGS.input_model
         q_model = quantizer()

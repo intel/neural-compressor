@@ -62,7 +62,7 @@ bash prepare_model.sh --output_dir=./model
   ```
 ## Run Command
   ```shell
-  python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --mode=tune
+  python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --tune
   ```
 
 Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
