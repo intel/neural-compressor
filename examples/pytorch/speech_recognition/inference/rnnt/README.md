@@ -62,7 +62,7 @@ Our example comes from MLPerf Inference Benchmark Suite
 
 ### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
 
-    bash run_benchmark.sh --dataset=convert_dataset --input_model=./rnnt.pt --log_dir=bench_log --output_dir=saved_results
+    bash run_benchmark.sh --dataset=convert_dataset --input_model=./rnnt.pt --log_dir=bench_log --output_dir=saved_results --int8=true
 
 ### 4. The following is the brief output information:
 

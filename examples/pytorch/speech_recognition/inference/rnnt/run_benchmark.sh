@@ -26,6 +26,9 @@ function init_params {
       --output_dir=*)
           output_dir=$(echo $var |cut -f2 -d=)
       ;;
+      --int8=*)
+          int8=$(echo ${var} |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -50,6 +53,10 @@ function run_benchmark {
     if [ -n "$output_dir" ];then
         extra_cmd=$extra_cmd"--tuned_checkpoint ${output_dir} "
     fi
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd"--int8"
+    fi
+
 
     python run_tune.py \
                     --backend pytorch \
@@ -57,7 +64,6 @@ function run_benchmark {
                     --pytorch_config_toml pytorch/configs/rnnt.toml \
                     --scenario Offline \
                     --benchmark \
-                    --int8 \
                     ${extra_cmd}
 }
 
