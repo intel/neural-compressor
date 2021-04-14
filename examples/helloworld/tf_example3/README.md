@@ -49,6 +49,11 @@ evaluation:                                          # optional. required if use
 ```
 
 3. Run quantizaiton
+* Run Command
+  The cmd of quantization and predict with the quantized model 
+  ```shell
+  python test.py 
+  ```
 * In order to do quanzation for slim models, we need to get graph from slim .ckpt first. 
 ```python
     from lpot.experimental import Quantization, common
