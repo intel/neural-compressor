@@ -31,7 +31,7 @@ class TestConsts(unittest.TestCase):
         self.assertIs(type(github_info), dict)
         self.assertEqual(github_info.get("user"), "intel")
         self.assertEqual(github_info.get("repository"), "lpot")
-        self.assertEqual(github_info.get("tag"), "v1.2")
+        self.assertEqual(github_info.get("tag"), "v1.3")
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@
 
 import os
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from lpot.ux.components.benchmark.benchmark_model import benchmark_model
 from lpot.ux.utils.exceptions import ClientErrorException
@@ -35,8 +35,11 @@ class Benchmark:
         datatype: str,
     ) -> None:
         """Initialize Benchmark class."""
-        self.instances: int = 1
-        self.cores_per_instance: int = HWInfo().cores // self.instances
+        self.instances: int = workload.config.get_performance_num_of_instance() or 1
+        self.cores_per_instance: int = (
+            workload.config.get_performance_cores_per_instance()
+            or HWInfo().cores // self.instances
+        )
         self.model_path = model_path
         self.datatype = datatype
         self.mode = mode
@@ -73,14 +76,13 @@ class Benchmark:
             self.framework,
         ]
 
-    def execute(self) -> List[Dict[str, Any]]:
+    def execute(self) -> None:
         """Execute benchmark and collect results."""
-        return benchmark_model(
+        benchmark_model(
             input_graph=self.model_path,
             config=self.config_path,
             benchmark_mode=self.mode,
             framework=self.framework,
-            datatype=self.datatype,
         )
 
     def serialize(self) -> Dict[str, Any]:

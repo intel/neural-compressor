@@ -69,7 +69,7 @@ export class ImportModelComponent implements OnInit {
 
   constructor(
     private _formBuilder: FormBuilder,
-    private modelService: ModelService,
+    public modelService: ModelService,
     private socketService: SocketService,
     public dialog: MatDialog
   ) { }
@@ -97,7 +97,6 @@ export class ImportModelComponent implements OnInit {
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value && this.firstFormGroup.get('modelDomain').value) {
           this.getConfig();
-          this.getPossibleTransformations();
         }
       }
       );
@@ -143,6 +142,8 @@ export class ImportModelComponent implements OnInit {
                 const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
                 if (nonCustomParams.length === 1) {
                   this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
+                } else if (nonCustomParams.includes('softmax_tensor')) {
+                  this.firstFormGroup.get(param.slice(0, -1)).setValue(['softmax_tensor']);
                 }
               }
             });
@@ -193,20 +194,29 @@ export class ImportModelComponent implements OnInit {
       op: [''],
       strategy: [''],
       batchSize: [1],
-      cores_per_instance: [''],
-      num_of_instance: [''],
+      cores_per_instance: [4],
+      num_of_instance: [],
       inter_num_of_threads: [''],
       intra_num_of_threads: [''],
       kmp_blocktime: [''],
       warmup: [],
       iteration: [-1],
       metric: [''],
-      objective: [''],
+      objective: ['performance'],
       timeout: [0],
       maxTrials: [100],
       randomSeed: [],
       approach: [],
     });
+    if (this.modelService.systemInfo['cores_per_socket']) {
+      this.secondFormGroup.get('num_of_instance')
+        .setValue(Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4));
+    } else {
+      this.modelService.systemInfoChange.subscribe(resp => {
+        this.secondFormGroup.get('num_of_instance')
+          .setValue(Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4));
+      });
+    }
   }
 
   getPossibleValues() {
@@ -237,13 +247,6 @@ export class ImportModelComponent implements OnInit {
     this.modelService.getPossibleValues('strategy', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
         resp => this.tunings = resp['strategy'],
-        error => this.openErrorDialog(error));
-  }
-
-  getPossibleTransformations() {
-    this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value, domain: this.firstFormGroup.get('modelDomain').value })
-      .subscribe(
-        resp => this.transformations = resp['transform'],
         error => this.openErrorDialog(error));
   }
 
@@ -319,17 +322,23 @@ export class ImportModelComponent implements OnInit {
             }
             this.secondFormGroup.get('transform').setValue(transform);
             const transformNames = Object.keys(transform);
-            transformNames.forEach((name, index) => {
-              this.addNewTransformation(name);
-              if (this.transformations.find(x => x.name === name)) {
-                this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
-                if (Array.isArray(this.transformationParams[index]['params'])) {
-                  this.transformationParams[index]['params'].forEach(param => {
-                    param.value = transform[name][param.name];
+            this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value, domain: this.firstFormGroup.get('modelDomain').value })
+              .subscribe(
+                resp => {
+                  this.transformations = resp['transform'];
+                  transformNames.forEach((name, index) => {
+                    this.addNewTransformation(name);
+                    if (this.transformations.find(x => x.name === name)) {
+                      this.transformationParams[index]['params'] = this.transformations.find(x => x.name === name).params;
+                      if (Array.isArray(this.transformationParams[index]['params'])) {
+                        this.transformationParams[index]['params'].forEach(param => {
+                          param.value = transform[name][param.name];
+                        });
+                      }
+                    }
                   });
-                }
-              }
-            });
+                },
+                error => this.openErrorDialog(error));
 
             if (resp['config']['quantization'].calibration.dataloader) {
               const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
@@ -437,7 +446,7 @@ export class ImportModelComponent implements OnInit {
         metric_param: this.metricParam,
         batch_size: this.secondFormGroup.get('batchSize').value,
         cores_per_instance: this.secondFormGroup.get('cores_per_instance').value,
-        instances: this.secondFormGroup.get('num_of_instance').value,
+        instances: this.secondFormGroup.get('num_of_instance').value ? this.secondFormGroup.get('num_of_instance').value : Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4),
         inter_nr_of_threads: this.secondFormGroup.get('inter_num_of_threads').value,
         intra_nr_of_threads: this.secondFormGroup.get('intra_num_of_threads').value,
         iterations: this.secondFormGroup.get('iteration').value,

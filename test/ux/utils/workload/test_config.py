@@ -15,7 +15,6 @@
 """Config test."""
 
 import unittest
-from unittest.mock import MagicMock, patch
 
 from lpot.ux.utils.workload.config import Config
 
@@ -63,7 +62,7 @@ predefined_config = {
             },
         },
         "performance": {
-            "configs": {"cores_per_instance": 4, "num_of_instance": 7},
+            "configs": {"cores_per_instance": 3, "num_of_instance": 2},
             "dataloader": {
                 "batch_size": 1,
                 "dataset": {"ImageRecord": {"root": "/path/to/evaluation/dataset"}},
@@ -93,11 +92,8 @@ class TestConfig(unittest.TestCase):
         """Config test constructor."""
         super().__init__(*args, **kwargs)
 
-    @patch("psutil.cpu_count")
-    def test_config_constructor(self, mock_cpu_count: MagicMock) -> None:
+    def test_config_constructor(self) -> None:
         """Test Config constructor."""
-        mock_cpu_count.return_value = 8
-
         config = Config(predefined_config)
 
         self.assertEqual(config.model_path, "/path/to/model")
@@ -213,14 +209,14 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.evaluation.performance.configs)
         self.assertEqual(
             config.evaluation.performance.configs.cores_per_instance,
-            4,
-        )  # Cores per instance should be equal to 4
+            3,
+        )
         self.assertEqual(
             config.evaluation.performance.configs.num_of_instance,
             2,
-        )  # 8 cores / 4 instances = 2
-        self.assertEqual(config.evaluation.performance.configs.inter_num_of_threads, 4)
-        self.assertEqual(config.evaluation.performance.configs.kmp_blocktime, 1)
+        )
+        self.assertEqual(config.evaluation.performance.configs.inter_num_of_threads, None)
+        self.assertEqual(config.evaluation.performance.configs.kmp_blocktime, None)
         self.assertIsNotNone(config.evaluation.performance.dataloader)
         self.assertIsNone(config.evaluation.performance.dataloader.last_batch)
         self.assertEqual(
@@ -256,11 +252,8 @@ class TestConfig(unittest.TestCase):
 
         self.assertIsNone(config.pruning)
 
-    @patch("psutil.cpu_count")
-    def test_config_serializer(self, mock_cpu_count: MagicMock) -> None:
+    def test_config_serializer(self) -> None:
         """Test Config serializer."""
-        mock_cpu_count.return_value = 8
-
         config = Config(predefined_config)
         result = config.serialize()
         print(result)
@@ -322,10 +315,8 @@ class TestConfig(unittest.TestCase):
                         "warmup": 10,
                         "iteration": -1,
                         "configs": {
-                            "cores_per_instance": 4,
+                            "cores_per_instance": 3,
                             "num_of_instance": 2,
-                            "inter_num_of_threads": 4,
-                            "kmp_blocktime": 1,
                         },
                         "dataloader": {
                             "batch_size": 1,

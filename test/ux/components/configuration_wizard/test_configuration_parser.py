@@ -322,8 +322,8 @@ class TestTransformParser(TestParser):
                 "metric": "topk",
                 "metric_param": 1,
                 "batch_size": 1,
-                "cores_per_instance": "",
-                "instances": "",
+                "cores_per_instance": "1",
+                "instances": "1",
                 "inter_nr_of_threads": "",
                 "intra_nr_of_threads": "",
                 "iterations": -1,
@@ -364,8 +364,8 @@ class TestTransformParser(TestParser):
                 "metric": "topk",
                 "metric_param": 1,
                 "batch_size": 1,
-                "cores_per_instance": "",
-                "instances": "",
+                "cores_per_instance": "1",
+                "instances": "1",
                 "inter_nr_of_threads": "",
                 "intra_nr_of_threads": "",
                 "iterations": -1,
@@ -467,6 +467,14 @@ class TestDataloaderParser(TestParser):
             },
         )
 
+    def test_parses_evaluation_performance_dataloader_batch_size(self) -> None:
+        """Test parsing evaluation.performance.batch_size."""
+        parsed = self.parser.parse(
+            self._build_input_with_dataloader("foo", {}),
+        )
+
+        self.assertEqual(234, parsed.get("evaluation", {}).get("batch_size"))
+
     def _build_input_with_dataloader(self, name: str, params: Optional[dict]) -> dict:
         """Build fake data with dataloader."""
         return {
@@ -494,9 +502,9 @@ class TestDataloaderParser(TestParser):
                 "dataloader": {"name": name, "params": params},
                 "metric": "topk",
                 "metric_param": 1,
-                "batch_size": 1,
-                "cores_per_instance": "",
-                "instances": "",
+                "batch_size": "234",
+                "cores_per_instance": "1",
+                "instances": "1",
                 "inter_nr_of_threads": "",
                 "intra_nr_of_threads": "",
                 "iterations": -1,

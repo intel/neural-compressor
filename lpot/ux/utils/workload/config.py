@@ -30,6 +30,8 @@ from lpot.ux.utils.workload.quantization import Quantization
 from lpot.ux.utils.workload.tuning import Tuning
 from lpot.ux.utils.yaml_utils import float_representer
 
+from .evaluation import Configs
+
 
 class Config(JsonSerializer):
     """Configuration class."""
@@ -137,6 +139,49 @@ class Config(JsonSerializer):
             )
         else:
             log.warning("Could not set performance dataset path.")
+
+    def get_performance_configs(self) -> Optional[Configs]:
+        """Get evaluation.performance.configs."""
+        if self.evaluation and self.evaluation.performance and self.evaluation.performance.configs:
+            return self.evaluation.performance.configs
+        return None
+
+    def set_performance_cores_per_instance(self, cores_per_instance: int) -> None:
+        """Update cores_per_instance evaluation config."""
+        configs = self.get_performance_configs()
+        if configs is not None:
+            configs.cores_per_instance = cores_per_instance
+
+    def get_performance_cores_per_instance(self) -> Optional[int]:
+        """Get cores_per_instance evaluation config."""
+        configs = self.get_performance_configs()
+        if configs is not None:
+            return configs.cores_per_instance
+
+        return None
+
+    def set_performance_num_of_instance(self, num_of_instance: int) -> None:
+        """Update num_of_instance evaluation config."""
+        configs = self.get_performance_configs()
+        if configs is not None:
+            configs.num_of_instance = num_of_instance
+
+    def get_performance_num_of_instance(self) -> Optional[int]:
+        """Get num_of_instance evaluation config."""
+        configs = self.get_performance_configs()
+        if configs is not None:
+            return configs.num_of_instance
+
+        return None
+
+    def set_performance_batch_size(self, batch_size: int) -> None:
+        """Update batch_size evaluation config."""
+        if (
+            self.evaluation
+            and self.evaluation.performance
+            and self.evaluation.performance.dataloader
+        ):
+            self.evaluation.performance.dataloader.batch_size = batch_size
 
     def set_quantization_dataloader(self, dataloader: dict) -> None:
         """Udpate dataloader in quantization config."""

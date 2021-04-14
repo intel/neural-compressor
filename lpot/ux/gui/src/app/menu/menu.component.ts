@@ -13,7 +13,6 @@
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { ModelService } from '../services/model.service';

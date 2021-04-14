@@ -18,6 +18,7 @@ from collections.abc import Iterable
 from typing import Any, Dict, List, Type, Union
 
 from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.hw_info import HWInfo
 
 
 class ConfigurationParser:
@@ -95,6 +96,40 @@ class ConfigurationParser:
             data["evaluation"].update(
                 {"dataloader": self.parse_dataloader(evaluation_dataloader)},
             )
+
+        num_cores = HWInfo().cores
+        cores_per_instance = int(data.get("evaluation", {}).get("cores_per_instance", 4))
+
+        if cores_per_instance < 1:
+            raise ClientErrorException(
+                "At least one core per instance must be used.",
+            )
+        if cores_per_instance > num_cores:
+            raise ClientErrorException(
+                f"Requested {cores_per_instance} cores per instance, "
+                f"while only {num_cores} available.",
+            )
+
+        max_number_of_instances = num_cores // cores_per_instance
+        instances = int(data.get("evaluation", {}).get("instances", max_number_of_instances))
+
+        if instances < 1:
+            raise ClientErrorException("At least one instance must be used.")
+
+        if instances > max_number_of_instances:
+            raise ClientErrorException(
+                f"Attempted to use {instances}," f" while only {max_number_of_instances} allowed.",
+            )
+
+        if "evaluation" in data:
+            data["evaluation"].update(
+                {
+                    "cores_per_instance": cores_per_instance,
+                    "num_of_instance": instances,
+                    "batch_size": int(data.get("evaluation", {}).get("batch_size", 1)),
+                },
+            )
+
         return data
 
     def parse_transforms(self, transforms_data: List[dict]) -> List[dict]:

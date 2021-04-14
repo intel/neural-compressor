@@ -122,6 +122,9 @@ def update_evaluation_data(config: Config, evaluation_data: Dict[str, Any]) -> N
         "iterations": config.set_performance_iterations,
         "dataloader": config.set_evaluation_dataloader,
         "dataset_path": config.set_evaluation_dataset_path,
+        "cores_per_instance": config.set_performance_cores_per_instance,
+        "num_of_instance": config.set_performance_num_of_instance,
+        "batch_size": config.set_performance_batch_size,
     }
 
     for key, action in map_key_to_action.items():

@@ -23,7 +23,7 @@ from lpot.ux.components.tune.tuning import Tuning
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.parser import Parser
+from lpot.ux.utils.parser import TuningParser
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import _load_json_as_dict, get_size
 from lpot.ux.web.communication import MessageQueue
@@ -86,7 +86,7 @@ def execute_tuning(data: Dict[str, Any]) -> dict:
         tuning_time = round(tuning_time, 2)
     log.debug(f"Elapsed time: {tuning_time}")
     logs = [os.path.join(workload_path, "output.txt")]
-    parser = Parser(logs)
+    parser = TuningParser(logs)
     if proc.is_ok:
         response_data = parser.process()
 

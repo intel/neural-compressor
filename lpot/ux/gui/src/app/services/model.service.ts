@@ -26,6 +26,7 @@ export class ModelService {
   myModels = [];
   workspacePath: string;
   workspacePathChange: Subject<boolean> = new Subject<boolean>();
+  systemInfoChange: Subject<boolean> = new Subject<boolean>();
   token;
   systemInfo = {};
 
@@ -50,11 +51,12 @@ export class ModelService {
   }
 
   getSystemInfo() {
-
     this.http.get(
       this.baseUrl + 'api/system_info'
-    ).subscribe(resp =>
-      this.systemInfo = resp
+    ).subscribe(resp => {
+      this.systemInfo = resp;
+      this.systemInfoChange.next(true);
+    }
     );
   }
 

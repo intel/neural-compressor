@@ -23,7 +23,7 @@ from lpot.ux.components.benchmark.benchmark import Benchmark
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.parser import Parser
+from lpot.ux.utils.parser import BenchmarkParser
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import _load_json_as_dict
 from lpot.ux.web.communication import MessageQueue
@@ -126,7 +126,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
         logs = [os.path.join(workload_path, f"{log_name}.txt")]
 
         if proc.is_ok:
-            parser = Parser(logs)
+            parser = BenchmarkParser(logs)
             metrics = parser.process()
             metric = {}
             execution_details: Dict[str, Any] = {}

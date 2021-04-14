@@ -27,7 +27,7 @@ quantization:                                        # optional. tuning constrai
         ImageFolder:
           root: /path/to/calibration/dataset/        # NOTE: modify to calibration dataset location if needed
       transform:
-        ResizeCropImagenet: 
+        ResizeCropImagenet:
           height: 224
           width: 224
           mean_value: [0.485, 0.456, 0.406]
@@ -48,7 +48,7 @@ evaluation:                                          # optional. required if use
         ImageFolder:
           root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
       transform:
-        ResizeCropImagenet: 
+        ResizeCropImagenet:
           height: 224
           width: 224
           mean_value: [0.485, 0.456, 0.406]
@@ -59,7 +59,7 @@ evaluation:                                          # optional. required if use
       cores_per_instance: 4
       num_of_instance: 7
     dataloader:
-      batch_size: 1 
+      batch_size: 1
       dataset:
         ImageFolder:
           root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed

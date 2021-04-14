@@ -36,6 +36,16 @@ class Configuration:
 
     def __init__(self) -> None:
         """Set the variables."""
+        self.server_address = ""
+        self.server_port = 0
+        self.gui_port = 0
+        self.log_level = 0
+        self.token = ""
+        self.scheme = ""
+        self.determine_values_from_environment()
+
+    def determine_values_from_environment(self) -> None:
+        """Set variables based on environment values."""
         self.server_address = "localhost"
         args = self.get_command_line_args()
         self.server_port = self.determine_server_port(args)

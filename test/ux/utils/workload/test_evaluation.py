@@ -136,12 +136,12 @@ class TestConfigsConfig(unittest.TestCase):
 
         self.assertEqual(
             configs.cores_per_instance,
-            4,
-        )  # Cores per instance should be equal to 4
-        self.assertEqual(configs.num_of_instance, 2)  # 8 cores / 4 instances = 2
-        self.assertEqual(configs.inter_num_of_threads, 4)
+            2,
+        )
+        self.assertEqual(configs.num_of_instance, 4)
+        self.assertEqual(configs.inter_num_of_threads, 8)
         self.assertEqual(configs.intra_num_of_threads, 16)
-        self.assertEqual(configs.kmp_blocktime, 1)
+        self.assertEqual(configs.kmp_blocktime, 3)
 
     @patch("psutil.cpu_count")
     def test_configs_constructor_defaults(self, mock_cpu_count: MagicMock) -> None:
@@ -153,11 +153,11 @@ class TestConfigsConfig(unittest.TestCase):
         self.assertEqual(
             configs.cores_per_instance,
             4,
-        )  # Cores per instance should be equal to 4
-        self.assertEqual(configs.num_of_instance, 2)  # 8 cores / 4 instances = 2
-        self.assertEqual(configs.inter_num_of_threads, 4)
+        )
+        self.assertEqual(configs.num_of_instance, 2)
+        self.assertIsNone(configs.inter_num_of_threads)
         self.assertIsNone(configs.intra_num_of_threads)
-        self.assertEqual(configs.kmp_blocktime, 1)
+        self.assertIsNone(configs.kmp_blocktime)
 
     @patch("psutil.cpu_count")
     def test_configs_serializer(self, mock_cpu_count: MagicMock) -> None:
@@ -177,11 +177,11 @@ class TestConfigsConfig(unittest.TestCase):
         self.assertDictEqual(
             result,
             {
-                "cores_per_instance": 4,
-                "num_of_instance": 2,
-                "inter_num_of_threads": 4,
+                "cores_per_instance": 2,
+                "num_of_instance": 4,
+                "inter_num_of_threads": 8,
                 "intra_num_of_threads": 16,
-                "kmp_blocktime": 1,
+                "kmp_blocktime": 3,
             },
         )
 
@@ -318,15 +318,15 @@ class TestAccuracyConfig(unittest.TestCase):
         self.assertIsNotNone(accuracy.configs)
         self.assertEqual(
             accuracy.configs.cores_per_instance,
-            4,
-        )  # Cores per instance should be equal to 4
+            2,
+        )
         self.assertEqual(
             accuracy.configs.num_of_instance,
-            2,
-        )  # 8 cores / 4 instances = 2
-        self.assertEqual(accuracy.configs.inter_num_of_threads, 4)
+            4,
+        )
+        self.assertEqual(accuracy.configs.inter_num_of_threads, 8)
         self.assertEqual(accuracy.configs.intra_num_of_threads, 16)
-        self.assertEqual(accuracy.configs.kmp_blocktime, 1)
+        self.assertEqual(accuracy.configs.kmp_blocktime, 3)
 
         self.assertIsNotNone(accuracy.dataloader)
         self.assertEqual(accuracy.dataloader.last_batch, "rollover")
@@ -446,15 +446,15 @@ class TestPerformanceConfig(unittest.TestCase):
         self.assertIsNotNone(performance.configs)
         self.assertEqual(
             performance.configs.cores_per_instance,
-            4,
-        )  # Cores per instance should be equal to 4
+            2,
+        )
         self.assertEqual(
             performance.configs.num_of_instance,
-            2,
-        )  # 8 cores / 4 instances = 2
-        self.assertEqual(performance.configs.inter_num_of_threads, 4)
+            4,
+        )
+        self.assertEqual(performance.configs.inter_num_of_threads, 8)
         self.assertEqual(performance.configs.intra_num_of_threads, 16)
-        self.assertEqual(performance.configs.kmp_blocktime, 1)
+        self.assertEqual(performance.configs.kmp_blocktime, 3)
 
         self.assertIsNotNone(performance.dataloader)
         self.assertEqual(performance.dataloader.last_batch, "rollover")
@@ -517,9 +517,9 @@ class TestPerformanceConfig(unittest.TestCase):
         self.assertIsNotNone(performance.configs)
         self.assertEqual(performance.configs.cores_per_instance, 4)
         self.assertEqual(performance.configs.num_of_instance, 2)
-        self.assertEqual(performance.configs.inter_num_of_threads, 4)
+        self.assertIsNone(performance.configs.inter_num_of_threads)
         self.assertIsNone(performance.configs.intra_num_of_threads)
-        self.assertEqual(performance.configs.kmp_blocktime, 1)
+        self.assertIsNone(performance.configs.kmp_blocktime)
 
         self.assertIsNone(performance.dataloader)
 
@@ -636,15 +636,15 @@ class TestEvaluationConfig(unittest.TestCase):
         self.assertIsNotNone(evaluation.accuracy.configs)
         self.assertEqual(
             evaluation.accuracy.configs.cores_per_instance,
-            4,
-        )  # Cores per instance should be equal to 4
+            2,
+        )
         self.assertEqual(
             evaluation.accuracy.configs.num_of_instance,
-            2,
-        )  # 8 cores / 4 instances = 2
-        self.assertEqual(evaluation.accuracy.configs.inter_num_of_threads, 4)
+            4,
+        )
+        self.assertEqual(evaluation.accuracy.configs.inter_num_of_threads, 8)
         self.assertEqual(evaluation.accuracy.configs.intra_num_of_threads, 16)
-        self.assertEqual(evaluation.accuracy.configs.kmp_blocktime, 1)
+        self.assertEqual(evaluation.accuracy.configs.kmp_blocktime, 3)
 
         self.assertIsNotNone(evaluation.accuracy.dataloader)
         self.assertEqual(evaluation.accuracy.dataloader.last_batch, "rollover")
@@ -705,15 +705,15 @@ class TestEvaluationConfig(unittest.TestCase):
         self.assertIsNotNone(evaluation.performance.configs)
         self.assertEqual(
             evaluation.performance.configs.cores_per_instance,
-            4,
-        )  # Cores per instance should be equal to 4
+            2,
+        )
         self.assertEqual(
             evaluation.performance.configs.num_of_instance,
-            2,
-        )  # 8 cores / 4 instances = 2
-        self.assertEqual(evaluation.performance.configs.inter_num_of_threads, 4)
+            4,
+        )
+        self.assertEqual(evaluation.performance.configs.inter_num_of_threads, 8)
         self.assertEqual(evaluation.performance.configs.intra_num_of_threads, 16)
-        self.assertEqual(evaluation.performance.configs.kmp_blocktime, 1)
+        self.assertEqual(evaluation.performance.configs.kmp_blocktime, 3)
 
         self.assertIsNotNone(evaluation.performance.dataloader)
         self.assertEqual(evaluation.performance.dataloader.last_batch, "rollover")

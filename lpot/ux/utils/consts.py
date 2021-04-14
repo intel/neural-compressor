@@ -18,5 +18,5 @@
 github_info = {
     "user": "intel",
     "repository": "lpot",
-    "tag": "v1.2",
+    "tag": "v1.3",
 }

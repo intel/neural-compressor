@@ -1,6 +1,6 @@
 <h1>Create low precision model</h1>
 <mat-horizontal-stepper #stepper>
-  <mat-step [stepControl]="firstFormGroup">
+  <mat-step [stepControl]="firstFormGroup" [completed]="false">
     <p class="required">
       * - required field
     </p>
@@ -19,11 +19,11 @@
             <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
             Choose file
           </button>
-          <button mat-raised-button color="accent" class="fixed-height" (click)="showGraph()"
+          <!-- <button mat-raised-button color="accent" class="fixed-height" (click)="showGraph()"
             [disabled]="!firstFormGroup.get('modelLocation').value">
             <img class="icon" src="./../../assets/298a-workflow-process-solid.svg">
             Show graph
-          </button>
+          </button> -->
           <mat-spinner *ngIf="showGraphSpinner" class="spinner" [diameter]="25"></mat-spinner>
         </span>
         <br>
@@ -436,6 +436,23 @@
             <mat-label>iteration</mat-label>
             <input type="number" formControlName="iteration" matInput>
           </mat-form-field>
+          <br>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>cores per instance</mat-label>
+            <input min=1 step=1 type="number" formControlName="cores_per_instance" matInput>
+          </mat-form-field>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>number of instances</mat-label>
+            <input min=1 step=1 type="number" formControlName="num_of_instance" matInput>
+          </mat-form-field>
+          <a class="cores-warning"
+            *ngIf="secondFormGroup.get('num_of_instance').value * secondFormGroup.get('cores_per_instance').value > modelService.systemInfo['cores_per_socket']">
+            <img class="warning-icon" src="./../../assets/006a-alert-solid-red.svg">
+            cores_per_instance * num_of_instance should not be greater than cores_per_socket
+            ({{ secondFormGroup.get('num_of_instance').value }} * {{ secondFormGroup.get('cores_per_instance').value }}
+            >
+            {{ modelService.systemInfo['cores_per_socket'] }})
+          </a>
         </form>
       </mat-card>
       <br>
@@ -448,7 +465,7 @@
           Back
         </button>
         <button mat-raised-button color="accent"
-          [disabled]="firstFormGroup.status === 'INVALID' || secondFormGroup.status === 'INVALID'"
+          [disabled]="firstFormGroup.status === 'INVALID' || secondFormGroup.status === 'INVALID' || secondFormGroup.get('num_of_instance').value * secondFormGroup.get('cores_per_instance').value > modelService.systemInfo['cores_per_socket']"
           routerLink="/my-models" (click)="addModel()" queryParamsHandling="preserve">
           <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
           Finish

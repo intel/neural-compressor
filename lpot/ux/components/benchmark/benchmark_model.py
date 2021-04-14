@@ -15,8 +15,7 @@
 """Generic benchmark script."""
 
 import argparse
-import logging as log
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     import tensorflow as tf
@@ -62,12 +61,9 @@ def benchmark_model(
     config: str,
     benchmark_mode: str,
     framework: str,
-    datatype: str = "",
-) -> List[Dict[str, Any]]:
+) -> None:
     """Execute benchmark."""
     from lpot.experimental import Benchmark, common
-
-    benchmark_results = []
 
     if framework == "onnxrt":
         import onnx
@@ -76,30 +72,7 @@ def benchmark_model(
 
     evaluator = Benchmark(config)
     evaluator.model = common.Model(input_graph)
-    results = evaluator()
-    for mode, result in results.items():
-        if benchmark_mode == mode:
-            log.info(f"Mode: {mode}")
-            acc, batch_size, result_list = result
-            latency = (sum(result_list) / len(result_list)) / batch_size
-            log.info(f"Batch size: {batch_size}")
-            if mode == "accuracy":
-                log.info(f"Accuracy: {acc:.3f}")
-            elif mode == "performance":
-                log.info(f"Latency: {latency * 1000:.3f} ms")
-                log.info(f"Throughput: {1. / latency:.3f} images/sec")
-
-            benchmark_results.append(
-                {
-                    "precision": datatype,
-                    "mode": mode,
-                    "batch_size": batch_size,
-                    "accuracy": acc,
-                    "latency": latency * 1000,
-                    "throughput": 1.0 / latency,
-                },
-            )
-    return benchmark_results
+    evaluator(benchmark_mode)
 
 
 if __name__ == "__main__":

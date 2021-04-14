@@ -16,8 +16,7 @@
 
 from typing import Any, Dict, List, Optional, Union
 
-import psutil
-
+from lpot.ux.utils.hw_info import HWInfo
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.workload.dataloader import Dataloader
 
@@ -74,11 +73,14 @@ class Configs(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration Configs class."""
         super().__init__()
-        self.cores_per_instance: int = 4
-        self.num_of_instance: int = psutil.cpu_count() // self.cores_per_instance
-        self.inter_num_of_threads: int = 4
+        self.cores_per_instance: int = data.get("cores_per_instance", 4)
+        self.num_of_instance: int = data.get(
+            "num_of_instance",
+            HWInfo().cores // self.cores_per_instance,
+        )
+        self.inter_num_of_threads: int = data.get("inter_num_of_threads", None)
         self.intra_num_of_threads: int = data.get("intra_num_of_threads", None)
-        self.kmp_blocktime: int = 1
+        self.kmp_blocktime: int = data.get("kmp_blocktime", None)
 
 
 class PostprocessSchema(JsonSerializer):
