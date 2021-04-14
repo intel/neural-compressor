@@ -101,6 +101,17 @@ evaluation:
         SquadV1PostTransform:
           label_file: dev-v1.1.json
           vocab_file: vocab.txt
+  performance:
+    iteration: 50
+    configs:
+        num_of_instance: 7
+        cores_per_instance: 4
+    dataloader:
+      dataset:
+        bert:
+          root: /path/to/eval.tf_record
+          label_file: /path/to/dev-v1.1.json
+      batch_size: 64
 
 quantization:            
   calibration:

@@ -36,6 +36,9 @@ evaluation:
           vocab_file: /path/to/vocab.txt
   performance:
     iteration: 50
+    configs:
+        num_of_instance: 7
+        cores_per_instance: 4
     dataloader:
       dataset:
         bert:

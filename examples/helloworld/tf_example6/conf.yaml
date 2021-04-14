@@ -24,7 +24,7 @@ quantization:                                        # optional. tuning constrai
       batch_size: 1
       dataset:
         ImageRecord:
-          root: small_dataset
+          root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet: {}
         BilinearImagenet: 
@@ -39,7 +39,7 @@ evaluation:                                          # optional. required if use
       batch_size: 32 
       dataset:
         ImageRecord:
-          root: small_dataset
+          root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet: {}
         BilinearImagenet: 
@@ -54,7 +54,7 @@ evaluation:                                          # optional. required if use
       last_batch: discard 
       dataset:
         ImageRecord:
-          root: small_dataset
+          root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
         ParseDecodeImagenet: {}
         ResizeCropImagenet: 

@@ -10,7 +10,6 @@ def main():
 
      # Optional, run benchmark 
     from lpot import Benchmark
-    import pdb; pdb.set_trace()
     evaluator = Benchmark('./conf.yaml')
     results = evaluator(quantized_model)
     batch_size = 1
