@@ -40,8 +40,6 @@ flags.DEFINE_string('output_model', None, 'Output model directory.')
 
 flags.DEFINE_string('input_model', None, 'Output directory.')
 
-flags.DEFINE_string('precision', 'fp32', 'precision')
-
 flags.DEFINE_integer('batch_size', 1, 'batch_size')
 
 flags.DEFINE_bool('tune', False, 'if use tune')
@@ -145,7 +143,7 @@ def main(args=None):
               shape=[(200, 256, 256, 3), (200, 256, 256, 3)], label=True) 
       dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
       tf.import_graph_def(frozen_graph, name='')
-      style_transfer(sess, dataloader, FLAGS.precision)
+      style_transfer(sess, dataloader)
 
 def add_import_to_name(sess, name, try_cnt=2):
     for i in range(0, try_cnt):
@@ -158,7 +156,7 @@ def add_import_to_name(sess, name, try_cnt=2):
     raise ValueError('can not find tensor by name')
 
 # validate and  save the files
-def style_transfer(sess, dataloader, precision='fp32'):
+def style_transfer(sess, dataloader):
       time_list = []
       output_name = add_import_to_name(sess, 'transformer/expand/conv3/conv/Sigmoid:0', 3)
       style_name = add_import_to_name(sess, 'style_input:0', 3)

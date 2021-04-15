@@ -47,6 +47,12 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
           --model_name=inception_v1 \
           --output_file=/tmp/inception_v1_inf_graph.pb
   ```
+  Make sure to use intel-tensorflow v1.15, and pip install tf_slim.
+  #### Install Intel Tensorflow 1.15 up2
+  Check your python version and use pip install 1.15.0 up2 from links below:
+  https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl                
+  https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
+  https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
   > Please note: The ImageNet dataset has 1001, the VGG and ResNet V1 final layers have only 1000 outputs rather than 1001. So we need add the `--labels_offset=1` flag in the inference graph exporting command.
 
   3. Use [Netron](https://lutzroeder.github.io/netron/) to get the input/output layer name of inference graph pb, for Inception_v1 the output layer name is `InceptionV1/Logits/Predictions/Reshape_1`

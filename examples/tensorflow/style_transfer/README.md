@@ -49,7 +49,16 @@ tar -xvzf arbitrary_style_transfer.tar.gz ./model
 
 ## Run Command
   ```shell
-  python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --model_dir=./model --precision=quantized
+  python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --input_model=./model/model.ckpt
+  ```
+### Quantize with lpot
+#### 1. Tune model with lpot
+  ```shell
+  bash run_tuning.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
+  ```
+#### 2. check benchmark of tuned model
+  ```shell
+  bash run_benchmark.sh --dataset_location=style_images/,content_images/ --input_model=saved_model.pb --batch_size=1
   ```
 
 Details of enabling Intel® Low Precision Optimization Tool on style transfer for Tensorflow.

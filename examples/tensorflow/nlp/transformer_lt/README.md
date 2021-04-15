@@ -39,7 +39,7 @@ bash prepare_dataset_model.sh
 ## Run Command
 
 ```shell
-python main.py --input_graph=/path/to/fp32_graphdef.pb --inputs_file=/path/to/newstest2014.en --reference_file=/path/to/newstest2014.de --vocab_file=/path/tp/vocab.txt --config=./transformer_lt.yaml --tune
+python main.py --input_graph=/path/to/fp32_graphdef.pb --inputs_file=/path/to/newstest2014.en --reference_file=/path/to/newstest2014.de --vocab_file=/path/to/vocab.txt --config=./transformer_lt.yaml --tune
 ```
 
 Details of enabling Intel® Low Precision Optimization Tool on transformer-lt for Tensorflow.

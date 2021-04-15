@@ -27,7 +27,8 @@ import pandas
 import argparse
 import numpy as np
 import tensorflow as tf
-tf.enable_eager_execution()
+if tf.version.VERSION < '2.0':
+    tf.enable_eager_execution()
 parser = argparse.ArgumentParser()
 parser.add_argument('--inputcsv-datafile', type=str,
                     help='full path of data file e.g. eval.csv',
@@ -118,7 +119,7 @@ with open(eval_csv_file, 'r') as f:
     print('range list',range_list)
 
 
-with tf.python_io.TFRecordWriter(output_file) as writer:
+with tf.compat.v1.python_io.TFRecordWriter(output_file) as writer:
     print('*****Processing data******')
     for row in csv:
         no_of_rows = no_of_rows+1
@@ -137,7 +138,7 @@ with tf.python_io.TFRecordWriter(output_file) as writer:
                 new_categorical_list.append("")
             else:
                 new_categorical_list.append(new_categorical_dict[i])
-        hash_values =  tf.string_to_hash_bucket_fast(
+        hash_values =  tf.compat.v1.string_to_hash_bucket_fast(
             new_categorical_list, 1000).numpy()
         new_numerical_dict = dict(zip(NUMERIC_COLUMNS2, normalized_vals))
         example = tf.train.Example()
