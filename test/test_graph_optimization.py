@@ -49,16 +49,34 @@ def build_fake_yaml_2():
         yaml.dump(y, f)
     f.close()
 
+def build_fake_yaml_3():
+    fake_yaml_3 = '''
+        model:
+          name: fake_yaml_2
+          framework: tensorflow
+          inputs: input
+          outputs: op_to_store
+        graph_optimization:
+          precisions:
+            - bf16
+            - fp32
+        '''
+    y = yaml.load(fake_yaml_3, Loader=yaml.SafeLoader)
+    with open('fake_yaml_3.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
 class TestGraphOptimization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
         build_fake_yaml_2()
+        build_fake_yaml_3()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_2.yaml')
+        os.remove('fake_yaml_3.yaml')
 
     @disable_random()
     def test_graph_optimization_with_evaluation(self):
@@ -191,5 +209,49 @@ class TestGraphOptimization(unittest.TestCase):
                     break
 
             self.assertEqual(found_cast_op, True)
+
+    @disable_random()
+    def test_graph_optimization_without_yaml(self):
+        os.environ['FORCE_BF16'] = '1'
+
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
+                                  initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        relu = tf.nn.relu(conv)
+
+        max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.math.add(conv_1, conv_bias)
+        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot.experimental import Graph_Optimization
+            graph_optimizer = Graph_Optimization('fake_yaml_3.yaml')
+
+            graph_optimizer.model = output_graph_def
+            output_graph = graph_optimizer()
+            found_cast_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Cast':
+                    found_cast_op = True
+                    break
+
+            self.assertEqual(found_cast_op, True)
+
 if __name__ == "__main__":
     unittest.main()

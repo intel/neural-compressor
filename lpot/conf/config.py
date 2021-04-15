@@ -99,7 +99,10 @@ def input_to_list_int(data):
 
 def input_to_list(data):
     if isinstance(data, str):
-        return [s.strip() for s in data.split(',')]
+        if ',' in data:
+            return [s.strip() for s in data.split(',')]
+
+        return [s.strip() for s in data.split()]
 
     if isinstance(data, int):
         return [data]
