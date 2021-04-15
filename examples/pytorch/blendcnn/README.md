@@ -53,7 +53,7 @@ dev_ids.tsv  dev.tsv  test.tsv  train.tsv
 ```Shell
 ./run_tuning.sh --input_model=/PATH/TO/models/ --dataset_location=/PATH/TO/MRPC/ --output_model=/DIR/TO/INT8_MODEL/
 
-./run_benchmark.sh --int8=true --mode=benchmark --batch_size=32
+./run_benchmark.sh --int8=true --mode=benchmark --batch_size=32 --input_model=/DIR/TO/INT8_MODEL/
 ./run_benchmark.sh --int8=False --mode=benchmark --batch_size=32 --input_model=/PATH/TO/FP32_MODEL
 
 ```

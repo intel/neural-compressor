@@ -38,7 +38,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--task_name',
         type=str,
-        choices=["mrpc", "mnli"],
+        choices=["MRPC", "MNLI"],
         help='tasks names of bert model')
     parser.add_argument(
         '--max_len',

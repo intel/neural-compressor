@@ -29,7 +29,10 @@ python setup.py install
 #### Install dependency
 
 ```shell
-cd examples/test-classification
+cd examples/text-classification
+pip install -r requirements.txt
+
+cd ../seq2seq
 pip install -r requirements.txt
 ```
 
@@ -93,6 +96,7 @@ Where output_dir is path of checkpoint which be created by fine tuning.
 ### seq2seq task
 
 ```bash
+cd examples/seq2seq/
 export TASK_NAME=translation_en_to_ro
 
 python run_seq2seq_tune.py \

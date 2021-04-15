@@ -35,7 +35,7 @@ train  val
 
 ```Shell
 cd examples/pytorch/image_recognition/resnest
-python -u scripts/torch/verify.py --tune --model resnest50 --batch-size what_you_want --workers 1 --no-cuda --pretrained /path/to/imagenet
+python -u scripts/torch/verify.py --tune --model resnest50 --batch-size what_you_want --workers 1 --no-cuda /path/to/imagenet
 ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNest

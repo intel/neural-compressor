@@ -10,17 +10,18 @@ onnxruntime: 1.6.0+
 ### Prepare dataset
 download the GLUE data with `prepare_data.sh` script.
 ```shell
-bash prepare_data.sh --data_dir='/path/to/glue_data' --task_name='MRPC'
+export GLUE_DIR=/path/to/glue_data
+export TASK_NAME=MRPC
+
+bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 ```
 
 ### Prepare model
 Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/notebooks/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export. The following is a simple example.
 
-Use [Huggingface Transfomers](https://github.com/huggingface/transformers) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/master/examples/text-classification#mrpc) example with command like:
+Use [Huggingface Transfomers](https://github.com/huggingface/transformers/tree/v2.2.1) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/master/examples/text-classification#mrpc) example with command like:
 ```shell
-export GLUE_DIR=/path/to/glue_data
-export TASK_NAME=mrpc
-export OUT_DIR=./$TASK_NAME/
+export OUT_DIR=/path/to/out_dir/
 python ./run_glue.py \ 
     --model_type mobilebert \
     --model_name_or_path google/mobilebert-uncased \ 
@@ -41,7 +42,7 @@ Run the `prepare_model.sh` script.
 
 Usage:
 ```shell
-export TASK_NAME=mrpc
+cd examples/onnxrt/language_translation/mobilebert/
 
 bash prepare_model.sh --input_dir=$OUT_DIR \
                       --task_name=$TASK_NAME \

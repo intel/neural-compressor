@@ -13,9 +13,10 @@ Please refer to [pytorch official guide](https://pytorch.org/docs/stable/onnx.ht
 ```python
 import torch
 import torchvision
+batch_size = 1
 model = torchvision.models.vgg16(pretrained=True)
 x = torch.randn(batch_size, 3, 224, 224, requires_grad=True)
-torch_out = torch_model(x)
+torch_out = model(x)
 
 # Export the model
 torch.onnx.export(model,               # model being run
@@ -44,7 +45,7 @@ Usually we need to bind the program to specific cores like 4 cores to get perfor
 ```bash
 export KMP_AFFINITY=granularity=fine,noduplicates,compact,1,0
 export OMP_NUM_THREADS=4
-numactl --physcpubind=0-3 --membind=0 python main.py --model_path path/to/model --benchmark
+numactl --physcpubind=0-3 --membind=0 python main.py --model_path path/to/model --benchmark \ 
 --tune  --config vgg16.yaml 
 ```
 

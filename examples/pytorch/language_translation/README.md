@@ -180,7 +180,7 @@ Please download [WikiText-2 dataset](https://blog.einstein.ai/the-wikitext-long-
   export TRAIN_FILE=/path/to/dataset/wiki.train.raw
   export TEST_FILE=/path/to/dataset/wiki.test.raw
 
-  python examples/run_lm_tune.py \
+  python examples/run_lm_finetuning.py \
       --model_type=openai-gpt \
       --model_name_or_path=openai-gpt \
       --do_train \
