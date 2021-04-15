@@ -13,7 +13,7 @@
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ModelService, NewModel } from '../services/model.service';
+import { FileBrowserFilter, ModelService, NewModel } from '../services/model.service';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { MatDialog } from '@angular/material/dialog';
 import { SocketService } from '../services/socket.service';
@@ -522,7 +522,7 @@ export class ImportModelComponent implements OnInit {
       });
   }
 
-  openDialog(fieldName: string, filter: 'models' | 'datasets' | 'directories', paramFile?) {
+  openDialog(fieldName: string, filter: FileBrowserFilter, paramFile?) {
     let form = 'firstFormGroup';
     if (filter === 'datasets') {
       form = 'secondFormGroup';

@@ -122,7 +122,14 @@ export class ModelService {
     return this.http.get(this.baseUrl + 'file' + path, { responseType: 'text' as 'json' });
   }
 
-  getFileSystem(path: string, filter: 'models' | 'datasets' | 'directories') {
+  getFileSystem(path: string, filter: FileBrowserFilter) {
+    if (filter === 'all') {
+      return this.http.get(this.baseUrl + 'api/filesystem', {
+        params: {
+          path: path + '/'
+        }
+      });
+    }
     return this.http.get(this.baseUrl + 'api/filesystem', {
       params: {
         path: path + '/',
@@ -173,3 +180,5 @@ export interface NewModel {
   model_path: string;
   output?: string;
 }
+
+export type FileBrowserFilter = 'models' | 'datasets' | 'directories' | 'all';

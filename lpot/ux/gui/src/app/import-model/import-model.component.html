@@ -156,7 +156,7 @@
                     matTooltipPosition="right" [matTooltip]="param.help">
                 </mat-form-field>
                 <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
-                  (click)="openDialog(param.name, 'datasets', 'quantization')">
+                  (click)="openDialog(param.name, 'all', 'quantization')">
                   <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
                   Choose file
                 </button>
@@ -208,7 +208,7 @@
                     matTooltipPosition="right" [matTooltip]="param.help">
                 </mat-form-field>
                 <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
-                  (click)="openDialog(param.name, 'datasets', 'evaluation')">
+                  (click)="openDialog(param.name, 'all', 'evaluation')">
                   <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
                   Choose file
                 </button>
@@ -260,7 +260,7 @@
                           matTooltipPosition="right" [matTooltip]="param.help">
                       </mat-form-field>
                       <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
-                        class="browse" (click)="openDialog(param.name, 'datasets', transformItem['params'])">
+                        class="browse" (click)="openDialog(param.name, 'all', transformItem['params'])">
                         <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
                         Choose file
                       </button>

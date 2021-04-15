@@ -56,6 +56,22 @@ Path to the template will be available by clicking "Copy code template path" but
 
 Follow the comments in generated code template to fill in required methods with your own code.
 
+# Bert model tuning
+![Bert model Wizard](imgs/ux/model_create_bert.png "Bert model Wizard")   
+1. Follow [instructions](https://github.com/intel/lpot/blob/master/examples/tensorflow/nlp/bert/README.md) to:
+   * install Intel Tensorflow 1.15 up2
+   * prepare dataset and a frozen pb model 
+1. In the "Create low precision model":
+   * select created frozen model
+   * choose NLP as model domain
+   * select input_file, batch_size in inputs (in that order)
+   * choose "custom" in output and enter `IteratorGetNext:3, unstack:0, unstack:1` in input field
+   * in "Calibration/label_file", select "dev-v1.1.json" file from dataset created in step 1
+   * in "Calibration/dataset location", select "evel.tf_record" file from dataset created in step 1
+   * in "Evaluation/Transforms/label_file", select "dev-v1.1.json" file from dataset created in step 1  
+   * in "Evaluation/Transforms/vocab_file", select "vocab.txt" file from dataset created in step 1
+   * click Finish or change Advanced parameters
+
 # Tuning
 Having a Model Configuration created, you can:
 1. See generated config (by clicking the "Show config" link).

@@ -16,7 +16,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { sha256 } from 'js-sha256';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
-import { ModelService } from '../services/model.service';
+import { FileBrowserFilter, ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 
 @Component({
@@ -124,7 +124,7 @@ export class PredefinedModelsComponent implements OnInit {
     return false;
   }
 
-  openDialog(filter: 'models' | 'datasets' | 'directories', index: number) {
+  openDialog(filter: FileBrowserFilter, index: number) {
     const dialogRef = this.dialog.open(FileBrowserComponent, {
       width: '60%',
       height: '60%',

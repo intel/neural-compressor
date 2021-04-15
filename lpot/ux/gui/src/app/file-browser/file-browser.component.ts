@@ -15,7 +15,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { DialogComponent } from '../dialog/dialog.component';
 import { ErrorComponent } from '../error/error.component';
-import { ModelService } from '../services/model.service';
+import { FileBrowserFilter, ModelService } from '../services/model.service';
 
 @Component({
   selector: 'app-file-browser',
@@ -27,7 +27,7 @@ export class FileBrowserComponent implements OnInit {
   contents = [];
   currentPath: string;
   chosenFile: string;
-  filter: 'models' | 'datasets' | 'directories';
+  filter: FileBrowserFilter;
 
   constructor(
     private modelService: ModelService,
