@@ -53,7 +53,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl                
   https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
   https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
-  > Please note: The ImageNet dataset has 1001, the VGG and ResNet V1 final layers have only 1000 outputs rather than 1001. So we need add the `--labels_offset=1` flag in the inference graph exporting command.
+  > Please note: The ImageNet dataset has 1001, the **VGG** and **ResNet V1** final layers have only 1000 outputs rather than 1001. So we need add the `--labels_offset=1` flag in the inference graph exporting command.
 
   3. Use [Netron](https://lutzroeder.github.io/netron/) to get the input/output layer name of inference graph pb, for Inception_v1 the output layer name is `InceptionV1/Logits/Predictions/Reshape_1`
 
@@ -75,6 +75,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
    ```shell
    git clone https://github.com/openvinotoolkit/open_model_zoo.git
    cd open_model_zoo/tools/downloader
+   git checkout tags/2021.2
    pip install -r requirements.in
    python downloader.py --name densenet-{121|161|169}-tf -o /PATH/TO/MODEL
    ```
