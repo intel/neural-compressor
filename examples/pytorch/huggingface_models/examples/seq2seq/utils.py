@@ -23,7 +23,6 @@ from logging import getLogger
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Tuple, Union
 
-import git
 import numpy as np
 import torch
 import torch.distributed as dist
@@ -471,11 +470,6 @@ def flatten_list(summary_ids: List[List]):
     return [x for x in itertools.chain.from_iterable(summary_ids)]
 
 
-def save_git_info(folder_path: str) -> None:
-    """Save git information to output_dir/git_log.json"""
-    repo_infos = get_git_info()
-    save_json(repo_infos, os.path.join(folder_path, "git_log.json"))
-
 
 def save_json(content, path, indent=4, **json_dump_kwargs):
     with open(path, "w") as f:
@@ -485,25 +479,6 @@ def save_json(content, path, indent=4, **json_dump_kwargs):
 def load_json(path):
     with open(path) as f:
         return json.load(f)
-
-
-def get_git_info():
-    try:
-        repo = git.Repo(search_parent_directories=True)
-        repo_infos = {
-            "repo_id": str(repo),
-            "repo_sha": str(repo.head.object.hexsha),
-            "repo_branch": str(repo.active_branch),
-            "hostname": str(socket.gethostname()),
-        }
-        return repo_infos
-    except TypeError:
-        return {
-            "repo_id": None,
-            "repo_sha": None,
-            "repo_branch": None,
-            "hostname": None,
-        }
 
 
 ROUGE_KEYS = ["rouge1", "rouge2", "rougeL", "rougeLsum"]

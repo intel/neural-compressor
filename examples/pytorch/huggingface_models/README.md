@@ -1,3 +1,7 @@
+# Original BERT README
+
+Please refer [BERT README](BERT_README.md) and [README](examples/text-classification/README.md)
+
 Step-by-Step
 ============
 
@@ -9,9 +13,9 @@ This document is used to list steps of reproducing PyTorch BERT tuning zoo resul
 
 # Prerequisite
 
-### 1. Installation
+## 1. Installation
 
-#### Python First
+### Python Version
 
 Recommend python 3.6 or higher version.
 
@@ -37,15 +41,25 @@ pip install -r requirements.txt
 ```
 
 #### Install PyTorch
-```
-pip install torch -f https://download.pytorch.org/whl/torch_stable.html
+```shell
+# Install Dependencies
+conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi
+# Install pytorch from source
+git clone https://github.com/pytorch/pytorch.git
+cd pytorch
+git reset --hard 24aac321718d58791c4e6b7cfa50788a124dae23
+git submodule sync
+git submodule update --init --recursive
+export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+python setup.py install
+pip install torchvision==0.7.0 --no-deps
 ```
 
-### 2. Prepare pretrained model
+## 2. Prepare pretrained model
 
 Before use Intel® Low Precision Optimization Tool, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
 
-#### BERT
+### Text-classification
 
 * For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
 
@@ -63,8 +77,11 @@ python run_glue.py \
   --num_train_epochs 3 \
   --output_dir /tmp/$TASK_NAME/
 ```
-
-where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
+> NOTE 
+>
+> model_name_or_path : Path to pretrained model or model identifier from huggingface.co/models
+>
+> task_name : where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
 
 The dev set results will be present within the text file 'eval_results.txt' in the specified output_dir. In case of MNLI, since there are two separate dev sets, matched and mismatched, there will be a separate output folder called '/tmp/MNLI-MM/' in addition to '/tmp/MNLI/'.
 
@@ -72,43 +89,64 @@ please refer to [BERT base scripts and instructions](examples/text-classificatio
 
 * After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
 
-# Run
+### Seq2seq
 
-### BERT glue task
-
-```bash
-export TASK_NAME=MRPC
-
-python run_glue_tune.py \
-    --model_name_or_path /path/to/checkpoint/dir \
-    --task_name $TASK_NAME \
-    --do_eval \
-    --max_seq_length 128 \
-    --per_gpu_eval_batch_size 8 \
-    --no_cuda \
-    --tune \
-    --output_dir /path/to/checkpoint/dir
+#### Install dependency
+```shell
+cd examples/pytorch/huggingface_models/examples/seq2seq
+pip install -r requirements.txt
 ```
 
-where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
-Where output_dir is path of checkpoint which be created by fine tuning.
+#### summarization_billsum task
 
-### seq2seq task
-
-```bash
-cd examples/seq2seq/
-export TASK_NAME=translation_en_to_ro
+##### Prepare dataset
+```shell
+wget https://cdn-datasets.huggingface.co/summarization/pegasus_data/billsum.tar.gz
+tar -xzvf billsum.tar.gz
+```
+##### Finetune command
+```shell
+export TASK_NAME=summarization_billsum
 
 python run_seq2seq_tune.py \
-    --model_name_or_path /path/to/checkpoint/dir \
-    --task $TASK_NAME \
-    --data_dir /path/to/data/dir \
-    --output_dir /path/to/checkpoint/dir \
-    --overwrite_output_dir \
-    --predict_with_generate \
-    --tune \
-    --tuned_checkpoint /path/to/checkpoint/dir
+  --model_name_or_path google/pegasus-billsum \
+  --do_train \
+  --do_eval \
+  --task $TASK_NAME \
+  --data_dir /path/to/data/dir \
+  --output_dir /path/to/checkpoint/dir \
+  --overwrite_output_dir \
+  --predict_with_generate \
+  --max_source_length 1024 \
+  --max_target_length=256 \
+  --val_max_target_length=256 \
+  --test_max_target_length=256 
 ```
+for example /path/to/data/dir can be `./billsum`
+
+#### translation_en_ro task
+
+##### Finetune command
+```shell
+export TASK_NAME=translation
+
+python run_seq2seq_tune.py \
+  --model_name_or_path t5-small \
+  --do_train \
+  --do_eval \
+  --task $TASK_NAME \
+  --data_dir /path/to/data/dir \
+  --output_dir /path/to/checkpoint/dir \
+  --overwrite_output_dir \
+  --predict_with_generate 
+```
+for example /path/to/data/dir can be `../test_data/wmt_en_ro`
+
+> NOTE 
+>
+> model_name_or_path : Path to pretrained model or model identifier from huggingface.co/models
+>
+> task : Task name, summarization (or summarization_{dataset} for pegasus) or translation
 
 Where task name can be one of summarization_{summarization dataset name},translation_{language}\_to\_{language}.
 
@@ -116,25 +154,76 @@ Where summarization dataset can be one of xsum,billsum etc.
 
 Where output_dir is path of checkpoint which be created by fine tuning.
 
-### language modeling task
+* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
+
+#### Language-modeling
+##### Finetune command
+```shell
+cd examples/pytorch/huggingface_models/examples/language-modeling
+```
+```shell
+python run_clm.py \
+  --model_name_or_path microsoft/DialoGPT-small \
+  --dataset_name wikitext\
+  --dataset_config_name wikitext-2-raw-v1 \
+  --do_train \
+  --do_eval \
+  --output_dir /home2/zhenggo1/checkpoint/dialogpt_clm
+```
+> NOTE 
+>
+> Until now, enabled dialogpt, reformer.
+>
+> model_name_or_path : Path to pretrained model or model identifier from huggingface.co/models
+>
+> dataset_name : Dataset name, can be one of {wikitext, crime_and_punish}.
+>
+> dataset_config_name : just for dialogpt: wikitext-2-raw-v1.
+
+# Start to lpot tune
+```shell
+cd examples/pytorch/huggingface_models
+```
+## Glue task
 
 ```bash
-export DATASET_NAME=wikitext
-export DATASET_CONFIG_NAME=wikitext-2-raw-v1
-
-python run_clm_tune.py \
-    --model_name_or_path /path/to/checkpoint/dir \
-    --dataset_name ${DATASET_NAME} \
-    --dataset_config_name ${DATASET_CONFIG_NAME} \
-    --do_eval \
-    --tune \
-    --output_dir /path/to/checkpoint/dir \
-    --tuned_checkpoint=/path/to/checkpoint/dir \
+sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/glue/data/dir --input_model=/path/to/checkpoint/dir
 ```
+> NOTE
+>
+> topology_name can be:{"bert_base_MRPC", "distilbert_base_MRPC", "albert_base_MRPC", "funnel_MRPC", "bart_WNLI", "mbart_WNLI"}
+>
+> /path/to/checkpoint/dir is the path to finetune output_dir 
 
-Where dataset can be one of wikitext,crime_and_punish etc.
+## Seq2seq task
 
-Where output_dir is path of checkpoint which be created by fine tuning.
+```bash
+sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/seq2seq/data/dir --input_model=/path/to/checkpoint/dir
+```
+> NOTE
+>
+> topology_name can be:{"t5_WMT_en_ro", "marianmt_WMT_en_ro", "pegasus_billsum"}
+>
+> /path/to/checkpoint/dir is the path to output_dir set in finetune. 
+>
+> /path/to/seq2seq/data/dir is the path to data_dir set in finetune.
+>
+> for example,
+>
+> `examples/test_data/wmt_en_ro` for translation task
+>
+> `examples/seq2seq/billsum` for summarization task
+
+## Language-modeling task
+```bash
+sh run_tuning.sh --topology=topology_name --input_model=/path/to/checkpoint/dir
+```
+> NOTE
+>
+> topology_name can be one of {dialogpt_wikitext, reformer_crime_and_punishment}
+>
+> /path/to/checkpoint/dir is the path to finetune output_dir 
+
 
 Examples of enabling Intel® Low Precision Optimization Tool
 ============================================================
@@ -288,6 +377,4 @@ if training_args.tune:
     q_model.save(training_args.tuned_checkpoint)
     exit(0)
 ```
-# Original BERT README
 
-Please refer [BERT README](BERT_README.md) and [README](examples/test-classification/README.md)
