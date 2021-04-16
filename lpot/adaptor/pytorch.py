@@ -833,8 +833,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         for name, child in model.named_children():
             op_name = prefix + '.' + name if prefix != '' else name
             if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
-                    type(child) != torch.quantization.stubs.DeQuantStub and \
-                    type(child) != torch.quantization.stubs.QuantStub:
+                    type(child) != torch.quantization.stubs.DeQuantStub:
                 quantizable_ops.append((
                     op_name, self.unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in self.unify_op_type_mapping else
