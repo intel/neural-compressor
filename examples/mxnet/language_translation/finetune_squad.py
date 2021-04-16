@@ -898,7 +898,7 @@ if __name__ == '__main__':
             warnings.warn('INT8 Quantization for BERT need mxnet-mkl >= 1.6.0b20200115')
     elif not only_predict:
         train()
-        evaluate()
+        evaluate(net)
     elif args.tune:
         # lpot auto-tuning
         dev_dataloader = gen_dataset()
