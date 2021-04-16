@@ -73,17 +73,8 @@ for post-installation instructions.
 |---|---|
 
 ## Install for Windows
-### Install from binary
-  ```shell
-  # install from pip
-  pip install lpot
 
-  # install from conda
-  conda install lpot -c conda-forge -c intel 
-  ```
-### Install from source
-
-#### **Prerequisites**
+### **Prerequisites**
 
 The following prerequisites and requirements must be satisfied in order to install successfully：
 
@@ -92,20 +83,31 @@ The following prerequisites and requirements must be satisfied in order to insta
 - Download and install anaconda: [anaconda](https://anaconda.org/)
 
 - Create a virtual environment named lpot in anaconda:
-    ```shell
-    # Here we install python 3.7 for instance. You can also choose python 3.6 & 3.8.
-    conda create -n lpot python=3.7
-    conda activate lpot
-    ```
 
-#### **Installation Procedure**
+  ```shell
+  # Here we install python 3.7 for instance. You can also choose python 3.6 & 3.8.
+  conda create -n lpot python=3.7
+  conda activate lpot
+  ```
 
-```shell
-git clone https://github.com/intel/lpot.git
-cd lpot
-pip install -r requirements.txt
-python setup.py install
-```
+### Install from binary
+
+  ```shell
+  # install from pip
+  pip install lpot
+
+  # install from conda
+  conda install lpot -c conda-forge -c intel 
+  ```
+
+### Install from source
+
+  ```shell
+  git clone https://github.com/intel/lpot.git
+  cd lpot
+  pip install -r requirements.txt
+  python setup.py install
+  ```
 
 # Getting started
 
