@@ -35,7 +35,7 @@ function run_tuning {
       task_name='mrpc'
       model_name_or_path='google/mobilebert-uncased'
     fi 
-    python bert_base.py --model_path ${input_model} --data_dir ${data_dir} \
+    python mobilebert.py --model_path ${input_model} --data_dir ${data_dir} \
     --task_name ${task_name} --input_dir ${model_name_or_path} \
     --tune --config ${bert_yaml} --output_model ${output_model} \
     --model_name_or_path ${model_name_or_path}

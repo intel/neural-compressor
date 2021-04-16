@@ -1,5 +1,5 @@
 torch
 transformers==3.2.0
 onnx>=1.7.0
-onnxruntime==1.6.0
+onnxruntime>=1.6.0
 coloredlogs

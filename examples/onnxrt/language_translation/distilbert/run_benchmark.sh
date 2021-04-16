@@ -11,7 +11,7 @@ function main {
 
 # init params
 function init_params {
-  bert_yaml="./bert.yaml"
+  bert_yaml="./distilbert.yaml"
   for var in "$@"
   do
     case $var in
@@ -45,7 +45,7 @@ function init_params {
 
 function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
-      mode_cmd=" --benchmark --accuracy_only"
+      mode_cmd=" --benchmark --mode=accuracy"
     elif [[ ${mode} == "benchmark" ]]; then
       mode_cmd=" --benchmark_nums ${iters} --benchmark"
     else
@@ -60,7 +60,7 @@ function run_benchmark {
       task_name='mrpc'
       model_name_or_path='distilbert-base-uncased'
     fi
-    python bert_base.py --model_path ${input_model} \
+    python distilbert_base.py --model_path ${input_model} \
                         --data_dir ${dataset_location} \
                         --task_name ${task_name} \
                         --input_dir ${model_name_or_path} \

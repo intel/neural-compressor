@@ -3,30 +3,15 @@ MRPC with Bidirectional Encoder Representations from Transformers
 
 =========================================================================================
 
-This example shows how to implement finetune a model with pre-trained RoBERTa parameters for
+This example shows how to implement finetune a model with pre-trained DistilBERT parameters for
 for Microsoft Research Paraphrase Corpus (MRPC) task.
 
-@article{DBLP:journals/corr/abs-1907-11692,
-  author    = {Yinhan Liu and
-               Myle Ott and
-               Naman Goyal and
-               Jingfei Du and
-               Mandar Joshi and
-               Danqi Chen and
-               Omer Levy and
-               Mike Lewis and
-               Luke Zettlemoyer and
-               Veselin Stoyanov},
-  title     = {RoBERTa: {A} Robustly Optimized {BERT} Pretraining Approach},
-  journal   = {CoRR},
-  volume    = {abs/1907.11692},
-  year      = {2019},
-  url       = {http://arxiv.org/abs/1907.11692},
-  archivePrefix = {arXiv},
-  eprint    = {1907.11692},
-  timestamp = {Thu, 01 Aug 2019 08:59:33 +0200},
-  biburl    = {https://dblp.org/rec/journals/corr/abs-1907-11692.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+@article{Sanh2019DistilBERTAD,
+  title={DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter},
+  author={Victor Sanh and Lysandre Debut and Julien Chaumond and Thomas Wolf},
+  journal={ArXiv},
+  year={2019},
+  volume={abs/1910.01108}
 }
 """
 
@@ -63,7 +48,7 @@ import torch
 from torch.utils.data import (DataLoader, SequentialSampler,
                               TensorDataset)
 from tqdm import tqdm
-from transformers import RobertaTokenizer
+from transformers import DistilBertTokenizer
 from transformers import glue_compute_metrics as compute_metrics
 from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
@@ -98,7 +83,7 @@ def parse_dummy_input(model, benchmark_nums, max_seq_length):
         highs.append(high)
     return shapes, lows, highs
 
-def evaluate_onnxrt(args, model, tokenizer, eval_dataloader, benchmark=False):
+def evaluate_onnxrt(args, model, tokenizer, eval_dataloader):
     session = onnxruntime.InferenceSession(model.SerializeToString(), None)
     output_mode = output_modes[args.task_name]
 
@@ -124,29 +109,20 @@ def evaluate_onnxrt(args, model, tokenizer, eval_dataloader, benchmark=False):
                             session.get_inputs()[0].name:  batch[0],
                             session.get_inputs()[1].name: batch[1]
                         }
-        if benchmark:
-            start = time.time()
-            _ = session.run(None, ort_inputs)
-            latencies.append(time.time() - start)
+        logits = np.reshape(session.run(None, ort_inputs)[0], (-1,2))
+        if preds is None:
+            preds = logits
+            out_label_ids = batch[2]
         else:
-            logits = np.reshape(session.run(None, ort_inputs)[0], (-1,2))
-            if preds is None:
-                preds = logits
-                out_label_ids = batch[2]
-            else:
-                preds = np.append(preds, logits, axis=0)
-                out_label_ids = np.append(out_label_ids, batch[2], axis=0)
-
-    if not benchmark:
-        if output_mode == "classification":
-            preds = np.argmax(preds, axis=1)
-        elif output_mode == "regression":
-            preds = np.squeeze(preds)
-        result = compute_metrics(eval_task, preds, out_label_ids)
-        results.update(result)
-        return results["acc"]
-    else:
-        return latencies
+            preds = np.append(preds, logits, axis=0)
+            out_label_ids = np.append(out_label_ids, batch[2], axis=0)
+    if output_mode == "classification":
+        preds = np.argmax(preds, axis=1)
+    elif output_mode == "regression":
+        preds = np.squeeze(preds)
+    result = compute_metrics(eval_task, preds, out_label_ids)
+    results.update(result)
+    return results["acc"]
 
 def load_and_cache_examples(args, task, tokenizer, evaluate=False):
 
@@ -188,14 +164,13 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
 
-    # dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
     dataset = TensorDataset(all_input_ids, all_attention_mask, all_labels)
     return dataset
 
 if __name__ == "__main__":
     logger.info('Evaluating ONNXRuntime full precision accuracy and performance:')
     parser = argparse.ArgumentParser(
-    description='RoBERTa fine-tune examples for classification/regression tasks.',
+    description='DistilBERT fine-tune examples for classification/regression tasks.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '--eval_batch_size',
@@ -227,16 +202,16 @@ if __name__ == "__main__":
         type=str,
         default='MRPC',
         choices=['MRPC'],
-        help='The dataset RoBERTa pre-trained with.')
+        help='The dataset DistilBERT pre-trained with.')
     parser.add_argument(
         '--model_type',
         type=str,
-        default='roberta')
+        default='distilbert')
     parser.add_argument(
         '--model_path',
         type=str,
         default=None,
-        help='Pre-trained roberta model onnx file.')
+        help='Pre-trained distilbert model onnx file.')
     parser.add_argument(
         '--input_dir',
         type=str,
@@ -250,12 +225,12 @@ if __name__ == "__main__":
                         default=128,
                         help='max seq length')
     parser.add_argument('--model_name_or_path', type=str,
-                        default='roberta-base',
+                        default='distilbert-base-uncased',
                         help='model name or path')
     parser.add_argument('--data_dir', type=str,
                         help='datseset path')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get roberta tuning quantization model with lpot.')
+                        help='Get distilbert tuning quantization model with lpot.')
     parser.add_argument('--config',type=str, default=None,
                         help='Tuning config file path')
     parser.add_argument('--output_model',type=str, default=None,
@@ -264,10 +239,11 @@ if __name__ == "__main__":
                         help='Get benchmark performance of quantized model.')
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
-    parser.add_argument('--accuracy_only', action='store_true', default=False,
+    parser.add_argument('--mode', type=str, default='performance',
+                        choices=['performance', 'accuracy'],
                         help="Mode of benchmark")
     args = parser.parse_args()
-    tokenizer = RobertaTokenizer.from_pretrained(args.input_dir, do_lower_case=True)
+    tokenizer = DistilBertTokenizer.from_pretrained(args.input_dir, do_lower_case=True)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=True)
 
@@ -279,7 +255,7 @@ if __name__ == "__main__":
     def eval_func(model):
         return evaluate_onnxrt(args, model, tokenizer, eval_dataloader)
 
-    if args.benchmark:
+    if args.benchmark and args.mode == "performance":
         model = onnx.load(args.model_path)
         
         from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
@@ -288,17 +264,16 @@ if __name__ == "__main__":
         dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
         dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
         
-        print('---------------------------------------------------------------')
-        if args.accuracy_only:
-            results = evaluate_onnxrt(args, model, tokenizer, eval_dataloader)
-            print("Accuracy: %.5f" % results)
-        else:
-            results = evaluate_onnxrt(args, model, tokenizer, dummy_dataloader, benchmark=True)
-            latency = np.array(results).mean() / args.eval_batch_size
+        from lpot.experimental import Benchmark, common
+        evaluator = Benchmark(args.config)
+        evaluator.b_dataloader = dummy_dataloader
+        evaluator.model = common.Model(model)
+        evaluator(args.mode)
 
-            print('Latency: {:.3f} ms'.format(latency * 1000))
-            print('Throughput: {:.3f} items/sec'.format(args.eval_batch_size * 1./ latency))
-        print('--------------------------------------------------------------')
+    if args.benchmark and args.mode == "accuracy":
+        model = onnx.load(args.model_path)
+        results = evaluate_onnxrt(args, model, tokenizer, eval_dataloader)
+        print("Accuracy: %.5f" % results)
 
     if args.tune:
         from onnxruntime.transformers import optimizer

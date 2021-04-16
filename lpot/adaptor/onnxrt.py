@@ -300,7 +300,13 @@ class ONNXRTAdaptor(Adaptor):
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
-        session = ort.InferenceSession(input_graph.model.SerializeToString(), None)
+        sess_options = ort.SessionOptions()
+        if measurer:
+            # https://github.com/microsoft/onnxruntime/issues/7347 
+            cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+            assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
+            sess_options.intra_op_num_threads = cores_per_instance
+        session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         if metric:
             metric.reset()
             if hasattr(metric, "compare_label") and not metric.compare_label:

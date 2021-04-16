@@ -28,6 +28,24 @@ quantization:
      }
   } 
 
+evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  performance:                                       # optional. used to benchmark performance of passing model.
+    warmup: 10
+    iteration: 100
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      batch_size: 1
+      dataset:
+        ImageFolder:
+          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
+      transform:
+        ResizeCropImagenet:
+          height: 224
+          width: 224
+          mean_value: [0.485, 0.456, 0.406]
+
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.

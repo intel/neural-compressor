@@ -45,7 +45,7 @@ function init_params {
 
 function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
-      mode_cmd=" --benchmark --accuracy_only"
+      mode_cmd=" --benchmark --mode=accuracy"
     elif [[ ${mode} == "benchmark" ]]; then
       mode_cmd=" --benchmark_nums ${iters} --benchmark"
     else

@@ -50,7 +50,7 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
 ```
 
 ### Evaluating
-To evaluate the model, run `bert_base.py` with the path to the model:
+To evaluate the model, run `roberta.py` with the path to the model:
 
 ```bash
 bash run_tuning.sh --topology=roberta_base_MRPC \ 
