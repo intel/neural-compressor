@@ -39,7 +39,38 @@ def build_static_yaml():
             timeout: 0
           random_seed: 9527
         """
-    with open("static_yaml.yaml", "w", encoding="utf-8") as f:
+    with open("static.yaml", "w", encoding="utf-8") as f:
+        f.write(fake_yaml)
+
+def build_benchmark_yaml():
+    fake_yaml = """
+        model:
+          name: imagenet
+          framework: onnxrt_qlinearops
+
+        evaluation:
+          performance:
+            warmup: 1
+            iteration: 10
+            configs:
+              num_of_instance: 1
+            dataloader:
+              batch_size: 1
+              dataset:
+                ImageFolder:
+                  root: /path/to/evaluation/dataset/
+          accuracy:
+            metric:
+              topk: 1
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+        """
+    with open("benchmark.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 def build_dynamic_yaml():
@@ -65,7 +96,7 @@ def build_dynamic_yaml():
             timeout: 0
           random_seed: 9527
         """
-    with open("dynamic_yaml.yaml", "w", encoding="utf-8") as f:
+    with open("dynamic.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 def build_non_MSE_yaml():
@@ -101,7 +132,7 @@ def build_non_MSE_yaml():
             timeout: 0
           random_seed: 9527
         """
-    with open("non_MSE_yaml.yaml", "w", encoding="utf-8") as f:
+    with open("non_MSE.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 def eval_func(model):
@@ -139,6 +170,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         build_static_yaml()
         build_dynamic_yaml()
         build_non_MSE_yaml()
+        build_benchmark_yaml()
         export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
         export_onnx_model(self.rn50_model, self.rn50_export_path)
@@ -146,9 +178,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove("static_yaml.yaml")
-        os.remove("dynamic_yaml.yaml")
-        os.remove("non_MSE_yaml.yaml")
+        os.remove("static.yaml")
+        os.remove("dynamic.yaml")
+        os.remove("non_MSE.yaml")
+        os.remove("benchmark.yaml")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
         shutil.rmtree("./saved", ignore_errors=True)
@@ -167,22 +200,30 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor = FRAMEWORKS[framework](framework_specific_info)
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv"])
 
-    def test_quantizate(self):
+    def test_adaptor(self):
         from lpot.experimental import Quantization, common
-        for fake_yaml in ["static_yaml.yaml", "dynamic_yaml.yaml"]:
+        for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = common.Model(self.rn50_model)
             q_model = quantizer()
             eval_func(q_model)
-        for fake_yaml in ["non_MSE_yaml.yaml"]:
+        for fake_yaml in ["non_MSE.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = common.Model(self.mb_v2_model)
             q_model = quantizer()
             eval_func(q_model)
+
+        from lpot.experimental import Benchmark, common
+        for mode in ["performance", "accuracy"]:
+            fake_yaml = "benchmark.yaml"
+            evaluator = Benchmark(fake_yaml)
+            evaluator.b_dataloader = self.cv_dataloader
+            evaluator.model = common.Model(self.rn50_model)
+            evaluator(mode)
 
 
 if __name__ == "__main__":
