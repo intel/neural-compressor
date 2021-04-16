@@ -2,12 +2,14 @@ import unittest
 import tensorflow as tf
 import numpy as np
 import os
+import json
+import shutil
+from PIL import Image
 from lpot.data import FILTERS, TRANSFORMS, DATASETS, DATALOADERS
 from lpot.utils.create_obj_from_config import create_dataset, get_preprocess, create_dataloader
 
 class TestCOCOFilter(unittest.TestCase):
     def testLabelBalanceCOCORecord(self):
-        from PIL import Image
         tf.compat.v1.disable_eager_execution() 
 
         random_array = np.random.random_sample([100,100,3]) * 255
@@ -81,6 +83,77 @@ class TestCOCOFilter(unittest.TestCase):
         os.remove('test.record')
         os.remove('test.jpeg')
 
+    def testLabelBalanceCOCORaw(self):
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        os.makedirs('val2017', exist_ok=True)
+        im.save('./val2017/test_0.jpg')
+        im.save('./val2017/test_1.jpg')
+        fake_dict = {
+            'info': {
+                'description': 'COCO 2017 Dataset',
+                'url': 'http://cocodataset.org',
+                'version': '1.0',
+                'year': 2017,
+                'contributor': 'COCO Consortium',
+                'date_created': '2017/09/01'
+            },
+            'licenses':{},
+            'images':[{
+                'file_name': 'test_0.jpg',
+                'height': 100,
+                'width': 100,
+                'id': 0
+            },
+            {
+                'file_name': 'test_1.jpg',
+                'height': 100,
+                'width': 100,
+                'id': 1
+            }],
+            'annotations':[{
+                'category_id': 18,
+                'id': 1767,
+                'iscrowd': 0,
+                'image_id': 0,
+                'bbox': [473.07, 395.93, 38.65, 28.67],
+            },
+            {
+               'category_id': 18,
+               'id': 1768,
+               'iscrowd': 0,
+               'image_id': 1,
+               'bbox': [473.07, 395.93, 38.65, 28.67],
+            },
+            {
+               'category_id': 18,
+               'id': 1768,
+               'iscrowd': 0,
+               'image_id': 1,
+               'bbox': [473.07, 395.93, 38.65, 28.67],
+            }],
+            'categories':[{
+                'supercategory': 'animal',
+                'id': 18,
+                'name': 'dog'
+            }]
+        }
+        fake_json = json.dumps(fake_dict)
+        os.makedirs('annotations', exist_ok=True)
+        with open('./annotations/instances_val2017.json', 'w') as f:
+            f.write(fake_json)
+
+        filters = FILTERS('onnxrt_qlinearops')
+        filter = filters['LabelBalanceCOCORaw'](1)
+        datasets = DATASETS('onnxrt_qlinearops')
+        dataset = datasets['COCORaw']('./', transform=None, filter=filter)
+        dataloader = DATALOADERS['onnxrt_qlinearops'](dataset=dataset, batch_size=1)
+        for (inputs, labels) in dataloader:
+            self.assertEqual(labels[0].shape[1], 1)
+
+        shutil.rmtree('annotations')
+        shutil.rmtree('val2017')
 
 if __name__ == "__main__":
     unittest.main()

@@ -26,3 +26,13 @@ class LabelBalanceCOCORecordFilter(Filter):
 
     def __call__(self, image, label):
         return tf.math.equal(len(label[0]), self.size)
+
+@filter_registry(filter_type="LabelBalanceCOCORaw", framework="tensorflow, \
+    pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+class LabelBalanceCOCORawFilter(Filter):
+    def __init__(self, size=1):
+        self.size = size
+
+    def __call__(self, image, label):
+        return len(label) == self.size
+

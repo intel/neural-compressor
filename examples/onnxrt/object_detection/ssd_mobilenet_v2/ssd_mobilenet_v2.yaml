@@ -28,6 +28,9 @@ quantization:                                        # optional. tuning constrai
       dataset:
         COCORaw:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation raw image folder
+      filter:
+        LabelBalance:
+          size: 1
       transform:
         Resize:
           size: 300
@@ -74,7 +77,7 @@ evaluation:                                          # optional. used to config 
       num_of_instance: 1
       kmp_blocktime: 1
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
-      batch_size: 1
+      batch_size: 16
       dataset:
         COCORaw:
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation raw image datafolder
@@ -89,7 +92,7 @@ evaluation:                                          # optional. used to config 
       num_of_instance: 1
       kmp_blocktime: 1
     dataloader:
-      batch_size: 1
+      batch_size: 16
       dataset:
         COCORaw:
           root: /path/to/evaluation/dataset
@@ -99,7 +102,7 @@ evaluation:                                          # optional. used to config 
     
 tuning:
   accuracy_criterion:
-    relative:  0.03                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 3%.
+    absolute:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 3%.
   exit_policy:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
   random_seed: 9527                                  # optional. random seed for deterministic tuning.

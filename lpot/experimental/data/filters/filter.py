@@ -24,15 +24,55 @@ class TensorflowFilters(object):
         self.filters = {}
         self.filters.update(TENSORFLOW_FILTERS)
 
+@singleton
+class ONNXRTQLFilters(object):
+    def __init__(self):
+        self.filters = {}
+        self.filters.update(ONNXRT_QL_FILTERS)
+
+@singleton
+class ONNXRTITFilters(object):
+    def __init__(self):
+        self.filters = {}
+        self.filters.update(ONNXRT_IT_FILTERS)
+
+@singleton
+class PyTorchFilters(object):
+    def __init__(self):
+        self.filters = {}
+        self.filters.update(PYTORCH_FILTERS)
+
+@singleton
+class MXNetFilters(object):
+    def __init__(self):
+        self.filters = {}
+        self.filters.update(MXNET_FILTERS)
+
 TENSORFLOW_FILTERS = {}
+ONNXRT_IT_FILTERS = {}
+ONNXRT_QL_FILTERS = {}
+PYTORCH_FILTERS = {}
+MXNET_FILTERS = {}
 
-framework_filters = {"tensorflow": TensorflowFilters}
+framework_filters = {"tensorflow": TensorflowFilters,
+                     "pytorch": PyTorchFilters,
+                     "pytorch_ipex": PyTorchFilters,
+                     "mxnet": MXNetFilters,
+                     "onnxrt_qlinearops": ONNXRTQLFilters,
+                     "onnxrt_integerops": ONNXRTITFilters,
+                     }
 
-registry_filters = {"tensorflow": TENSORFLOW_FILTERS}
+registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
+                    "pytorch": PYTORCH_FILTERS,
+                    "pytorch_ipex": PYTORCH_FILTERS,
+                    "mxnet": MXNET_FILTERS,
+                    "onnxrt_integerops": ONNXRT_IT_FILTERS,
+                    "onnxrt_qlinearops": ONNXRT_QL_FILTERS}
 
 class FILTERS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow"), \
+        assert framework in ["tensorflow", "pytorch", "pytorch_ipex", "mxnet",
+                             "onnxrt_integerops", "onnxrt_qlinearops"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.filters = framework_filters[framework]().filters
         self.framework = framework
@@ -58,8 +98,13 @@ def filter_registry(filter_type, framework):
     def decorator_transform(cls):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
-                "tensorflow"
-            ], "The framework support tensorflow"
+                "tensorflow", 
+                "pytorch",
+                "pytorch_ipex",
+                "mxnet",
+                "onnxrt_integerops",
+                "onnxrt_qlinearops"
+            ], "The framework support tensorflow mxnet pytorch onnxrt"
             if filter_type in registry_filters[single_framework].keys():
                 raise ValueError('Cannot have two transforms with the same name')
             registry_filters[single_framework][filter_type] = cls

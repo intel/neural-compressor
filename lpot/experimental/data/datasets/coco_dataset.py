@@ -156,7 +156,6 @@ class COCORaw(Dataset):
         from lpot.experimental.metric.coco_label_map import category_map
         self.image_list = []
         self.transform = transform
-        self.filter = filter
         img_path = os.path.join(root, img_dir)
         anno_path = os.path.join(root, anno_dir)
         coco = COCO(anno_path)
@@ -184,6 +183,9 @@ class COCORaw(Dataset):
                 labels.append(category_map[ann['category_id']].encode('utf8'))
             img_file = os.path.join(img_path, img_detail['file_name'])
             if not os.path.exists(img_file) or len(bboxes) == 0:
+                continue
+
+            if filter and not filter(None, bboxes):
                 continue
 
             with Image.open(img_file) as image:
