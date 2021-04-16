@@ -48,10 +48,14 @@ We only need to add the following lines for quantization to create an int8 model
     from lpot import Quantization
     quantizer = Quantization('./conf.yaml')
     quantized_model = quantizer('./mobilenet_v1_1.0_224_frozen.pb')
+    tf.io.write_graph(graph_or_graph_def=quantized_model,
+                      logdir='./',
+                      name='int8.pb',
+                      as_text=False)
 ```
 * Run quantization and evaluation:
 ```shell
-    python test.py
+    python test.py --tune
 ``` 
 
 4. Run benchmark accoridng to config
@@ -59,6 +63,11 @@ We only need to add the following lines for quantization to create an int8 model
      # Optional, run benchmark 
     from lpot import Benchmark
     evaluator = Benchmark('./conf.yaml')
-    results = evaluator(quantized_model)
+    results = evaluator('./int8.pb')
  
 ```
+
+* Run benchmark and please make sure benchmark should after tuning:
+```shell
+    python test.py --benchmark
+``` 

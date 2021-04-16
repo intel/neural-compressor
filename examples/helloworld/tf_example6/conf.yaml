@@ -47,8 +47,8 @@ evaluation:                                          # optional. required if use
           width: 224
   performance:                                       # optional. used to benchmark performance of passing model.
     configs:
-      cores_per_instance: 4
       num_of_instance: 7
+      cores_per_instance: 4
     dataloader:
       batch_size: 1 
       last_batch: discard 

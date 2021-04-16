@@ -49,19 +49,22 @@ We only need to add the following lines for quantization to create an int8 model
     quantizer = Quantization('./conf.yaml')
     quantizer.model = common.Model('./mobilenet_v1_1.0_224_frozen.pb')
     quantized_model = quantizer()
-    quantized_model.save('./output/int8.pb')
+    quantized_model.save('./int8.pb')
 ```
 * Run quantization and evaluation:
 ```shell
-    python test.py
+    python test.py --tune
 ``` 
 
 4. Run benchmark accoridng to config
 ```python
-     # Optional, run benchmark 
     from lpot.experimental import Quantization,  Benchmark, common
     evaluator = Benchmark('./conf.yaml')
-    evaluator.model = common.Model('./output/int8.pb')
+    evaluator.model = common.Model('./int8.pb')
     results = evaluator()
  
 ```
+* Run benchmark, please make sure benchmark the model should after tuning:
+```shell
+    python test.py --benchmark
+``` 
