@@ -632,7 +632,7 @@ def train(metric):
 
         # inference on dev data
         for segment, dev_data in dev_data_list:
-            metric_nm, metric_val = evaluate(dev_data, metric, segment)
+            metric_nm, metric_val = evaluate(model,dev_data, metric, segment)
             if best_metric is None or metric_val >= best_metric:
                 best_metric = metric_val
                 patience = args.early_stop
