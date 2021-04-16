@@ -126,6 +126,7 @@ python setup.py install
 * [Pruning](docs/pruning.md) provides a common method for introducing sparsity in weights and activations.
 * [Benchmarking](docs/benchmark.md) introduces how to utilize the benchmark interface of LPOT.
 * [Mixed precision](docs/mixed_precision.md) introduces how to enable mixed precision, including BFP16 and int8 and FP32, on Intel platforms during tuning.
+* [Graph Optimization](docs/graph_optimization.md) introduces how to enable graph optimization for fp32 and auto-mixed precision.
 * [TensorBoard](docs/tensorboard.md) provides tensor histogram and execution graph for tuning debugging purpose.
 
 

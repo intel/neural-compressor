@@ -57,7 +57,7 @@ class Graph_Optimization(object):
         self._eval_dataloader = None
         self._eval_func = None
 
-        self._precisions = None
+        self._precisions = 'fp32'
         self._input = None
         self._output = None
         self.conf = None

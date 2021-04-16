@@ -89,10 +89,6 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             op_cfgs['calib_iteration'] = int(iterations)
 
             for combined_cfg in self.combined_model_wise_quant_cfgs:
-                activation_dtype = [op_cfg['activation']['dtype'] in ['bf16', 'fp32']
-                                    for _, op_cfg in combined_cfg.items()]
-                if not all(activation_dtype):
-                    continue
                 op_cfgs['op'] = OrderedDict()
                 for op, op_cfg in self.opwise_quant_cfgs.items():
                     if op[1] in combined_cfg.keys() and len(op_cfg) > 0:

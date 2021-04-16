@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow.python.framework import graph_util
 from lpot.adaptor.tf_utils.util import disable_random
 
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
@@ -34,6 +35,7 @@ def build_fake_yaml():
         yaml.dump(y, f)
     f.close()
 
+
 def build_fake_yaml_2():
     fake_yaml_2 = '''
         model:
@@ -48,6 +50,7 @@ def build_fake_yaml_2():
     with open('fake_yaml_2.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
+
 
 def build_fake_yaml_3():
     fake_yaml_3 = '''
@@ -65,23 +68,26 @@ def build_fake_yaml_3():
     with open('fake_yaml_3.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
+
+
 class TestGraphOptimization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        os.environ['FORCE_BF16'] = '1'
+
         build_fake_yaml()
         build_fake_yaml_2()
         build_fake_yaml_3()
 
     @classmethod
     def tearDownClass(self):
+        del os.environ['FORCE_BF16']
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_2.yaml')
         os.remove('fake_yaml_3.yaml')
 
     @disable_random()
     def test_graph_optimization_with_evaluation(self):
-        os.environ['FORCE_BF16'] = '1'
-
         x = tf.compat.v1.placeholder(tf.float32, [1, 300, 300, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -89,14 +95,15 @@ class TestGraphOptimization(unittest.TestCase):
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
         conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
-                                  initializer=tf.compat.v1.random_normal_initializer())
+                                                   initializer=tf.compat.v1.random_normal_initializer())
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
         relu = tf.nn.relu(conv)
 
         max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
         conv_bias = tf.compat.v1.get_variable("bias", [16],
                                               initializer=tf.compat.v1.random_normal_initializer())
-        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
         conv_bias = tf.math.add(conv_1, conv_bias)
         relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
         out_name = relu6.name.split(':')[0]
@@ -121,10 +128,8 @@ class TestGraphOptimization(unittest.TestCase):
 
             self.assertEqual(found_cast_op, True)
 
-
     @disable_random()
     def test_graph_optimization_without_evaluation(self):
-        os.environ['FORCE_BF16'] = '1'
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
@@ -133,14 +138,15 @@ class TestGraphOptimization(unittest.TestCase):
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
         conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
-                                  initializer=tf.compat.v1.random_normal_initializer())
+                                                   initializer=tf.compat.v1.random_normal_initializer())
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
         relu = tf.nn.relu(conv)
 
         max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
         conv_bias = tf.compat.v1.get_variable("bias", [16],
                                               initializer=tf.compat.v1.random_normal_initializer())
-        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
         conv_bias = tf.math.add(conv_1, conv_bias)
         relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
 
@@ -166,8 +172,6 @@ class TestGraphOptimization(unittest.TestCase):
 
     @disable_random()
     def test_graph_optimization_without_yaml(self):
-        os.environ['FORCE_BF16'] = '1'
-
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -175,14 +179,15 @@ class TestGraphOptimization(unittest.TestCase):
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
         conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
-                                  initializer=tf.compat.v1.random_normal_initializer())
+                                                   initializer=tf.compat.v1.random_normal_initializer())
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
         relu = tf.nn.relu(conv)
 
         max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
         conv_bias = tf.compat.v1.get_variable("bias", [16],
                                               initializer=tf.compat.v1.random_normal_initializer())
-        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
         conv_bias = tf.math.add(conv_1, conv_bias)
         relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
 
@@ -193,9 +198,9 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common
+            from lpot.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
-            graph_optimizer.precisions = 'bf16,fp32'
+            graph_optimizer.precisions = 'fp32'
             graph_optimizer.input = 'input'
             graph_optimizer.output = 'op_to_store'
 
@@ -212,7 +217,6 @@ class TestGraphOptimization(unittest.TestCase):
 
     @disable_random()
     def test_graph_optimization_without_yaml(self):
-        os.environ['FORCE_BF16'] = '1'
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
@@ -221,14 +225,15 @@ class TestGraphOptimization(unittest.TestCase):
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
         conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
-                                  initializer=tf.compat.v1.random_normal_initializer())
+                                                   initializer=tf.compat.v1.random_normal_initializer())
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
         relu = tf.nn.relu(conv)
 
         max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
         conv_bias = tf.compat.v1.get_variable("bias", [16],
                                               initializer=tf.compat.v1.random_normal_initializer())
-        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
         conv_bias = tf.math.add(conv_1, conv_bias)
         relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
 
@@ -252,6 +257,99 @@ class TestGraphOptimization(unittest.TestCase):
                     break
 
             self.assertEqual(found_cast_op, True)
+
+
+class TestGraphOptmizationFP32(unittest.TestCase):
+
+    @disable_random()
+    def test_graph_optimization_without_yaml_without_precisions(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        relu = tf.nn.relu(conv)
+
+        max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.math.add(conv_1, conv_bias)
+        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot.experimental import Graph_Optimization
+            graph_optimizer = Graph_Optimization()
+            graph_optimizer.input = 'input'
+            graph_optimizer.output = 'op_to_store'
+
+            graph_optimizer.model = output_graph_def
+            output_graph = graph_optimizer()
+            found_cast_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Cast':
+                    found_cast_op = True
+                    break
+
+            self.assertEqual(found_cast_op, False)
+
+    @disable_random()
+    def test_graph_optimization_without_yaml_with_precisions(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        relu = tf.nn.relu(conv)
+
+        max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.math.add(conv_1, conv_bias)
+        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot.experimental import Graph_Optimization
+            graph_optimizer = Graph_Optimization()
+            graph_optimizer.precisions = 'fp32'
+            graph_optimizer.input = 'input'
+            graph_optimizer.output = 'op_to_store'
+
+            graph_optimizer.model = output_graph_def
+            output_graph = graph_optimizer()
+            found_cast_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Cast':
+                    found_cast_op = True
+                    break
+
+            self.assertEqual(found_cast_op, False)
+
 
 if __name__ == "__main__":
     unittest.main()

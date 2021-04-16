@@ -181,7 +181,7 @@ ops_schema = Schema({
 
 graph_optimization_schema = Schema({
 
-    Optional('precisions', default={'precisions': ['bf16', 'fp32']}): And(
+    Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
         lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),

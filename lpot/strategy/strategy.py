@@ -182,7 +182,7 @@ class TuneStrategy(object):
         else:
             self.calib_iter = [1]
 
-        fallback_precision_list = ['fp32'] if  self.graph_optimization_mode else ['fp32', 'bf16']
+        fallback_precision_list = ['fp32'] if self.graph_optimization_mode else ['fp32', 'bf16']
         self.model_wise_quant_cfgs = OrderedDict()
         for optype in self.model_wise_tune_cfgs.keys():
             self.model_wise_quant_cfgs[optype] = []
@@ -199,8 +199,12 @@ class TuneStrategy(object):
             cfg_list = self.opwise_tune_cfgs[key]
             new_list = []
             for cfg in cfg_list:
-                if cfg['activation']['dtype'] not in fallback_precision_list:
-                    new_list.append(cfg)
+                if self.graph_optimization_mode:
+                    if cfg['activation']['dtype'] in ['bf16', 'fp32']:
+                        new_list.append(cfg)
+                else:
+                    if cfg['activation']['dtype'] not in fallback_precision_list:
+                        new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 
         # The tuning history ever made, structured like below:

@@ -384,11 +384,10 @@ class TensorFlowAdaptor(Adaptor):
         tf_quantizable_op_type = list(set(uint8_type).union(set(int8_type)))
 
         valid_precision = self.query_handler.get_mixed_precision_combination()
-
-        conv_config = self.query_handler.get_quantization_capability()['uint8']['Conv2D']
-        matmul_config = self.query_handler.get_quantization_capability()['uint8']['MatMul']
-        other_config = self.query_handler.get_quantization_capability()['uint8']['default']
-
+        op_capability = self.query_handler.get_quantization_capability()
+        conv_config = copy.deepcopy(op_capability['uint8']['Conv2D'])
+        matmul_config = copy.deepcopy(op_capability['uint8']['MatMul'])
+        other_config = copy.deepcopy(op_capability['uint8']['default'])
         if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
             #TODO we need to enhance below logic by introducing precision priority.
             conv_config['weight']['dtype'].insert(-1, 'bf16')
