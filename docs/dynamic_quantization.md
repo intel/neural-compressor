@@ -10,9 +10,9 @@ Take onnxruntime bert_base model as an example, users can specific quantization 
 
 
 ```yaml
-model:                                               # mandatory. lpot uses this model name and framework name to decide where to save snapshot if tuning.snapshot field is empty.
+model:                                               # mandatory. used to specify model specific information.
   name: bert 
-  framework: onnxrt_integerops                       # possible values are tensorflow, mxnet, pytorch or onnxrt
+  framework: onnxrt_integerops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant

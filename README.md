@@ -13,8 +13,8 @@ Intel® Low Precision Optimization Tool (Intel® LPOT) is an open-source Python*
     <td>Workflow</td>
   </tr>
   <tr>
-    <td><img src="docs/imgs/infrastructure.jpg" width=640 height=320></td>
-    <td><img src="docs/imgs/workflow.jpg" width=640 height=320></td>
+    <td><img src="docs/imgs/infrastructure.png" width=640 height=320></td>
+    <td><img src="docs/imgs/workflow.png" width=640 height=320></td>
   </tr>
  </table>
 

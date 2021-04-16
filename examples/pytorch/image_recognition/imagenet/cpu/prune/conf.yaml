@@ -15,7 +15,7 @@
 
 model:
   name: imagenet_prune
-  framework: pytorch                           # possible values are tensorflow, mxnet and pytorch
+  framework: pytorch                           # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 pruning:
   magnitude:

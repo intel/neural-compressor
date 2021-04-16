@@ -15,7 +15,7 @@
 
 model:
   name: hello_world
-  framework: tensorflow                          # possible values are tensorflow, mxnet and pytorch
+  framework: tensorflow                          # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
   inputs: input                                  # optional. inputs and outputs fields are only required for tensorflow backend.
   outputs: output
 

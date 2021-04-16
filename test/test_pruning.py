@@ -13,8 +13,7 @@ def build_fake_yaml():
     fake_yaml = """
        model:
            name: imagenet_prune
-           framework: pytorch                           # possible values are tensorflow, mxnet \
-                                                              and pytorch
+           framework: pytorch
       
        pruning:
          magnitude:

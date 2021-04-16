@@ -116,9 +116,9 @@ In examples directory, there is a template.yaml. We could remove most of items a
 ```
 # conf.yaml
 
-model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. used to specify model specific information.
   name: cnn
-  framework: mxnet                                   # possible values are tensorflow, mxnet and pytorch
+  framework: mxnet                                   # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
