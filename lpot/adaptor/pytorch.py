@@ -312,7 +312,10 @@ def _propagate_qconfig_recursively(model, prefix, op_qcfgs, white_list, qconfig_
             model_qconfig = op_qcfgs[op_name]
         elif type(child) in white_list and type(child) != torch.nn.Sequential:
             if model_qconfig is None:
-                model_qconfig = torch.quantization.default_per_channel_qconfig
+                model_qconfig = torch.quantization.QConfig(
+                        activation=torch.quantization.MinMaxObserver.with_args(
+                                reduce_range=REDUCE_RANGE),
+                        weight=torch.quantization.default_per_channel_weight_observer)
             child.qconfig = model_qconfig
         _propagate_qconfig_recursively(
             child, op_name + '.', op_qcfgs, white_list, model_qconfig)
