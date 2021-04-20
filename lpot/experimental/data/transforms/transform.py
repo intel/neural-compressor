@@ -706,6 +706,33 @@ class CenterCropTFTransform(BaseTransform):
             image, label = transform(sample)
         return (image, label)
 
+@transform_registry(transform_type="PaddedCenterCrop", process="preprocess", \
+                framework="tensorflow")
+class PaddedCenterCropTransform(BaseTransform):
+    def __init__(self, size, crop_padding=0):
+        if isinstance(size, int):
+            self.image_size = size
+        elif isinstance(size, list):
+            if len(size) == 1:
+                self.image_size = size[0]
+            elif len(size) == 2:
+                if size[0] != size[1]:
+                    raise ValueError("'crop height must eaqual to crop width'")
+                self.image_size = size[0]
+        self.crop_padding = crop_padding
+
+    def __call__(self, sample):
+        image, label = sample
+        h, w = image.shape[0], image.shape[1]
+
+        padded_center_crop_size = \
+            int((self.image_size / (self.image_size + self.crop_padding)) * min(h, w))  
+        
+        y0 = (h - padded_center_crop_size + 1) // 2
+        x0 = (w - padded_center_crop_size + 1) // 2
+        image = image[y0:y0 + padded_center_crop_size, x0:x0 + padded_center_crop_size, :]
+        return (image, label)
+
 @transform_registry(transform_type="Resize",
                     process="preprocess", framework="tensorflow")
 class ResizeTFTransform(BaseTransform):

@@ -266,6 +266,11 @@ transform_schema = Schema({
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0))
     },
+    Optional('PaddedCenterCrop'): {
+        'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
+                    And(int, lambda s: s > 0)),
+        Optional('crop_padding'): And(int, lambda s: s > 0),
+    },
     Optional('ToArray'): Or({}, None),
     Optional('QuantizedInput'): {
         Optional('dtype', default='int8'): And(str, lambda s: s in ['int8', 'uint8']),
@@ -374,7 +379,7 @@ dataset_schema = Schema({
     },
     Optional('ImagenetRaw'): {
         'data_path': str,
-        'image_list': list,
+        Optional('image_list'): str,
     },
     Optional('style_transfer'): {
         'content_folder': str,

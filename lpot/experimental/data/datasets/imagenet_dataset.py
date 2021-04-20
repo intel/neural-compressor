@@ -66,8 +66,8 @@ class ImagenetRaw(Dataset):
         self.transform = transform
         not_found = 0
         if image_list is None:
-            # by default look for val_map.txt
-            image_list = os.path.join(data_path, "val_map.txt")
+            # by default look for val.txt
+            image_list = os.path.join(data_path, "val.txt")
 
         with open(image_list, 'r') as f:
             for s in f:

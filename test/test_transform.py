@@ -465,6 +465,41 @@ class TestTFTransorm(unittest.TestCase):
         img_result = transform((TestTFTransorm.img, None))[0]
         self.assertEqual(img_result.shape, (10,10,3))
 
+    def testPaddedCenterCrop(self):
+        args = {'size':[4,4]}
+        tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+        tf_result = tf_func((TestTFTransorm.img, None))[0]
+        self.assertEqual(tf_result.shape, (10,10,3))
+
+        args = {'size':[4,4], 'crop_padding': 4}
+        tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+        tf_result = tf_func((TestTFTransorm.img, None))[0]
+        self.assertEqual(tf_result.shape, (5,5,3))
+
+        args = {'size':4}
+        tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+        tf_result = tf_func((TestTFTransorm.img, None))[0]
+        self.assertEqual(tf_result.shape, (10,10,3))
+
+        args = {'size':4, 'crop_padding':4}
+        tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+        tf_result = tf_func((TestTFTransorm.img, None))[0]
+        self.assertEqual(tf_result.shape, (5,5,3))
+
+        args = {'size':[4]}
+        tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+        tf_result = tf_func((TestTFTransorm.img, None))[0]
+        self.assertEqual(tf_result.shape, (10,10,3))
+        
+        args = {'size':[4], 'crop_padding':4}
+        tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+        tf_result = tf_func((TestTFTransorm.img, None))[0]
+        self.assertEqual(tf_result.shape, (5,5,3))
+
+        args = {'size':[4,5], 'crop_padding':4}
+        with self.assertRaises(ValueError):
+            tf_func = TestTFTransorm.transforms['PaddedCenterCrop'](**args)
+            tf_result = tf_func((TestTFTransorm.img, None))
 
     def testRescale(self):
         transform = TestTFTransorm.transforms['Rescale']()

@@ -227,7 +227,7 @@ class TestImagenetRaw(unittest.TestCase):
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
         im.save('val/test.jpg')
-        with open('val/val_map.txt', 'w') as f:
+        with open('val/val.txt', 'w') as f:
             f.write('test.jpg   0')
     
     @classmethod
@@ -247,7 +247,7 @@ class TestImagenetRaw(unittest.TestCase):
             break
 
         dataloader_args = {
-            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val.txt'}},
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
@@ -268,7 +268,7 @@ class TestImagenetRaw(unittest.TestCase):
             break
 
         dataloader_args = {
-            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val.txt'}},
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
@@ -290,7 +290,7 @@ class TestImagenetRaw(unittest.TestCase):
             break
 
         dataloader_args = {
-            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val.txt'}},
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
@@ -311,7 +311,7 @@ class TestImagenetRaw(unittest.TestCase):
             break
 
         dataloader_args = {
-            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val_map.txt'}},
+            'dataset': {"ImagenetRaw": {'data_path':'val', 'image_list':'val/val.txt'}},
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }

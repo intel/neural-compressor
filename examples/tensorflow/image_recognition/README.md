@@ -29,6 +29,13 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   bash prepare_dataset.sh --output_dir=./data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
   ```
 
+  > EfficientNet-b0 model use ImageNet raw and caffe label. Please download caffe label.
+  ```shell
+  cd /PATH/TO/img_raw/val/
+  wget http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz
+  tar -xvf caffe_ilsvrc12.tar.gz
+  ```
+
 ### 3. Prepare pre-trained model
   In this version, Intel® Low Precision Optimization Tool just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
 
@@ -270,6 +277,21 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=nasnet_mobile.yaml \
           --input_model=/PATH/TO/frozen_nasnet_mobile.pb --output_model=./lpot_nasnet_mobile
+  ```
+
+### 20. EfficientNet-b0
+
+  Download pre-trained checkpoint
+  ```shell
+  wget https://storage.googleapis.com/cloud-tpu-checkpoints/efficientnet/ckpts/efficientnet-b0.tar.gz
+  tar -xvf efficientnet-b0.tar.gz
+  ```
+
+  ```shell
+  cd examples/tensorflow/image_recognition
+  bash run_tuning.sh --config=efficientnet-b0.yaml \
+      --input_model=/PATH/TO/efficientnet-b0 \
+      --output_model=./lpot_efficientnet-b0.pb
   ```
 
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
