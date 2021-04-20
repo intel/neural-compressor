@@ -14,17 +14,17 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --dataset=*)
-          dataset=$(echo $var |cut -f2 -d=)
+      --topology=*)
+          topology=$(echo $var |cut -f2 -d=)
+      ;;
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-      --log_dir=*)
-          log_dir=$(echo $var |cut -f2 -d=)
-      ;;
-      --output_dir=*)
-          output_dir=$(echo $var |cut -f2 -d=)
+      --output_model=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -32,32 +32,27 @@ function init_params {
       ;;
     esac
   done
-  mkdir -p $log_dir $output_dir
 }
 
 # run_tuning
 function run_tuning {
     extra_cmd=""
-    if [ -n "$dataset" ];then
-        extra_cmd=$extra_cmd"--dataset_dir ${dataset} "
+    if [ -n "$dataset_location" ];then
+        extra_cmd=$extra_cmd"--dataset_dir ${dataset_location} "
     fi
     if [ -n "$input_model" ];then
         extra_cmd=$extra_cmd"--pytorch_checkpoint ${input_model} "
     fi
-    if [ -n "$log_dir" ];then
-        extra_cmd=$extra_cmd"--log_dir ${log_dir} "
-    fi
-    if [ -n "$output_dir" ];then
-        extra_cmd=$extra_cmd"--tuned_checkpoint ${output_dir} "
+    if [ -n "$tuned_checkpoint" ];then
+        extra_cmd=$extra_cmd"--tuned_checkpoint ${tuned_checkpoint} "
     fi
 
     python run_tune.py \
-                    -t \
+                    --tune \
                     --backend pytorch \
-                    --manifest $dataset/dev-clean-wav.json \
+                    --manifest $dataset_location/dev-clean-wav.json \
                     --pytorch_config_toml pytorch/configs/rnnt.toml \
                     --scenario Offline \
-                    --accuracy \
                     ${extra_cmd}
 }
 

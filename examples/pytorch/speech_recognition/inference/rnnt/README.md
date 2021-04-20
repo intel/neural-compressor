@@ -58,11 +58,11 @@ Our example comes from MLPerf Inference Benchmark Suite
 
 ### 2. To get the tuned model and its accuracy: 
 
-    bash run_tuning.sh --dataset=convert_dataset --input_model=./rnnt.pt --log_dir=accu_log --output_dir=saved_results
+    bash run_tuning.sh --dataset_location=convert_dataset --input_model=./rnnt.pt --output_model=saved_results
 
 ### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
 
-    bash run_benchmark.sh --dataset=convert_dataset --input_model=./rnnt.pt --log_dir=bench_log --output_dir=saved_results --int8=true
+    bash run_benchmark.sh --dataset_location=convert_dataset --input_model=./rnnt.pt --mode=benchmark/accuracy --int8=true/false
 
 ### 4. The following is the brief output information:
 

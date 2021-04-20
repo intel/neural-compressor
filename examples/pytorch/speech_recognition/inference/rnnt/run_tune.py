@@ -28,12 +28,11 @@ MLPERF_CONF = MLPERF_CONF.resolve()
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--tune', dest='tune', action='store_true', 
+    parser.add_argument('--tune', dest='tune', action='store_true', 
                         help='tune best int8 model on calibration dataset')
     parser.add_argument("--backend", choices=["pytorch"], default="pytorch", help="Backend")
     parser.add_argument("--scenario", choices=["SingleStream", "Offline", "Server"], 
                         default="Offline", help="Scenario")
-    parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
     parser.add_argument("--mlperf_conf", default=str(MLPERF_CONF), help="mlperf rules config")
     parser.add_argument("--user_conf", default="user.conf", 
                         help="user config for user LoadGen settings such as target QPS")
@@ -42,8 +41,11 @@ def get_args():
     parser.add_argument("--dataset_dir", required=True)
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--perf_count", type=int, default=None)
-    parser.add_argument("--log_dir", required=True)
-    parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
+    parser.add_argument("--log_dir", default='./saved_log')
+    parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+                        help='run benchmark')
+    parser.add_argument("--accuracy_only", dest='accuracy_only', action='store_true',
+                        help='For accuracy measurement only.')
     parser.add_argument('--int8', dest='int8', action='store_true', help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
@@ -74,10 +76,10 @@ def main():
     settings.FromConfig(args.mlperf_conf, "rnnt", args.scenario)
     settings.FromConfig(args.user_conf, "rnnt", args.scenario)
 
-    if args.accuracy:
-        settings.mode = lg.TestMode.AccuracyOnly
-    else:
+    if args.benchmark:
         settings.mode = lg.TestMode.PerformanceOnly
+    else:
+        settings.mode = lg.TestMode.AccuracyOnly
 
     log_path = args.log_dir
     os.makedirs(log_path, exist_ok=True)
@@ -87,38 +89,36 @@ def main():
     log_settings = lg.LogSettings()
     log_settings.log_output = log_output_settings
 
-    pattern = ['accuracy=\d+.\d+', 'samples_per_query : \d+', 'Samples per second: \d+.\d+']
+    pattern = ['accuracy=\d+.\d+', 'samples_per_query : \d+', 'Mean latency.*']
     
     def eval_func(model):
         print("Running Loadgen test...")
         sut.greedy_decoder._model = model
         lg.StartTestWithLogSettings(sut.sut, sut.qsl.qsl, settings, log_settings)
-        if args.accuracy:
-            cmd = f"python3 accuracy_eval.py --log_dir {log_path} \
-               --dataset_dir {args.dataset_dir} --manifest {args.manifest}"
-            out = subprocess.check_output(cmd, shell=True)
-            out = out.decode()
-            regex_accu = re.compile(pattern[0])
-            accu = float(regex_accu.findall(out)[0].split('=')[1])
-            return accu
-        return 0
+        cmd = f"python3 accuracy_eval.py --log_dir {log_path} \
+            --dataset_dir {args.dataset_dir} --manifest {args.manifest}"
+        out = subprocess.check_output(cmd, shell=True)
+        out = out.decode()
+        regex_accu = re.compile(pattern[0])
+        accu = float(regex_accu.findall(out)[0].split('=')[1])
+        print('Accuracy: %.3f ' % (accu))
+        return accu
     
-    def perf_func(model):
+    def benchmark(model):
         print("Running Loadgen test...")
         sut.greedy_decoder._model = model
         lg.StartTestWithLogSettings(sut.sut, sut.qsl.qsl, settings, log_settings)
-        if not args.accuracy:
-            file_path = os.path.join(log_path, 'mlperf_log_summary.txt')
-            f = open(file_path, 'r', encoding='UTF-8')
-            file_content = f.read()
-            f.close()
-            regex_batch = re.compile(pattern[1])
-            regex_thro = re.compile(pattern[2])
-            samples_per_query = int(regex_batch.findall(file_content)[0].split(': ')[1])
-            samples_per_second = float(regex_thro.findall(file_content)[0].split(': ')[1])
-            print('Batch size = %d' % samples_per_query)
-            print('Latency: %.3f ms' % ((1 / samples_per_second) * 1000))
-            print('Throughput: %.3f samples/sec' % samples_per_second)
+        file_path = os.path.join(log_path, 'mlperf_log_summary.txt')
+        f = open(file_path, 'r', encoding='UTF-8')
+        file_content = f.read()
+        f.close()
+        regex_batch = re.compile(pattern[1])
+        regex_late = re.compile(pattern[2])
+        samples_per_query = int(regex_batch.findall(file_content)[0].split(': ')[1])
+        latency_per_sample = int(regex_late.findall(file_content)[0].split(': ')[1])
+        print('Batch size = %d' % samples_per_query)
+        print('Latency: %.3f ms' % (latency_per_sample / 10**6))
+        print('Throughput: %.3f samples/sec' % (10**9/latency_per_sample))
 
     if args.tune:
         # Dynamic Quantization with LPOT
@@ -129,13 +129,19 @@ def main():
         q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
 
-    if args.benchmark:
-        if args.int8:
-            from lpot.utils.pytorch import load
-            new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
-        else:
-            new_model = model
-        perf_func(new_model)
+    elif args.int8:
+        from lpot.utils.pytorch import load
+        int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
+        if args.accuracy_only:
+            eval_func(int8_model)
+        elif args.benchmark:
+            benchmark(int8_model)
+    else:
+        if args.accuracy_only:
+            eval_func(model)
+        elif args.benchmark:
+            benchmark(model)
+        
 
     print("Done!", flush=True)
 

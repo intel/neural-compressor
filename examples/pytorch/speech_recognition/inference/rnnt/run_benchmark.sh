@@ -10,24 +10,33 @@ function main {
 
 # init params
 function init_params {
-  output_model=saved_results
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
-      --dataset=*)
-          dataset=$(echo $var |cut -f2 -d=)
+      --topology=*)
+          topology=$(echo $var |cut -f2 -d=)
+      ;;
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-      --log_dir=*)
-          log_dir=$(echo $var |cut -f2 -d=)
+      --mode=*)
+          mode=$(echo $var |cut -f2 -d=)
       ;;
-      --output_dir=*)
-          output_dir=$(echo $var |cut -f2 -d=)
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo ${var} |cut -f2 -d=)
       ;;
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
+      ;;
+      --config=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -35,35 +44,40 @@ function init_params {
       ;;
     esac
   done
-  mkdir -p $log_dir $output_dir
 }
 
 # run_benchmark
 function run_benchmark {
+
+    if [[ ${mode} == "accuracy" ]]; then
+        mode_cmd="--accuracy_only "
+    elif [[ ${mode} == "benchmark" ]]; then
+        mode_cmd="--benchmark "
+    else
+        echo "Error: No such mode: ${mode}"
+        exit 1
+    fi
+
     extra_cmd=""
-    if [ -n "$dataset" ];then
-        extra_cmd=$extra_cmd"--dataset_dir ${dataset} "
+    if [ -n "$dataset_location" ];then
+        extra_cmd=$extra_cmd"--dataset_dir ${dataset_location} "
     fi
     if [ -n "$input_model" ];then
         extra_cmd=$extra_cmd"--pytorch_checkpoint ${input_model} "
     fi
-    if [ -n "$log_dir" ];then
-        extra_cmd=$extra_cmd"--log_dir ${log_dir} "
-    fi
-    if [ -n "$output_dir" ];then
-        extra_cmd=$extra_cmd"--tuned_checkpoint ${output_dir} "
+    if [ -n "$tuned_checkpoint" ];then
+        extra_cmd=$extra_cmd"--tuned_checkpoint ${tuned_checkpoint} "
     fi
     if [[ ${int8} == "true" ]]; then
         extra_cmd=$extra_cmd"--int8"
     fi
 
-
     python run_tune.py \
                     --backend pytorch \
-                    --manifest $dataset/dev-clean-wav.json \
+                    --manifest $dataset_location/dev-clean-wav.json \
                     --pytorch_config_toml pytorch/configs/rnnt.toml \
-                    --scenario Offline \
-                    --benchmark \
+                    --scenario SingleStream \
+                    ${mode_cmd} \
                     ${extra_cmd}
 }
 
