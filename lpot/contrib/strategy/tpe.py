@@ -22,9 +22,9 @@ from functools import partial
 import numpy as np
 import hyperopt as hpo
 from hyperopt import fmin, hp, STATUS_OK, Trials
-from ..utils.utility import Timeout
-from ..utils import logger
-from .strategy import strategy_registry, TuneStrategy
+from lpot.utils.utility import Timeout
+from lpot.utils import logger
+from lpot.strategy.strategy import strategy_registry, TuneStrategy
 
 try:
     import pandas as pd

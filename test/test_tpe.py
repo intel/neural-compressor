@@ -129,7 +129,7 @@ class TestQuantization(unittest.TestCase):
         quantizer()
 
     def test_loss_calculation(self):
-        from lpot.strategy.tpe import TpeTuneStrategy
+        from lpot.contrib.strategy.tpe import TpeTuneStrategy
         from lpot.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
