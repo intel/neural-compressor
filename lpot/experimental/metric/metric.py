@@ -836,3 +836,31 @@ class SquadF1(BaseMetric):
     def result(self):
         """calculate metric"""
         return np.array(self._score_list).mean()
+
+
+@metric_registry('mIOU', 'tensorflow')
+class mIOU(BaseMetric):
+    def __init__(self, num_classes=21):
+        self.num_classes = num_classes
+        self.hist = np.zeros((num_classes, num_classes))
+
+    def update(self, preds, labels):
+        """add preds and labels to storage"""
+        preds = preds.flatten()
+        labels = labels.flatten()
+        mask = (labels >= 0) & (labels < self.num_classes)
+        self.hist += np.bincount(
+            self.num_classes * labels[mask].astype(int) +
+            preds[mask], minlength=self.num_classes ** 2).reshape(self.num_classes, 
+            self.num_classes)
+
+    def reset(self):
+        """clear preds and labels storage"""
+        self.hist = np.zeros((self.num_classes, self.num_classes))
+
+    def result(self):
+        """calculate metric"""
+        iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) - 
+        np.diag(self.hist))
+        mean_iu = np.nanmean(iu)
+        return mean_iu

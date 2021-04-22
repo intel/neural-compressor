@@ -282,6 +282,7 @@ transform_schema = Schema({
     # THIS API IS TO BE DEPRECATED!
     Optional('ParseDecodeImagenet'): Or({}, None),
     Optional('ParseDecodeCoco'): Or({}, None),
+    Optional('ParseDecodeVoc'): Or({}, None),
     Optional('BilinearImagenet'): {
         'height': And(int, lambda s: s > 0),
         'width': And(int, lambda s: s > 0),
@@ -368,6 +369,9 @@ dataset_schema = Schema({
         'label_file': str,
         Optional('task'): And(str, lambda s: s in ["classifier", "squad"]),
         Optional('model_type'): And(str, lambda s: s in ['bert', 'xlnet', 'xlm']),
+    },
+    Optional('VOCRecord'): {
+        'root': str,
     },
     Optional('COCORecord'): {
         'root': str,
@@ -568,6 +572,9 @@ schema = Schema({
                 Optional('BLEU'): Or({}, None),
                 Optional('SquadF1'): Or({}, None),
                 Optional('F1'): Or({}, None),
+                Optional('mIOU'): {
+                    Optional('num_classes'): int
+                },
             },
             Optional('configs'): configs_schema,
             Optional('dataloader'): dataloader_schema,

@@ -2147,3 +2147,57 @@ class SquadV1PostTransform(BaseTransform):
         return (all_predictions, label)
 
 
+@transform_registry(transform_type="ParseDecodeVoc", \
+                    process="preprocess", framework="tensorflow")
+class ParseDecodeVocTransform(BaseTransform):
+    """Parse features in Example proto.
+
+    Returns:
+        tuple of parsed image and labels
+    """
+
+    def __call__(self, sample):
+        # Currently only supports jpeg and png.
+        # Need to use this logic because the shape is not known for
+        # tf.image.decode_image and we rely on this info to
+        # extend label if necessary.
+        def _decode_image(content, channels):
+            return tf.cond(
+                tf.image.is_jpeg(content),
+                lambda: tf.image.decode_jpeg(content, channels),
+                lambda: tf.image.decode_png(content, channels))
+
+        features = {
+            'image/encoded':
+                tf.compat.v1.FixedLenFeature((), tf.string, default_value=''),
+            'image/filename':
+                tf.compat.v1.FixedLenFeature((), tf.string, default_value=''),
+            'image/format':
+                tf.compat.v1.FixedLenFeature((), tf.string, default_value='jpeg'),
+            'image/height':
+                tf.compat.v1.FixedLenFeature((), tf.int64, default_value=0),
+            'image/width':
+                tf.compat.v1.FixedLenFeature((), tf.int64, default_value=0),
+            'image/segmentation/class/encoded':
+                tf.compat.v1.FixedLenFeature((), tf.string, default_value=''),
+            'image/segmentation/class/format':
+                tf.compat.v1.FixedLenFeature((), tf.string, default_value='png'),
+        }
+
+        parsed_features = tf.compat.v1.parse_single_example(sample, features)
+
+        image = _decode_image(parsed_features['image/encoded'], channels=3)
+
+        label = None
+        label = _decode_image(
+            parsed_features['image/segmentation/class/encoded'], channels=1)
+
+        sample = {
+            'image': image,
+        }
+
+        label.set_shape([None, None, 1])
+
+        sample['labels_class'] = label
+
+        return sample['image'], sample['labels_class']

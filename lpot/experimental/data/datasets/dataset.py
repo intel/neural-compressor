@@ -737,3 +737,38 @@ class TensorflowImageRecord(IterableDataset):
             ds = ds.map(transform, num_parallel_calls=None)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
+
+@dataset_registry(dataset_type="VOCRecord", framework="tensorflow", dataset_format='')
+class TensorflowVOCRecord(IterableDataset):
+    """Configuration for PASCAL VOC 2012 database in tf record format
+
+    Please arrange data in this way:  
+        root/val-00000-of-00004.tfrecord  
+        root/val-00001-of-00004.tfrecord  
+        ...  
+        root/val-00003-of-00004.tfrecord  
+    The file name needs to follow this pattern: 'val-*-of-*'
+
+    Args: root (str): Root directory of dataset.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions
+    """
+    def __new__(cls, root, transform=None, filter=None):
+
+        from tensorflow.python.platform import gfile # pylint: disable=no-name-in-module
+        glob_pattern = os.path.join(root, '%s-*' % 'val')
+        file_names = gfile.Glob(glob_pattern)
+        if not file_names:
+            raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
+        
+        # pylint: disable=no-name-in-module
+        from tensorflow.python.data.experimental import parallel_interleave
+        ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
+        ds = ds.apply(parallel_interleave(
+                tf.data.TFRecordDataset, cycle_length=len(file_names)))
+
+        if transform is not None:
+            ds = ds.map(transform, num_parallel_calls=None)
+        ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
+        return ds

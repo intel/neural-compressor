@@ -874,5 +874,68 @@ class TestCOCOTransform(unittest.TestCase):
         os.remove('test.record')
         os.remove('test.jpeg')
 
+class TestVOCTransform(unittest.TestCase):
+    def testVOCDecode(self):
+        import shutil
+        tf.compat.v1.disable_eager_execution() 
+
+        def _bytes_list_feature(values):
+            import six
+            def norm2bytes(value):
+                return value.encode() if isinstance(value, str) and six.PY3 else value
+            return tf.train.Feature(
+                bytes_list=tf.train.BytesList(value=[norm2bytes(values)]))
+
+        def _int64_list_feature(values):
+            import collections
+            if not isinstance(values, collections.Iterable):
+                values = [values]
+            return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
+
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test.jpg')
+        random_array = np.random.random_sample([100,100,3]) * 0
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test.png')
+        image_data = tf.compat.v1.gfile.GFile('test.jpg', 'rb').read()
+        seg_data = tf.compat.v1.gfile.GFile('test.png', 'rb').read()
+        filename = 'test'
+
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'image/encoded': _bytes_list_feature(image_data),
+            'image/filename': _bytes_list_feature(filename),
+            'image/format': _bytes_list_feature('png'),
+            'image/height': _int64_list_feature(100),
+            'image/width': _int64_list_feature(100),
+            'image/channels': _int64_list_feature(3),
+            'image/segmentation/class/encoded': (
+                _bytes_list_feature(seg_data)),
+            'image/segmentation/class/format': _bytes_list_feature('png'),
+        }))
+
+        if not os.path.exists('./test_record'):
+            os.mkdir('./test_record')
+        with tf.io.TFRecordWriter('./test_record/val-test.record') as writer:
+            writer.write(example.SerializeToString())
+        eval_dataset = create_dataset(
+            'tensorflow', {'VOCRecord':{'root':'./test_record'}}, {'ParseDecodeVoc':{}}, None)
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
+        for (inputs, labels) in dataloader:
+            self.assertEqual(inputs.shape, (1,100,100,3))
+            self.assertEqual(labels[0].shape, (100,100,1))
+
+        from lpot.experimental.data.transforms.transform import ParseDecodeVocTransform
+        func = ParseDecodeVocTransform()
+        out = func(example.SerializeToString())
+        self.assertEqual(out[0].eval(session=tf.compat.v1.Session()).shape, (100,100,3))
+
+        os.remove('./test_record/val-test.record')
+        os.remove('test.jpg')
+        os.remove('test.png')
+        shutil.rmtree('./test_record')
+
 if __name__ == "__main__":
     unittest.main()

@@ -6,6 +6,20 @@ from lpot.experimental.metric.f1 import evaluate
 from lpot.experimental.metric import bleu
 
 class TestMetrics(unittest.TestCase):
+    def testmIOU(self):
+        metrics = METRICS('tensorflow')
+        miou = metrics['mIOU']()
+        preds = np.array([0, 0, 1, 1])
+        labels = np.array([0, 1, 0, 1])
+        miou.update(preds, labels)
+        self.assertAlmostEqual(miou.result(), 0.33333334)
+
+        miou.reset()
+        preds = np.array([0, 0, 1, 1])
+        labels = np.array([0, 1, 1, 1])
+        miou.update(preds, labels)
+        self.assertAlmostEqual(miou.result(), 0.58333333)
+
     def testBLEU(self):
         metrics = METRICS('tensorflow')
         bleu = metrics['BLEU']()
