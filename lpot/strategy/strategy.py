@@ -200,7 +200,7 @@ class TuneStrategy(object):
             new_list = []
             for cfg in cfg_list:
                 if self.graph_optimization_mode:
-                    if cfg['activation']['dtype'] in ['bf16', 'fp32']:
+                    if cfg['activation']['dtype'] in self.cfg.graph_optimization.precisions:
                         new_list.append(cfg)
                 else:
                     if cfg['activation']['dtype'] not in fallback_precision_list:
