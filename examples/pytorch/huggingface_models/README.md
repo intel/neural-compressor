@@ -168,7 +168,7 @@ python run_clm.py \
   --dataset_config_name wikitext-2-raw-v1 \
   --do_train \
   --do_eval \
-  --output_dir /home2/zhenggo1/checkpoint/dialogpt_clm
+  --output_dir /path/to/checkpoint/dir
 ```
 > NOTE 
 >
