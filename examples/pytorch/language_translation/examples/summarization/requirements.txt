@@ -5,5 +5,5 @@ boto3
 # Used for downloading models over HTTP
 requests
 # For ROUGE
-nltk
+nltk>=3.6
 py-rouge
