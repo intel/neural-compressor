@@ -1,19 +1,20 @@
-### Full Validated Models
+Full Validated Models
+=====================
 
-Below tables are models enabled by Intel® Low Precision Optimization Tool.
+The below tables are models enabled by the Intel® Low Precision Optimization Tool.
 
 
-TensorFlow 2.x models:
+### TensorFlow 2.x models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Framework&nbsp;&nbsp;&nbsp;</th>
     <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Version&nbsp;&nbsp;&nbsp;</th>
     <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Model&nbsp;&nbsp;&nbsp;</th>
     <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Dataset&nbsp;&nbsp;&nbsp;</th>
-    <th colspan="3">&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;</th>
-    <th>&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;</th>
+    <th colspan="3">Accuracy</th>
+    <th>Performance speed up</th>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy&nbsp;&nbsp;&nbsp;</td>
@@ -237,9 +238,9 @@ TensorFlow 2.x models:
 </table>
 
 
-TensorFlow 1.x models:
+### TensorFlow 1.x models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Framework&nbsp;&nbsp;&nbsp;</th>
@@ -391,10 +392,9 @@ TensorFlow 1.x models:
 </table>
 
 
-PyTorch models:
+### PyTorch models
 
-
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
@@ -656,10 +656,9 @@ PyTorch models:
 </table>
 
 
-Quantization-aware training models:
+### Quantization-aware training models
 
-
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
@@ -701,9 +700,9 @@ Quantization-aware training models:
 </table>
 
 
-MXNet models:
+### MXNet models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
@@ -805,9 +804,9 @@ MXNet models:
 </table>
 
 
-ONNX Models:
+### ONNX Models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Framework</th>

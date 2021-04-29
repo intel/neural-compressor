@@ -1,0 +1,13 @@
+/* make the page 1000px */
+.wy-nav-content {
+   max-width: 1000px;
+}
+
+/* code block highlight color in rtd changed to lime green, no no no */
+
+.rst-content tt.literal, .rst-content code.literal, .highlight {
+   background: #f0f0f0;
+}
+.rst-content tt.literal, .rst-content code.literal {
+    color: #000000;
+}

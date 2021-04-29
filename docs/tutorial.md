@@ -1,37 +1,32 @@
 Tutorial
-=========================================
+========
 
-This tutorial will introduce step by step instructions on how to integrate models with Intel® Low Precision Optimization Tool (LPOT) with examples. 
+This tutorial provides instructions (with examples) on how to integrate models with Intel® Low Precision Optimization Tool (LPOT). 
 
-<table>
-  <tr>
-    <td>Steps of enabling model with LPOT</td>
-  </tr>
-  <tr>
-    <td><img src="./imgs/tutorial.png" width=640 height=320></td>
-  </tr>
- </table>
+The following diagram shows steps for enabling model with LPOT:
 
-# Usage Examples
+![Tutorial](imgs/tutorial.png "Tutorial") 
 
-To write lanuncher code, user need prepare four components:
+## Usage Examples
 
-1.	`Dataloader/Dataset`
-2.	`Model`
-3.	`Postprocess`      <span style="color:red">*optional*</span>
-4.	`Metric`
+To write lanuncher code, a user needs to prepare four components:
 
-LPOT will construct the whole quantization/pruning process by these four ingredients. 
+*	`Dataloader/Dataset`
+*	`Model`
+*	`Postprocess`      <span style="color:red">*optional*</span>
+*	`Metric`
 
-LPOT has added built-in supports on popular dataloader/dataset and metric to ease the preparation. Please refer to [dataset](./dataset.md) and [metric](./metric.md) to know how to use them in yaml. 
+LPOT constructs the whole quantization/pruning process using these four components. 
 
-LPOT also supports register custom dataset and custom metric by code. 
+LPOT has added built-in support for popular dataloaders/datasets and metrics to ease the preparation. Refer to [dataset](./dataset.md) and [metric](./metric.md) to learn how to use them in yaml. 
 
-As for model, LPOT abstract a common API, named as [lpot.experimental.common.Model](../lpot/experimental/common/model.py), to cover the case in which model, weight, and other necessary info, are separately stored. Please refer to [model](./model.md) to know how to use it.
+LPOT also supports registering custom datasets and custom metrics by code. 
 
-Postprocess is treat as a specical transform by LPOT which is only needed when model output is mismatching with the expected input of LPOT built-in metrics. if user is using custom metric, the postprocess is not needed indeed as custom metric implementation need ensure it can handle model output correctly. On the other hand, the postprocess logic becomes part of custom metric implementation.
+As for model, LPOT abstract a common API, named [lpot.experimental.common.Model](../lpot/experimental/common/model.py), to cover the case in which model, weight, and other necessary info are separately stored. Refer to [model](./model.md) to learn how to use it.
 
-Below is an example of how to enable LPOT on TensorFlow mobilenet_v1 with built-in dataloader, dataset and metric.
+Postprocess is treated as a specical transform by LPOT which is only needed when a model output is mismatching with the expected input of LPOT built-in metrics. If a user is using a custom metric, the postprocess is not needed as the custom metric implementation needed ensures it can handle the model output correctly. On the other hand, the postprocess logic becomes part of the custom metric implementation.
+
+The example below shows how to enable LPOT on TensorFlow mobilenet_v1 with a built-in dataloader, dataset, and metric.
 
 ```python
 # main.py
@@ -76,9 +71,9 @@ evaluation:
 
 ```
 
-In this example, we use a LPOT built-in dataset “ImageRecord” and metric “topk”.
+In this example, we use an LPOT built-in `ImageRecord` dataset and a `topk` metric.
 
-If user wants to use a dataset or metric which does not support by LPOT built-in, user could register a custom one like below helloworld example.
+If the user wants to use a dataset or metric that is not supported by the LPOT built-in, the user can register a custom one as demonstrated in the below helloworld example.
 
 ```python
 # main.py
@@ -123,11 +118,11 @@ quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.model = common.Model('../models/simple_model')
 q_model = quantizer()
 ```
-Note: 
+> **Note** 
+>
+> In the customized dataset, the `__getitem__()` interface must be implemented and return a single sample and label. In this example, it returns the (image, label) pair. The user can return (image, 0) for a label-free case.
 
-In the customized dataset, the `__getitem__()` interface must be implemented and return single sample and label. In this example, it returns the (image, label) pair. User could return (image, 0) for label-free case.
-
-In the customized metric, the update() function records the predict result of each mini-batch, the result() function would be invoked by LPOT at the end of evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from customerized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
+In the customized metric, the update() function records the predicted result of each mini-batch. The result() function is invoked by LPOT at the end of the evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from the customerized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
 
 ```yaml
 # conf.yaml
@@ -145,10 +140,10 @@ tuning:
   random_seed: 100
 ```
 
-# Helloworld Examples
+## Helloworld Examples
 
-1.  Builtin dataloader and metric example: see [README](../examples/helloworld/tf_example1/README.md) for more details.
-2.  TensorFlow checkpoint: see [tf_example4](../examples/helloworld/tf_example4) for more details.
-3.  Enable benchmark for performance and accuracy measurement: see [tf_example5](../examples/helloworld/tf_example5) for more details.
-4.  TensorFlow slim model: see [tf_example3](../examples/helloworld/tf_example3/README.md) for more details.
+1.  Built-in dataloader and metric example: see [tf_example1](/examples/helloworld/tf_example1) for more details.
+2.  TensorFlow checkpoint: see [tf_example4](/examples/helloworld/tf_example4) for more details.
+3.  Enable benchmark for performance and accuracy measurement: see [tf_example5](/examples/helloworld/tf_example5) for more details.
+4.  TensorFlow slim model: see [tf_example3](/examples/helloworld/tf_example3) for more details.
 
