@@ -1,14 +1,14 @@
-# incompatible changes between v1.2 and v1.1
+# Incompatible changes between v1.2 and v1.1
 
-## user facing APIs
+## User-facing APIs
 
-The user facing APIs are changed between v1.2 and v1.1. The major changes are:
+The user-facing APIs are changed between v1.2 and v1.1. The major changes are:
 
-1. v1.2 abstracts `lpot.common.Model` concept to cover those cases whose weight and graph files are stored seperately.
+1. v1.2 abstracts `lpot.common.Model` concept to cover those cases whose weight and graph files are stored separately.
 
-2. v1.2 unifies the calling style by setting model, calibration dataloader, evaluation dataloader, metric through `quantizer` attributes rather than passing as function inputs.
+2. v1.2 unifies the calling style by setting model, calibration dataloader, evaluation dataloader, and metric through `quantizer` attributes rather than passing as function inputs.
 
-Please refer to below examples to know the details.
+Refer to below examples for details.
 
 ```python
 # user facing API example in v1.1
@@ -34,8 +34,8 @@ q_model.save('/path/to/output/dir') # explicitly call to save q_model
 
 ```
 
-## built-in transform/dataset/metric APIs
+## Built-in transform/dataset/metric APIs
 
 v1.2 refines LPOT built-in transform/dataset/metric to unify APIs cross different framework backends.
 
-Please refer to [dataset](./dataset.md), [transform](./transform.md) and [metric](./metric.md) to know how to use them in yaml or code.
+Refer to [dataset](./dataset.md), [transform](./transform.md), and [metric](./metric.md) to learn how to use them in yaml or code.

@@ -1,9 +1,9 @@
 Model
-===============
+=====
 
-Model feature of LPOT is used to encapsulate the behavior of model building and saving. By just give information of different model format and framework_specific_info, LPOT will do optimizations and quantization on this model object and return a LPOT Model object for further model persisting or benchmark. LPOT Model make it possible to keep neccessary information of a model which is needed during optimization and quantization like the input/output names, workspace path and other model format knowledges. This helps unify the features gap bring by different model format and frameworks.
+The LPOT Model feature is used to encapsulate the behavior of model building and saving. By simply providing information such as different model formats and framework_specific_info, LPOT performs optimizations and quantization on this model object and returns an LPOT Model object for further model persisting or benchmarking. An LPOT Model helps users to maintain necessary model information which is needed during optimization and quantization such as the input/output names, workspace path, and other model format knowledge. This helps unify the features gap brought by different model formats and frameworks.
 
-User can create, use and save a model in this way:
+Users can create, use, and save models in the following manner:
 
 ```python
 from lpot import Quantization, common
@@ -14,9 +14,9 @@ q_model.save(save_path)
 
 ```
 
-# Framework model support list
+## Framework model support list
 
-#### TensorFlow
+### TensorFlow
 
 | Model format | Parameters | Comments | Usage |
 | ------ | ------ |------|------|
@@ -32,7 +32,7 @@ q_model.save(save_path)
 | tf1.x saved model | **model**(str): path to saved model, **framework_specific_info**(dict): information about model and framework, such as input_tensor_names, input_tensor_names, workspace_path and name <br> **kwargs**(dict): other required parameters | **Save format**: <br> saved model | from lpot.experimental import Quantization, common <br> quantizer = Quantization(args.config) <br> quantizer.model = common.Model(model) <br> q_model = quantizer() <br> **model is the path of model, like ./path/to/saved_model/** |
 | tf2.x checkpoint | | Not support yes. As tf2.x checkpoint only has weight and does not contain any description of the computation, please use different tf2.x model for quantization | |
 
-The following methods can be used in tensorflow model
+The following methods can be used in the TensorFlow model:
 
 ```python
 graph_def = model.graph_def
@@ -46,14 +46,14 @@ input_tensor = model.input_tensor
 output_tensor = model.output_tensor
 ```
 
-#### MXNet
+### MXNet
 
 | Model format | Parameters | Comments | Usage |
 | ------ | ------ |------|------|
 | mxnet.gluon.HybridBlock | **model**(mxnet.gluon.HybridBlock): mxnet.gluon.HybridBlock object <br> **framework_specific_info**(dict): information about model and framework <br> **kwargs**(dict): other required parameters | **Save format**: <br> save_path.json | from lpot.experimental import Quantization, common <br> quantizer = Quantization(args.config) <br> quantizer.model = common.Model(model) <br> q_model = quantizer() <br> **model is mxnet.gluon.HybridBlock object** |
 | mxnet.symbol.Symbol | **model**(tuple): tuple of symbol, arg_params, aux_params <br> **framework_specific_info**(dict): information about model and framework <br> **kwargs**(dict): other required parameters | **Save format**: <br> save_path-symbol.json and save_path-0000.params | from lpot.experimental import Quantization, common <br> quantizer = Quantization(args.config) <br> quantizer.model = common.Model(model) <br> q_model = quantizer() <br> **model is the tuple of symbol, arg_params, aux_params** |
 
-* Get symbol, arg_params, aux_params from symbol and param files
+* Get symbol, arg_params, aux_params from symbol and param files.
 
 ```python
 import mxnet as mx
@@ -71,7 +71,7 @@ for k, v in save_dict.items():
         aux_params[name] = v
 ```
 
-#### PyTorch
+### PyTorch
 
 | Model format | Parameters | Comments | Usage |
 | ------ | ------ |------|------|

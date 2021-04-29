@@ -1,4 +1,5 @@
-# Tuning Strategies
+Tuning Strategies
+=================
 
 ## Introduction
 
@@ -16,9 +17,7 @@ Each strategy generates the next quantization configuration according to its
 logic and the last quantization result. The function of strategies is shown
 below:
 
-<div align="left">
-  <img src="imgs/strategy.png" width="700px" />
-</div>
+![Tuning Strategy](imgs/strategy.png "Strategy Framework")
 
 Strategies begin with an adaptor layer (Framework Adaptor) where the user
 passes a framework-specific model to initialize an instance of the
@@ -33,7 +32,7 @@ tuning phase stops when the `accuracy` criteria is met.
 
 ## Configurations
 
-Detailed configuration templates can be found in [`here`](../lpot/template).
+Detailed configuration templates can be found [here](../lpot/template).
 
 ### Model-specific configurations
 
@@ -307,8 +306,7 @@ tuning:
 
 ```
 
-Customize a New Tuning Strategy
-======================
+## Customize a New Tuning Strategy
 
 Intel® Low Precision Optimization Tool supports new strategy extension by implementing a subclass of `TuneStrategy` class in lpot.strategy package
  and registering this strategy by `strategy_registry` decorator.
@@ -331,4 +329,4 @@ The `next_tune_cfg` function is used to yield the next tune configuration accord
  all the tuning space till a quantization configuration meets pre-defined accuracy criterion.
 
 If the traverse behavior of `TuneStrategy` base class does not meet new strategy requirement, it could re-implement `traverse` function with self own logic.
-An example like this is under [TPE Strategy](../lpot/strategy/tpe.py).
+An example like this is under [TPE Strategy](../lpot/strategy/strategy.py).

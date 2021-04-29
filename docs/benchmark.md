@@ -1,10 +1,11 @@
 Benchmarking
-===============
+============
 
-Benchmarking feature of LPOT is used to measure the model performance with the objective settings, user can get the performance of the models between float32 model and quantized low precision model in same scenarios that they configured in yaml. Benchmarking is always used after a quantization process.
+The benchmarking feature of LPOT is used to measure the model performance with the objective settings; the user can get the performance of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.
 
-# how to use it
-## config evaluation filed in yaml file
+The following examples show how to use benchmarking.
+
+## Config evaluation filed in a yaml file
 
 ```yaml
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
@@ -44,11 +45,11 @@ evaluation:                                          # optional. required if use
           mean: [0.485, 0.456, 0.406]
 ```
 
-in this example config you can see there is 2 sub-fields named 'accuracy' and 'performance', benchmark module will get the accuracy and performance of the model. User can also remove the performance field to only get accuracy of the model or the opposite. It's flexible to configure the benchmark you want.
+The above example config two sub-fields named 'accuracy' and 'performance' which indicates that the benchmark module will get the accuracy and performance of the model. The user can also remove the performance field to only get model accuracy or performance. It's flexible enough to configure the benchmark you want.
 
-## use user specific dataloader to run benchmark
+## Use a user-specific dataloader to run benchmark
 
-In this case, you should config your dataloader and lpot will construct an evaluation function to run the benchmarking. User can also register postprocess transform and metric to get the accuracy.
+In this case, configure your dataloader and LPOT will construct an evaluation function to run the benchmarking. The user can also register the postprocess transform and metric to get the accuracy.
 
 ```python
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
@@ -64,5 +65,5 @@ results = evaluator()
 
 ### Examples
 
-[Benchamrk example](../examples/tensorflow/image_recognition/run_benchmark.sh).
+Refer to the [Benchmark example](../examples/tensorflow/image_recognition/run_benchmark.sh).
 

@@ -1,11 +1,8 @@
-# Original BERT README
-
-Please refer [BERT README](BERT_README.md) and [README](examples/text-classification/README.md)
-
 Step-by-Step
 ============
 
 This document is used to list steps of reproducing PyTorch BERT tuning zoo result.
+Original BERT documents please refer to [BERT README](BERT_README.md) and [README](examples/text-classification/README.md).
 
 > **Note**
 >

@@ -1,5 +1,7 @@
-BF16 Convert
-=========================================
+Mixed Precision
+===============
+
+## BF16 Convert
 
 The recent growth of Deep Learning has driven the development of more complex models that require significantly more compute and memory capabilities. Several low precision numeric formats have been proposed to address the problem. Google's [bfloat16](https://cloud.google.com/tpu/docs/bfloat16) and the [FP16: IEEE](https://en.wikipedia.org/wiki/Half-precision_floating-point_format) half-precision format are two of the most widely used sixteen bit formats. [Mixed precision](https://arxiv.org/abs/1710.03740) training and inference using low precision formats have been developed to reduce compute and bandwidth requirements.
 
@@ -9,11 +11,9 @@ Intel has worked with the TensorFlow development team to enhance TensorFlow to i
 
 Intel® Low Precision Optimization Tool can support op-wise BF16 precision for TensorFlow now. With BF16 support, it can get a mixed precision model with acceptable accuracy and performance or others objective goals. This document will give a simple introduction of TensorFlow BF16 convert transformation and how to use the BF16.
 
-# BF16 Convert Transformation in TensorFlow
+## BF16 Convert Transformation in TensorFlow
 
-<div align="left">
-  <img src="imgs/bf16_convert_tf.png" width="700px" />
-</div>
+![Mixed Precision](imgs/bf16_convert_tf.png "Mixed Precision Graph")
 
 ### Three steps
 
@@ -29,9 +29,9 @@ Intel® Low Precision Optimization Tool can support op-wise BF16 precision for T
    
    After the mixed precision graph generated, there are still some optimization need to be applied to improved the performance, for example `Cast + Cast` and so on. The `BF16Convert` transformer also apply a depth-first method to make it possible to take the ops use `BF16` which can support `BF16` datatype to reduce the insertion of `Cast` op.
 
-# How to use it
+## Using BF16 Convert
 
-> BF16 support has enabled in `intel-tensorflow` [`2.3.0`](https://pypi.org/project/intel-tensorflow/2.3.0/)/[`2.4.0`](https://pypi.org/project/intel-tensorflow/2.4.0/)/[`1.15.0up1`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1)/[`1.15.0up2`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2) and `intel-tensorflow-avx512` [`2.3.0`](https://pypi.org/project/intel-tensorflow-avx512/2.3.0/)/[`2.4.0`](https://pypi.org/project/intel-tensorflow-avx512/2.4.0/). On hardware side, it need the CPU support `avx512_bf16` instruction set. We also support force enable it for debug usage by using set the environment variable `FORCE_BF16=1`. But without above 2 sides support, the poor performance or other problems may expect.
+BF16 support has enabled in `intel-tensorflow` [`2.3.0`](https://pypi.org/project/intel-tensorflow/2.3.0/)/[`2.4.0`](https://pypi.org/project/intel-tensorflow/2.4.0/)/[`1.15.0up1`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1)/[`1.15.0up2`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2) and `intel-tensorflow-avx512` [`2.3.0`](https://pypi.org/project/intel-tensorflow-avx512/2.3.0/)/[`2.4.0`](https://pypi.org/project/intel-tensorflow-avx512/2.4.0/). On hardware side, it need the CPU support `avx512_bf16` instruction set. We also support force enable it for debug usage by using set the environment variable `FORCE_BF16=1`. But without above 2 sides support, the poor performance or other problems may expect.
 
 For now this feature will be auto enabled in the env with `intel-tensorflow` `>=2.3.0` and `avx512_bf16` instruction set support plantform. To get better ferformance with `BF16` datatype, the `intel-tensorflow-avx512` is recommended, or build intel tensorflow (take [tag `v1.15.0up2`](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2) as example) from source code by using below command,  
 
@@ -44,4 +44,4 @@ bazel build --cxxopt=-D_GLIBCXX_USE_CXX11_ABI=0 --copt=-O3 --copt=-Wformat --cop
 ./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/
 ```
 
-By default, `BF16` has been added into activation and weight supported datatype if the tensorflow version and CPU meet the requirements. We can disable it in `yaml` config file by specifying the datatype for activation and weight. For now, only the `Basic` strategy `BF16` support has been tested. 
+By default, `BF16` has been added into activation and weight supported datatype if the tensorflow version and CPU meet the requirements. We can disable it in the yaml config file by specifying the datatype for activation and weight. For now, only the `Basic` strategy `BF16` support has been tested. 

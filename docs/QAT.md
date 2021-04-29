@@ -2,24 +2,27 @@
 
 ## Design
 
-The core idea is that QAT simulates low-precision inference-time computation in the forward pass of the training process. With QAT, all weights and activations are "fake quantized" during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while "aware" of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
+At its core, QAT simulates low-precision inference-time computation in the forward pass of the training process. With QAT, all weights and activations are "fake quantized" during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while "aware" of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
 
-The overall workflow for actually performing QAT is very similar to Post-training static quantization(PTQ):
+The overall workflow for actually performing QAT is very similar to Post-training static quantization (PTQ):
 
-* We can use the same model as PTQ: there is no additional preparation needed for quantization-aware training.
+* We can use the same model as PTQ; no additional preparation is needed for quantization-aware training.
 * We need to use a qconfig specifying what kind of fake-quantization is to be inserted after weights and activations, instead of specifying observers.
 
 ## Usage
+
 ### MobileNetV2 Model Architecture
 
-Please refer to [PTQ Usage](PTQ.md#L8)
+Refer to the [PTQ Model Usage](PTQ.md#mobilenetv2-model-architecture).
 
 ### Helper Functions
 
-Please refer to [PTQ Usage](PTQ.md#L173)
+Refer to [PTQ Helper Functions](PTQ.md#helper-functions).
 
 ### QAT
+
 First, define a training function:
+
 ```python
 def train_one_epoch(model, criterion, optimizer, data_loader, device, ntrain_batches):
     model.train()
@@ -63,10 +66,10 @@ Finally, prepare_qat performs the "fake quantization", preparing the model for q
 ```python
 torch.quantization.prepare_qat(model, inplace=True)
 ```
-Training a quantized model with high accuracy requires accurate modeling of numerics at inference. For quantization-aware training, therefore,modify the training loop by doing the following:
+Training a quantized model with high accuracy requires accurate modeling of numerics at inference. For quantization-aware training, therefore, modify the training loop by doing the following:
 
 * Switch batch norm to use running mean and variance towards the end of training to better match inference numerics.
-* We also freeze the quantizer parameters (scale and zero-point) and fine tune the weights.
+* Freeze the quantizer parameters (scale and zero-point) and fine tune the weights.
 ```python
 num_train_batches = 20
 # Train and check accuracy after each epoch
@@ -89,14 +92,14 @@ Here, we just perform quantization-aware training for a small number of epochs. 
 
 More on quantization-aware training:
 
-* QAT is a super-set of post training quant techniques that allows for more debugging. For example, we can analyze if the accuracy of the model is limited by weight or activation quantization.
-* We can simulate the accuracy of a quantized model in floating point since we are using fake-quantization to model the numerics of actual quantized arithmetic.
-* We can easily mimic post-training quantization..
+* QAT is a super-set of post-training quantization techniques that allows for more debugging. For example, we can analyze if the accuracy of the model is limited by weight or activation quantization.
+* We can simulate the accuracy of a quantized model in floating points since we are using fake-quantization to model the numerics of actual quantized arithmetic.
+* We can easily mimic post-training quantization.
 
 Intel® Low Precision Optimization Tool can support QAT calibration for
-PyTorch models. Refer to [QAT model](../examples/pytorch/image_recognition/imagenet/cpu/qat/README.md) for step-by-step tuning.
+PyTorch models. Refer to the [QAT model](https://github.com/intel/lpot/tree/master/examples/pytorch/image_recognition/imagenet/cpu/qat/README.md) for step-by-step tuning.
 
 ### Example
-View a [QAT example of PyTorch resnet50](../examples/pytorch/image_recognition/imagenet/cpu/qat/README.md).
+View a [QAT example of PyTorch resnet50](/examples/pytorch/image_recognition/imagenet/cpu/qat).
 
 

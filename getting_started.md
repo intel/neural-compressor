@@ -1,23 +1,5 @@
-Introduction to Intel® LPOT 
-===========================
-
-The Intel® Low Precision Optimization Tool (Intel® LPOT) is an open-source Python library that delivers a unified low-precision inference interface across multiple Intel-optimized Deep Learning (DL) frameworks on both CPUs and GPUs. It supports automatic accuracy-driven tuning strategies, along with additional objectives such as optimizing for performance, model size, and memory footprint. It also provides easy extension capability for new backends, tuning strategies, metrics, and objectives.
-
-> **Note**
->
-> GPU support is under development.
-
-| Infrastructure | Workflow |
-| - | - |
-| ![LPOT Infrastructure](./docs/imgs/infrastructure.png "Infrastructure") | ![LPOT Workflow](./docs/imgs/workflow.png "Workflow") |
-
-Supported Intel-optimized DL frameworks are:
-* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP2](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2), [1.15.0 UP1](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1), [2.1.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.1.0), [2.2.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.2.0), [2.3.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.3.0), [2.4.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.4.0)
-* [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.6.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
-* [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0)
-* [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0)
-
-**Visit the Intel® LPOT website at: <https://intel.github.io/lpot>.**
+Getting Started
+===============
 
 ## Installation
 
@@ -105,33 +87,22 @@ pip install -r requirements.txt
 python setup.py install
 ```
 
-## Documentation
+## Tutorials and Examples
 
-**Get Started**
+Read the following resources to learn how to use LPOT.
 
-* [APIs](docs/api-introduction.md) explains Intel® Low Precision Optimization Tool's API.
-* [Transform](docs/transform.md) introduces how to utilize LPOT's built-in data processing and how to develop a custom data processing method. 
-* [Dataset](docs/dataset.md) introduces how to utilize LPOT's built-in dataset and how to develop a custom dataset.
-* [Metric](docs/metric.md) introduces how to utilize LPOT's built-in metrics and how to develop a custom metric.
-* [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize LPOT's features with examples. 
-* [Examples](/examples) are provided to demonstrate the usage of LPOT in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime.
-* [UX](docs/ux.md) is a web-based system used to simplify LPOT usage.
-* [Intel oneAPI AI Analytics Toolkit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) explains the AI Kit components, installation and configuration guides, and instructions for building and running sample apps.
-* [AI and Analytics Samples](https://github.com/oneapi-src/oneAPI-samples/tree/master/AI-and-Analytics) includes code samples for Intel oneAPI libraries.
+### Tutorial
 
-**Deep Dive**
+The [Tutorial](../docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples.
 
-* [Quantization](docs/Quantization.md) are processes that enable inference and training by performing computations at low-precision data types, such as fixed-point integers. LPOT supports Post-Training Quantization ([PTQ](docs/PTQ.md)) and Quantization-Aware Training ([QAT](docs/QAT.md)). Note that ([Dynamic Quantization](docs/dynamic_quantization.md)) currently has limited support.
-* [Pruning](docs/pruning.md) provides a common method for introducing sparsity in weights and activations.
-* [Benchmarking](docs/benchmark.md) introduces how to utilize the benchmark interface of LPOT.
-* [Mixed precision](docs/mixed_precision.md) introduces how to enable mixed precision, including BFP16 and int8 and FP32, on Intel platforms during tuning.
-* [Graph Optimization](docs/graph_optimization.md) introduces how to enable graph optimization for FP3232 and auto-mixed precision.
-* [TensorBoard](docs/tensorboard.md) provides tensor histograms and execution graphs for tuning debugging purposes. 
+### Examples
 
-**Advanced Topics**
+[Examples](examples_readme.md) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime. Hello World examples are also available.
 
-* [Adaptor](docs/adaptor.md) is the interface between LPOT and framework. The method to develop adaptor extension is introduced with ONNX Runtime as example. 
-* [Strategy](docs/tuning_strategies.md) can automatically optimized low-precision recipes for deep learning models to achieve optimal product objectives like inference performance and memory usage with expected accuracy criteria. The method to develop a new strategy is introduced.
+
+## Developer Documentation
+
+View LPOT [Documentation](docs/doclist.rst) for getting started, deep dive, and advanced resources to help you use and develop LPOT.
 
 ## System Requirements
 
@@ -204,7 +175,7 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
 </tbody>
 </table>
 
-### Validated Models
+## Validated Models
 
 Intel® Low Precision Optimization Tool provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](docs/full_model_list.md).
 
@@ -470,11 +441,3 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
   </tr>
 </tbody>
 </table>
-
-## Additional Content
-
-* [Release Information](releases_info.md)
-* [Contribution Guidelines](contributions.md)
-* [Legal](legal_information.md)
-* [Security Policy](security_policy.md)
-* [Intel® LPOT Website](https://intel.github.io/lpot)
