@@ -1,5 +1,6 @@
 import unittest
 import copy
+import re
 import tensorflow as tf
 import numpy as np
 from tensorflow.core.framework import attr_value_pb2
@@ -142,6 +143,16 @@ class TestGraph_util(unittest.TestCase):
         assert self.add_node not in list(result_graph.node)
         assert new_add_node in list(result_graph.node)
 
+
+    def test_freeze_value_regrex(self):
+        sample_str_1 = ';efficientnet-b3/model/blocks_14/se/conv2d/Conv2D_eightbit_requant_range__print__;__requant_min_max:[-2.35420851e+09][2.59383834e+09]'
+        sample_str_2 = ';efficientnet-b3/model/blocks_15/se/conv2d/Conv2D_eightbit_requant_range__print__;__requant_min_max:[-1.254][2.59383834]'
+        print_suffix = '__print__'
+        postfix = '__requant_min_max'
+        res_1 = re.search(r"{};{}:\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, postfix), sample_str_1)
+        res_2 = re.search(r"{};{}:\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, postfix), sample_str_2)
+        self.assertNotEqual(res_1, None)
+        self.assertNotEqual(res_2, None)
 
 if __name__ == "__main__":
     unittest.main()

@@ -79,9 +79,10 @@ class FreezeValueTransformer(GraphRewriterBase):
 
         res = {}
         temp = {}
+        pattern_def = r"{};{}\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, self.postfix)
         for i in lines:
 
-            if not re.search(r"{};{}\[\-?\d+\.?\d*\]".format(print_suffix, self.postfix), i):
+            if not re.search(pattern_def, i):
                 continue
 
             max_line_data = i.split(';')
@@ -109,8 +110,9 @@ class FreezeValueTransformer(GraphRewriterBase):
         lines = self._get_valid_log()
         temp_min = {}
         temp_max = {}
+        pattern_def = r"{};{}:\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, self.postfix)
         for i in lines:
-            if not re.search(r"{};{}:\[\-?\d+\.?\d*\]".format(print_suffix, self.postfix), i):
+            if not re.search(pattern_def, i):
                 continue
 
             max_line_data = i.split(print_suffix + ";" + self.postfix)[-1]
