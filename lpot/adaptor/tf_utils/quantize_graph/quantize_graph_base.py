@@ -572,7 +572,7 @@ class QuantizeNodeBase():
                 ranges[ranges < epsilon] = epsilon
                 min_value[np.abs(min_value) < epsilon] = -epsilon
                 max_value[np.abs(max_value) < epsilon] = epsilon
-                qint8_tensor = (float_tensor * 127.0 / ranges).astype(np.int8)
+                qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
             else:
                 min_value = np.min(float_tensor.flatten())
                 max_value = np.max(float_tensor.flatten())
@@ -623,8 +623,8 @@ class QuantizeNodeBase():
             # When divide by range, qint8_tensor needs to be 3 dim
             # where, 3rd dim should be same dim of ranges
             a, b, c, d = float_tensor.shape
-            qint8_tensor = (float_tensor.reshape(a, b, c * d) * 127.0 /
-                            ranges).astype(np.int8)
+            qint8_tensor = (np.around(float_tensor.reshape(a, b, c * d) * 127.0 /
+                            ranges)).astype(np.int8)
             # get the shape back to 4 dim
             qint8_tensor = qint8_tensor.reshape(a, b, c, d)
         shape = tensor_util.TensorShapeProtoToList(
@@ -644,4 +644,4 @@ class QuantizeNodeBase():
         self.add_output_graph_node(min_node)
         self.add_output_graph_node(max_node)
 
-        return   qint8_const_node.name, min_node.name, max_node.name
+        return qint8_const_node.name, min_node.name, max_node.name
