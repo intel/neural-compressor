@@ -20,6 +20,7 @@ import pickle
 import random
 import yaml
 import sys
+import tempfile
 import numpy as np
 from lpot.model.model import get_model_fwk_name
 from ..conf.config import Conf
@@ -58,8 +59,8 @@ class Graph_Optimization(object):
         self._eval_func = None
 
         self._precisions = 'fp32'
-        self._input = None
-        self._output = None
+        self._input = []
+        self._output = []
         self.conf = None
         self.__init_env(self.conf_name, self.model)
 
@@ -205,7 +206,7 @@ class Graph_Optimization(object):
         default_yaml_template['model']['inputs'] = self._input
         default_yaml_template['model']['outputs'] = self._output
 
-        graph_optimization_yaml_path =  '/tmp/graph_optimization.yaml'
+        graph_optimization_yaml_path = tempfile.mkstemp(suffix='.yaml')[1]
         with open(graph_optimization_yaml_path, 'w', encoding='utf-8') as f:
             yaml.dump(default_yaml_template, f)
         self.conf = Conf(graph_optimization_yaml_path)
