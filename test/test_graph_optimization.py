@@ -55,7 +55,7 @@ def build_fake_yaml_2():
 def build_fake_yaml_3():
     fake_yaml_3 = '''
         model:
-          name: fake_yaml_2
+          name: fake_yaml_3
           framework: tensorflow
           inputs: input
           outputs: op_to_store
@@ -207,16 +207,15 @@ class TestGraphOptimization(unittest.TestCase):
             graph_optimizer.model = output_graph_def
             output_graph = graph_optimizer()
             found_cast_op = False
-
             for i in output_graph.graph_def.node:
                 if i.op == 'Cast':
                     found_cast_op = True
                     break
 
-            self.assertEqual(found_cast_op, True)
+            self.assertEqual(found_cast_op, False)
 
     @disable_random()
-    def test_graph_optimization_without_yaml(self):
+    def test_graph_optimization_with_yaml(self):
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
@@ -257,7 +256,6 @@ class TestGraphOptimization(unittest.TestCase):
                     break
 
             self.assertEqual(found_cast_op, True)
-
 
 class TestGraphOptmizationFP32(unittest.TestCase):
 
@@ -336,8 +334,6 @@ class TestGraphOptmizationFP32(unittest.TestCase):
             from lpot.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.precisions = 'fp32'
-            graph_optimizer.input = 'input'
-            graph_optimizer.output = 'op_to_store'
 
             graph_optimizer.model = output_graph_def
             output_graph = graph_optimizer()
@@ -349,7 +345,6 @@ class TestGraphOptmizationFP32(unittest.TestCase):
                     break
 
             self.assertEqual(found_cast_op, False)
-
 
     @disable_random()
     def test_graph_optimization_fp32_only_with_force_bf16(self):
