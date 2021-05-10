@@ -94,6 +94,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                     if op[1] in combined_cfg.keys() and len(op_cfg) > 0:
                         op_cfgs['op'][op] = copy.deepcopy(
                             self._get_common_cfg(combined_cfg[op[1]], op_cfg))
+                    elif op[1] not in combined_cfg.keys() or not op_cfg:
+                        pass
                     else:
                         op_cfgs['op'][op] = copy.deepcopy(
                             self.opwise_tune_cfgs[op][0])

@@ -43,6 +43,17 @@ The only difference between this and the default mode (FP32 optimization) is tha
       graph_optimizer.model = '/path/to/model'
       optimized_model = graph_optimizer()
   ```
+Note the **fp32** is optional when the **bf16** is set to precisions field. The below example has the identical action under the hardware platform supports bf16, e.g, the CPX platform.
+  ```python
+      from lpot.experimental import Graph_Optimization
+      graph_optimizer = Graph_Optimization()
+      graph_optimizer.precisions = 'bf16'
+      graph_optimizer.model = '/path/to/model'
+      optimized_model = graph_optimizer()
+  ```
+For those platforms without bf16 enabling, like CLX. LPOT also could leverage the graph optimization feature to generate the model under bf16 precision.The usage is just adding the `FORCE_BF16=1` before the cmd.
+e.g, `FORCE_BF16=1 /path/to/executable_lpot_wrapper`. If we don't add such prefix `FORCE_BF16=1`, the LPOT would exit consequently.
+
 
 #### Auto-mixed precision with auto-tuning
 
