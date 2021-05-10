@@ -193,8 +193,8 @@ def validate_graph_node(graph_def, node_names):
     all_node_name = [node.name for node in graph_def.node]
     for user_input_name in node_names:
         if user_input_name not in all_node_name:
-            logger.info("Input node name {} doesn't exist in the model, \
-                please check the yaml.".format(user_input_name))
+            logger.info(str("Input node name {} doesn't exist in the model, " +
+                "please check the yaml.").format(user_input_name))
             return False
     return True
 
