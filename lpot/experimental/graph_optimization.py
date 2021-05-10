@@ -18,19 +18,20 @@
 import os
 import pickle
 import random
-import yaml
-import sys
 import tempfile
+import sys
 import numpy as np
+import yaml
 from lpot.model.model import get_model_fwk_name
 from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
+from ..utils.utility import CpuInfo
 from ..model import BaseModel as LpotModel
 
-class Graph_Optimization(object):
+class Graph_Optimization():
     """Graph_Optimization class automatically searches for optimal quantization recipes for low
        precision model inference, achieving best tuning objectives like inference performance
        within accuracy loss constraints.
@@ -202,7 +203,17 @@ class Graph_Optimization(object):
             logger.info('Graph optimization only supports Tensorflow at current stage.')
             sys.exit(0)
         default_yaml_template['model']['framework'] = get_model_fwk_name(model_obj.root)
-        default_yaml_template['graph_optimization']['precisions'] = [str(self._precisions)]
+
+        if self._precisions == ['bf16'] and not CpuInfo().bf16:
+            if os.getenv('FORCE_BF16') == '1':
+                logger.warning("Graph optimization will be enforced even " \
+                                "the hardware platform doesn't support bf16 instruction.")
+            else:
+                logger.info("Graph optimization exits due to the hardware " \
+                            "doesn't support bf16 instruction.")
+                sys.exit(0)
+
+        default_yaml_template['graph_optimization']['precisions'] = self._precisions
         default_yaml_template['model']['inputs'] = self._input
         default_yaml_template['model']['outputs'] = self._output
 
@@ -217,7 +228,11 @@ class Graph_Optimization(object):
 
     @precisions.setter
     def precisions(self, customized_precisions):
-        self._precisions = customized_precisions
+        if isinstance(customized_precisions, list):
+            self._precisions = sorted([i.strip() for i in customized_precisions])
+        elif isinstance(customized_precisions, str):
+            self._precisions = sorted([i.strip() for i in customized_precisions.split(',')])
+
 
     @property
     def input(self):
@@ -291,6 +306,7 @@ class Graph_Optimization(object):
         if not isinstance(user_model, LpotModel):
             logger.warning('force convert user raw model to lpot model, '
                            'better initialize lpot.common.Model and set....')
+
             self.user_model = LpotModel(user_model)
         else:
             self.user_model = user_model
