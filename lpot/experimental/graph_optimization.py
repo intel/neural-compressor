@@ -289,8 +289,8 @@ class Graph_Optimization(object):
         from .common import Model as LpotModel
 
         if not isinstance(user_model, LpotModel):
-            logger.warning('force convert user raw model to lpot model, \
-                better initialize lpot.common.Model and set....')
+            logger.warning('force convert user raw model to lpot model, '
+                           'better initialize lpot.common.Model and set....')
             self.user_model = LpotModel(user_model)
         else:
             self.user_model = user_model
