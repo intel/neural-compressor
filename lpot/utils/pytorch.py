@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig, get_torch_version
+from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
+from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
@@ -50,8 +51,6 @@ def load(checkpoint_dir, model):
     assert os.path.exists(
         weights_file), "weight file %s didn't exist" % weights_file
 
-    q_model = copy.deepcopy(model.eval())
-
     with open(tune_cfg_file, 'r') as f:
         tune_cfg = yaml.safe_load(f)
 
@@ -75,7 +74,7 @@ def load(checkpoint_dir, model):
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
-        
+
     if version < '1.7':
         white_list = \
             tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
@@ -96,6 +95,25 @@ def load(checkpoint_dir, model):
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
     else:
         op_cfgs = _cfg_to_qconfig(tune_cfg)
+
+    try:                         # pragma: no cover
+        # For torch.fx approach
+        if version >= '1.7':
+            q_model = copy.deepcopy(model.eval())
+            from torch.quantization.quantize_fx import prepare_fx, convert_fx
+            fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs)
+            if version < '1.8':
+                q_model = torch._fx.symbolic_trace(q_model)
+            q_model = prepare_fx(q_model, fx_op_cfgs)
+            q_model = convert_fx(q_model)
+            weights = torch.load(weights_file)
+            q_model.load_state_dict(weights)
+            return q_model
+    except Exception as e:      # pragma: no cover
+        logger.info("The model can't be convert to fx graph! Just use eager mode!")
+        logger.info(str(e))
+
+    q_model = copy.deepcopy(model.eval())
     _propagate_qconfig(q_model, op_cfgs, white_list=white_list, approach=tune_cfg['approach'])
     # sanity check common API misusage
     if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):

@@ -9,6 +9,7 @@ from lpot.adaptor import FRAMEWORKS
 from lpot.model import MODELS
 import lpot.adaptor.pytorch as lpot_torch
 from lpot.experimental import Quantization, common
+from lpot.utils.pytorch import load
 import shutil
 import copy
 import numpy as np
@@ -279,8 +280,6 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(len(df) == 22)
 
     def test_quantization_saved(self):
-        from lpot.utils.pytorch import load
-
         for fake_yaml in ['dynamic_yaml.yaml', 'qat_yaml.yaml', 'ptq_yaml.yaml']:
             if fake_yaml == 'dynamic_yaml.yaml':
                 model = torchvision.models.resnet18()
@@ -391,6 +390,27 @@ class TestPytorchAdaptor(unittest.TestCase):
         qy = model.model(x)
         tol = {'atol': 1e-01, 'rtol': 1e-03}
         self.assertTrue(np.allclose(y, qy, **tol))
+
+    def test_fx_quant(self):
+        version = get_torch_version()
+        if version >= '1.7':
+            model_origin = torchvision.models.resnet18()
+
+            # run fx_quant in lpot and save the quantized GraphModule
+            quantizer = Quantization('ptq_yaml.yaml')
+            dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_func = eval_func
+            quantizer.model = common.Model(model_origin)
+            q_model = quantizer()
+            q_model.save('./saved_fx')
+            
+            # Load configure and weights by lpot.utils
+            model_fx = load("./saved_fx", model_origin)
+            if version >= '1.8':
+                self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+            else:
+                self.assertTrue(isinstance(model_fx, torch._fx.graph_module.GraphModule))
 
 
 @unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")

@@ -125,8 +125,12 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 qconfig = torch.quantization.QConfig(
                     activation=activation_fake_quantize, weight=weights_fake_quantize)
             elif observer_type == 'post_training_static_quant':
-                qconfig = torch.quantization.QConfig(
-                    activation=activation_observer, weight=weights_observer)
+                if key[1] in ['Embedding', 'EmbeddingBag']:     # pragma: no cover
+                    qconfig = torch.quantization.QConfigDynamic(
+                        activation=activation_observer, weight=weights_observer)
+                else:
+                    qconfig = torch.quantization.QConfig(
+                        activation=activation_observer, weight=weights_observer)
             else:
                 version = get_torch_version()
                 if version < '1.6':
@@ -138,6 +142,33 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
             op_qcfgs[key[0]] = qconfig
 
     return op_qcfgs
+
+
+def _cfgs_to_fx_cfgs(op_cfgs):          # pragma: no cover
+    """Convert quantization config to a format that meets the requirements of torch.fx.
+
+        Args:
+            op_cfgs (dict): dictionary of quantization configure for each op
+
+        Returns:
+            fx_op_cfgs (dict): dictionary of quantization configure that meets 
+                               the requirements of torch.fx
+
+    example: fx_op_cfgs = 
+                {"": None, "module_name": [("layer4.1.conv2", per_channel_weight_qconfig)]}
+    """
+    fx_op_cfgs = dict()
+    model_qconfig = torch.quantization.QConfig(
+                        activation=torch.quantization.MinMaxObserver.with_args(
+                                reduce_range=REDUCE_RANGE),
+                        weight=torch.quantization.default_per_channel_weight_observer)
+    fx_op_cfgs[""] = model_qconfig
+    op_tuple_cfg_list = []
+    for key, value in op_cfgs.items():
+        op_tuple = (key, value)
+        op_tuple_cfg_list.append(op_tuple)
+    fx_op_cfgs["module_name"] = op_tuple_cfg_list
+    return fx_op_cfgs
 
 
 def _observer(algorithm, scheme, granularity, dtype, observer_type='post_training_static_quant'):
@@ -158,6 +189,8 @@ def _observer(algorithm, scheme, granularity, dtype, observer_type='post_trainin
     """
     if observer_type == 'post_training_dynamic_quant' and get_torch_version() >= '1.6':
         return torch.quantization.default_dynamic_quant_observer
+    if scheme == 'placeholder':         # pragma: no cover
+        return torch.quantization.PlaceholderObserver
     if algorithm == 'minmax':
         if granularity == 'per_channel':
             observer = torch.quantization.PerChannelMinMaxObserver
@@ -683,14 +716,40 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         assert isinstance(model.model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
-        q_model = copy.deepcopy(model)
-        if self.approach == 'quant_aware_training':
-            q_model.model.train()
 
         # For tensorboard display
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
+
+        try:                            # pragma: no cover
+            # For torch.fx approach
+            if self.version >= '1.7':
+                q_model = copy.deepcopy(model)
+                q_model.model.eval()
+                from torch.quantization.quantize_fx import prepare_fx, convert_fx
+                fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs)
+                if self.version < '1.8' and not \
+                    isinstance(q_model.model, torch._fx.graph_module.GraphModule):
+                    q_model.model = torch._fx.symbolic_trace(q_model.model)
+                q_model.model = prepare_fx(q_model.model, fx_op_cfgs)
+                if self.approach == 'post_training_static_quant':
+                    iterations = tune_cfg.get('calib_iteration', 1)
+                    self.model_calibration(q_model.model, dataloader, iterations)
+                q_model.model = convert_fx(q_model.model)
+                q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
+                if self.is_baseline:
+                    self.is_baseline = False
+                return q_model
+        except Exception as e:          # pragma: no cover
+            logger.info("The model can't be convert to fx graph! Just use eager mode!")
+            logger.info(str(e))
+
+        q_model = copy.deepcopy(model)
+        if self.approach == 'quant_aware_training':
+            q_model.model.train()
+        else:
+            q_model.model.eval()
         if self.version < '1.7' or self.approach != 'quant_aware_training':
             _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list,
                                approach=self.approach)
@@ -705,7 +764,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model.model, dataloader, iterations)
         elif self.approach == 'quant_aware_training':
-            if self.version >= '1.7':
+            if self.version >= '1.7':       # pragma: no cover
                 _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True,
                                    white_list=self.white_list)
                 torch.quantization.convert(q_model.model, mapping=self.q_mapping,

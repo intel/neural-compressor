@@ -156,6 +156,7 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
+    pytorch_version = get_torch_version()
     #args.gpu = gpu
     #affinity = subprocess.check_output("lscpu | grep 'NUMA node[0-9]' | awk '{ print $4 }' | awk -F',' '{ print $1 }'", shell=True)
     #os.environ['OMP_NUM_THREADS'] = '28'
@@ -178,7 +179,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     if args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
-        if args.ipex:
+        if args.ipex or pytorch_version >= '1.7':
             model = models.__dict__[args.arch](pretrained=True)
         else:
             model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
@@ -290,7 +291,8 @@ def main_worker(gpu, ngpus_per_node, args):
             quantizer = Quantization("./conf_ipex.yaml")
         else:
             model.eval()
-            model.fuse_model()
+            if pytorch_version < '1.7':
+                model.fuse_model()
             quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer()
@@ -311,7 +313,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
                                                 "best_configure.json")
             else:
-                model.fuse_model()
+                if pytorch_version < '1.7':
+                    model.fuse_model()
                 from lpot.utils.pytorch import load
                 new_model = load(
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
@@ -324,7 +327,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 except:
                     new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
             else:
-                model.fuse_model()
+                if pytorch_version < '1.7':
+                    model.fuse_model()
                 new_model = model
         validate(val_loader, new_model, criterion, args, ipex_config_path)
         return
@@ -354,6 +358,12 @@ def main_worker(gpu, ngpus_per_node, args):
                 'optimizer' : optimizer.state_dict(),
             }, is_best)
 
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:
+        assert False, 'Got an unknow version of torch: {}'.format(e)
+    return torch_version
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')

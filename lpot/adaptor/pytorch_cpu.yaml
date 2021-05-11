@@ -50,6 +50,21 @@
           'Linear': *cap_s8_1_7_Conv1d,
           'Conv2d': *cap_s8_1_7_Conv1d,
           'Conv3d': *cap_s8_1_7_Conv1d,
+          'EmbeddingBag': &cap_static_s8_1_7_EmbeddingBag {
+            'weight': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym_float'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['placeholder'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Embedding': *cap_static_s8_1_7_EmbeddingBag,
           'QuantStub': {
             'activation': {
                         'dtype': ['uint8'],

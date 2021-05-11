@@ -150,8 +150,8 @@ ops_schema = Schema({
             lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
         Optional('scheme', default=None): And(
             list,
-            # asym_float is only for PyTorch framework
-            lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
+            # asym_float and placeholder is only for PyTorch framework
+            lambda s: all(i in ['asym', 'sym', 'asym_float', 'placeholder'] for i in s)),
         Optional('dtype', default=None): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
