@@ -7,9 +7,30 @@ The Intel® Low Precision Optimization Tool (Intel® LPOT) is an open-source Pyt
 >
 > GPU support is under development.
 
-| Infrastructure | Workflow |
-| - | - |
-| ![LPOT Infrastructure](./docs/imgs/infrastructure.png "Infrastructure") | ![LPOT Workflow](./docs/imgs/workflow.png "Workflow") |
+**Visit the Intel® LPOT online document website at: <https://intel.github.io/lpot>.**
+
+## Architecture
+
+Intel® LPOT features an infrastructure and workflow that aids in increasing performance and faster deployments across architectures. 
+
+
+#### Infrastructure
+
+<a target="_blank" href="docs/imgs/infrastructure.png">
+  <img src="docs/imgs/infrastructure.png" alt="Infrastructure" width=800 height=360>
+</a>
+
+Click the image to enlarge it.
+
+#### Workflow
+
+<a target="_blank" href="docs/imgs/workflow.png">
+  <img src="docs/imgs/workflow.png" alt="Workflow" width=800 height=360>
+</a>
+
+Click the image to enlarge it.
+
+#### Supported Frameworks
 
 Supported Intel-optimized DL frameworks are:
 * [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP2](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2), [1.15.0 UP1](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1), [2.1.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.1.0), [2.2.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.2.0), [2.3.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.3.0), [2.4.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.4.0)
@@ -17,9 +38,41 @@ Supported Intel-optimized DL frameworks are:
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0)
 * [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0)
 
-**Visit the Intel® LPOT website at: <https://intel.github.io/lpot>.**
 
 ## Installation
+
+Select the installation based on your operating system.
+
+
+### Linux Installation
+
+You can install LPOT using one of three options: Install just the LPOT library
+from binary or source, or get the Intel-optimized framework together with the
+LPOT library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+
+#### Option 1 Install from binary
+
+  ```Shell
+  # install stable version from pip
+  pip install lpot
+
+  # install nightly version from pip
+  pip install -i https://test.pypi.org/simple/ lpot
+
+  # install stable version from from conda
+  conda install lpot -c conda-forge -c intel 
+  ```
+
+#### Option 2 Install from source
+
+  ```Shell
+  git clone https://github.com/intel/lpot.git
+  cd lpot
+  pip install -r requirements.txt
+  python setup.py install
+  ```
+
+#### Option 3 Install from AI Kit
 
 The Intel® LPOT library is released as part of the
 [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html) (AI Kit).
@@ -29,36 +82,7 @@ LPOT, the AI Kit includes Intel-optimized versions of deep learning frameworks
 (such as TensorFlow and PyTorch) and high-performing Python libraries to
 streamline end-to-end data science and AI workflows on Intel architectures.
 
-
-### Linux Installation
-
-You can install just the LPOT library from binary or source, or you can get
-the Intel-optimized framework together with the LPOT library by installing the
-Intel® oneAPI AI Analytics Toolkit.
-
-#### Install from binary
-
-  ```Shell
-  # install from pip
-  pip install lpot
-
-  # install from conda
-  conda install lpot -c conda-forge -c intel 
-  ```
-
-#### Install from source
-
-  ```Shell
-  git clone https://github.com/intel/lpot.git
-  cd lpot
-  pip install -r requirements.txt
-  python setup.py install
-  ```
-
-#### Install from AI Kit
-
-The AI Kit, which includes the LPOT
-library, is distributed through many common channels,
+The AI Kit is distributed through many common channels,
 including from Intel's website, YUM, APT, Anaconda, and more.
 Select and [download](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html)
 the AI Kit distribution package that's best suited for you and follow the
@@ -85,18 +109,22 @@ The following prerequisites and requirements must be satisfied for a successful 
     conda create -n lpot python=3.7
     conda activate lpot
     ```
+**Installation options**
 
-#### Install from binary
+#### Option 1 Install from binary
 
   ```Shell
-  # install from pip
+  # install stable version from pip
   pip install lpot
+
+  # install nightly version from pip
+  pip install -i https://test.pypi.org/simple/ lpot
 
   # install from conda
   conda install lpot -c conda-forge -c intel 
   ```
 
-#### Install from source
+#### Option 2 Install from source
 
 ```shell
 git clone https://github.com/intel/lpot.git
