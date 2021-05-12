@@ -30,17 +30,29 @@ class FuseGeluOptimizer(GraphRewriterBase):
         cur_graph.graph = self.model
 
         graph_info = cur_graph.parse_graph()
-
+        #Below code is relative to expression on
+        # https://github.com/IntelAI/models/blob/master/models/language_modeling/tensorflow/
+        # bert_large/inference/generic_ops.py#L105
         target_nodes = cur_graph.query_fusion_pattern_nodes(
+            [["Pow"], ["Mul"], ["AddV2"], ["Mul"], ["Tanh"], ["AddV2"], ["Mul"], ['Mul']])
+
+        if not target_nodes:
+            target_nodes = cur_graph.query_fusion_pattern_nodes(
             [["Pow"], ["Mul"], ["AddV2"], ["Mul"], ["Tanh"], ["AddV2"], ["Mul"]])
+
         for node_combination in target_nodes:
+            match_node_length = len(node_combination)
             pow_node = graph_info[node_combination[0]].node
             mul_1_node = graph_info[node_combination[1]].node
             addv2_1_node = graph_info[node_combination[2]].node
             mul_2_node = graph_info[node_combination[3]].node
             tanh_node = graph_info[node_combination[4]].node
             addv2_2_node = graph_info[node_combination[5]].node
-            mul_3_node = graph_info[node_combination[6]].node
+            if match_node_length == 8:
+                mul_3_node = graph_info[node_combination[6]].node
+            else:
+                mul_3_node = graph_info[node_combination[7]].node
+
             gelu_input_name = None
             pow_const_node_name = None
             pow_value = None
@@ -91,14 +103,17 @@ class FuseGeluOptimizer(GraphRewriterBase):
                 continue
 
             rest_mul_node = None
-            for i in mul_3_node.input:
-                i = Helper.node_name_from_input(i)
-                if i != addv2_2_node.name:
-                    rest_mul_node = graph_info[i].node
-                    break
+            if match_node_length == 8:
+                for i in mul_3_node.input:
+                    i = Helper.node_name_from_input(i)
+                    if i != addv2_2_node.name:
+                        rest_mul_node = graph_info[i].node
+                        break
 
-            if not rest_mul_node or rest_mul_node.op != 'Mul':
-                continue
+                if not rest_mul_node or rest_mul_node.op != 'Mul':
+                    continue
+            else:
+                rest_mul_node = graph_info[node_combination[6]].node
 
             rest_mul_valid = False
             rest_mul_const_node_name = None
