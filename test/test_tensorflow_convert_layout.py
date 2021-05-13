@@ -21,13 +21,13 @@ class TestConvertLayout(unittest.TestCase):
 
         from lpot.adaptor.tf_utils.graph_rewriter.generic import convert_layout
         convert = convert_layout.ConvertLayoutOptimizer(output_graph_def, [out_name])
-        if tf.version.VERSION >= '2.4.0':
-            convert_graph = convert.do_transformation()
-            for node in convert_graph.node:
-                if node.op == 'Conv2D' and 'data_format' in node.attr:
+        convert_graph = convert.do_transformation()
+        for node in convert_graph.node:
+            if node.op == 'Conv2D' and 'data_format' in node.attr:
+                if tf.version.VERSION >= '2.4.0':
                     self.assertEqual(node.attr['data_format'].s, b'NHWC')
-        else:
-            self.assertRaises(AssertionError, convert.do_transformation)
+                else:
+                    self.assertEqual(node.attr['data_format'].s, b'NCHW')
 
 if __name__ == "__main__":
     unittest.main()

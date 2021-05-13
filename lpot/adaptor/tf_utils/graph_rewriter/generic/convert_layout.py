@@ -15,14 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from lpot.utils.utility import dump_elapsed_time
-from ..graph_base import GraphRewriterBase
+import tensorflow as tf
 from tensorflow.python.training import saver as saver_lib
 from tensorflow.core.protobuf import config_pb2
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.grappler import tf_optimizer
 from tensorflow.core.protobuf import meta_graph_pb2
-import tensorflow as tf
+from lpot.utils.utility import dump_elapsed_time
+from ..graph_base import GraphRewriterBase
 
 class ConvertLayoutOptimizer(GraphRewriterBase):
     """ The layout convertion optimizer, convert NCHW to NHWC format.
@@ -47,9 +47,7 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
                node.attr['data_format'].s == b'NCHW':
                 convert = True
                 break
-        if convert:
-            assert tf.version.VERSION >= '2.4.0', 'layout convert is only supported by \
-                                                            tensorflow 2.4.0 and above'
+        if convert and tf.version.VERSION >= '2.4.0':
 
             g = tf.Graph()
             with g.as_default(): # pylint: disable=not-context-manager
@@ -61,7 +59,7 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
                     fetch_collection.node_list.value.append(fetch) # pylint: disable=no-member
                 meta_graph.collection_def["train_op"].CopyFrom( # pylint: disable=no-member
                                                     fetch_collection) # pylint: disable=no-member
-                
+
             config = config_pb2.ConfigProto()
             convert = rewriter_config_pb2.RewriterConfig.NCHW_TO_NHWC # pylint: disable=no-member
             config.graph_options.rewrite_options.CopyFrom( # pylint: disable=no-member
@@ -80,5 +78,5 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
 
             optimized_graph = tf_optimizer.OptimizeGraph(config, meta_graph)
             return optimized_graph
-        else:
-            return self.model
+
+        return self.model
