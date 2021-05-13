@@ -109,6 +109,27 @@ function run_benchmark {
         model_name_or_path=$input_model 
         SCRIPTS=examples/language-modeling/run_clm_tune.py
         approach="post_training_static_quant"
+    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "flaubert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "barthez_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "longformer_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "layoutlm_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "deberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "squeezebert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
     fi
 
     if [[ ${int8} == "true" ]]; then

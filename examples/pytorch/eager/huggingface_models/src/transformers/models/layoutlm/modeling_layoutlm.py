@@ -40,6 +40,8 @@ from ...modeling_utils import (
 from ...utils import logging
 from .configuration_layoutlm import LayoutLMConfig
 
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -154,6 +156,9 @@ class LayoutLMSelfAttention(nn.Module):
             self.distance_embedding = nn.Embedding(2 * config.max_position_embeddings - 1, self.attention_head_size)
 
         self.is_decoder = config.is_decoder
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
@@ -170,8 +175,9 @@ class LayoutLMSelfAttention(nn.Module):
         past_key_value=None,
         output_attentions=False,
     ):
+        hidden_states = self.quant1(hidden_states)
         mixed_query_layer = self.query(hidden_states)
-
+        mixed_query_layer = self.dequant(mixed_query_layer)
         # If this is instantiated as a cross-attention module, the keys
         # and values come from an encoder; the attention mask needs to be
         # such that the encoder's padding tokens are not attended to.
@@ -183,17 +189,24 @@ class LayoutLMSelfAttention(nn.Module):
             value_layer = past_key_value[1]
             attention_mask = encoder_attention_mask
         elif is_cross_attention:
+            encoder_hidden_states = self.quant2(encoder_hidden_states)
             key_layer = self.transpose_for_scores(self.key(encoder_hidden_states))
+            key_layer = self.dequant(key_layer)
             value_layer = self.transpose_for_scores(self.value(encoder_hidden_states))
+            value_layer = self.dequant(value_layer)
             attention_mask = encoder_attention_mask
         elif past_key_value is not None:
             key_layer = self.transpose_for_scores(self.key(hidden_states))
+            key_layer = self.dequant(key_layer)
             value_layer = self.transpose_for_scores(self.value(hidden_states))
+            value_layer = self.dequant(value_layer)
             key_layer = torch.cat([past_key_value[0], key_layer], dim=2)
             value_layer = torch.cat([past_key_value[1], value_layer], dim=2)
         else:
             key_layer = self.transpose_for_scores(self.key(hidden_states))
+            key_layer = self.dequant(key_layer)
             value_layer = self.transpose_for_scores(self.value(hidden_states))
+            value_layer = self.dequant(value_layer)
 
         query_layer = self.transpose_for_scores(mixed_query_layer)
 
@@ -262,9 +275,13 @@ class LayoutLMSelfOutput(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -329,9 +346,13 @@ class LayoutLMIntermediate(nn.Module):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.intermediate_act_fn(hidden_states)
         return hidden_states
 
@@ -343,9 +364,13 @@ class LayoutLMOutput(nn.Module):
         self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -539,12 +564,16 @@ class LayoutLMPooler(nn.Module):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
+        first_token_tensor = self.quant(first_token_tensor)
         pooled_output = self.dense(first_token_tensor)
+        pooled_output = self.dequant(pooled_output)
         pooled_output = self.activation(pooled_output)
         return pooled_output
 
@@ -559,9 +588,13 @@ class LayoutLMPredictionHeadTransform(nn.Module):
         else:
             self.transform_act_fn = config.hidden_act
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)   
         hidden_states = self.dense(hidden_states)
+        # hidden_states = self.dequant(hidden_states)
         hidden_states = self.transform_act_fn(hidden_states)
         hidden_states = self.LayerNorm(hidden_states)
         return hidden_states
@@ -581,10 +614,14 @@ class LayoutLMLMPredictionHead(nn.Module):
 
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
         self.decoder.bias = self.bias
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
         hidden_states = self.transform(hidden_states)
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.decoder(hidden_states)
+        # hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 
@@ -966,6 +1003,8 @@ class LayoutLMForSequenceClassification(LayoutLMPreTrainedModel):
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def get_input_embeddings(self):
         return self.layoutlm.embeddings.word_embeddings
@@ -1043,8 +1082,9 @@ class LayoutLMForSequenceClassification(LayoutLMPreTrainedModel):
         pooled_output = outputs[1]
 
         pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
-
+        pooled_output = self.quant(pooled_output)
+        logits = self.classifier(pooled_output) 
+        logits = self.dequant(logits)
         loss = None
         if labels is not None:
             if self.num_labels == 1:
@@ -1084,6 +1124,8 @@ class LayoutLMForTokenClassification(LayoutLMPreTrainedModel):
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def get_input_embeddings(self):
         return self.layoutlm.embeddings.word_embeddings
@@ -1160,7 +1202,9 @@ class LayoutLMForTokenClassification(LayoutLMPreTrainedModel):
         sequence_output = outputs[0]
 
         sequence_output = self.dropout(sequence_output)
+        sequence_output = self.quant(sequence_output)
         logits = self.classifier(sequence_output)
+        logits = self.dequant(logits)
 
         loss = None
         if labels is not None:

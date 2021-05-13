@@ -35,7 +35,8 @@ from ...modeling_outputs import (
 from ...modeling_utils import PreTrainedModel
 from ...utils import logging
 from .configuration_squeezebert import SqueezeBertConfig
-
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -363,12 +364,16 @@ class SqueezeBertPooler(nn.Module):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
+        first_token_tensor = self.quant(first_token_tensor)
         pooled_output = self.dense(first_token_tensor)
+        pooled_output = self.dequant(pooled_output)
         pooled_output = self.activation(pooled_output)
         return pooled_output
 
@@ -403,10 +408,15 @@ class SqueezeBertLMPredictionHead(nn.Module):
 
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
         self.decoder.bias = self.bias
+        
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
         hidden_states = self.transform(hidden_states)
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.decoder(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 
@@ -735,6 +745,8 @@ class SqueezeBertForSequenceClassification(SqueezeBertPreTrainedModel):
         self.classifier = nn.Linear(config.hidden_size, self.config.num_labels)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
     @add_code_sample_docstrings(
@@ -779,7 +791,9 @@ class SqueezeBertForSequenceClassification(SqueezeBertPreTrainedModel):
         pooled_output = outputs[1]
 
         pooled_output = self.dropout(pooled_output)
+        pooled_output = self.quant(pooled_output)
         logits = self.classifier(pooled_output)
+        logits = self.dequant(logits)
 
         loss = None
         if labels is not None:
@@ -1000,6 +1014,8 @@ class SqueezeBertForQuestionAnswering(SqueezeBertPreTrainedModel):
         self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
     @add_code_sample_docstrings(
@@ -1047,8 +1063,9 @@ class SqueezeBertForQuestionAnswering(SqueezeBertPreTrainedModel):
         )
 
         sequence_output = outputs[0]
-
+        sequence_output = self.quant(sequence_output)
         logits = self.qa_outputs(sequence_output)
+        logits = self.dequant(logits)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)

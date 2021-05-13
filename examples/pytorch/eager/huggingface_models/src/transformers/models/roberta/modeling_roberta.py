@@ -21,6 +21,8 @@ import torch
 import torch.nn as nn
 import torch.utils.checkpoint
 from torch.nn import CrossEntropyLoss, MSELoss
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 from ...activations import ACT2FN, gelu
 from ...file_utils import (
@@ -167,6 +169,9 @@ class RobertaSelfAttention(nn.Module):
             self.distance_embedding = nn.Embedding(2 * config.max_position_embeddings - 1, self.attention_head_size)
 
         self.is_decoder = config.is_decoder
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
@@ -183,7 +188,9 @@ class RobertaSelfAttention(nn.Module):
         past_key_value=None,
         output_attentions=False,
     ):
+        hidden_states = self.quant1(hidden_states)
         mixed_query_layer = self.query(hidden_states)
+        mixed_query_layer = self.dequant(mixed_query_layer)
 
         # If this is instantiated as a cross-attention module, the keys
         # and values come from an encoder; the attention mask needs to be
@@ -196,17 +203,19 @@ class RobertaSelfAttention(nn.Module):
             value_layer = past_key_value[1]
             attention_mask = encoder_attention_mask
         elif is_cross_attention:
-            key_layer = self.transpose_for_scores(self.key(encoder_hidden_states))
-            value_layer = self.transpose_for_scores(self.value(encoder_hidden_states))
+            key_layer = self.transpose_for_scores(self.dequant(self.key(
+                self.quant2(encoder_hidden_states))))
+            value_layer = self.transpose_for_scores(self.dequant(self.value(
+                self.quant2(encoder_hidden_states))))
             attention_mask = encoder_attention_mask
         elif past_key_value is not None:
-            key_layer = self.transpose_for_scores(self.key(hidden_states))
-            value_layer = self.transpose_for_scores(self.value(hidden_states))
+            key_layer = self.transpose_for_scores(self.dequant(self.key(hidden_states)))
+            value_layer = self.transpose_for_scores(self.dequant(self.value(hidden_states)))
             key_layer = torch.cat([past_key_value[0], key_layer], dim=2)
             value_layer = torch.cat([past_key_value[1], value_layer], dim=2)
         else:
-            key_layer = self.transpose_for_scores(self.key(hidden_states))
-            value_layer = self.transpose_for_scores(self.value(hidden_states))
+            key_layer = self.transpose_for_scores(self.dequant(self.key(hidden_states)))
+            value_layer = self.transpose_for_scores(self.dequant(self.value(hidden_states)))
 
         query_layer = self.transpose_for_scores(mixed_query_layer)
 
@@ -275,9 +284,13 @@ class RobertaSelfOutput(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -342,9 +355,13 @@ class RobertaIntermediate(nn.Module):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.intermediate_act_fn(hidden_states)
         return hidden_states
 
@@ -356,9 +373,13 @@ class RobertaOutput(nn.Module):
         self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -552,12 +573,16 @@ class RobertaPooler(nn.Module):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
+        first_token_tensor = self.quant(first_token_tensor)
         pooled_output = self.dense(first_token_tensor)
+        pooled_output = self.dequant(pooled_output)
         pooled_output = self.activation(pooled_output)
         return pooled_output
 
@@ -1370,14 +1395,20 @@ class RobertaClassificationHead(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
         x = self.dropout(x)
+        x = self.quant(x)
         x = self.dense(x)
+        x = self.dequant(x)
         x = torch.tanh(x)
         x = self.dropout(x)
+        x = self.quant(x)
         x = self.out_proj(x)
+        x = self.dequant(x)
         return x
 
 

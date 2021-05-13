@@ -43,6 +43,8 @@ from .file_utils import (
 from .generation_utils import GenerationMixin
 from .utils import logging
 
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -1589,6 +1591,9 @@ class SequenceSummary(nn.Module):
         if hasattr(config, "summary_last_dropout") and config.summary_last_dropout > 0:
             self.last_dropout = nn.Dropout(config.summary_last_dropout)
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub() 
+
     def forward(
         self, hidden_states: torch.FloatTensor, cls_index: Optional[torch.LongTensor] = None
     ) -> torch.FloatTensor:
@@ -1627,7 +1632,9 @@ class SequenceSummary(nn.Module):
             raise NotImplementedError
 
         output = self.first_dropout(output)
+        output = self.quant(output)
         output = self.summary(output)
+        output = self.dequant(output)
         output = self.activation(output)
         output = self.last_dropout(output)
 

@@ -54,6 +54,8 @@ from ...modeling_utils import (
 from ...utils import logging
 from .configuration_xlm import XLMConfig
 
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -125,6 +127,10 @@ class MultiHeadAttention(nn.Module):
         self.v_lin = nn.Linear(dim, dim)
         self.out_lin = nn.Linear(dim, dim)
         self.pruned_heads = set()
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.quant3 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def prune_heads(self, heads):
         attention_head_size = self.dim // self.n_heads
@@ -164,15 +170,22 @@ class MultiHeadAttention(nn.Module):
         def unshape(x):
             """  compute context """
             return x.transpose(1, 2).contiguous().view(bs, -1, self.n_heads * dim_per_head)
-
+        input = self.quant1(input)
         q = shape(self.q_lin(input))  # (bs, n_heads, qlen, dim_per_head)
+        q = self.dequant(q)
         if kv is None:
             k = shape(self.k_lin(input))  # (bs, n_heads, qlen, dim_per_head)
             v = shape(self.v_lin(input))  # (bs, n_heads, qlen, dim_per_head)
+            k = self.dequant(k)
+            v = self.dequant(v)
         elif cache is None or self.layer_id not in cache:
             k = v = kv
+            k = self.quant2(k)
+            v = self.quant2(v)
             k = shape(self.k_lin(k))  # (bs, n_heads, qlen, dim_per_head)
             v = shape(self.v_lin(v))  # (bs, n_heads, qlen, dim_per_head)
+            k = self.dequant(k)
+            v = self.dequant(v)
 
         if cache is not None:
             if self.layer_id in cache:
@@ -199,7 +212,7 @@ class MultiHeadAttention(nn.Module):
         context = torch.matmul(weights, v)  # (bs, n_heads, qlen, dim_per_head)
         context = unshape(context)  # (bs, qlen, dim)
 
-        outputs = (self.out_lin(context),)
+        outputs = (self.dequant(self.out_lin(self.quant3(context))),)
         if output_attentions:
             outputs = outputs + (weights,)
         return outputs
@@ -214,14 +227,21 @@ class TransformerFFN(nn.Module):
         self.act = gelu if config.gelu_activation else F.relu
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, input):
         return apply_chunking_to_forward(self.ff_chunk, self.chunk_size_feed_forward, self.seq_len_dim, input)
 
     def ff_chunk(self, input):
+        input = self.quant1(input)
         x = self.lin1(input)
+        x = self.dequant(x)
         x = self.act(x)
+        x = self.quant2(x)
         x = self.lin2(x)
+        x = self.dequant(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         return x
 
@@ -650,12 +670,16 @@ class XLMPredLayer(nn.Module):
                 div_value=config.asm_div_value,
                 head_bias=True,  # default is False
             )
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, x, y=None):
         """Compute the loss, and optionally the scores."""
         outputs = ()
         if self.asm is False:
+            x = self.quant(x)
             scores = self.proj(x)
+            scores = self.dequant(scores)
             outputs = (scores,) + outputs
             if y is not None:
                 loss = F.cross_entropy(scores.view(-1, self.n_words), y.view(-1), reduction="elementwise_mean")
@@ -869,6 +893,9 @@ class XLMForQuestionAnsweringSimple(XLMPreTrainedModel):
 
         self.init_weights()
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
@@ -921,8 +948,9 @@ class XLMForQuestionAnsweringSimple(XLMPreTrainedModel):
         )
 
         sequence_output = transformer_outputs[0]
-
+        sequence_output = self.quant(sequence_output)
         logits = self.qa_outputs(sequence_output)
+        logits = self.dequant(logits)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
@@ -1092,6 +1120,9 @@ class XLMForTokenClassification(XLMPreTrainedModel):
 
         self.init_weights()
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
@@ -1140,7 +1171,9 @@ class XLMForTokenClassification(XLMPreTrainedModel):
         sequence_output = outputs[0]
 
         sequence_output = self.dropout(sequence_output)
+        sequence_output = self.quant(sequence_output)
         logits = self.classifier(sequence_output)
+        logits = self.dequant(logits)
 
         loss = None
         if labels is not None:
@@ -1184,6 +1217,8 @@ class XLMForMultipleChoice(XLMPreTrainedModel):
         self.logits_proj = nn.Linear(config.num_labels, 1)
 
         self.init_weights()
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, num_choicec, sequence_length"))
     @add_code_sample_docstrings(
@@ -1251,7 +1286,9 @@ class XLMForMultipleChoice(XLMPreTrainedModel):
         )
         output = transformer_outputs[0]
         logits = self.sequence_summary(output)
+        logits = self.quant(logits)
         logits = self.logits_proj(logits)
+        logits = self.dequant(logits)
         reshaped_logits = logits.view(-1, num_choices)
 
         loss = None

@@ -33,7 +33,8 @@ from ...modeling_outputs import (
 from ...modeling_utils import PreTrainedModel
 from ...utils import logging
 from .configuration_deberta import DebertaConfig
-
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -57,6 +58,8 @@ class ContextPooler(nn.Module):
         self.dense = nn.Linear(config.pooler_hidden_size, config.pooler_hidden_size)
         self.dropout = StableDropout(config.pooler_dropout)
         self.config = config
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
@@ -64,7 +67,9 @@ class ContextPooler(nn.Module):
 
         context_token = hidden_states[:, 0]
         context_token = self.dropout(context_token)
+        context_token = self.quant(context_token)
         pooled_output = self.dense(context_token)
+        pooled_output = self.dequant(pooled_output)
         pooled_output = ACT2FN[self.config.pooler_hidden_act](pooled_output)
         return pooled_output
 
@@ -238,9 +243,13 @@ class DebertaSelfOutput(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = DebertaLayerNorm(config.hidden_size, config.layer_norm_eps)
         self.dropout = StableDropout(config.hidden_dropout_prob)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -291,9 +300,13 @@ class DebertaIntermediate(nn.Module):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.intermediate_act_fn(hidden_states)
         return hidden_states
 
@@ -305,9 +318,13 @@ class DebertaOutput(nn.Module):
         self.LayerNorm = DebertaLayerNorm(config.hidden_size, config.layer_norm_eps)
         self.dropout = StableDropout(config.hidden_dropout_prob)
         self.config = config
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -524,7 +541,11 @@ class DisentangledSelfAttention(torch.nn.Module):
                 self.pos_q_proj = torch.nn.Linear(config.hidden_size, self.all_head_size)
 
         self.dropout = StableDropout(config.attention_probs_dropout_prob)
-
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.quant3 = QuantStub()
+        self.quant4 = QuantStub()
+        self.dequant = DeQuantStub()
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, -1)
         x = x.view(*new_x_shape)
@@ -569,7 +590,10 @@ class DisentangledSelfAttention(torch.nn.Module):
 
         """
         if query_states is None:
+            hidden_states = self.quant1(hidden_states)
             qp = self.in_proj(hidden_states)  # .split(self.all_head_size, dim=-1)
+            hidden_states = self.dequant(hidden_states)
+            qp = self.dequant(qp)
             query_layer, key_layer, value_layer = self.transpose_for_scores(qp).chunk(3, dim=-1)
         else:
 
@@ -605,12 +629,16 @@ class DisentangledSelfAttention(torch.nn.Module):
 
         # bxhxlxd
         if self.talking_head:
+            attention_scores = self.quant2(attention_scores)
             attention_scores = self.head_logits_proj(attention_scores.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+            attention_scores = self.dequant(attention_scores)
 
         attention_probs = XSoftmax.apply(attention_scores, attention_mask, -1)
         attention_probs = self.dropout(attention_probs)
         if self.talking_head:
+            attention_probs = self.quant3(attention_probs)
             attention_probs = self.head_weights_proj(attention_probs.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+            attention_probs = self.dequant(attention_probs)
 
         context_layer = torch.matmul(attention_probs, value_layer)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
@@ -638,12 +666,15 @@ class DisentangledSelfAttention(torch.nn.Module):
         rel_embeddings = rel_embeddings[
             self.max_relative_positions - att_span : self.max_relative_positions + att_span, :
         ].unsqueeze(0)
+        rel_embeddings = self.quant4(rel_embeddings)
         if "c2p" in self.pos_att_type or "p2p" in self.pos_att_type:
             pos_key_layer = self.pos_proj(rel_embeddings)
+            pos_key_layer = self.dequant(pos_key_layer)
             pos_key_layer = self.transpose_for_scores(pos_key_layer)
 
         if "p2c" in self.pos_att_type or "p2p" in self.pos_att_type:
             pos_query_layer = self.pos_q_proj(rel_embeddings)
+            pos_query_layer = self.dequant(pos_query_layer)
             pos_query_layer = self.transpose_for_scores(pos_query_layer)
 
         score = 0
@@ -1125,6 +1156,9 @@ class DebertaForSequenceClassification(DebertaPreTrainedModel):
 
         self.init_weights()
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def get_input_embeddings(self):
         return self.deberta.get_input_embeddings()
 
@@ -1172,7 +1206,9 @@ class DebertaForSequenceClassification(DebertaPreTrainedModel):
         encoder_layer = outputs[0]
         pooled_output = self.pooler(encoder_layer)
         pooled_output = self.dropout(pooled_output)
+        pooled_output = self.quant(pooled_output)
         logits = self.classifier(pooled_output)
+        logits = self.dequant(logits)
 
         loss = None
         if labels is not None:

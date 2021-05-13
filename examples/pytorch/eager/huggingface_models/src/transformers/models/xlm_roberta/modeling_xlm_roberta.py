@@ -27,7 +27,8 @@ from ..roberta.modeling_roberta import (
     RobertaModel,
 )
 from .configuration_xlm_roberta import XLMRobertaConfig
-
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 

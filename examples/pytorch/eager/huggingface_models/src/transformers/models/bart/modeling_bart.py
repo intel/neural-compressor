@@ -46,6 +46,8 @@ from ...modeling_utils import PreTrainedModel
 from ...utils import logging
 from .configuration_bart import BartConfig
 
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -149,6 +151,12 @@ class BartAttention(nn.Module):
         self.v_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.q_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.quant3 = QuantStub()
+        self.quant4 = QuantStub()
+        self.quant5 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def _shape(self, tensor: torch.Tensor, seq_len: int, bsz: int):
         return tensor.view(bsz, seq_len, self.num_heads, self.head_dim).transpose(1, 2).contiguous()
@@ -170,7 +178,7 @@ class BartAttention(nn.Module):
         bsz, tgt_len, embed_dim = hidden_states.size()
 
         # get query proj
-        query_states = self.q_proj(hidden_states) * self.scaling
+        query_states = self.dequant(self.q_proj(self.quant1(hidden_states))) * self.scaling
         # get key, value proj
         if is_cross_attention and past_key_value is not None:
             # reuse k,v, cross_attentions
@@ -178,18 +186,27 @@ class BartAttention(nn.Module):
             value_states = past_key_value[1]
         elif is_cross_attention:
             # cross_attentions
+            key_value_states = self.quant2(key_value_states)
             key_states = self._shape(self.k_proj(key_value_states), -1, bsz)
             value_states = self._shape(self.v_proj(key_value_states), -1, bsz)
+            key_states = self.dequant(key_states)
+            value_states = self.dequant(value_states)
         elif past_key_value is not None:
             # reuse k, v, self_attention
+            hidden_states = self.quant3(hidden_states)
             key_states = self._shape(self.k_proj(hidden_states), -1, bsz)
             value_states = self._shape(self.v_proj(hidden_states), -1, bsz)
+            key_states = self.dequant(key_states)
+            value_states = self.dequant(value_states)
             key_states = torch.cat([past_key_value[0], key_states], dim=2)
             value_states = torch.cat([past_key_value[1], value_states], dim=2)
         else:
             # self_attention
+            hidden_states = self.quant4(hidden_states)
             key_states = self._shape(self.k_proj(hidden_states), -1, bsz)
             value_states = self._shape(self.v_proj(hidden_states), -1, bsz)
+            key_states = self.dequant(key_states)
+            value_states = self.dequant(value_states)
 
         if self.is_decoder:
             # if cross_attention save Tuple(torch.Tensor, torch.Tensor) of all cross attention key/value_states.
@@ -259,8 +276,9 @@ class BartAttention(nn.Module):
             .transpose(1, 2)
             .reshape(bsz, tgt_len, embed_dim)
         )
-
+        attn_output = self.quant5(attn_output)
         attn_output = self.out_proj(attn_output)
+        attn_output = self.dequant(attn_output)
 
         return attn_output, attn_weights_reshaped, past_key_value
 
@@ -281,6 +299,9 @@ class BartEncoderLayer(nn.Module):
         self.fc1 = nn.Linear(self.embed_dim, config.encoder_ffn_dim)
         self.fc2 = nn.Linear(config.encoder_ffn_dim, self.embed_dim)
         self.final_layer_norm = nn.LayerNorm(self.embed_dim)
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(
         self,
@@ -312,9 +333,9 @@ class BartEncoderLayer(nn.Module):
         hidden_states = self.self_attn_layer_norm(hidden_states)
 
         residual = hidden_states
-        hidden_states = self.activation_fn(self.fc1(hidden_states))
+        hidden_states = self.activation_fn(self.dequant(self.fc1(self.quant1(hidden_states))))
         hidden_states = F.dropout(hidden_states, p=self.activation_dropout, training=self.training)
-        hidden_states = self.fc2(hidden_states)
+        hidden_states = self.dequant(self.fc2(self.quant2(hidden_states)))
         hidden_states = F.dropout(hidden_states, p=self.dropout, training=self.training)
         hidden_states = residual + hidden_states
         hidden_states = self.final_layer_norm(hidden_states)
@@ -357,6 +378,9 @@ class BartDecoderLayer(nn.Module):
         self.fc1 = nn.Linear(self.embed_dim, config.decoder_ffn_dim)
         self.fc2 = nn.Linear(config.decoder_ffn_dim, self.embed_dim)
         self.final_layer_norm = nn.LayerNorm(self.embed_dim)
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(
         self,
@@ -429,9 +453,9 @@ class BartDecoderLayer(nn.Module):
 
         # Fully Connected
         residual = hidden_states
-        hidden_states = self.activation_fn(self.fc1(hidden_states))
+        hidden_states = self.activation_fn(self.dequant(self.fc1(self.quant1(hidden_states))))
         hidden_states = F.dropout(hidden_states, p=self.activation_dropout, training=self.training)
-        hidden_states = self.fc2(hidden_states)
+        hidden_states = self.dequant(self.fc2(self.quant2(hidden_states)))
         hidden_states = F.dropout(hidden_states, p=self.dropout, training=self.training)
         hidden_states = residual + hidden_states
         hidden_states = self.final_layer_norm(hidden_states)
@@ -461,13 +485,20 @@ class BartClassificationHead(nn.Module):
         self.dense = nn.Linear(input_dim, inner_dim)
         self.dropout = nn.Dropout(p=pooler_dropout)
         self.out_proj = nn.Linear(inner_dim, num_classes)
+        self.quant1 = QuantStub()
+        self.quant2 = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states: torch.Tensor):
         hidden_states = self.dropout(hidden_states)
+        hidden_states = self.quant1(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = torch.tanh(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        hidden_states = self.quant2(hidden_states)
         hidden_states = self.out_proj(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 
@@ -1212,6 +1243,9 @@ class BartForConditionalGeneration(BartPretrainedModel):
 
         self.init_weights()
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def get_encoder(self):
         return self.model.get_encoder()
 
@@ -1476,6 +1510,8 @@ class BartForQuestionAnswering(BartPretrainedModel):
         self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
 
         self.model._init_weights(self.qa_outputs)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(BART_INPUTS_DOCSTRING)
     @add_code_sample_docstrings(
@@ -1533,8 +1569,9 @@ class BartForQuestionAnswering(BartPretrainedModel):
         )
 
         sequence_output = outputs[0]
-
+        sequence_output = self.quant(sequence_output)
         logits = self.qa_outputs(sequence_output)
+        logits = self.dequant(logits)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)

@@ -97,6 +97,41 @@ function run_tuning {
         model_type='reformer'
         SCRIPTS=examples/language-modeling/run_clm_tune.py
         approach="post_training_static_quant"
+    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='xlm-roberta'
+        approach="post_training_static_quant"
+    elif [ "${topology}" = "flaubert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='flaubert'
+        approach="post_training_static_quant"
+    elif [ "${topology}" = "barthez_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='barthez'
+        approach="post_training_static_quant"
+    elif [ "${topology}" = "longformer_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='longformer'
+        approach="post_training_static_quant"
+    elif [ "${topology}" = "layoutlm_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='layoutlm'
+        approach="post_training_static_quant"
+    elif [ "${topology}" = "deberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='deberta'
+        approach="post_training_static_quant"
+    elif [ "${topology}" = "squeezebert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='squeezebert'
+        approach="post_training_static_quant"
     fi
 
     sed -i "/name:/s|name:.*|name: $model_type|g" conf.yaml

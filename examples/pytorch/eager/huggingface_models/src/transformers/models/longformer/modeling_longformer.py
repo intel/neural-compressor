@@ -41,6 +41,8 @@ from ...modeling_utils import (
 from ...utils import logging
 from .configuration_longformer import LongformerConfig
 
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 
@@ -549,6 +551,9 @@ class LongformerSelfAttention(nn.Module):
 
         self.one_sided_attn_window_size = attention_window // 2
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def forward(
         self,
         hidden_states,
@@ -571,10 +576,17 @@ class LongformerSelfAttention(nn.Module):
         """
         hidden_states = hidden_states.transpose(0, 1)
 
+        hidden_states = self.quant(hidden_states)
         # project hidden states
         query_vectors = self.query(hidden_states)
+        query_vectors = self.dequant(query_vectors)
+
         key_vectors = self.key(hidden_states)
+        key_vectors = self.dequant(key_vectors)
+
         value_vectors = self.value(hidden_states)
+        value_vectors = self.dequant(value_vectors)
+        hidden_states = self.dequant(hidden_states) 
 
         seq_len, batch_size, embed_dim = hidden_states.size()
         assert (
@@ -1007,9 +1019,16 @@ class LongformerSelfAttention(nn.Module):
         ]
 
         # global key, query, value
+        global_attn_hidden_states = self.quant(global_attn_hidden_states)
         global_query_vectors_only_global = self.query_global(global_attn_hidden_states)
+        global_query_vectors_only_global = self.dequant(global_query_vectors_only_global)
+
+        hidden_states = self.quant(hidden_states)
         global_key_vectors = self.key_global(hidden_states)
+        global_key_vectors = self.dequant(global_key_vectors)
+
         global_value_vectors = self.value_global(hidden_states)
+        global_value_vectors = self.dequant(global_value_vectors)
 
         # normalize
         global_query_vectors_only_global /= math.sqrt(self.head_dim)
@@ -1094,8 +1113,13 @@ class LongformerSelfOutput(nn.Module):
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -1159,9 +1183,13 @@ class LongformerIntermediate(nn.Module):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
             self.intermediate_act_fn = config.hidden_act
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.intermediate_act_fn(hidden_states)
         return hidden_states
 
@@ -1173,9 +1201,13 @@ class LongformerOutput(nn.Module):
         self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.quant = QuantStub() 
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
@@ -1315,12 +1347,16 @@ class LongformerPooler(nn.Module):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
-
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+        
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
         first_token_tensor = hidden_states[:, 0]
+        first_token_tensor = self.quant(first_token_tensor)
         pooled_output = self.dense(first_token_tensor)
+        pooled_output = self.dequant(first_token_tensor)
         pooled_output = self.activation(pooled_output)
         return pooled_output
 
@@ -1340,8 +1376,13 @@ class LongformerLMHead(nn.Module):
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
         self.decoder.bias = self.bias
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def forward(self, features, **kwargs):
+        features = self.quant(features)
         x = self.dense(features)
+        x = self.dequant(x)
         x = gelu(x)
         x = self.layer_norm(x)
 
@@ -1884,14 +1925,20 @@ class LongformerClassificationHead(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, **kwargs):
         hidden_states = hidden_states[:, 0, :]  # take <s> token (equiv. to [CLS])
         hidden_states = self.dropout(hidden_states)
+        hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
+        hidden_states = self.dequant(hidden_states)
         hidden_states = torch.tanh(hidden_states)
         hidden_states = self.dropout(hidden_states)
+        hidden_states = self.quant(hidden_states)
         output = self.out_proj(hidden_states)
+        output = self.dequant(output)
         return output
 
 
@@ -1914,6 +1961,9 @@ class LongformerForQuestionAnswering(LongformerPreTrainedModel):
         self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
+
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @replace_return_docstrings(output_type=LongformerQuestionAnsweringModelOutput, config_class=_CONFIG_FOR_DOC)
@@ -1995,7 +2045,9 @@ class LongformerForQuestionAnswering(LongformerPreTrainedModel):
 
         sequence_output = outputs[0]
 
+        sequence_output = self.quant(sequence_output)
         logits = self.qa_outputs(sequence_output)
+        logits = self.dequant(logits)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
@@ -2052,6 +2104,9 @@ class LongformerForTokenClassification(LongformerPreTrainedModel):
 
         self.init_weights()
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
@@ -2096,7 +2151,9 @@ class LongformerForTokenClassification(LongformerPreTrainedModel):
         sequence_output = outputs[0]
 
         sequence_output = self.dropout(sequence_output)
+        sequence_output = self.quant(sequence_output)
         logits = self.classifier(sequence_output)
+        logits = self.dequant(logits)
 
         loss = None
         if labels is not None:
@@ -2140,6 +2197,9 @@ class LongformerForMultipleChoice(LongformerPreTrainedModel):
         self.classifier = nn.Linear(config.hidden_size, 1)
 
         self.init_weights()
+
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
 
     @add_start_docstrings_to_model_forward(
         LONGFORMER_INPUTS_DOCSTRING.format("batch_size, num_choices, sequence_length")
@@ -2215,7 +2275,9 @@ class LongformerForMultipleChoice(LongformerPreTrainedModel):
         pooled_output = outputs[1]
 
         pooled_output = self.dropout(pooled_output)
+        pooled_output = self.quant(pooled_output)
         logits = self.classifier(pooled_output)
+        logits = self.dequant(logits)
         reshaped_logits = logits.view(-1, num_choices)
 
         loss = None

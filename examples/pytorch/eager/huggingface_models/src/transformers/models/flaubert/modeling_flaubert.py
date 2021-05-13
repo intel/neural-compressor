@@ -34,7 +34,8 @@ from ..xlm.modeling_xlm import (
     get_masks,
 )
 from .configuration_flaubert import FlaubertConfig
-
+from torch.quantization import \
+    QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
 
 logger = logging.get_logger(__name__)
 

@@ -413,12 +413,16 @@ def main():
                     break
             return acc
         from lpot.experimental import Quantization, common
+        from transformers.data.data_collator import default_data_collator_lpot
         quantizer = Quantization("./conf.yaml")
-        calibration_dataset = quantizer.dataset('bert', dataset=eval_dataset,
-                                         task="classifier", model_type=config.model_type)
+        # calibration_dataset = quantizer.dataset('bert', dataset=eval_dataset,
+        #                                  task="classifier", model_type=config.model_type)
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(
-                                     calibration_dataset, batch_size=training_args.per_device_eval_batch_size)
+                                     eval_dataset, 
+                                     batch_size=training_args.per_device_eval_batch_size,
+                                     collate_fn=default_data_collator_lpot
+                                     )
         quantizer.eval_func = eval_func_for_lpot
         q_model = quantizer()
         q_model.save(training_args.tuned_checkpoint)
