@@ -122,7 +122,7 @@ def _post_eval_hook(self, model, **args):
 ### Examples
 
 ```shell
-  examples/pytorch/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh 
+  examples/pytorch/eager/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh 
 ```
 
 ## TensorFlow Tensorboard

@@ -97,9 +97,9 @@ More on quantization-aware training:
 * We can easily mimic post-training quantization.
 
 Intel® Low Precision Optimization Tool can support QAT calibration for
-PyTorch models. Refer to the [QAT model](https://github.com/intel/lpot/tree/master/examples/pytorch/image_recognition/imagenet/cpu/qat/README.md) for step-by-step tuning.
+PyTorch models. Refer to the [QAT model](https://github.com/intel/lpot/tree/master/examples/pytorch/eager/image_recognition/imagenet/cpu/qat/README.md) for step-by-step tuning.
 
 ### Example
-View a [QAT example of PyTorch resnet50](/examples/pytorch/image_recognition/imagenet/cpu/qat).
+View a [QAT example of PyTorch resnet50](/examples/pytorch/eager/image_recognition/imagenet/cpu/qat).
 
 
