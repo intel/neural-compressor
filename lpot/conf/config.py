@@ -27,6 +27,34 @@ import itertools
 from collections import OrderedDict
 from .dotdict import DotDict
 
+def constructor_register(cls):
+    yaml_key = "!{}".format(cls.__name__)
+
+    def constructor(loader, node):
+        instance = cls.__new__(cls)
+        yield instance
+
+        state = loader.construct_mapping(node, deep=True)
+        instance.__init__(**state)
+
+    yaml.add_constructor(
+        yaml_key,
+        constructor,
+        yaml.SafeLoader,
+    )
+    return cls
+
+@constructor_register
+class MagnitudePruneModifier():
+    def __init__(self, start_epoch, end_epoch, update_frequency=1, initial_sparsity=0.0,
+                 target_sparsity=0.97, mask_type='unstructured', params=[]):
+        self.start_epoch = start_epoch
+        self.end_epoch = end_epoch
+        self.update_frequency = update_frequency
+        self.target_sparsity = target_sparsity
+        self.initial_sparsity = initial_sparsity
+        self.mask_type = mask_type
+        self.params = params
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -48,13 +76,10 @@ def _valid_prune_epoch(key, scope, error):
         assert scope["start_epoch"] <= scope["end_epoch"]
 
 def _valid_prune_sparsity(key, scope, error):
-    if "init_sparsity" in scope and "target_sparsity" in scope:
-        assert scope["init_sparsity"] <= scope["target_sparsity"]
-        if "start_epoch" in scope and "end_epoch" in scope:
-            if scope["start_epoch"] == scope["end_epoch"]:
-                assert scope["init_sparsity"] == scope["target_sparsity"]
-    elif "init_sparsity" in scope:
-        assert scope["init_sparsity"] >= 0
+    if "initial_sparsity" in scope and "target_sparsity" in scope:
+        assert scope["initial_sparsity"] <= scope["target_sparsity"]
+    elif "initial_sparsity" in scope:
+        assert scope["initial_sparsity"] >= 0
     else:
         assert scope["target_sparsity"] < 1
 
@@ -131,17 +156,6 @@ def percent_to_float(data):
     else:
         assert isinstance(data, float), 'This field should be float, int or percent string'
     return data
-
-policy_schema = Schema({
-    Optional('weights', default=None): list,
-    Optional('method', default=None): And(str, lambda s: s in ["per_channel", "per_tensor"]),
-    Optional('init_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
-    Hook('target_sparsity', handler=_valid_prune_sparsity): object,
-    Optional('target_sparsity', default=0.5): float,
-    Optional("start_epoch", default=0): int,
-    Hook('end_epoch', handler=_valid_prune_epoch): object,
-    Optional('end_epoch', default=4): int
-})
 
 ops_schema = Schema({
     Optional('weight', default=None): {
@@ -420,6 +434,50 @@ configs_schema = Schema({
     Optional('kmp_affinity', default='granularity=fine,verbose,compact,1,0'): str,
 })
 
+optimizer_schema = Schema({
+    Optional('SGD'): {
+        'learning_rate': float,
+        'momentum': float,
+        'nesterov': bool,
+        'weight_decay': float
+    }
+})
+
+criterion_schema = Schema({
+    Optional('CrossEntropyLoss'): {
+        'reduction': And(str, lambda s: s in ['None', 'Sum', 'Mean'])
+    }
+})
+
+train_schema = Schema({
+    'optimizer': optimizer_schema,
+    'criterion': criterion_schema,
+    'dataloader': dataloader_schema,
+    Optional('start_epoch'): int,
+    Optional('end_epoch'): int,
+    Optional('iteration'): int,
+    Optional('frequency'): int,
+    # TODO reserve for multinode training support
+    Optional('hostfile'): str    
+})
+
+weight_magnitude_schema = Schema({
+    Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
+    Optional('target_sparsity', default=0.97): float,
+    Optional('modifiers'): And(list, lambda s: all(isinstance(i, MagnitudePruneModifier) for i in s))
+})
+
+gradient_sensativity_schema = Schema({
+    Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
+    Optional('target_sparsity', default=0.97): float,
+    Optional('modifiers'): list
+})
+
+approach_schema = Schema({
+    Optional('weight_magnitude'): weight_magnitude_schema,
+    Optional('gradient_sensativity'): gradient_sensativity_schema
+})
+
 schema = Schema({
     'model': {
         'name': str,
@@ -442,6 +500,7 @@ schema = Schema({
             lambda s: s in ['post_training_static_quant',
                             'post_training_dynamic_quant',
                             'quant_aware_training']),
+        Optional('train', default=None): train_schema,
         Optional('advance', default=None): {
             Optional('bias_correction'): And(str, lambda s: s in ['weight_empirical']),
         },
@@ -598,16 +657,8 @@ schema = Schema({
         },
     },
     Optional('pruning'): {
-        Optional("magnitude"): {
-            str: policy_schema
-        },
-        Optional('start_epoch', default=0): int,
-        Hook('end_epoch', handler=_valid_prune_epoch): object,
-        Optional('end_epoch', default=4): int,
-        Optional('frequency', default=2): int,
-        Optional('init_sparsity', default=0.0): And(float, lambda s: s < 1.0 and s >= 0.0),
-        Hook("target_sparsity", handler=_valid_prune_sparsity): object,
-        Optional('target_sparsity', default=0.5): And(float, lambda s: s < 1.0 and s >= 0.0)
+        Optional("train"): train_schema,
+        Optional("approach"): approach_schema
     }
 })
 
@@ -639,10 +690,7 @@ class Conf(object):
         """
         try:
             with open(cfg_fname, 'r') as f:
-                # remove '- ' sign from yaml, it's to avoid the side effect
-                # of the syntax as user may not quite familiar with this and
-                # arbitrarily add it or not.
-                content = f.read().replace('- ', '  ')
+                content = f.read()
                 cfg = yaml.safe_load(content)
                 return schema.validate(cfg)
         except Exception as e:

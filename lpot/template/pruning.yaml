@@ -13,26 +13,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module:                                              # mandatory. lpot uses this module name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. lpot uses this module name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50v1.5
   framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 
 pruning:                                             # mandotory only for pruning.
-  magnitude:
-    prune1:
-      weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
+  train:
+    start_epoch: 0
+    end_epoch: 10
+    iteration: 100
+    frequency: 2
+    hostfile: /path/to/host/file                     # reserved for multi-node training.
+    
+    dataloader:
+      batch_size: 256
+      dataset:
+        ImageFolder:
+          root: /path/to/imagenet/train
+      transform:
+        RandomResizedCrop:
+          size: 224
+        RandomHorizontalFlip:
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225] 
+    criterion:
+      CrossEntropyLoss:
+        reduction: None
+    optimizer:
+      SGD:
+        learning_rate: 0.1
+        momentum: 0.9
+        weight_decay: 0.0004
+        nesterov: False
+
+  approach:
+    weight_magnitude:
+      initial_sparsity: 0.0
       target_sparsity: 0.3
-      end_epoch: [1, 5, 2]
-    prune2:
-      weights: ['layer1.0.conv3.weight', 'layer1.0.conv4.weight']
-      target_sparsity: 0.2
-  start_epoch: 0
-  end_epoch: 20
-  frequency: 2
-  init_sparsity: 0
-  target_sparsity: 0.5
+      modifiers:
+        - !MagnitudePruneModifier
+            initial_sparsity: 0.0
+            final_sparsity: 0.97
+            mask_type: unstructured
+            params: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
+            start_epoch: 0
+            end_epoch: 2
+            update_frequency: 0.1
 
 evaluation:                                          # optional. used to config evaluation process. 
   accuracy:                                          # optional. used to evaluate accuracy of passing model.
@@ -54,10 +84,6 @@ evaluation:                                          # optional. used to config 
         Normalize:
           mean: [0.485, 0.456, 0.406]
           std: [0.229, 0.224, 0.225]
-    postprocess:                                     # optional. required if output of model could not directly feed into metric evaluator.
-      transform:
-        Reshape:
-          shape: [-1, 1001]
   performance:                                       # optional. used to benchmark performance of passing model.
     warmup: 10
     iteration: 100

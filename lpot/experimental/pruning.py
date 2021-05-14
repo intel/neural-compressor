@@ -17,10 +17,12 @@
 
 
 from ..conf.config import Conf
-from ..policy import POLICIES
+from ..pruning_modifier import PRUNING_MODIFIERS
 from ..utils import logger
 from ..utils.utility import singleton
+from ..utils.create_obj_from_config import create_train_func
 from ..model import BaseModel as LpotModel
+from ..adaptor import FRAMEWORKS
 
 @singleton
 class Pruning(object):
@@ -43,26 +45,27 @@ class Pruning(object):
         self.framework = self.cfg.model.framework.lower()
         self._model = None
         self._calib_func = None
+        self._calib_dataloader = None
 
     def on_epoch_begin(self, epoch):
         """ called on the begining of epochs"""
-        for policy in self.policies:
-            policy.on_epoch_begin(epoch)
+        for pruning_modifier in self.pruning_modifiers:
+            pruning_modifier.on_epoch_begin(epoch)
 
     def on_batch_begin(self, batch_id):
         """ called on the begining of batches"""
-        for policy in self.policies:
-            policy.on_batch_begin(batch_id)
+        for pruning_modifier in self.pruning_modifiers:
+            pruning_modifier.on_batch_begin(batch_id)
 
     def on_batch_end(self):
         """ called on the end of batches"""
-        for policy in self.policies:
-            policy.on_batch_end()
+        for pruning_modifier in self.pruning_modifiers:
+            pruning_modifier.on_batch_end()
 
     def on_epoch_end(self):
         """ called on the end of epochs"""
-        for policy in self.policies:
-            policy.on_epoch_end()
+        for pruning_modifier in self.pruning_modifiers:
+            pruning_modifier.on_epoch_end()
         stats, sparsity = self._model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
@@ -109,26 +112,84 @@ class Pruning(object):
 
         """
         framework_specific_info = {'device': self.cfg.device,
-                                   'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'q_dataloader': None}
+
         if self.framework == 'tensorflow':
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
+        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+
         assert isinstance(self._model, LpotModel), 'need set lpot Model for quantization....'
 
-        policies = {}
-        for policy in POLICIES:
-            for name in self.cfg["pruning"][policy]:
-                policies[name] = {"policy_name": policy,
-                                  "policy_spec": self.cfg["pruning"][policy][name]}
-        self.policies = []
-        for name, policy_spec in policies.items():
-            print(policy_spec)
-            self.policies.append(POLICIES[policy_spec["policy_name"]](
-                self._model, policy_spec["policy_spec"], self.cfg))
+        self.pruning_modifiers = []
+        for name in self.cfg['pruning']['approach']:
+            assert name = 'weight_magnitude', 'now we only support weight_magnitude'
+            for magnitude_prune_modifier in self.cfg['pruning']['approach']['weight_magnitude']: 
+                self.pruning_modifiers.append(PRUNING_MODIFIERS['MagnitudePruningModifier'])(\
+                                        self._model, \
+                                        magnitude_prune_modifier, 
+                                        self.cfg['pruning']['approach']['weight_magnitude'])
+            # TODO, add gradient_sensativity
+
+        if self._calib_dataloader is None and self._calib_func is None:
+            calib_dataloader_cfg = deep_get(cfg, 'pruning.train.dataloader')
+            assert calib_dataloader_cfg is not None, \
+                   'dataloader field of train field of pruning section ' \
+                   'in yaml file should be configured as calib_dataloader property is NOT set!'
+
+            self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg) 
+
+        if self._calib_func == None:
+            # train section of pruning section in yaml file should be configured.
+            train_cfg = deep_get(cfg, 'pruning.train')
+            assert train_cfg, "train field of pruning section in yaml file must " \
+                              "be configured for pruning if q_func is NOT set."
+            hooks = {
+                'on_epoch_start': self.on_epoch_begin,
+                'on_epoch_end': self.on_epoch_end,
+                'on_batch_start': self.on_batch_start,
+                'on_batch_end': self.on_batch_end,
+            }
+            self._calib_func = create_train_func(self.framework, self.calib_dataloader, self.adaptor, train_cfg, hooks=hooks)
+
         return self._calib_func(self._model.model)
+
+    @property
+    def calib_dataloader(self):
+        return self._calib_dataloader
+
+    @calib_dataloader.setter
+    def calib_dataloader(self, dataloader):
+        """Set Data loader for calibration, mandatory for post-training quantization.
+           It is iterable and the batched data should consists of a tuple like
+           (input, label) if the calibration dataset containing label, or yield (input, _)
+           for label-free calibration dataset, the input in the batched data will be used for
+           model inference, so it should satisfy the input format of specific model.
+           In calibration process, label of data loader will not be used and
+           neither the postprocess and metric. User only need to set
+           calib_dataloader when calib_dataloader can not be configured from yaml file.
+
+           Args:
+               dataloader(generator): user are supported to set a user defined dataloader
+                                      which meet the requirements that can yield tuple of
+                                      (input, label)/(input, _) batched data. Another good
+                                      practice is to use lpot.experimental.common.DataLoader
+                                      to initialize a lpot dataloader object. Notice
+                                      lpot.experimental.common.DataLoader is just a wrapper of the
+                                      information needed to build a dataloader, it can't yield
+                                      batched data and only in this setter method
+                                      a 'real' calib_dataloader will be created,
+                                      the reason is we have to know the framework info
+                                      and only after the Quantization object created then
+                                      framework infomation can be known.
+                                      Future we will support creating iterable dataloader
+                                      from lpot.experimental.common.DataLoader
+        """
+        from .common import _generate_common_dataloader
+        self._calib_dataloader = _generate_common_dataloader(
+            dataloader, self.framework)
 
     @property
     def model(self):
@@ -178,5 +239,4 @@ class Pruning(object):
                          set eval_dataloader with metric configured or directly eval_func 
                          to make evaluation of the model executed.
         """
-        logger.warning('q_func is to be deprecated, please construct q_dataloader....')
         self._calib_func = user_q_func

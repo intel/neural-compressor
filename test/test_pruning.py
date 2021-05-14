@@ -11,26 +11,46 @@ from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoa
 
 def build_fake_yaml():
     fake_yaml = """
-       model:
-           name: imagenet_prune
-           framework: pytorch
-      
-       pruning:
-         magnitude:
-           prune1:
-             weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
-             target_sparsity: 0.3
-             start_epoch: 1
-         start_epoch: 0
-         end_epoch: 4
-         frequency: 1
-         init_sparsity: 0.05
-         target_sparsity: 0.25
-       
-       evaluation:
-         accuracy:
-           metric:
-             topk: 1                                    # tuning metrics: accuracy
+    model:
+      name: imagenet_prune
+      framework: pytorch
+    
+    pruning:
+      train:
+        start_epoch: 0
+        end_epoch: 4
+        dataloader:
+          batch_size: 30
+          dataset:
+            ImageFolder:
+              root: /path/to/training/dataset
+        optimizer:
+          SGD:
+            learning_rate: 0.1
+            momentum: 0.1
+            nesterov: True
+            weight_decay: 0.1
+        criterion:
+          CrossEntropyLoss:
+            reduction: Sum
+      approach:
+        weight_magnitude:
+          initial_sparsity: 0.0
+          target_sparsity: 0.97
+          modifiers:
+            - !MagnitudePruneModifier
+                start_epoch: 1
+                end_epoch: 3
+                mask_type: unstructured
+                params: ['layer1.0.conv1.weight']
+    
+            - !MagnitudePruneModifier
+                start_epoch: 0
+                end_epoch: 4
+                target_sparsity: 0.6
+                mask_type: unstructured
+                update_frequency: 2
+                params: ['layer1.0.conv2.weight']
     """
     with open('fake.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)

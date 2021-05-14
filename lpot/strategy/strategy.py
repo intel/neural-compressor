@@ -26,7 +26,7 @@ import yaml
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils.utility import Timeout, fault_tolerant_file, equal_dicts
-from ..utils.create_obj_from_config import create_eval_func
+from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
@@ -152,6 +152,14 @@ class TuneStrategy(object):
                 {"workspace_path": os.path.dirname(self.deploy_path)})
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
+
+        if self.q_func == None and self.cfg.quantization.approach == 'quant_aware_training':
+            train_cfg = self.cfg.quantization.train
+            assert train_cfg, "train field of quantization section in yaml file must " \
+                              "be configured for quantization aware training if q_func is NOT set."
+            assert self.calib_dataloader, "dataloader field of train field of quantization " \
+                                          "section in yaml file must be configured."
+            self.q_func = create_train_func(self.framework, self.calib_dataloader, self.adaptor, train_cfg)
 
         self.baseline = None
         self.last_tune_result = None

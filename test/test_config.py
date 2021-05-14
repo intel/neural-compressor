@@ -406,25 +406,45 @@ class TestConf(unittest.TestCase):
     def test_prune(self):
         test = '''
         model:
-          name: prune_yaml 
+          name: imagenet_prune
           framework: pytorch
-
-        device: cpu
-
+        
         pruning:
-          magnitude:
-            prune1:
-              weights: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
-              target_sparsity: 0.3
-              end_epoch: 1
-            prune2:
-              weights: ['layer1.0.conv3.weight', 'layer1.0.conv4.weight']
-              target_sparsity: 0.2
-          start_epoch: 0
-          end_epoch: 20
-          frequency: 2
-          init_sparsity: 0.0
-          target_sparsity: 0.5
+          train:
+            start_epoch: 0
+            end_epoch: 4
+            dataloader:
+              batch_size: 30
+              dataset:
+                ImageFolder:
+                  root: /path/to/training/dataset
+            optimizer:
+              SGD:
+                learning_rate: 0.1
+                momentum: 0.1   
+                nesterov: True
+                weight_decay: 0.1     
+            criterion:
+              CrossEntropyLoss:
+                reduction: Sum
+          approach:
+            weight_magnitude:
+              initial_sparsity: 0.0
+              target_sparsity: 0.97
+              modifiers:
+                - !MagnitudePruneModifier
+                    start_epoch: 1
+                    end_epoch: 3
+                    mask_type: unstructured
+                    params: ['layer1.0.conv1.weight']
+        
+                - !MagnitudePruneModifier
+                    start_epoch: 0
+                    end_epoch: 4
+                    target_sparsity: 0.6
+                    mask_type: unstructured
+                    update_frequency: 2
+                    params: ['layer1.0.conv2.weight']
         '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')

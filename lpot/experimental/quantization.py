@@ -117,12 +117,27 @@ class Quantization(object):
                                                              eval_dataloader_cfg)
 
         approach_cfg = deep_get(cfg, 'quantization.approach')
-        if self._calib_func is None:
-            if self._calib_dataloader is None and approach_cfg != 'post_training_dynamic_quant':
+        if self._calib_func:
+            assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
+                   'set for {}'.format(approach_cfg)
+            assert self._calib_dataloader is None, 'q_func has provided by user, calib_dataloader ' \
+                   'property should not be set.'
+
+        if self._calib_dataloader is None and self._calib_func is None:
+            if approach_cfg == 'post_training_static_quant':
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
                 assert calib_dataloader_cfg is not None, \
-                       "dataloader field of calibration field of quantization section " \
-                       "in yaml file should be configured as calib_dataloader is None!"
+                       'dataloader field of calibration field of quantization section ' \
+                       'in yaml file should be configured as calib_dataloader property is NOT set!'
+            elif approach_cfg == 'quant_aware_training':
+                calib_dataloader_cfg = deep_get(cfg, 'quantization.train.dataloader')
+                assert calib_dataloader_cfg is not None, \
+                       'dataloader field of train field of quantization section ' \
+                       'in yaml file should be configured as calib_dataloader property is NOT set!'
+            else:
+                calib_dataloader_cfg = None
+
+            if calib_dataloader_cfg:
                 self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
 
         strategy = cfg.tuning.strategy.name.lower()
