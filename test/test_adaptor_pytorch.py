@@ -1,5 +1,6 @@
 
 import torch
+import torch.nn as nn
 import torch.nn.quantized as nnq
 from torch.quantization import QuantStub, DeQuantStub
 import torchvision
@@ -403,10 +404,62 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             quantizer.model = common.Model(model_origin)
             q_model = quantizer()
-            q_model.save('./saved_fx')
+            q_model.save('./saved_static_fx')
             
             # Load configure and weights by lpot.utils
-            model_fx = load("./saved_fx", model_origin)
+            model_fx = load("./saved_static_fx", model_origin)
+            if version >= '1.8':
+                self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+            else:
+                self.assertTrue(isinstance(model_fx, torch._fx.graph_module.GraphModule))
+
+    def test_fx_quant(self):
+
+        # Model Definition
+        class LSTMModel(nn.Module):
+            """Container module with an encoder, a recurrent module, and a decoder."""
+
+            def __init__(self, ntoken, ninp, nhid, nlayers, dropout=0.5):
+                super(LSTMModel, self).__init__()
+                self.drop = nn.Dropout(dropout)
+                self.encoder = nn.Embedding(ntoken, ninp)
+                self.rnn = nn.LSTM(ninp, nhid, nlayers, dropout=dropout)
+                self.decoder = nn.Linear(nhid, ntoken)
+                self.init_weights()
+                self.nhid = nhid
+                self.nlayers = nlayers
+
+            def init_weights(self):
+                initrange = 0.1
+                self.encoder.weight.data.uniform_(-initrange, initrange)
+                self.decoder.bias.data.zero_()
+                self.decoder.weight.data.uniform_(-initrange, initrange)
+
+            def forward(self, input, hidden):
+                emb = self.drop(self.encoder(input))
+                output, hidden = self.rnn(emb, hidden)
+                output = self.drop(output)
+                decoded = self.decoder(output)
+                return decoded, hidden
+
+        version = get_torch_version()
+        if version >= '1.7':
+            model = LSTMModel(
+                ntoken = 10,
+                ninp = 512,
+                nhid = 256,
+                nlayers = 5,
+            )
+
+            # run fx_quant in lpot and save the quantized GraphModule
+            model.eval()
+            quantizer = Quantization('dynamic_yaml.yaml')
+            quantizer.model = common.Model(model)
+            q_model = quantizer()
+            q_model.save('./saved_dynamic_fx')
+
+            # Load configure and weights by lpot.utils
+            model_fx = load("./saved_dynamic_fx", model)
             if version >= '1.8':
                 self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             else:

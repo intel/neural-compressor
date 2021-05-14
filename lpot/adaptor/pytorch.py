@@ -106,7 +106,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                     weights_observer = _observer(algorithm, scheme, granularity, dtype)
             else:
                 if observer_type == 'quant_aware_training':
-                    weights_fake_quantize = torch.quantization.default_per_channel_weight_observer
+                    weights_fake_quantize = torch.quantization.default_weight_fake_quant
                 else:
                     weights_observer = torch.quantization.default_per_channel_weight_observer
 
@@ -144,30 +144,44 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
     return op_qcfgs
 
 
-def _cfgs_to_fx_cfgs(op_cfgs):          # pragma: no cover
+def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):    # pragma: no cover
     """Convert quantization config to a format that meets the requirements of torch.fx.
 
         Args:
             op_cfgs (dict): dictionary of quantization configure for each op
+            observer_type (str, optional): specify observer type, Default is 'ptq_static',
+                                           options: 'ptq_dynamic', 'qat'.
 
         Returns:
             fx_op_cfgs (dict): dictionary of quantization configure that meets 
                                the requirements of torch.fx
 
-    example: fx_op_cfgs = 
-                {"": None, "module_name": [("layer4.1.conv2", per_channel_weight_qconfig)]}
+    example: fx_op_cfgs = {"": default_qconfig,
+                           "module_name": [("layer4.1.conv2", per_channel_weight_qconfig)]}
     """
+    if observer_type == 'post_training_dynamic_quant':
+        model_qconfig = torch.quantization.default_dynamic_qconfig
+    elif observer_type == 'quant_aware_training':
+        model_qconfig = torch.quantization.QConfig(
+                            activation=torch.quantization.FakeQuantize.with_args(
+                                    dtype=torch.quint8,
+                                    qscheme=torch.per_tensor_affine,
+                                    reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_weight_fake_quant)
+    else:
+        model_qconfig = torch.quantization.QConfig(
+                            activation=torch.quantization.MinMaxObserver.with_args(
+                                    reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_per_channel_weight_observer)
+
     fx_op_cfgs = dict()
-    model_qconfig = torch.quantization.QConfig(
-                        activation=torch.quantization.MinMaxObserver.with_args(
-                                reduce_range=REDUCE_RANGE),
-                        weight=torch.quantization.default_per_channel_weight_observer)
     fx_op_cfgs[""] = model_qconfig
     op_tuple_cfg_list = []
     for key, value in op_cfgs.items():
         op_tuple = (key, value)
         op_tuple_cfg_list.append(op_tuple)
     fx_op_cfgs["module_name"] = op_tuple_cfg_list
+
     return fx_op_cfgs
 
 
@@ -724,18 +738,28 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         try:                            # pragma: no cover
             # For torch.fx approach
+            from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
             if self.version >= '1.7':
                 q_model = copy.deepcopy(model)
                 q_model.model.eval()
-                from torch.quantization.quantize_fx import prepare_fx, convert_fx
-                fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs)
+                fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
                 if self.version < '1.8' and not \
                     isinstance(q_model.model, torch._fx.graph_module.GraphModule):
                     q_model.model = torch._fx.symbolic_trace(q_model.model)
-                q_model.model = prepare_fx(q_model.model, fx_op_cfgs)
-                if self.approach == 'post_training_static_quant':
-                    iterations = tune_cfg.get('calib_iteration', 1)
-                    self.model_calibration(q_model.model, dataloader, iterations)
+                if self.approach == 'quant_aware_training':
+                    q_model.model.train()
+                    q_model.model = prepare_qat_fx(q_model.model, fx_op_cfgs)
+                    if q_func is None:
+                        assert False, \
+                            "quantization aware training mode requires q_function to train"
+                    else:
+                        q_func(q_model.model)
+                    q_model.model.eval()
+                else:
+                    q_model.model = prepare_fx(q_model.model, fx_op_cfgs)
+                    if self.approach == 'post_training_static_quant':
+                        iterations = tune_cfg.get('calib_iteration', 1)
+                        self.model_calibration(q_model.model, dataloader, iterations)
                 q_model.model = convert_fx(q_model.model)
                 q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
                 if self.is_baseline:
