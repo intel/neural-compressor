@@ -15,19 +15,35 @@
 
 """Parsers for log files."""
 import re
+from abc import ABC
 from typing import Any, Dict, List, Union
 
+from lpot.ux.components.benchmark import Benchmarks
+from lpot.ux.utils.exceptions import InternalException
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.templates.metric import Metric
 
 
-class TuningParser:
-    """Parser class is responsible for parsing tuning log files."""
+class Parser(ABC):
+    """Parser abstract class."""
 
     def __init__(self, logs: list) -> None:
-        """Initialize object."""
+        """Initialize parser."""
         self._logs = logs
         self.metric = Metric()
+
+    def process(self) -> Dict[str, Any]:
+        """Process log files."""
+        raise NotImplementedError
+
+    @property
+    def patterns(self) -> dict:
+        """Set patterns to get metrics from lines."""
+        raise NotImplementedError
+
+
+class OptimizationParser(Parser):
+    """Parser class is responsible for parsing optimization log files."""
 
     def process(self) -> Dict[str, Any]:
         """Process files."""
@@ -48,21 +64,16 @@ class TuningParser:
     def patterns(self) -> dict:
         """Set patterns to get metrics from lines."""
         return {
-            "acc_fp32": r".*FP32 baseline is: \[(\d+.\d+),",
-            "acc_int8": r".*Best tune result is: \[(\d+.\d+),",
+            "acc_input_model": r".*FP32 baseline is: \[(\d+.\d+),",
+            "acc_optimized_model": r".*Best tune result is: \[(\d+.\d+),",
         }
 
 
-class BenchmarkParser:
-    """Parser class is responsible for parsing benchmark log files."""
-
-    def __init__(self, logs: list) -> None:
-        """Initialize object."""
-        self._logs = logs
+class PerformanceParser(Parser):
+    """Parser class is responsible for parsing performance benchmark log files."""
 
     def process(self) -> Dict[str, Any]:
         """Process files."""
-        metric = Metric()
         partial: Dict[str, List] = {}
         for log_file in self._logs:
             log.debug(f"Read from {log_file}")
@@ -74,9 +85,9 @@ class BenchmarkParser:
                         match = prog.search(line)
                         if not match:
                             continue
-                        metric_name = f"perf_{key}_fp32"
-                        metric.insert_data(metric_name, match.group(1))
-                        converted_value = getattr(metric, metric_name)
+                        metric_name = f"perf_{key}_input_model"
+                        self.metric.insert_data(metric_name, match.group(1))
+                        converted_value = getattr(self.metric, metric_name)
                         parse_result = {
                             key: converted_value,
                         }
@@ -84,8 +95,8 @@ class BenchmarkParser:
 
         return self.summarize_partial(partial)
 
+    @staticmethod
     def update_partial(
-        self,
         partial: Dict[str, List],
         parsed_result: Dict[str, Union[float, int]],
     ) -> Dict[str, List]:
@@ -101,13 +112,14 @@ class BenchmarkParser:
         summary = {}
         for key, value in partial.items():
             summarized_value = self.summarize_value(key, value)
-            for precision in ["fp32", "int8"]:
+            for precision in ["input_model", "optimized_model"]:
                 metric_name = f"perf_{key}_{precision}"
 
                 summary[metric_name] = summarized_value
         return summary
 
-    def summarize_value(self, key: str, value: list) -> Union[float, int]:
+    @staticmethod
+    def summarize_value(key: str, value: list) -> Union[float, int]:
         """Calculate final value."""
         if key == "latency":
             return round(sum(value) / len(value), 4)
@@ -122,3 +134,48 @@ class BenchmarkParser:
             "throughput": r"Throughput:\s+(\d+(\.\d+)?)",
             "latency": r"Latency:\s+(\d+(\.\d+)?)",
         }
+
+
+class AccuracyParser(Parser):
+    """Parser class is responsible for parsing accuracy benchmark log files."""
+
+    def process(self) -> Dict[str, Any]:
+        """Process accuracy logs."""
+        for log_file in self._logs:
+            log.debug(f"Read from {log_file}")
+
+            with open(log_file) as f:
+                for line in f:
+                    for key in self.patterns:
+                        prog = re.compile(self.patterns[key])
+                        match = prog.search(line)
+                        if match:
+                            for precision in ["input_model", "optimized_model"]:
+                                metric_name = f"acc_{precision}"
+                                self.metric.insert_data(metric_name, match.group(1))
+
+        parsed_data: Dict[str, Any] = self.metric.serialize()  # type: ignore
+        return parsed_data
+
+    @property
+    def patterns(self) -> dict:
+        """Set patterns to get metrics from lines."""
+        return {
+            Benchmarks.ACC: r"Accuracy is (\d+(\.\d+)?)",
+        }
+
+
+class BenchmarkParserFactory:
+    """Benchmark parser factory."""
+
+    @staticmethod
+    def get_parser(benchmark_mode: str, logs: List[str]) -> Parser:
+        """Get benchmark parser for specified mode."""
+        parser_map = {
+            Benchmarks.PERF: PerformanceParser,
+            Benchmarks.ACC: AccuracyParser,
+        }
+        parser = parser_map.get(benchmark_mode, None)
+        if parser is None:
+            raise InternalException(f"Could not find optimization class for {benchmark_mode}")
+        return parser(logs)

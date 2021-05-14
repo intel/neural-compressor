@@ -35,7 +35,10 @@ class Workdir:
         workspace_path: Optional[str] = None,
         request_id: Optional[str] = None,
         model_path: Optional[str] = None,
+        input_precision: Optional[str] = None,
         model_output_path: Optional[str] = None,
+        output_precision: Optional[str] = None,
+        mode: Optional[str] = None,
         metric: Optional[Union[dict, Metric]] = None,
         overwrite: bool = True,
     ) -> None:
@@ -80,11 +83,19 @@ class Workdir:
             )
 
         if request_id and overwrite:
-            self.update_data(request_id, model_path, model_output_path, metric)
+            self.update_data(
+                request_id=request_id,
+                model_path=model_path,
+                input_precision=input_precision,
+                model_output_path=model_output_path,
+                output_precision=output_precision,
+                mode=mode,
+                metric=metric,
+            )
 
     def load(self) -> dict:
         """Load json with workloads list."""
-        logging.info(f"Loading predefined config from {self.workloads_json}")
+        logging.info(f"Loading workloads list from {self.workloads_json}")
         with open(self.workloads_json, encoding="utf-8") as workloads_list:
             self.workloads_data = json.load(workloads_list)
             return self.workloads_data
@@ -114,7 +125,10 @@ class Workdir:
         self,
         request_id: Optional[str],
         model_path: Optional[str] = None,
+        input_precision: Optional[str] = None,
         model_output_path: Optional[str] = None,
+        output_precision: Optional[str] = None,
+        mode: Optional[str] = None,
         metric: Optional[Union[Dict[str, Any], Metric]] = Metric(),
         status: Optional[str] = None,
         execution_details: Optional[Dict[str, Any]] = None,
@@ -125,7 +139,10 @@ class Workdir:
             workload_path=self.workload_path,
             request_id=request_id,
             model_path=model_path,
+            input_precision=input_precision,
             model_output_path=model_output_path,
+            output_precision=output_precision,
+            mode=mode,
             metric=metric,
             status=status,
             code_template_path=self.template_path,

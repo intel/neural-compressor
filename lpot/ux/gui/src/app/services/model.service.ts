@@ -73,9 +73,9 @@ export class ModelService {
     );
   }
 
-  getPossibleValues(param: string, config: {}) {
+  getPossibleValues(param: string, config?: {}) {
     return this.http.post(
-      this.baseUrl + 'api/get_possible_values_v2',
+      this.baseUrl + 'api/get_possible_values',
       {
         param: param,
         config: config
@@ -100,9 +100,9 @@ export class ModelService {
       });
   }
 
-  tune(newModel: NewModel) {
+  optimize(newModel: NewModel) {
     return this.http.post(
-      this.baseUrl + 'api/tune',
+      this.baseUrl + 'api/optimize',
       {
         workspace_path: this.workspacePath,
         id: newModel.id

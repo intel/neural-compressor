@@ -82,6 +82,23 @@ predefined_config = {
         "exit_policy": {"timeout": 0},
         "random_seed": 9527,
     },
+    "graph_optimization": {
+        "precisions": "bf16, fp32",
+        "op_wise": {
+            "weight": {
+                "granularity": "per_channel",
+                "scheme": "asym",
+                "dtype": "bf16",
+                "algorithm": "kl",
+            },
+            "activation": {
+                "granularity": "per_tensor",
+                "scheme": "sym",
+                "dtype": "int8",
+                "algorithm": "minmax",
+            },
+        },
+    },
 }
 
 
@@ -343,6 +360,23 @@ class TestConfig(unittest.TestCase):
                     "accuracy_criterion": {"relative": 0.01},
                     "exit_policy": {"timeout": 0},
                     "random_seed": 9527,
+                },
+                "graph_optimization": {
+                    "precisions": "bf16,fp32",
+                    "op_wise": {
+                        "weight": {
+                            "granularity": "per_channel",
+                            "scheme": "asym",
+                            "dtype": "bf16",
+                            "algorithm": "kl",
+                        },
+                        "activation": {
+                            "granularity": "per_tensor",
+                            "scheme": "sym",
+                            "dtype": "int8",
+                            "algorithm": "minmax",
+                        },
+                    },
                 },
             },
         )

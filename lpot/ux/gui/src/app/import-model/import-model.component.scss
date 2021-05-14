@@ -53,6 +53,10 @@ button {
   top: -12px;
 }
 
+.gray {
+  color: $gray;
+}
+
 .icon {
   width: 20px;
   position: relative;
@@ -107,4 +111,10 @@ button {
 
 .custom-option {
   font-family: IntelOneBd;
+}
+
+.tuning-checkbox {
+  position: relative;
+  top: -2px;
+  padding-right: 5px;
 }

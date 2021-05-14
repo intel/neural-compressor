@@ -19,11 +19,12 @@ import json
 import os
 from typing import Any, Dict
 
-from lpot.ux.components.tune.tuning import Tuning
+from lpot.ux.components.optimization.factory import OptimizationFactory
+from lpot.ux.components.optimization.optimization import Optimization
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.parser import TuningParser
+from lpot.ux.utils.parser import OptimizationParser
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import _load_json_as_dict, get_size
 from lpot.ux.web.communication import MessageQueue
@@ -31,20 +32,20 @@ from lpot.ux.web.communication import MessageQueue
 mq = MessageQueue()
 
 
-def execute_tuning(data: Dict[str, Any]) -> dict:
+def execute_optimization(data: Dict[str, Any]) -> dict:
     """Get configuration."""
     from lpot.ux.utils.workload.workload import Workload
 
     if not str(data.get("id", "")):
         message = "Missing request id."
         mq.post_error(
-            "tuning_finish",
+            "optimization_finish",
             {"message": message, "code": 404},
         )
         raise Exception(message)
 
     request_id: str = data["id"]
-    workdir = Workdir(request_id=request_id)
+    workdir = Workdir(request_id=request_id, overwrite=False)
     workload_path: str = workdir.workload_path
     try:
         workload_data = _load_json_as_dict(
@@ -52,71 +53,80 @@ def execute_tuning(data: Dict[str, Any]) -> dict:
         )
     except Exception as err:
         mq.post_error(
-            "tuning_finish",
+            "optimization_finish",
             {"message": repr(err), "code": 404, "id": request_id},
         )
         raise err
     workload = Workload(workload_data)
-    tuning: Tuning = Tuning(workload, workdir.workload_path, workdir.template_path)
+    optimization: Optimization = OptimizationFactory.get_optimization(
+        workload,
+        workdir.template_path,
+    )
     send_data = {
         "message": "started",
         "id": request_id,
-        "size_fp32": get_size(tuning.model_path),
+        "size_input_model": get_size(optimization.input_graph),
     }
     workdir.clean_logs()
     workdir.update_data(
         request_id=request_id,
-        model_path=tuning.model_path,
-        model_output_path=tuning.model_output_path,
+        model_path=optimization.input_graph,
+        input_precision=optimization.input_precision,
+        model_output_path=optimization.output_graph,
+        output_precision=optimization.output_precision,
         status="wip",
     )
 
     executor = Executor(
         workspace_path=workload_path,
-        subject="tuning",
+        subject="optimization",
         data=send_data,
         log_name="output",
     )
 
     proc = executor.call(
-        tuning.command,
+        optimization.command,
     )
-    tuning_time = executor.process_duration
-    if tuning_time:
-        tuning_time = round(tuning_time, 2)
-    log.debug(f"Elapsed time: {tuning_time}")
+    optimization_time = executor.process_duration
+    if optimization_time:
+        optimization_time = round(optimization_time, 2)
+    log.debug(f"Elapsed time: {optimization_time}")
     logs = [os.path.join(workload_path, "output.txt")]
-    parser = TuningParser(logs)
+    parser = OptimizationParser(logs)
     if proc.is_ok:
         response_data = parser.process()
 
         if isinstance(response_data, dict):
             response_data["id"] = request_id
-            response_data["tuning_time"] = tuning_time
-            response_data["size_int8"] = get_size(tuning.model_output_path)
-            response_data["model_output_path"] = tuning.model_output_path
-            response_data["size_fp32"] = get_size(tuning.model_path)
+            response_data["optimization_time"] = optimization_time
+            response_data["size_optimized_model"] = get_size(optimization.output_graph)
+            response_data["model_output_path"] = optimization.output_graph
+            response_data["size_input_model"] = get_size(optimization.input_graph)
             response_data["is_custom_dataloader"] = bool(workdir.template_path)
 
             workdir.update_data(
                 request_id=request_id,
-                model_path=tuning.model_path,
-                model_output_path=tuning.model_output_path,
+                model_path=optimization.input_graph,
+                model_output_path=optimization.output_graph,
                 metric=response_data,
                 status="success",
-                execution_details={"tuning": tuning.serialize()},
+                execution_details={"optimization": optimization.serialize()},
+                input_precision=optimization.input_precision,
+                output_precision=optimization.output_precision,
             )
-            response_data["execution_details"] = {"tuning": tuning.serialize()}
+            response_data["execution_details"] = {"optimization": optimization.serialize()}
 
         log.debug(f"Parsed data is {json.dumps(response_data)}")
-        mq.post_success("tuning_finish", response_data)
+        mq.post_success("optimization_finish", response_data)
         return response_data
     else:
         log.debug("FAIL")
         workdir.update_data(
             request_id=request_id,
-            model_path=tuning.model_path,
+            model_path=optimization.input_graph,
+            input_precision=optimization.input_precision,
+            output_precision=optimization.output_precision,
             status="error",
         )
-        mq.post_failure("tuning_finish", {"message": "failed", "id": request_id})
-        raise ClientErrorException("Tuning failed during execution.")
+        mq.post_failure("optimization_finish", {"message": "failed", "id": request_id})
+        raise ClientErrorException("Optimization failed during execution.")

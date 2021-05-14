@@ -34,7 +34,10 @@ class WorkloadInfo(JsonSerializer):
         request_id: Optional[str],
         workload_path: Optional[str],
         model_path: Optional[str],
+        input_precision: Optional[str],
         model_output_path: Optional[str],
+        output_precision: Optional[str],
+        mode: Optional[str],
         metric: Optional[Union[Metric, dict]],
         status: Optional[str],
         code_template_path: Optional[str],
@@ -44,7 +47,10 @@ class WorkloadInfo(JsonSerializer):
         super().__init__()
         self._id = request_id
         self._model_path = model_path
+        self._input_precision = input_precision
         self._model_output_path = model_output_path
+        self._output_precision = output_precision
+        self._mode = mode
         self._workload_path = workload_path
         self._status = status
         self._metric = metric
@@ -63,10 +69,10 @@ class WorkloadInfo(JsonSerializer):
                 with open(self._log_path, "w") as log_file:
                     log_file.write("Configuration created.\n")
         if self._model_path and self._metric:
-            if isinstance(self._metric, dict) and not self._metric.get("size_fp32"):
-                self._metric["size_fp32"] = get_size(self._model_path)
-            if isinstance(self._metric, Metric) and not self._metric.size_fp32:
-                self._metric.insert_data("size_fp32", str(get_size(self._model_path)))
+            if isinstance(self._metric, dict) and not self._metric.get("size_input_model"):
+                self._metric["size_input_model"] = get_size(self._model_path)
+            if isinstance(self._metric, Metric) and not self._metric.size_input_model:
+                self._metric.insert_data("size_input_model", str(get_size(self._model_path)))
 
     def insert_data(self, data: dict) -> None:
         """

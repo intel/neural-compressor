@@ -1,4 +1,4 @@
-<h1>Create low precision model</h1>
+<h1>Create new configuration</h1>
 <mat-horizontal-stepper #stepper>
   <mat-step [stepControl]="firstFormGroup" [completed]="false">
     <p class="required">
@@ -60,6 +60,18 @@
             {{ frameworkWarning }}
           </a>
           <mat-spinner class="spinner" *ngIf="showSpinner" [diameter]="25"></mat-spinner>
+        </div>
+
+        <div class="spinner-wrapper">
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>requested precision</mat-label>
+            <mat-select formControlName="precision" required (selectionChange)="onPrecisionChange($event)">
+              <mat-option *ngFor="let precision of precisions" [value]="precision.name" matTooltipPosition="right"
+                [matTooltip]="precision.help">
+                {{ precision.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <div *ngIf="inputs && outputs" class="spinner-wrapper">
@@ -127,109 +139,129 @@
     </mat-card>
 
     <form [formGroup]="secondFormGroup">
-      <h2>Dataset
-        <a href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
+
+      <h2>Evaluation</h2>
+      <mat-card>
+        <span class="inline">
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>provided dataset</mat-label>
+            <mat-select formControlName="dataLoaderEvaluation"
+              (selectionChange)="setDefaultDataLoaderParam($event, 'evaluation')">
+              <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
+                [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
+                {{ dataLoader.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </span>
+        <span class="inline">
+          <ng-container *ngFor="let param of dataLoaderParams['evaluation']">
+            <ng-container *ngIf="param.name !== 'root'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                  matTooltipPosition="right" [matTooltip]="param.help">
+              </mat-form-field>
+              <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
+                (click)="openDialog(param.name, 'all', 'evaluation')">
+                <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                Choose file
+              </button>
+            </ng-container>
+          </ng-container>
+        </span>
+        <span *ngIf="showDatasetLocation['evaluation']" class="inline">
+          <mat-form-field class="form-field long" appearance="fill">
+            <mat-label>dataset location *</mat-label>
+            <input formControlName="datasetLocationEvaluation" matInput>
+          </mat-form-field>
+          <button mat-raised-button color="primary" class="browse"
+            (click)="openDialog('datasetLocationEvaluation', 'datasets')">
+            <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+            Choose dataset
+          </button>
+        </span>
+        <a *ngIf="secondFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="custom">
+          Fill the code template before tuning
+        </a>
+      </mat-card>
+
+      <h2 [ngClass]="{'gray': firstFormGroup.get('precision').value === 'fp32'}">
+        <mat-checkbox *ngIf="firstFormGroup.get('precision').value === 'bf16,fp32'" [(ngModel)]="tuningEnabled"
+          [ngModelOptions]="{standalone: true}" (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning"
+          class="tuning-checkbox">
+        </mat-checkbox>
+        Tuning
+        <a *ngIf="firstFormGroup.get('precision').value !== 'fp32'"
+          href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
           <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
         </a>
+        <a *ngIf="firstFormGroup.get('precision').value === 'fp32'"
+          href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
+          <img class="help-icon" src="./../../assets/005a-help-solid-gray.svg" matTooltip="Click to open documentation">
+        </a>
       </h2>
-      <mat-card>
+      <a *ngIf="tuningWarning" class="info">
+        {{ tuningWarning }}
+      </a>
+
+      <mat-card *ngIf="tuningEnabled">
         <h3>Calibration</h3>
-        <mat-card>
-          <span class="inline">
-            <mat-form-field class="form-field" appearance="fill">
-              <mat-label>provided dataset</mat-label>
-              <mat-select formControlName="dataLoaderQuantization"
-                (selectionChange)="setDefaultDataLoaderParam($event, 'quantization')">
-                <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
-                  [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
-                  {{ dataLoader.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </span>
-          <span class="inline">
-            <ng-container *ngFor="let param of dataLoaderParams['quantization']">
-              <ng-container *ngIf="param.name !== 'root'">
-                <mat-form-field class="form-field" appearance="fill">
-                  <mat-label>{{ param.name }}</mat-label>
-                  <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
-                    matTooltipPosition="right" [matTooltip]="param.help">
-                </mat-form-field>
-                <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
-                  (click)="openDialog(param.name, 'all', 'quantization')">
-                  <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-                  Choose file
-                </button>
-              </ng-container>
-            </ng-container>
-          </span>
-          <span *ngIf="showDatasetLocation['quantization']" class="inline">
-            <mat-form-field class="form-field long" appearance="fill">
-              <mat-label>dataset location *</mat-label>
-              <input formControlName="datasetLocationQuantization" matInput (change)="useForEvaluation()">
-            </mat-form-field>
-            <button mat-raised-button color="primary" class="browse"
-              (click)="openDialog('datasetLocationQuantization', 'datasets')">
-              <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-              Choose dataset
-            </button>
-          </span>
-          <a *ngIf="secondFormGroup.get('dataLoaderQuantization').value === 'custom'" class="custom">
-            Fill the code template before tuning
-          </a>
-          <br>
-          <a class="info">
-            Default calibration sample size: 100
-          </a>
-        </mat-card>
-        <h3>Evaluation</h3>
         <mat-checkbox [checked]="true" (change)="calibrationDataChange($event.checked)">Use the same data as calibration
         </mat-checkbox>
 
-        <mat-card *ngIf="!useCalibrationData">
-          <span class="inline">
-            <mat-form-field class="form-field" appearance="fill">
-              <mat-label>provided dataset</mat-label>
-              <mat-select formControlName="dataLoaderEvaluation"
-                (selectionChange)="setDefaultDataLoaderParam($event, 'evaluation')">
-                <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
-                  [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
-                  {{ dataLoader.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </span>
-          <span class="inline">
-            <ng-container *ngFor="let param of dataLoaderParams['evaluation']">
-              <ng-container *ngIf="param.name !== 'root'">
-                <mat-form-field class="form-field" appearance="fill">
-                  <mat-label>{{ param.name }}</mat-label>
-                  <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
-                    matTooltipPosition="right" [matTooltip]="param.help">
-                </mat-form-field>
-                <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
-                  (click)="openDialog(param.name, 'all', 'evaluation')">
-                  <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-                  Choose file
-                </button>
+        <mat-card *ngIf="!useEvaluationData">
+          <mat-card>
+            <span class="inline">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>provided dataset</mat-label>
+                <mat-select formControlName="dataLoaderQuantization"
+                  (selectionChange)="setDefaultDataLoaderParam($event, 'quantization')">
+                  <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name"
+                    matTooltipPosition="right" [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null"
+                    [matTooltip]="dataLoader.help">
+                    {{ dataLoader.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </span>
+            <span class="inline">
+              <ng-container *ngFor="let param of dataLoaderParams['quantization']">
+                <ng-container *ngIf="param.name !== 'root'">
+                  <mat-form-field class="form-field" appearance="fill">
+                    <mat-label>{{ param.name }}</mat-label>
+                    <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                      matTooltipPosition="right" [matTooltip]="param.help">
+                  </mat-form-field>
+                  <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
+                    class="browse" (click)="openDialog(param.name, 'all', 'quantization')">
+                    <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                    Choose file
+                  </button>
+                </ng-container>
               </ng-container>
-            </ng-container>
-          </span>
-          <span *ngIf="showDatasetLocation['evaluation']" class="inline">
-            <mat-form-field class="form-field long" appearance="fill">
-              <mat-label>dataset location *</mat-label>
-              <input formControlName="datasetLocationEvaluation" matInput>
-            </mat-form-field>
-            <button mat-raised-button color="primary" class="browse"
-              (click)="openDialog('datasetLocationEvaluation', 'datasets')">
-              <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-              Choose dataset
-            </button>
-          </span>
-          <a *ngIf="secondFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="custom">
-            Fill the code template before tuning
-          </a>
+            </span>
+            <span *ngIf="showDatasetLocation['quantization']" class="inline">
+              <mat-form-field class="form-field long" appearance="fill">
+                <mat-label>dataset location *</mat-label>
+                <input formControlName="datasetLocationQuantization" matInput (change)="useForQuantization()">
+              </mat-form-field>
+              <button mat-raised-button color="primary" class="browse"
+                (click)="openDialog('datasetLocationQuantization', 'datasets')">
+                <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                Choose dataset
+              </button>
+            </span>
+            <a *ngIf="secondFormGroup.get('dataLoaderQuantization').value === 'custom'" class="custom">
+              Fill the code template before tuning
+            </a>
+            <br>
+            <a class="info">
+              Default calibration sample size: 100
+            </a>
+          </mat-card>
         </mat-card>
+
         <ng-container
           *ngIf="secondFormGroup.get('dataLoaderQuantization').value !== 'custom' && secondFormGroup.get('dataLoaderEvaluation').value !== 'custom'">
           <h3>Transforms
@@ -237,49 +269,48 @@
               <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
             </a>
           </h3>
-          <mat-card>
-            <ng-container *ngFor="let transformItem of transformationParams; let index = index; let last = last">
-              <mat-card>
-                <span class="inline">
-                  <mat-form-field class="form-field" appearance="fill">
-                    <mat-label>transform {{ index }}</mat-label>
-                    <mat-select [(ngModel)]="transformItem['name']" [ngModelOptions]="{standalone: true}"
-                      (selectionChange)="setDefaultTransformationParam($event, index)">
-                      <mat-option *ngFor="let transformation of transformations" [value]="transformation.name"
-                        [ngClass]="transformation.name === 'custom' ? 'custom-option' : null" matTooltipPosition="right"
-                        [matTooltip]="transformation.help">
-                        {{ transformation.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <ng-container *ngIf="isArray(transformItem['params'])">
-                    <ng-container *ngFor="let param of transformItem['params']">
-                      <mat-form-field class="form-field" appearance="fill">
-                        <mat-label>{{ param.name }}</mat-label>
-                        <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
-                          matTooltipPosition="right" [matTooltip]="param.help">
-                      </mat-form-field>
-                      <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
-                        class="browse" (click)="openDialog(param.name, 'all', transformItem['params'])">
-                        <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-                        Choose file
-                      </button>
-                    </ng-container>
+          <ng-container *ngFor="let transformItem of transformationParams; let index = index; let last = last">
+            <mat-card>
+              <span class="inline">
+                <mat-form-field class="form-field" appearance="fill">
+                  <mat-label>transform {{ index }}</mat-label>
+                  <mat-select [(ngModel)]="transformItem['name']" [ngModelOptions]="{standalone: true}"
+                    (selectionChange)="setDefaultTransformationParam($event, index)">
+                    <mat-option *ngFor="let transformation of transformations" [value]="transformation.name"
+                      [ngClass]="transformation.name === 'custom' ? 'custom-option' : null" matTooltipPosition="right"
+                      [matTooltip]="transformation.help">
+                      {{ transformation.name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <ng-container *ngIf="isArray(transformItem['params'])">
+                  <ng-container *ngFor="let param of transformItem['params']">
+                    <mat-form-field class="form-field" appearance="fill">
+                      <mat-label>{{ param.name }}</mat-label>
+                      <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                        matTooltipPosition="right" [matTooltip]="param.help">
+                    </mat-form-field>
+                    <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
+                      class="browse" (click)="openDialog(param.name, 'all', transformItem['params'])">
+                      <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                      Choose file
+                    </button>
                   </ng-container>
-                  <button mat-icon-button color="warn" class="browse" (click)="removeTransformation(index)"
-                    matTooltip="Remove this transformation">
-                    &#x2573;
-                  </button>
-                  <button *ngIf="last" mat-raised-button color="accent" class="browse" (click)="addNewTransformation()">
-                    &#65291; Add new transformation
-                  </button>
-                </span>
-              </mat-card>
-            </ng-container>
-            <br>
-          </mat-card>
+                </ng-container>
+                <button mat-icon-button color="warn" class="browse" (click)="removeTransformation(index)"
+                  matTooltip="Remove this transformation">
+                  &#x2573;
+                </button>
+                <button *ngIf="last" mat-raised-button color="accent" class="browse" (click)="addNewTransformation()">
+                  &#65291; Add new transformation
+                </button>
+              </span>
+            </mat-card>
+          </ng-container>
+          <br>
         </ng-container>
       </mat-card>
+
       <h2>Metric
         <a href="https://github.com/intel/lpot/blob/master/docs/metrics.md" target="_blank">
           <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">

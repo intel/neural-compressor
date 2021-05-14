@@ -26,7 +26,7 @@ import { SocketService } from '../services/socket.service';
 export class ModelListComponent implements OnInit {
 
   modelList = [];
-  visibleColumns = ['model_name', 'framework', 'config', 'console_output', 'acc_fp32', 'acc_int8'];
+  visibleColumns = ['model_name', 'framework', 'config', 'console_output', 'acc_input_model', 'acc_optimized_model'];
   showSpinner = true;
 
   constructor(
@@ -36,7 +36,7 @@ export class ModelListComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.socketService.tuningStart$
+    this.socketService.optimizationStart$
       .subscribe(result => {
         if (result['data']) {
           if (result['status'] === 'success') {
@@ -46,7 +46,7 @@ export class ModelListComponent implements OnInit {
           }
         }
       });
-    this.socketService.tuningFinish$
+    this.socketService.optimizationFinish$
       .subscribe(result => {
         if (result['data']) {
           if (result['status'] === 'success') {
@@ -77,8 +77,8 @@ export class ModelListComponent implements OnInit {
           if (index !== -1) {
             this.modelList[index]['status'] = result['status'];
             if (result['status'] === 'success') {
-              this.modelList[index]['perf_throughput_fp32'] = result['data']['perf_throughput_fp32'];
-              this.modelList[index]['perf_throughput_int8'] = result['data']['perf_throughput_int8'];
+              this.modelList[index]['perf_throughput_input_model'] = result['data']['perf_throughput_input_model'];
+              this.modelList[index]['perf_throughput_optimized_model'] = result['data']['perf_throughput_optimized_model'];
             } else {
               this.openErrorDialog(result['data']['message']);
             }
@@ -128,19 +128,17 @@ export class ModelListComponent implements OnInit {
     if (this.modelList[index]) {
       if (param === 'finish') {
         this.modelList[index]['message'] = result['data']['message'];
-        this.modelList[index]['acc_fp32'] = result['data']['acc_fp32'];
-        this.modelList[index]['acc_int8'] = result['data']['acc_int8'];
-        this.modelList[index]['tuning_time'] = result['data']['tuning_time'];
-        this.modelList[index]['model_int8'] = result['data']['model_int8'];
-        this.modelList[index]['perf_latency_int8'] = result['data']['perf_latency_int8'];
-        this.modelList[index]['perf_latency_fp32'] = result['data']['perf_latency_fp32'];
-        this.modelList[index]['size_int8'] = result['data']['size_int8'];
+        this.modelList[index]['acc_input_model'] = result['data']['acc_input_model'];
+        this.modelList[index]['acc_optimized_model'] = result['data']['acc_optimized_model'];
+        this.modelList[index]['optimization_time'] = result['data']['optimization_time'];
+        this.modelList[index]['size_optimized_model'] = result['data']['size_optimized_model'];
         this.modelList[index]['model_output_path'] = result['data']['model_output_path'];
-
+        this.modelList[index]['input_precision'] = result['data']['execution_details']['optimization']['input_precision'];
+        this.modelList[index]['output_precision'] = result['data']['execution_details']['optimization']['output_precision'];
         this.modelList[index]['perf_throughput_fp32'] = null;
         this.modelList[index]['perf_throughput_int8'] = null;
       } else if (param === 'start') {
-        this.modelList[index]['size_fp32'] = result['data']['size_fp32'];
+        this.modelList[index]['size_input_model'] = result['data']['size_input_model'];
       }
     }
   }
@@ -155,9 +153,9 @@ export class ModelListComponent implements OnInit {
     });
   }
 
-  tune(model: NewModel) {
+  optimize(model: NewModel) {
     model['status'] = 'wip';
-    this.modelService.tune(model)
+    this.modelService.optimize(model)
       .subscribe(
         response => { },
         error => {
@@ -169,20 +167,36 @@ export class ModelListComponent implements OnInit {
   getTooltip(execution_details): string | null {
     if (execution_details) {
       let tooltip = '';
-      if (execution_details.fp32_benchmark) {
-        tooltip += 'FP32 BENCHMARK\n' +
-          'cores per instance: ' + execution_details.fp32_benchmark.cores_per_instance + '\n' +
-          'instances: ' + execution_details.fp32_benchmark.instances + '\n\n'
+      if (execution_details.input_model_benchmark) {
+        tooltip += 'INPUT MODEL BENCHMARK\n\n';
+        if (execution_details.input_model_benchmark.accuracy) {
+          tooltip += 'ACCURACY\n' +
+            'cores per instance: ' + execution_details.input_model_benchmark.accuracy.cores_per_instance + '\n' +
+            'instances: ' + execution_details.input_model_benchmark.accuracy.instances + '\n\n';
+        }
+        if (execution_details.input_model_benchmark.performance) {
+          tooltip += 'PERFORMANCE\n' +
+            'cores per instance: ' + execution_details.input_model_benchmark.performance.cores_per_instance + '\n' +
+            'instances: ' + execution_details.input_model_benchmark.performance.instances + '\n\n\n';
+        }
       }
-      if (execution_details.int8_benchmark) {
-        tooltip += 'INT8 BENCHMARK\n' +
-          'cores per instance: ' + execution_details.int8_benchmark.cores_per_instance + '\n' +
-          'instances: ' + execution_details.int8_benchmark.instances + '\n\n';
+      if (execution_details.optimized_model_benchmark) {
+        tooltip += 'OUTPUT MODEL BENCHMARK\n\n';
+        if (execution_details.optimized_model_benchmark.accuracy) {
+          tooltip += 'ACCURACY\n' +
+            'cores per instance: ' + execution_details.optimized_model_benchmark.accuracy.cores_per_instance + '\n' +
+            'instances: ' + execution_details.optimized_model_benchmark.accuracy.instances + '\n\n';
+        }
+        if (execution_details.optimized_model_benchmark.performance) {
+          tooltip += 'PERFORMANCE\n' +
+            'cores per instance: ' + execution_details.optimized_model_benchmark.performance.cores_per_instance + '\n' +
+            'instances: ' + execution_details.optimized_model_benchmark.performance.instances + '\n\n\n';
+        }
       }
-      if (execution_details.tuning) {
-        tooltip += 'TUNING\n' +
-          'cores per instance: ' + execution_details.tuning.cores_per_instance + '\n' +
-          'instances: ' + execution_details.tuning.instances + '\n\n';
+      if (execution_details.optimization) {
+        tooltip += 'OPTIMIZATION\n' +
+          'cores per instance: ' + execution_details.optimization.cores_per_instance + '\n' +
+          'instances: ' + execution_details.optimization.instances + '\n\n';
       }
       return tooltip;
     }

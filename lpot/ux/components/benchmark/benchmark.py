@@ -18,6 +18,7 @@ import os
 import re
 from typing import Any, Dict
 
+from lpot.ux.components.benchmark import Benchmarks
 from lpot.ux.components.benchmark.benchmark_model import benchmark_model
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.hw_info import HWInfo
@@ -32,16 +33,23 @@ class Benchmark:
         workload: Workload,
         model_path: str,
         mode: str,
-        datatype: str,
+        precision: str,
     ) -> None:
         """Initialize Benchmark class."""
-        self.instances: int = workload.config.get_performance_num_of_instance() or 1
-        self.cores_per_instance: int = (
-            workload.config.get_performance_cores_per_instance()
-            or HWInfo().cores // self.instances
-        )
+        hw_info = HWInfo()
+        self.instances: int = 1
+        if mode == Benchmarks.PERF:
+            self.instances = workload.config.get_performance_num_of_instance() or 1
+
+        self.cores_per_instance: int = hw_info.cores // self.instances
+        if mode == Benchmarks.PERF:
+            self.cores_per_instance = (
+                workload.config.get_performance_cores_per_instance()
+                or hw_info.cores // self.instances
+            )
+
         self.model_path = model_path
-        self.datatype = datatype
+        self.precision = precision
         self.mode = mode
         self.batch_size = 1
         self.framework = workload.framework

@@ -25,8 +25,8 @@ export class SocketService {
 
   baseUrl = environment.baseUrl;
   socket;
-  public tuningStart$ = new BehaviorSubject({});
-  public tuningFinish$ = new BehaviorSubject({});
+  public optimizationStart$ = new BehaviorSubject({});
+  public optimizationFinish$ = new BehaviorSubject({});
   public boundaryNodesStart$ = new BehaviorSubject({});
   public boundaryNodesFinish$ = new BehaviorSubject({});
   public modelDownloadFinish$ = new BehaviorSubject({});
@@ -37,18 +37,18 @@ export class SocketService {
     private http: HttpClient
   ) {
     this.socket = io(this.baseUrl);
-    this.setupTuningConnection();
+    this.setupOptimizationConnection();
     this.setupBoundaryNodesConnection();
     this.setupModelDownload();
     this.setupBenchmark();
   }
 
-  setupTuningConnection() {
-    this.socket.on('tuning_start', (data) => {
-      this.tuningStart$.next(data);
+  setupOptimizationConnection() {
+    this.socket.on('optimization_start', (data) => {
+      this.optimizationStart$.next(data);
     });
-    this.socket.on('tuning_finish', (data) => {
-      this.tuningFinish$.next(data);
+    this.socket.on('optimization_finish', (data) => {
+      this.optimizationFinish$.next(data);
     });
   }
 

@@ -15,7 +15,7 @@
 """Parameters feeder module."""
 
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.utils import (
@@ -26,6 +26,7 @@ from lpot.ux.utils.utils import (
     load_dataloader_config,
     load_help_lpot_params,
     load_model_config,
+    load_precisions_config,
     load_transforms_config,
 )
 
@@ -50,6 +51,7 @@ class Feeder:
             "strategy": self.get_strategies,
             "quantization_approach": self.get_quantization_approaches,
             "metric": self.get_metrics,
+            "precision": self.get_precisions,
         }
         if self.param is None:
             raise ClientErrorException("Parameter not defined.")
@@ -189,6 +191,11 @@ class Feeder:
             strategies.append({"name": strategy, "help": help_msg})
         return strategies
 
+    @staticmethod
+    def get_precisions() -> List[dict]:
+        """Get list of available precisions."""
+        return load_precisions_config()
+
     def get_quantization_approaches(self) -> List[Dict[str, Any]]:
         """Get list of supported quantization approaches."""
         approaches = [
@@ -284,59 +291,6 @@ def update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
 
 
 def get_possible_values(data: dict) -> Dict[str, List[Any]]:
-    """
-    Get list of possible values for specified scenario.
-
-    Example expected data:
-    {
-        "param": "dataloader",
-        "config": {
-            "framework": "tensorflow"
-        }
-    }
-    """
-    feeder = Feeder(data)
-    return convert_to_v1_api(feeder.feed())
-
-
-def convert_to_v1_api(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Convert new API into old (without "help")."""
-    data_v1 = {}
-    for key, value in data.items():
-        if isinstance(value, list):
-            data_v1[key] = _convert_to_v1_api_list(value)
-        else:
-            data_v1[key] = value
-    return data_v1
-
-
-def _convert_to_v1_api_list(data: list) -> Union[List[str], Dict[str, Any]]:
-    """Convert values in list with "help" args into dict or list, based on content."""
-    data_v1_dict = {}
-    data_v1_list = []
-    for item in data:
-        if isinstance(item, dict):
-            if "params" in item.keys():
-                params = item["params"]
-                if isinstance(params, list):
-                    data_v1_dict[item["name"]] = _convert_to_v1_api_list(params)
-                else:
-                    raise TypeError(
-                        f"Type of params could be only type of list, not {type(params)}.",
-                    )
-            elif "value" in item.keys():
-                data_v1_dict[item["name"]] = item["value"]
-            else:
-                data_v1_list.append(item["name"])
-    if data_v1_dict and not data_v1_list:
-        return data_v1_dict
-    elif data_v1_list and not data_v1_dict:
-        return data_v1_list
-    else:
-        raise Exception("Could not determine return type, error in input data.")
-
-
-def get_possible_values_v2(data: dict) -> Dict[str, List[Any]]:
     """Get list of possible values for specified scenario with "help" information."""
     feeder = Feeder(data)
     return feeder.feed()

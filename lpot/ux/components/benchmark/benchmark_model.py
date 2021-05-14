@@ -17,6 +17,8 @@
 import argparse
 from typing import Any
 
+from lpot.ux.components.benchmark import Benchmarks
+
 try:
     import tensorflow as tf
 
@@ -43,8 +45,8 @@ def parse_args() -> Any:
     parser.add_argument(
         "--mode",
         type=str,
-        default="performance",
-        choices=["accuracy", "performance"],
+        default=Benchmarks.PERF,
+        choices=[Benchmarks.PERF, Benchmarks.ACC],
         help="Benchmark mode.",
     )
     parser.add_argument(

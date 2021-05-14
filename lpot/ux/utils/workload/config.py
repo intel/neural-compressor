@@ -22,8 +22,10 @@ import yaml
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.logger import log
+from lpot.ux.utils.utils import load_precisions_config
 from lpot.ux.utils.workload.dataloader import Transform
 from lpot.ux.utils.workload.evaluation import Evaluation
+from lpot.ux.utils.workload.graph_optimization import GraphOptimization
 from lpot.ux.utils.workload.model import Model
 from lpot.ux.utils.workload.pruning import Pruning
 from lpot.ux.utils.workload.quantization import Quantization
@@ -48,6 +50,7 @@ class Config(JsonSerializer):
         self.tuning: Tuning = Tuning()
         self.evaluation: Optional[Evaluation] = None
         self.pruning: Optional[Pruning] = None
+        self.graph_optimization: Optional[GraphOptimization] = None
 
         self.initialize(data)
 
@@ -70,6 +73,9 @@ class Config(JsonSerializer):
 
         if isinstance(data.get("pruning"), dict):
             self.pruning = Pruning(data.get("pruning", {}))
+
+        if isinstance(data.get("graph_optimization"), dict):
+            self.graph_optimization = GraphOptimization(data.get("graph_optimization", {}))
 
     def remove_dataloader(self) -> None:
         """Remove datalader."""
@@ -195,7 +201,7 @@ class Config(JsonSerializer):
             }
             self.quantization.calibration.dataloader.set_dataset(calib_dataloader)
         else:
-            log.warning("Could not set performance dataloader.")
+            log.warning("Could not set calibration dataloader.")
 
     def set_quantization_dataset_path(self, dataset_path: str) -> None:
         """Update dataset path in quantization config."""
@@ -341,6 +347,19 @@ class Config(JsonSerializer):
             )
         if self.evaluation and self.evaluation.performance:
             self.evaluation.performance.iteration = iterations
+
+    def set_optimization_precision(self, precision: str) -> None:
+        """Update graph optimization precision."""
+        precisions_config = load_precisions_config()
+        available_precisions = [precision.get("name") for precision in precisions_config]
+        if precision not in available_precisions:
+            raise ClientErrorException(
+                f"Precision {precision} is not supported in graph optimization.",
+            )
+        if self.graph_optimization is None:
+            self.graph_optimization = GraphOptimization({"precisions": precision})
+        else:
+            self.graph_optimization.precisions = precision
 
     def load(self, path: str) -> None:
         """Load configuration from file."""

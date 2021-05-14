@@ -13,3 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Package benchmark contains all packages required to benchmark model."""
+
+
+class Benchmarks:
+    """Benchmarks enumeration."""
+
+    PERF = "performance"
+    ACC = "accuracy"

@@ -20,3 +20,11 @@ github_info = {
     "repository": "lpot",
     "tag": "v1.3",
 }
+
+
+class Precisions:
+    """Precisions enumeration."""
+
+    INT8 = "int8"
+    FP32 = "fp32"
+    MIXED = "bf16,fp32"

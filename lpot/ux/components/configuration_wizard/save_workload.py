@@ -42,6 +42,9 @@ def save_workload(
         workspace_path=data["workspace_path"],
         request_id=data["id"],
         model_path=data["model_path"],
+        input_precision=workload.input_precision,
+        output_precision=workload.output_precision,
+        mode=workload.mode,
     )
 
     update_config(workload, parsed_data, workdir)

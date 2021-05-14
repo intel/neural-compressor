@@ -9,13 +9,15 @@
 |:-----------|:-------------|
 | **id** | workload ID |
 | **workspace_path** | path to current UX workspace |
-| **models** | list of models to benchmark |
+| **input_model** | input model to benchmark |
+| **optimized_model** | optimized model to benchmark |
 
 > *Model definition*:
 > ```json
 > {
 >     "precision": "fp32",  // Model datatype
 >     "path": "/path/to/fp32_model.pb"  // Model path
+>     "mods": ["benchmark", "accuracy"] // Benchmark mode
 > }
 > ```
 
@@ -26,16 +28,14 @@
 {
     "id": "configuration_id",
     "workspace_path": "/path/to/workspace",
-    "models": [
-        {
-            "precision": "fp32",
-            "path": "/path/to/fp32_model.pb"
-        },
-        {
-            "precision": "int8",
-            "path": "/path/to/int8_model.pb"
-        }
-    ]
+    "input_model": {
+        "precision": "fp32",
+        "path": "/localdisk/fp32.pb"
+    },
+    "optimized_model": {
+        "precision": "int8",
+        "path": "/localdisk/int8.pb"
+    }
 }
 ```
 
@@ -55,9 +55,25 @@
     **Data**:
     ```json
     {
-        "id": "22b60ef39915ff4931936ca43b8c3ead",
-        "perf_throughput_fp32": <float>,
-        "progress": "1/2"
+        "id": "configuration_id",
+        "execution_details": {
+            "input_model_benchmark": {
+                "performance": {
+                    "instances": 7,
+                    "cores_per_instance": 4,
+                    "model_path": "/localdisk/fp32.pb",
+                    "precision": "fp32",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml",
+                    "benchmark_script": "/localdisk/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /localdisk/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml --input-graph /localdisk/fp32.pb --mode performance --framework tensorflow"
+                }
+            }
+        },
+        "progress": "1/2",
+        "perf_throughput_input_model": <float>
     }
     ```
 
@@ -66,10 +82,40 @@
     **Data**:
     ```json
     {
-        "id": "22b60ef39915ff4931936ca43b8c3ead",
-        "perf_throughput_fp32": <float>,
+        "id": "configuration_id",
+        "execution_details": {
+            "input_model_benchmark": {
+                "performance": {
+                    "instances": 7,
+                    "cores_per_instance": 4,
+                    "model_path": "/localdisk/fp32.pb",
+                    "precision": "fp32",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml",
+                    "benchmark_script": "/localdisk/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /localdisk/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml --input-graph /localdisk/fp32.pb --mode performance --framework tensorflow"
+                }
+            },
+            "optimized_model_benchmark": {
+                "performance": {
+                    "instances": 7,
+                    "cores_per_instance": 4,
+                    "model_path": "/localdisk/int8.pb",
+                    "precision": "int8",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml",
+                    "benchmark_script": "/localdisk/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /localdisk/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml --input-graph /localdisk/int8.pb --mode performance --framework tensorflow"
+                }
+            }
+        },
         "progress": "2/2",
-        "perf_throughput_int8": <float>
+        "perf_throughput_input_model": <float>,
+        "perf_throughput_optimized_model": <float>
     }
     ```
 
@@ -78,9 +124,39 @@
     **Data**:
     ```json
     {
-        "id": "22b60ef39915ff4931936ca43b8c3ead",
-        "perf_throughput_fp32": <float>,
+        "id": "configuration_id",
+        "execution_details": {
+            "input_model_benchmark": {
+                "performance": {
+                    "instances": 7,
+                    "cores_per_instance": 4,
+                    "model_path": "/localdisk/fp32.pb",
+                    "precision": "fp32",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml",
+                    "benchmark_script": "/localdisk/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /localdisk/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml --input-graph /localdisk/fp32.pb --mode performance --framework tensorflow"
+                }
+            },
+            "optimized_model_benchmark": {
+                "performance": {
+                    "instances": 7,
+                    "cores_per_instance": 4,
+                    "model_path": "/localdisk/int8.pb",
+                    "precision": "int8",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml",
+                    "benchmark_script": "/localdisk/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /localdisk/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/<model_name>_<configuration_id>/config.yaml --input-graph /localdisk/int8.pb --mode performance --framework tensorflow"
+                }
+            }
+        },
         "progress": "2/2",
-        "perf_throughput_int8": <float>
+        "perf_throughput_input_model": <float>,
+        "perf_throughput_optimized_model": <float>
     }
     ```

@@ -17,7 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.parser import BenchmarkParser, TuningParser
+from lpot.ux.utils.parser import BenchmarkParserFactory, OptimizationParser
 
 
 class TestTuningParser(unittest.TestCase):
@@ -25,8 +25,8 @@ class TestTuningParser(unittest.TestCase):
 
     def test_parsing_empty_file_list(self) -> None:
         """Test parsing of none files."""
-        tuning_parser = TuningParser([])
-        parsed = tuning_parser.process()
+        optimization_parser = OptimizationParser([])
+        parsed = optimization_parser.process()
 
         self.assertEqual({}, parsed)
 
@@ -35,8 +35,8 @@ class TestTuningParser(unittest.TestCase):
         """Test parsing of files without any lines."""
         mocked_open.return_value.__enter__.return_value = []
 
-        tuning_parser = TuningParser(["file.log"])
-        parsed = tuning_parser.process()
+        optimization_parser = OptimizationParser(["file.log"])
+        parsed = optimization_parser.process()
 
         self.assertEqual({}, parsed)
 
@@ -50,13 +50,13 @@ class TestTuningParser(unittest.TestCase):
             "a b c d",
         ]
 
-        tuning_parser = TuningParser(["file.log"])
-        parsed = tuning_parser.process()
+        optimization_parser = OptimizationParser(["file.log"])
+        parsed = optimization_parser.process()
 
         self.assertEqual(
             {
-                "acc_fp32": 0.1234,
-                "acc_int8": 0.9988,
+                "acc_input_model": 0.1234,
+                "acc_optimized_model": 0.9988,
             },
             parsed,
         )
@@ -73,13 +73,13 @@ class TestTuningParser(unittest.TestCase):
             "2021-04-13 13:42:00 [INFO] FP32 baseline is: [0.2, 5.6789]",
         ]
 
-        tuning_parser = TuningParser(["file.log"])
+        tuning_parser = OptimizationParser(["file.log"])
         parsed = tuning_parser.process()
 
         self.assertEqual(
             {
-                "acc_fp32": 0.2,
-                "acc_int8": 0.1,
+                "acc_input_model": 0.2,
+                "acc_optimized_model": 0.1,
             },
             parsed,
         )
@@ -90,7 +90,10 @@ class TestBenchmarkParser(unittest.TestCase):
 
     def test_parsing_empty_file_list(self) -> None:
         """Test parsing of none files."""
-        benchmark_parser = BenchmarkParser([])
+        benchmark_parser = BenchmarkParserFactory.get_parser(
+            benchmark_mode="performance",
+            logs=[],
+        )
         parsed = benchmark_parser.process()
 
         self.assertEqual({}, parsed)
@@ -100,7 +103,10 @@ class TestBenchmarkParser(unittest.TestCase):
         """Test parsing of files without any lines."""
         mocked_open.return_value.__enter__.return_value = []
 
-        benchmark_parser = BenchmarkParser(["file.log"])
+        benchmark_parser = BenchmarkParserFactory.get_parser(
+            benchmark_mode="performance",
+            logs=["file.log"],
+        )
         parsed = benchmark_parser.process()
 
         self.assertEqual({}, parsed)
@@ -121,15 +127,18 @@ class TestBenchmarkParser(unittest.TestCase):
             "a b c d",
         ]
 
-        benchmark_parser = BenchmarkParser(["file.log"])
+        benchmark_parser = BenchmarkParserFactory.get_parser(
+            benchmark_mode="performance",
+            logs=["file.log"],
+        )
         parsed = benchmark_parser.process()
 
         self.assertEqual(
             {
-                "perf_throughput_fp32": 123.4568,
-                "perf_throughput_int8": 123.4568,
-                "perf_latency_fp32": 2.3457,
-                "perf_latency_int8": 2.3457,
+                "perf_throughput_input_model": 123.4568,
+                "perf_throughput_optimized_model": 123.4568,
+                "perf_latency_input_model": 2.3457,
+                "perf_latency_optimized_model": 2.3457,
             },
             parsed,
         )
@@ -159,15 +168,18 @@ class TestBenchmarkParser(unittest.TestCase):
             "a b c d",
         ]
 
-        benchmark_parser = BenchmarkParser(["file.log"])
+        benchmark_parser = BenchmarkParserFactory.get_parser(
+            benchmark_mode="performance",
+            logs=["file.log"],
+        )
         parsed = benchmark_parser.process()
 
         self.assertEqual(
             {
-                "perf_throughput_fp32": 15.0,  # SUM
-                "perf_throughput_int8": 15.0,  # SUM
-                "perf_latency_fp32": 3.5,  # AVG
-                "perf_latency_int8": 3.5,  # AVG
+                "perf_throughput_input_model": 15.0,  # SUM
+                "perf_throughput_optimized_model": 15.0,  # SUM
+                "perf_latency_input_model": 3.5,  # AVG
+                "perf_latency_optimized_model": 3.5,  # AVG
             },
             parsed,
         )

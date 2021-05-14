@@ -331,6 +331,7 @@ class TestTransformParser(TestParser):
                 "kmp_blocktime": 1,
             },
             "workspace_path": "/foo",
+            "tuning": True,
         }
 
     def _build_input_with_multiple_transforms(
@@ -373,6 +374,7 @@ class TestTransformParser(TestParser):
                 "kmp_blocktime": 1,
             },
             "workspace_path": "/foo",
+            "tuning": True,
         }
 
     def _assert_parses_single_transform_params(
@@ -512,6 +514,7 @@ class TestDataloaderParser(TestParser):
                 "kmp_blocktime": 1,
             },
             "workspace_path": "/foo",
+            "tuning": True,
         }
 
     def _assert_parses_dataloader_params(

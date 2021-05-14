@@ -17,15 +17,17 @@
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from lpot.ux.components.benchmark import Benchmarks
 from lpot.ux.components.benchmark.benchmark import Benchmark
-from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.exceptions import ClientErrorException, InternalException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.parser import BenchmarkParser
+from lpot.ux.utils.parser import BenchmarkParserFactory
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import _load_json_as_dict
+from lpot.ux.utils.workload.workload import Workload
 from lpot.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -39,25 +41,27 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
     {
         "id": "configuration_id",
         "workspace_path": "/path/to/workspace",
-        "models": [
-            {
-                "precision": "fp32",
-                "path": "/localdisk/fp32.pb"
-            },
-            {
-                "precision": "int8",
-                "path": "/localdisk/int8.pb"
-            }
-        ]
+        "input_model": {
+            "precision": "fp32",
+            "path": "/localdisk/fp32.pb"
+        },
+        "optimized_model": {
+            "precision": "int8",
+            "path": "/localdisk/int8.pb"
+        }
     }
     """
     from lpot.ux.utils.workload.workload import Workload
 
     request_id = str(data.get("id", ""))
-    models = data.get("models", None)
+    input_model = data.get("input_model", None)
+    input_model.update({"model_type": "input_model"})
 
-    if not (request_id and models):
-        message = "Missing request id or model list."
+    optimized_model = data.get("optimized_model", None)
+    optimized_model.update({"model_type": "optimized_model"})
+
+    if not (request_id and input_model and optimized_model):
+        message = "Missing request id, input or optimized model data."
         mq.post_error(
             "benchmark_finish",
             {"message": message, "code": 404, "id": request_id},
@@ -89,69 +93,131 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
         },
     )
 
-    for idx, model_info in enumerate(models, start=1):
+    models = [input_model, optimized_model]
+
+    benchmark_count = 0
+    benchmark_total = 0
+
+    for model_info in models:
+        benchmark_modes: List[str] = model_info.get("mode", [Benchmarks.PERF])
+        if (
+            not workload.tune and Benchmarks.ACC not in benchmark_modes
+        ):  # Accuracy information is provided only in tuning
+            benchmark_modes.append(Benchmarks.ACC)
+        model_info.update({"benchmark_modes": benchmark_modes})
+        benchmark_total += len(benchmark_modes)
+
+    for model_info in models:
         model_precision = model_info.get("precision", None)
+        model_type = model_info.get("model_type", None)
         model_path = model_info.get("path", None)
-        benchmark_mode = model_info.get("mode", "performance")
-        if not (model_precision and model_path):
-            message = "Missing model precision or model path."
+        benchmark_modes = model_info.get("benchmark_modes", None)
+
+        if not (model_precision and model_path and model_type and benchmark_modes):
+            message = "Missing model precision, model path or model type."
             mq.post_error(
                 "benchmark_finish",
                 {"message": message, "code": 404, "id": request_id},
             )
             raise ClientErrorException(message)
 
-        benchmark: Benchmark = Benchmark(
-            workload=workload,
-            model_path=model_path,
-            datatype=model_precision,
-            mode=benchmark_mode,
-        )
+        for benchmark_mode in benchmark_modes:
+            benchmark_count += 1
 
-        log_name = f"{model_precision}_{benchmark_mode}_benchmark"
-
-        executor = Executor(
-            workload_path,
-            subject="benchmark",
-            data={"id": request_id},
-            send_response=False,
-            log_name=log_name,
-            additional_log_names=["output.txt"],
-        )
-
-        proc = executor.call(
-            benchmark.command,
-        )
-
-        logs = [os.path.join(workload_path, f"{log_name}.txt")]
-
-        if proc.is_ok:
-            parser = BenchmarkParser(logs)
-            metrics = parser.process()
-            metric = {}
-            execution_details: Dict[str, Any] = {}
-            throughput_field = f"perf_throughput_{model_precision}"
-            if isinstance(metrics, dict):
-                metric = {throughput_field: metrics.get(throughput_field, "")}
-                execution_details = {
-                    f"{model_precision}_benchmark": benchmark.serialize(),
-                }
-                response_data.update({"progress": f"{idx}/{len(models)}"})
-                response_data.update(metric)
-                response_data["execution_details"].update(execution_details)
-            workdir.update_metrics(
-                request_id=request_id,
-                metric_data=metric,
+            response_data = benchmark_model(
+                response_data=response_data,
+                workload=workload,
+                workdir=workdir,
+                model=model_type,
+                model_path=model_path,
+                model_precision=model_precision,
+                benchmark_mode=benchmark_mode,
+                benchmark_count=benchmark_count,
+                benchmark_total=benchmark_total,
             )
-            workdir.update_execution_details(
-                request_id=request_id,
-                execution_details=execution_details,
-            )
-            log.debug(f"Parsed data is {json.dumps(response_data)}")
-            mq.post_success("benchmark_progress", response_data)
-        else:
-            log.error("Benchmark failed.")
-            mq.post_failure("benchmark_finish", {"message": "failed", "id": request_id})
-            raise ClientErrorException("Benchmark failed during execution.")
 
     mq.post_success("benchmark_finish", response_data)
+
+
+def benchmark_model(
+    response_data: dict,
+    workload: Workload,
+    workdir: Workdir,
+    model: str,
+    model_path: str,
+    model_precision: str,
+    benchmark_mode: str,
+    benchmark_count: int,
+    benchmark_total: int,
+) -> dict:
+    """Benchmark model and prepare response data."""
+    request_id = response_data.get("id")
+
+    benchmark: Benchmark = Benchmark(
+        workload=workload,
+        model_path=model_path,
+        precision=model_precision,
+        mode=benchmark_mode,
+    )
+
+    log_name = f"{model}_{benchmark_mode}_benchmark"
+
+    executor = Executor(
+        workload.workload_path,
+        subject="benchmark",
+        data={"id": request_id},
+        send_response=False,
+        log_name=log_name,
+        additional_log_names=["output.txt"],
+    )
+
+    proc = executor.call(
+        benchmark.command,
+    )
+
+    logs = [os.path.join(workload.workload_path, f"{log_name}.txt")]
+
+    if not proc.is_ok:
+        log.error("Benchmark failed.")
+        mq.post_failure("benchmark_finish", {"message": "failed", "id": request_id})
+        raise ClientErrorException("Benchmark failed during execution.")
+
+    parser = BenchmarkParserFactory.get_parser(benchmark_mode, logs)
+    metrics = parser.process()
+    metric = {}
+    execution_details: Dict[str, Any] = {}
+
+    if benchmark_mode == Benchmarks.PERF:
+        result_field = f"perf_throughput_{model}"
+    elif benchmark_mode == Benchmarks.ACC:
+        result_field = f"acc_{model}"
+    else:
+        raise InternalException(f"Benchmark mode {benchmark_mode} is not supported.")
+
+    if isinstance(metrics, dict):
+        metric = {result_field: metrics.get(result_field, "")}
+        execution_details = response_data.get("execution_details", {})
+        model_benchmark_details = execution_details.get(f"{model}_benchmark", {})
+        model_benchmark_details.update(
+            {
+                benchmark_mode: benchmark.serialize(),
+            },
+        )
+
+        response_data.update({"progress": f"{benchmark_count}/{benchmark_total}"})
+        response_data.update(metric)
+        response_data["execution_details"].update(
+            {f"{model}_benchmark": model_benchmark_details},
+        )
+    workdir.update_metrics(
+        request_id=request_id,
+        metric_data=metric,
+    )
+    workdir.update_execution_details(
+        request_id=request_id,
+        execution_details=execution_details,
+    )
+    log.debug(f"Parsed data is {json.dumps(response_data)}")
+    mq.post_success("benchmark_progress", response_data)
+
+    return response_data

@@ -32,6 +32,7 @@ export class ImportModelComponent implements OnInit {
   frameworks = [];
   domains = [];
   metrics = [];
+  precisions = [];
   metricParam: string | boolean;
   metricParams = [];
   objectives = [];
@@ -47,6 +48,8 @@ export class ImportModelComponent implements OnInit {
   };
   transformations = [];
   transformationParams = [];
+  tuningEnabled = true;
+  tuningWarning: string;
   tunings = [];
   inputs = [];
   outputs = [];
@@ -64,7 +67,7 @@ export class ImportModelComponent implements OnInit {
   id: string;
   showSpinner = false;
   showGraphSpinner = false;
-  useCalibrationData = true;
+  useEvaluationData = true;
   fileBrowserParams = ['label_file', 'vocab_file'];
 
   constructor(
@@ -124,15 +127,11 @@ export class ImportModelComponent implements OnInit {
           } else {
             this.firstFormGroup.get('framework').setValue(result['data']['framework']);
             if (result['data']['framework'] === 'tensorflow') {
-              this.firstFormGroup.controls['input'].setValidators([Validators.required]);
-              this.firstFormGroup.controls['output'].setValidators([Validators.required]);
-              this.firstFormGroup.controls['input'].updateValueAndValidity();
-              this.firstFormGroup.controls['output'].updateValueAndValidity();
+              this.isFieldRequired('firstFormGroup', 'input', true);
+              this.isFieldRequired('firstFormGroup', 'output', true);
             } else {
-              this.firstFormGroup.controls['input'].clearValidators();
-              this.firstFormGroup.controls['output'].clearValidators();
-              this.firstFormGroup.controls['input'].updateValueAndValidity();
-              this.firstFormGroup.controls['output'].updateValueAndValidity();
+              this.isFieldRequired('firstFormGroup', 'input', false);
+              this.isFieldRequired('firstFormGroup', 'output', false);
             }
             this.getPossibleValues();
             this.frameworkVersion = result['data']['framework_version'];
@@ -179,12 +178,13 @@ export class ImportModelComponent implements OnInit {
       inputOther: [''],
       output: [''],
       outputOther: [''],
+      precision: ['int8', Validators.required]
     });
     this.secondFormGroup = this._formBuilder.group({
       accuracyGoal: [0.01],
       dataLoaderEvaluation: [''],
       dataLoaderQuantization: [''],
-      datasetLocationEvaluation: [''],
+      datasetLocationEvaluation: ['', Validators.required],
       datasetLocationQuantization: [''],
       datasetParams0: [''],
       datasetParams1: [''],
@@ -217,6 +217,10 @@ export class ImportModelComponent implements OnInit {
           .setValue(Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4));
       });
     }
+    this.modelService.getPossibleValues('precision')
+      .subscribe(
+        resp => this.precisions = resp['precision'],
+        error => this.openErrorDialog(error));
   }
 
   getPossibleValues() {
@@ -274,17 +278,14 @@ export class ImportModelComponent implements OnInit {
       })
     }
     this.showDatasetLocation[section] = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
-    if (section === 'quantization' && this.useCalibrationData) {
-      this.secondFormGroup.controls['datasetLocationEvaluation'].clearValidators();
-      this.secondFormGroup.controls['datasetLocationEvaluation'].updateValueAndValidity();
+    if (section === 'evaluation' && this.useEvaluationData) {
+      this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
     }
     const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
     if (this.showDatasetLocation[section]) {
-      this.secondFormGroup.controls[controlName].setValidators([Validators.required]);
-      this.secondFormGroup.controls[controlName].updateValueAndValidity();
+      this.isFieldRequired('secondFormGroup', controlName, true);
     } else {
-      this.secondFormGroup.controls[controlName].clearValidators();
-      this.secondFormGroup.controls[controlName].updateValueAndValidity();
+      this.isFieldRequired('secondFormGroup', controlName, false);
     }
   }
 
@@ -298,6 +299,37 @@ export class ImportModelComponent implements OnInit {
 
   removeTransformation(index: number) {
     this.transformationParams.splice(index, 1);;
+  }
+
+  onPrecisionChange(event) {
+    if (event.value === 'int8') {
+      this.tuningEnabled = true;
+      this.tuningWarning = null;
+    } else if (event.value === 'fp32') {
+      this.tuningEnabled = false;
+      this.tuningWarning = 'Tuning is not available for this configuration.';
+      this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
+      this.secondFormGroup.get('datasetLocationQuantization').setValue('');
+    } else if (event.value === 'bf16,fp32') {
+      this.tuningEnabled = true;
+      this.tuningWarning = null;
+    }
+  }
+
+  onTuningEnabledChange() {
+    if (!this.tuningEnabled) {
+      this.secondFormGroup.get('datasetLocationQuantization').setValue('');
+      this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
+    }
+  }
+
+  isFieldRequired(form: string, field: string, required: boolean) {
+    if (required) {
+      this[form].controls[field].setValidators([Validators.required]);
+    } else {
+      this[form].controls[field].clearValidators();
+    }
+    this[form].controls[field].updateValueAndValidity();
   }
 
   getConfig() {
@@ -371,20 +403,20 @@ export class ImportModelComponent implements OnInit {
   }
 
   calibrationDataChange(copied: boolean) {
-    this.useCalibrationData = copied;
+    this.useEvaluationData = copied;
     if (copied) {
-      this.secondFormGroup.get('dataLoaderEvaluation').setValue(this.secondFormGroup.get('dataLoaderQuantization').value);
-      this.secondFormGroup.get('datasetLocationEvaluation').setValue(this.secondFormGroup.get('datasetLocationQuantization').value);
-      this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
+      this.secondFormGroup.get('dataLoaderQuantization').setValue(this.secondFormGroup.get('dataLoaderEvaluation').value);
+      this.secondFormGroup.get('datasetLocationQuantization').setValue(this.secondFormGroup.get('datasetLocationEvaluation').value);
+      this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderQuantization'), 'evaluation');
     } else {
-      this.secondFormGroup.get('dataLoaderEvaluation').reset();
-      this.secondFormGroup.get('datasetLocationEvaluation').setValue('');
+      this.secondFormGroup.get('dataLoaderQuantization').reset();
+      this.secondFormGroup.get('datasetLocationQuantization').setValue('');
     }
   }
 
-  useForEvaluation() {
-    if (this.useCalibrationData) {
-      this.secondFormGroup.get('datasetLocationEvaluation').setValue(this.secondFormGroup.get('datasetLocationQuantization').value);
+  useForQuantization() {
+    if (this.useEvaluationData) {
+      this.secondFormGroup.get('datasetLocationQuantization').setValue(this.secondFormGroup.get('datasetLocationEvaluation').value);
     }
   }
 
@@ -423,7 +455,9 @@ export class ImportModelComponent implements OnInit {
       model_path: this.firstFormGroup.get('modelLocation').value,
       inputs: this.getBoundaryNodes('input'),
       outputs: this.getBoundaryNodes('output'),
+      precision: this.firstFormGroup.get('precision').value,
       transform: this.getTransformParams(this.transformationParams),
+      tuning: this.tuningEnabled,
       quantization: {
         dataset_path: this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location',
         dataloader: {
@@ -458,22 +492,22 @@ export class ImportModelComponent implements OnInit {
   }
 
   getEvaluationDatasetPath() {
-    if (this.useCalibrationData) {
-      return this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location'
+    if (this.useEvaluationData) {
+      return this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location'
     }
-    return this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location'
+    return this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location'
   }
 
   getEvaluationDataloader() {
-    if (this.useCalibrationData) {
+    if (this.useEvaluationData) {
       return {
-        name: this.secondFormGroup.get('dataLoaderQuantization').value,
-        params: this.dataLoaderParams['quantization'] ? this.getParams(this.dataLoaderParams['quantization']) : null
+        name: this.secondFormGroup.get('dataLoaderEvaluation').value,
+        params: this.dataLoaderParams['evaluation'] ? this.getParams(this.dataLoaderParams['evaluation']) : null
       };
     }
     return {
-      name: this.secondFormGroup.get('dataLoaderEvaluation').value,
-      params: this.dataLoaderParams['evaluation'] ? this.getParams(this.dataLoaderParams['evaluation']) : null
+      name: this.secondFormGroup.get('dataLoaderQuantization').value,
+      params: this.dataLoaderParams['quantization'] ? this.getParams(this.dataLoaderParams['quantization']) : null
     };
   }
 
@@ -546,8 +580,8 @@ export class ImportModelComponent implements OnInit {
           }
         } else {
           this[form].get(fieldName).setValue(chosenFile);
-          if (fieldName === 'datasetLocationQuantization' && this.useCalibrationData) {
-            this.secondFormGroup.get('datasetLocationEvaluation').setValue(chosenFile);
+          if (fieldName === 'datasetLocationEvaluation' && this.useEvaluationData) {
+            this.secondFormGroup.get('datasetLocationQuantization').setValue(chosenFile);
           }
         }
       }
@@ -583,6 +617,8 @@ export interface FullModel {
   model_path: string;
   inputs: string[];
   outputs: string[];
+  precision: string;
+  tuning: boolean,
   transform: {
     name: string;
     params: {};

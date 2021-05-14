@@ -81,6 +81,8 @@ class ConfigurationParser:
 
     def parse(self, data: dict) -> dict:
         """Parse configuration."""
+        data = set_defaults(data)
+
         transforms_data = data.get("transform", None)
         if transforms_data is not None:
             data.update({"transform": self.parse_transforms(transforms_data)})
@@ -129,6 +131,8 @@ class ConfigurationParser:
                     "batch_size": int(data.get("evaluation", {}).get("batch_size", 1)),
                 },
             )
+
+        data["tuning"] = parse_bool_value(data["tuning"])
 
         return data
 
@@ -257,3 +261,16 @@ def normalize_string_list(string_list: str) -> str:
     if not string_list.endswith("]"):
         string_list += "]"
     return string_list
+
+
+def set_defaults(data: dict) -> dict:
+    """Set default values for data if missing."""
+    # Set tuning as default
+    if "tuning" not in data:
+        data.update({"tuning": True})
+
+    # Set int8 as default requested precision
+    if "precision" not in data:
+        data.update({"precision": "int8"})
+
+    return data

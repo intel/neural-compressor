@@ -12,5 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Package optimization contains all packages required to optimize model."""
 
-"""Parse tune data."""
+
+class Optimizations:
+    """Optimizations enumeration."""
+
+    TUNING = "tuning"
+    GRAPH = "graph_optimization"

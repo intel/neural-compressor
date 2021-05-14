@@ -50,7 +50,6 @@ import { GraphComponent } from './graph/graph.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { MatSidenavModule } from '@angular/material/sidenav';
 
-
 @NgModule({
   declarations: [
     AppComponent,

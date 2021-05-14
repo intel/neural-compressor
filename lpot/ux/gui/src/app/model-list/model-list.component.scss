@@ -53,6 +53,10 @@ img {
   border-left: 3px solid $lighter-gray1 !important;
 }
 
+.precision {
+  border-right: 3px solid $lighter-gray1 !important;
+}
+
 .center {
   text-align: center;
 }
@@ -63,4 +67,13 @@ img {
 
 .icon-button {
   width: 25px;
+}
+
+.tag {
+  color: $dark-gray;
+  background-color: white;
+  border: $dark-gray 1px solid;
+  border-radius: 5px;
+  padding: 2px;
+  text-align: center;
 }
