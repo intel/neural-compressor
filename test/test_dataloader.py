@@ -549,8 +549,7 @@ class TestDataloader(unittest.TestCase):
         eval_dataset = create_dataset(
             'tensorflow', 
             {'COCORecord':{'root':'test.record'}}, 
-            {'ParseDecodeCoco':{}, 
-            'RandomVerticalFlip': {},
+            {'RandomVerticalFlip': {},
             'RandomHorizontalFlip': {},
             'CropResize':{'x':0, 'y':0, 'width':10, 'height':10, 'size':[5,5]},
             'Transpose':{'perm': [2, 0, 1]}
@@ -700,13 +699,6 @@ class TestDataloader(unittest.TestCase):
         im = Image.fromarray(random_array)
         im.save('test.jpeg')
 
-        dataloader_args = {
-            'dataset': {"ImageRecord": {'root': './'}},
-            'transform': None,
-            'filter': None
-        }
-        self.assertRaises(ValueError, create_dataloader, 'tensorflow', dataloader_args)
-
         image = tf.compat.v1.gfile.FastGFile('test.jpeg','rb').read()
         example = tf.train.Example(features=tf.train.Features(feature={
             'image/encoded':tf.train.Feature(
@@ -719,7 +711,7 @@ class TestDataloader(unittest.TestCase):
             writer.write(example.SerializeToString())
 
         eval_dataset = create_dataset(
-            'tensorflow', {'ImageRecord':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
+            'tensorflow', {'ImageRecord':{'root':'./'}}, None, None)
 
         dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1) 
         for (inputs, labels) in dataloader:
@@ -728,7 +720,7 @@ class TestDataloader(unittest.TestCase):
 
         # test old api
         eval_dataset = create_dataset(
-            'tensorflow', {'Imagenet':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
+            'tensorflow', {'Imagenet':{'root':'./'}}, None, None)
         dataloader = DataLoader('tensorflow', dataset=eval_dataset, batch_size=1) 
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))

@@ -28,7 +28,6 @@ quantization:                                        # optional. tuning constrai
         COCORecord:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
-        ParseDecodeCoco: {}
         Resize:
           size: 600
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
@@ -48,7 +47,6 @@ evaluation:                                          # optional. used to config 
         COCORecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
-        ParseDecodeCoco: {}
         Resize:
           size: 600
   performance:
@@ -63,7 +61,6 @@ evaluation:                                          # optional. used to config 
         COCORecord:
           root: /path/to/evaluation/dataset
       transform:
-        ParseDecodeCoco: {}
         Resize:
           size: 600
 tuning:

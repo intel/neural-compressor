@@ -26,7 +26,6 @@ quantization:                                        # optional. tuning constrai
         ImageRecord:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
       transform:
-        ParseDecodeImagenet: {}
         BilinearImagenet: 
           height: 299
           width: 299
@@ -49,7 +48,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet: {}
         BilinearImagenet: 
           height: 299
           width: 299
@@ -64,7 +62,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet: {}
         BilinearImagenet: 
           height: 299
           width: 299

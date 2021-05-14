@@ -121,7 +121,10 @@ class COCORecordDataset(IterableDataset):
                                 buffer_output_elements=10000,
                                 prefetch_input_elements=10000))
         if transform is not None:
-            ds = ds.map(transform, num_parallel_calls=None)
+            transform.transform_list.insert(0, ParseDecodeCoco())
+        else:
+            transform = ParseDecodeCoco()
+        ds = ds.map(transform, num_parallel_calls=None)
         if filter is not None:
             ds = ds.filter(filter)
         ds = ds.prefetch(buffer_size=1000)

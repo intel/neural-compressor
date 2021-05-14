@@ -87,3 +87,32 @@ class LabelShift(BaseTransform):
         images, labels = sample
         labels = np.array(labels) - self.label_shift
         return images, labels
+
+class ParseDecodeImagenet():
+    """Parse features in Example proto.
+
+    Returns:
+        tuple of parsed image and label
+    """
+
+    def __call__(self, sample):
+        # Dense features in Example proto.
+        feature_map = {
+            'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string, default_value=''),
+            'image/class/label': tf.io.FixedLenFeature([1], dtype=tf.int64, default_value=-1)}
+
+        sparse_float32 = tf.io.VarLenFeature(dtype=tf.float32)
+        # Sparse features in Example proto.
+        feature_map.update(
+            {k: sparse_float32 for k in ['image/object/bbox/xmin',
+                                         'image/object/bbox/ymin',
+                                         'image/object/bbox/xmax',
+                                         'image/object/bbox/ymax']})
+
+        features = tf.io.parse_single_example(serialized=sample, features=feature_map)
+        label = tf.cast(features['image/class/label'], dtype=tf.int32)
+        image = features['image/encoded']
+        image = tf.image.decode_jpeg(
+            image, channels=3, fancy_upscaling=False, dct_method='INTEGER_FAST')
+
+        return (image, label)

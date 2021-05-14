@@ -285,8 +285,6 @@ transform_schema = Schema({
         'perm': And(list, lambda s: all(isinstance(i, int) for i in s)),
     },
     # THIS API IS TO BE DEPRECATED!
-    Optional('ParseDecodeImagenet'): Or({}, None),
-    Optional('ParseDecodeCoco'): Or({}, None),
     Optional('ParseDecodeVoc'): Or({}, None),
     Optional('BilinearImagenet'): {
         'height': And(int, lambda s: s > 0),

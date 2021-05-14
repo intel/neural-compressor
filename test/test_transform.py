@@ -251,6 +251,10 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_result.eval(session=tf.compat.v1.Session())
         self.assertEqual(tf_result.shape, (4,4,3))
 
+        tf_result = tf_func((tf.constant(TestSameTransfoms.img.reshape((1,10,10,3))), None))[0]
+        tf_result = tf_result.eval(session=tf.compat.v1.Session())
+        self.assertEqual(tf_result.shape, (1,4,4,3))
+
         args = {'size':4}
         tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
@@ -272,11 +276,17 @@ class TestSameTransfoms(unittest.TestCase):
         with self.assertRaises(ValueError):
             tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
             tf_result = tf_func((np.array([[TestSameTransfoms.img]]), None))
+        with self.assertRaises(ValueError):
+            tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
+            tf_result = tf_func((tf.constant(TestSameTransfoms.img.reshape((1,1,10,10,3))), None))
 
         args = {'size':[20]}
         with self.assertRaises(ValueError):
             tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
             tf_result = tf_func((TestSameTransfoms.img, None))
+        with self.assertRaises(ValueError):
+            tf_func = TestSameTransfoms.tf_trans['CenterCrop'](**args)
+            tf_result = tf_func((TestSameTransfoms.tf_img, None))
 
     def testResizeWithRatio(self):
         args = {'padding': True}
@@ -447,6 +457,8 @@ class TestSameTransfoms(unittest.TestCase):
     def testRandomHorizontalFlip(self):
         tf_func = TestSameTransfoms.tf_trans['RandomHorizontalFlip']()
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
+        ox_func = TestSameTransfoms.ox_trans['RandomHorizontalFlip']()
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans['RandomHorizontalFlip']()
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
         mx_func = TestSameTransfoms.mx_trans['RandomHorizontalFlip']()
@@ -458,6 +470,10 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertTrue(
             (TestSameTransfoms.img == tf_result).all() or
             (np.fliplr(TestSameTransfoms.img) == tf_result).all()
+        )
+        self.assertTrue(
+            (TestSameTransfoms.img == ox_result).all() or
+            (np.fliplr(TestSameTransfoms.img) == ox_result).all()
         )
         self.assertTrue(
             (TestSameTransfoms.mx_img.asnumpy() == mx_result.asnumpy()).all() or
@@ -474,6 +490,8 @@ class TestSameTransfoms(unittest.TestCase):
     def testRandomVerticalFlip(self):
         tf_func = TestSameTransfoms.tf_trans['RandomVerticalFlip']()
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
+        ox_func = TestSameTransfoms.ox_trans['RandomVerticalFlip']()
+        ox_result = ox_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans['RandomVerticalFlip']()
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
         mx_func = TestSameTransfoms.mx_trans['RandomVerticalFlip']()
@@ -485,6 +503,10 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertTrue(
             (TestSameTransfoms.img == tf_result).all() or
             (np.flipud(TestSameTransfoms.img) == tf_result).all()
+        )
+        self.assertTrue(
+            (TestSameTransfoms.img == ox_result).all() or
+            (np.flipud(TestSameTransfoms.img) == ox_result).all()
         )
         self.assertTrue(
             (TestSameTransfoms.mx_img.asnumpy() == mx_result.asnumpy()).all() or
@@ -502,6 +524,7 @@ class TestTFTransorm(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.img = np.ones([10,10,3])
+        cls.tf_img = tf.constant(cls.img)
         cls.transforms = TRANSFORMS('tensorflow', 'preprocess')
         cls.tf_img = tf.constant(cls.img)
 
@@ -509,10 +532,16 @@ class TestTFTransorm(unittest.TestCase):
         args = {'size': [50]}
         transform = TestTFTransorm.transforms['RandomCrop'](**args)
         self.assertRaises(ValueError, transform, (TestTFTransorm.img, None))
+        self.assertRaises(ValueError, transform, (TestTFTransorm.tf_img, None))
+ 
         args = {'size': [5, 5]}
         transform = TestTFTransorm.transforms['RandomCrop'](**args)
         img_result = transform((TestTFTransorm.img, None))[0]
         self.assertEqual(img_result.shape, (5,5,3))
+        tf_result = transform((tf.constant(TestTFTransorm.img.reshape((1,10,10,3))), None))[0]
+        tf_result = tf_result.eval(session=tf.compat.v1.Session())
+        self.assertEqual(tf_result.shape, (1,5,5,3))
+
         args = {'size': [10,10]}
         transform = TestTFTransorm.transforms['RandomCrop'](**args)
         img_result = transform((TestTFTransorm.img, None))[0]
@@ -563,6 +592,10 @@ class TestTFTransorm(unittest.TestCase):
         comp_result = np.array(TestTFTransorm.img)/255.
         self.assertAlmostEqual(img_result[0][0][0], comp_result[0][0][0], places=5)
 
+        tf_result = transform((TestTFTransorm.tf_img, None))[0]
+        tf_result = tf_result.eval(session=tf.compat.v1.Session())
+        self.assertAlmostEqual(tf_result[0][0][0], comp_result[0][0][0], places=5) 
+
     def testNormalize(self):
         args = {'mean':[0.0,0.0,0.0], 'std':[0.2, 0.5, 0.1]}
         normalize = TestTFTransorm.transforms['Normalize'](**args)
@@ -572,6 +605,10 @@ class TestTFTransorm(unittest.TestCase):
         self.assertAlmostEqual(img_result[0][0][1], comp_result[0][0][1], places=5)
         self.assertAlmostEqual(img_result[0][0][2], comp_result[0][0][2], places=5)
         
+        tf_result = normalize((TestTFTransorm.tf_img, None))[0]
+        tf_result = tf_result.eval(session=tf.compat.v1.Session())
+        self.assertAlmostEqual(tf_result[0][0][0], comp_result[0][0][0], places=5)
+
         args = {'mean':[0.0,0.0,0.0], 'std':[0, 0, 0]}
         with self.assertRaises(ValueError):
             TestTFTransorm.transforms["Normalize"](**args)
@@ -843,22 +880,30 @@ class TestImagenetTransform(unittest.TestCase):
             'image/object/bbox/ymax': tf.train.Feature(
                     float_list=tf.train.FloatList(value=[200])),
         }))
-        with tf.io.TFRecordWriter('test.record') as writer:
+        with tf.io.TFRecordWriter('test-0-of-0') as writer:
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
-            'tensorflow', {'TFRecordDataset':{'root':'test.record'}}, {'ParseDecodeImagenet':{}}, None)
+            'tensorflow', {'ImageRecord':{'root':'./'}}, None, None)
         dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0][0], 10)
             break
 
-        from lpot.data.transforms.imagenet_transform import ParseDecodeImagenetTransform
-        func = ParseDecodeImagenetTransform()
+        from lpot.experimental.data.transforms.imagenet_transform import ParseDecodeImagenet
+        func = ParseDecodeImagenet()
         out = func(example.SerializeToString())
         self.assertEqual(out[0].eval(session=tf.compat.v1.Session()).shape, (100,100,3))
 
-        os.remove('test.record')
+        from lpot.experimental.data.datasets.dataset import TensorflowTFRecordDataset
+        ds = TensorflowTFRecordDataset('test-0-of-0', func)
+        dataloader = DATALOADERS['tensorflow'](dataset=ds, batch_size=1)
+        for (inputs, labels) in dataloader:
+            self.assertEqual(inputs.shape, (1,100,100,3))
+            self.assertEqual(labels[0][0], 10)
+            break
+
+        os.remove('test-0-of-0')
         os.remove('test.jpeg')
 
 class TestCOCOTransform(unittest.TestCase):
@@ -894,7 +939,7 @@ class TestCOCOTransform(unittest.TestCase):
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
             'tensorflow', {'COCORecord':{'root':'test.record'}}, 
-            {'ParseDecodeCoco':{}, 'Resize': {'size': 50}, 'Cast':{'dtype':'int64'},
+            {'Resize': {'size': 50}, 'Cast':{'dtype':'int64'},
             'CropToBoundingBox':{'offset_height':2, 'offset_width':2, 'target_height':5, 'target_width':5},
             'CenterCrop':{'size':[4,4]},
             'RandomResizedCrop':{'size':[4,5]},
@@ -904,10 +949,9 @@ class TestCOCOTransform(unittest.TestCase):
             self.assertEqual(inputs.shape, (1,4,5,3))
             self.assertEqual(labels[0].shape, (1,1,4))
 
-        from lpot.data.transforms.coco_transform import ParseDecodeCocoTransform
         from lpot.experimental.data.transforms.transform import TensorflowResizeWithRatio
         from lpot.experimental.data.datasets.coco_dataset import ParseDecodeCoco
-        func = ParseDecodeCocoTransform()
+        func = ParseDecodeCoco()
         out = func(example.SerializeToString())
         self.assertEqual(out[0].eval(session=tf.compat.v1.Session()).shape, (100,100,3))
 

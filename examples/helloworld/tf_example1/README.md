@@ -17,7 +17,6 @@ quantization:                                        # optional. tuning constrai
         ImageRecord:
           root: <DATASET>/TF_imagenet/val/           # NOTE: modify to calibration dataset location if needed
       transform:
-        ParseDecodeImagenet:
         BilinearImagenet: 
           height: 224
           width: 224
@@ -37,7 +36,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: <DATASET>/TF_imagenet/val/           # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
         BilinearImagenet: 
           height: 224
           width: 224

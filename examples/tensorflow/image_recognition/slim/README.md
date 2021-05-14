@@ -208,7 +208,6 @@ quantization:                                        # optional. tuning constrai
         ImageRecord:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
       transform:
-        ParseDecodeImagenet:
         ResizeCropImagenet: 
           height: 224
           width: 224
@@ -227,7 +226,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
         ResizeCropImagenet: 
           height: 224
           width: 224
@@ -242,7 +240,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
         ResizeCropImagenet: 
           height: 224
           width: 224

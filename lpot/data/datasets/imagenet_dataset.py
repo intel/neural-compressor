@@ -55,31 +55,20 @@ class TensorflowImagenetDataset(IterableDataset):
             raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
 
         from tensorflow.python.data.experimental import parallel_interleave
+        from lpot.experimental.data.transforms.imagenet_transform import ParseDecodeImagenet
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
         ds = ds.apply(
           parallel_interleave(
             tf.data.TFRecordDataset, cycle_length=num_cores))
 
+        if transform is not None:
+            transform.transform_list.insert(0, ParseDecodeImagenet())
+        else:
+            transform = ParseDecodeImagenet()
         ds = ds.map(transform, num_parallel_calls=None)
 
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
-
-    def __iter__(self):
-        ds_iterator = tf.compat.v1.data.make_one_shot_iterator(self)
-        iter_tensors = ds_iterator.get_next()
-        from tensorflow.python.framework.errors_impl import OutOfRangeError
-        data_config = tf.compat.v1.ConfigProto()
-        data_config.use_per_session_threads = 1
-        data_config.intra_op_parallelism_threads = 1
-        data_config.inter_op_parallelism_threads = 16
-        with tf.compat.v1.Session(config=data_config) as sess:
-            while True:
-                try:
-                    outputs = sess.run(iter_tensors)
-                    yield outputs
-                except OutOfRangeError:
-                    return
 
 @dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
                    onnxrt_integerops", dataset_format='')

@@ -729,12 +729,16 @@ class TensorflowImageRecord(IterableDataset):
         
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
+        from lpot.experimental.data.transforms.imagenet_transform import ParseDecodeImagenet
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
         ds = ds.apply(parallel_interleave(
                 tf.data.TFRecordDataset, cycle_length=len(file_names)))
 
         if transform is not None:
-            ds = ds.map(transform, num_parallel_calls=None)
+            transform.transform_list.insert(0, ParseDecodeImagenet())
+        else:
+            transform = ParseDecodeImagenet()
+        ds = ds.map(transform, num_parallel_calls=None)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 

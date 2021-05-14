@@ -57,26 +57,25 @@ class TestCOCOFilter(unittest.TestCase):
             writer.write(example2.SerializeToString())
         
         preprocesses = TRANSFORMS('tensorflow', 'preprocess')
-        preprocess = get_preprocess(preprocesses, {'ParseDecodeCoco':{}})
         filters = FILTERS('tensorflow')
         filter = filters['LabelBalanceCOCORecord'](2)
         datasets = DATASETS('tensorflow')
         dataset = datasets['COCORecord']('test.record', \
-            transform=preprocess, filter=filter)
+            transform=None, filter=filter)
         dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (1,2,4))
 
         dataset2 = create_dataset(
-            'tensorflow', {'COCORecord':{'root':'test.record'}}, {'ParseDecodeCoco':{}}, {'LabelBalance':{'size':2}})
+            'tensorflow', {'COCORecord':{'root':'test.record'}}, None, {'LabelBalance':{'size':2}})
         dataloader2 = DATALOADERS['tensorflow'](dataset=dataset2, batch_size=1)
         for (inputs, labels) in dataloader2:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (1,2,4))
 
         dataloader3 = create_dataloader('tensorflow', {'batch_size':1, 'dataset':{'COCORecord':{'root':'test.record'}},\
-                 'filter':{'LabelBalance':{'size':2}}, 'transform':{'ParseDecodeCoco':{}}})
+                 'filter':{'LabelBalance':{'size':2}}, 'transform':None})
         for (inputs, labels) in dataloader3:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (1,2,4))

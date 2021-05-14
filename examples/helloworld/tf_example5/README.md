@@ -18,7 +18,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
         BilinearImagenet: 
           height: 224
           width: 224
@@ -34,7 +33,6 @@ evaluation:                                          # optional. required if use
         ImageRecord:
           root: /path/to/imagenet/                   # NOTE: modify to evaluation dataset location if needed
       transform:
-        ParseDecodeImagenet:
         ResizeCropImagenet: 
           height: 224
           width: 224
