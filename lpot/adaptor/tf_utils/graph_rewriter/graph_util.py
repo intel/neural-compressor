@@ -105,9 +105,19 @@ class GraphAnalyzer():
         output_node_names = []
         unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
                                  'global_step', 'read', 'switch', 'cond', 'train',
-                                 'init_ops']
+                                 'init_ops', '[A-Za-z]+Dataset']
+        unlikely_input_types = ['FIFOQueueV2', 'QueueDequeueV2', 'QueueDequeueUpToV2',
+                                'OneShotIterator', 'IteratorGetNext']
+        exclude_input_names = []
+        extra_input_names = []
 
         for _, i in self.node_name_details.items():
+            for exclude_input_name in exclude_input_names:
+                if exclude_input_name == i.node.name:
+                    if i.node.op in unlikely_input_types:
+                        exclude_input_names += i.outputs
+                    else:
+                        extra_input_names.append(i.node.name)
             if i.node.op == 'Const':
                 continue
             if not i.node.input and not i.outputs:
@@ -115,11 +125,19 @@ class GraphAnalyzer():
             elif i.node.op == 'Placeholder':
                 input_node_names.append(i.node.name)
             elif not i.node.input:
-                input_node_names.append(i.node.name)
-            elif not i.outputs and i.node.op not in unlikely_output_types:
+                if i.node.op not in unlikely_input_types:
+                    input_node_names.append(i.node.name)
+                else:
+                    exclude_input_names += i.outputs
+            elif not i.outputs and i.node.op not in unlikely_output_types \
+                    and not re.match(unlikely_output_types[-1], i.node.op):
                 output_node_names.append(i.node.name)
             else:
                 pass
+        
+        if len(input_node_names) == 0 and len(extra_input_names) != 0:
+            for extra_input_name in extra_input_names:
+                input_node_names.append(extra_input_name)
 
         self.logger.warning("Found possible input node names: {}, output node names: {}".format(
             input_node_names, output_node_names))
