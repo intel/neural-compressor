@@ -32,8 +32,6 @@ quantization:                                        # optional. tuning constrai
           size: 1
       transform:
         ParseDecodeCoco: {}
-        Resize:
-          size: 600
   #op_wise: {
   #        'FirstStageFeatureExtractor/InceptionV2/InceptionV2/Conv2d_1a_7x7/separable_conv2d': {
   #          'activation':  {'dtype': ['fp32']},
@@ -45,14 +43,17 @@ evaluation:                                          # optional. used to config 
     metric: 
       COCOmAP: {}
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
-      batch_size: 10
+      batch_size: 1
       dataset:
         COCORecord:
           root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
       transform:
         ParseDecodeCoco: {}
-        Resize:
-          size: 600
+        ResizeWithRatio: 
+          min_dim: 800
+          max_dim: 1356
+          padding: False
+
   performance:
     iteration: 100
     configs:
@@ -66,9 +67,11 @@ evaluation:                                          # optional. used to config 
           root: /path/to/evaluation/dataset
       transform:
         ParseDecodeCoco: {}
-        Resize:
-          size: 600
- 
+        ResizeWithRatio: 
+          min_dim: 800
+          max_dim: 1356
+          padding: True
+
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 2%.

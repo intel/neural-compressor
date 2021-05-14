@@ -209,6 +209,11 @@ filter_schema = Schema({
 })
 
 transform_schema = Schema({
+    Optional('ResizeWithRatio'):{
+        Optional('min_dim'): int,
+        Optional('max_dim'): int,
+        Optional('padding'): bool
+    },
     Optional('CropToBoundingBox'): {
         'offset_height': int,
         'offset_width': int,

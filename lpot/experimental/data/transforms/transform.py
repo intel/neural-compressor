@@ -424,6 +424,113 @@ class TensorflowCropToBoundingBox(CropToBoundingBox):
                     self.offset_width : self.offset_width+self.target_width, :] 
         return (image, label)
 
+@transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
+                framework="onnxrt_qlinearops, onnxrt_integerops, pytorch, mxnet")
+class ResizeWithRatio(BaseTransform):
+    """Resize image with aspect ratio and pad it to max shape(optional). 
+       If the image is padded, the label will be processed at the same time.
+       The input image should be np.array.
+
+    Args:
+        min_dim (int, default=800): 
+            Resizes the image such that its smaller dimension == min_dim
+        max_dim (int, default=1365):
+            Ensures that the image longest side doesn't exceed this value
+        padding (bool, default=False):
+            If true, pads image with zeros so its size is max_dim x max_dim
+
+    Returns:
+        tuple of processed image and label
+    """
+ 
+    def __init__(self, min_dim=800, max_dim=1365, padding=False):
+        self.min_dim = min_dim
+        self.max_dim = max_dim
+        self.padding = padding
+
+    def __call__(self, sample):
+        image, label = sample
+        height, width = image.shape[:2]
+        scale = 1
+        if self.min_dim:
+            scale = max(1, self.min_dim / min(height, width))
+        if self.max_dim:
+            image_max = max(height, width)
+            if round(image_max * scale) > self.max_dim:
+                scale = self.max_dim / image_max
+        if scale != 1: 
+            image = cv2.resize(image, (round(height * scale), round(width * scale)))
+        
+        bbox, str_label, int_label, image_id = label
+        
+        if self.padding:
+            h, w = image.shape[:2]
+            pad_param = [[(self.max_dim-h)//2, self.max_dim-h-(self.max_dim-h)//2],
+                         [(self.max_dim-w)//2, self.max_dim-w-(self.max_dim-w)//2],
+                         [0, 0]]
+            bbox = np.divide(np.array(bbox) * [h, w, h, w] + [(self.max_dim-h)//2, \
+                (self.max_dim-w)//2, (self.max_dim-h)//2, (self.max_dim-w)//2], self.max_dim)
+            image = np.pad(image, pad_param, mode='constant', constant_values=0)
+        return image, (bbox, str_label, int_label, image_id)
+
+@transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
+                framework="tensorflow")
+class TensorflowResizeWithRatio(BaseTransform):
+    """Resize image with aspect ratio and pad it to max shape(optional). 
+       If the image is padded, the label will be processed at the same time.
+       The input image should be np.array or tf.Tensor.
+
+    Args:
+        min_dim (int, default=800): 
+            Resizes the image such that its smaller dimension == min_dim
+        max_dim (int, default=1365):
+            Ensures that the image longest side doesn't exceed this value
+        padding (bool, default=False):
+            If true, pads image with zeros so its size is max_dim x max_dim
+
+    Returns:
+        tuple of processed image and label
+    """
+ 
+    def __init__(self, min_dim=800, max_dim=1365, padding=False):
+        self.min_dim = min_dim
+        self.max_dim = max_dim
+        self.padding = padding
+
+    def __call__(self, sample):
+        image, label = sample
+        if isinstance(image, tf.Tensor):
+            shape = tf.shape(input=image)
+            height = tf.cast(shape[0], dtype=tf.float32)
+            width = tf.cast(shape[1], dtype=tf.float32)
+            scale = 1
+            if self.min_dim:
+                scale = tf.maximum(1., tf.cast(self.min_dim / tf.math.minimum(height, width),\
+                                                                            dtype=tf.float32))
+            if self.max_dim:
+                image_max = tf.cast(tf.maximum(height, width), dtype=tf.float32)
+                scale = tf.cond(pred=tf.greater(tf.math.round(image_max * scale), self.max_dim), \
+                                true_fn=lambda: self.max_dim / image_max,
+                                false_fn=lambda: scale)
+            image = tf.image.resize(image, (tf.math.round(height * scale), \
+                                            tf.math.round(width * scale)))
+            bbox, str_label, int_label, image_id = label
+            
+            if self.padding:
+                shape = tf.shape(input=image)
+                h = tf.cast(shape[0], dtype=tf.float32)
+                w = tf.cast(shape[1], dtype=tf.float32)
+                pad_param = [[(self.max_dim-h)//2, self.max_dim-h-(self.max_dim-h)//2],
+                             [(self.max_dim-w)//2, self.max_dim-w-(self.max_dim-w)//2],
+                             [0, 0]]
+                bbox = tf.math.divide(bbox * [h, w, h, w] + [(self.max_dim-h)//2, \
+                    (self.max_dim-w)//2, (self.max_dim-h)//2, (self.max_dim-w)//2], self.max_dim)
+                image = tf.pad(image, pad_param)
+        else:
+            transform = ResizeWithRatio(self.min_dim, self.max_dim, self.padding)
+            image, (bbox, str_label, int_label, image_id) = transform(sample)
+        return image, (bbox, str_label, int_label, image_id)
+
 @transform_registry(transform_type="Transpose", process="preprocess", \
         framework="onnxrt_qlinearops, onnxrt_integerops")
 class Transpose(BaseTransform):
