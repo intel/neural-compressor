@@ -125,7 +125,7 @@ class Pruning(object):
 
         self.pruning_modifiers = []
         for name in self.cfg['pruning']['approach']:
-            assert name = 'weight_magnitude', 'now we only support weight_magnitude'
+            assert name == 'weight_magnitude', 'now we only support weight_magnitude'
             for magnitude_prune_modifier in self.cfg['pruning']['approach']['weight_magnitude']: 
                 self.pruning_modifiers.append(PRUNING_MODIFIERS['MagnitudePruningModifier'])(\
                                         self._model, \

@@ -93,15 +93,14 @@ class TensorFlowCrossEntropyLoss(object):
         self._param_dict = param_dict
 
     def _mapping(self):
-        _param_map = {'learning_rate': 'learning_rate',
-                      'momentum': 'momentum',
-                      'nesterov': 'nesterov'}
+        _param_map = {'reduction': 'reduction'}
         _dict = {}
         for key in self._param_dict:
             if key in _param_map:
                 if key == 'reduction':
-                    assert _param_map[key] in ['None', 'Mean', 'Sum'], 'Supported reduction value is None, Mean, Sum'
-                _dict.update({_param_map[key] : self._param_dict[key]})
+                    assert self._param_dict[key] in ['none', 'mean', 'sum'], \
+                        'Supported reduction value is none, mean, sum'
+                _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 
     def __call__(self, **kwargs):
@@ -124,8 +123,9 @@ class PyTorchCrossEntropyLoss(object):
         for key in self._param_dict:
             if key in _param_map:
                 if key == 'reduction':
-                    assert _param_map[key] in ['None', 'Mean', 'Sum'], 'Supported reduction value is None, Mean, Sum'
-                _dict.update({_param_map[key] : self._param_dict[key]})
+                    assert self._param_dict[key] in ['none', 'mean', 'sum'], \
+                        'Supported reduction value is none, mean, sum'
+                _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 
     def __call__(self, **kwargs):

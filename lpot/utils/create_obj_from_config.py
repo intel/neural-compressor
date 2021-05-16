@@ -48,6 +48,7 @@ def get_metrics(metrics, cfg, compose=True):
 def get_postprocess(postprocesses, cfg, compose=True):
     return get_func_from_config(postprocesses, cfg, compose)
 
+
 def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
     transform_list = []
     # generate framework specific transforms
@@ -66,9 +67,10 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
         filter_dataset_type = filter_type + dataset_type
         filter = filters[filter_dataset_type](**cfg_filter[filter_type])
     # in this case we should prepare eval_data and calib_data sperately
-    dataset = datasets[dataset_type](**data_source[dataset_type], \
-            transform=preprocess, filter=filter)
+    dataset = datasets[dataset_type](**data_source[dataset_type],
+                                     transform=preprocess, filter=filter)
     return dataset
+
 
 def create_dataloader(framework, dataloader_cfg):
 
@@ -82,11 +84,12 @@ def create_dataloader(framework, dataloader_cfg):
                                   copy.deepcopy(dataloader_cfg['transform']),
                                   copy.deepcopy(dataloader_cfg['filter']),)
 
-    return DATALOADERS[framework](dataset=eval_dataset, batch_size=batch_size, \
-        last_batch=last_batch)
+    return DATALOADERS[framework](dataset=eval_dataset, batch_size=batch_size,
+                                  last_batch=last_batch)
 
-def create_eval_func(framework, dataloader, adaptor, \
-                     metric_cfg, postprocess_cfg=None, \
+
+def create_eval_func(framework, dataloader, adaptor,
+                     metric_cfg, postprocess_cfg=None,
                      iteration=-1, tensorboard=False,
                      fp32_baseline=False):
     """The interface to create evaluate function from config.
@@ -112,12 +115,14 @@ def create_eval_func(framework, dataloader, adaptor, \
         metric = get_metrics(metrics, metric_cfg, compose=False)
     else:
         metric = None
+
     def eval_func(model, measurer=None):
-        return adaptor.evaluate(model, dataloader, postprocess, \
-                                metric, measurer, iteration, \
+        return adaptor.evaluate(model, dataloader, postprocess,
+                                metric, measurer, iteration,
                                 tensorboard, fp32_baseline)
 
     return eval_func
+
 
 def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
     """The interface to create train function from config.
@@ -136,7 +141,7 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
     """
     # train_func being None means user will provide training related info
     # in config yaml file
-    assert dataloader, "dataloader should NOT be empty when eval_func is None"
+    assert dataloader, "dataloader should NOT be empty when train_func is None"
     assert adaptor, "adaptor should NOT be empty"
 
     assert train_cfg.optimizer and len(train_cfg.optimizer) == 1, "optimizer should only set once"
@@ -146,9 +151,11 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
     key, value = next(iter(train_cfg.criterion.items()))
     criterion = Criterions(framework)[next(iter(train_cfg.criterion))](value)
 
-    default_dict = {k: train_cfg[k] for k in train_cfg.keys() - {'optimizer', 'criterion', 'dataloader'}}
+    default_dict = {k: train_cfg[k] for k in train_cfg.keys() - {'optimizer', 'criterion',
+                                                                 'dataloader'}}
 
     def train_func(model):
-        return adaptor.train(model, dataloader, optimizer(), criterion(), hooks, default_dict)
+        return adaptor.train(model, dataloader, optimizer_tuple=optimizer(),
+                             criterion_tuple=criterion(), hooks=hooks, kwargs=default_dict)
 
     return train_func

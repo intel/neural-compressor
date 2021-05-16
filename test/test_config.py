@@ -426,7 +426,7 @@ class TestConf(unittest.TestCase):
                 weight_decay: 0.1     
             criterion:
               CrossEntropyLoss:
-                reduction: Sum
+                reduction: sum
           approach:
             weight_magnitude:
               initial_sparsity: 0.0

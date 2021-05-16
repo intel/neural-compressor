@@ -437,23 +437,23 @@ configs_schema = Schema({
 optimizer_schema = Schema({
     Optional('SGD'): {
         'learning_rate': float,
-        'momentum': float,
-        'nesterov': bool,
-        'weight_decay': float
+        Optional('momentum'): float,
+        Optional('nesterov'): bool,
+        Optional('weight_decay'): float
     }
 })
 
 criterion_schema = Schema({
     Optional('CrossEntropyLoss'): {
-        'reduction': And(str, lambda s: s in ['None', 'Sum', 'Mean'])
+        Optional('reduction', default='mean'): And(str, lambda s: s in ['none', 'sum', 'mean'])
     }
 })
 
 train_schema = Schema({
     'optimizer': optimizer_schema,
     'criterion': criterion_schema,
-    'dataloader': dataloader_schema,
-    Optional('start_epoch'): int,
+    Optional('dataloader'): dataloader_schema,
+    Optional('start_epoch', default=0): int,
     Optional('end_epoch'): int,
     Optional('iteration'): int,
     Optional('frequency'): int,

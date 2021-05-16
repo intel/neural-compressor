@@ -725,7 +725,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             q_func (objext, optional): training function for quantization aware training mode.
 
         Returns:
-            (dict): quantized model
+            (object): quantized model
         """
 
         assert isinstance(model.model, torch.nn.Module), \
@@ -738,8 +738,8 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         try:                            # pragma: no cover
             # For torch.fx approach
-            from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
             if self.version >= '1.7':
+                from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
                 q_model = copy.deepcopy(model)
                 q_model.model.eval()
                 fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
@@ -832,7 +832,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             fp32_baseline (boolen, optional): only for compare_label=False pipeline
 
         Returns:
-            (dict): quantized model
+            (object): accuracy
         """
         if tensorboard:
             model = self._pre_eval_hook(model)
@@ -902,6 +902,51 @@ class PyTorchAdaptor(TemplateAdaptor):
         if tensorboard:
             self._post_eval_hook(model, accuracy=acc)
         return acc
+
+    def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
+        """Execute the train process on the specified model.
+
+        Args:
+            model (object): model to run evaluation.
+            dataloader (object): training dataset.
+            optimizer (tuple): It is a tuple of (cls, parameters) for optimizer.
+            criterion (tuple): It is a tuple of (cls, parameters) for criterion.
+            kwargs (dict, optional): other parameters.
+
+        Returns:
+            None
+        """
+        optimizer = optimizer_tuple[0](model.parameters(), **optimizer_tuple[1])
+        criterion = criterion_tuple[0](**criterion_tuple[1])
+        start_epochs = kwargs['kwargs']['start_epoch']
+        end_epochs = kwargs['kwargs']['end_epoch']
+        iters = kwargs['kwargs']['iteration']
+        if hooks is not None:
+            on_epoch_start = hooks['on_epoch_start']
+            on_epoch_end = hooks['on_epoch_end']
+            on_batch_start = hooks['on_batch_start']
+            on_batch_end = hooks['on_batch_end']
+        for nepoch in range(start_epochs, end_epochs):
+            model.train()
+            cnt = 0
+            if hooks is not None:
+                on_epoch_start(nepoch)
+            for image, target in dataloader:
+                if hooks is not None:
+                    on_batch_start(cnt)
+                print('.', end='', flush=True)
+                cnt += 1
+                output = model(image)
+                loss = criterion(output, target)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                if hooks is not None:
+                    on_batch_end()
+                if cnt >= iters:
+                    break
+            if hooks is not None:
+                on_epoch_end()
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,

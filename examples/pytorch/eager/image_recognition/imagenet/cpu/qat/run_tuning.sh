@@ -42,9 +42,17 @@ function run_tuning {
         extra_cmd = $extra_cmd"--tuned_checkpoint ${output_model}"
     fi
     extra_cmd=$extra_cmd" ${dataset_location}"
-    yaml="./conf.yaml"
+    result=$(echo $topology | grep "buildin")
+    if [[ "$result" != "" ]];then
+        topology=${topology%*${topology:(-8)}}
+        yaml="./conf_buildin.yaml"
+        SCRIPTS=main_buildin.py
+    else
+        SCRIPTS=main.py
+        yaml="./conf.yaml"
+    fi
 
-    python main.py \
+    python $SCRIPTS \
             --pretrained \
             -t \
             -a $topology \

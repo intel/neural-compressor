@@ -14,7 +14,7 @@ def build_fake_yaml():
     model:
       name: imagenet_prune
       framework: pytorch
-    
+
     pruning:
       train:
         start_epoch: 0
@@ -32,7 +32,7 @@ def build_fake_yaml():
             weight_decay: 0.1
         criterion:
           CrossEntropyLoss:
-            reduction: Sum
+            reduction: sum
       approach:
         weight_magnitude:
           initial_sparsity: 0.0
@@ -43,7 +43,7 @@ def build_fake_yaml():
                 end_epoch: 3
                 mask_type: unstructured
                 params: ['layer1.0.conv1.weight']
-    
+
             - !MagnitudePruneModifier
                 start_epoch: 0
                 end_epoch: 4
@@ -73,10 +73,10 @@ class TestPruning(unittest.TestCase):
     def test_pruning(self):
         from lpot.experimental import Pruning, common
         prune = Pruning('fake.yaml')
- 
+
         dummy_dataset = PyTorchDummyDataset([tuple([100, 3, 256, 256])])
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
- 
+
         def training_func_for_lpot(model):
             epochs = 16
             iters = 30
