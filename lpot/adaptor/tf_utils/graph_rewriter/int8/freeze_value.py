@@ -25,6 +25,7 @@ from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
+import numpy as np
 import re
 
 class FreezeValueTransformer(GraphRewriterBase):
@@ -42,7 +43,12 @@ class FreezeValueTransformer(GraphRewriterBase):
         """
         super().__init__(model)
         self.data = max_min_data
-        self.threshold = th
+        if 0.0 < th <= 1.0:
+            self.threshold = th
+        else:
+            self.logger.warning("The threshold value for clipping is invalid ," \
+                "reset it to 0.95 by default")
+            self.threshold = 0.95
         self.postfix = postfix
         self.device = device
         self.tensor_data = tensor_data
@@ -128,16 +134,19 @@ class FreezeValueTransformer(GraphRewriterBase):
             temp_max[name].append(float(max_value))
 
         for key in temp_min:
-            target_min_index = int(round(len(temp_min[key]) * (1 - self.threshold)))
-            if target_min_index < 0:
-                target_min_index = 0
+            target_min_index = int(np.ceil(len(temp_min[key]) * (1 - self.threshold)))
+
             if key not in res:
                 res[key] = []
+            # Avoid the out of the index error.
+            if target_min_index > len(temp_min[key]) - 1:
+                target_min_index = len(temp_min[key]) - 1
+
             res[key].append(sorted(temp_min[key])[target_min_index])
+
         for key in temp_max:
-            target_max_index = int(round(len(temp_max[key]) * self.threshold))
-            if target_max_index > len(temp_max[key]) - 1:
-                target_max_index = len(temp_max[key]) - 1
+            target_max_index = int(np.floor(len(temp_max[key]) * self.threshold)) - 1
+
             res[key].append(sorted(temp_max[key])[target_max_index])
 
         if self.tensor_data:
