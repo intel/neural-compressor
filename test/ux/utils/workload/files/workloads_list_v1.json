@@ -1,0 +1,71 @@
+{
+    "active_workspace_path": "/path/to/workspace",
+    "workloads": {
+        "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1": {
+            "id": "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+            "model_path": "/path/to/model.pb",
+            "model_output_path": "/path/to/output_model.pb",
+            "workload_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+            "status": "success",
+            "metric": {
+                "acc_fp32": 0.758,
+                "acc_int8": 0.764,
+                "id": "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+                "tuning_time": 65.7,
+                "size_int8": 25.0,
+                "model_output_path": "/path/to/output_model.pb",
+                "size_fp32": 98.0,
+                "is_custom_dataloader": false,
+                "perf_throughput_fp32": 22.207,
+                "perf_throughput_int8": 62.366
+            },
+            "code_template_path": null,
+            "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+            "log_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/output.txt",
+            "execution_details": {
+                "tuning": {
+                    "model_path": "/path/to/model.pb",
+                    "framework": "tensorflow",
+                    "instances": 1,
+                    "cores_per_instance": 6,
+                    "model_output_path": "/path/to/output_model.pb",
+                    "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+                    "script_path": "/path/to/lpot/ux/components/tune/tune_model.py",
+                    "command": "python /path/to/lpot/ux/components/tune/tune_model.py --input-graph /path/to/model.pb --output-graph /path/to/output_model.pb --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --framework tensorflow"
+                },
+                "fp32_benchmark": {
+                    "instances": 1,
+                    "cores_per_instance": 4,
+                    "model_path": "/path/to/model.pb",
+                    "datatype": "fp32",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+                    "benchmark_script": "/path/to/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /path/to/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/model.pb --mode performance --framework tensorflow"
+                },
+                "int8_benchmark": {
+                    "instances": 1,
+                    "cores_per_instance": 4,
+                    "model_path": "/path/to/output_model.pb",
+                    "datatype": "int8",
+                    "mode": "performance",
+                    "batch_size": 1,
+                    "framework": "tensorflow",
+                    "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+                    "benchmark_script": "/path/to/lpot/ux/components/benchmark/benchmark_model.py",
+                    "command": "python /path/to/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/output_model.pb --mode performance --framework tensorflow"
+                }
+            },
+            "acc_fp32": 0.758,
+            "acc_int8": 0.764,
+            "tuning_time": 65.7,
+            "size_int8": 25.0,
+            "size_fp32": 98.0,
+            "is_custom_dataloader": false,
+            "perf_throughput_fp32": 22.207,
+            "perf_throughput_int8": 62.366
+        }
+    }
+}

@@ -15,6 +15,7 @@ import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject } from 'rxjs';
+import { ModelService } from '../services/model.service';
 
 @Component({
   selector: 'app-graph',
@@ -23,64 +24,101 @@ import { Subject } from 'rxjs';
 })
 export class GraphComponent implements OnInit {
 
-  edges = [];
+  edges: Edge[] = [];
   nodes: Node[] = [];
+  viewSize = [1000, 1000];
   nodeDetails: Node;
+  expandedNodesArray = [];
+  showSpinner = false;
 
   layoutSettings = { orientation: 'TB' };
   panToNodeObservable: Subject<string> = new Subject<string>();
+  updateObservable: Subject<string> = new Subject<string>();
+  center$: Subject<boolean> = new Subject();
+  zoomToFit$: Subject<boolean> = new Subject();
 
   @ViewChild('sidenav') sidenav: MatSidenav;
 
-  customColor = {
-    'Add': '#004A86',
-    'Relu': '#0095CA',
-    'Conv2D': '#525252',
-    'FusedBatchNorm': '#41728A',
-    'Identity': '#653171',
-    'Pad': '#708541',
-    'BiasAdd': '#B24501',
-    'MatMul': '#000F8A',
-    'Mean': '#C81326',
-    'Softmax': '#EDB200',
-    'ArgMax': '#005B85',
-    'MaxPool': '#183544',
-    'Placeholder': '#515A3D',
-    'Squeeze': '#C98F00',
-  };
+  customColor = [
+    '#004A86',
+    '#0095CA',
+    '#525252',
+    '#41728A',
+    '#653171',
+    '#708541',
+    '#B24501',
+    '#000F8A',
+    '#C81326',
+    '#EDB200',
+    '#005B85',
+    '#183544',
+    '#515A3D',
+    '#C98F00',
+  ];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data,
+    private modelService: ModelService
   ) { }
 
   ngOnInit(): void {
+    this.viewSize = this.data.viewSize;
+    this.updateGraph(this.data['graph']);
+  }
+
+  center() {
+    this.center$.next(true);
+  }
+
+  zoomToFit() {
+    this.zoomToFit$.next(true);
+  }
+
+  updateGraph(graph: any) {
     let nodes = [];
     let edges = [];
-    this.data.graph.nodes.forEach(node => {
+    graph.nodes.forEach(node => {
       nodes.push({
-        id: node.id.replaceAll('/', '_').replaceAll(' ', '_'),
+        id: node.id,
         label: node.label,
         attributes: node.attributes,
         properties: node.properties,
+        node_type: node.node_type,
+        color: this.customColor[node.label.length % 14]
       });
     });
-    this.data.graph.edges.forEach(edge => {
+    graph.edges.forEach(edge => {
       edges.push({
-        source: edge.source.replaceAll('/', '_').replaceAll(' ', '_'),
-        target: edge.target.replaceAll('/', '_').replaceAll(' ', '_'),
+        source: edge.source,
+        target: edge.target,
       });
     });
     this.nodes = nodes;
     this.edges = edges;
+    this.showSpinner = false;
   }
 
   getDetails(node: Node) {
-    this.panToNodeObservable.next(node.id);
     this.nodeDetails = node;
   }
 
   close() {
     this.sidenav.close();
+  }
+
+  expand(id: string) {
+    this.showSpinner = true;
+    if (this.expandedNodesArray.includes(id)) {
+      this.collapse(id);
+    } else {
+      this.expandedNodesArray.push(id);
+    }
+    this.modelService.getModelGraph(this.data.modelPath, this.expandedNodesArray)
+      .subscribe(graph => this.updateGraph(graph));
+  }
+
+  collapse(id: string) {
+    this.expandedNodesArray = this.expandedNodesArray.filter(x => x !== id);
   }
 }
 
@@ -94,5 +132,12 @@ interface Node {
   },
   data?: {
     color: string
-  }
+  },
+  node_type: string,
+  color: string,
+}
+
+interface Edge {
+  target: string,
+  source: string,
 }

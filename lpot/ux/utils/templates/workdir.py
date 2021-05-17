@@ -57,6 +57,7 @@ class Workdir:
             self.workloads_data = {
                 "active_workspace_path": workspace_path,
                 "workloads": {},
+                "version": "2",
             }
 
         if (

@@ -67,9 +67,15 @@ export class ModelService {
     );
   }
 
-  getModelGraph(path: string) {
+  getModelGraph(path: string, groups?: string[]) {
+    let groupsParam = '';
+    if (groups) {
+      groups.forEach(group => {
+        groupsParam += '&group=' + group;
+      });
+    }
     return this.http.get(
-      this.baseUrl + 'api/model_graph' + '?path=' + path
+      this.baseUrl + 'api/model_graph' + '?path=' + path + groupsParam
     );
   }
 

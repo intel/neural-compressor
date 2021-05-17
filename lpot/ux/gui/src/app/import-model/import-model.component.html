@@ -19,11 +19,10 @@
             <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
             Choose file
           </button>
-          <!-- <button mat-raised-button color="accent" class="fixed-height" (click)="showGraph()"
-            [disabled]="!firstFormGroup.get('modelLocation').value">
+          <button *ngIf="showGraphButton" mat-raised-button color="accent" class="fixed-height" (click)="showGraph()">
             <img class="icon" src="./../../assets/298a-workflow-process-solid.svg">
             Show graph
-          </button> -->
+          </button>
           <mat-spinner *ngIf="showGraphSpinner" class="spinner" [diameter]="25"></mat-spinner>
         </span>
         <br>

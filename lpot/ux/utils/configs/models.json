@@ -154,7 +154,7 @@
                 "__help__download": null,
                 "download": {
                     "__help__script": null,
-                    "script": "examples/pytorch/eager/object_detection/yolo_v3/weights/download_weights.sh",
+                    "script": "examples/pytorch/object_detection/yolo_v3/weights/download_weights.sh",
                     "__help__filename": null,
                     "filename": "yolov3.weights"
                 },

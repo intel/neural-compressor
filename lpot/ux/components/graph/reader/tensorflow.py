@@ -66,6 +66,7 @@ class TensorflowReader(Reader):
                         "type": node_def.op,
                     },
                     attributes=self._convert_attributes(node_def),
+                    groups=self._get_group_names(current_node_id),
                 ),
             )
 
@@ -80,6 +81,14 @@ class TensorflowReader(Reader):
                 )
 
         return graph
+
+    def _get_group_names(self, node_id: str) -> List[str]:
+        """Get a group names from Node starting from the top."""
+        elements = node_id.split("/")
+        names = []
+        for idx in range(1, len(elements)):
+            names.append("/".join(elements[0:idx]))
+        return names
 
     def _should_hide_node(self, node_def: NodeDef) -> bool:
         """Check if given node should be hidden."""

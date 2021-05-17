@@ -16,12 +16,13 @@
 
 import json
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from lpot.ux.components.optimization import Optimizations
 from lpot.ux.utils.consts import Precisions
-from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.exceptions import ClientErrorException, InternalException
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import (
@@ -119,6 +120,7 @@ class Workload(JsonSerializer):
             self.workload_path,
             self.model_output_name,
         )
+        self.version = "2.0"
 
     def initialize_config(self, data: dict) -> None:
         """Initialize config."""
@@ -220,3 +222,97 @@ class Workload(JsonSerializer):
             raise ClientErrorException(f"Mode {self.mode} is not supported.")
 
         return output_name + "." + get_file_extension(self.model_path)
+
+
+class WorkloadMigrator:
+    """Workload migrator."""
+
+    def __init__(self, workload_json_path: str):
+        """Initialize workloads list migrator."""
+        self.workload_json = workload_json_path
+        self.workload_data: dict = {}
+        self.version_migrators = {
+            2: self._migrate_to_v2,
+        }
+
+    @property
+    def current_version(self) -> int:
+        """Get version of current workload format."""
+        self.ensure_workload_loaded()
+        return int(self.workload_data.get("version", 1))
+
+    @property
+    def require_migration(self) -> bool:
+        """Check if workload require migration."""
+        if not os.path.isfile(self.workload_json):
+            log.debug("Workload does not exits.")
+            return False
+        if self.current_version >= max(self.version_migrators.keys()):
+            log.debug("Workload already up to date.")
+            return False
+        return True
+
+    def load_workload_data(self) -> None:
+        """Load workload data from json."""
+        with open(self.workload_json, encoding="utf-8") as workload_json:
+            self.workload_data = json.load(workload_json)
+
+    def ensure_workload_loaded(self) -> None:
+        """Make sure that workloads list is loaded."""
+        if not self.workload_data and os.path.isfile(self.workload_json):
+            self.load_workload_data()
+
+    def dump(self) -> None:
+        """Dump workloads information to json."""
+        with open(self.workload_json, "w") as workload_json:
+            json.dump(self.workload_data, workload_json, indent=4)
+
+    def migrate(self) -> None:
+        """Migrate workload to latest version."""
+        self.ensure_workload_loaded()
+        if not self.require_migration:
+            return
+
+        migration_steps = range(self.current_version, max(self.version_migrators.keys()))
+        for step in migration_steps:
+            migration_version = step + 1
+            self._migrate_workload(migration_version)
+
+    def _migrate_workload(self, migration_version: int) -> None:
+        """Migrate workload one version up."""
+        print(f"Migrate called with {migration_version} migration version.")
+        migrate = self.version_migrators.get(migration_version, None)
+        if migrate is None:
+            raise InternalException(f"Could not parse workload from version {migration_version}")
+        migrate()
+
+    def _migrate_to_v2(self) -> None:
+        """Parse workload from v1 to v2."""
+        print("Migrating workload.json to v2...")
+        new_data = {
+            "input_precision": "fp32",
+            "output_precision": "int8",
+            "mode": "tuning",
+            "tune": True,
+            "version": 2,
+        }
+        parsed_workload = deepcopy(self.workload_data)
+        parsed_workload.update(new_data)
+
+        try:
+            parsed_workload["config"]["tuning"].update({"objective": "performance"})
+        except KeyError:
+            log.debug("Could not set tuning objective.")
+        try:
+            input_nodes = self.workload_data["config"]["model"]["inputs"].split(",")
+        except KeyError:
+            input_nodes = []
+        parsed_workload.update({"input_nodes": input_nodes})
+
+        try:
+            output_nodes = self.workload_data["config"]["model"]["outputs"].split(",")
+        except KeyError:
+            output_nodes = []
+        parsed_workload.update({"output_nodes": output_nodes})
+
+        self.workload_data = parsed_workload

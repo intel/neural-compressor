@@ -22,7 +22,9 @@ from .attribute import Attribute
 
 
 class Node(JsonSerializer):
-    """Node in graph."""
+    """Single Node in graph."""
+
+    TYPE_SIMPLE_NODE = "node"
 
     def __init__(
         self,
@@ -30,6 +32,7 @@ class Node(JsonSerializer):
         label: str,
         properties: Dict[str, Any] = {},
         attributes: List[Attribute] = [],
+        groups: List[str] = [],
     ) -> None:
         """Construct object."""
         super().__init__()
@@ -37,3 +40,25 @@ class Node(JsonSerializer):
         self.label = label
         self.properties = properties
         self.attributes = attributes
+        self.groups = groups
+        self.node_type = self.TYPE_SIMPLE_NODE
+        self._skip.append("groups")
+
+
+class GroupNode(Node):
+    """Node being a group of Nodes in Graph."""
+
+    TYPE_GROUP_NODE = "group_node"
+
+    def __init__(
+        self,
+        id: str,
+        group_name: str,
+    ) -> None:
+        """Construct object."""
+        super().__init__(
+            id=id,
+            label=group_name,
+        )
+        self.group = group_name
+        self.node_type = self.TYPE_GROUP_NODE

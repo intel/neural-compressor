@@ -57,6 +57,8 @@ export class ImportModelComponent implements OnInit {
     input: [],
     output: []
   };
+  graph = {};
+
   frameworkVersion: string;
   frameworkWarning: string;
 
@@ -67,6 +69,7 @@ export class ImportModelComponent implements OnInit {
   id: string;
   showSpinner = false;
   showGraphSpinner = false;
+  showGraphButton = false;
   useEvaluationData = true;
   fileBrowserParams = ['label_file', 'vocab_file'];
 
@@ -108,6 +111,7 @@ export class ImportModelComponent implements OnInit {
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value) {
           this.showSpinner = true;
+          this.showGraphButton = false;
           this.frameworkVersion = null;
           this.frameworkWarning = null;
           ['input', 'output'].forEach(type => {
@@ -115,6 +119,16 @@ export class ImportModelComponent implements OnInit {
             this.order[type] = [];
           });
           this.socketService.getBoundaryNodes(this.getNewModel()).subscribe();
+          this.modelService.getModelGraph(this.firstFormGroup.get('modelLocation').value)
+            .subscribe(
+              graph => {
+                this.graph = graph;
+                this.showGraphButton = true;
+              },
+              error => {
+                this.showGraphButton = false;
+              }
+            );
         }
       });
 
@@ -545,15 +559,17 @@ export class ImportModelComponent implements OnInit {
 
   showGraph() {
     this.showGraphSpinner = true;
-    this.modelService.getModelGraph(this.firstFormGroup.get('modelLocation').value)
-      .subscribe(graph => {
-        this.showGraphSpinner = false;
-        this.dialog.open(GraphComponent, {
-          data: {
-            graph
-          }
-        });
-      });
+    let height = window.innerHeight < 1000 ? '99%' : '95%';
+    this.showGraphSpinner = false;
+    this.dialog.open(GraphComponent, {
+      width: '90%',
+      height: height,
+      data: {
+        graph: this.graph,
+        modelPath: this.firstFormGroup.get('modelLocation').value,
+        viewSize: [window.innerWidth * 0.9, window.innerHeight * 0.9]
+      }
+    });
   }
 
   openDialog(fieldName: string, filter: FileBrowserFilter, paramFile?) {

@@ -17,7 +17,7 @@
 import unittest
 import uuid
 
-from lpot.ux.components.graph.graph import Node
+from lpot.ux.components.graph.node import Node
 
 
 def _get_random_string() -> str:

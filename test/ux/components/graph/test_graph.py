@@ -17,7 +17,8 @@
 import unittest
 import uuid
 
-from lpot.ux.components.graph.graph import Graph, Node
+from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.graph.node import Node
 
 
 def _get_random_string() -> str:
@@ -57,8 +58,9 @@ class TestGraph(unittest.TestCase):
         target_id = _get_random_string()
 
         graph = Graph()
-        graph.add_edge(source_id=source_id, target_id=target_id)
+        result = graph.add_edge(source_id=source_id, target_id=target_id)
 
+        self.assertEqual(False, result)
         self.assertEqual([], graph.edges)
 
     def test_adding_edge_between_nodes_works(self) -> None:
@@ -69,7 +71,9 @@ class TestGraph(unittest.TestCase):
         graph = Graph()
         graph.add_node(source)
         graph.add_node(target)
-        graph.add_edge(source_id=source.id, target_id=target.id)
+        result = graph.add_edge(source_id=source.id, target_id=target.id)
+
+        self.assertEqual(True, result)
 
         edges = graph.edges
         self.assertEqual(1, len(edges))
@@ -77,6 +81,11 @@ class TestGraph(unittest.TestCase):
         edge = edges[0]
         self.assertEqual(source, edge._source)
         self.assertEqual(target, edge._target)
+
+    def test_comparing_to_something_else_fails(self) -> None:
+        """Test if comparing Graph to something other fails."""
+        with self.assertRaises(NotImplementedError):
+            Graph() == 1
 
 
 if __name__ == "__main__":

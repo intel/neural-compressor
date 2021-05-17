@@ -15,9 +15,9 @@
 # limitations under the License.
 
 """WSGI Web Server."""
-
 import sys
 
+from lpot.ux.utils.environment import Environment
 from lpot.ux.utils.exceptions import NotFoundException
 from lpot.ux.utils.logger import change_log_level
 from lpot.ux.web.configuration import Configuration
@@ -41,7 +41,16 @@ def main() -> None:
         f"Then open address {configuration.get_url()}",
     )
 
+    prepare_environment()
     run_server(configuration)
+
+
+def prepare_environment() -> None:
+    """Prepare environment for LPOT UX."""
+    environment = Environment()
+    environment.migrate_workloads_list()
+    environment.migrate_workloads()
+    environment.clean_workloads_wip_status()
 
 
 if __name__ == "__main__":

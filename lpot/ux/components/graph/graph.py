@@ -14,7 +14,7 @@
 # limitations under the License.
 """Graph class."""
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from lpot.ux.utils.exceptions import NotFoundException
 from lpot.ux.utils.json_serializer import JsonSerializer
@@ -47,21 +47,30 @@ class Graph(JsonSerializer):
         """Return edges as a list."""
         return self._edges
 
-    def add_edge(self, source_id: str, target_id: str) -> None:
+    def add_edge(self, source_id: str, target_id: str) -> bool:
         """Add an Edge to graph."""
         try:
-            source = self._get_node(source_id)
-            target = self._get_node(target_id)
+            source = self.get_node(source_id)
+            target = self.get_node(target_id)
         except NotFoundException as err:
             log.error(
                 f"Got an error: {str(err)} while attempted "
                 f"to add an Edge from {source_id} to {target_id}",
             )
-            return None
+            return False
         self._edges.append(Edge(source, target))
+        return True
 
-    def _get_node(self, id: str) -> Node:
+    def get_node(self, id: str) -> Node:
         """Get a node by id."""
         if id not in self._nodes:
             raise NotFoundException(f"Node id: {id} not found in Graph")
         return self._nodes[id]
+
+    def __eq__(self, other: Any) -> bool:
+        """Compare graph to other instance."""
+        if not isinstance(other, Graph):
+            # don't attempt to compare against unrelated types
+            raise NotImplementedError
+
+        return self.serialize() == other.serialize()

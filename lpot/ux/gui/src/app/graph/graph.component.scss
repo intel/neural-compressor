@@ -31,10 +31,33 @@
   background-color: white;
 }
 
+.group-node-container {
+  border-radius: 0.5rem;
+  background-color: #000864;
+}
+
 .node-header {
   font-size: 150%;
   text-align: center;
   color: white !important;
+}
+
+.group-node {
+  font-size: 150%;
+  text-align: center;
+  color: white !important;
+  background-color: #000864 !important;
+  cursor: pointer;
+  font-family: IntelClearBd;
+
+  :hover {
+    color: #EDB200;
+  }
+}
+
+.group-node-label {
+  position: relative;
+  top: 50px;
 }
 
 .node-text {
@@ -50,4 +73,60 @@
   margin-top: 30%;
   box-shadow: none;
   border-radius: 0.5rem;
+}
+
+.close {
+  float: right;
+  top: -8px;
+}
+
+.wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.graph {
+  float: left;
+}
+
+.nodes-table-container {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background-color: #e1e1e1;
+}
+
+.nodes-table {
+  font-family: IntelClearRg;
+  width: 200px;
+}
+
+.header {
+  font-family: IntelClearBd;
+  text-align: left;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.spinner {
+  position: absolute;
+  top: 48%;
+  left: 48%;
+}
+
+.expand-button {
+  position: absolute;
+  top: -5px;
+  right: 2px;
+  width: 30px;
+  height: 30px;
+}
+
+.graph-buttons {
+  cursor: pointer;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
 }

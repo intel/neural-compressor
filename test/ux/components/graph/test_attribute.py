@@ -12,13 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Test Edge."""
+"""Test Attribute."""
 
 import unittest
 import uuid
 
-from lpot.ux.components.graph.edge import Edge
-from lpot.ux.components.graph.node import Node
+from lpot.ux.components.graph.attribute import Attribute
 from lpot.ux.utils.json_serializer import JsonSerializer
 
 
@@ -27,44 +26,35 @@ def _get_random_string() -> str:
     return uuid.uuid4().hex
 
 
-def _get_random_node() -> Node:
-    """Create a Node with random values."""
-    return Node(id=_get_random_string(), label=_get_random_string())
-
-
-class TestEdge(unittest.TestCase):
-    """Test Edge class."""
+class TestAttribute(unittest.TestCase):
+    """Test Attribute class."""
 
     def test_setting_parameters(self) -> None:
         """Test if parameters are correctly set."""
-        source_node = _get_random_node()
-        target_node = _get_random_node()
+        name = _get_random_string()
+        attribute_type = _get_random_string()
+        value = _get_random_string()
 
-        edge = Edge(
-            source=source_node,
-            target=target_node,
-        )
+        attribute = Attribute(name=name, attribute_type=attribute_type, value=value)
 
-        self.assertEqual(source_node, edge._source)
-        self.assertEqual(source_node.id, edge.source)
-        self.assertEqual(target_node, edge._target)
-        self.assertEqual(target_node.id, edge.target)
+        self.assertEqual(name, attribute.name)
+        self.assertEqual(attribute_type, attribute.attribute_type)
+        self.assertEqual(value, attribute.value)
 
     def test_serialization(self) -> None:
-        """Test if Edge is serialized as expected."""
-        source_node = _get_random_node()
-        target_node = _get_random_node()
+        """Test if Attribute is serialized as expected."""
+        name = _get_random_string()
+        attribute_type = _get_random_string()
+        value = _get_random_string()
 
-        edge = Edge(
-            source=source_node,
-            target=target_node,
-        )
+        attribute = Attribute(name=name, attribute_type=attribute_type, value=value)
 
         expected_serialized_object = {
-            "source": source_node.id,
-            "target": target_node.id,
+            "name": name,
+            "attribute_type": attribute_type,
+            "value": value,
         }
-        serialized = JsonSerializer.serialize_item(edge)
+        serialized = JsonSerializer.serialize_item(attribute)
         self.assertEqual(expected_serialized_object, serialized)
 
 

@@ -20,7 +20,6 @@ import unittest
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.web.communication import Request
 from lpot.ux.web.exceptions import ServiceNotFoundException
 from lpot.ux.web.router import Router
@@ -36,21 +35,11 @@ class TestRouter(unittest.TestCase):
         """Prepare environment."""
         assert not os.path.isdir(self._get_workdir_path())
         self._paths_to_clean = [self._get_workdir_path()]
-        mocked_workdir_init = patch.object(Workdir, "__init__", self._mocked_workdir_init)
-        mocked_workdir_init.__enter__()
-        self._workdir_clean_status_patcher = patch.object(Workdir, "clean_status")
-        self._mocked_workdir_clean_status = self._workdir_clean_status_patcher.start()
 
     def tearDown(self) -> None:
         """Make environment clean again."""
-        self._workdir_clean_status_patcher.stop()
         for path in self._paths_to_clean:
             shutil.rmtree(path, ignore_errors=True)
-
-    def test_it_cleans_wip_status(self) -> None:
-        """Test that WIP status of existing workloads is cleaned."""
-        Router()
-        self._mocked_workdir_clean_status.assert_called_once_with(status_to_clean="wip")
 
     def test_handle_fails_on_unknown_path(self) -> None:
         """Test that passing unknown path fails."""

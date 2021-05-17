@@ -15,6 +15,9 @@
 """Graph reader."""
 
 
+from typing import List
+
+from .collapser import Collapser
 from .graph import Graph
 from .reader.repository import GraphReaderRepository
 
@@ -31,7 +34,12 @@ class GraphReader:
         reader = self.graph_reader_repository.find(model_path)
         reader.ensure_model_readable(model_path)
 
-    def read(self, model_path: str) -> Graph:
+    def read(self, model_path: str, expanded_groups: List[str]) -> Graph:
         """Return Graph for given model path."""
         reader = self.graph_reader_repository.find(model_path)
-        return reader.read(model_path)
+        graph = reader.read(model_path)
+
+        collapser = Collapser(expanded_groups)
+        collapsed_graph = collapser.collapse(graph)
+
+        return collapsed_graph

@@ -15,7 +15,6 @@
 
 """Connector between api.py and components."""
 
-import os
 from threading import Thread
 from typing import Any, Callable, Dict
 
@@ -40,7 +39,6 @@ from lpot.ux.components.optimization.execute_optimization import execute_optimiz
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.hw_info import HWInfo
 from lpot.ux.utils.json_serializer import JsonSerializer
-from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.web.communication import Request, Response, create_simple_response
 from lpot.ux.web.exceptions import ServiceNotFoundException
 
@@ -70,7 +68,6 @@ class Router:
 
     def __init__(self) -> None:
         """Initialize object."""
-        clean_workloads_wip_status()
         self.routes: Dict[str, RoutingDefinition] = {
             "filesystem": RealtimeRoutingDefinition(get_directory_entries),
             "save_workload": RealtimeRoutingDefinition(save_workload),
@@ -140,16 +137,13 @@ def _execute_optimization_benchmark(data: dict) -> None:
         execute_benchmark(benchmark_data)
 
 
-def clean_workloads_wip_status() -> None:
-    """Clean WIP status for workloads in workloads_list.json."""
-    workdir = Workdir(workspace_path=os.environ["HOME"])
-    workdir.clean_status(status_to_clean="wip")
-
-
 def get_model_graph(data: Dict[str, Any]) -> Graph:
     """Get model graph."""
     graph_reader = GraphReader()
-    return graph_reader.read(_get_string_value(data, "path"))
+    return graph_reader.read(
+        model_path=_get_string_value(data, "path"),
+        expanded_groups=data.get("group", []),
+    )
 
 
 def _get_string_value(data: Dict[str, Any], name: str) -> str:
