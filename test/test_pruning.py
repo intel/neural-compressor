@@ -16,27 +16,12 @@ def build_fake_yaml():
       framework: pytorch
 
     pruning:
-      train:
-        start_epoch: 0
-        end_epoch: 4
-        dataloader:
-          batch_size: 30
-          dataset:
-            ImageFolder:
-              root: /path/to/training/dataset
-        optimizer:
-          SGD:
-            learning_rate: 0.1
-            momentum: 0.1
-            nesterov: True
-            weight_decay: 0.1
-        criterion:
-          CrossEntropyLoss:
-            reduction: sum
       approach:
         weight_magnitude:
           initial_sparsity: 0.0
           target_sparsity: 0.97
+          start_epoch: 0
+          end_epoch: 4
           modifiers:
             - !MagnitudePruneModifier
                 start_epoch: 1
@@ -45,8 +30,6 @@ def build_fake_yaml():
                 params: ['layer1.0.conv1.weight']
 
             - !MagnitudePruneModifier
-                start_epoch: 0
-                end_epoch: 4
                 target_sparsity: 0.6
                 mask_type: unstructured
                 update_frequency: 2
@@ -102,8 +85,8 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = PyTorchDummyDataset(tuple([100, 3, 256, 256]), label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.model = common.Model(self.model)
-        prune.q_func = training_func_for_lpot
-        prune.eval_dataloader = dummy_dataloader
+        prune.pruning_func = training_func_for_lpot
+        prune.train_dataloader = dummy_dataloader
         _ = prune()
 
 

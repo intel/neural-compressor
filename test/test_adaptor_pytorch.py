@@ -291,10 +291,11 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
             quantizer.model = common.Model(model)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
             if fake_yaml == 'qat_yaml.yaml':
                 quantizer.q_func = q_func
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights by lpot.utils

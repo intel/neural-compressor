@@ -120,8 +120,8 @@ class Quantization(object):
         if self._calib_func:
             assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
                    'set for {}'.format(approach_cfg)
-            assert self._calib_dataloader is None, 'q_func has provided by user, calib_dataloader ' \
-                   'property should not be set.'
+            assert self._calib_dataloader is None, 'q_func has provided by user, ' \
+                   'calib_dataloader property should not be set.'
 
         if self._calib_dataloader is None and self._calib_func is None:
             if approach_cfg == 'post_training_static_quant':

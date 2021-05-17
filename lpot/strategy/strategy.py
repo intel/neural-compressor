@@ -159,7 +159,8 @@ class TuneStrategy(object):
                               "be configured for quantization aware training if q_func is NOT set."
             assert self.calib_dataloader, "dataloader field of train field of quantization " \
                                           "section in yaml file must be configured."
-            self.q_func = create_train_func(self.framework, self.calib_dataloader, self.adaptor, train_cfg)
+            self.q_func = create_train_func(self.framework, self.calib_dataloader, \
+                                            self.adaptor, train_cfg)
 
         self.baseline = None
         self.last_tune_result = None

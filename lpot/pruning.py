@@ -21,7 +21,7 @@ from .utils.utility import singleton
 from .experimental import Pruning as ExpPruning
 
 @singleton
-class Pruning(object):
+class Pruning:
     """This is base class of pruning object.
 
        Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
@@ -54,55 +54,55 @@ class Pruning(object):
         """ called on the end of epochs"""
         self.exp_pruner.on_epoch_end()
 
-    def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
+    def __call__(self, model, train_dataloader=None, prune_func=None, eval_dataloader=None,
                  eval_func=None):
         """The main entry point of pruning.
 
            This interface currently only works on pytorch
            and provides three usages:
            a) Fully yaml configuration: User specifies all the info through yaml,
-              including dataloaders used in calibration and evaluation phases
-              and quantization tuning settings.
+              including dataloaders used in training and evaluation phases
+              and pruning tuning settings.
 
               For this usage, only model parameter is mandotory.
 
-           b) Partial yaml configuration: User specifies dataloaders used in calibration
+           b) Partial yaml configuration: User specifies dataloaders used in training
               and evaluation phase by code.
               The tool provides built-in dataloaders and evaluators, user just need provide
               a dataset implemented __iter__ or __getitem__ methods and invoke dataloader()
               with dataset as input parameter to create lpot dataloader before calling this
               function.
 
-              After that, User specifies fp32 "model", calibration dataset "q_dataloader"
+              After that, User specifies fp32 "model", train dataset "train_dataloader"
               and evaluation dataset "eval_dataloader".
-              The calibrated and quantized model is evaluated with "eval_dataloader"
+              The trained and pruned model is evaluated with "eval_dataloader"
               with evaluation metrics specified in the configuration file. The evaluation tells
-              the tuner whether the quantized model meets the accuracy criteria. If not,
-              the tuner starts a new calibration and tuning flow.
+              the tuner whether the pruned model meets the accuracy criteria. If not,
+              the tuner starts a new training and tuning flow.
 
               For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
 
-           c) Partial yaml configuration: User specifies dataloaders used in calibration phase
+           c) Partial yaml configuration: User specifies dataloaders used in training phase
               by code.
               This usage is quite similar with b), just user specifies a custom "eval_func"
               which encapsulates the evaluation dataset by itself.
-              The calibrated and quantized model is evaluated with "eval_func".
-              The "eval_func" tells the tuner whether the quantized model meets
-              the accuracy criteria. If not, the Tuner starts a new calibration and tuning flow.
+              The trained and pruned model is evaluated with "eval_func".
+              The "eval_func" tells the tuner whether the pruned model meets
+              the accuracy criteria. If not, the Tuner starts a new training and tuning flow.
 
               For this usage, model, q_dataloader and eval_func parameters are mandotory.
 
         Args:
             model (object):                        For PyTorch model, it's torch.nn.model
                                                    instance.
-            q_dataloader (generator):              Data loader for calibration. It is iterable
+            train_dataloader (generator):          Data loader for training. It is iterable
                                                    and should yield a tuple (input, label) for
-                                                   calibration dataset containing label,
-                                                   or yield (input, _) for label-free calibration
+                                                   training dataset containing label,
+                                                   or yield (input, _) for label-free training
                                                    dataset. The input could be a object, list,
                                                    tuple or dict, depending on user implementation,
                                                    as well as it can be taken as model input.
-            q_func (function, optional):           Training function for pruning.
+            prune_func (function, optional):       Training function for pruning.
                                                    This function takes "model" as input parameter
                                                    and executes entire training process with self
                                                    contained training hyper-parameters. If this
@@ -145,9 +145,8 @@ class Pruning(object):
             'lpot.experimental.Pruning, set the attributes about '
             'dataloader and metric, then use new __call__ method')
         self.exp_pruner.model = model
-        if q_dataloader or eval_dataloader or eval_func:
-            logger.warning('Pruning will do nothing with param '
-                           'q_dataloader/eval_dataloader/eval_func')
-        self.exp_pruner.q_func = q_func 
+        self.exp_pruner.train_dataloader = train_dataloader
+        self.exp_pruner.prune_func = prune_func
+        self.exp_pruner.eval_dataloader = eval_dataloader
+        self.exp_pruner.eval_func = eval_func
         return self.exp_pruner()
-

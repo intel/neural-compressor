@@ -518,7 +518,6 @@ class TemplateAdaptor(Adaptor):
         random_seed = framework_specific_info['random_seed']
         torch.manual_seed(random_seed)
 
-        self.approach = framework_specific_info['approach']
         self.device = framework_specific_info['device']
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.benchmark = framework_specific_info['benchmark'] \
@@ -526,37 +525,40 @@ class TemplateAdaptor(Adaptor):
         self.workspace_path = framework_specific_info['workspace_path']
         self.is_baseline = True if not self.benchmark else False
         self.query_handler = None
+        self.approach = ''
 
-        if framework_specific_info['approach'] == "post_training_static_quant":
-            if self.version < '1.7':
-                self.q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
-            elif self.version < '1.8':
-                self.q_mapping = \
-                    tq.quantization_mappings.get_static_quant_module_mappings()
+        if 'approach' in framework_specific_info:
+            self.approach = framework_specific_info['approach']
+            if framework_specific_info['approach'] == "post_training_static_quant":
+                if self.version < '1.7':
+                    self.q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
+                elif self.version < '1.8':
+                    self.q_mapping = \
+                        tq.quantization_mappings.get_static_quant_module_mappings()
+                else:
+                    self.q_mapping = \
+                        tq.quantization_mappings.get_default_static_quant_module_mappings()
+            elif framework_specific_info['approach'] == "quant_aware_training":
+                if self.version < '1.7':
+                    self.q_mapping = tq.default_mappings.DEFAULT_QAT_MODULE_MAPPING
+                elif self.version < '1.8':
+                    self.q_mapping = \
+                        tq.quantization_mappings.get_qat_module_mappings()
+                else:
+                    self.q_mapping = \
+                        tq.quantization_mappings.get_default_qat_module_mappings()
+            elif framework_specific_info['approach'] == "post_training_dynamic_quant":
+                if self.version < '1.7':
+                    self.q_mapping = \
+                        tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
+                elif self.version < '1.8':
+                    self.q_mapping = \
+                        tq.quantization_mappings.get_dynamic_quant_module_mappings()
+                else:
+                    self.q_mapping = \
+                        tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
             else:
-                self.q_mapping = \
-                    tq.quantization_mappings.get_default_static_quant_module_mappings()
-        elif framework_specific_info['approach'] == "quant_aware_training":
-            if self.version < '1.7':
-                self.q_mapping = tq.default_mappings.DEFAULT_QAT_MODULE_MAPPING
-            elif self.version < '1.8':
-                self.q_mapping = \
-                    tq.quantization_mappings.get_qat_module_mappings()
-            else:
-                self.q_mapping = \
-                    tq.quantization_mappings.get_default_qat_module_mappings()
-        elif framework_specific_info['approach'] == "post_training_dynamic_quant":
-            if self.version < '1.7':
-                self.q_mapping = \
-                    tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
-            elif self.version < '1.8':
-                self.q_mapping = \
-                    tq.quantization_mappings.get_dynamic_quant_module_mappings()
-            else:
-                self.q_mapping = \
-                    tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
-        else:
-            assert False, "Unsupport quantization approach: {}".format(self.approach)
+                assert False, "Unsupport approach: {}".format(self.approach)
 
         self.fp32_results = []
         self.fp32_preds_as_label = False

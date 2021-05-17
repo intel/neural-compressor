@@ -46,14 +46,17 @@ def constructor_register(cls):
 
 @constructor_register
 class MagnitudePruneModifier():
-    def __init__(self, start_epoch, end_epoch, update_frequency=1, initial_sparsity=0.0,
-                 target_sparsity=0.97, mask_type='unstructured', params=[]):
+    def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None, 
+                 target_sparsity=None, update_frequency=1, mask_type='unstructured',
+                 method='per_tensor', params=[]):
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
         self.update_frequency = update_frequency
         self.target_sparsity = target_sparsity
         self.initial_sparsity = initial_sparsity
+        self.update_frequency = update_frequency
         self.mask_type = mask_type
+        self.method = method
         self.params = params
 
 # Schema library has different loading sequence priorities for different
@@ -464,12 +467,17 @@ train_schema = Schema({
 weight_magnitude_schema = Schema({
     Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
     Optional('target_sparsity', default=0.97): float,
-    Optional('modifiers'): And(list, lambda s: all(isinstance(i, MagnitudePruneModifier) for i in s))
+    Optional('start_epoch', default=0): int,
+    Optional('end_epoch', default=4): int,
+    Optional('modifiers'): And(list, \
+                               lambda s: all(isinstance(i, MagnitudePruneModifier) for i in s))
 })
 
 gradient_sensativity_schema = Schema({
     Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
     Optional('target_sparsity', default=0.97): float,
+    Optional('start_epoch', default=0): int,
+    Optional('end_epoch', default=4): int,
     Optional('modifiers'): list
 })
 
