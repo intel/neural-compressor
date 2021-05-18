@@ -363,7 +363,7 @@ export class ImportModelComponent implements OnInit {
               transform = resp['config']['quantization'].calibration.dataloader.transform;
             } else if (resp['config']['evaluation'] && resp['config']['evaluation'].dataloader && resp['config']['evaluation'].dataloader.transform) {
               transform = resp['config']['evaluation'].dataloader.transform;
-            } else if (resp['config']['evaluation'] && resp['config']['evaluation'].accuracy && resp['config']['evaluation'].accuracy.postprocess.transform) {
+            } else if (resp['config']['evaluation'] && resp['config']['evaluation'].accuracy && resp['config']['evaluation'].accuracy.postprocess && resp['config']['evaluation'].accuracy.postprocess.transform) {
               transform = resp['config']['evaluation'].accuracy.postprocess.transform;
             }
             this.secondFormGroup.get('transform').setValue(transform);

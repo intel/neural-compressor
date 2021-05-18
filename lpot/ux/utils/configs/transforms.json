@@ -167,16 +167,6 @@
                 ]
             },
             {
-                "name": "ParseDecodeCoco",
-                "help": null,
-                "value": null
-            },
-            {
-                "name": "ParseDecodeImagenet",
-                "help": null,
-                "value": null
-            },
-            {
                 "name": "QuantizedInput",
                 "help": null,
                 "params": [

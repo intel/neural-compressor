@@ -14,15 +14,16 @@
 # limitations under the License.
 """Parameters feeder module."""
 
-import os
 from typing import Any, Dict, List, Optional
 
+from lpot.experimental.metric.metric import framework_metrics
+from lpot.objective import OBJECTIVES
+from lpot.strategy import STRATEGIES
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.utils import (
     check_module,
     filter_transforms,
     framework_extensions,
-    is_model_file,
     load_dataloader_config,
     load_help_lpot_params,
     load_model_config,
@@ -81,8 +82,6 @@ class Feeder:
 
     def get_domains(self) -> List[Dict[str, Any]]:
         """Get list of available domains."""
-        if self.config is None:
-            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
@@ -102,8 +101,6 @@ class Feeder:
 
     def get_models(self) -> List[Dict[str, Any]]:
         """Get list of models."""
-        if self.config is None:
-            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
@@ -121,24 +118,8 @@ class Feeder:
             models.append({"name": model, "help": help_msg})
         return models
 
-    def get_available_models(self, workspace_path: str) -> List[str]:
-        """Get list of available models in workspace."""
-        available_models = []
-        all_models = self.get_models()
-        for filename in os.listdir(workspace_path):
-            name = os.path.splitext(filename)[0]
-            if (
-                os.path.isfile(os.path.join(workspace_path, filename))
-                and name in all_models
-                and is_model_file(filename)
-            ):
-                available_models.append(filename)
-        return available_models
-
     def get_dataloaders(self) -> List[Dict[str, Any]]:
         """Get available dataloaders."""
-        if self.config is None:
-            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
@@ -149,8 +130,6 @@ class Feeder:
 
     def get_transforms(self) -> List[Dict[str, Any]]:
         """Get available transforms."""
-        if self.config is None:
-            raise ClientErrorException("Config not found.")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
@@ -167,9 +146,6 @@ class Feeder:
     @staticmethod
     def get_objectives() -> List[dict]:
         """Get list of supported objectives."""
-        check_module("lpot")
-        from lpot.objective import OBJECTIVES
-
         help_dict = load_help_lpot_params("objectives")
 
         objectives = []
@@ -181,9 +157,6 @@ class Feeder:
     @staticmethod
     def get_strategies() -> List[Dict[str, Any]]:
         """Get list of supported strategies."""
-        check_module("lpot")
-        from lpot.strategy import STRATEGIES
-
         help_dict = load_help_lpot_params("strategies")
         strategies = []
         for strategy in STRATEGIES.keys():
@@ -217,7 +190,6 @@ class Feeder:
 
     def get_metrics(self) -> List[Dict[str, Any]]:
         """Get list of possible metrics."""
-        check_module("lpot")
         framework = self.config.get("framework", None)
         if framework is None:
             raise ClientErrorException("Framework not set.")
@@ -226,17 +198,14 @@ class Feeder:
             check_module("ignite")
         else:
             check_module(framework)
-        from lpot.experimental.metric.metric import framework_metrics
 
         help_dict = load_help_lpot_params("metrics")
-        if framework == "onnxrt":
-            raw_metric_list = list(
-                framework_metrics.get("onnxrt_qlinearops")().metrics.keys(),
-            )
-        else:
-            raw_metric_list = list(framework_metrics.get(framework)().metrics.keys())
+
+        key_in_framework_metrics = "onnxrt_qlinearops" if framework == "onnxrt" else framework
+        metrics_class = framework_metrics.get(key_in_framework_metrics)
+        raw_metric_list = list(metrics_class().metrics.keys()) if metrics_class else []
         raw_metric_list += ["custom"]
-        metrics_updated = update_metric_parameters(raw_metric_list)
+        metrics_updated = _update_metric_parameters(raw_metric_list)
         for metric, value in metrics_updated.copy().items():
             if isinstance(value, dict):
                 for key in value.copy().keys():
@@ -275,7 +244,7 @@ class Feeder:
         return parsed_list
 
 
-def update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
+def _update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
     """Add parameters to metrics."""
     metrics: Dict[str, Any] = {}
     for metric in metric_list:

@@ -7,7 +7,6 @@ quantization:
             dataset:
                 ImageRecord: {root: /path/to/calib/dataset}
             transform:
-                ParseDecodeImagenet: null
                 ResizeCropImagenet:
                     height: 224
                     width: 224
@@ -30,7 +29,6 @@ evaluation:
             dataset:
                 ImageRecord: {root: /path/to/eval/dataset}
             transform:
-                ParseDecodeImagenet: null
                 ResizeCropImagenet:
                     height: 224
                     width: 224
@@ -44,7 +42,6 @@ evaluation:
             dataset:
                 ImageRecord: {root: /path/to/eval/dataset}
             transform:
-                ParseDecodeImagenet: null
                 ResizeCropImagenet:
                     height: 224
                     width: 224

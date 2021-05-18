@@ -239,7 +239,7 @@ class WorkloadMigrator:
     def current_version(self) -> int:
         """Get version of current workload format."""
         self.ensure_workload_loaded()
-        return int(self.workload_data.get("version", 1))
+        return int(float(self.workload_data.get("version", 1)))
 
     @property
     def require_migration(self) -> bool:

@@ -136,7 +136,7 @@ class WorkloadsListMigrator:
     def current_version(self) -> int:
         """Get version of current workloads list."""
         self.ensure_workloads_loaded()
-        return int(self.workloads_data.get("version", 1))
+        return int(float(self.workloads_data.get("version", 1)))
 
     @property
     def require_migration(self) -> bool:

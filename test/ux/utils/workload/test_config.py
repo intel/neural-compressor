@@ -34,7 +34,6 @@ predefined_config = {
                 "batch_size": 10,
                 "dataset": {"ImageRecord": {"root": "/path/to/calibration/dataset"}},
                 "transform": {
-                    "ParseDecodeImagenet": None,
                     "ResizeCropImagenet": {
                         "height": 224,
                         "width": 224,
@@ -52,7 +51,6 @@ predefined_config = {
                 "batch_size": 32,
                 "dataset": {"ImageRecord": {"root": "/path/to/evaluation/dataset"}},
                 "transform": {
-                    "ParseDecodeImagenet": None,
                     "ResizeCropImagenet": {
                         "height": 224,
                         "width": 224,
@@ -67,7 +65,6 @@ predefined_config = {
                 "batch_size": 1,
                 "dataset": {"ImageRecord": {"root": "/path/to/evaluation/dataset"}},
                 "transform": {
-                    "ParseDecodeImagenet": None,
                     "ResizeCropImagenet": {
                         "height": 224,
                         "width": 224,
@@ -161,11 +158,6 @@ class TestConfig(unittest.TestCase):
         transform_name, transform = list(
             config.quantization.calibration.dataloader.transform.items(),
         )[0]
-        self.assertEqual(transform_name, "ParseDecodeImagenet")
-        self.assertIsNone(transform.parameters)
-        transform_name, transform = list(
-            config.quantization.calibration.dataloader.transform.items(),
-        )[1]
         self.assertEqual(transform_name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
@@ -207,11 +199,6 @@ class TestConfig(unittest.TestCase):
         transform_name, transform = list(
             config.evaluation.accuracy.dataloader.transform.items(),
         )[0]
-        self.assertEqual(transform_name, "ParseDecodeImagenet")
-        self.assertIsNone(transform.parameters)
-        transform_name, transform = list(
-            config.evaluation.accuracy.dataloader.transform.items(),
-        )[1]
         self.assertEqual(transform_name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
@@ -254,11 +241,6 @@ class TestConfig(unittest.TestCase):
         transform_name, transform = list(
             config.quantization.calibration.dataloader.transform.items(),
         )[0]
-        self.assertEqual(transform_name, "ParseDecodeImagenet")
-        self.assertIsNone(transform.parameters)
-        transform_name, transform = list(
-            config.quantization.calibration.dataloader.transform.items(),
-        )[1]
         self.assertEqual(transform_name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
@@ -296,7 +278,6 @@ class TestConfig(unittest.TestCase):
                                 },
                             },
                             "transform": {
-                                "ParseDecodeImagenet": None,
                                 "ResizeCropImagenet": {
                                     "height": 224,
                                     "width": 224,
@@ -319,7 +300,6 @@ class TestConfig(unittest.TestCase):
                                 },
                             },
                             "transform": {
-                                "ParseDecodeImagenet": None,
                                 "ResizeCropImagenet": {
                                     "height": 224,
                                     "width": 224,
@@ -343,7 +323,6 @@ class TestConfig(unittest.TestCase):
                                 },
                             },
                             "transform": {
-                                "ParseDecodeImagenet": None,
                                 "ResizeCropImagenet": {
                                     "height": 224,
                                     "width": 224,

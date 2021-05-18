@@ -255,45 +255,6 @@ class TestTransformParser(TestParser):
             {"dtype": "float32"},
         )
 
-    def test_parses_ParseDecodeImagenet(self) -> None:
-        """Test parsing of Cast parameters."""
-        self._assert_parses_single_transform_params(
-            "ParseDecodeImagenet",
-            None,
-            None,
-        )
-
-    def test_parses_ParseDecodeImagenet_BilinearImagenet(self) -> None:
-        """Test parsing multiple transforms."""
-        self._assert_parses_multiple_transforms(
-            [
-                {"name": "ParseDecodeImagenet", "params": None},
-                {
-                    "name": "BilinearImagenet",
-                    "params": {
-                        "height": 224,
-                        "width": "224",
-                        "central_fraction": 0.875,
-                        "mean_value": "[0.0, 0.0, 0.0]",
-                        "scale": 1,
-                    },
-                },
-            ],
-            [
-                {"name": "ParseDecodeImagenet", "params": None},
-                {
-                    "name": "BilinearImagenet",
-                    "params": {
-                        "height": 224,
-                        "width": 224,
-                        "central_fraction": 0.875,
-                        "mean_value": [0.0, 0.0, 0.0],
-                        "scale": 1,
-                    },
-                },
-            ],
-        )
-
     def _build_input_with_transform(self, name: str, params: Optional[dict]) -> dict:
         """Build fake data with single Transform."""
         return {
