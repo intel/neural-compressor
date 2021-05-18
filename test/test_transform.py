@@ -883,7 +883,7 @@ class TestImagenetTransform(unittest.TestCase):
         with tf.io.TFRecordWriter('test-0-of-0') as writer:
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
-            'tensorflow', {'ImageRecord':{'root':'./'}}, None, None)
+            'tensorflow', {'ImageRecord':{'root':'./'}}, {'ParseDecodeImagenet':{}}, None)
         dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
@@ -939,7 +939,7 @@ class TestCOCOTransform(unittest.TestCase):
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
             'tensorflow', {'COCORecord':{'root':'test.record'}}, 
-            {'Resize': {'size': 50}, 'Cast':{'dtype':'int64'},
+            {'ParseDecodeCoco':{}, 'Resize': {'size': 50}, 'Cast':{'dtype':'int64'},
             'CropToBoundingBox':{'offset_height':2, 'offset_width':2, 'target_height':5, 'target_width':5},
             'CenterCrop':{'size':[4,4]},
             'RandomResizedCrop':{'size':[4,5]},

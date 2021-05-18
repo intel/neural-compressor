@@ -31,6 +31,7 @@
 # ==============================================================================
 
 import numpy as np
+from lpot.utils import logger
 from lpot.utils.utility import LazyImport
 from lpot.experimental.data.transforms import transform_registry, BaseTransform
 
@@ -38,6 +39,15 @@ tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')
 
 # BELOW IS TO BE DEPRECATED!
+@transform_registry(transform_type="ParseDecodeImagenet", \
+                    process="preprocess", framework="tensorflow")
+class ParseDecodeImagenetTransform(BaseTransform):
+
+    def __call__(self, sample):
+        logger.warning('This transform is going to be deprecated, '
+            'imagenet decoding will be performed automatically' )
+        return sample
+
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="tensorflow")
 class TensorflowResizeCropImagenetTransform(BaseTransform):
