@@ -85,6 +85,15 @@ function run_benchmark {
     elif [ "${topology}" = "mbart_WNLI" ]; then
         TASK_NAME='WNLI'
         model_name_or_path=$input_model #'facebook/mbart-large-cc25'
+    elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "xlnet_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "gpt2_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
     elif [ "${topology}" = "t5_WMT_en_ro" ];then
         TASK_NAME='translation_en_to_ro'
         model_name_or_path=$input_model

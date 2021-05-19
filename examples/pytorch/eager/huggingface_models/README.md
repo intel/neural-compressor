@@ -58,6 +58,7 @@ Before use Intel® Low Precision Optimization Tool, you should fine tune the mod
 
 ### Text-classification
 
+#### BERT
 * For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
 
 ```shell
@@ -85,6 +86,83 @@ The dev set results will be present within the text file 'eval_results.txt' in t
 please refer to [BERT base scripts and instructions](examples/text-classification/README.md#PyTorch version).
 
 * After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
+
+#### XLM-RoBERTa
+For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
+
+```shell
+cd examples/text-classification
+export TASK_NAME=MRPC
+
+python run_glue.py 
+  --model_name_or_path xlm-roberta-base 
+  --task_name $TASK_NAME 
+  --do_train 
+  --do_eval 
+  --max_seq_length 128 
+  --per_device_train_batch_size 32 
+  --learning_rate 2e-5 
+  --num_train_epochs 2 
+  --output_dir /path/to/checkpoint/dir
+```
+
+#### XLNet
+For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
+
+```shell
+cd examples/text-classification
+export TASK_NAME=MRPC
+
+python run_glue.py 
+  --model_name_or_path xlnet-base-cased 
+  --task_name $TASK_NAME  
+  --do_train 
+  --do_eval 
+  --max_seq_length 256 
+  --per_device_train_batch_size 32 
+  --learning_rate 5e-5 
+  --num_train_epochs 5 
+  --output_dir /path/to/checkpoint/dir
+```
+
+#### GPT2
+For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...). First you need to create a model with appropriate number of labels. For example, MRPC is a two-way sentence pair classification task.
+
+```python
+from transformers import GPT2ForSequenceClassification, GPT2Tokenizer
+
+model = GPT2ForSequenceClassification.from_pretrained("gpt2", num_labels=2)
+tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+
+# Define a padding token
+tokenizer.pad_token = tokenizer.eos_token
+model.config.pad_token_id = tokenizer.pad_token_id
+
+# Save the model and tokenizer in a directory
+model.save_pretrained("directory")
+tokenizer.save_pretrained("directory")
+```
+
+fine tuning command like this.
+```shell
+cd examples/text-classification
+export MODEL_PATH=directory
+export TASK_NAME=MRPC
+
+python run_glue.py 
+  --model_name_or_path $MODEL_PATH
+  --task_name $TASK_NAME 
+  --do_train 
+  --do_eval 
+  --max_seq_length 128 
+  --per_device_train_batch_size 1 
+  --learning_rate 2e-5 
+  --num_train_epochs 1 
+  --output_dir /path/to/checkpoint/dir
+  
+```
+
+
 
 ### Seq2seq
 
@@ -188,7 +266,7 @@ sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/glue/data/
 ```
 > NOTE
 >
-> topology_name can be:{"bert_base_MRPC", "distilbert_base_MRPC", "albert_base_MRPC", "funnel_MRPC", "bart_WNLI", "mbart_WNLI"}
+> topology_name can be:{"bert_base_MRPC", "distilbert_base_MRPC", "albert_base_MRPC", "funnel_MRPC", "bart_WNLI", "mbart_WNLI", "xlm_roberta_MRPC", "gpt2_MRPC", "xlnet_base_MRPC"}
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir 
 
