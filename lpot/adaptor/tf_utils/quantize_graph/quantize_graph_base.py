@@ -18,13 +18,10 @@
 
 import logging
 from collections import namedtuple
-import numpy as np
 import tensorflow as tf
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.ops import array_ops
 from .quantize_graph_common import QuantizeGraphHelper as helper
 
 class QuantizeGraphBase():
@@ -555,91 +552,8 @@ class QuantizeNodeBase():
                                             input_node,
                                             per_channel,
                                             quantization_mode=b"SCALED"):
-        base_name = input_node.name + "_"
-        qint8_const_name = base_name + "qint8_const"
-        min_name = base_name + "min"
-        max_name = base_name + "max"
-        float_tensor = tensor_util.MakeNdarray(input_node.attr["value"].tensor)
-        epsilon = 1e-4  # Needs to be set empirically if accuracy is not satisfactory
-        range_coefficent = 127 / (2 ** self.weight_bit - 1)
-        if parent in ("Conv2D", "MatMul"):
-            if per_channel:
-                ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
-                ranges *= range_coefficent
-                min_value = -ranges
-                max_value = ranges
-                # nudging min-max values outside epsilon radius around zero
-                ranges[ranges < epsilon] = epsilon
-                min_value[np.abs(min_value) < epsilon] = -epsilon
-                max_value[np.abs(max_value) < epsilon] = epsilon
-                qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
-            else:
-                min_value = np.min(float_tensor.flatten())
-                max_value = np.max(float_tensor.flatten())
-                min_value *= range_coefficent
-                max_value *= range_coefficent
-                # Same processing of min-max as in quantize_weight_eightbit
-                # function.
-                if min_value > 0.0:
-                    min_value = 0.0
-                if min_value == max_value:
-                    if abs(min_value) < 0.000001:
-                        max_value = min_value + 1.0
-                    elif min_value > 0:
-                        max_value = 2 * min_value
-                    else:
-                        max_value = min_value / 2.0
-
-                sess = tf.compat.v1.Session()
-                with sess.as_default():
-                    quantize_op = array_ops.quantize_v2(
-                        float_tensor,
-                        min_value,
-                        max_value,
-                        dtypes.qint8,
-                        mode=quantization_mode,
-                        round_mode="HALF_TO_EVEN")
-                    qint8_tensor = quantize_op[0].numpy(
-                    ) if tf.executing_eagerly() else quantize_op[0].eval()
-                    # Updated min-max values should be passed to the next
-                    # feeding node.
-                    min_value = quantize_op[1].numpy(
-                    ) if tf.executing_eagerly() else quantize_op[1].eval()
-                    max_value = quantize_op[2].numpy(
-                    ) if tf.executing_eagerly() else quantize_op[2].eval()
-                sess.close()
-        elif parent == "DepthwiseConv2dNative":
-            # get the max values based on dim 0 and 1 for depthwise conv
-            # since, the output channel will be dim 2 * dim 3
-            ranges = np.abs(float_tensor).max(axis=(0, 1))
-            ranges = ranges.flatten()
-            min_value = -ranges
-            max_value = ranges
-            # nudging min-max values outside epsilon radius around zero
-            ranges[ranges < epsilon] = epsilon
-            min_value[np.abs(min_value) < epsilon] = -epsilon
-            max_value[np.abs(max_value) < epsilon] = epsilon
-            # Since output channel will be 1 dim which is dim 2 * dim 3
-            # When divide by range, qint8_tensor needs to be 3 dim
-            # where, 3rd dim should be same dim of ranges
-            a, b, c, d = float_tensor.shape
-            qint8_tensor = (np.around(float_tensor.reshape(a, b, c * d) * 127.0 /
-                            ranges)).astype(np.int8)
-            # get the shape back to 4 dim
-            qint8_tensor = qint8_tensor.reshape(a, b, c, d)
-        shape = tensor_util.TensorShapeProtoToList(
-            input_node.attr["value"].tensor.tensor_shape)
-        qint8_const_node = helper.create_constant_node(qint8_const_name,
-                                                       qint8_tensor,
-                                                       dtypes.qint8,
-                                                       shape=shape)
-
-        min_node = helper.create_constant_node(min_name, min_value,
-                                               dtypes.float32, device=self.device)
-
-        max_node = helper.create_constant_node(max_name, max_value,
-                                               dtypes.float32, device=self.device)
-
+        qint8_const_node, min_node, max_node = helper.generate_quantized_weight_node(
+            parent, input_node, per_channel, quantization_mode, self.weight_bit, self.device)
         self.add_output_graph_node(qint8_const_node)
         self.add_output_graph_node(min_node)
         self.add_output_graph_node(max_node)
