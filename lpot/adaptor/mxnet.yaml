@@ -125,6 +125,71 @@
     << : *common_patterns
 
 
+version:
+    name: '1.9.0'
+
+  precisions:
+    names: int8, fp32
+    valid_mixed_precisions: []
+
+  ops:
+    int8: ['_sg_mkldnn_conv', 'Convolution', '_sg_mkldnn_fully_connected', 'FullyConnected', '_sg_mkldnn_selfatt_qk', '_sg_mkldnn_selfatt_valatt']
+    fp32: ['*'] # '*' means all op types
+
+  capabilities:
+    'int8': {
+        '_sg_mkldnn_conv': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8', 'fp32']}
+        },
+        'Convolution': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8', 'fp32']}
+        },
+        '_sg_mkldnn_fully_connected': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8', 'fp32']}
+        },
+        'FullyConnected': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8', 'fp32']}
+        },
+        '_sg_mkldnn_selfatt_qk': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax', 'kl']}
+        },
+        '_sg_mkldnn_selfatt_valatt': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax', 'kl']}
+        },
+        'default': {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+          }
+        }
+      }
+
+  patterns:
+    fp32: []
+    int8: []
+
 -
   version:
     name: 'default'
