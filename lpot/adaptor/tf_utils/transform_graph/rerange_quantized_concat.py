@@ -215,10 +215,10 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 int32_bias = []
                 if channel_size > 1:
                     for i in range(bias_length):
-                        int32_bias.append(int(bias_tensor[i] * scales[i]))
+                        int32_bias.append(int(np.around(bias_tensor[i] * scales[i])))
                 else:
                     for i in range(bias_length):
-                        int32_bias.append(int(bias_tensor[i] * scales[0]))
+                        int32_bias.append(int(np.around(bias_tensor[i] * scales[0])))
 
                 original_conv_node.attr['Tbias'].CopyFrom(
                     attr_value_pb2.AttrValue(

@@ -113,8 +113,8 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                     np.sum(np.array(weights_tensor, dtype=np.int32),
                             axis=0,
                             dtype=np.int32)):
-                int32_bias.append(int(bias_tensor[bias_index] *
-                                      bias_scale + value * relative_scale))
+                int32_bias.append(int(np.around(bias_tensor[bias_index] *
+                                      bias_scale + value * relative_scale)))
 
             bias_node.attr['dtype'].CopyFrom(
                 attr_value_pb2.AttrValue(
@@ -234,8 +234,8 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                         np.sum(np.array(weights_tensor, dtype=np.int32),
                                 axis=0,
                                 dtype=np.int32)):
-                    int32_bias.append(int(bias_tensor[bias_index]
-                                          * bias_scale + value * relative_scale))
+                    int32_bias.append(int(np.around(bias_tensor[bias_index]
+                                          * bias_scale + value * relative_scale)))
 
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(

@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
@@ -126,10 +127,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 int32_bias = []
                 if channel_size > 1:
                     for i in range(bias_length):
-                        int32_bias.append((int)(bias_tensor[i] * scales[i]))
+                        int32_bias.append((int)(np.around(bias_tensor[i] * scales[i])))
                 else:
                     for i in range(bias_length):
-                        int32_bias.append((int)(bias_tensor[i] * scales[0]))
+                        int32_bias.append((int)(np.around(bias_tensor[i] * scales[0])))
 
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(
