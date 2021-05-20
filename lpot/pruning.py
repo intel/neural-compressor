@@ -54,7 +54,7 @@ class Pruning:
         """ called on the end of epochs"""
         self.exp_pruner.on_epoch_end()
 
-    def __call__(self, model, train_dataloader=None, prune_func=None, eval_dataloader=None,
+    def __call__(self, model, train_dataloader=None, pruning_func=None, eval_dataloader=None,
                  eval_func=None):
         """The main entry point of pruning.
 
@@ -102,7 +102,7 @@ class Pruning:
                                                    dataset. The input could be a object, list,
                                                    tuple or dict, depending on user implementation,
                                                    as well as it can be taken as model input.
-            prune_func (function, optional):       Training function for pruning.
+            pruning_func (function, optional):       Training function for pruning.
                                                    This function takes "model" as input parameter
                                                    and executes entire training process with self
                                                    contained training hyper-parameters. If this
@@ -146,7 +146,7 @@ class Pruning:
             'dataloader and metric, then use new __call__ method')
         self.exp_pruner.model = model
         self.exp_pruner.train_dataloader = train_dataloader
-        self.exp_pruner.prune_func = prune_func
+        self.exp_pruner.pruning_func = pruning_func
         self.exp_pruner.eval_dataloader = eval_dataloader
         self.exp_pruner.eval_func = eval_func
         return self.exp_pruner()

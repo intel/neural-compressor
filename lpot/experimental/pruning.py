@@ -305,8 +305,8 @@ class Pruning:
         """ not support get eval_func """
         logger.warning('eval_func not support getter....')
 
-    @pruning_func.setter
-    def pruning_func(self, user_eval_func):
+    @eval_func.setter
+    def eval_func(self, user_eval_func):
         """Eval function for pruning.
 
         Args:

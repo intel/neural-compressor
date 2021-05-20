@@ -34,6 +34,10 @@ def build_fake_yaml():
                 mask_type: unstructured
                 update_frequency: 2
                 params: ['layer1.0.conv2.weight']
+    evaluation:                    
+      accuracy:                      
+        metric:
+          topk: 1                  
     """
     with open('fake.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
@@ -86,6 +90,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.model = common.Model(self.model)
         prune.pruning_func = training_func_for_lpot
+        prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
         _ = prune()
 

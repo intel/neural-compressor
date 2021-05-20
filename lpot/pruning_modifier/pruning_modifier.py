@@ -46,7 +46,8 @@ class PruningModifier:
 
         """
         self.model = model
-        self.tensor_dims = [4]
+        #2 for linear weight, 4 for conv weight
+        self.tensor_dims = [2, 4]
 
         if local_config.method:
             self.method = local_config.method
