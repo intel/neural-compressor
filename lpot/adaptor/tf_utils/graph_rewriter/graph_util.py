@@ -19,6 +19,7 @@ import copy
 
 import re
 import logging
+import numpy as np
 from collections import namedtuple
 
 from tensorflow.core.framework import graph_pb2
@@ -134,7 +135,7 @@ class GraphAnalyzer():
                 output_node_names.append(i.node.name)
             else:
                 pass
-        
+
         if len(input_node_names) == 0 and len(extra_input_names) != 0:
             for extra_input_name in extra_input_names:
                 input_node_names.append(extra_input_name)
@@ -767,3 +768,43 @@ class GraphRewriterHelper():
         input_tensor = node_def.attr["value"].tensor
         tensor_value = tensor_util.MakeNdarray(input_tensor)
         return tensor_value
+
+    @staticmethod
+    def generate_int32_bias_for_conv(bias_tensor, channel_size,
+                                     max_input, min_input,
+                                     max_filter_tensor, min_filter_tensor,
+                                     activation_range, weights_range=127.0):
+        bias_length = bias_tensor.shape[0]
+        scales = []
+        for i in range(channel_size):
+            scales.append(activation_range * weights_range /
+                          (max(abs(max_input), abs(min_input)) *
+                           max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
+
+        int32_bias = []
+        if channel_size > 1:
+            for i in range(bias_length):
+                int32_bias.append((int)(np.around(bias_tensor[i] * scales[i])))
+        else:
+            for i in range(bias_length):
+                int32_bias.append((int)(np.around(bias_tensor[i] * scales[0])))
+
+        return int32_bias
+
+    @staticmethod
+    def generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                     input_range, max_input, min_input,
+                                     max_filter_value, min_filter_value,
+                                     ):
+        bias_scale = 255.0 * 127.0 / (
+                input_range * max(abs(max_filter_value), abs(min_filter_value)))
+        relative_scale = 255 * min_input / (max_input - min_input)
+        int32_bias = []
+        for bias_index, value in enumerate(
+                np.sum(np.array(weights_tensor, dtype=np.int32),
+                        axis=0,
+                        dtype=np.int32)):
+            int32_bias.append(int(np.around(bias_tensor[bias_index] *
+                                    bias_scale + value * relative_scale)))
+
+        return int32_bias

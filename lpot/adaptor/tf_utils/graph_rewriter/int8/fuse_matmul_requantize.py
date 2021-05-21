@@ -104,18 +104,14 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                     self.graph_info[new_node.input[1]].node.attr['value'].tensor)
             bias_tensor = tensor_util.MakeNdarray(
                 self.graph_info[new_node.input[2]].node.attr['value'].tensor)
-            bias_scale = 255.0 * 127.0 / (
-                    (max_input_value -min_input_value) *
-                    max(abs(max_filter_value), abs(min_filter_value)))
-            relative_scale = 255 * min_input_value / (max_input_value - min_input_value)
-            int32_bias = []
-            for bias_index, value in enumerate(
-                    np.sum(np.array(weights_tensor, dtype=np.int32),
-                            axis=0,
-                            dtype=np.int32)):
-                int32_bias.append(int(np.around(bias_tensor[bias_index] *
-                                      bias_scale + value * relative_scale)))
+            is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
+            input_range = max_input_value - min_input_value if is_min_first else max(
+                    abs(max_input_value), abs(min_input_value))
 
+            int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                    input_range, max_input_value,
+                                                    min_input_value,
+                                                    max_filter_value, min_filter_value)
             bias_node.attr['dtype'].CopyFrom(
                 attr_value_pb2.AttrValue(
                     type=float32_type if self.device == 'gpu' else qint32_type))
@@ -143,8 +139,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
 
                 new_node.name = deq_node_name
                 self.graph_analyzer.replace_single_node(
-                    new_node, [top_node_name], quantized_node_name,
-                    [], deq_node_name)
+                    new_node, [top_node_name], quantized_node_name, [], deq_node_name)
 
             self.graph_analyzer.remove_node(quantized_node_name)
 
@@ -207,7 +202,8 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
             min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
 
-            is_min_first = bool(quantized_node.attr['input_quant_mode'] == 'MIN_FIRST')
+            is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
+
             if last_node.op.find('Requantize') != -1 or last_node.op.find('QuantizeV2') != -1:
 
                 bias_node = self.graph_info[new_node.input[2]].node
@@ -223,20 +219,16 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                         self.graph_info[new_node.input[1]].node.attr['value'].tensor)
                 bias_tensor = tensor_util.MakeNdarray(
                     self.graph_info[new_node.input[2]].node.attr['value'].tensor)
-                input_range = max_input_value - \
-                    min_input_value if is_min_first else max(
-                        abs(max_input_value), abs(min_input_value))
-                bias_scale = 255.0 * 127.0 / (
-                        input_range * max(abs(max_filter_value), abs(min_filter_value)))
-                relative_scale = 255 * min_input_value / (max_input_value - min_input_value)
-                int32_bias = []
-                for bias_index, value in enumerate(
-                        np.sum(np.array(weights_tensor, dtype=np.int32),
-                                axis=0,
-                                dtype=np.int32)):
-                    int32_bias.append(int(np.around(bias_tensor[bias_index]
-                                          * bias_scale + value * relative_scale)))
 
+                input_range = max_input_value - min_input_value if is_min_first else max(
+                        abs(max_input_value), abs(min_input_value))
+
+                int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                                   input_range,
+                                                                   max_input_value,
+                                                                   min_input_value,
+                                                                   max_filter_value,
+                                                                   min_filter_value)
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(
                         type=float32_type if self.device == 'gpu' else qint32_type))

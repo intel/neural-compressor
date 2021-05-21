@@ -25,6 +25,7 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from .graph_transform_base import GraphTransformBase
+from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 
 class RerangeQuantizedConcat(GraphTransformBase):
@@ -171,10 +172,8 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 if bias_node_type.type != dtypes.float32 or bias_node_type.type == dtypes.qint32:
                     continue
 
-                min_filter_node = self.node_mapping[
-                    original_conv_node.input[5]]
-                max_filter_node = self.node_mapping[
-                    original_conv_node.input[6]]
+                min_filter_node = self.node_mapping[original_conv_node.input[5]]
+                max_filter_node = self.node_mapping[original_conv_node.input[6]]
 
                 channel_size = 1 if not min_filter_node.attr[
                     'value'].tensor.tensor_shape.dim else min_filter_node.attr[
@@ -201,31 +200,19 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 min_input = min_freezed_output_node.attr['value'].tensor.float_val[0]
                 max_input = max_freezed_output_node.attr['value'].tensor.float_val[0]
 
-                bias_tensor = (tensor_util.MakeNdarray(
-                    bias_node.attr['value'].tensor))
-                bias_length = bias_tensor.shape[0]
-                scales = []
+                bias_tensor = (tensor_util.MakeNdarray(bias_node.attr['value'].tensor))
+
                 activation_range = 127.0 if current_node.attr['out_type'].type == dtypes.qint8  \
                     else 255.0
-                weights_range = 127.0
-                for i in range(channel_size):
-                    scales.append(activation_range * weights_range /
-                                  (max(abs(max_input), abs(min_input)) *
-                                   max(abs(max_filter_tensor[i]), abs(min_filter_tensor[i]))))
-                int32_bias = []
-                if channel_size > 1:
-                    for i in range(bias_length):
-                        int32_bias.append(int(np.around(bias_tensor[i] * scales[i])))
-                else:
-                    for i in range(bias_length):
-                        int32_bias.append(int(np.around(bias_tensor[i] * scales[0])))
+
+                int32_bias = Helper.generate_int32_bias_for_conv(
+                    bias_tensor, channel_size, max_input, min_input,
+                    max_filter_tensor, min_filter_tensor, activation_range)
 
                 original_conv_node.attr['Tbias'].CopyFrom(
-                    attr_value_pb2.AttrValue(
-                        type=dtypes.qint32.as_datatype_enum))
+                    attr_value_pb2.AttrValue(type=dtypes.qint32.as_datatype_enum))
                 bias_node.attr['dtype'].CopyFrom(
-                    attr_value_pb2.AttrValue(
-                        type=dtypes.qint32.as_datatype_enum))
+                    attr_value_pb2.AttrValue(type=dtypes.qint32.as_datatype_enum))
 
                 bias_node.attr['value'].CopyFrom(
                     attr_value_pb2.AttrValue(

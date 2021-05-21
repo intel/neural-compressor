@@ -91,6 +91,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, "T1", dtypes.quint8)
                 helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
                 helper.set_attr_dtype(quantized_matmul_node, "Toutput", dtypes.qint32)
+                helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
+                                       b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
 
                 self.add_output_graph_node(quantized_matmul_node)
 
@@ -156,6 +158,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
                 helper.set_attr_dtype(quantized_matmul_node, "Toutput", dtypes.qint32)
                 helper.set_attr_dtype(quantized_matmul_node, "Tbias", dtypes.float32)
+                helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
+                                       b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
 
                 self.add_output_graph_node(quantized_matmul_node)
                 requantize_type = dtypes.qint8
