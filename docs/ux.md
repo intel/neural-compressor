@@ -1,6 +1,8 @@
 LPOT UX
 =======
 
+LPOT UX is only available on Linux based hosts.
+
 ## Start the UX
 
 1. Start the LPOT UX server:
@@ -65,6 +67,30 @@ When both models and configurations are downloaded, you can point to the Dataset
 If you choose **custom** in the Dataset or Metric section, the appropriate code templates will be generated for you to fill in with your code. The path to the template will be available by clicking the **Copy code template path** button located in the right-most column in the **My models** list.
 
 Follow the comments in the generated code template to fill in required methods with your own code.
+
+## Bert model configuration
+![Bert model Wizard](imgs/ux/model_create_bert.png "Bert model Wizard")   
+* Follow [instructions](https://github.com/intel/lpot/blob/master/examples/tensorflow/nlp/bert/README.md) to:
+   * install Intel Tensorflow 1.15 up2
+   * prepare dataset and a frozen pb model 
+* In the **Create low precision model**:
+   * select created frozen model
+   * choose NLP as model domain
+   * select input_file, batch_size in inputs (in that order)
+   * choose **custom** in output and enter `IteratorGetNext:3, unstack:0, unstack:1` in input field
+   * in **Calibration/label_file**, select **dev-v1.1.json** file from created dataset
+   * in **Calibration/dataset location**, select **evel.tf_record** file from created dataset
+   * in **Evaluation/Transforms/label_file**, select **dev-v1.1.json** file from created dataset  
+   * in **Evaluation/Transforms/vocab_file**, select **vocab.txt** file from created dataset
+   * click **Finish** or change Advanced parameters
+
+## Model Graph Display
+For Tensorflow frozen pb models there will be a new button available ![Show graph](imgs/ux/show_graph_button.png "Show graph").
+
+Click it to display graph of selected model:
+
+![Bert model graph](imgs/ux/graph_bert.png "Bert model graph").
+
 
 ## Tuning
 
