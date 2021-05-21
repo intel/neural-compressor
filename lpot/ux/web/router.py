@@ -18,6 +18,8 @@
 from threading import Thread
 from typing import Any, Callable, Dict
 
+from werkzeug.wrappers import BaseResponse as WebResponse
+
 from lpot.ux.components.benchmark.execute_benchmark import execute_benchmark
 from lpot.ux.components.configuration_wizard.get_boundary_nodes import get_boundary_nodes
 from lpot.ux.components.configuration_wizard.get_configuration import get_predefined_configuration
@@ -36,11 +38,12 @@ from lpot.ux.components.model_zoo.download_config import download_config
 from lpot.ux.components.model_zoo.download_model import download_model
 from lpot.ux.components.model_zoo.list_models import list_models
 from lpot.ux.components.optimization.execute_optimization import execute_optimization
-from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.hw_info import HWInfo
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.web.communication import Request, Response, create_simple_response
 from lpot.ux.web.exceptions import ServiceNotFoundException
+from lpot.ux.web.service.request_data_processor import RequestDataProcessor
+from lpot.ux.web.service.workload import WorkloadService
 
 
 class RoutingDefinition:
@@ -85,6 +88,11 @@ class Router:
             "download_config": DeferredRoutingDefinition(download_config),
             "model_graph": RealtimeRoutingDefinition(get_model_graph),
             "system_info": RealtimeRoutingDefinition(get_system_info),
+            "workload/config.yaml": RealtimeRoutingDefinition(WorkloadService.get_config),
+            "workload/output.log": RealtimeRoutingDefinition(WorkloadService.get_output),
+            "workload/code_template.py": RealtimeRoutingDefinition(
+                WorkloadService.get_code_template,
+            ),
         }
 
     def handle(self, request: Request) -> Response:
@@ -94,6 +102,8 @@ class Router:
             raise ServiceNotFoundException(f"Unable to find {request.operation}")
 
         data = self._process_routing_definition(routing_definition, request.data)
+        if isinstance(data, WebResponse):
+            return data
 
         serialized_data = JsonSerializer.serialize_item(data)
 
@@ -141,17 +151,9 @@ def get_model_graph(data: Dict[str, Any]) -> Graph:
     """Get model graph."""
     graph_reader = GraphReader()
     return graph_reader.read(
-        model_path=_get_string_value(data, "path"),
+        model_path=RequestDataProcessor.get_string_value(data, "path"),
         expanded_groups=data.get("group", []),
     )
-
-
-def _get_string_value(data: Dict[str, Any], name: str) -> str:
-    """Get string value from request."""
-    try:
-        return data[name][0]
-    except KeyError:
-        raise ClientErrorException(f"Missing {name} parameter")
 
 
 def get_system_info(data: Dict[str, Any]) -> dict:

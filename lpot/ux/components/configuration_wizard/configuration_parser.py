@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Type, Union
 
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.hw_info import HWInfo
+from lpot.ux.utils.utils import parse_bool_value
 
 
 class ConfigurationParser:
@@ -214,24 +215,6 @@ def parse_list_value(value: Any, required_type: Union[Type, List[Type]]) -> List
         return [required_type(value)]
     else:
         return [value]
-
-
-def parse_bool_value(value: Any) -> bool:
-    """Parse value to boolean."""
-    true_options = ["true", "t", "yes", "y", "1"]
-    false_options = ["false", "f", "no", "n", "0"]
-    if isinstance(value, str):
-        value = value.lower().strip()
-        if value in true_options:
-            return True
-        elif value in false_options:
-            return False
-        else:
-            raise ValueError(
-                f"Supported values boolean values are: "
-                f"True ({true_options}), False ({false_options})",
-            )
-    return bool(value)
 
 
 def parse_multidim_list(value: Any, required_type: Type) -> List[Union[Any, List[Any]]]:

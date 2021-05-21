@@ -143,7 +143,7 @@
       <mat-card>
         <span class="inline">
           <mat-form-field class="form-field" appearance="fill">
-            <mat-label>provided dataset</mat-label>
+            <mat-label>evaluation dataset</mat-label>
             <mat-select formControlName="dataLoaderEvaluation"
               (selectionChange)="setDefaultDataLoaderParam($event, 'evaluation')">
               <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
@@ -179,87 +179,65 @@
             <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
             Choose dataset
           </button>
+          <mat-checkbox *ngIf="firstFormGroup.get('precision').value === 'int8'" [checked]="true"
+            (change)="calibrationDataChange($event.checked)">
+            Use the same data as calibration
+          </mat-checkbox>
         </span>
+        <br>
         <a *ngIf="secondFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="custom">
           Fill the code template before tuning
         </a>
-      </mat-card>
 
-      <h2 [ngClass]="{'gray': firstFormGroup.get('precision').value === 'fp32'}">
-        <mat-checkbox *ngIf="firstFormGroup.get('precision').value === 'bf16,fp32'" [(ngModel)]="tuningEnabled"
-          [ngModelOptions]="{standalone: true}" (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning"
-          class="tuning-checkbox">
-        </mat-checkbox>
-        Tuning
-        <a *ngIf="firstFormGroup.get('precision').value !== 'fp32'"
-          href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
-          <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
-        </a>
-        <a *ngIf="firstFormGroup.get('precision').value === 'fp32'"
-          href="https://github.com/intel/lpot/blob/master/docs/dataset.md" target="_blank">
-          <img class="help-icon" src="./../../assets/005a-help-solid-gray.svg" matTooltip="Click to open documentation">
-        </a>
-      </h2>
-      <a *ngIf="tuningWarning" class="info">
-        {{ tuningWarning }}
-      </a>
-
-      <mat-card *ngIf="tuningEnabled">
-        <h3>Calibration</h3>
-        <mat-checkbox [checked]="true" (change)="calibrationDataChange($event.checked)">Use the same data as calibration
-        </mat-checkbox>
-
-        <mat-card *ngIf="!useEvaluationData">
-          <mat-card>
-            <span class="inline">
-              <mat-form-field class="form-field" appearance="fill">
-                <mat-label>provided dataset</mat-label>
-                <mat-select formControlName="dataLoaderQuantization"
-                  (selectionChange)="setDefaultDataLoaderParam($event, 'quantization')">
-                  <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name"
-                    matTooltipPosition="right" [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null"
-                    [matTooltip]="dataLoader.help">
-                    {{ dataLoader.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </span>
-            <span class="inline">
-              <ng-container *ngFor="let param of dataLoaderParams['quantization']">
-                <ng-container *ngIf="param.name !== 'root'">
-                  <mat-form-field class="form-field" appearance="fill">
-                    <mat-label>{{ param.name }}</mat-label>
-                    <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
-                      matTooltipPosition="right" [matTooltip]="param.help">
-                  </mat-form-field>
-                  <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
-                    class="browse" (click)="openDialog(param.name, 'all', 'quantization')">
-                    <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-                    Choose file
-                  </button>
-                </ng-container>
+        <ng-container *ngIf="tuningEnabled && !useEvaluationData && firstFormGroup.get('precision').value === 'int8'">
+          <span class="inline">
+            <mat-form-field class="form-field" appearance="fill">
+              <mat-label>calibration dataset</mat-label>
+              <mat-select formControlName="dataLoaderQuantization"
+                (selectionChange)="setDefaultDataLoaderParam($event, 'quantization')">
+                <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
+                  [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
+                  {{ dataLoader.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </span>
+          <span class="inline">
+            <ng-container *ngFor="let param of dataLoaderParams['quantization']">
+              <ng-container *ngIf="param.name !== 'root'">
+                <mat-form-field class="form-field" appearance="fill">
+                  <mat-label>{{ param.name }}</mat-label>
+                  <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
+                    matTooltipPosition="right" [matTooltip]="param.help">
+                </mat-form-field>
+                <button *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary" class="browse"
+                  (click)="openDialog(param.name, 'all', 'quantization')">
+                  <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                  Choose file
+                </button>
               </ng-container>
-            </span>
-            <span *ngIf="showDatasetLocation['quantization']" class="inline">
-              <mat-form-field class="form-field long" appearance="fill">
-                <mat-label>dataset location *</mat-label>
-                <input formControlName="datasetLocationQuantization" matInput (change)="useForQuantization()">
-              </mat-form-field>
-              <button mat-raised-button color="primary" class="browse"
-                (click)="openDialog('datasetLocationQuantization', 'datasets')">
-                <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-                Choose dataset
-              </button>
-            </span>
-            <a *ngIf="secondFormGroup.get('dataLoaderQuantization').value === 'custom'" class="custom">
-              Fill the code template before tuning
-            </a>
-            <br>
-            <a class="info">
-              Default calibration sample size: 100
-            </a>
-          </mat-card>
-        </mat-card>
+            </ng-container>
+          </span>
+          <span *ngIf="showDatasetLocation['quantization']" class="inline">
+            <mat-form-field class="form-field long" appearance="fill">
+              <mat-label>dataset location *</mat-label>
+              <input formControlName="datasetLocationQuantization" matInput (change)="useForQuantization()">
+            </mat-form-field>
+            <button mat-raised-button color="primary" class="browse"
+              (click)="openDialog('datasetLocationQuantization', 'datasets')">
+              <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+              Choose dataset
+            </button>
+          </span>
+          <a *ngIf="secondFormGroup.get('dataLoaderQuantization').value === 'custom'" class="custom">
+            Fill the code template before tuning
+          </a>
+          <br>
+        </ng-container>
+        <mat-form-field *ngIf="firstFormGroup.get('precision').value === 'int8'" class="form-field" appearance="fill">
+          <mat-label>calibration sampling size</mat-label>
+          <input formControlName="samplingSize" matInput placeholder="100">
+        </mat-form-field>
 
         <ng-container
           *ngIf="secondFormGroup.get('dataLoaderQuantization').value !== 'custom' && secondFormGroup.get('dataLoaderEvaluation').value !== 'custom'">
@@ -268,8 +246,8 @@
               <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
             </a>
           </h3>
-          <ng-container *ngFor="let transformItem of transformationParams; let index = index; let last = last">
-            <mat-card>
+          <mat-card>
+            <ng-container *ngFor="let transformItem of transformationParams; let index = index; let last = last">
               <span class="inline">
                 <mat-form-field class="form-field" appearance="fill">
                   <mat-label>transform {{ index }}</mat-label>
@@ -304,57 +282,63 @@
                   &#65291; Add new transformation
                 </button>
               </span>
-            </mat-card>
-          </ng-container>
-          <br>
+              <br>
+            </ng-container>
+          </mat-card>
         </ng-container>
-      </mat-card>
 
-      <h2>Metric
-        <a href="https://github.com/intel/lpot/blob/master/docs/metrics.md" target="_blank">
-          <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
-        </a>
-      </h2>
-      <mat-card>
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>metric</mat-label>
-          <mat-select formControlName="metric" (selectionChange)="setDefaultMetricParam($event)">
-            <mat-option *ngFor="let metric of metrics" [value]="metric.name" matTooltipPosition="right"
-              [ngClass]="metric.name === 'custom' ? 'custom-option' : null" [matTooltip]="metric.help">
-              {{ metric.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <a *ngIf="secondFormGroup.get('metric').value === 'custom'" class="custom">
-          Fill the code template before tuning
-        </a>
-        <ng-container *ngFor="let param of metricParams">
-          <ng-container *ngIf="isArray(param.value)">
-            <mat-form-field class="form-field" appearance="fill">
-              <mat-label>{{ param.name }}</mat-label>
-              <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
-                <mat-option *ngFor="let option of param.value" [value]="option">{{ option }}</mat-option>
-              </mat-select>
-            </mat-form-field>
+        <h3>Metric
+          <a href="https://github.com/intel/lpot/blob/master/docs/metrics.md" target="_blank">
+            <img class="help-icon" src="./../../assets/005a-help-solid.svg" matTooltip="Click to open documentation">
+          </a>
+        </h3>
+        <mat-card>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>metric</mat-label>
+            <mat-select formControlName="metric" (selectionChange)="setDefaultMetricParam($event)">
+              <mat-option *ngFor="let metric of metrics" [value]="metric.name" matTooltipPosition="right"
+                [ngClass]="metric.name === 'custom' ? 'custom-option' : null" [matTooltip]="metric.help">
+                {{ metric.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <a *ngIf="secondFormGroup.get('metric').value === 'custom'" class="custom">
+            Fill the code template before tuning
+          </a>
+          <ng-container *ngFor="let param of metricParams">
+            <ng-container *ngIf="isArray(param.value)">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
+                  <mat-option *ngFor="let option of param.value" [value]="option">{{ option }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="typeOf(param.value) === 'boolean'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
+                  <mat-option [value]="true">yes</mat-option>
+                  <mat-option [value]="false">no</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="typeOf(param.value) === 'string'">
+              <mat-form-field class="form-field" appearance="fill">
+                <mat-label>{{ param.name }}</mat-label>
+                <input [(ngModel)]="metricParam" matInput [ngModelOptions]="{standalone: true}"
+                  matTooltipPosition="right" [matTooltip]="param.help">
+              </mat-form-field>
+            </ng-container>
           </ng-container>
-          <ng-container *ngIf="typeOf(param.value) === 'boolean'">
-            <mat-form-field class="form-field" appearance="fill">
-              <mat-label>{{ param.name }}</mat-label>
-              <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
-                <mat-option [value]="true">yes</mat-option>
-                <mat-option [value]="false">no</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </ng-container>
-          <ng-container *ngIf="typeOf(param.value) === 'string'">
-            <mat-form-field class="form-field" appearance="fill">
-              <mat-label>{{ param.name }}</mat-label>
-              <input [(ngModel)]="metricParam" matInput [ngModelOptions]="{standalone: true}" matTooltipPosition="right"
-                [matTooltip]="param.help">
-            </mat-form-field>
-          </ng-container>
-        </ng-container>
+        </mat-card>
       </mat-card>
+      <h2 *ngIf="firstFormGroup.get('precision').value !== 'fp32'">
+        <mat-checkbox [(ngModel)]="tuningEnabled" [ngModelOptions]="{standalone: true}"
+          (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning" class="tuning-checkbox">
+          Run tuning
+        </mat-checkbox>
+      </h2>
     </form>
     <br>
     <div>
@@ -378,52 +362,54 @@
     <p class="required">
       * - required field
     </p>
-    <h2>Tune</h2>
-    <mat-card>
-      <form [formGroup]="secondFormGroup">
+    <ng-container *ngIf="tuningEnabled">
+      <h2>Tune</h2>
+      <mat-card>
+        <form [formGroup]="secondFormGroup">
 
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>tuning strategy</mat-label>
-          <mat-select formControlName="strategy">
-            <mat-option *ngFor="let tuning of tunings" [value]="tuning.name" matTooltipPosition="right"
-              [matTooltip]="tuning.help">
-              {{ tuning.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>tuning strategy</mat-label>
+            <mat-select formControlName="strategy">
+              <mat-option *ngFor="let tuning of tunings" [value]="tuning.name" matTooltipPosition="right"
+                [matTooltip]="tuning.help">
+                {{ tuning.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>accuracy goal</mat-label>
-          <input type="number" formControlName="accuracyGoal" matInput>
-        </mat-form-field>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>accuracy goal</mat-label>
+            <input type="number" formControlName="accuracyGoal" matInput>
+          </mat-form-field>
 
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>objective</mat-label>
-          <mat-select formControlName="objective">
-            <mat-option *ngFor="let objective of objectives" [value]="objective.name" matTooltipPosition="right"
-              [matTooltip]="objective.help">
-              {{ objective.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <br>
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>timeout</mat-label>
-          <input type="number" formControlName="timeout" matInput>
-        </mat-form-field>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>objective</mat-label>
+            <mat-select formControlName="objective">
+              <mat-option *ngFor="let objective of objectives" [value]="objective.name" matTooltipPosition="right"
+                [matTooltip]="objective.help">
+                {{ objective.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <br>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>timeout</mat-label>
+            <input type="number" formControlName="timeout" matInput>
+          </mat-form-field>
 
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>max trials</mat-label>
-          <input type="number" formControlName="maxTrials" matInput>
-        </mat-form-field>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>max trials</mat-label>
+            <input type="number" formControlName="maxTrials" matInput>
+          </mat-form-field>
 
-        <mat-form-field class="form-field" appearance="fill">
-          <mat-label>random seed</mat-label>
-          <input type="number" formControlName="randomSeed" matInput>
-        </mat-form-field>
+          <mat-form-field class="form-field" appearance="fill">
+            <mat-label>random seed</mat-label>
+            <input type="number" formControlName="randomSeed" matInput>
+          </mat-form-field>
 
-      </form>
-    </mat-card>
+        </form>
+      </mat-card>
+    </ng-container>
 
     <h2>Quantization</h2>
     <mat-card>
@@ -439,13 +425,6 @@
           </mat-select>
         </mat-form-field>
 
-        <h3>Calibration</h3>
-        <mat-card>
-          <mat-form-field class="form-field" appearance="fill">
-            <mat-label>sampling size</mat-label>
-            <input formControlName="samplingSize" matInput placeholder="100">
-          </mat-form-field>
-        </mat-card>
       </form>
     </mat-card>
 

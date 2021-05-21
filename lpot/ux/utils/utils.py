@@ -428,3 +428,21 @@ def filter_transforms(
             filtered_transforms.append(transform)
 
     return filtered_transforms
+
+
+def parse_bool_value(value: Any) -> bool:
+    """Parse value to boolean."""
+    true_options = ["true", "t", "yes", "y", "1"]
+    false_options = ["false", "f", "no", "n", "0"]
+    if isinstance(value, str):
+        value = value.lower().strip()
+        if value in true_options:
+            return True
+        elif value in false_options:
+            return False
+        else:
+            raise ValueError(
+                f"Supported values boolean values are: "
+                f"True ({true_options}), False ({false_options})",
+            )
+    return bool(value)

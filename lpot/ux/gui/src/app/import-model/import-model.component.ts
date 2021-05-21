@@ -49,7 +49,6 @@ export class ImportModelComponent implements OnInit {
   transformations = [];
   transformationParams = [];
   tuningEnabled = true;
-  tuningWarning: string;
   tunings = [];
   inputs = [];
   outputs = [];
@@ -318,15 +317,12 @@ export class ImportModelComponent implements OnInit {
   onPrecisionChange(event) {
     if (event.value === 'int8') {
       this.tuningEnabled = true;
-      this.tuningWarning = null;
     } else if (event.value === 'fp32') {
       this.tuningEnabled = false;
-      this.tuningWarning = 'Tuning is not available for this configuration.';
       this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
       this.secondFormGroup.get('datasetLocationQuantization').setValue('');
     } else if (event.value === 'bf16,fp32') {
       this.tuningEnabled = true;
-      this.tuningWarning = null;
     }
   }
 
@@ -473,11 +469,8 @@ export class ImportModelComponent implements OnInit {
       transform: this.getTransformParams(this.transformationParams),
       tuning: this.tuningEnabled,
       quantization: {
-        dataset_path: this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location',
-        dataloader: {
-          name: this.secondFormGroup.get('dataLoaderQuantization').value,
-          params: this.dataLoaderParams['quantization'] ? this.getParams(this.dataLoaderParams['quantization']) : null,
-        },
+        dataset_path: this.getQuantizationDatasetPath(),
+        dataloader: this.getQuantizationDataloader(),
         accuracy_goal: this.secondFormGroup.get('accuracyGoal').value,
         sampling_size: this.secondFormGroup.get('samplingSize').value,
         strategy: this.secondFormGroup.get('strategy').value,
@@ -488,8 +481,11 @@ export class ImportModelComponent implements OnInit {
         random_seed: this.secondFormGroup.get('randomSeed').value
       },
       evaluation: {
-        dataset_path: this.getEvaluationDatasetPath(),
-        dataloader: this.getEvaluationDataloader(),
+        dataset_path: this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location',
+        dataloader: {
+          name: this.secondFormGroup.get('dataLoaderEvaluation').value,
+          params: this.dataLoaderParams['evaluation'] ? this.getParams(this.dataLoaderParams['evaluation']) : null,
+        },
         metric: this.secondFormGroup.get('metric').value,
         metric_param: this.metricParam,
         batch_size: this.secondFormGroup.get('batchSize').value,
@@ -505,14 +501,14 @@ export class ImportModelComponent implements OnInit {
     return model;
   }
 
-  getEvaluationDatasetPath() {
+  getQuantizationDatasetPath() {
     if (this.useEvaluationData) {
       return this.secondFormGroup.get('datasetLocationEvaluation').value.length ? this.secondFormGroup.get('datasetLocationEvaluation').value : 'no_dataset_location'
     }
     return this.secondFormGroup.get('datasetLocationQuantization').value.length ? this.secondFormGroup.get('datasetLocationQuantization').value : 'no_dataset_location'
   }
 
-  getEvaluationDataloader() {
+  getQuantizationDataloader() {
     if (this.useEvaluationData) {
       return {
         name: this.secondFormGroup.get('dataLoaderEvaluation').value,
@@ -551,7 +547,7 @@ export class ImportModelComponent implements OnInit {
     obj.forEach(item => {
       newObj.push({
         name: item.name,
-        params: item.params ? this.getParams(item.params) : null
+        params: item.params && Array.isArray(item.params) ? this.getParams(item.params) : null
       })
     });
     return newObj;

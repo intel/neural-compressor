@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional
 
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.json_serializer import JsonSerializer
+from lpot.ux.utils.utils import parse_bool_value
 
 
 class Strategy(JsonSerializer):
@@ -58,6 +59,8 @@ class ExitPolicy(JsonSerializer):
         self.timeout: Optional[int] = data.get("timeout", None)
 
         self.max_trials: Optional[int] = data.get("max_trials", None)
+
+        self.performance_only: Optional[bool] = data.get("performance_only", None)
 
 
 class Workspace(JsonSerializer):
@@ -127,6 +130,20 @@ class Tuning(JsonSerializer):
             self.exit_policy.max_trials = max_trials
         else:
             self.exit_policy = ExitPolicy({"max_trials": max_trials})
+
+    def set_performance_only(self, performance_only: Any) -> None:
+        """Update performance only flag in config."""
+        try:
+            performance_only = parse_bool_value(performance_only)
+        except ValueError:
+            raise ClientErrorException(
+                "The performance_only flag value is not valid. "
+                "Performance_ony should be a boolean.",
+            )
+        if self.exit_policy:
+            self.exit_policy.performance_only = performance_only
+        else:
+            self.exit_policy = ExitPolicy({"performance_only": performance_only})
 
     def set_random_seed(self, random_seed: int) -> None:
         """Update random seed value in config."""

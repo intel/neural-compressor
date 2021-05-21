@@ -125,20 +125,20 @@
         {{ model['optimization_time'] }}
       </td>
       <td class="cell">
-        <button class="file-button" (click)="openDialog(model['config_path'], 'config')">
+        <a class="file-button" href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}" target="_blank">
           Show config
-        </button>
+        </a>
       </td>
       <td class="cell">
-        <button class="file-button" (click)="openDialog(model['log_path'], 'output')">
+        <a class="file-button" href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}" target="_blank">
           Show output
-        </button>
+        </a>
       </td>
       <td class="cell">
-        <button *ngIf="model['code_template_path']" class="file-button"
-          (click)="openDialog(model['code_template_path'], 'config')">
+        <a *ngIf="model['code_template_path']" class="file-button"
+          href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}" target="_blank">
           Show code template
-        </button>
+        </a>
       </td>
       <td class="cell clipboard">
         <img *ngIf="model['code_template_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"

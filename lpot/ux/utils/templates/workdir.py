@@ -60,14 +60,9 @@ class Workdir:
                 "version": "2",
             }
 
-        if (
-            self.workloads_data.get("workloads", None)
-            and self.workloads_data.get(
-                "workloads",
-                None,
-            ).get(request_id, None)
-        ):
-            self.workload_path = self.workloads_data["workloads"][request_id]["workload_path"]
+        workload_data = self.get_workload_data(request_id)
+        if workload_data:
+            self.workload_path = workload_data.get("workload_path", "")
         elif workspace_path and request_id:
             workload_name = request_id
             if model_path:
@@ -238,12 +233,7 @@ class Workdir:
     @property
     def template_path(self) -> Optional[str]:
         """Get template_path."""
-        path = (
-            self.workloads_data["workloads"]
-            .get(self.request_id, {})
-            .get("code_template_path", None)
-        )
-        return path
+        return self.get_workload_data(self.request_id).get("code_template_path", None)
 
     def delete_workload(self, workload_id: str) -> None:
         """Delete workload by ID."""
@@ -262,3 +252,7 @@ class Workdir:
 
         else:
             raise NotFoundException(f"Can't find workload ID {workload_id}.")
+
+    def get_workload_data(self, request_id: Optional[str]) -> dict:
+        """Return data of given Workload."""
+        return self.workloads_data.get("workloads", {}).get(request_id, {})

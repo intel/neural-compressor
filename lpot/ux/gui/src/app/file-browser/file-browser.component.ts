@@ -13,7 +13,6 @@
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { DialogComponent } from '../dialog/dialog.component';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserFilter, ModelService } from '../services/model.service';
 
@@ -31,7 +30,7 @@ export class FileBrowserComponent implements OnInit {
 
   constructor(
     private modelService: ModelService,
-    public dialogRef: MatDialogRef<DialogComponent>,
+    public dialogRef: MatDialogRef<FileBrowserComponent>,
     @Inject(MAT_DIALOG_DATA) public data,
     public dialog: MatDialog
   ) { }

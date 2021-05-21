@@ -124,10 +124,6 @@ export class ModelService {
     );
   }
 
-  getFile(path: string) {
-    return this.http.get(this.baseUrl + 'file' + path, { responseType: 'text' as 'json' });
-  }
-
   getFileSystem(path: string, filter: FileBrowserFilter) {
     if (filter === 'all') {
       return this.http.get(this.baseUrl + 'api/filesystem', {

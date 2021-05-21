@@ -21,22 +21,17 @@ from typing import Any, Callable
 
 from flask import Flask
 from flask import Request as WebRequest
-from flask import Response as WebResponse
-from flask import jsonify, request, send_file
+from flask import jsonify, request
 from flask_cors import CORS
 from flask_socketio import SocketIO
+from werkzeug.wrappers import BaseResponse as WebResponse
 
-from lpot.ux.utils.exceptions import (
-    AccessDeniedException,
-    ClientErrorException,
-    InternalException,
-    NotFoundException,
-)
+from lpot.ux.utils.exceptions import InternalException
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.utils import verify_file_path
 from lpot.ux.web.communication import MessageQueue, Request
 from lpot.ux.web.configuration import Configuration
 from lpot.ux.web.router import Router
+from lpot.ux.web.service.response_generator import ResponseGenerator
 
 app = Flask(__name__, static_url_path="")
 socketio = SocketIO()
@@ -114,20 +109,6 @@ def root() -> Any:
     return app.send_static_file("index.html")
 
 
-@app.route("/file/<path:path>", methods=METHODS)
-@require_api_token
-def serve_from_filesystem(path: str) -> Any:
-    """Serve any file from filesystem."""
-    try:
-        absolute_path = f"/{path}"
-        verify_file_path(absolute_path)
-        return send_file(absolute_path, as_attachment=True, cache_timeout=0)
-    except NotFoundException as err:
-        return str(err), 404
-    except AccessDeniedException as err:
-        return str(err), 403
-
-
 @app.route("/api/<path:subpath>", methods=METHODS)
 @require_api_token
 def handle_api_call(subpath: str) -> Any:
@@ -135,16 +116,13 @@ def handle_api_call(subpath: str) -> Any:
     try:
         parameters = build_parameters(subpath, request)
         response = router.handle(parameters)
+        if isinstance(response, WebResponse):
+            return response
         return jsonify(response.data)
-    except ClientErrorException as err:
-        return str(err), 400
-    except AccessDeniedException as err:
-        return str(err), 403
-    except NotFoundException as err:
-        return str(err), 404
-    except InternalException as err:
-        log.critical(err)
-        return str(err), 500
+    except Exception as err:
+        if isinstance(err, InternalException):
+            log.critical(err)
+        return ResponseGenerator.from_exception(err)
 
 
 @app.route("/api/<path:subpath>", methods=["OPTIONS"])

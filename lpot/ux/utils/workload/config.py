@@ -56,6 +56,9 @@ class Config(JsonSerializer):
 
     def initialize(self, data: Dict[str, Any] = {}) -> None:
         """Initialize config from dict."""
+        self.model_path = data.get("model_path", self.model_path)
+        self.domain = data.get("domain", self.domain)
+
         if isinstance(data.get("model"), dict):
             self.model = Model(data.get("model", {}))
 
@@ -221,8 +224,6 @@ class Config(JsonSerializer):
 
     def set_workspace(self, path: str) -> None:
         """Update tuning workspace path in config."""
-        if self.tuning is None:
-            raise Exception("Tuning section not defined!")
         self.tuning.workspace.path = path
 
     def set_accuracy_goal(self, accuracy_goal: float) -> None:

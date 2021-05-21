@@ -11,9 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import { environment } from 'src/environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { DialogComponent } from '../dialog/dialog.component';
 import { ErrorComponent } from '../error/error.component';
 import { ModelService, NewModel } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
@@ -28,6 +28,8 @@ export class ModelListComponent implements OnInit {
   modelList = [];
   visibleColumns = ['model_name', 'framework', 'config', 'console_output', 'acc_input_model', 'acc_optimized_model'];
   showSpinner = true;
+  token = "";
+  apiBaseUrl = environment.baseUrl
 
   constructor(
     private modelService: ModelService,
@@ -79,6 +81,8 @@ export class ModelListComponent implements OnInit {
             if (result['status'] === 'success') {
               this.modelList[index]['perf_throughput_input_model'] = result['data']['perf_throughput_input_model'];
               this.modelList[index]['perf_throughput_optimized_model'] = result['data']['perf_throughput_optimized_model'];
+              this.modelList[index]['acc_input_model'] = result['data']['acc_input_model'];
+              this.modelList[index]['acc_optimized_model'] = result['data']['acc_optimized_model'];
             } else {
               this.openErrorDialog(result['data']['message']);
             }
@@ -86,6 +90,7 @@ export class ModelListComponent implements OnInit {
         }
       });
     this.getAllModels();
+    this.token = this.modelService.getToken();
   }
 
   systemInfo() {
@@ -143,17 +148,8 @@ export class ModelListComponent implements OnInit {
     }
   }
 
-  openDialog(path: string, fileType: string): void {
-    const dialogRef = this.dialog.open(DialogComponent, {
-      width: '90%',
-      data: {
-        path: path,
-        fileType: fileType
-      }
-    });
-  }
-
   optimize(model: NewModel) {
+    this.clearModel(model);
     model['status'] = 'wip';
     this.modelService.optimize(model)
       .subscribe(
@@ -162,6 +158,12 @@ export class ModelListComponent implements OnInit {
           this.openErrorDialog(error);
         }
       );
+  }
+
+  clearModel(model: NewModel) {
+    ["acc_input_model", "acc_optimized_model", "optimization_time", "perf_throughput_input_model", "perf_throughput_optimized_model", "status"].forEach(property => {
+      model[property] = null;
+    })
   }
 
   getTooltip(execution_details): string | null {

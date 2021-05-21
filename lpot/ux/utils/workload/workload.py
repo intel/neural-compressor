@@ -145,6 +145,8 @@ class Workload(JsonSerializer):
     def initialize_tuning_config(self) -> None:
         """Initialize tuning config."""
         self.config.set_quantization_dataset_path(self.calib_dataset_path)
+        if not self.tune:
+            self.config.tuning.set_performance_only(True)
 
     def initialize_graph_optimization_config(self) -> None:
         """Initialize graph optimization config."""
@@ -193,11 +195,9 @@ class Workload(JsonSerializer):
 
     def is_tuning_enabled(self, data: dict) -> bool:
         """Check if tuning is enabled for workload."""
-        if self.output_precision == Precisions.INT8:
-            return True
-        elif self.output_precision == Precisions.FP32:
+        if self.output_precision == Precisions.FP32:
             return False
-        elif self.output_precision == Precisions.MIXED:
+        elif self.output_precision in [Precisions.INT8, Precisions.MIXED]:
             if data.get("tuning"):
                 return True
             else:

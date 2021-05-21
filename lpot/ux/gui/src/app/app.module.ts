@@ -41,14 +41,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModelService } from './services/model.service';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { SocketService } from './services/socket.service';
-import { DialogComponent } from './dialog/dialog.component';
-import { FileComponent } from './file/file.component';
 import { FileBrowserComponent } from './file-browser/file-browser.component';
 import { AuthenticationInterceptor } from './authentication/authentication.interceptor';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { GraphComponent } from './graph/graph.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -59,13 +58,12 @@ import { MatSidenavModule } from '@angular/material/sidenav';
     ImportModelComponent,
     ModelListComponent,
     ModelListPipe,
-    DialogComponent,
-    FileComponent,
     FileBrowserComponent,
     GraphComponent
   ],
   imports: [
     BrowserModule,
+    CommonModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     FlexLayoutModule,
@@ -104,7 +102,6 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 
   ],
   entryComponents: [
-    DialogComponent,
     ErrorComponent,
     FileBrowserComponent
   ],

@@ -13,18 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Constant values."""
+"""Request data processor."""
 
-github_info = {
-    "user": "intel",
-    "repository": "lpot",
-    "tag": "v1.4",
-}
+from typing import Any, Dict
+
+from lpot.ux.utils.exceptions import ClientErrorException
 
 
-class Precisions:
-    """Precisions enumeration."""
+class RequestDataProcessor:
+    """Request data processor."""
 
-    INT8 = "int8"
-    FP32 = "fp32"
-    MIXED = "bf16,fp32"
+    @staticmethod
+    def get_string_value(data: Dict[str, Any], name: str) -> str:
+        """Get string value from request."""
+        try:
+            return data[name][0]
+        except KeyError:
+            raise ClientErrorException(f"Missing {name} parameter")
