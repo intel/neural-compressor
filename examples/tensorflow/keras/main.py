@@ -42,6 +42,7 @@ class eval_classifier_optimized_graph:
     arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 
     arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
+    arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode, support performence and accuracy')
 
     self.args = arg_parser.parse_args()
 
@@ -59,16 +60,7 @@ class eval_classifier_optimized_graph:
           from lpot.experimental import Benchmark, common
           evaluator = Benchmark(self.args.config)
           evaluator.model = common.Model(self.args.input_graph)
-          results = evaluator()
-          for mode, result in results.items():
-              acc, batch_size, result_list = result
-              latency = np.array(result_list).mean() / batch_size
-
-              print('\n{} mode benchmark result:'.format(mode))
-              print('Accuracy is {:.3f}'.format(acc))
-              print('Batch size = {}'.format(batch_size))
-              print('Latency: {:.3f} ms'.format(latency * 1000))
-              print('Throughput: {:.3f} images/sec'.format(1./ latency))
+          evaluator(self.args.mode)
 
 if __name__ == "__main__":
 

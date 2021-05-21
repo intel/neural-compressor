@@ -11,10 +11,11 @@ from PIL import Image
 class TestBuiltinDataloader(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        if os.path.exists('MNIST'):
-            shutil.rmtree('MNIST')
-        if os.path.exists('FashionMNIST'):
-            shutil.rmtree('FashionMNIST')
+        os.remove('./t10k-labels-idx1-ubyte.gz')
+        os.remove('./t10k-images-idx3-ubyte.gz')
+        os.remove('./train-images-idx3-ubyte.gz')
+        os.remove('./train-labels-idx1-ubyte.gz')
+        os.remove('./mnist.npz')
 
     def test_pytorch_dataset(self):
         dataloader_args = {
@@ -90,7 +91,7 @@ class TestBuiltinDataloader(unittest.TestCase):
  
         dataloader_args = {
             'batch_size': 2,
-            'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
+            'dataset': {"MNIST": {'root': './', 'train':True, 'download':True}},
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }

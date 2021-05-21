@@ -25,6 +25,8 @@ quantization:                                        # optional. tuning constrai
       dataset:
         FashionMNIST:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
+      transform:
+        Rescale: {}
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
     activation:
       algorithm: minmax
@@ -38,6 +40,8 @@ evaluation:                                          # optional. required if use
       dataset:
         FashionMNIST:
           root: /path/to/evaluation/dataset         # NOTE: modify to calibration dataset location if needed
+      transform:
+        Rescale: {}
   performance:                                       # optional. used to benchmark performance of passing model.
     iteration: 100
     configs:
@@ -48,6 +52,8 @@ evaluation:                                          # optional. required if use
       dataset:
         FashionMNIST:
           root: /path/to/evaluation/dataset         # NOTE: modify to calibration dataset location if needed
+      transform:
+        Rescale: {}
  
 tuning:
   accuracy_criterion:

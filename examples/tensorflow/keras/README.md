@@ -21,10 +21,22 @@ pip install intel-tensorflow
 
 Run the `resnet50_fashion_mnist_train.py` script located in `LowPrecisionInferenceTool/examples/tensorflow/keras`, and it will generate a saved model called `resnet50_fashion` at current path.
 
+### 4. Prepare dataset
+
+If users download FashionMNIST dataset in advance, please set dataset part in yaml as follows:
+
+```yaml
+dataset:
+  FashionMNIST:
+    root: /path/to/user/dataset
+```
+
+Otherwise, if users do not download dataset in advance, please set the dataset root to any place which can be accessed and it will automatically download FashionMNIST dataset to the corresponding path.
+
 
 ## Run Command
   ```shell
   bash run_tuning.sh --config=resnet50_fashion.yaml --input_model=./resnet50_fashion --output_model=./result
-  bash run_benchmark.sh --config=resnet50_fashion.yaml --input_model=./resnet50_fashion
+  bash run_benchmark.sh --config=resnet50_fashion.yaml --input_model=./resnet50_fashion --mode=performence
   ```
 

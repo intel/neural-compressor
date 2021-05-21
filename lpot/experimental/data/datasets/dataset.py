@@ -271,7 +271,6 @@ class CIFAR10(Dataset):
                                        and puts it in root directory. If dataset is already 
                                        downloaded, it is not downloaded again.
     """
-    base_folder = 'cifar-10-batches-py'
     url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
     filename = "cifar-10-python.tar.gz"
     tgz_md5 = 'c58f30108f718f92721af3b95e74349a'
@@ -310,7 +309,7 @@ class CIFAR10(Dataset):
         self.data = []
         self.targets = []
         for file_name, checksum in downloaded_list:
-            file_path = os.path.join(self.root, self.base_folder, file_name)
+            file_path = os.path.join(self.root, file_name)
             with open(file_path, 'rb') as f:
                 entry = pickle.load(f, encoding='latin1')
                 self.data.append(entry['data'])
@@ -325,7 +324,7 @@ class CIFAR10(Dataset):
         self.transform = transform
 
     def load_meta(self): # pragma: no cover 
-        path = os.path.join(self.root, self.base_folder, self.meta['filename'])
+        path = os.path.join(self.root, self.meta['filename'])
         if not check_integrity(path, self.meta['md5']):
             raise RuntimeError('Dataset metadata file not found or corrupted.' +
                                ' You can use download=True to download it')
@@ -359,7 +358,7 @@ class CIFAR10(Dataset):
         root = self.root
         for fentry in (self.train_list + self.test_list):
             filename, md5 = fentry[0], fentry[1]
-            fpath = os.path.join(root, self.base_folder, filename)
+            fpath = os.path.join(root, filename)
             if not check_integrity(fpath, md5):
                 return False
             return True
@@ -398,7 +397,6 @@ class TensorflowCIFAR10(CIFAR10):
 @dataset_registry(dataset_type="CIFAR100", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class CIFAR100(CIFAR10):
-    base_folder = 'cifar-100-python'
     url = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
     filename = "cifar-100-python.tar.gz"
     tgz_md5 = 'eb9058c3a382ffc7106e4002c42a8d85'
@@ -476,7 +474,6 @@ class MNIST(Dataset):
         ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz',
             '8a61469f7ea1b51cbae51d4f78837e45')
     ]
-    base_folder = 'MNIST'
 
     def __init__(self, root, train=False, transform=None, filter=None, download=True):
         self.root = root
@@ -485,8 +482,11 @@ class MNIST(Dataset):
         if download:
             self.download()
 
+        self.read_data()
+        
+    def read_data(self):
         for file_name, checksum in self.resource:
-            file_path = os.path.join(self.root, self.base_folder, os.path.basename(file_name))
+            file_path = os.path.join(self.root, os.path.basename(file_name))
             if not os.path.exists(file_path):
                 raise RuntimeError(
                     'Dataset not found. You can use download=True to download it')
@@ -495,7 +495,7 @@ class MNIST(Dataset):
                     self.data, self.targets = f['x_train'], f['y_train']
                 else:
                     self.data, self.targets = f['x_test'], f['y_test']
-        
+ 
     def __len__(self):
         return len(self.data)
 
@@ -513,10 +513,10 @@ class MNIST(Dataset):
     def download(self):
         for url, md5 in self.resource:
             filename = os.path.basename(url)
-            if os.path.exists(os.path.join(self.root, self.base_folder, filename)): 
+            if os.path.exists(os.path.join(self.root, filename)): 
                 continue
             else:
-                download_url(url, root=os.path.join(self.root, self.base_folder), 
+                download_url(url, root=self.root, 
                             filename=filename, md5=md5)
 
 @dataset_registry(dataset_type="MNIST", framework="pytorch", dataset_format='')
@@ -556,17 +556,32 @@ class TensorflowMNIST(MNIST):
 @dataset_registry(dataset_type="FashionMNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class FashionMNIST(MNIST):
-    resources = [
+    resource = [
         ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/' + file_name, None) 
         for file_name in [
             'train-labels-idx1-ubyte.gz', 'train-images-idx3-ubyte.gz',
             't10k-labels-idx1-ubyte.gz', 't10k-images-idx3-ubyte.gz'
             ]
     ]
-    base_folder = 'FashionMNIST'
 
     classes = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal',
                'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+    
+    def read_data(self):
+        import struct
+        if self.train:
+            label_path = os.path.join(self.root, 'train-labels-idx1-ubyte.gz')
+            image_path = os.path.join(self.root, 'train-images-idx3-ubyte.gz')
+        else:
+            label_path = os.path.join(self.root, 't10k-labels-idx1-ubyte.gz')
+            image_path = os.path.join(self.root, 't10k-images-idx3-ubyte.gz')
+        with gzip.open(label_path, 'rb') as f:
+            struct.unpack(">II", f.read(8))
+            self.targets = np.frombuffer(f.read(), dtype=np.uint8).astype(np.int32)
+        with gzip.open(image_path, 'rb') as f:
+            struct.unpack(">IIII", f.read(16))
+            data = np.frombuffer(f.read(), dtype=np.uint8)
+            self.data = data.reshape(len(self.targets), 28, 28)
 
 @dataset_registry(dataset_type="FashionMNIST", framework="pytorch", dataset_format='')
 class PytorchFashionMNIST(FashionMNIST):
