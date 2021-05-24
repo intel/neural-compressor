@@ -107,7 +107,8 @@ class ONNXRTAdaptor(Adaptor):
         augment = ONNXRTAugment(ONNXModel(model), \
                   data_loader, self.quantizable_op_types, \
                   os.path.join(self.work_space, 'augmented_model.onnx'), \
-                  black_nodes=black_nodes, white_nodes=white_nodes)
+                  black_nodes=black_nodes, white_nodes=white_nodes, \
+                  iterations=list(range(0, q_config['calib_iteration'])))
         quantize_params = augment.dump_calibration()
         return quantize_params
 
@@ -171,6 +172,14 @@ class ONNXRTAdaptor(Adaptor):
                             B_trans.name = B.name
                             model.remove_initializer(B)
                             model.add_initializer(B_trans)
+
+                            #TBD this is for onnx model zoo, which are all in old IR version
+                            if model.model.ir_version < 4:
+                                for input in model.model.graph.input:
+                                    if input.name == B_trans.name:
+                                        for i, dim in enumerate(input.type.tensor_type.shape.dim):
+                                            dim.dim_value = B_array.T.shape[i]
+
                         else:
                             inputB += '_Transposed'
                             transpose_node = onnx.helper.make_node('Transpose',
@@ -240,7 +249,8 @@ class ONNXRTAdaptor(Adaptor):
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _cfg_to_qconfig(self, tune_cfg):
-        nodes_config = {}
+        q_config = {}
+        q_config['calib_iteration'] = tune_cfg['calib_iteration']
         granularity = 'per_tensor'
         algorithm = 'minmax'
         scheme = 'sym'
@@ -249,7 +259,7 @@ class ONNXRTAdaptor(Adaptor):
         for _, op in enumerate(self.quantizable_ops):
             if tune_cfg['op'][(op.name, op.op_type)
                               ]['activation']['dtype'] == 'fp32':
-                nodes_config[op.name] = 'fp32'
+                q_config[op.name] = 'fp32'
             else:
                 node_config = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
                 for tensor, config in tune_cfg['op'][(op.name, op.op_type)].items():
@@ -265,9 +275,9 @@ class ONNXRTAdaptor(Adaptor):
                     else:
                         node_config[tensor]['dtype'] = \
                                  onnx_proto.TensorProto.UINT8 # pylint: disable=no-member
-                nodes_config[op.name] = node_config
+                q_config[op.name] = node_config
 
-        return nodes_config
+        return q_config
 
     def _query_quantizable_ops(self, model):
         for node in model.graph.node:

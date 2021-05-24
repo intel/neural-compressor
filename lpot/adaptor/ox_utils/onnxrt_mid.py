@@ -204,7 +204,9 @@ class ONNXRTAugment:
 
         for idx, batch in enumerate(self.dataloader):
             ort_inputs = {}
-            if self.iterations:
+            if self.iterations != []:
+                if idx > max(self.iterations):
+                    break    
                 if idx in self.iterations:
                     for i in range(len(session.get_inputs())):
                         ort_inputs.update({session.get_inputs()[i].name: batch[i]})

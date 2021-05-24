@@ -6,7 +6,8 @@ import torch
 import torchvision
 import yaml
 import onnx
-
+import numpy as np
+from onnx import version_converter, helper, TensorProto, numpy_helper
 from lpot.adaptor import FRAMEWORKS
 from lpot.data import DATASETS, DATALOADERS
 
@@ -154,6 +155,32 @@ def export_onnx_model(model, path):
                     dynamic_axes={"input" : {0 : "batch_size"},    # variable lenght axes
                                   "output" : {0 : "batch_size"}})
 
+def build_ir3_model():
+    def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
+        '''
+        Helper function to generate initializers for test inputs
+        '''
+        tensor = np.random.ranf(tensor_shape).astype(tensor_dtype)
+        init = numpy_helper.from_array(tensor, input_name)
+        return init  
+
+    input0 = helper.make_tensor_value_info('input0', TensorProto.FLOAT, [1, 2048])
+    output = helper.make_tensor_value_info('output', TensorProto.FLOAT, [1, 1000])
+    weight = helper.make_tensor_value_info('X1_weight', TensorProto.FLOAT, [1000, 2048])
+
+    X1_weight = generate_input_initializer([1000, 2048], np.float32, 'X1_weight')
+    X1_bias = generate_input_initializer([1000], np.float32, 'X1_bias')
+    kwargs = {'alpha':1.0, 'beta':1.0, 'transA':0, 'transB':1}
+    gemm = helper.make_node('Gemm', ['input0', 'X1_weight'], ['output'], name='gemm', **kwargs)
+
+    graph = helper.make_graph([gemm], 'test_graph_6', [input0], [output])
+    graph.initializer.add().CopyFrom(X1_weight)
+    graph.initializer.add().CopyFrom(X1_bias)  
+    graph.input.extend([weight])
+    model = helper.make_model(graph)
+    model.ir_version = 3
+    return model
+
 class TestAdaptorONNXRT(unittest.TestCase):
 
     mb_v2_export_path = "mb_v2.onnx"
@@ -164,6 +191,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
     datasets = DATASETS('onnxrt_qlinearops')
     cv_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
+    
+    ir3_dataset = datasets['dummy'](shape=(10, 2048), low=0., high=1., label=True)
+    ir3_dataloader = DATALOADERS['onnxrt_qlinearops'](ir3_dataset)
 
     @classmethod
     def setUpClass(self):
@@ -175,6 +205,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
         export_onnx_model(self.rn50_model, self.rn50_export_path)
         self.rn50_model = onnx.load(self.rn50_export_path)
+        self.ir3_model = build_ir3_model()
 
     @classmethod
     def tearDownClass(self):
@@ -216,6 +247,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.model = common.Model(self.mb_v2_model)
             q_model = quantizer()
             eval_func(q_model)
+
+        for fake_yaml in ["static.yaml"]:
+            quantizer = Quantization(fake_yaml)
+            quantizer.calib_dataloader = self.ir3_dataloader
+            quantizer.eval_dataloader = self.ir3_dataloader
+            quantizer.model = common.Model(self.ir3_model)
+            q_model = quantizer()
 
         from lpot.experimental import Benchmark, common
         for mode in ["performance", "accuracy"]:
