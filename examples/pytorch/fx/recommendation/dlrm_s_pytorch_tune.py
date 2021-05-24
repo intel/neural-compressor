@@ -935,11 +935,9 @@ if __name__ == "__main__":
         if args.int8:
             from lpot.utils.pytorch import load
             import os
-            new_model = load(
+            dlrm = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), dlrm)
-        else:
-            new_model = dlrm
-        eval_func(new_model)
+        eval_func(dlrm)
         exit(0)
 
 
