@@ -26,6 +26,7 @@ import copy
 import itertools
 from collections import OrderedDict
 from .dotdict import DotDict
+import os, datetime
 
 def constructor_register(cls):
     yaml_key = "!{}".format(cls.__name__)
@@ -486,6 +487,9 @@ approach_schema = Schema({
     Optional('gradient_sensativity'): gradient_sensativity_schema
 })
 
+default_workspace = './lpot_workspace/{}/'.format(
+                                           datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+
 schema = Schema({
     'model': {
         'name': str,
@@ -584,7 +588,7 @@ schema = Schema({
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
-        'workspace': {'path': None}}): {
+        'workspace': {'path': default_workspace}}): {
         Optional('strategy', default={'name': 'basic'}): {
             'name': And(str, lambda s: s in STRATEGIES),
             Optional('accuracy_weight', default=1.0): float,
@@ -606,8 +610,7 @@ schema = Schema({
         },
         Optional('random_seed', default=1978): int,
         Optional('tensorboard', default=False): And(bool, lambda s: s in [True, False]),
-        # workspace default value is ./lpot_workspace/$framework/$module_name/, set by code
-        Optional('workspace', default={'path': None}): {
+        Optional('workspace', default={'path': default_workspace}): {
             Optional('path', default=None): str,
             Optional('resume'): str
         }
@@ -684,11 +687,6 @@ class Conf(object):
         self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
         self._model_wise_tune_space = None
         self._opwise_tune_space = None
-        # set lpot workspace default path
-        if self.usr_cfg.tuning.workspace.path is None:
-            self.usr_cfg.tuning.workspace.path = './lpot_workspace/{}/{}/'.format(
-                                                        self.usr_cfg.model.framework,
-                                                        self.usr_cfg.model.name)
 
     def _read_cfg(self, cfg_fname):
         """Load a config file following yaml syntax.

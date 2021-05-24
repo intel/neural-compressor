@@ -121,8 +121,6 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(model.input_tensor[0].name, 'x:0')
         self.assertEqual(model.output_tensor[0].name, 'op_to_store:0')
 
-        with self.assertRaises(ValueError):
-            model.save('fake_path/fake_path')
         with self.assertRaises(AssertionError):
             model.input_tensor_names = []
         with self.assertRaises(AssertionError):
@@ -287,7 +285,6 @@ class TestONNXModel(unittest.TestCase):
         self.assertEqual(True, isinstance(model, LpotModel.ONNXModel))
         self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
 
-        self.assertRaises(ValueError, model.save, './lpot/test/test.onnx')
         model.save('test.onnx')
         self.assertEqual(True, os.path.exists('test.onnx'))
         os.remove('test.onnx')
@@ -349,7 +346,6 @@ class TestMXNetModel(unittest.TestCase):
         self.assertEqual(True, isinstance(model, LpotModel.MXNetModel))
         self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
 
-        self.assertRaises(ValueError, model.save, './lpot/test/')
         model.save('./test')
         self.assertEqual(True, os.path.exists('test-symbol.json'))
         self.assertEqual(True, os.path.exists('test-0000.params'))

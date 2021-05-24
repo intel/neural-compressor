@@ -125,6 +125,6 @@ tuning:
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 
   workspace:
-    path: /path/to/saving/directory                  # optional. default workspace is ./lpot_workspace/$framework/$module_name/, saving tuning history and deploy yaml.
+    path: /path/to/saving/directory                  # optional. default workspace is ./lpot_workspace/current_time_stamp, saving tuning history and deploy yaml.
     resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
 

@@ -188,6 +188,9 @@ class Graph_Optimization():
                 "Specified timeout or max trials is reached! "
                 "Not found any converted model which meet accuracy goal. Exit...")
 
+        logger.info("Graph optimization is done. Please invoke model.save() to save " \
+                    "optimized model to disk")
+
         return self.strategy.best_qmodel
 
     def dataset(self, dataset_type, *args, **kwargs):

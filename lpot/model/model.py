@@ -21,6 +21,7 @@ from abc import abstractmethod
 from lpot.utils.utility import LazyImport, compute_sparsity
 from lpot.utils import logger
 from lpot.conf.dotdict import deep_get, deep_set
+from lpot.conf import config as cfg 
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -52,9 +53,22 @@ def get_model_type(model):
     elif isinstance(model, tf.estimator.Estimator):
         return 'estimator'
     elif isinstance(model, str):
-        if (model.endswith('.pb') and os.path.isfile(model)) or \
-            os.path.isfile(model + '.pb'):
-            return 'frozen_pb'
+        model = os.path.abspath(os.path.expanduser(model))
+        if (model.endswith('.pb') and os.path.isfile(model)):
+            if is_saved_model_format(os.path.dirname(model)):
+                # Warning: TF compatibility issue to load saved model. TF 2.3 keras.load
+                # can load saved model from TF backend, but TF 2.4 cannot.
+                try:
+                    model = tf.keras.models.load_model(model)
+                    if isinstance(model, tf.keras.Model):
+                        return 'keras'
+                    else:
+                        return 'saved_model'
+                except:
+                    # can't use keras load
+                    return 'saved_model'
+            else:
+                return 'frozen_pb'
         elif model.endswith('.ckpt') and os.path.isfile(model):
             return 'slim'
         elif os.path.isdir(model):
@@ -72,6 +86,8 @@ def get_model_type(model):
                 except:
                     # can't use keras load
                     return 'saved_model'
+        elif os.path.isfile(model + '.pb'):
+            return 'frozen_pb'
 
     raise ValueError('model {} has not recognized model type....'.format(model))
 
@@ -509,7 +525,7 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
 class BaseModel(object):
 
     @abstractmethod
-    def save(self, root, *args, **kwargs):
+    def save(self, root=None, *args, **kwargs):
         raise NotImplementedError
 
 class TensorflowModel(object):
@@ -632,13 +648,16 @@ class TensorflowBaseModel(BaseModel):
         return [get_tensor_by_name(\
             self.sess.graph, x) for x in self._output_tensor_names]
 
-    def save(self, root):
-        if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
-            raise ValueError('"root" directory does not exists.')
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace + '/save.pb'
+        root = os.path.abspath(os.path.expanduser(root))
         # if not have suffix, default append .pb
-        pb_file =  root if os.path.split(root)[-1].endswith('.pb') else root + '.pb'
+        os.makedirs(os.path.dirname(root), exist_ok=True)
+        pb_file = root if os.path.split(root)[-1].endswith('.pb') else root + '.pb'
         f = tf.io.gfile.GFile(pb_file, 'wb')
         f.write(self.graph_def.SerializeToString())
+        logger.info("Save quantized model at %s" % pb_file)
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
  
@@ -660,21 +679,26 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
     def graph(self):
         return self.sess.graph
 
-    def save(self, root):
-        if root is not self._model:
-            assert os.path.isdir(root), 'please supply the path to save the model....'
-            import shutil
-            file_names = os.listdir(self._model)
-            for f in file_names:
-                shutil.move(os.path.join(self._model, f), root)
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(root, exist_ok=True)
+        assert root != self._model, 'saved location should be different with original saved ' \
+                                    'model path'
+        import shutil
+        file_names = os.listdir(self._model)
+        for f in file_names:
+            shutil.move(os.path.join(self._model, f), root)
+        logger.info("Save quantized model at %s" % root)
 
 class TensorflowKerasModel(TensorflowBaseModel):
 
-    def save(self, root):
-        if os.path.exists(root):
-            import shutil
-            shutil.rmtree(root)
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace
 
+        root = os.path.abspath(os.path.expanduser(root))
         os.makedirs(root, exist_ok=True)
         from tensorflow.python.saved_model import signature_constants
         from tensorflow.python.saved_model import tag_constants
@@ -694,6 +718,7 @@ class TensorflowKerasModel(TensorflowBaseModel):
                                                  [tag_constants.SERVING],
                                                  signature_def_map=sigs)
         builder.save()
+        logger.info("Save quantized model at %s" % root)
 
 class TensorflowCheckpointModel(TensorflowBaseModel):
 
@@ -872,14 +897,16 @@ class PyTorchModel(PyTorchBaseModel):
     def model(self, model):
         self._model = model
 
-    def save(self, path):
-        path = os.path.expanduser(path)
-        os.makedirs(path, exist_ok=True)
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(root, exist_ok=True)
         try:
-            with open(os.path.join(path, "best_configure.yaml"), 'w') as f:
+            with open(os.path.join(root, "best_configure.yaml"), 'w') as f:
                 yaml.dump(self.tune_cfg, f, default_flow_style=False)
-            torch.save(self._model.state_dict(), os.path.join(path, "best_model_weights.pt"))
-            logger.info("save config file and weights of quantized model to path %s" % path)
+            torch.save(self._model.state_dict(), os.path.join(root, "best_model_weights.pt"))
+            logger.info("Save config file and weights of quantized model at %s" % root)
         except IOError as e:
             logger.error("Unable to save configure file and weights. %s" % e)
 
@@ -916,13 +943,15 @@ class PyTorchIpexModel(PyTorchBaseModel):
     def model(self, model):
         self._model = model
 
-    def save(self, path):
-        path = os.path.expanduser(path)
-        os.makedirs(path, exist_ok=True)
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(root, exist_ok=True)
         try:
-            with open(os.path.join(path, "best_configure.json"), 'w') as f:
+            with open(os.path.join(root, "best_configure.json"), 'w') as f:
                 json.dump(self.tune_cfg, f)
-            logger.info("save config file of quantized model to path %s" % path)
+            logger.info("Save config file of quantized model at %s" % root)
         except IOError as e:
             logger.error("Unable to save configure file and weights. %s" % e)
 
@@ -946,14 +975,15 @@ class MXNetModel(BaseModel):
     def model(self, model):
         self._model = model
 
-    def save(self, root):
-        if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
-            raise ValueError('"root" directory does not exists.')
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(root, exist_ok=True)
 
         if isinstance(self._model, mx.gluon.HybridBlock):
-            logger.info("Save MXNet HybridBlock quantization model!")
             self._model.export(root)
-            logger.info('Saving quantized model at %s' % root)
+            logger.info('Save quantized hybrid block model at %s' % root)
         else:
             symbol, arg_params, aux_params = self._model
             symbol.save(root + '-symbol.json')
@@ -961,7 +991,7 @@ class MXNetModel(BaseModel):
             save_dict.update(\
                 {('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
             mx.nd.save(root + '-0000.params', save_dict)
-            logger.info('Saving symbol into file at %s' % root)
+            logger.info('Save quantized symbol model at %s' % root)
 
 class ONNXModel(BaseModel):
     """Build ONNXModel object
@@ -983,10 +1013,14 @@ class ONNXModel(BaseModel):
     def model(self, model):
         self._model = model
 
-    def save(self, root):
-        if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
-            raise ValueError('"root" directory does not exists.')
-        onnx.save(self._model, root)
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace + '/save.onnx'
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(os.path.dirname(root), exist_ok=True)
+        onnx_file = root if os.path.split(root)[-1].endswith('.onnx') else root + '.onnx'
+        onnx.save(self._model, onnx_file)
+        logger.info("Save quantized model at %s" % onnx_file)
 
 MODELS = {'tensorflow': TensorflowModel,
           'mxnet': MXNetModel,

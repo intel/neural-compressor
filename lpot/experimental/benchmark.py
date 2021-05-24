@@ -93,6 +93,7 @@ class Benchmark(object):
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
 
+        logger.info('Benchmark starts to run...')
         if os.environ.get('LPOT_ENV_CONF') == 'True':
             return self.run_instance(mode)
         else:

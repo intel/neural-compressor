@@ -12,7 +12,6 @@ quantization:                                        # optional. tuning constrai
   calibration:
     sampling_size: 20                                # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
-      batch_size: 1
       dataset:
         ImageRecord:
           root: <DATASET>/TF_imagenet/val/           # NOTE: modify to calibration dataset location if needed

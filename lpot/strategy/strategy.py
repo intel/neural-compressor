@@ -347,7 +347,7 @@ class TuneStrategy(object):
         setup_yaml()
         with open(self.deploy_path, 'w+') as f:
             yaml.dump(self.deploy_cfg, f)
-            logger.info('save deploy yaml to path {}'.format(self.deploy_path))
+            logger.info('Save deploy yaml to path {}'.format(self.deploy_path))
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.

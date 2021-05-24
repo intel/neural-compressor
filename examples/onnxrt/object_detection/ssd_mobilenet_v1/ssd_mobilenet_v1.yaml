@@ -24,7 +24,6 @@ quantization:                                        # optional. tuning constrai
   calibration:
     sampling_size: 50                                # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
-      batch_size: 1
       dataset:
         COCORaw:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation raw image folder

@@ -166,6 +166,7 @@ class Pruning:
                                                    self.train_dataloader, \
                                                    self.adaptor, train_cfg, hooks=hooks)
         self._pruning_func(self._model.model)
+        logger.info('Model pruning is done. Start to evaluate the pruned model...')
         if self._eval_func is None:
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation
