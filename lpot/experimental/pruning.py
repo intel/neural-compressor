@@ -179,7 +179,7 @@ class Pruning:
                                             fp32_baseline = False)
         score = self._eval_func(self._model)
         logger.info('Pruned model score is: ' + str(score))
-        return self._model.model
+        return self._model
 
     @property
     def train_dataloader(self):
