@@ -266,7 +266,7 @@ sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/glue/data/
 ```
 > NOTE
 >
-> topology_name can be:{"bert_base_MRPC", "distilbert_base_MRPC", "albert_base_MRPC", "funnel_MRPC", "bart_WNLI", "mbart_WNLI", "xlm_roberta_MRPC", "gpt2_MRPC", "xlnet_base_MRPC"}
+> topology_name can be:{"bert_base_MRPC", "distilbert_base_MRPC", "albert_base_MRPC", "funnel_MRPC", "bart_WNLI", "mbart_WNLI", "xlm_roberta_MRPC", "gpt2_MRPC", "xlnet_base_MRPC", "transfo_xl_MRPC", "ctrl_MRPC", "xlm_MRPC"}
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir 
 

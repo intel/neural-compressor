@@ -139,6 +139,15 @@ function run_benchmark {
     elif [ "${topology}" = "squeezebert_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=$input_model
+    elif [ "${topology}" = "transfo_xl_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "ctrl_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+    elif [ "${topology}" = "xlm_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
     fi
 
     if [[ ${int8} == "true" ]]; then

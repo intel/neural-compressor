@@ -144,6 +144,18 @@ function run_tuning {
         model_name_or_path=$input_model
         model_type='squeezebert'
         approach="post_training_static_quant"
+    elif [ "${topology}" = "transfo_xl_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model 
+        model_type='transfo-xl-wt103'
+    elif [ "${topology}" = "ctrl_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model 
+        model_type='ctrl'
+    elif [ "${topology}" = "xlm_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model 
+        model_type='xlm-mlm-en-2048'
     fi
 
     sed -i "/name:/s|name:.*|name: $model_type|g" conf.yaml
