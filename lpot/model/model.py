@@ -699,6 +699,10 @@ class TensorflowKerasModel(TensorflowBaseModel):
             root = cfg.default_workspace
 
         root = os.path.abspath(os.path.expanduser(root))
+        if os.path.exists(root):
+            import shutil
+            shutil.rmtree(root)
+
         os.makedirs(root, exist_ok=True)
         from tensorflow.python.saved_model import signature_constants
         from tensorflow.python.saved_model import tag_constants
