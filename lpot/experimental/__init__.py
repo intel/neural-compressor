@@ -19,4 +19,6 @@ from .quantization import Quantization
 from .pruning import Pruning
 from .benchmark import Benchmark
 from .graph_optimization import Graph_Optimization
-__all__ = ['Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization']
+from .model_conversion import ModelConversion
+
+__all__ = ['Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization', 'ModelConversion']

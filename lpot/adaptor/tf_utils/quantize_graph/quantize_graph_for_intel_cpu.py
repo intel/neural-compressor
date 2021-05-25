@@ -31,7 +31,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
     """
 
-    def __init__(self, input_graph, output_node_names, op_wise_config, op_wise_sequences, device):
+    def __init__(self, input_graph, output_node_names, op_wise_config, op_wise_sequences, device, \
+                 fake_quant=False):
         """Quantize Graph For Intel Cpu
 
         Arguments:
@@ -58,6 +59,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.op_wise_seq = op_wise_sequences
 
         self.device = device
+        self.fake_quant = fake_quant
 
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
@@ -83,6 +85,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     patterns=self.op_wise_seq[node.op],
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
                     op_wise_cfg=self.op_wise_config[node.name],
-                    start_node_name=node.name, device=self.device).apply_the_transform()
+                    start_node_name=node.name, device=self.device, \
+                    fake_quant=self.fake_quant).apply_the_transform()
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names)

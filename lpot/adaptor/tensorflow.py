@@ -47,7 +47,7 @@ class TensorFlowAdaptor(Adaptor):
         self.framework_specific_info = framework_specific_info
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
-        self.recipes = self.framework_specific_info['recipes']
+        self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.optimization = deep_get(self.framework_specific_info, 'optimization', {})
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
@@ -400,7 +400,9 @@ class TensorFlowAdaptor(Adaptor):
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
 
-        exclude_first_quantizable_op = self.recipes['first_conv_or_matmul_quantization']
+        exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
+                      self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
+                      else False
         for details in matched_nodes:
             node_op = details[-1][0]
             node_name = details[0]
@@ -412,10 +414,10 @@ class TensorFlowAdaptor(Adaptor):
             }
             if node_op in tf_quantizable_op_type and node_name not in self.exclude_node_names and (
                 node_name, self.unify_op_type_mapping[node_op]) not in self.quantizable_op_details:
-                if not exclude_first_quantizable_op and \
+                if exclude_first_quantizable_op and \
                     (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
                     self.unify_op_type_mapping[node_op].find("matmul") != -1):
-                    exclude_first_quantizable_op = True
+                    exclude_first_quantizable_op = False 
                     self.exclude_node_names.append(node_name)
                     continue
                 self._init_op_stat[node_op].append(node_name)
@@ -640,6 +642,48 @@ class TensorFlowAdaptor(Adaptor):
 
     def save(self, model, path):
         pass
+
+    def convert(self, model, source, destination):
+        '''The function is used to convert a source model format to another.
+
+           Args:
+               model (lpot.model): base model to be converted.
+               source (string): The source model format.
+               destination (string): The destination model format.
+        '''
+        assert source.lower() == 'qat' and destination.lower() == 'default'
+        capability = self.query_fw_capability(model)
+        print(capability['opwise'])
+        quantize_config = {'op_wise_config': {}}
+        for each_op_info in capability['opwise']: 
+            op_name = each_op_info[0]
+            op_type = each_op_info[1]
+
+            is_perchannel = False
+            weight_bit = 7.0
+            activation = capability['optypewise'][op_type]['activation']
+            if 'weight' in capability['optypewise'][op_type]:
+                weight = capability['optypewise'][op_type]['weight']
+                is_perchannel = True if weight[
+                    'granularity'][0] == 'per_channel' else False
+
+            algorithm = activation['algorithm'][0]
+
+            is_asymmetric = False
+            if 'activation' in capability['optypewise'][op_type]:
+                is_asymmetric = True if activation['scheme'][0] == 'asym' else False
+
+            quantize_config['op_wise_config'][op_name] = (is_perchannel,
+                                                          algorithm,
+                                                          is_asymmetric,
+                                                          weight_bit)
+        from .tf_utils.graph_converter import GraphConverter
+        converter = GraphConverter(model,
+                                   qt_config=quantize_config,
+                                   int8_sequences=self.op_wise_sequences,
+                                   fake_quant=True)
+
+        return converter.convert()
 
 
 @singleton

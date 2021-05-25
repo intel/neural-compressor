@@ -412,6 +412,5 @@ class Quantization(object):
                                  accuracy = metric(output, label)
                                  return accuracy
         """
-        logger.warning('eval_func is to be deprecated, please construct eval_dataloader....')
         self._eval_func = user_eval_func
 

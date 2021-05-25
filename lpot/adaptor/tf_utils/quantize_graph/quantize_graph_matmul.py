@@ -119,7 +119,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             return
 
         for i in self.node_name_mapping:
-            if weight_node.name in self.node_name_mapping[i].output:
+            if weight_node.input and not weight_node.input[0].startswith('^') \
+                    and weight_node.name in self.node_name_mapping[i].output:
                 self.output_graph = self.input_graph
                 return
 

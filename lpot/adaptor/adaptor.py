@@ -159,3 +159,14 @@ class Adaptor(object):
                path (string): The path where to save.
         '''
         raise NotImplementedError
+
+    @abstractmethod
+    def convert(self, model, source, destinatin):
+        '''The function is used to convert a source model format to another.
+
+           Args:
+               model (lpot.model): base model to be converted.
+               source (string): The source model format.
+               destination (string): The destination model format.
+        '''
+        raise NotImplementedError

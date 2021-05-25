@@ -220,6 +220,11 @@ graph_optimization_schema = Schema({
     }
 })
 
+model_conversion_schema = Schema({
+    'source': And(str, lambda s: s.lower() == 'qat'),
+    'destination': And(str, lambda s: s.lower() == 'default')
+})
+
 filter_schema = Schema({
     Optional('LabelBalance'): {
         'size': And(int, lambda s: s > 0)
@@ -578,9 +583,9 @@ schema = Schema({
         },
     },
 
-    Optional('graph_optimization'): And(
-        graph_optimization_schema
-    ),
+    Optional('graph_optimization'): graph_optimization_schema,
+
+    Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},

@@ -75,6 +75,7 @@ class QuantizeNodeBase():
         self.quantized_node_dict = {}
         self.patterns =  kwargs['patterns']
         self.remove_redundant_quant_flag = kwargs['remove_redundant_quant_flag']
+        self.fake_quant = kwargs['fake_quant'] if 'fake_quant' in kwargs else False
         self.per_channel, self.is_asymmetric = kwargs['op_wise_cfg'][0], kwargs['op_wise_cfg'][2]
         self.weight_bit = kwargs['op_wise_cfg'][3]
         self.start_node_name = kwargs['start_node_name']
@@ -181,9 +182,9 @@ class QuantizeNodeBase():
         return None, None
 
     def _need_to_check(self, node_type):
-        op_list = ("ConcatV2", "Conv2D", "DepthwiseConv2D", "QuantizeV2",
-                   "DepthwiseConv2dNative", "MaxPool", "Requantize", "AvgPool",
-                   "Pad", "CropAndResize", "Dequantize", "Mean", "MatMul")
+        op_list = ("ConcatV2", "Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
+                   "MaxPool", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
+                   "CropAndResize", "Dequantize", "Mean", "MatMul", "FakeQuantWithMinMaxVars")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
@@ -298,7 +299,8 @@ class QuantizeNodeBase():
             min_max_names.append(max_input_name)
         all_input_names = []
         all_input_names.extend(input_names)
-        all_input_names.extend(min_max_names)
+        if min_max_names:
+            all_input_names.extend(min_max_names)
 
         for original_input_name in self.node_name_mapping[
                 original_node].node.input:
@@ -451,27 +453,43 @@ class QuantizeNodeBase():
             quantized_output_name, quantized_output_name + ":1",
             quantized_output_name + ":2"
         ]
-        # Add a RequantizationRange node for finding the min and max values.
-        requant_range_node = helper.create_node(
-            "RequantizationRangePerChannel"
-            if self.per_channel else "RequantizationRange",
-            original_node.name + "_eightbit_requant_range", quantized_outputs)
+        if not self.fake_quant:
+            # Add a RequantizationRange node for finding the min and max values.
+            requant_range_node = helper.create_node(
+                "RequantizationRangePerChannel"
+                if self.per_channel else "RequantizationRange",
+                original_node.name + "_eightbit_requant_range", quantized_outputs)
 
-        if self.per_channel:
-            helper.set_attr_dtype(requant_range_node, "T", dtypes.qint32)
-            if is_relu6:
-                helper.set_attr_float(requant_range_node, "clip_value_max",
-                                      6.0)
+            if self.per_channel:
+                helper.set_attr_dtype(requant_range_node, "T", dtypes.qint32)
+                if is_relu6:
+                    helper.set_attr_float(requant_range_node, "clip_value_max",
+                                          6.0)
+                else:
+                    helper.set_attr_float(requant_range_node, "clip_value_max",
+                                          1e30)
             else:
-                helper.set_attr_float(requant_range_node, "clip_value_max",
-                                      1e30)
-        else:
-            helper.set_attr_dtype(requant_range_node, "Tinput", dtypes.qint32)
+                helper.set_attr_dtype(requant_range_node, "Tinput", dtypes.qint32)
 
-        self.add_output_graph_node(requant_range_node)
-        min_max_inputs = [
-            requant_range_node.name + ":0", requant_range_node.name + ":1"
-        ]
+            self.add_output_graph_node(requant_range_node)
+            min_max_inputs = [
+                requant_range_node.name + ":0", requant_range_node.name + ":1"
+            ]
+        else:
+            max_input_name = original_node.name + "_max"
+            max_node = helper.create_constant_node(
+                max_input_name, 1., dtypes.float32)
+            self.add_output_graph_node(max_node)
+
+            min_input_name = original_node.name + "_min"
+            min_node = helper.create_constant_node(
+                min_input_name, -1., dtypes.float32)
+            self.add_output_graph_node(min_node)
+
+            min_max_inputs = [
+                min_input_name, max_input_name
+            ]
+
         requantize_node = helper.create_node(
             "RequantizePerChannel" if self.per_channel else "Requantize",
             original_node.name + "_eightbit_requantize",
@@ -498,30 +516,44 @@ class QuantizeNodeBase():
             quantized_tuple = self.quantized_node_dict[unique_input_name]
             return quantized_tuple[0], quantized_tuple[1], quantized_tuple[2]
 
-        reshape_input_name = namespace_prefix + "_reshape_" + unique_input_name
-        min_input_name = namespace_prefix + "_min_" + unique_input_name
-        max_input_name = namespace_prefix + "_max_" + unique_input_name
-        quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
-        reshape_input_node = helper.create_node(
-            "Reshape", reshape_input_name,
-            [original_input_name, reshape_dims_name])
-        helper.set_attr_dtype(reshape_input_node, "T", dtypes.float32)
-        self.add_output_graph_node(reshape_input_node)
-        min_input_node = helper.create_node(
-            "Min", min_input_name, [reshape_input_name, reduction_dims_name])
-        helper.set_attr_dtype(min_input_node, "T", dtypes.float32)
-        helper.set_attr_dtype(min_input_node, "Tidx", dtypes.int32)
-        helper.set_attr_bool(min_input_node, "keep_dims", False)
-        self.add_output_graph_node(min_input_node)
-        max_input_node = helper.create_node(
-            "Max", max_input_name, [reshape_input_name, reduction_dims_name])
-        helper.set_attr_dtype(max_input_node, "T", dtypes.float32)
-        helper.set_attr_dtype(max_input_node, "Tidx", dtypes.int32)
-        helper.set_attr_bool(max_input_node, "keep_dims", False)
-        self.add_output_graph_node(max_input_node)
-        quantize_input_node = helper.create_node(
-            "QuantizeV2", quantize_input_name,
-            [original_input_name, min_input_name, max_input_name])
+        if self.fake_quant:
+            min_input_name = namespace_prefix + "_min_" + unique_input_name
+            min_node = helper.create_constant_node(
+                min_input_name, -1., dtypes.float32)
+            self.add_output_graph_node(min_node)
+            max_input_name = namespace_prefix + "_max_" + unique_input_name
+            max_node = helper.create_constant_node(
+                max_input_name, 1., dtypes.float32)
+            self.add_output_graph_node(max_node)
+            quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
+            quantize_input_node = helper.create_node(
+                "QuantizeV2", quantize_input_name,
+                [original_input_name, min_input_name, max_input_name])
+        else:
+            reshape_input_name = namespace_prefix + "_reshape_" + unique_input_name
+            min_input_name = namespace_prefix + "_min_" + unique_input_name
+            max_input_name = namespace_prefix + "_max_" + unique_input_name
+            quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
+            reshape_input_node = helper.create_node(
+                "Reshape", reshape_input_name,
+                [original_input_name, reshape_dims_name])
+            helper.set_attr_dtype(reshape_input_node, "T", dtypes.float32)
+            self.add_output_graph_node(reshape_input_node)
+            min_input_node = helper.create_node(
+                "Min", min_input_name, [reshape_input_name, reduction_dims_name])
+            helper.set_attr_dtype(min_input_node, "T", dtypes.float32)
+            helper.set_attr_dtype(min_input_node, "Tidx", dtypes.int32)
+            helper.set_attr_bool(min_input_node, "keep_dims", False)
+            self.add_output_graph_node(min_input_node)
+            max_input_node = helper.create_node(
+                "Max", max_input_name, [reshape_input_name, reduction_dims_name])
+            helper.set_attr_dtype(max_input_node, "T", dtypes.float32)
+            helper.set_attr_dtype(max_input_node, "Tidx", dtypes.int32)
+            helper.set_attr_bool(max_input_node, "keep_dims", False)
+            self.add_output_graph_node(max_input_node)
+            quantize_input_node = helper.create_node(
+                "QuantizeV2", quantize_input_name,
+                [original_input_name, min_input_name, max_input_name])
 
         helper.set_attr_dtype(quantize_input_node, "T", dtype)
 

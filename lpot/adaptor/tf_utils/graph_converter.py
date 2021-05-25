@@ -45,6 +45,7 @@ from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
+from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
@@ -66,7 +67,8 @@ class GraphConverter:
                  int8_sequences={},
                  fp32_ops=[],
                  bf16_ops=[],
-                 data_loader=None):
+                 data_loader=None,
+                 fake_quant=False):
         """Convert graph.
 
         :param model: input tensorflow model.
@@ -74,13 +76,14 @@ class GraphConverter:
         :param fp32_ops: fall back to fp32 dtype op list
         :param bf16_ops: fall back to bf16 dtype op list
         :param data_loader: for calibration phase used dataloader
+        :param fake_quant: for quantization-aware training model conversion to default model
         """
         # Logger initial
         self.logger = logging.getLogger()
         self.debug = bool(self.logger.level == logging.DEBUG)
         self.model = model
         # quantize specific config
-        self.calib_iteration = qt_config['calib_iteration']
+        self.calib_iteration = qt_config['calib_iteration'] if not fake_quant else 0
         self.op_wise_config = qt_config['op_wise_config']
         self.advance_config = deep_get(qt_config, 'advance')
         self.device = qt_config['device'] if 'device' in qt_config else 'cpu'
@@ -88,6 +91,7 @@ class GraphConverter:
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         self.recipes = recipes
+        self.fake_quant = fake_quant
 
         self._calibration_data = []
         self._fp32_print_data = []
@@ -407,18 +411,21 @@ class GraphConverter:
         """
         try:
             self._quantize_graph()
-            if self._enable_kl_op_names:
-                self._get_fp32_print_node_names(self._enable_kl_op_names)
-                self._generate_calibration_data(self._fp32_logged_model_path,
-                                                self._fp32_print_data,
-                                                True)
-
-            self._insert_logging()
-            self._generate_calibration_data(self._int8_logged_model_path,
-                                            self._calibration_data)
-            if len(self._calibration_data) > 0:
-                self._freeze_requantization_ranges(self._kl_op_dict)
+            if self.fake_quant:
                 self._fuse_requantize_with_fused_quantized_node()
+            else:
+                if self._enable_kl_op_names:
+                    self._get_fp32_print_node_names(self._enable_kl_op_names)
+                    self._generate_calibration_data(self._fp32_logged_model_path,
+                                                    self._fp32_print_data,
+                                                    True)
+
+                self._insert_logging()
+                self._generate_calibration_data(self._int8_logged_model_path,
+                                                self._calibration_data)
+                if len(self._calibration_data) > 0:
+                    self._freeze_requantization_ranges(self._kl_op_dict)
+                    self._fuse_requantize_with_fused_quantized_node()
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -469,7 +476,8 @@ class GraphConverter:
             self._tmp_model.output_node_names,
             self.op_wise_config,
             self.int8_sequences,
-            self.device).do_transform()
+            self.device,
+            self.fake_quant).do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if self.debug:
@@ -549,7 +557,8 @@ class GraphConverter:
             device=self.device,
             ).do_transformation()
 
-        if self.recipes['scale_propagation_max_pooling']:
+        if 'scale_propagation_max_pooling' in self.recipes and \
+                self.recipes['scale_propagation_max_pooling']:
             self._tmp_graph_def = ScaleProPagationTransformer(
                 self._tmp_graph_def).do_transformation()
 
@@ -559,6 +568,10 @@ class GraphConverter:
             self._tmp_model.save(self._int8_frozen_range_model_path)
 
     def _fuse_requantize_with_fused_quantized_node(self):
+        if self.fake_quant:
+            self._tmp_graph_def = FreezeFakeQuantOpOptimizer(
+                self._tmp_graph_def).do_transformation() 
+
         self._tmp_graph_def = FuseConvRequantizeTransformer(
             self._tmp_graph_def,
             self.device).do_transformation()
@@ -581,7 +594,7 @@ class GraphConverter:
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(
             self._tmp_graph_def).do_transformation()
 
-        if self.recipes['scale_propagation_concat']:
+        if 'scale_propagation_concat' in self.recipes and self.recipes['scale_propagation_concat']:
             self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
                                                      self.device).do_transformation()
 
