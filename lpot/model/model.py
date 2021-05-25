@@ -108,20 +108,30 @@ def get_model_fwk_name(model):
             return True
 
     def _is_pytorch(model):
-        return isinstance(model, torch.nn.Module)
+        try:
+            is_torch = isinstance(model, torch.nn.Module)
+        except:
+            return False
+        else:
+            return is_torch
 
     def _is_tensorflow(model):
         try:
-            model_type= get_model_type(model)
+            get_model_type(model)
         except Exception as e:
             return False
         else:
             return True
 
     def _is_mxnet(model):
-        return isinstance(model, mx.gluon.HybridBlock) or \
+        try:
+            is_mxnet = isinstance(model, mx.gluon.HybridBlock) or \
             (hasattr(model, '__len__') and len(model) > 1 and \
-                isinstance(model[0], mx.symbol.Symbol))
+            isinstance(model[0], mx.symbol.Symbol))
+        except:
+            return False
+        else:
+            return is_mxnet
 
     checker = {'tensorflow': _is_tensorflow,
                 'pytorch': _is_pytorch,
