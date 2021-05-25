@@ -42,7 +42,7 @@ cd examples/pytorch/fx/image_recognition/imagenet/cpu/ptq
 python main.py -t -a resnet18 --pretrained /path/to/imagenet
 ```
 
-### 3. ResNext101_32x8d
+### 3. ResNeXt101_32x8d
 
 ```shell
 cd examples/pytorch/fx/image_recognition/imagenet/cpu/ptq
@@ -61,20 +61,6 @@ python main.py -t -a inception_v3 --pretrained /path/to/imagenet
 ```shell
 cd examples/pytorch/fx/image_recognition/imagenet/cpu/ptq
 python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
-```
-
-### 6. ResNet50 dump tensors for debug
-
-```shell
-  cd examples/pytorch/fx/image_recognition/imagenet/cpu/ptq
-  python main_dump_tensors.py -t -a resnet50 --pretrained /path/to/imagenet
-```
-
-### 7. ResNet50 With Intel PyTorch Extension
-
-```shell
-  cd examples/pytorch/fx/image_recognition/imagenet/cpu/PTQ
-  python main.py -t -a resnet50 -j 0 --pretrained --ipex /path/to/imagenet
 ```
 
 # Saving and loading model:
