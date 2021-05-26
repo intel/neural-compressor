@@ -10,3 +10,4 @@
 *.swp
 *.onnx
 _build
+lpot_workspace/
