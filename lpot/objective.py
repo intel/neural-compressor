@@ -43,10 +43,15 @@ def objective_registry(cls):
 class Measurer(object):
     """The base class for precise benchmark supported by lpot.
 
+    Args:
+       representation (string): the string represenation of Measurer object
+
     """
 
-    def __init__(self):
+    def __init__(self, representation=''):
         self._result_list = []
+        assert isinstance(representation, str)
+        self.representation = representation
 
     @abstractmethod
     def reset(self):
@@ -101,8 +106,10 @@ class Measurer(object):
         """
         return self._result_list
 
-class PerformanceMeasure(Measurer):
+    def __str__(self):
+        return self.representation
 
+class PerformanceMeasure(Measurer):
     def start(self):
         self.start_time = time.time()
 
@@ -215,7 +222,7 @@ class Performance(Objective):
 
     def __init__(self, accuracy_criterion, is_measure=False):
         super(Performance, self).__init__(accuracy_criterion, is_measure)
-        self.measurer = PerformanceMeasure()
+        self.measurer = PerformanceMeasure('duration (seconds)')
 
 @objective_registry
 class Footprint(Objective):
@@ -229,7 +236,7 @@ class Footprint(Objective):
 
     def __init__(self, accuracy_criterion):
         super(Footprint, self).__init__(accuracy_criterion)
-        self.measurer = FootprintMeasure()
+        self.measurer = FootprintMeasure('memory footprint (MB)')
 
 @objective_registry
 class ModelSize(Objective):
@@ -242,5 +249,5 @@ class ModelSize(Objective):
 
     def __init__(self, accuracy_criterion):
         super(ModelSize, self).__init__(accuracy_criterion)
-        self.measurer = ModelSizeMeasure()
+        self.measurer = ModelSizeMeasure('model size (MB)')
 
