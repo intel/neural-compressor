@@ -81,8 +81,10 @@ export class ModelListComponent implements OnInit {
             if (result['status'] === 'success') {
               this.modelList[index]['perf_throughput_input_model'] = result['data']['perf_throughput_input_model'];
               this.modelList[index]['perf_throughput_optimized_model'] = result['data']['perf_throughput_optimized_model'];
-              this.modelList[index]['acc_input_model'] = result['data']['acc_input_model'];
-              this.modelList[index]['acc_optimized_model'] = result['data']['acc_optimized_model'];
+              if (result['data']['acc_input_model']) {
+                this.modelList[index]['acc_input_model'] = result['data']['acc_input_model'];
+                this.modelList[index]['acc_optimized_model'] = result['data']['acc_optimized_model'];
+              }
             } else {
               this.openErrorDialog(result['data']['message']);
             }

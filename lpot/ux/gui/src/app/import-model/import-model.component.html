@@ -278,12 +278,12 @@
                   matTooltip="Remove this transformation">
                   &#x2573;
                 </button>
-                <button *ngIf="last" mat-raised-button color="accent" class="browse" (click)="addNewTransformation()">
-                  &#65291; Add new transformation
-                </button>
               </span>
-              <br>
+              <br *ngIf="!last">
             </ng-container>
+            <button mat-raised-button color="accent" class="browse" (click)="addNewTransformation()">
+              &#65291; Add new transformation
+            </button>
           </mat-card>
         </ng-container>
 
