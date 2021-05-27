@@ -20,7 +20,6 @@ import copy
 import os
 import logging
 import tensorflow as tf
-
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 from lpot.utils.utility import get_all_fp32_data
@@ -28,7 +27,7 @@ from lpot.utils.utility import get_tensor_histogram
 from lpot.utils.utility import combine_histogram
 from lpot.utils.utility import CaptureOutputToFile
 from lpot.utils.utility import str2array
-from lpot.utils.utility import Dequantize
+from lpot.utils.utility import Dequantize, DequantizeWeight
 from lpot.conf.dotdict import deep_get
 from lpot.model.model import TensorflowModel
 from .transform_graph.insert_logging import InsertLogging
@@ -39,6 +38,7 @@ from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
 
+from .graph_rewriter.graph_util import GraphAnalyzer
 from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
@@ -110,7 +110,7 @@ class GraphConverter:
                                            **self.model.kwargs)
         self._fp32_model.graph_def = self.model.graph_def
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
-    # pylint: disable=no-member 
+    # pylint: disable=no-member
     def _inference(self, model):
         """Run the calibration on the input graph
 
@@ -278,7 +278,7 @@ class GraphConverter:
         self._fp32_model.graph_def = fp32_graph_def
         return self._fp32_model
 
-    def inspect_tensor(self, original_op_list, iteration_list, work_dir, save_weights):
+    def inspect_tensor(self, original_op_list, iteration_list, work_dir, inspect_type):
         """dump the specified op's output tensor content
 
         Args:
@@ -303,6 +303,9 @@ class GraphConverter:
         op_name_type_dict = {}
         quantized_node_name_postfix = '_eightbit_requantize'
         weights_tensor = {}
+        g = GraphAnalyzer()
+        g.graph = sorted_graph
+        graph_info = g.parse_graph()
 
         for node in sorted_graph.node:
             node_name = node.name
@@ -312,18 +315,56 @@ class GraphConverter:
             graph_node_name_mapping[node_name] = node
 
         for node in sorted_graph.node:
-            if save_weights and node.op in ("Conv2D", "DepthwiseConv2dNative"):
-                weights_tensor[node.name] = {node.input[1]: tensor_util.MakeNdarray(
-                    graph_node_name_mapping[node.input[1]].attr['value'].tensor).flatten()}
+            node_name = node.name
+            if node.op.find("Quantized") != -1:
+                node_name = node.name.split(quantized_node_name_postfix)[0]
 
-        for op_info in original_op_list:
-            op_name = op_info[0]
-            op_type = op_info[1]
+            if inspect_type in ('weight', 'all') and node.op.find("Conv") != -1:
+                if node.op.find("Quantized") == -1:
+                    weights_tensor[node_name] = {node.input[1]: tensor_util.MakeNdarray(
+                        graph_node_name_mapping[\
+                                node.input[1]].attr['value'].tensor).transpose(3,2,0,1)}
+                    bias_node = None if \
+                        not graph_info[node.name].outputs \
+                            else graph_info[graph_info[node.name].outputs[0]].node
+                    if bias_node and bias_node.op == 'BiasAdd':
+                        weights_tensor[node_name][bias_node.name] = tensor_util.MakeNdarray(
+                            graph_node_name_mapping[bias_node.input[1]].attr['value'].tensor)
+
+                else:
+                    if graph_info[node.input[5]].node.attr['value'].tensor.float_val:
+                        min_filter_tensor = graph_info[\
+                                node.input[5]].node.attr['value'].tensor.float_val
+                        max_filter_tensor = graph_info[\
+                                node.input[6]].node.attr['value'].tensor.float_val
+                    else:
+                        min_filter_tensor = tensor_util.MakeNdarray(\
+                                graph_info[node.input[5]].node.attr['value'].tensor)
+                        max_filter_tensor = tensor_util.MakeNdarray(\
+                                graph_info[node.input[6]].node.attr['value'].tensor)
+
+                    weight_tensor = tensor_util.MakeNdarray(\
+                            graph_node_name_mapping[node.input[1]].attr['value'].tensor)
+                    weight_tensor = weight_tensor = weight_tensor.astype('float')
+
+                    DequantizeWeight(weight_tensor, min_filter_tensor,max_filter_tensor)
+                    weights_tensor[node_name] = {node.input[1]:weight_tensor.transpose(3,2,0,1)}
+
+                    weights_tensor[node_name][node.input[2]] = tensor_util.MakeNdarray(
+                            graph_node_name_mapping[node.input[2]].attr['value'].tensor)
+
+        for op_name in original_op_list:
+            if isinstance(op_name, tuple):
+                op_name = op_name[0]
+                op_type = op_name[1]
+            else:
+                #TODO op_type set to conv2d for fast_bias_correction and weigh correction.
+                op_type = "conv2d" #TODO
 
             if op_type not in ["conv2d"]:
                 continue
-            op_name_type_dict[op_name] = op_type
 
+            op_name_type_dict[op_name] = op_type
             if op_name in graph_q_node_name:
                 q_node_name.append(op_name + quantized_node_name_postfix)
                 q_node = graph_node_name_mapping[op_name]
@@ -390,12 +431,14 @@ class GraphConverter:
             for k, v in dump_tensor_content.items():
                 if k in fp32_node_name_mapping:
                     key = fp32_node_name_mapping[k]
-                    result_disk[(key, op_name_type_dict[key])] = {key: v[iter_idx - 1]}
+                    result_disk[(key, op_name_type_dict[key])] = \
+                            {key: v[iter_idx - 1].transpose(0,3,1,2)}
                 else:
-                    result_key = k.split(quantized_node_name_postfix)[iter_idx - 1]
-                    result_disk[(result_key, op_name_type_dict[result_key])
-                                ] = {result_key: Dequantize(v[0], q_node_scale[k])}
+                    result_key = k.split(quantized_node_name_postfix)[0]
+                    result_disk[(result_key, op_name_type_dict[result_key])] = \
+                            {result_key: Dequantize(v[0], q_node_scale[k]).transpose(0,3,1,2)}
             activation_content.append(result_disk)
+
         final_result = {'weight': weights_tensor, 'activation': activation_content}
 
         return final_result

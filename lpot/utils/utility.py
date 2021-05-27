@@ -256,12 +256,30 @@ def str2array(s):
 
     return np.array(ast.literal_eval(s))
 
+def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
+    weight_channel = weight_tensor.shape[-1]
+
+    for i in range(weight_channel):
+        data = weight_tensor[:,:,:,i]
+        new_data = data.reshape(data.size,)
+        if len(min_filter_tensor) == weight_channel:
+            # per_channel mode
+            for j in range((data.size)):
+                new_data[j] = \
+                        float(new_data[j] *(max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+        else:
+            # per_tensor mode
+            for j in range((data.size)):
+                new_data[j] = \
+                        float(new_data[j] *(max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+
 def Dequantize(data, scale_info):
     original_shape = data.shape
     size = data.size
     new_data = data.reshape(size, )
     max_value = 255 if scale_info[0].find("Relu") != -1 else 127
-    return np.array([float(i / max_value) for i in new_data]).reshape(original_shape)
+    return np.array([float(i *(scale_info[2] - scale_info[1])/ max_value) for i in new_data]\
+            ).reshape(original_shape)
 class CaptureOutputToFile(object):
     def __init__(self, tmp_file_path, stream=sys.stderr):
         self.orig_stream_fileno = stream.fileno()

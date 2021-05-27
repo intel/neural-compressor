@@ -43,6 +43,41 @@ def get_torch_version():
     return torch_version
 
 
+def get_ops_recursively(model, prefix, ops={}):
+        """This is a helper function for `graph_info`,
+           and it will get all ops from model.
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            ops (dict): dict of ops from model {op name: type}.
+        Returns:
+            None
+        """
+        version = get_torch_version()
+        if version < '1.7':
+            white_list = \
+               (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
+                set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
+                set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()) |
+                set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.keys()) |
+                set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.keys()) |
+                set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.keys()) |
+                torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST)
+        elif version < '1.8':
+            white_list = torch.quantization.get_compare_output_module_list()
+        else:
+            white_list = torch.quantization.get_default_compare_output_module_list()
+
+        for name, child in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if type(child) in white_list and not isinstance(child, torch.nn.Sequential) and \
+               type(child) != torch.quantization.stubs.DeQuantStub:
+                ops[op_name] = unify_op_type_mapping[str(child.__class__.__name__)] \
+                    if str(child.__class__.__name__) in unify_op_type_mapping else \
+                    str(child.__class__.__name__)
+            get_ops_recursively(child, op_name, ops)
+
+
 def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
     """Convert tune configure to quantization config for each op.
 
@@ -502,7 +537,6 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_lis
 
 @adaptor_registry
 class TemplateAdaptor(Adaptor):
-    unify_op_type_mapping = None
     """Tample adaptor of PyTorch framework.
 
     Args:
@@ -526,6 +560,7 @@ class TemplateAdaptor(Adaptor):
         self.is_baseline = True if not self.benchmark else False
         self.query_handler = None
         self.approach = ''
+        self.pre_optimized_model = None
 
         if 'approach' in framework_specific_info:
             self.approach = framework_specific_info['approach']
@@ -589,6 +624,7 @@ class TemplateAdaptor(Adaptor):
         Returns:
             q_capability (dictionary): tuning capability for each op from model.
         """
+        self.pre_optimized_model = model
         quantizable_ops = []
         self._get_quantizable_ops_recursively(model.model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
@@ -609,15 +645,17 @@ class TemplateAdaptor(Adaptor):
         return q_capability
 
 
+unify_op_type_mapping = {
+    "ConvReLU2d": "Conv2d",
+    "ConvReLU3d": "Conv3d",
+    "LinearReLU": "Linear",
+    "ConvBn2d": "Conv2d",
+    "ConvBnReLU2d": "Conv2d"
+}
+
+
 @adaptor_registry
 class PyTorchAdaptor(TemplateAdaptor):
-    unify_op_type_mapping = {
-        "ConvReLU2d": "Conv2d",
-        "ConvReLU3d": "Conv3d",
-        "LinearReLU": "Linear",
-        "ConvBn2d": "Conv2d",
-        "ConvBnReLU2d": "Conv2d"
-    }
     """Adaptor of PyTorch framework, all PyTorch API is in this class.
 
     Args:
@@ -812,6 +850,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         else:
             torch.quantization.convert(q_model.model, mapping=self.q_mapping, inplace=True)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
+        q_model.is_quantized = True
 
         if self.is_baseline:
             self.is_baseline = False
@@ -950,6 +989,24 @@ class PyTorchAdaptor(TemplateAdaptor):
             if hooks is not None:
                 on_epoch_end()
 
+    def is_fused_module(self, module):
+        """This is a helper function for `_propagate_qconfig_helper` to detecte
+           if this module is fused.
+
+        Args:
+            module (object): input module
+
+        Returns:
+            (bool): is fused or not
+        """
+        op_type = str(type(module))
+        op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
+        op_type = 'nni.' + op_type
+        if op_type in self.fused_op:
+            return True
+        else:
+            return False
+
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
@@ -968,9 +1025,16 @@ class PyTorchAdaptor(TemplateAdaptor):
             if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
                     type(child) != torch.quantization.stubs.DeQuantStub:
                 quantizable_ops.append((
-                    op_name, self.unify_op_type_mapping[str(child.__class__.__name__)]
-                    if str(child.__class__.__name__) in self.unify_op_type_mapping else
+                    op_name, unify_op_type_mapping[str(child.__class__.__name__)]
+                    if str(child.__class__.__name__) in unify_op_type_mapping else
                     str(child.__class__.__name__)))
+                if self.is_fused_module(child):
+                    for name, _ in child.named_children():
+                        module_prefix = op_name + '.' + name
+                        if op_name in self.fused_dict:
+                            self.fused_dict[op_name] = [self.fused_dict[op_name], module_prefix]
+                        else:
+                            self.fused_dict[op_name] = module_prefix
             else:
                 self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
@@ -1096,24 +1160,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                 else:
                     _add_observer_(child, op_list, op_name)
 
-        def is_fused_module(module):
-            """This is a helper function for `_propagate_qconfig_helper` to detecte
-               if this module is fused.
-
-            Args:
-                module (object): input module
-
-            Returns:
-                (bool): is fused or not
-            """
-            op_type = str(type(module))
-            op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
-            op_type = 'nni.' + op_type
-            if op_type in self.fused_op:
-                return True
-            else:
-                return False
-
         def _propagate_qconfig_helper(module,
                                       qconfig_dict,
                                       white_list=None,
@@ -1146,15 +1192,9 @@ class PyTorchAdaptor(TemplateAdaptor):
 
             if type(module) in white_list and type(module) != torch.nn.Sequential:
                 module.qconfig = qconfig_parent
-                for name, child in module.named_children():
-                    module_prefix = prefix + '.' + name if prefix else name
-                    if is_fused_module(module):
-                        if prefix in self.fused_dict:
-                            self.fused_dict[prefix] = [self.fused_dict[prefix], module_prefix]
-                        else:
-                            self.fused_dict[prefix] = module_prefix
             else:
                 module.qconfig = None
+            if hasattr(module, '_modules'):
                 for name, child in module.named_children():
                     module_prefix = prefix + '.' + name if prefix else name
                     _propagate_qconfig_helper(child, qconfig_dict, white_list,
@@ -1367,88 +1407,200 @@ class PyTorchAdaptor(TemplateAdaptor):
         pass
 
     def inspect_tensor(self, model, dataloader, op_list=None, iteration_list=None,
-                       weights=False, save_to_disk=False):
-        from torch.quantization import get_observer_dict
+                       inspect_type='activation', save_to_disk=False):
+        if self.version > '1.7':
+            from torch.fx import GraphModule
+            if type(model.model) == GraphModule:
+                assert False, "Inspect_tensor didn't support fx graph model now!"
         from torch import dequantize
         import numpy as np
-        new_model = copy.deepcopy(model)
+        is_quantized = model.is_quantized
+        op_list_ = []
+        fp32_int8_map = {}
+        for op_name in op_list:
+            op_list_.append(op_name)
+            for key in self.fused_dict:
+                if op_name in self.fused_dict[key]:
+                    fp32_int8_map[op_name] = \
+                        {'activation': self.fused_dict[key][-1], 'weight': key}
+                    if is_quantized:
+                        op_list_.append(key)
+                        op_list_.remove(op_name)
+                    else:
+                        op_list_.append(self.fused_dict[key][-1])
+
+        new_model = model if is_quantized else copy.deepcopy(model)
+
         assert min(iteration_list) > 0, \
             "Iteration number should great zero, 1 means first iteration."
         iterations = max(iteration_list) if iteration_list is not None else -1
-        new_model = self._pre_eval_hook(new_model, op_list=op_list, iteration_list=iteration_list)
+        new_model = self._pre_eval_hook(new_model, op_list=op_list_, iteration_list=iteration_list)
         self.evaluate(new_model, dataloader, iteration=iterations)
         observer_dict = {}
         ret = {}
-        ret['activations'] = []
-        get_observer_dict(new_model.model, observer_dict)
-        if iteration_list is None:
-            iteration_list = [1]
-        for i in iteration_list:
-            summary = OrderedDict()
-            for key in observer_dict:
-                if isinstance(observer_dict[key],
-                              torch.nn.modules.linear.Identity):
-                    continue
-                op_name = key.replace(".activation_post_process", "")
-                value = observer_dict[key].get_tensor_value()[i]
-                if type(value) is list:
-                    summary[op_name] = {}
-                    for index in range(len(value)):
-                        summary[op_name].update(
-                            {op_name + ".output" + str(index): dequantize(value[index]).numpy()
-                             if value[index].is_quantized else value[index].numpy()})
-                else:
-                    summary[op_name] = {op_name + ".output0":
-                                        dequantize(value[index]).numpy()
-                                        if value.is_quantized else value.numpy()}
+        if inspect_type == 'activation' or inspect_type == 'all':
+            from torch.quantization import get_observer_dict
+            ret['activation'] = []
+            get_observer_dict(new_model.model, observer_dict)
+            if iteration_list is None:
+                iteration_list = [1]
+            for i in iteration_list:
+                summary = OrderedDict()
+                for key in observer_dict:
+                    if isinstance(observer_dict[key],
+                                  torch.nn.modules.linear.Identity):
+                        continue
+                    op_name = key.replace(".activation_post_process", "")
+                    value = observer_dict[key].get_tensor_value()[i]
+                    if op_name in op_list:
+                        if type(value) is list:
+                            summary[op_name] = {}
+                            for index in range(len(value)):
+                                summary[op_name].update(
+                                    {op_name + ".output" + 
+                                     str(index): dequantize(value[index]).numpy()
+                                     if value[index].is_quantized else value[index].numpy()})
+                        else:
+                            summary[op_name] = {op_name + ".output0":
+                                                dequantize(value).numpy()
+                                                if value.is_quantized else value.numpy()}
+                    else:
+                        if bool(self.fused_dict):
+                            if is_quantized:
+                                for a in fp32_int8_map:
+                                    if op_name == fp32_int8_map[a]['weight']:
+                                        if type(value) is list:
+                                            summary[a] = {}
+                                            for index in range(len(value)):
+                                                summary[a].update(
+                                                    {op_name + ".output" +
+                                                     str(index): dequantize(value[index]).numpy()
+                                                     if value[index].is_quantized else
+                                                     value[index].numpy()})
+                                        else:
+                                            summary[a] = {op_name + ".output0":
+                                                          dequantize(value).numpy()
+                                                          if value.is_quantized else
+                                                          value.numpy()}
+                            else:
+                                for a in fp32_int8_map:
+                                    if op_name == fp32_int8_map[a]['activation']:
+                                        if type(value) is list:
+                                            summary[a] = {}
+                                            for index in range(len(value)):
+                                                summary[a].update(
+                                                    {op_name + ".output" +
+                                                     str(index): dequantize(value[index]).numpy()
+                                                     if value[index].is_quantized else
+                                                     value[index].numpy()})
+                                        else:
+                                            summary[a] = {op_name + ".output0":
+                                                          dequantize(value).numpy()
+                                                          if value.is_quantized else
+                                                          value.numpy()}
 
-            if save_to_disk:
-                dump_dir = os.path.join(self.workspace_path, 'dump_tensor')
-                os.makedirs(dump_dir, exist_ok=True)
-                np.savez(os.path.join(dump_dir, 'activation_iter{}.npz'.format(i)), **summary)
+                if save_to_disk:
+                    dump_dir = os.path.join(self.workspace_path, 'dump_tensor')
+                    os.makedirs(dump_dir, exist_ok=True)
+                    np.savez(os.path.join(dump_dir, 'activation_iter{}.npz'.format(i)), **summary)
 
-            ret['activations'].append(summary)
+                ret['activation'].append(summary)
 
-        if weights:
-            ret['weights'] = {}
+        if inspect_type == 'weight' or inspect_type == 'all':
+            ret['weight'] = {}
             state_dict = new_model.model.state_dict()
+
             for key in state_dict:
                 if not isinstance(state_dict[key], torch.Tensor):
                     continue
+                if 'weight' not in key and 'bias' not in key:
+                    continue
 
                 op = key[:key.rfind('.')]
-                if self.is_fused_child(op) is True:
-                    op = op[:op.rfind('.')]
                 op = op.replace('._packed_params', '')
 
-                # To merge ._packed_params
-                weight_name = key.replace('._packed_params', '')
-
-                if op in ret['weights']:
-                    ret['weights'][op].update({weight_name: dequantize(state_dict[key]).numpy()
-                                              if state_dict[key].is_quantized else
-                                              state_dict[key].numpy()})
+                if op in op_list:
+                    if op in ret['weight']:
+                        ret['weight'][op].update({key: dequantize(state_dict[key]).numpy()
+                            if state_dict[key].is_quantized else
+                            state_dict[key].detach().numpy()})
+                    else:
+                        ret['weight'][op] = {key: dequantize(state_dict[key]).numpy()
+                            if state_dict[key].is_quantized else
+                            state_dict[key].detach().numpy()}
                 else:
-                    ret['weights'][op] = {weight_name: dequantize(state_dict[key]).numpy()
-                                          if state_dict[key].is_quantized else
-                                          state_dict[key].numpy()}
+                    if bool(self.fused_dict):
+                        if is_quantized:
+                            for a in fp32_int8_map:
+                                if op == fp32_int8_map[a]['weight']:
+                                    if a in ret['weight']:
+                                        ret['weight'][a].update(
+                                            {key: dequantize(state_dict[key]).numpy()
+                                                if state_dict[key].is_quantized else
+                                                    state_dict[key].detach().numpy()})
+                                    else:
+                                        ret['weight'][a] = \
+                                            {key: dequantize(state_dict[key]).numpy()
+                                                if state_dict[key].is_quantized else
+                                                    state_dict[key].detach().numpy()}
+                                    break
 
             if save_to_disk:
-                np.savez(os.path.join(dump_dir, 'weight.npz'), **ret['weights'])
+                np.savez(os.path.join(dump_dir, 'weight.npz'), **ret['weight'])
         else:
-            ret['weights'] = None
+            ret['weight'] = None
 
         return ret
+
+    def set_tensor(self, model, tensor_dict):
+        state_dict = model.model.state_dict()
+        tensor_name = None
+        for key in tensor_dict.keys():
+            end = key.rfind('.')
+            op_name = key[:end]
+            state_op_name = None
+            weight_bias = key[end+1:]
+            for op in self.fused_dict:
+                if op_name in self.fused_dict[op]:
+                    state_op_name = op
+            if state_op_name is None:
+                state_op_name = op_name
+            for state_dict_key in state_dict.keys():
+                state_key_end = state_dict_key.rfind('.')
+                state_key = state_dict_key[:state_key_end].replace('._packed_params', '')
+                if weight_bias in state_dict_key and state_op_name == state_key:
+                    tensor_name = state_dict_key
+            assert tensor_name is not None, key + " is not in the state dict"
+            tensor = torch.from_numpy(tensor_dict[key])
+            dtype = state_dict[tensor_name].dtype
+            if state_dict[tensor_name].is_quantized:
+                if 'channel' in str(state_dict[tensor_name].qscheme()):
+                    scales = state_dict[tensor_name].q_per_channel_scales()
+                    zero_points = state_dict[tensor_name].q_per_channel_zero_points()
+                    axis = state_dict[tensor_name].q_per_channel_axis()
+                    state_dict[tensor_name] = torch.quantize_per_channel(tensor, scales,
+                                                                         zero_points,
+                                                                         axis, dtype=dtype)
+                elif 'tensor' in str(state_dict[tensor_name].qscheme()):
+                    scales = state_dict[tensor_name].q_scale()
+                    zero_points = state_dict[tensor_name].q_zero_point()
+                    state_dict[tensor_name] = torch.quantize_per_tensor(tensor, scales,
+                                                                        zero_points, dtype)
+            else:
+                state_dict[tensor_name] = tensor
+        model.model.load_state_dict(state_dict)
+
+
+unify_op_type_mapping_ipex = {
+    "Convolution_Relu": "Conv2d",
+    "Convolution_Sum_Relu": "Conv2d",
+    "Convolution_BatchNorm": "Conv2d",
+    "Linear_Relu": "Linear"
+}
 
 
 @adaptor_registry
 class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
-    unify_op_type_mapping = {
-        "Convolution_Relu": "Convolution",
-        "Convolution_Sum_Relu": "Convolution",
-        "Convolution_BatchNorm": "Convolution",
-        "Linear_Relu": "Linear"
-    }
     """Adaptor of PyTorch framework with Intel PyTorch Extension,
        all PyTorch IPEX API is in this class.
 
@@ -1693,8 +1845,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
             self.cfgs = json.load(f)
             for op_cfg in self.cfgs:
                 quantizable_ops.append((op_cfg["id"],
-                                       self.unify_op_type_mapping[op_cfg["name"]]
-                                       if op_cfg["name"] in self.unify_op_type_mapping else
+                                       unify_op_type_mapping_ipex[op_cfg["name"]]
+                                       if op_cfg["name"] in unify_op_type_mapping_ipex else
                                        op_cfg["name"]))
         os.remove(self.ipex_config_path)
 
@@ -1711,6 +1863,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         """
 
         pass
+
+    def inspect_tensor(self, model, dataloader, op_list=None, iteration_list=None,
+                       inspect_type='activation', save_to_disk=False):
+        assert False, "Inspect_tensor didn't support IPEX backend now!"
 
 
 class PyTorchQuery(QueryBackendCapability):

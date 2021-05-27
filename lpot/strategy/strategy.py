@@ -30,6 +30,7 @@ from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
+from ..algorithm import AlgorithmScheduler
 
 """The tuning strategies supported by lpot, including basic, random, bayesian and mse.
 
@@ -216,6 +217,11 @@ class TuneStrategy(object):
                         new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 
+        self.algo = AlgorithmScheduler(self.cfg.quantization.recipes)
+        self.algo.dataloader = self.calib_dataloader
+        # reuse the calibration iteration
+        self.algo.origin_model = self.model
+        self.algo.adaptor = self.adaptor
         # The tuning history ever made, structured like below:
         # [
         #   {
@@ -301,8 +307,14 @@ class TuneStrategy(object):
 
                 logger.debug('Dump current tuning configuration:')
                 logger.debug(tune_cfg)
-                self.last_qmodel = self.adaptor.quantize(
+                self.q_model = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
+                self.algo.calib_iter = tune_cfg['calib_iteration']
+                self.algo.q_model = self.q_model
+                # TODO align the api to let strategy has access to pre_optimized model
+                assert self.adaptor.pre_optimized_model
+                self.algo.origin_model = self.adaptor.pre_optimized_model
+                self.last_qmodel = self.algo()
                 assert self.last_qmodel
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 

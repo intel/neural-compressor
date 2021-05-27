@@ -370,6 +370,8 @@ class MxNetAdaptor(Adaptor):
         op_wise = OrderedDict()
         quantizable_op_config = self.query_handler.get_quantization_capability()['int8']
         mixed_quantization = self.query_handler.get_mixed_precision_combination()
+        # (TODO) to allign with other fw, set pre_optimized_model here
+        self.pre_optimized_model = model
         for _, opname_type in enumerate(quantizable_ops):
             optype = opname_type["type"]
             if optype in quantizable_op_config.keys():

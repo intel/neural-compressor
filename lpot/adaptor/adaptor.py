@@ -101,25 +101,54 @@ class Adaptor(object):
 
     @abstractmethod
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[],
-                       weights=False, save_to_disk=False):
+                       inspect_type='activation', save_to_disk=False):
         '''The function is used by tune strategy class for dumping tensor info.
 
            Args:
-               model (object): The model to do calibration.
+               model (object): The model to inspect.
+               dataloader (object): The dataloader used to feed into.
+               op_list (list): The op name in the fp32 model for dumpping.
+               iteration_list (list): The iteration list containing iterations to dump.
+               inspect_type (str): The valid value are 'weight', 'activation', 'all'.
+               save_to_disk (bool): Save to disk or memory.
+
            Return:
                Numpy Array Dict
-               {'op1': tensor, 'op2': tensor}
+               {
+                 'weight': {
+                   'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                   'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                   ...
+                 },
+                 'activation': [
+                   # iter 0
+                   {
+                     'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                     'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                     ...
+                   },
+                   # iter 1
+                   ...
+                 ]
+               }
         '''
         raise NotImplementedError
 
     @abstractmethod
-    def mapping(self, src_model, dst_model):
-        '''The function is used to create a dict to map tensor name
-           of src model to tensor name of dst model.
+    def set_tensor(self, model, tensor_dict):
+        '''The function is used by tune strategy class for setting tensor back to model.
 
-           Return:
-               Dict
-               {'src_op1': 'dst_op1'}
+           Args:
+               model (object): The model to set tensor. Usually it is quantized model.
+               tensor_dict (dict): The tensor dict to set. Note the numpy array contains float
+                                   value, adaptor layer has the responsibility to quantize to
+                                   int8 or int32 to set into the quantized model if needed.
+                                   The dict format is something like:
+                                   {
+                                     'weight0_name': numpy.array,
+                                     'bias0_name': numpy.array,
+                                     ...
+                                   }
         '''
         raise NotImplementedError
 

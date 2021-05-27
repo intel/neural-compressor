@@ -22,9 +22,9 @@ import logging
 from collections import OrderedDict
 import yaml
 import numpy as np
-from .adaptor import adaptor_registry, Adaptor
-from .query import QueryBackendCapability
-from ..utils.utility import LazyImport, dump_elapsed_time
+from lpot.adaptor.adaptor import adaptor_registry, Adaptor
+from lpot.adaptor.query import QueryBackendCapability
+from lpot.utils.utility import LazyImport, dump_elapsed_time
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -54,6 +54,8 @@ class ONNXRTAdaptor(Adaptor):
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
+        self.q_config = {} # adaptor should know current configs at any time
+        self.quantize_params = {} # adaptor should know current params at any time
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -70,7 +72,7 @@ class ONNXRTAdaptor(Adaptor):
         Returns:
             (dict): quantized model
         """
-        assert q_func==None, "quantization aware training has not been supported on ONNXRUNTIME"
+        assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         model = self.pre_optimized_model if self.pre_optimized_model else model
         ort_version = [int(i) for i in ort.__version__.split(".")]
         if ort_version < [1, 5, 2]:
@@ -78,17 +80,20 @@ class ONNXRTAdaptor(Adaptor):
             return model
         if model.model.opset_import[0].version < 11:
             logger.warning('quantize input need model opset >= 11')
-        from .ox_utils.onnx_quantizer import ONNXQuantizer
+        from lpot.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
         model = copy.deepcopy(model)
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         q_config = self._cfg_to_qconfig(tune_cfg)
+        iterations = tune_cfg.get('calib_iteration', 1)
         if self.static:
-            quantize_params = self._get_quantize_params(model.model, data_loader, q_config)
+            quantize_params = self._get_quantize_params(model.model, data_loader, q_config, \
+                                                                                  iterations)
         else:
             quantize_params = None
+        self.quantize_params = quantize_params
         quantizer = ONNXQuantizer(model.model,
             q_config,
             backend,
@@ -97,14 +102,17 @@ class ONNXRTAdaptor(Adaptor):
             self.quantizable_op_types)
         quantizer.quantize_model()
         model.model = quantizer.model.model
+        self.q_config = q_config # update so other methods can know current configs
         return model
 
-    def _get_quantize_params(self, model, data_loader, q_config):
-        from .ox_utils.onnxrt_mid import ONNXRTAugment
-        from .ox_utils.onnx_model import ONNXModel
+    def _get_quantize_params(self, model, data_loader, q_config, iterations):
+        from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+        from lpot.model.onnx_model import ONNXModel
+        if not isinstance(model, ONNXModel):
+            model = ONNXModel(model)
         black_nodes = [node for node in q_config if q_config[node]=='fp32']
         white_nodes = [node for node in q_config if q_config[node]!='fp32']
-        augment = ONNXRTAugment(ONNXModel(model), \
+        augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   os.path.join(self.work_space, 'augmented_model.onnx'), \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
@@ -114,25 +122,82 @@ class ONNXRTAdaptor(Adaptor):
 
     def inspect_tensor(self, model, data_loader, op_list=[],
                        iteration_list=[],
-                       have_weights=False,
+                       inspect_type='activation',
                        save_to_disk=False):
         '''The function is used by tune strategy class for dumping tensor info.
         '''
-        from .ox_utils.onnxrt_mid import ONNXRTAugment
-        from .ox_utils.onnx_model import ONNXModel
-        model_wrapper = ONNXModel(model)
-        augment = ONNXRTAugment(model_wrapper, data_loader, [], \
+        from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+        from lpot.model.onnx_model import ONNXModel
+        if not isinstance(model, ONNXModel):
+            model = ONNXModel(model)
+        augment = ONNXRTAugment(model, data_loader, [], \
                   os.path.join(self.work_space, 'augment_for_inspect.onnx'), \
                   iterations=iteration_list,
                   white_nodes=op_list)
-        tensors = augment.dump_tensor(activation_only=not have_weights)
+        tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
+                                      weight=(inspect_type!='activation'))
         if save_to_disk:
             np.savez(tensors, os.path.join(self.work_space, 'dumped_tensors.npz'))
         return tensors
 
+    def set_tensor(self, model, tensor_dict):
+        from onnx import numpy_helper
+        from lpot.model.onnx_model import ONNXModel
+        from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zo
+        from lpot.adaptor.ox_utils.util import quantize_data_per_channel
+        if not isinstance(model, ONNXModel):
+            model = ONNXModel(model)
+        assert "QuantizeLinear" in [node.op_type for node in model.model.graph.node], \
+                                           'adaptor.set_tensor only accept int8 model'
+        input_name_to_nodes = model.input_name_to_nodes
+        for tensor_name, tensor_value in tensor_dict.items():
+            if not tensor_name.endswith('_quantized'):
+                tensor_name += '_quantized'
+            not_filter = False
+            scale_tensor, zo_tensor = model.get_scale_zo(tensor_name)
+            if scale_tensor is None or zo_tensor is None:
+                not_filter = True
+            else:
+                scale_value = numpy_helper.to_array(scale_tensor)
+                zo_value = numpy_helper.to_array(zo_tensor)
+            assert len(input_name_to_nodes[tensor_name]) == 1, \
+                    'quantized filter weight should be input of only one node'
+            node = input_name_to_nodes[tensor_name][0] #TBD only for conv bias
+            node_name = node.name.replace('_quant', '')
+            assert node_name in self.q_config
+            q_type = self.q_config[node_name]['weight']['dtype']
+            if not_filter:
+                new_tensor_value = self._requantize_bias(model, tensor_name, tensor_value)
+            elif self.q_config[node_name]['weight']['granularity'] == 'per_tensor':
+                new_tensor_value = quantize_data_with_scale_zo(tensor_value,
+                                                               q_type,
+                                                               scale_value,
+                                                               zo_value)
+            else:
+                new_tensor_value = quantize_data_per_channel(tensor_value,
+                                                             q_type,
+                                                             scale_value,
+                                                             zo_value)
+            model.set_initializer(tensor_name, new_tensor_value)
+        return model
+
+    def _requantize_bias(self, model, bias_name, bias_data):
+        ''' helper function to requantize bias, borrowed from onnx_quantizer '''
+        from onnx import numpy_helper
+        node = model.input_name_to_nodes[bias_name][0]
+        input_scale_name = node.input[1]
+        input_scale = numpy_helper.to_array(model.get_initializer(input_scale_name))
+
+        weight_scale_name = node.input[4]
+        weight_scale = numpy_helper.to_array(model.get_initializer(weight_scale_name))
+
+        bias_scale = input_scale * weight_scale
+        new_bias_data = (bias_data / bias_scale).round().astype(np.int32)
+        return new_bias_data
+
     def _pre_optimize(self, model, level=1):
         sess_options = ort.SessionOptions()
-        level = self.query_handler.get_graph_optimization() # pylint: disable=no-member 
+        level = self.query_handler.get_graph_optimization() # pylint: disable=no-member
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
@@ -143,8 +208,10 @@ class ONNXRTAdaptor(Adaptor):
 
     def _replace_gemm_with_matmul(self, model):
         new_nodes = []
-        from .ox_utils.onnx_model import ONNXModel
-        model = ONNXModel(model)
+        from onnx import numpy_helper
+        from lpot.model.onnx_model import ONNXModel
+        if not isinstance(model, ONNXModel):
+            model = ONNXModel(model)
 
         for node in model.nodes():
             if node.op_type == 'Gemm':
@@ -167,8 +234,8 @@ class ONNXRTAdaptor(Adaptor):
                         B = model.get_initializer(node.input[1])
                         if B:
                             # assume B is not used by any other node
-                            B_array = onnx.numpy_helper.to_array(B)
-                            B_trans = onnx.numpy_helper.from_array(B_array.T)
+                            B_array = numpy_helper.to_array(B)
+                            B_trans = numpy_helper.from_array(B_array.T)
                             B_trans.name = B.name
                             model.remove_initializer(B)
                             model.add_initializer(B_trans)
@@ -312,7 +379,7 @@ class ONNXRTAdaptor(Adaptor):
         """
         sess_options = ort.SessionOptions()
         if measurer:
-            # https://github.com/microsoft/onnxruntime/issues/7347 
+            # https://github.com/microsoft/onnxruntime/issues/7347
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
@@ -355,7 +422,7 @@ class ONNXRTAdaptor(Adaptor):
                 break
 
         if self.fp32_preds_as_label:
-            from .ox_utils.util import collate_preds
+            from lpot.adaptor.ox_utils.util import collate_preds
             if fp32_baseline:
                 results = collate_preds(self.fp32_results)
                 metric.update(results, results)

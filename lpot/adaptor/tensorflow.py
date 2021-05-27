@@ -51,7 +51,7 @@ class TensorFlowAdaptor(Adaptor):
         self.optimization = deep_get(self.framework_specific_info, 'optimization', {})
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
-        
+
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
 
@@ -95,7 +95,7 @@ class TensorFlowAdaptor(Adaptor):
         writer.flush()
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, 
+                 metric=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Evaluate the model for specified metric on validation dataset.
 
@@ -180,7 +180,7 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
 
-        if metric: 
+        if metric:
             metric.reset()
             if hasattr(metric, "compare_label") and not metric.compare_label:
                 self.fp32_preds_as_label = True
@@ -497,8 +497,110 @@ class TensorFlowAdaptor(Adaptor):
 
         return capability
 
+    def set_tensor(self, model, tensor_dict):
+        from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+        g = GraphAnalyzer()
+        g.graph = model.graph_def
+        graph_info = g.parse_graph()
+
+        def _get_fp32_op_name(model, tensor_name):
+            is_weight = False
+            is_biasadd = False
+            last_node_name = None
+            current_node_name = None
+            for each_node in model.graph_def.node:
+
+                if tensor_name in each_node.input:
+                    tensor_index = list(each_node.input).index(tensor_name)
+                    if each_node.op.find("Quantized") != -1 and tensor_index == 2:
+                        is_biasadd = True
+                        last_node_name = each_node.input[0]
+                        current_node_name = each_node.name
+
+                if tensor_name + "_qint8_const" in each_node.input:
+                    pass
+
+            return is_weight, is_biasadd, current_node_name, last_node_name
+
+        from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+        from tensorflow.python.framework import dtypes
+        from tensorflow.python.framework import tensor_util
+        from tensorflow.core.framework import attr_value_pb2
+        qint32_type = dtypes.qint32.as_datatype_enum
+
+        for tensor_name, tensor_content in tensor_dict.items():
+            is_weight, is_biasadd, current_node_name, last_node_name = \
+                    _get_fp32_op_name(model, tensor_name)
+
+            if is_biasadd:
+                is_biasadd_dtype_is_fp32 = graph_info[\
+                        current_node_name].node.attr['Tbias'] == attr_value_pb2.AttrValue(
+                    type=dtypes.float32.as_datatype_enum)
+                current_node = graph_info[current_node_name].node
+                bias_add_node = graph_info[current_node.input[2]].node
+                if is_biasadd_dtype_is_fp32:
+                    bias_add_node.attr["value"].CopyFrom(
+                        attr_value_pb2.AttrValue(
+                            tensor=tensor_util.make_tensor_proto(tensor_content,
+                            dtypes.float32, tensor_content.shape)))
+                else:
+                    last_node = graph_info[last_node_name].node
+                    min_input = graph_info[\
+                            last_node.input[-2]].node.attr['value'].tensor.float_val[0]
+                    max_input = graph_info[\
+                            last_node.input[-1]].node.attr['value'].tensor.float_val[0]
+                    channel_size = tensor_content.shape[0]
+                    max_filter_node = graph_info[current_node.input[6]].node
+                    min_filter_node = graph_info[current_node.input[5]].node
+                    if max_filter_node.attr['value'].tensor.float_val:
+                        max_filter_tensor = []
+                        min_filter_tensor = []
+                        max_filter_tensor.append(\
+                                (max_filter_node.attr['value'].tensor.float_val)[0])
+                        min_filter_tensor.append(\
+                                (min_filter_node.attr['value'].tensor.float_val)[0])
+                    else:
+                        max_filter_tensor = tensor_util.MakeNdarray(\
+                                min_filter_node.attr['value'].tensor)
+                        min_filter_tensor = tensor_util.MakeNdarray(\
+                                min_filter_node.attr['value'].tensor)
+                    activation_range = 127.0 if \
+                            current_node.attr["Tinput"].type == dtypes.qint8 else 255.0
+                    updated_bias = Helper.generate_int32_bias_for_conv(\
+                            tensor_content, channel_size, max_input, min_input, \
+                                max_filter_tensor, min_filter_tensor, activation_range)
+
+                    bias_add_node.attr['dtype'].CopyFrom(\
+                            attr_value_pb2.AttrValue(type=qint32_type))
+                    bias_add_node.attr["value"].CopyFrom(\
+                        attr_value_pb2.AttrValue(
+                            tensor=tensor_util.make_tensor_proto(updated_bias,
+                            dtypes.int32, tensor_content.shape)))
+                    bias_add_node.attr['value'].tensor.dtype = qint32_type
+                    current_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=qint32_type))
+
+            if is_weight:
+                tmp_const_node = Helper.create_constant_node(\
+                        current_node.name + '_weights_tmp',
+                        tensor_content.transpose(2,3,1,0), dtypes.float32)
+                min_filter_node = graph_info[current_node.input[5]].node
+                per_channel = True if min_filter_node.attr['value'].tensor.tensor_shape else False
+                from .tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+                original_fp32_op = current_node.op.split("With")[0].split("Quantized")[-1]
+                if original_fp32_op.find("Depthwise") != -1:
+                    original_fp32_op = "DepthwiseConv2dNative"
+                qint8_const_node, min_node, max_node = \
+                        QuantizeGraphHelper.generate_quantized_weight_node(
+                            original_fp32_op, tmp_const_node, per_channel)
+                g.add_node(qint8_const_node, [], [current_node.name])
+                g.add_node(min_node, [], [current_node.name])
+                g.add_node(max_node, [], [current_node.name])
+                g.replace_constant_graph_with_constant_node(qint8_const_node, tensor_name)
+                g.replace_constant_graph_with_constant_node(min_node, current_node.input[5])
+                g.replace_constant_graph_with_constant_node(max_node, current_node.input[6])
+
     def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[],
-                       weights=False, save_to_disk=False):
+                       inspect_type='activation', save_to_disk=False):
         """Collect the specified tensor's output on specified iteration.
 
         Args:
@@ -517,8 +619,8 @@ class TensorFlowAdaptor(Adaptor):
                                    int8_sequences=self.op_wise_sequences,
                                    data_loader=dataloader)
 
-        dump_content = converter.inspect_tensor(op_list, iteration_list, self.work_dir, weights)
-
+        dump_content = converter.inspect_tensor(\
+                op_list, iteration_list, self.work_dir, inspect_type)
         if save_to_disk:
             dump_dir = os.path.join(self.work_dir, 'dump_tensor')
             os.makedirs(dump_dir, exist_ok=True)
@@ -529,7 +631,7 @@ class TensorFlowAdaptor(Adaptor):
                 output_path = os.path.join(dump_dir, 'activation_iter{}.npz'.format(index + 1))
                 np.savez(output_path, **tmp_dict)
 
-            if weights and dump_content['weight']:
+            if inspect_type in ('weight', 'all') and dump_content['weight']:
                 np.savez(os.path.join(dump_dir, 'weight.npz'), **dump_content['weight'])
 
         return dump_content

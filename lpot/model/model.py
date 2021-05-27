@@ -22,6 +22,8 @@ from lpot.utils.utility import LazyImport, compute_sparsity
 from lpot.utils import logger
 from lpot.conf.dotdict import deep_get, deep_set
 from lpot.conf import config as cfg 
+from lpot.model.base_model import BaseModel
+from lpot.model.onnx_model import ONNXModel
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -587,12 +589,6 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
             'estimator': estimator_session,
             'slim': slim_session,}
 
-class BaseModel(object):
-
-    @abstractmethod
-    def save(self, root=None, *args, **kwargs):
-        raise NotImplementedError
-
 class TensorflowModel(object):
     """Build LPOT TensorflowModel object
 
@@ -644,6 +640,7 @@ class TensorflowBaseModel(BaseModel):
             self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
 
         tf.compat.v1.get_variable_scope().reuse_variables()
+        self._graph_info = {}
 
     @property
     def model(self):
@@ -652,6 +649,13 @@ class TensorflowBaseModel(BaseModel):
     @property
     def graph_def(self):
         return self.sess.graph.as_graph_def()
+
+    @property
+    def graph_info(self):
+        self._graph_info = {}
+        for node in self.graph_def.node:
+            self._graph_info[node.name] = node.op
+        return self._graph_info
 
     @property
     def graph(self):
@@ -828,6 +832,7 @@ class PyTorchBaseModel(BaseModel):
     def __init__(self, model, framework_specific_info={}, **kwargs):
         self._model = model
         self.tune_cfg = None
+        self.is_quantized = False
 
     def get_all_weight_names(self):
         """Get weight names
@@ -853,9 +858,10 @@ class PyTorchBaseModel(BaseModel):
             (object): weight tensor
 
         """
-        for name, param in self._model.named_parameters():
+        state_dict = self._model.state_dict()
+        for name in state_dict:
             if tensor_name == name:
-                return param.data
+                return state_dict[name]
 
     def update_weights(self, tensor_name, new_tensor):
         """Update weight value
@@ -868,9 +874,11 @@ class PyTorchBaseModel(BaseModel):
 
         """
         new_tensor = torch.Tensor(new_tensor)
-        for name, param in self._model.named_parameters():
+        state_dict = self._model.state_dict()
+        for name in state_dict:
             if name == tensor_name:
-                param.data.copy_(new_tensor.data)
+                state_dict[name] = new_tensor
+        self._model.load_state_dict(state_dict)
 
     def report_sparsity(self):
         """Get sparsity of the model
@@ -920,6 +928,8 @@ class PyTorchBaseModel(BaseModel):
             0, 0, 0])
 
         return df, total_sparsity
+
+
 class PyTorchModel(PyTorchBaseModel):
     """Build PyTorchModel object
 
@@ -981,6 +991,14 @@ class PyTorchModel(PyTorchBaseModel):
             logger.info("Save config file and weights of quantized model at %s" % root)
         except IOError as e:
             logger.error("Unable to save configure file and weights. %s" % e)
+
+    @property
+    def graph_info(self):
+        from ..adaptor.pytorch import get_ops_recursively
+        op_map = {}
+        get_ops_recursively(self._model, '', op_map)
+        return op_map
+
 
 class PyTorchIpexModel(PyTorchBaseModel):
     """Build PyTorchIpexModel object
@@ -1064,35 +1082,6 @@ class MXNetModel(BaseModel):
                 {('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
             mx.nd.save(root + '-0000.params', save_dict)
             logger.info('Save quantized symbol model at %s' % root)
-
-class ONNXModel(BaseModel):
-    """Build ONNXModel object
-
-    Args:
-        model (onnx model): model path 
-        framework_specific_info (dict): information about model and framework
-    """
- 
-    def __init__(self, model, framework_specific_info={}, **kwargs):
-        self._model = model
-        self.framework_specific_info = framework_specific_info
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        self._model = model
-
-    def save(self, root=None):
-        if not root:
-            root = cfg.default_workspace + '/save.onnx'
-        root = os.path.abspath(os.path.expanduser(root))
-        os.makedirs(os.path.dirname(root), exist_ok=True)
-        onnx_file = root if os.path.split(root)[-1].endswith('.onnx') else root + '.onnx'
-        onnx.save(self._model, onnx_file)
-        logger.info("Save quantized model at %s" % onnx_file)
 
 MODELS = {'tensorflow': TensorflowModel,
           'mxnet': MXNetModel,

@@ -101,7 +101,7 @@ def load(checkpoint_dir, model):
         if version >= '1.7':
             q_model = copy.deepcopy(model.eval())
             from torch.quantization.quantize_fx import prepare_fx, convert_fx
-            fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs)
+            fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
             if version < '1.8':
                 q_model = torch._fx.symbolic_trace(q_model)
             q_model = prepare_fx(q_model, fx_op_cfgs)

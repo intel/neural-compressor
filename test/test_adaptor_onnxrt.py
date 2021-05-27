@@ -7,9 +7,13 @@ import torchvision
 import yaml
 import onnx
 import numpy as np
+
+from onnx import onnx_pb as onnx_proto
 from onnx import version_converter, helper, TensorProto, numpy_helper
 from lpot.adaptor import FRAMEWORKS
 from lpot.data import DATASETS, DATALOADERS
+from lpot.experimental import Quantization, common
+from lpot.experimental import Benchmark, common
 
 def build_static_yaml():
     fake_yaml = """
@@ -229,10 +233,34 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                                        'imagenet')}
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info)
-        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv"])
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type='activation')
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type='activation', save_to_disk=True)
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type='weight')
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type='all')
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv_0"], inspect_type='activation')
+
+    def test_set_tensor(self):
+        quantizer = Quantization("static.yaml")
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.model = common.Model(self.mb_v2_model)
+        q_model = quantizer()
+        framework_specific_info = {"device": "cpu",
+                     "approach": "post_training_static_quant",
+                     "random_seed": 1234,
+                     "q_dataloader": None,
+                     "backend": "qlinearops",
+                     "workspace_path": './lpot_workspace/{}/{}/'.format(
+                                             'onnxrt',
+                                             'imagenet')}
+        framework = "onnxrt_qlinearops"
+        adaptor = FRAMEWORKS[framework](framework_specific_info) 
+        q_config = {'fused Conv_0': {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8}}}
+        adaptor.q_config = q_config
+        adaptor.set_tensor(q_model, {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
+        adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random([32])})
 
     def test_adaptor(self):
-        from lpot.experimental import Quantization, common
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
@@ -255,7 +283,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.model = common.Model(self.ir3_model)
             q_model = quantizer()
 
-        from lpot.experimental import Benchmark, common
         for mode in ["performance", "accuracy"]:
             fake_yaml = "benchmark.yaml"
             evaluator = Benchmark(fake_yaml)

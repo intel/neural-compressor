@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.quantized as nnq
@@ -256,6 +255,15 @@ class TestPytorchAdaptor(unittest.TestCase):
         build_qat_yaml()
         build_dump_tensors_yaml()
 
+    @classmethod
+    def tearDownClass(self):
+        os.remove('ptq_yaml.yaml')
+        os.remove('dynamic_yaml.yaml')
+        os.remove('qat_yaml.yaml')
+        os.remove('dump_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
+
     def test_get_all_weight_name(self):
         assert len(list(self.lpot_model.get_all_weight_names())) == 62
 
@@ -301,6 +309,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             # Load configure and weights by lpot.utils
             saved_model = load("./saved", model)
             eval_func(saved_model)
+            shutil.rmtree('./saved', ignore_errors=True)
         from lpot.experimental import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
         # Load configure and weights by lpot.model
@@ -325,22 +334,41 @@ class TestPytorchAdaptor(unittest.TestCase):
         quantizer()
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
 
-    def test_tensor_dump(self):
+    def test_tensor_dump_and_set(self):
         model = copy.deepcopy(self.lpot_model)
         model.model.eval().fuse_model()
         quantizer = Quantization('ptq_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         dataloader = common.DataLoader(dataset)
         dataloader = common._generate_common_dataloader(dataloader, 'pytorch')
-        self.adaptor.inspect_tensor(
-            model, dataloader, op_list=['conv1', 'layer1.0.conv1'],
-            iteration_list=[1, 2], weights=True, save_to_disk=True)
+        quantizer.eval_dataloader = dataloader
+        quantizer.calib_dataloader = dataloader
+        quantizer.model = common.Model(model.model)
+        q_model = quantizer()
+        quantizer.strategy.adaptor.inspect_tensor(
+            model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
+            iteration_list=[1, 2], inspect_type='all', save_to_disk=True)
         load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
-        a = load_array('dump_tensor/activation_iter1.npz')
-        w = load_array('dump_tensor/weight.npz')
-        self.assertTrue(w['conv1'].item()['conv1.0.weight'].shape[0] ==
-                        a['conv1'].item()['conv1.output0'].shape[1])
-        shutil.rmtree('./dump_tensor', ignore_errors=True)
+        a = load_array('saved/dump_tensor/activation_iter1.npz')
+        w = load_array('saved/dump_tensor/weight.npz')
+        self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
+                        a['conv1.0'].item()['conv1.1.output0'].shape[1])
+        data = np.random.random(w['conv1.0'].item()['conv1.0.weight'].shape).astype(np.float32)
+        quantizer.strategy.adaptor.set_tensor(q_model, {'conv1.0.weight': data})
+        changed_tensor = q_model.get_weight('conv1.weight')
+        scales = changed_tensor.q_per_channel_scales()
+        changed_tensor_fp32 = torch.dequantize(changed_tensor)
+        self.assertTrue(np.allclose(data, changed_tensor_fp32.numpy(), atol=2 / np.min(scales.numpy())))
+        quantizer.strategy.adaptor.inspect_tensor(
+            q_model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
+            iteration_list=[1, 2], inspect_type='all', save_to_disk=False)
+
+    def test_get_graph_info(self):
+        from lpot.adaptor.pytorch import get_ops_recursively
+        model = copy.deepcopy(self.model)
+        op_map = {}
+        get_ops_recursively(model, '', op_map)
+        self.assertTrue(op_map['conv1'] == 'Conv2d')
 
     def test_floatfunctions_fallback(self):
         class ModelWithFunctionals(torch.nn.Module):
@@ -406,7 +434,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.model = common.Model(model_origin)
             q_model = quantizer()
             q_model.save('./saved_static_fx')
-            
+
             # Load configure and weights by lpot.utils
             model_fx = load("./saved_static_fx", model_origin)
             if version >= '1.8':
@@ -414,8 +442,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             else:
                 self.assertTrue(isinstance(model_fx, torch._fx.graph_module.GraphModule))
 
-    def test_fx_quant(self):
-
+    def test_fx_dynamic_quant(self):
         # Model Definition
         class LSTMModel(nn.Module):
             """Container module with an encoder, a recurrent module, and a decoder."""
@@ -478,6 +505,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         os.remove('ipex_yaml.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
+
     def test_tuning_ipex(self):
         from lpot.experimental import Quantization
         model = torchvision.models.resnet18()

@@ -10,7 +10,7 @@ from onnx import helper, TensorProto, numpy_helper
 sys.path.append('..')
 from lpot.experimental.data.datasets.dataset import Dataset
 from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
-from lpot.adaptor.ox_utils.onnx_model import ONNXModel
+from lpot.model.onnx_model import ONNXModel
 from lpot.data import DATASETS, DATALOADERS
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
@@ -122,7 +122,7 @@ class TestAugment(unittest.TestCase):
                                 self.augment_path,
                                 iterations=[0, 1],
                                 white_nodes=["conv"])
-        map_dumped_tensors = augment.dump_tensor(activation_only=True)
+        map_dumped_tensors = augment.dump_tensor()
         assert "conv" in map_dumped_tensors["activation"][0]
         assert "C" in map_dumped_tensors["activation"][0]["conv"]
         assert "conv" in map_dumped_tensors["activation"][1]
@@ -135,10 +135,10 @@ class TestAugment(unittest.TestCase):
                                 self.augment_path,
                                 iterations=[0],
                                 white_nodes=["conv", "relu"])
-        map_dumped_tensors = augment.dump_tensor(activation_only=False)
+        map_dumped_tensors = augment.dump_tensor(weight=True)
         assert "conv" in map_dumped_tensors["activation"][0]
         assert "relu" in map_dumped_tensors["activation"][0]
-        assert "conv" in map_dumped_tensors["weight"][0]
+        assert "conv" in map_dumped_tensors["weight"]
 
         model, dataloader = self.nlp_session
         augment = ONNXRTAugment(ONNXModel(model), 
@@ -473,8 +473,8 @@ class TestAugment(unittest.TestCase):
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['D_quantized_new_DequantizeLinear']
-        added_outputs = ['D_quantized_new_DequantizeLinear']
+        added_node_names = ['D_quantized_DequantizeLinear']
+        added_outputs = ['D_quantized_output']
         self.assertEqual(len(augmented_model_node_names), 4)
         self.assertEqual(len(augmented_model_outputs), 2)
         for name in added_node_names:
@@ -483,7 +483,7 @@ class TestAugment(unittest.TestCase):
             self.assertTrue(output in augmented_model_outputs)
      
     def test_quant_param_calculation(self):
-        '''TEST_CONFIG_5'''
+        '''TEST_CONFIG_6'''
      
         #   Relu      
         #    |      \ 

@@ -534,6 +534,10 @@ schema = Schema({
                     And(bool, lambda s: s in [True, False]),
             Optional('first_conv_or_matmul_quantization', default=True):
                     And(bool, lambda s: s in [True, False]),
+            Optional('fast_bias_correction', default=False):
+                    And(bool, lambda s: s in [True, False]),
+            Optional('weight_correction', default=False):
+                    And(bool, lambda s: s in [True, False]),
         },
         Optional('model_wise', default={'weight': {'bit': [7.0]}, 'activation': {}}): {
             Optional('weight', default= {'bit': [7.0]}): {

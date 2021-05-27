@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 sys.path.append('..')
-from lpot.adaptor.ox_utils.onnx_model import ONNXModel
+from lpot.model.onnx_model import ONNXModel
 
 def get_onnx_model():
     model = torchvision.models.resnet18()
@@ -64,6 +64,50 @@ class TestOnnxModel(unittest.TestCase):
         onnx.save(model, test_model_path)
         model = onnx.load(test_model_path)
         self.model = ONNXModel(model)
+
+        #    QuantizeLinear
+        #        |
+        #    QLinearConv
+        #        |
+        #    DequantizeLinear
+        A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
+        A_scale = helper.make_tensor_value_info('A_scale', TensorProto.FLOAT, [1])
+        a_scale = generate_input_initializer([1], np.float32, 'A_scale')
+        A_zo = helper.make_tensor_value_info('A_zero_point', TensorProto.INT8, [1])
+        a_zero_point = generate_input_initializer([1], np.int8, 'A_zero_point')
+        B_scale = helper.make_tensor_value_info('B_scale', TensorProto.FLOAT, [1])
+        b_scale = generate_input_initializer([1], np.float32, 'B_scale')
+        B_zo = helper.make_tensor_value_info('B_zero_point', TensorProto.INT8, [1])
+        b_zero_point = generate_input_initializer([1], np.int8, 'B_zero_point')
+        C = helper.make_tensor_value_info('C', TensorProto.INT8, [1, 1, 5, 5])
+        c = generate_input_initializer([1, 1, 5, 5], np.int8, 'C')
+        C_scale = helper.make_tensor_value_info('C_scale', TensorProto.FLOAT, [1])
+        c_scale = generate_input_initializer([1], np.float32, 'C_scale')
+        C_zo = helper.make_tensor_value_info('C_zero_point', TensorProto.INT8, [1])
+        c_zero_point = generate_input_initializer([1], np.int8, 'C_zero_point')
+        E = helper.make_tensor_value_info('E', TensorProto.INT32, [1])
+        e = generate_input_initializer([1], np.int32, 'E')
+        D_scale = helper.make_tensor_value_info('D_scale', TensorProto.FLOAT, [1])
+        d_scale = generate_input_initializer([1], np.float32, 'D_scale')
+        D_zo = helper.make_tensor_value_info('D_zero_point', TensorProto.INT8, [1])
+        d_zero_point = generate_input_initializer([1], np.int8, 'D_zero_point')
+        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
+        quantize_node = onnx.helper.make_node('QuantizeLinear', ['A', 'A_scale', 'A_zero_point'], ['B_quantized'], name='A_QuantizeLinear')
+        conv_node = onnx.helper.make_node('QLinearConv', ['B_quantized', 'B_scale', 'B_zero_point', 'C_quantized', 'C_scale', 'C_zero_point', 'D_scale', 'D_zero_point', 'E'], ['D_quantized'], name='conv_quant', kernel_shape=[3, 3], pads=[1, 1, 1, 1])
+        dequantize_node = onnx.helper.make_node('DequantizeLinear', ['D_quantized', 'D_scale', 'D_zero_point'], ['D'], name='D_DequantizeLinear')
+        graph = helper.make_graph([quantize_node, conv_node, dequantize_node], 'test_graph_7', [A, A_scale, A_zo, C, C_scale, C_zo, E, D_scale, D_zo], [D])
+        graph.initializer.add().CopyFrom(a_scale)
+        graph.initializer.add().CopyFrom(a_zero_point)
+        graph.initializer.add().CopyFrom(b_scale)
+        graph.initializer.add().CopyFrom(b_zero_point)
+        graph.initializer.add().CopyFrom(c)
+        graph.initializer.add().CopyFrom(c_scale)
+        graph.initializer.add().CopyFrom(c_zero_point)
+        graph.initializer.add().CopyFrom(e)
+        graph.initializer.add().CopyFrom(d_scale)
+        graph.initializer.add().CopyFrom(d_zero_point)
+        model = helper.make_model(graph)
+        self.q_model = ONNXModel(model)
 
     def test_nodes(self):
         self.assertEqual(len(self.model.nodes()), 6)
@@ -147,15 +191,15 @@ class TestOnnxModel(unittest.TestCase):
             self.assertTrue(init in inits_name)
 
     def test_input_name_to_nodes(self):
-        self.assertEqual(len(self.model.input_name_to_nodes()), 12)
-        ipts_name = [name for name in self.model.input_name_to_nodes()]
+        self.assertEqual(len(self.model.input_name_to_nodes), 12)
+        ipts_name = [name for name in self.model.input_name_to_nodes]
         ipts = ['input0', 'X1',  'X2', 'X3', 'X3_weight', 'X3_bias','X5_weight', 'X5_bias', 'X4', 'X5']
         for ipt in ipts:
             self.assertTrue(ipt in ipts_name)
 
     def test_output_name_to_node(self):
-        self.assertEqual(len(self.model.output_name_to_node()), 6)
-        opts_name = [name for name in self.model.output_name_to_node()]
+        self.assertEqual(len(self.model.output_name_to_node), 6)
+        opts_name = [name for name in self.model.output_name_to_node]
         opts = ['X1', 'X2', 'X3', 'X4', 'X5', 'output']
         for opt in opts:
             self.assertTrue(opt in opts_name)
@@ -198,6 +242,11 @@ class TestOnnxModel(unittest.TestCase):
         nodes = self.model.find_nodes_by_initializer(self.model.graph(), initializer)
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0].name, "Conv1")
+
+    def test_get_scale_zo(self):
+        input_scale, input_zo = self.q_model.get_scale_zo('B_quantized')
+        weight_scale, weight_zo = self.q_model.get_scale_zo('C_quantized') 
+        bias_scale, bias_zo = self.q_model.get_scale_zo('E')
 
     def test_save(self):
         self.model.save_model_to_file('./test_model_6.onnx', use_external_data_format=True)
