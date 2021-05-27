@@ -26,11 +26,11 @@ wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -P wwm_unc
 wwm_uncased_L-24_H-1024_A-16. will be your data path
 
 #### Automatic dataset download
-Run the `prepare_dataset.sh` script located in `examples/tensorflow/nlp/bert`.
+Run the `prepare_dataset.sh` script located in `examples/tensorflow/nlp/bert_large_squad`.
 
 Usage:
 ```shell
-cd examples/tensorflow/nlp/bert
+cd examples/tensorflow/nlp/bert_large_squad
 bash prepare_dataset.sh --output_dir=./data
 ```
 
@@ -48,11 +48,11 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/bert_
 unzip bert_large_checkpoints.zip
 ```
 #### Automatic model download
-Run the `prepare_model.sh` script located in `examples/tensorflow/nlp/bert`.
+Run the `prepare_model.sh` script located in `examples/tensorflow/nlp/bert_large_squad`.
 
 Usage:
 ```shell
-cd examples/tensorflow/nlp/bert
+cd examples/tensorflow/nlp/bert_large_squad
 bash prepare_model.sh --output_dir=./model
 ```
 

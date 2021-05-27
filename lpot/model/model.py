@@ -531,9 +531,13 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
       estimator_spec = model._call_model_fn(features, None,
           tf.estimator.ModeKeys.PREDICT, model.config)
 
-      outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
-          isinstance(estimator_spec.predictions, dict) else \
-              [estimator_spec.predictions.name]
+      if len(output_tensor_names) == 0:
+          outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
+              isinstance(estimator_spec.predictions, dict) else \
+                  [estimator_spec.predictions.name]
+      else:
+          outputs = output_tensor_names
+
       logger.info('estimator output tensor names is {}'.format(outputs))
       with tf.compat.v1.Session(graph=g) as sess:
         sess.run(tf.compat.v1.global_variables_initializer())

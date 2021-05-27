@@ -17,49 +17,26 @@ model:
   name: bert
   framework: tensorflow
   inputs: input_file, batch_size
-  outputs: IteratorGetNext:3, unstack:0, unstack:1
+  outputs: loss/Softmax:0, IteratorGetNext:3
 
 evaluation:
-  accuracy:
-    metric:
-      SquadF1:
-    dataloader:
-      dataset:
-        bert:
-          root: /path/to/eval.tf_record
-          label_file: /path/to/dev-v1.1.json
-      batch_size: 64
-    postprocess:
-      transform:
-        SquadV1:
-          label_file: /path/to/dev-v1.1.json
-          vocab_file: /path/to/vocab.txt
+  accuracy: {}
   performance:
-    iteration: 50
+    iteration: 20
+    warmup: 5
     configs:
-        num_of_instance: 7
-        cores_per_instance: 4
-    dataloader:
-      dataset:
-        bert:
-          root: /path/to/eval.tf_record
-          label_file: /path/to/dev-v1.1.json
-      batch_size: 64
+      num_of_instance: 1
+      cores_per_instance: 28 
+      kmp_blocktime: 1
 
 quantization:            
   calibration:
     sampling_size: 500
-    dataloader:
-      dataset:
-        bert:
-          root: /path/to/eval.tf_record
-          label_file: /path/to/dev-v1.1.json
-      batch_size: 64
   model_wise:
     weight:
       granularity: per_channel
   op_wise: {
-             'MatMul': {
+             'loss/MatMul': {
                'activation':  {'dtype': ['fp32']},
                'weight':  {'dtype': ['fp32']},
              }
