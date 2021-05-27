@@ -948,25 +948,67 @@ class TestConfig(unittest.TestCase):
         mocked_load_precisions_config: MagicMock,
     ) -> None:
         """Test set_optimization_precision."""
-        mocked_load_precisions_config.return_value = [
-            {
-                "name": "precision1",
-            },
-            {
-                "name": "precision2",
-            },
-            {
-                "name": "precision3",
-            },
-        ]
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {
+                    "name": "precision1",
+                },
+                {
+                    "name": "precision2",
+                },
+                {
+                    "name": "precision3",
+                },
+            ],
+            "framework_bar": [
+                {
+                    "name": "precision1",
+                },
+            ],
+        }
 
         config = Config(self.predefined_config)
 
         with self.assertRaisesRegex(
             ClientErrorException,
-            "Precision unknown_precision is not supported in graph optimization.",
+            "Precision unknown_precision is not supported "
+            "in graph optimization for framework framework_foo.",
         ):
-            config.set_optimization_precision("unknown_precision")
+            config.set_optimization_precision("framework_foo", "unknown_precision")
+        mocked_load_precisions_config.assert_called_once()
+
+    @patch("lpot.ux.utils.workload.config.load_precisions_config")
+    def test_set_optimization_precision_to_unknown_framework(
+        self,
+        mocked_load_precisions_config: MagicMock,
+    ) -> None:
+        """Test set_optimization_precision."""
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {
+                    "name": "precision1",
+                },
+                {
+                    "name": "precision2",
+                },
+                {
+                    "name": "precision3",
+                },
+            ],
+            "framework_bar": [
+                {
+                    "name": "precision1",
+                },
+            ],
+        }
+        config = Config(self.predefined_config)
+
+        with self.assertRaisesRegex(
+            ClientErrorException,
+            "Precision precision1 is not supported "
+            "in graph optimization for framework framework_baz.",
+        ):
+            config.set_optimization_precision("framework_baz", "precision1")
         mocked_load_precisions_config.assert_called_once()
 
     @patch("lpot.ux.utils.workload.config.load_precisions_config")
@@ -975,21 +1017,28 @@ class TestConfig(unittest.TestCase):
         mocked_load_precisions_config: MagicMock,
     ) -> None:
         """Test set_optimization_precision."""
-        mocked_load_precisions_config.return_value = [
-            {
-                "name": "precision1",
-            },
-            {
-                "name": "precision2",
-            },
-            {
-                "name": "precision3",
-            },
-        ]
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {
+                    "name": "precision1",
+                },
+                {
+                    "name": "precision2",
+                },
+                {
+                    "name": "precision3",
+                },
+            ],
+            "framework_bar": [
+                {
+                    "name": "precision1",
+                },
+            ],
+        }
 
         config = Config(self.predefined_config)
 
-        config.set_optimization_precision("precision2")
+        config.set_optimization_precision("framework_foo", "precision2")
 
         self.assertEqual("precision2", config.graph_optimization.precisions)
         mocked_load_precisions_config.assert_called_once()
@@ -1000,21 +1049,28 @@ class TestConfig(unittest.TestCase):
         mocked_load_precisions_config: MagicMock,
     ) -> None:
         """Test set_optimization_precision."""
-        mocked_load_precisions_config.return_value = [
-            {
-                "name": "precision1",
-            },
-            {
-                "name": "precision2",
-            },
-            {
-                "name": "precision3",
-            },
-        ]
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {
+                    "name": "precision1",
+                },
+                {
+                    "name": "precision2",
+                },
+                {
+                    "name": "precision3",
+                },
+            ],
+            "framework_bar": [
+                {
+                    "name": "precision1",
+                },
+            ],
+        }
 
         config = Config()
 
-        config.set_optimization_precision("precision2")
+        config.set_optimization_precision("framework_foo", "precision2")
 
         self.assertEqual("precision2", config.graph_optimization.precisions)
         mocked_load_precisions_config.assert_called_once()

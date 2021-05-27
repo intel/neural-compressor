@@ -45,8 +45,9 @@ class TestTuningParser(unittest.TestCase):
         """Test parsing of file."""
         mocked_open.return_value.__enter__.return_value = [
             "Foo bar baz",
-            "2021-04-13 13:14:00 [INFO] Best tune result is: [0.99876, 0.5432]",
-            "2021-04-13 13:42:00 [INFO] FP32 baseline is: [0.12344, 5.6789]",
+            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
             "a b c d",
         ]
 
@@ -66,11 +67,13 @@ class TestTuningParser(unittest.TestCase):
         """Test parsing of files without any lines."""
         mocked_open.return_value.__enter__.return_value = [
             "Foo bar baz",
-            "2021-04-13 13:14:00 [INFO] Best tune result is: [0.99876, 0.5432]",
-            "2021-04-13 13:42:00 [INFO] FP32 baseline is: [0.12344, 5.6789]",
+            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.2345, duration (seconds): 0.6789], Best tune result is: [accuracy: 0.2345, duration (seconds): 0.6789]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
             "a b c d",
-            "2021-04-13 13:14:00 [INFO] Best tune result is: [0.1, 0.1]",
-            "2021-04-13 13:42:00 [INFO] FP32 baseline is: [0.2, 5.6789]",
+            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
         ]
 
         tuning_parser = OptimizationParser(["file.log"])
@@ -78,8 +81,8 @@ class TestTuningParser(unittest.TestCase):
 
         self.assertEqual(
             {
-                "acc_input_model": 0.2,
-                "acc_optimized_model": 0.1,
+                "acc_input_model": 0.1234,
+                "acc_optimized_model": 0.9988,
             },
             parsed,
         )

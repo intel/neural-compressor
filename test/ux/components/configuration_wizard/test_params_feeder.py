@@ -570,6 +570,37 @@ class TestParamsFeeder(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @patch(
+        "lpot.ux.components.configuration_wizard.params_feeder.OBJECTIVES",
+        {"modelsize": {}, "objective2": {}, "objective3": {}},
+    )
+    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
+    def test_get_objectives_skipping_model_size(
+        self,
+        mocked_load_help_lpot_params: MagicMock,
+    ) -> None:
+        """Test get_objectives function."""
+        mocked_load_help_lpot_params.return_value = {
+            "__help__objective1": "help1",
+            "__help__objective_unknown": "this should be skipped",
+            "__help__objective2": "help2",
+        }
+        expected = [
+            {
+                "name": "objective2",
+                "help": "help2",
+            },
+            {
+                "name": "objective3",
+                "help": "",
+            },
+        ]
+
+        actual = Feeder.get_objectives()
+
+        mocked_load_help_lpot_params.assert_called_once_with("objectives")
+        self.assertEqual(expected, actual)
+
+    @patch(
         "lpot.ux.components.configuration_wizard.params_feeder.STRATEGIES",
         {"strategy1": {}, "strategy2": {}, "strategy3": {}},
     )
@@ -610,13 +641,25 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_precisions_config: MagicMock,
     ) -> None:
         """Test get_precisions function."""
-        mocked_load_precisions_config.return_value = [
-            {"foo": {}},
-            {"bar": {}},
-            {"baz": {}},
-        ]
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {"foo": {}},
+                {"bar": {}},
+                {"baz": {}},
+            ],
+            "framework_bar": [
+                {"foo": {}},
+            ],
+        }
 
-        actual = Feeder.get_precisions()
+        feeder = Feeder(
+            data={
+                "config": {
+                    "framework": "framework_foo",
+                },
+            },
+        )
+        actual = feeder.get_precisions()
 
         self.assertEqual(
             [
@@ -626,6 +669,56 @@ class TestParamsFeeder(unittest.TestCase):
             ],
             actual,
         )
+
+    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    def test_get_precisions_for_unknown_framework(
+        self,
+        mocked_load_precisions_config: MagicMock,
+    ) -> None:
+        """Test get_precisions function."""
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {"foo": {}},
+                {"bar": {}},
+                {"baz": {}},
+            ],
+            "framework_bar": [
+                {"foo": {}},
+            ],
+        }
+
+        feeder = Feeder(
+            data={
+                "config": {
+                    "framework": "framework_baz",
+                },
+            },
+        )
+        actual = feeder.get_precisions()
+
+        self.assertEqual([], actual)
+
+    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    def test_get_precisions_for_missing_framework(
+        self,
+        mocked_load_precisions_config: MagicMock,
+    ) -> None:
+        """Test get_precisions function."""
+        mocked_load_precisions_config.return_value = {
+            "framework_foo": [
+                {"foo": {}},
+                {"bar": {}},
+                {"baz": {}},
+            ],
+            "framework_bar": [
+                {"foo": {}},
+            ],
+        }
+
+        feeder = Feeder(data={})
+
+        with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
+            feeder.get_precisions()
 
     def test_get_quantization_approaches_for_fake_framework(self) -> None:
         """Test get_quantization_approaches."""

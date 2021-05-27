@@ -1,14 +1,22 @@
-[
-    {
-        "name": "int8",
-        "help": "Int8 precision"
-    },
-    {
-        "name": "fp32",
-        "help": "Float32 precision"
-    },
-    {
-        "name": "bf16,fp32",
-        "help": "Mixed precision - bfloat16 and float32"
-    }
-]
+{
+    "tensorflow": [
+        {
+            "name": "int8",
+            "help": "Int8 precision"
+        },
+        {
+            "name": "fp32",
+            "help": "Float32 precision"
+        },
+        {
+            "name": "bf16,fp32",
+            "help": "Mixed precision - bfloat16 and float32"
+        }
+    ],
+    "onnxrt": [
+        {
+            "name": "int8",
+            "help": "Int8 precision"
+        }
+    ]
+}

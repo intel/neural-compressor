@@ -150,6 +150,8 @@ class Feeder:
 
         objectives = []
         for objective in OBJECTIVES.keys():
+            if "modelsize" == objective:
+                continue
             help_msg = help_dict.get(f"__help__{objective}", "")
             objectives.append({"name": objective, "help": help_msg})
         return objectives
@@ -164,10 +166,12 @@ class Feeder:
             strategies.append({"name": strategy, "help": help_msg})
         return strategies
 
-    @staticmethod
-    def get_precisions() -> List[dict]:
+    def get_precisions(self) -> List[dict]:
         """Get list of available precisions."""
-        return load_precisions_config()
+        framework = self.config.get("framework", None)
+        if framework is None:
+            raise ClientErrorException("Framework not set.")
+        return load_precisions_config().get(framework, [])
 
     def get_quantization_approaches(self) -> List[Dict[str, Any]]:
         """Get list of supported quantization approaches."""

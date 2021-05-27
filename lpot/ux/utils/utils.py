@@ -329,14 +329,14 @@ def load_transforms_filter_config() -> Dict[str, Any]:
     return _load_json_as_dict(json_path)
 
 
-def load_precisions_config() -> List[Dict[str, Any]]:
+def load_precisions_config() -> dict:
     """Load transforms configs from json."""
     json_path = os.path.join(
         os.path.dirname(__file__),
         "configs",
         "precisions.json",
     )
-    return _load_json_as_list(json_path)
+    return _load_json_as_dict(json_path)
 
 
 def load_help_lpot_params(parameter: str) -> Dict[str, Any]:

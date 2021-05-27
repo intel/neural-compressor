@@ -349,13 +349,14 @@ class Config(JsonSerializer):
         if self.evaluation and self.evaluation.performance:
             self.evaluation.performance.iteration = iterations
 
-    def set_optimization_precision(self, precision: str) -> None:
+    def set_optimization_precision(self, framework: str, precision: str) -> None:
         """Update graph optimization precision."""
-        precisions_config = load_precisions_config()
+        precisions_config = load_precisions_config().get(framework, [])
         available_precisions = [precision.get("name") for precision in precisions_config]
         if precision not in available_precisions:
             raise ClientErrorException(
-                f"Precision {precision} is not supported in graph optimization.",
+                f"Precision {precision} is not supported "
+                f"in graph optimization for framework {framework}.",
             )
         if self.graph_optimization is None:
             self.graph_optimization = GraphOptimization({"precisions": precision})

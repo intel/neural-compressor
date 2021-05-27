@@ -69,6 +69,7 @@ export class ImportModelComponent implements OnInit {
   showSpinner = false;
   showGraphSpinner = false;
   showGraphButton = false;
+  showDomainSpinner = false;
   useEvaluationData = true;
   fileBrowserParams = ['label_file', 'vocab_file'];
 
@@ -94,6 +95,7 @@ export class ImportModelComponent implements OnInit {
           ['modelLocation', 'modelDomain'].forEach(field => {
             if (oldState[field] !== newState[field]) {
               changes++;
+              this.showDomainSpinner = true;
             };
           });
           return changes;
@@ -102,6 +104,8 @@ export class ImportModelComponent implements OnInit {
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value && this.firstFormGroup.get('modelDomain').value) {
           this.getConfig();
+        } else {
+          this.showDomainSpinner = false;
         }
       }
       );
@@ -230,16 +234,16 @@ export class ImportModelComponent implements OnInit {
           .setValue(Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4));
       });
     }
-    this.modelService.getPossibleValues('precision')
-      .subscribe(
-        resp => this.precisions = resp['precision'],
-        error => this.openErrorDialog(error));
   }
 
   getPossibleValues() {
     this.modelService.getPossibleValues('framework', {})
       .subscribe(
         resp => this.frameworks = resp['framework'],
+        error => this.openErrorDialog(error));
+    this.modelService.getPossibleValues('precision', { framework: this.firstFormGroup.get('framework').value })
+      .subscribe(
+        resp => this.precisions = resp['precision'],
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('metric', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
@@ -367,6 +371,7 @@ export class ImportModelComponent implements OnInit {
             this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value, domain: this.firstFormGroup.get('modelDomain').value })
               .subscribe(
                 resp => {
+                  this.showDomainSpinner = false;
                   this.transformations = resp['transform'];
                   transformNames.forEach((name, index) => {
                     this.addNewTransformation(name);

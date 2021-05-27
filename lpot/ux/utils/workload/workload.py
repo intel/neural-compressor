@@ -152,7 +152,7 @@ class Workload(JsonSerializer):
         """Initialize graph optimization config."""
         self.config.quantization = None
         self.config.pruning = None
-        self.config.set_optimization_precision(self.output_precision)
+        self.config.set_optimization_precision(self.framework, self.output_precision)
 
     def get_optimization_mode(self) -> str:
         """Get optimization mode based on precision."""

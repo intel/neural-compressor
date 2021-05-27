@@ -38,6 +38,7 @@
             </mat-select>
           </mat-form-field>
           <mat-spinner class="spinner" *ngIf="showSpinner" [diameter]="25"></mat-spinner>
+          <mat-spinner class="spinner" *ngIf="showDomainSpinner" [diameter]="25"></mat-spinner>
         </div>
 
         <div class="spinner-wrapper">
@@ -71,6 +72,7 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+          <mat-spinner class="spinner" *ngIf="showSpinner" [diameter]="25"></mat-spinner>
         </div>
 
         <div *ngIf="inputs && outputs" class="spinner-wrapper">
