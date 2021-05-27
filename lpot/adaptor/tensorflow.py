@@ -49,9 +49,8 @@ class TensorFlowAdaptor(Adaptor):
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.optimization = deep_get(self.framework_specific_info, 'optimization', {})
-        if not os.path.exists(self.work_dir):
-            os.makedirs(self.work_dir)
-
+        os.makedirs(self.work_dir, exist_ok=True)
+        
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
 

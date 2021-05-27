@@ -1618,8 +1618,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         self.ipex_config_path = \
             os.path.join(self.workspace_path, 'ipex_config_tmp.json')
 
-        if os.path.exists(self.ipex_config_path):
+        try:
             os.remove(self.ipex_config_path)
+        except:
+            logger.warning('removing {} fails'.format(self.ipex_config_path))
 
     def model_calibration(self, q_model, dataloader, iterations=1, conf=None):
         assert iterations > 0

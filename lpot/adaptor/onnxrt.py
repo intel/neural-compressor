@@ -46,8 +46,7 @@ class ONNXRTAdaptor(Adaptor):
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
-        if not os.path.exists(self.work_space):
-            os.makedirs(self.work_space)
+        os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
         self.quantizable_op_types = self._query_quantizable_op_types()
         self.evaluate_nums = 0

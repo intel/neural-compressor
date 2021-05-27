@@ -157,14 +157,12 @@ def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
     """
  
     model_variables_dir = os.path.join(input_model, 'variables')
-    if not os.path.exists(output_model):
-        os.makedirs(output_model)
+    os.makedirs(output_model, exist_ok=True)
     export_variables_dir = os.path.join(output_model, 'variables')
     export_saved_model = os.path.join(output_model,'saved_model.pb')
 
     checkpoint_file = os.path.join(export_variables_dir, 'checkpoint')
-    if not os.path.exists(export_variables_dir):
-        os.makedirs(export_variables_dir)
+    os.makedirs(export_variables_dir, exist_ok=True)
 
     with open(checkpoint_file, 'w') as f:
         f.write("model_checkpoint_path: \"variables\"\n")
