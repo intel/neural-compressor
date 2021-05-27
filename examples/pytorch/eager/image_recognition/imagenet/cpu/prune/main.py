@@ -11,7 +11,7 @@ model_names = sorted(name for name in models.__dict__
                      and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
+parser.add_argument('-t', '--topology', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
                     ' | '.join(model_names) +
@@ -30,6 +30,7 @@ parser.add_argument('--pretrained', dest='pretrained', action='store_true',
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
 parser.add_argument("--config", default=None, help="tuning config")
+parser.add_argument("--output-model", default=None, help="output path", type=str)
 
 best_acc1 = 0
 
@@ -52,11 +53,11 @@ def main_worker(args):
     global best_acc1
 
     if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
+        print("=> using pre-trained model '{}'".format(args.topology))
+        model = models.__dict__[args.topology](pretrained=True)
     else:
-        print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch]()
+        print("=> creating model '{}'".format(args.topology))
+        model = models.__dict__[args.topology]()
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -80,6 +81,7 @@ def main_worker(args):
 
         prune.model = common.Model(model)
         model = prune()
+        model.save(args.output_model)
         return
 
 
