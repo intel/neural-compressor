@@ -897,18 +897,6 @@ if __name__ == "__main__":
     if args.tune:
         print('tune')
         eval_dataloader = DLRM_DataLoader(test_ld)
-        fuse_list = []
-        for i in range(0, len(dlrm.bot_l), 2):
-            fuse_list.append(["bot_l.%d" % (i), "bot_l.%d" % (i + 1)])
-        dlrm = fuse_modules(dlrm, fuse_list)
-        fuse_list = []
-        for i in range(0, len(dlrm.top_l) - 2, 2):
-            fuse_list.append(["top_l.%d" % (i), "top_l.%d" % (i + 1)])
-        dlrm = fuse_modules(dlrm, fuse_list)
-        # dlrm.bot_l.insert(0, QuantStub())
-        # dlrm.bot_l.append(DeQuantStub())
-        # dlrm.top_l.insert(0, QuantStub())
-        # dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
         dlrm.eval()
         from lpot.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
@@ -920,18 +908,7 @@ if __name__ == "__main__":
         exit(0)
 
     if args.benchmark:
-        fuse_list = []
-        for i in range(0, len(dlrm.bot_l), 2):
-            fuse_list.append(["bot_l.%d" % (i), "bot_l.%d" % (i + 1)])
-        dlrm = fuse_modules(dlrm, fuse_list)
-        fuse_list = []
-        for i in range(0, len(dlrm.top_l) - 2, 2):
-            fuse_list.append(["top_l.%d" % (i), "top_l.%d" % (i + 1)])
-        dlrm = fuse_modules(dlrm, fuse_list)
-        # dlrm.bot_l.insert(0, QuantStub())
-        # dlrm.bot_l.append(DeQuantStub())
-        # dlrm.top_l.insert(0, QuantStub())
-        # dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
+        dlrm.eval()
         if args.int8:
             from lpot.utils.pytorch import load
             import os
