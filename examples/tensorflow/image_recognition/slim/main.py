@@ -53,6 +53,8 @@ def main(_):
 
   arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 
+  arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
+
   arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
 
   args = arg_parser.parse_args()
@@ -63,7 +65,6 @@ def main(_):
   factory.register('inception_v4', inception_v4, input_shape, inception_v4_arg_scope)
 
   if args.tune:
-
       from lpot.experimental import Quantization
       quantizer = Quantization(args.config)
       quantizer.model = args.input_graph
@@ -74,16 +75,7 @@ def main(_):
       from lpot.experimental import Benchmark
       evaluator = Benchmark(args.config)
       evaluator.model = args.input_graph
-      results = evaluator()
-      for mode, result in results.items():
-          acc, batch_size, result_list = result
-          latency = np.array(result_list).mean() / batch_size
-
-          print('\n{} mode benchmark result:'.format(mode))
-          print('Accuracy is {:.3f}'.format(acc))
-          print('Batch size = {}'.format(batch_size))
-          print('Latency: {:.3f} ms'.format(latency * 1000))
-          print('Throughput: {:.3f} images/sec'.format(1./ latency))
+      evaluator(args.mode)
   
 if __name__ == '__main__':
   tf.compat.v1.app.run()
