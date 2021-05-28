@@ -86,7 +86,7 @@ def prepare_qat_model(model_in_path, model_out_path, train_images, train_labels)
     
     q_aware_model.save(model_out_path)
 
-@unittest.skipIf(tf.version.VERSION < '2.1.0', "Only supports tf 2.x")
+@unittest.skipIf(tf.version.VERSION < '2.4.0', "Only supports tf 2.4.0 or above")
 class TestModelConversion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
