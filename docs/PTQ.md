@@ -2,7 +2,7 @@
 
 ## Design
 
-Post-training static quantization (PTQ) involves not just converting the weights from **float** to **int**, but also first feeding batches of data through the network and computing the resulting distributions of the different activations. Sspecifically, this is done by inserting observer modules at different points that record this data. These distributions are then used to determine specifically how the different activations should be quantized at inference time. A simple technique would be to simply divide the entire range of activations into 256 levels, but we support more sophisticated methods as well. This additional step allows us to pass quantized values between operations instead of converting these values to floats - and then back to ints - between every operation, resulting in a significant speed-up.
+Post-training static quantization (PTQ) involves not just converting the weights from **float** to **int**, but also first feeding batches of data through the network and computing the resulting distributions of the different activations. Specifically, this is done by inserting observer modules at different points that record this data. These distributions are used to determine specifically how the different activations should be quantized at inference time. A simple technique would be simply divide the entire range of activations into 256 levels, but we support more sophisticated methods as well. This additional step allows us to pass quantized values between operations instead of converting these values to floats - and then back to ints - between every operation, resulting in a significant speed-up.
 
 ## PyTorch Usage
 
