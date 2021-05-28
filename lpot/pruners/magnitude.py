@@ -16,13 +16,13 @@
 # limitations under the License.
 
 import numpy as np
-from .pruning_modifier import pruning_modifier_registry, PruningModifier
+from .pruner import pruner_registry, Pruner
 from ..utils import logger
 
-@pruning_modifier_registry
-class MagnitudePruningModifier(PruningModifier):
+@pruner_registry
+class BasicMagnitudePruner(Pruner):
     def __init__(self, model, local_config, global_config):
-        super(MagnitudePruningModifier, self).__init__(model, local_config, global_config)
+        super(BasicMagnitudePruner, self).__init__(model, local_config, global_config)
 
     def on_epoch_begin(self, epoch):
         logger.debug("start pruning in epoch {}".format(str(epoch)))

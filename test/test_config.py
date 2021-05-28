@@ -428,23 +428,21 @@ class TestConf(unittest.TestCase):
               CrossEntropyLoss:
                 reduction: sum
           approach:
-            weight_magnitude:
+            weight_compression:
               initial_sparsity: 0.0
               target_sparsity: 0.97
-              modifiers:
-                - !MagnitudePruneModifier
+              pruners:
+                - !Pruner
                     start_epoch: 1
                     end_epoch: 3
-                    mask_type: unstructured
-                    params: ['layer1.0.conv1.weight']
+                    names: ['layer1.0.conv1.weight']
         
-                - !MagnitudePruneModifier
+                - !Pruner
                     start_epoch: 0
                     end_epoch: 4
                     target_sparsity: 0.6
-                    mask_type: unstructured
                     update_frequency: 2
-                    params: ['layer1.0.conv2.weight']
+                    names: ['layer1.0.conv2.weight']
         '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')

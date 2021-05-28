@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PRUNING_MODIFIERS = {}
+PRUNERS = {}
 
-def pruning_modifier_registry(cls):
-    """The class decorator used to register all PruningModifier subclasses.
+def pruner_registry(cls):
+    """The class decorator used to register all Pruners subclasses.
 
     Args:
         cls (class): The class of register.
@@ -27,16 +27,16 @@ def pruning_modifier_registry(cls):
         cls: The class of register.
     """
     assert cls.__name__.endswith(
-        'PruningModifier'
-    ), "The name of subclass of PruningModifier should end with \'PruningModifier\' substring."
-    if cls.__name__[:-len('PruningModifier')].lower() in PRUNING_MODIFIERS:
-        raise ValueError('Cannot have two policies with the same name')
-    PRUNING_MODIFIERS[cls.__name__] = cls
+        'Pruner'
+    ), "The name of subclass of Pruner should end with \'Pruner\' substring."
+    if cls.__name__[:-len('Pruner')].lower() in PRUNERS:
+        raise ValueError('Cannot have two pruner with the same name')
+    PRUNERS[cls.__name__[:-len('Pruner')]] = cls
     return cls
 
-class PruningModifier:
+class Pruner:
     def __init__(self, model, local_config, global_config):
-        """The base clase of Prune policies
+        """The base clase of Pruner
 
         Args:
             model (object):          The original model (currently PyTorchModel instance).
@@ -74,8 +74,8 @@ class PruningModifier:
             self.freq = local_config.update_frequency
         else:
             self.freq = global_config.update_frequency
-        if local_config.params:
-            self.weights = local_config.params
+        if local_config.names:
+            self.weights = local_config.names
         else:
             self.weights = self.model.get_all_weight_names()
 

@@ -19,19 +19,19 @@ model:
 
 pruning:
   approach:
-    weight_magnitude:
+    weight_compression:
       initial_sparsity: 0.0
       target_sparsity: 0.97
       start_epoch: 0
       end_epoch: 4
-      modifiers:
-        - !MagnitudePruneModifier
+      pruners:
+        - !Pruner
             start_epoch: 0
             end_epoch: 4
             target_sparsity: 0.6
-            mask_type: unstructured
+            prune_type: basic_magnitude
             update_frequency: 1
-            params: ['distilbert.transformer.layer.1.attention.v_lin.weight',  'distilbert.transformer.layer.1.attention.k_lin.weight', 'distilbert.transformer.layer.1.attention.v_lin.weight']
+            names: ['distilbert.transformer.layer.1.attention.v_lin.weight',  'distilbert.transformer.layer.1.attention.k_lin.weight', 'distilbert.transformer.layer.1.attention.v_lin.weight']
 
 tuning:
   accuracy_criterion:

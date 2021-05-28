@@ -51,15 +51,15 @@ pruning:                                             # mandotory only for prunin
         nesterov: False
 
   approach:
-    weight_magnitude:
+    weight_compression:
       initial_sparsity: 0.0
       target_sparsity: 0.3
-      modifiers:
-        - !MagnitudePruneModifier
+      pruners:
+        - !Pruner
             initial_sparsity: 0.0
             final_sparsity: 0.97
-            mask_type: unstructured
-            params: ['layer1.0.conv1.weight',  'layer1.0.conv2.weight']
+            prune_type: basic_magnitude              # currently only support basic_magnitude
+            names: ['layer1.0.conv1.weight']         # tensor name to be pruned.
             start_epoch: 0
             end_epoch: 2
             update_frequency: 0.1

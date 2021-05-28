@@ -17,7 +17,7 @@
 
 
 from ..conf.config import Conf
-from ..pruning_modifier import PRUNING_MODIFIERS
+from ..pruners import PRUNERS
 from ..utils import logger
 from ..utils.utility import singleton
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
@@ -50,27 +50,27 @@ class Pruning:
         self._eval_func = None
         self._eval_dataloader = None
         self.adaptor = None
-        self.pruning_modifiers = []
+        self.pruners = []
 
     def on_epoch_begin(self, epoch):
         """ called on the begining of epochs"""
-        for pruning_modifier in self.pruning_modifiers:
-            pruning_modifier.on_epoch_begin(epoch)
+        for pruner in self.pruners:
+            pruner.on_epoch_begin(epoch)
 
     def on_batch_begin(self, batch_id):
         """ called on the begining of batches"""
-        for pruning_modifier in self.pruning_modifiers:
-            pruning_modifier.on_batch_begin(batch_id)
+        for pruner in self.pruners:
+            pruner.on_batch_begin(batch_id)
 
     def on_batch_end(self):
         """ called on the end of batches"""
-        for pruning_modifier in self.pruning_modifiers:
-            pruning_modifier.on_batch_end()
+        for pruner in self.pruners:
+            pruner.on_batch_end()
 
     def on_epoch_end(self):
         """ called on the end of epochs"""
-        for pruning_modifier in self.pruning_modifiers:
-            pruning_modifier.on_epoch_end()
+        for pruner in self.pruners:
+            pruner.on_epoch_end()
         stats, sparsity = self._model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
@@ -125,14 +125,14 @@ class Pruning:
 
         assert isinstance(self._model, BaseModel), 'need set lpot Model for pruning....'
 
-        self.pruning_modifiers = []
         for name in self.cfg.pruning.approach:
-            assert name == 'weight_magnitude', 'now we only support weight_magnitude'
-            for magnitude_prune_modifier in self.cfg.pruning.approach.weight_magnitude.modifiers:
-                self.pruning_modifiers.append(PRUNING_MODIFIERS['MagnitudePruningModifier'](\
-                                        self._model, \
-                                        magnitude_prune_modifier,
-                                        self.cfg.pruning.approach.weight_magnitude))
+            assert name == 'weight_compression', 'now we only support weight_compression'
+            for pruner in self.cfg.pruning.approach.weight_compression.pruners:
+                if pruner.prune_type == 'basic_magnitude':
+                    self.pruners.append(PRUNERS['BasicMagnitude'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
             # TODO, add gradient_sensativity
 
         if self._train_dataloader is None and self._pruning_func is None:

@@ -20,6 +20,7 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
+from ..pruners import PRUNERS
 from ..utils import logger
 import re
 import copy
@@ -46,19 +47,21 @@ def constructor_register(cls):
     return cls
 
 @constructor_register
-class MagnitudePruneModifier():
+class Pruner():
     def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None, 
-                 target_sparsity=None, update_frequency=1, mask_type='unstructured',
-                 method='per_tensor', params=[]):
+                 target_sparsity=None, update_frequency=1, prune_type='basic_magnitude',
+                 method='per_tensor', names=[]):
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
         self.update_frequency = update_frequency
         self.target_sparsity = target_sparsity
         self.initial_sparsity = initial_sparsity
         self.update_frequency = update_frequency
-        self.mask_type = mask_type
+        assert prune_type.replace('_', '') in [i.lower() for i in PRUNERS], \
+                                         'now only support {}'.format(PRUNERS.keys())
+        self.prune_type = prune_type
         self.method = method
-        self.params = params
+        self.names= names 
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -470,26 +473,17 @@ train_schema = Schema({
     Optional('hostfile'): str    
 })
 
-weight_magnitude_schema = Schema({
+weight_compression_schema = Schema({
     Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
     Optional('target_sparsity', default=0.97): float,
     Optional('start_epoch', default=0): int,
     Optional('end_epoch', default=4): int,
-    Optional('modifiers'): And(list, \
-                               lambda s: all(isinstance(i, MagnitudePruneModifier) for i in s))
-})
-
-gradient_sensativity_schema = Schema({
-    Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
-    Optional('target_sparsity', default=0.97): float,
-    Optional('start_epoch', default=0): int,
-    Optional('end_epoch', default=4): int,
-    Optional('modifiers'): list
+    Optional('pruners'): And(list, \
+                               lambda s: all(isinstance(i, Pruner) for i in s))
 })
 
 approach_schema = Schema({
-    Optional('weight_magnitude'): weight_magnitude_schema,
-    Optional('gradient_sensativity'): gradient_sensativity_schema
+    Optional('weight_compression'): weight_compression_schema,
 })
 
 default_workspace = './lpot_workspace/{}/'.format(
