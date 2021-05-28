@@ -63,7 +63,7 @@ Below is a fragment of the Tensorflow configuration file.
 * **precisions** field defines the supported precision for LPOT.
     -  valid_mixed_precision enumerates all supported precision combinations for specific scenario. For example, if one hardware doesn't support bf16， it should be `int8 + fp32`.
 * **ops** field defines the valid OP type list for each precision.
-* **capabilities** field focuses on the quantization ability of specific ops such as granularity, scheme, and algorithm. Note that the activation here means the input activation of the op rather than its output.
+* **capabilities** field focuses on the quantization ability of specific ops such as granularity, scheme, and algorithm. The activation assumes the same data type for both input and output activation by default based on op semantics defined by frameworks.
 * **patterns** field defines the supported fusion sequence of each op.
 
 ```yaml
