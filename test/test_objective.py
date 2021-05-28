@@ -7,6 +7,57 @@ import yaml
 import numpy as np
 import tensorflow as tf
 
+def build_fake_yaml_footprint():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+          objective: footprint
+          strategy:
+            name: fake
+          accuracy_criterion:
+            relative: 0.01        
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_footprint.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
+def build_fake_yaml_model_size():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+          objective: modelsize
+          strategy:
+            name: fake
+          accuracy_criterion:
+            relative: 0.01        
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_model_size.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -21,6 +72,7 @@ def build_fake_yaml():
             metric:
               topk: 1
         tuning:
+          objective: performance
           strategy:
             name: fake
           accuracy_criterion:
@@ -154,32 +206,56 @@ class TestObjective(unittest.TestCase):
         self.constant_graph = build_fake_model()
         self.constant_graph_1 = build_fake_model1()
         build_fake_yaml()
+        build_fake_yaml_footprint()
+        build_fake_yaml_model_size()
         build_fake_strategy()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+        os.remove('fake_yaml_model_size.yaml')
+        os.remove('fake_yaml_footprint.yaml')
         os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
-    def test_autosave(self):
+    def test_performance(self):
+        from lpot.data import DATASETS
+        dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
+
         from lpot.experimental import Quantization, common
         from lpot.utils.utility import get_size
 
         quantizer = Quantization('fake_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 256, 256, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer()
-
         q_model = quantizer()
 
-        quantizer.model = self.constant_graph_1
+        from lpot.experimental import Benchmark, common
+        benchmarker = Benchmark('fake_yaml.yaml')
+        benchmarker.b_dataloader = common.DataLoader(dataset)
+        benchmarker.model = self.constant_graph_1
+        benchmarker()
 
-        q_model_1 = quantizer()
+    def test_model_size(self):
+        from lpot.experimental import Benchmark, common
+        from lpot.data import DATASETS
+        dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
-        self.assertTrue((get_size(q_model_1.sess.graph) - get_size(q_model.sess.graph)) > 0)
+        benchmarker = Benchmark('fake_yaml_model_size.yaml')
+        benchmarker.b_dataloader = common.DataLoader(dataset)
+        benchmarker.model = self.constant_graph_1
+        benchmarker()
+
+    def test_footprint(self):
+        from lpot.experimental import Benchmark, common
+        from lpot.data import DATASETS
+        dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
+
+        benchmarker = Benchmark('fake_yaml_footprint.yaml')
+        benchmarker.b_dataloader = common.DataLoader(dataset)
+        benchmarker.model = self.constant_graph_1
+        benchmarker()
 
 
 if __name__ == "__main__":

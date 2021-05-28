@@ -52,6 +52,7 @@ class Measurer(object):
         self._result_list = []
         assert isinstance(representation, str)
         self.representation = representation
+        self._model = None
 
     @abstractmethod
     def reset(self):
@@ -62,22 +63,24 @@ class Measurer(object):
         return self._result_list
 
     @abstractmethod
-    def start(self, *args, **kwargs):
+    def start(self):
         """The interface start benchmark measuring
-        Args:
-           *args: params for start the measuring
-           **kargs: params for start the measuring
         """
         raise NotImplementedError
 
     @abstractmethod
-    def end(self, *args, **kwargs):
+    def end(self):
         """The interface end benchmark measuring
-        Args:
-           *args: params for start the measuring
-           **kargs: params for start the measuring
         """
         raise NotImplementedError
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        self._model = model
 
     def result(self, start=None, end=None):
         """The interface to get benchmark measuring result
@@ -128,11 +131,11 @@ class FootprintMeasure(Measurer):
         self._result_list.append(peak)
 
 class ModelSizeMeasure(Measurer):
-    def start(self, model):
+    def start(self):
         pass
 
-    def end(self, model):
-        model_size = get_size(model)
+    def end(self):
+        model_size = get_size(self.model)
         self._result_list.append(model_size)
 
 
@@ -202,6 +205,7 @@ class Objective(object):
         """
 
         self.measurer.reset()
+        self.measurer.model = model
         if self.is_measure:
             acc = eval_func(model, self.measurer)
         else:
@@ -234,8 +238,8 @@ class Footprint(Objective):
                                     {'relative': 0.01} or {'absolute': 0.01}
     """
 
-    def __init__(self, accuracy_criterion):
-        super(Footprint, self).__init__(accuracy_criterion)
+    def __init__(self, accuracy_criterion, is_measure=False):
+        super(Footprint, self).__init__(accuracy_criterion, is_measure)
         self.measurer = FootprintMeasure('memory footprint (MB)')
 
 @objective_registry
@@ -247,7 +251,7 @@ class ModelSize(Objective):
                                     {'relative': 0.01} or {'absolute': 0.01}
     """
 
-    def __init__(self, accuracy_criterion):
-        super(ModelSize, self).__init__(accuracy_criterion)
+    def __init__(self, accuracy_criterion, is_measure=False):
+        super(ModelSize, self).__init__(accuracy_criterion, is_measure)
         self.measurer = ModelSizeMeasure('model size (MB)')
 
