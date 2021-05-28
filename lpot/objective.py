@@ -128,7 +128,7 @@ class FootprintMeasure(Measurer):
     def end(self):
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        self._result_list.append(peak)
+        self._result_list.append(peak // 1048576)
 
 class ModelSizeMeasure(Measurer):
     def start(self):

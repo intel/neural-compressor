@@ -19,6 +19,7 @@ def build_fake_yaml_footprint():
           accuracy:
             metric:
               topk: 1
+          performance: {}
         tuning:
           objective: footprint
           strategy:
@@ -45,6 +46,7 @@ def build_fake_yaml_model_size():
           accuracy:
             metric:
               topk: 1
+          performance: {}
         tuning:
           objective: modelsize
           strategy:
@@ -71,6 +73,7 @@ def build_fake_yaml():
           accuracy:
             metric:
               topk: 1
+          performance: {}
         tuning:
           objective: performance
           strategy:
@@ -245,7 +248,7 @@ class TestObjective(unittest.TestCase):
         benchmarker = Benchmark('fake_yaml_model_size.yaml')
         benchmarker.b_dataloader = common.DataLoader(dataset)
         benchmarker.model = self.constant_graph_1
-        benchmarker()
+        benchmarker(mode='accuracy')
 
     def test_footprint(self):
         from lpot.experimental import Benchmark, common

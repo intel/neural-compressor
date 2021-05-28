@@ -222,10 +222,12 @@ class Benchmark(object):
         logger.info('\n{} mode benchmark result:'.format(mode))
         for i, res in enumerate(result_list):
             logger.debug('Iteration {} result {}:'.format(i, res))
-        logger.info('Accuracy is {:.4f}'.format(acc))
-        logger.info('Batch size = {}'.format(batch_size))
-        logger.info('Latency: {:.3f} ms'.format(latency * 1000))
-        logger.info('Throughput: {:.3f} images/sec'.format(1./ latency))
+        if mode == 'accuracy':
+            logger.info('Accuracy is {:.4f}'.format(acc))
+        elif mode == 'performance':
+            logger.info('Batch size = {}'.format(batch_size))
+            logger.info('Latency: {:.3f} ms'.format(latency * 1000))
+            logger.info('Throughput: {:.3f} images/sec'.format(1./ latency))
 
     @property
     def results(self):
