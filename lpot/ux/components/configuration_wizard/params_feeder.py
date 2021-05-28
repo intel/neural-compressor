@@ -150,8 +150,6 @@ class Feeder:
 
         objectives = []
         for objective in OBJECTIVES.keys():
-            if "modelsize" == objective:
-                continue
             help_msg = help_dict.get(f"__help__{objective}", "")
             objectives.append({"name": objective, "help": help_msg})
         return objectives
