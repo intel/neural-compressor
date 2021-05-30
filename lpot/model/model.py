@@ -185,40 +185,6 @@ def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
     from tensorflow.python.lib.io import file_io
     file_io.write_string_to_file(export_saved_model, saved_model.SerializeToString())
 
-def replace_graph_def_of_keras_model(input_model, output_model, graph_def, \
-                                     input_tensor_names, output_tensor_names):
-    """update graph_def of keras model
-
-    Args:
-        input_model (string): the origin input model path
-        output_model (string): output path
-        graph_def (tf.compat.v1.GraphDef): processed graph_def
-    """
-    if os.path.exists(output_model):
-        import shutil
-        shutil.rmtree(output_model)
-
-    os.makedirs(output_model, exist_ok=True)
-    from tensorflow.python.saved_model import signature_constants
-    from tensorflow.python.saved_model import tag_constants
-    from lpot.adaptor.tf_utils.util import get_tensor_by_name
-    builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(output_model)
-    sigs = {}
-    with tf.compat.v1.Session(graph=tf.Graph()) as sess:
-        tf.import_graph_def(graph_def, name="")
-        g = tf.compat.v1.get_default_graph()
-        inp = [get_tensor_by_name(g, x) for x in input_tensor_names]
-        out = [get_tensor_by_name(g, x) for x in output_tensor_names]
-        sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
-        tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
-            {k: v for k, v in zip(input_tensor_names, inp)},
-            {k: v for k, v in zip(output_tensor_names, out)})
-        builder.add_meta_graph_and_variables(sess,
-                                             [tag_constants.SERVING],
-                                             signature_def_map=sigs)
-    builder.save()
- 
-
 def create_session_with_input_output(model, input_tensor_names, \
     output_tensor_names, **kwargs):
     """Create session
@@ -411,9 +377,9 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
       fetch_collection.node_list.value.append(array)
     grappler_meta_graph_def.collection_def["train_op"].CopyFrom(
         fetch_collection)
-    
     grappler_session_config = config_pb2.ConfigProto()
     rewrite_options = grappler_session_config.graph_options.rewrite_options
+    rewrite_options.optimizers.append('constfold')
     rewrite_options.min_graph_nodes = -1
     graph_def = tf_optimizer.OptimizeGraph(grappler_session_config, \
                         grappler_meta_graph_def, graph_id=b"tf_graph")
@@ -734,14 +700,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
  
     @property
     def graph_def(self):
-        from lpot.adaptor.tf_utils.util import _parse_ckpt_bn_input
-        from tensorflow.python.framework import graph_util
-        graph_def = self.sess.graph.as_graph_def()
-        graph_def = _parse_ckpt_bn_input(graph_def)
-        return graph_util.convert_variables_to_constants(
-            sess=self.sess,
-            input_graph_def=graph_def,
-            output_node_names=self.output_node_names)
+        return self.sess.graph.as_graph_def() 
 
     @graph_def.setter
     def graph_def(self, graph_def):
@@ -771,9 +730,6 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         logger.info("Save quantized model at %s" % root)
 
 class TensorflowKerasModel(TensorflowBaseModel):
-    @property
-    def graph(self):
-        return self.sess.graph
 
     def save(self, root=None):
         if not root:
@@ -785,17 +741,24 @@ class TensorflowKerasModel(TensorflowBaseModel):
 
         os.makedirs(root, exist_ok=True)
 
-        temp_keras_model_path = os.path.join(self.workspace_path, 'temp_keras_model')
-        graph_def = self.sess.graph.as_graph_def()
-        replace_graph_def_of_keras_model(self._model, temp_keras_model_path, graph_def, \
-                                         self._input_tensor_names, self._output_tensor_names)
-        self._model = temp_keras_model_path
-        if root is not self._model:
-            os.makedirs(root, exist_ok=True)
-            import shutil
-            file_names = os.listdir(self._model)
-            for f in file_names:
-                shutil.move(os.path.join(self._model, f), root)
+        from tensorflow.python.saved_model import signature_constants
+        from tensorflow.python.saved_model import tag_constants
+        from lpot.adaptor.tf_utils.util import get_tensor_by_name
+        builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(root)
+        sigs = {}
+        with tf.compat.v1.Session(graph=tf.Graph()) as sess:
+            tf.import_graph_def(self.sess.graph.as_graph_def(), name="")
+            g = tf.compat.v1.get_default_graph()
+            inp = [get_tensor_by_name(g, x) for x in self._input_tensor_names]
+            out = [get_tensor_by_name(g, x) for x in self._output_tensor_names]
+            sigs[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY] = \
+            tf.compat.v1.saved_model.signature_def_utils.predict_signature_def(
+                {k: v for k, v in zip(self._input_tensor_names, inp)},
+                {k: v for k, v in zip(self._output_tensor_names, out)})
+            builder.add_meta_graph_and_variables(sess,
+                                                 [tag_constants.SERVING],
+                                                 signature_def_map=sigs)
+        builder.save()
         logger.info("Save quantized model at %s" % root)
 
 class TensorflowCheckpointModel(TensorflowBaseModel):

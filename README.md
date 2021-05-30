@@ -153,7 +153,8 @@ python setup.py install
 * [Pruning](docs/pruning.md) provides a common method for introducing sparsity in weights and activations.
 * [Benchmarking](docs/benchmark.md) introduces how to utilize the benchmark interface of LPOT.
 * [Mixed precision](docs/mixed_precision.md) introduces how to enable mixed precision, including BFP16 and int8 and FP32, on Intel platforms during tuning.
-* [Graph Optimization](docs/graph_optimization.md) introduces how to enable graph optimization for FP3232 and auto-mixed precision.
+* [Graph Optimization](docs/graph_optimization.md) introduces how to enable graph optimization for FP32 and auto-mixed precision.
+* [Model Conversion](docs/model_conversion.md) introduces how to convert TensorFlow QAT model to quantized model running on Intel platforms.
 * [TensorBoard](docs/tensorboard.md) provides tensor histograms and execution graphs for tuning debugging purposes. 
 
 **Advanced Topics**
