@@ -16,7 +16,7 @@ See the following three examples which demonstrate graph optimization API usage.
 
 ### FP32 Optimization
 
-LPOT runs the graph optimization under FP32 Optimization by default. In other words, the **precisions** field is explicitly set to **fp32**: 
+LPOT runs the graph optimization under FP32 Optimization by default. In other words, the **precisions** field is explicitly set to **fp32**:
 
 ```python
     from lpot.experimental import Graph_Optimization
@@ -75,3 +75,74 @@ Below is an example of using yaml to trigger graph optimization.
       graph_optimizer.model = '/path/to/model'
       optimized_model = graph_optimizer()
   ```
+
+  ## Examples
+
+  ### FP32 optimization
+  The below example demonstrate how to speed up the Resnet50 FP32 throughput performance via Graph Optimization.
+  1. Download the pre-trained ResNet-50 model with below command.
+  ```shell
+    wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb
+
+  ```
+  2. Measure the performance on original FP32 model.
+
+  First of all, we create the **resnet50_measurement.yaml** with below settings for leveraging LPOT Benchmark API.
+
+  ```yaml
+    model:
+      name: resnet50_v1
+      framework: tensorflow
+
+    evaluation:
+      performance:
+        configs:
+          cores_per_instance: 28
+          num_of_instance: 1
+        dataloader:
+          batch_size: 100
+          dataset:
+            dummy:
+              shape: [1000, 224, 224, 3]
+  ```
+
+  Then, we can leverage the Benchmark API to measure the performance.
+  ```python
+  from lpot.experimental import Benchmark
+  evaluator = Benchmark('/path/to/resnet50_measurement.yaml')
+  evaluator.model = '/path/to/resnet50_fp32_pretrained_model.pb'
+  evaluator('performance')
+  ```
+
+  We got below performance result under Intel Xeon Scalable processor Cascade Lake 8280.
+  ```shell
+  performance mode benchmark result:
+2021-05-28 15:16:11 [INFO] Batch size = 100
+2021-05-28 15:16:11 [INFO] Latency: 7.165 ms
+2021-05-28 15:16:11 [INFO] Throughput: 139.567 images/sec
+
+```
+3. Re-Measure the performance on optimized FP32 model.
+  ```python
+  from lpot.experimental import Graph_Optimization
+
+  graph_optimizer = Graph_Optimization()
+  graph_optimizer.model = '/path/to/resnet50_fp32_pretrained_model.pb'
+  output_graph = graph_optimizer()
+  output_graph.save('/path/to/fp32_optimized_model')
+  ```
+Then, We measure the optimized performance via LPOT Benchmark API again.
+  ```python
+  from lpot.experimental import Benchmark
+  evaluator = Benchmark('/path/to/resnet50_measurement.yaml')
+  evaluator.model = '/path/to/fp32_optimized_model'
+  evaluator('performance')
+  ```
+
+Now, the throughput has been improved ~2.3x (325.99 vs 139.56) compared with the initial data.
+```shell
+performance mode benchmark result:
+2021-05-28 15:16:41 [INFO] Batch size = 100
+2021-05-28 15:16:41 [INFO] Latency: 3.068 ms
+2021-05-28 15:16:41 [INFO] Throughput: 325.992 images/sec
+```
