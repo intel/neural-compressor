@@ -418,6 +418,7 @@ class TuneStrategy(object):
                                          self.adaptor, \
                                          self.cfg.evaluation.accuracy.metric, \
                                          postprocess_cfg, \
+                                         self.cfg.evaluation.accuracy.iteration, \
                                          tensorboard = self.cfg.tuning.tensorboard, \
                                          fp32_baseline = self.baseline == None)
 

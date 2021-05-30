@@ -24,7 +24,7 @@ mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
 @dataset_registry(dataset_type="dummy", framework="tensorflow, onnxrt_qlinearops, \
-                        onnxrt_integerops", dataset_format='')
+                  onnxrt_integerops, pytorch, pytorch_ipex, mxnet", dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.
        This Dataset is to construct a dataset from a specific shape.
@@ -134,28 +134,3 @@ class DummyDataset(Dataset):
             return sample, 0
         else:
             return sample
-
-@dataset_registry(dataset_type="dummy", framework="mxnet", dataset_format='')
-class MXNetDummyDataset(DummyDataset):
-    def __getitem__(self, index):
-        sample = self.dataset[index]
-        if self.transform is not None:
-            self.logger.info('Dummy dataset does not need transform!')
-        if self.label:
-            return sample, 0
-        else:
-            return sample
-
-@dataset_registry(dataset_type="dummy", framework="pytorch, pytorch_ipex", 
-                    dataset_format='')
-class PyTorchDummyDataset(DummyDataset):
-    def __getitem__(self, index):
-        sample = self.dataset[index]
-        if self.transform is not None:
-            self.logger.info('Dummy dataset does not need transform!')
-        if self.label:
-            return sample, 0
-        else:
-            return sample
-
-

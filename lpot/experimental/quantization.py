@@ -113,8 +113,12 @@ class Quantization(object):
                 if eval_dataloader_cfg is None:
                     self._eval_func = self._fake_eval_func
                 else:
+                    if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
+                        in deep_get(cfg, 'evaluation.accuracy.dataloader.dataset', {}):
+                        deep_set(cfg, 'evaluation.accuracy.iteration', 10) 
+                    
                     self._eval_dataloader = create_dataloader(self.framework, \
-                                                             eval_dataloader_cfg)
+                                                              eval_dataloader_cfg)
 
         approach_cfg = deep_get(cfg, 'quantization.approach')
         if self._calib_func:

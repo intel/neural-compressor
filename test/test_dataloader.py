@@ -798,6 +798,45 @@ class TestDataloader(unittest.TestCase):
             dataset = datasets['dummy'](shape=(4, 256, 256, 3), high=[128., 127.])
         with self.assertRaises(AssertionError):
             dataset = datasets['dummy'](shape=(4, 256, 256, 3), dtype=['float32', 'int8'])
+
+    def test_tensorflow_dummy_v2(self):
+        datasets = DATASETS('tensorflow')
+        # test with label
+        dataset = datasets['dummy_v2'](\
+            input_shape=(256, 256, 3), label_shape=(1,))
+        data_loader = DATALOADERS['tensorflow'](dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data[0].shape, (1, 256, 256, 3))
+        self.assertEqual(data[1].shape, (1, 1))
+        # dynamic batching
+        data_loader.batch(batch_size=2, last_batch='rollover')
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data[0].shape, (2, 256, 256, 3))
+        self.assertEqual(data[1].shape, (2, 1))
+
+        # test without label
+        dataset = datasets['dummy_v2'](input_shape=(256, 256, 3))
+        data_loader = DATALOADERS['tensorflow'](dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (1, 256, 256, 3))
+        # dynamic batching
+        data_loader.batch(batch_size=2, last_batch='rollover')
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data.shape, (2, 256, 256, 3))
+
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy_v2'](\
+                input_shape=(256, 256, 3), low=[1., 0.])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy_v2'](\
+                input_shape=(256, 256, 3), high=[128., 127.])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy_v2'](\
+                input_shape=(256, 256, 3), dtype=['float32', 'int8'])
  
     def test_style_transfer_dataset(self):
         random_array = np.random.random_sample([100,100,3]) * 255
