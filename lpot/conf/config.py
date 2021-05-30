@@ -144,7 +144,7 @@ def input_to_list(data):
 
 def list_to_tuple(data):
     if isinstance(data, str):
-        return tuple([s.strip() for s in data.split(',')])
+        return tuple([int(s.strip()) for s in data.split(',')])
 
     elif isinstance(data, list):
         if isinstance(data[0], list):
@@ -379,6 +379,21 @@ dataset_schema = Schema({
     },
     Optional('ImageRecord'): {
         'root': str,
+    },
+    Optional('dummy_v2'): {
+        'input_shape': And(Or(str, list), Use(list_to_tuple)), 
+        Optional('label_shape'): And(Or(str, list), Use(list_to_tuple)), 
+        Optional('low'): Or(
+            float,
+            And(int, Use(input_int_to_float)),
+            And(list, Use(input_int_to_float)),
+            And(str, Use(input_int_to_float))),
+        Optional('high'): Or(
+            float,
+            And(int, Use(input_int_to_float)),
+            And(list, Use(input_int_to_float)),
+            And(str, Use(input_int_to_float))),
+        Optional('dtype'): And(Or(str, list), Use(input_to_list)),
     },
     Optional('dummy'): {
         'shape': And(Or(str, list), Use(list_to_tuple)), 
@@ -655,6 +670,7 @@ schema = Schema({
                 },
             },
             Optional('configs'): configs_schema,
+            Optional('iteration', default=-1): int,
             Optional('dataloader'): dataloader_schema,
             Optional('postprocess'): {
                 Optional('transform'): postprocess_schema

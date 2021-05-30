@@ -139,8 +139,8 @@ def main(args=None):
               crop_ratio=0.2,
               resize_shape=(256, 256))
       else: 
-          dataset = DATASETS('tensorflow')['dummy']( \
-              shape=[(200, 256, 256, 3), (200, 256, 256, 3)], label=True) 
+          dataset = DATASETS('tensorflow')['dummy_v2'](\
+              input_shape=[(256, 256, 3), (256, 256, 3)], label_shape=(1, )) 
       dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
       tf.import_graph_def(frozen_graph, name='')
       style_transfer(sess, dataloader)
@@ -164,7 +164,7 @@ def style_transfer(sess, dataloader):
 
       stylized_images = sess.graph.get_tensor_by_name(output_name)
       
-      for (content_img_np, style_img_np), _ in dataloader:
+      for idx, ((content_img_np, style_img_np), _) in enumerate(dataloader):
           start_time = time.time()
           stylized_image_res = sess.run(
               stylized_images,
@@ -173,6 +173,8 @@ def style_transfer(sess, dataloader):
                   content_name: content_img_np})
           duration = time.time() - start_time
           time_list.append(duration)
+          if idx + 1 == 20:
+              break
       warm_up = 1
       throughput = (len(time_list) - warm_up)/ np.array(time_list[warm_up:]).sum()
       print('Batch size = {}'.format(FLAGS.batch_size)) 

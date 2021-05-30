@@ -174,8 +174,14 @@ class Benchmark(object):
 
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
+        if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) == -1 and 'dummy_v2' in \
+            deep_get(cfg, 'evaluation.{}.dataloader.dataset'.format(mode), {}):
+            deep_set(cfg, 'evaluation.{}.iteration'.format(mode), 10)
+
         iteration = -1 if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) is None \
             else deep_get(cfg, 'evaluation.{}.iteration'.format(mode))
+
+
         metric =  deep_get(cfg, 'evaluation.{}.metric'.format(mode))
         b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
 
