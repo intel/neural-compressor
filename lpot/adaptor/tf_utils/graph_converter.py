@@ -619,11 +619,12 @@ class GraphConverter:
             self._tmp_graph_def,
             self.device).do_transformation()
 
-        self._tmp_graph_def = FuseMatMulRequantizeTransformer(
-            self._tmp_graph_def).do_transformation()
+        if not self.fake_quant:
+            self._tmp_graph_def = FuseMatMulRequantizeTransformer(
+                self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
-            self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
+                self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,
