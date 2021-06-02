@@ -70,7 +70,7 @@ Follow the comments in the generated code template to fill in required methods w
 
 ## Bert model configuration
 ![Bert model Wizard](imgs/ux/model_create_bert.png "Bert model Wizard")   
-* Follow [instructions](https://github.com/intel/lpot/blob/master/examples/tensorflow/nlp/bert/README.md) to:
+* Follow [instructions](../examples/tensorflow/nlp/bert_large_squad/README.md) to:
    * install Intel Tensorflow 1.15 up2
    * prepare dataset and a frozen pb model 
 * In the **Create low precision model**:
