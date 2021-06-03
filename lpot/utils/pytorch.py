@@ -100,11 +100,15 @@ def load(checkpoint_dir, model):
         # For torch.fx approach
         if version >= '1.7':
             q_model = copy.deepcopy(model.eval())
-            from torch.quantization.quantize_fx import prepare_fx, convert_fx
+            from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
             fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
             if version < '1.8':
                 q_model = torch._fx.symbolic_trace(q_model)
-            q_model = prepare_fx(q_model, fx_op_cfgs)
+            if tune_cfg['approach'] == "quant_aware_training":
+                q_model.train()
+                q_model = prepare_qat_fx(q_model, fx_op_cfgs)
+            else:
+                q_model = prepare_fx(q_model, fx_op_cfgs)
             q_model = convert_fx(q_model)
             weights = torch.load(weights_file)
             q_model.load_state_dict(weights)
