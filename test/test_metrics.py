@@ -198,32 +198,10 @@ class TestMetrics(unittest.TestCase):
         import json
         import os
         metrics = METRICS('tensorflow')
-        fake_dict = {
-            'info': {},
-            'licenses':{},
-            'images':[{
-                'file_name': '000000397133.jpg',
-                'height': 100,
-                'width': 100,
-                'id': 397133
-             }],
-             'annotations':[{
-                'category_id': 18,
-                'id': 1768,
-                'iscrowd': 0,
-                'image_id': 397133,
-                'bbox': [473.07, 395.93, 38.65, 28.67]
-             }],
-             'categories':[{
-                'supercategory': 'animal',
-                'id': 18,
-                'name': 'dog'
-             }]
-        }
-        fake_json = json.dumps(fake_dict)
-        with open('anno.json', 'w') as f:
-            f.write(fake_json)
-        mAP = metrics['mAP']('anno.json')
+        fake_dict = 'dog: 1'
+        with open('anno.yaml', 'w', encoding="utf-8") as f:
+            f.write(fake_dict)
+        mAP = metrics['mAP']('anno.yaml')
         self.assertEqual(mAP.category_map_reverse['dog'], 1)
         detection = [
             np.array([[5]]),
@@ -245,9 +223,24 @@ class TestMetrics(unittest.TestCase):
         ]
         self.assertRaises(ValueError, mAP.update, detection, ground_truth)
 
-        os.remove('anno.json')
-
-        mAP = metrics['mAP']()
+        detection = [
+            np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
+                        [0.62706745, 0.35748824, 0.6892729 , 0.41513762]]]),
+            np.array([[0.9267181 , 0.8510787]]),
+            np.array([[ 1., 1.]])
+        ]
+        ground_truth = [
+            np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
+                        [0.62706745, 0.35748824, 0.6892729 , 0.41513762]]]),
+            np.array([[b'dog', b'dog']]),            
+            np.array([[]]),
+            np.array([b'000000397133.jpg'])
+        ]
+        mAP.update(detection, ground_truth)
+        mAP.result()
+        self.assertEqual(format(mAP.result(), '.5f'),
+                            '1.00000')
+        
         detection = [
             np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
                         [0.5589304 , 0.        , 0.98301625, 0.520178  ],
@@ -315,6 +308,8 @@ class TestMetrics(unittest.TestCase):
             np.array([[64, 62, 62, 67, 82, 52, 79, 81, 55, 55, 55, 55, 62, 55]]),
             np.array([b'000000037777.jpg'])
         ]
+
+        mAP = metrics['mAP']()
         
         self.assertEqual(mAP.result(), 0)
 
@@ -376,37 +371,16 @@ class TestMetrics(unittest.TestCase):
             np.array([[ 1., 67., 51., 79., 47.]])
         ]
         self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)
-    
+        os.remove('anno.yaml')
+
+   
     def test_tensorflow_VOCmAP(self):
-        import json
         import os
         metrics = METRICS('tensorflow')
-        fake_dict = {
-            'info': {},
-            'licenses':{},
-            'images':[{
-                'file_name': '000000397133.jpg',
-                'height': 100,
-                'width': 100,
-                'id': 397133
-             }],
-             'annotations':[{
-                'category_id': 18,
-                'id': 1768,
-                'iscrowd': 0,
-                'image_id': 397133,
-                'bbox': [473.07, 395.93, 38.65, 28.67]
-             }],
-             'categories':[{
-                'supercategory': 'animal',
-                'id': 18,
-                'name': 'dog'
-             }]
-        }
-        fake_json = json.dumps(fake_dict)
-        with open('anno.json', 'w') as f:
-            f.write(fake_json)
-        mAP = metrics['VOCmAP']('anno.json')
+        fake_dict = 'dog: 1'
+        with open('anno.yaml', 'w', encoding="utf-8") as f:
+            f.write(fake_dict)
+        mAP = metrics['VOCmAP']('anno.yaml')
         self.assertEqual(mAP.iou_thrs, 0.5)
         self.assertEqual(mAP.map_points, 0)
         self.assertEqual(mAP.category_map_reverse['dog'], 1)
@@ -430,7 +404,7 @@ class TestMetrics(unittest.TestCase):
         ]
         self.assertRaises(ValueError, mAP.update, detection, ground_truth)
 
-        os.remove('anno.json')
+        os.remove('anno.yaml')
 
         mAP = metrics['VOCmAP']()
         detection = [
@@ -564,35 +538,12 @@ class TestMetrics(unittest.TestCase):
 
 
     def test_tensorflow_COCOmAP(self):
-        import json
         import os
         metrics = METRICS('tensorflow')
-        fake_dict = {
-            'info': {},
-            'licenses':{},
-            'images':[{
-                'file_name': '000000397133.jpg',
-                'height': 100,
-                'width': 100,
-                'id': 397133
-             }],
-             'annotations':[{
-                'category_id': 18,
-                'id': 1768,
-                'iscrowd': 0,
-                'image_id': 397133,
-                'bbox': [473.07, 395.93, 38.65, 28.67]
-             }],
-             'categories':[{
-                'supercategory': 'animal',
-                'id': 18,
-                'name': 'dog'
-             }]
-        }
-        fake_json = json.dumps(fake_dict)
-        with open('anno.json', 'w') as f:
-            f.write(fake_json)
-        mAP = metrics['COCOmAP']('anno.json')
+        fake_dict = 'dog: 1'
+        with open('anno.yaml', 'w', encoding="utf-8") as f:
+            f.write(fake_dict)
+        mAP = metrics['COCOmAP']('anno.yaml')
         self.assertEqual(mAP.category_map_reverse['dog'], 1)
         detection = [
             np.array([[5]]),
@@ -614,7 +565,7 @@ class TestMetrics(unittest.TestCase):
         ]
         self.assertRaises(ValueError, mAP.update, detection, ground_truth)
 
-        os.remove('anno.json')
+        os.remove('anno.yaml')
 
         mAP = metrics['COCOmAP']()
         detection = [

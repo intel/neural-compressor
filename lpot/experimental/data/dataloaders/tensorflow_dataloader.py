@@ -25,7 +25,6 @@ from .default_dataloader import default_collate
 from .default_dataloader import DefaultDataLoader
 from ..datasets.bert_dataset import TensorflowBertDataset
 from .base_dataloader import BaseDataLoader
-from ..datasets.coco_dataset import COCORecordDataset
 
 tf = LazyImport('tensorflow')
 lpot = LazyImport('lpot')
@@ -138,21 +137,6 @@ class TensorflowDataLoader(BaseDataLoader):
         elif isinstance(dataset, TensorflowBertDataset):
             return TensorflowBertDataLoader(dataset, batch_size, last_batch,
                         collate_fn, sampler, batch_sampler, num_workers, pin_memory)
-        elif isinstance(dataset, COCORecordDataset):
-            def coco_collate_fn(batch):
-                elem = batch[0]
-                if isinstance(elem, list) or isinstance(elem, tuple):
-                    batch = zip(*batch)
-                    return [coco_collate_fn(samples) for samples in batch]
-                elif isinstance(elem, np.ndarray):
-                    try:
-                        return np.stack(batch)
-                    except:
-                        return batch
-                else:
-                    return batch
-            return DefaultDataLoader(dataset, batch_size, last_batch, coco_collate_fn,
-                                     sampler, batch_sampler, num_workers, pin_memory)
         else:
             return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
                                      sampler, batch_sampler, num_workers, pin_memory)

@@ -425,6 +425,8 @@ dataset_schema = Schema({
     },
     Optional('COCORaw'): {
         'root': str,
+        Optional('img_dir'): str,
+        Optional('anno_dir'): str,
         Optional('num_cores'): int,
     },
     Optional('ImagenetRaw'): {

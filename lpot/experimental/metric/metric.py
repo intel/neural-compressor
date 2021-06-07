@@ -657,14 +657,11 @@ class TensorflowMAP(BaseMetric):
         from .coco_label_map import category_map
         if anno_path:
             import os
-            import json
+            import yaml
             assert os.path.exists(anno_path), 'Annotation path does not exists!'
-            label_map = {}
-            with open(anno_path) as fin:
-                annotations = json.load(fin)
-            for cnt, cat in enumerate(annotations["categories"]):
-                label_map[cat["name"]] = cnt + 1
-            self.category_map_reverse = {k:v for k,v in label_map.items()}
+            with open(anno_path, 'r') as f:
+                label_map = yaml.safe_load(f.read())
+            self.category_map_reverse = {k: v for k,v in label_map.items()}
         else:
             # label: index
             self.category_map_reverse = {v: k for k, v in category_map.items()}
