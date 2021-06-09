@@ -99,8 +99,6 @@ where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WN
 
 The dev set results will be present within the text file 'eval_results.txt' in the specified output_dir. In case of MNLI, since there are two separate dev sets, matched and mismatched, there will be a separate output folder called '/tmp/MNLI-MM/' in addition to '/tmp/MNLI/'.
 
-please refer to [BERT base scripts and instructions](README.md#run_gluepy-fine-tuning-on-glue-tasks-for-sequence-classification).
-
 * For BERT large and glue tasks(MRPC, CoLA, RTE, QNLI...)
 
 ```bash
@@ -136,8 +134,6 @@ Training with these hyper-parameters gave us the following results:
   global_step = 174
   loss = 0.07231863956341798
 ```
-
-please refer to [BERT large scripts and instructions](README.md#fine-tuning-bert-model-on-the-mrpc-classification-task)
 
 * For BERT large SQuAD task
 
