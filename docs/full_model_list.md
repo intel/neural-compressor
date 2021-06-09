@@ -6,21 +6,20 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
 
 ### TensorFlow 2.x models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Framework&nbsp;&nbsp;&nbsp;</th>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Version&nbsp;&nbsp;&nbsp;</th>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Model&nbsp;&nbsp;&nbsp;</th>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Dataset&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Framework</th>
+    <th rowspan="2">Version</th>
+    <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
     <th>Performance speed up</th>
   </tr>
   <tr>
-    <td>&nbsp;&nbsp;&nbsp;<br>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>FP32&nbsp;&nbsp;&nbsp;Accuracy Baseline&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>Acc&nbsp;&nbsp;&nbsp;Ratio [(INT8-FP32)/FP32]&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>Realtime&nbsp;&nbsp;&nbsp;Latency Ratio[FP32/INT8]&nbsp;&nbsp;&nbsp;</td>
+    <td>INT8 Tuning Accuracy</td>
+    <td>FP32 Accuracy Baseline</td>
+    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
+    <td>Realtime Latency Ratio[FP32/INT8]</td>
   </tr>
 </thead>
 <tbody>
@@ -28,211 +27,208 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnet50v1.0&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>73.80%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.67%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.49x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>74.21%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>74.27%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.08%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.44x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnet50v1.5&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.70%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.50%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.26%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.23x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.92%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.46%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.60%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.37x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnet101&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>77.20%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.05%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.42x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>77.18%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.45%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.95%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.53x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v1&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>69.70%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.57%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.88x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.41%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>69.74%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.96%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.89x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v2&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.14%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.96x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>74.36%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>73.97%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.53%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.95x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v3&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>77.20%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.70%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.65%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.36x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>77.28%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.75%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.69%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.37x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v4&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>80.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>80.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.37%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.59x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>80.39%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>80.27%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.15%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.60x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_resnet_v2&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>80.10%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>80.38%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>80.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.37%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.97x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.02%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.98x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>mobilenetv1&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.14%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.88x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>73.29%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.96%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.28%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.93x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>mobilenetv2&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.80%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.80%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-1.39%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.60x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>71.98%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>71.76%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.31%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.78x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>ssd_resnet50_v1&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>Coco2017&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>37.90%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>37.98%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>38.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.26%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.97x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.05%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.99x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>mask_rcnn_inception_v2&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>Coco2017&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>28.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>29.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.69%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.66x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>28.62%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>28.73%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.38%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.96x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>wide_deep_large_ds&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>criteo-kaggle&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>77.61%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>77.67%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>-0.08%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.42x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.50x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>vgg16&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.50%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.26%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.75x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.11%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.89%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.72%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.76x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>vgg19&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.97%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.79x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.36%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>71.01%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.90%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.85x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnetv2_50&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>69.60%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.01%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.38x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.39%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>69.64%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.08%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.40x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnetv2_101&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.50%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.83%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.44x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.58%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>71.87%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.99%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.51x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnetv2_152&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.60%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.28%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.53x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.92%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.37%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.76%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.48x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>densenet121&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.60%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.41%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.49x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.79%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.89%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.14%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.58x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>densenet161&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.26%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.64x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.41%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.29%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.16%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.79x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>densenet169&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.20%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.60%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.54%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.47x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>74.55%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>74.65%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.13%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.49x&nbsp;&nbsp;&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>efficientnet_b0&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>78.40%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.75%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.15%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.13x&nbsp;&nbsp;&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.4.0&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>deeplab&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>81.96%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>82.20%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.29%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.55x&nbsp;&nbsp;&nbsp;</td>
   </tr>
 </tbody>
 </table>
@@ -240,153 +236,148 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
 
 ### TensorFlow 1.x models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Framework&nbsp;&nbsp;&nbsp;</th>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Version&nbsp;&nbsp;&nbsp;</th>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Model&nbsp;&nbsp;&nbsp;</th>
-    <th rowspan="2">&nbsp;&nbsp;&nbsp;<br>Dataset&nbsp;&nbsp;&nbsp;</th>
-    <th colspan="3">&nbsp;&nbsp;&nbsp;<br>Accuracy&nbsp;&nbsp;&nbsp;</th>
-    <th>&nbsp;&nbsp;&nbsp;<br>Performance&nbsp;&nbsp;&nbsp;speed up&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Framework</th>
+    <th rowspan="2">Version</th>
+    <th rowspan="2">Model</th>
+    <th colspan="3">Accuracy</th>
+    <th>Performance speed up</th>
   </tr>
   <tr>
-    <td>&nbsp;&nbsp;&nbsp;<br>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>FP32&nbsp;&nbsp;&nbsp;Accuracy Baseline&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>Acc&nbsp;&nbsp;&nbsp;Ratio [(INT8-FP32)/FP32]&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>Realtime&nbsp;&nbsp;&nbsp;Latency Ratio[FP32/INT8]&nbsp;&nbsp;&nbsp;</td>
+    <td>INT8 Tuning Accuracy</td>
+    <td>FP32 Accuracy Baseline</td>
+    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
+    <td>Realtime Latency Ratio[FP32/INT8]</td>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnet_v1_50_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>75.20%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.46%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.89x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.06%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>75.18%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.17%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.94x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnet_v1_101_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>77.10%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>77.19%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>76.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.92%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.25x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.03%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.39x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnet_v1_152_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>77.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>76.80%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.78%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.51x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>77.58%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>76.81%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.00%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.74x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v1_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>69.80%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.43%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.79x&nbsp;&nbsp;&nbsp;</td>
-  </tr>
-  <tr>
-    <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>inception_v2_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>74.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.14%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.44%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>69.77%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.96%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>1.95x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>inception_v2_slim&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>74.32%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>73.98%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.46%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.00x&nbsp;&nbsp;&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v3_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>78.10%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>78.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.13%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.48x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>78.30%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>77.99%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.40%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.57x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>inception_v4_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>79.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>80.20%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.37%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.78x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>80.30%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>80.19%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.14%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.88x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>vgg16_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.50%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.26%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.73x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.16%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.89%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.79%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.81x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>vgg19_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.00%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.97%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>3.82x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.29%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>71.01%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.80%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>3.88x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnetv2_50_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>70.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>69.70%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.86%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.38x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>70.35%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>69.72%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.90%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.41x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnetv2_101_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.30%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>71.90%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.56%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.50x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.49%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>71.91%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.81%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.54x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>resnetv2_152_slim&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>ImageNet&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>72.60%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>72.90%&nbsp;&nbsp;&nbsp;</td>
     <td>&nbsp;&nbsp;&nbsp;<br>72.40%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>0.28%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.57x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>0.69%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.60x&nbsp;&nbsp;&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>1.15UP2&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>bert&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>SQUAD&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>92.33%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>92.98%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>-0.69%&nbsp;&nbsp;&nbsp;</td>
-    <td>&nbsp;&nbsp;&nbsp;<br>2.89x&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>bert_large_squad&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>92.35&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>92.98&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.68%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>2.81x&nbsp;&nbsp;&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;&nbsp;&nbsp;<br>tensorflow&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.15up2&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>bert_base_mrpc&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>85.78%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>86.52%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>-0.86%&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;&nbsp;<br>1.50x&nbsp;&nbsp;&nbsp;</td>
   </tr>
 </tbody>
 </table>
@@ -394,21 +385,20 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
 
 ### PyTorch models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
-    <th rowspan="2">Dataset</th>
     <th colspan="3">Accuracy</th>
     <th>Performance speed up</th>
   </tr>
   <tr>
-    <td>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy</td>
-    <td>FP32 Accuracy&nbsp;&nbsp;&nbsp;Baseline</td>
-    <td>Acc Ratio&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency&nbsp;&nbsp;&nbsp;Ratio[FP32/INT8]</td>
+    <td>INT8 Tuning Accuracy</td>
+    <td>FP32 Accuracy Baseline</td>
+    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
+    <td>Realtime Latency Ratio[FP32/INT8]</td>
   </tr>
 </thead>
 <tbody>
@@ -416,207 +406,375 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>resnet18</td>
-    <td>ImageNet</td>
     <td>69.60%</td>
     <td>69.76%</td>
     <td>-0.22%</td>
-    <td>1.76x</td>
+    <td>2.00x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>resnet50</td>
-    <td>ImageNet</td>
     <td>75.96%</td>
     <td>76.13%</td>
     <td>-0.23%</td>
-    <td>2.63x</td>
+    <td>2.46x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>resnext101_32x8d</td>
-    <td>ImageNet</td>
     <td>79.12%</td>
     <td>79.31%</td>
     <td>-0.24%</td>
-    <td>2.61x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_base_mrpc</td>
-    <td>MRPC</td>
-    <td>88.90%</td>
-    <td>88.73%</td>
-    <td>0.19%</td>
-    <td>1.98x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_base_cola</td>
-    <td>COLA</td>
-    <td>59.06%</td>
-    <td>58.84%</td>
-    <td>0.37%</td>
-    <td>2.19x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_base_sts-b</td>
-    <td>STS-B</td>
-    <td>88.40%</td>
-    <td>89.27%</td>
-    <td>-0.97%</td>
-    <td>2.28x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_base_sst-2</td>
-    <td>SST-2</td>
-    <td>91.51%</td>
-    <td>91.86%</td>
-    <td>-0.37%</td>
-    <td>2.30x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_base_rte</td>
-    <td>RTE</td>
-    <td>69.31%</td>
-    <td>69.68%</td>
-    <td>-0.52%</td>
-    <td>2.16x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_large_mrpc</td>
-    <td>MRPC</td>
-    <td>87.45%</td>
-    <td>88.33%</td>
-    <td>-0.99%</td>
     <td>2.63x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_large_squad</td>
-    <td>SQUAD</td>
-    <td>92.85%</td>
-    <td>93.05%</td>
-    <td>-0.21%</td>
-    <td>2.01x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_large_qnli</td>
-    <td>QNLI</td>
-    <td>91.20%</td>
-    <td>91.82%</td>
-    <td>-0.68%</td>
-    <td>2.69x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_large_rte</td>
-    <td>RTE</td>
-    <td>71.84%</td>
-    <td>72.56%</td>
-    <td>-0.99%</td>
-    <td>1.36x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0a0+24aac32</td>
-    <td>bert_large_cola</td>
-    <td>COLA</td>
-    <td>62.74%</td>
-    <td>62.57%</td>
-    <td>0.27%</td>
-    <td>2.74x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.5.0+cpu</td>
-    <td>dlrm</td>
-    <td>CriteoTerabyte</td>
-    <td>80.27%</td>
-    <td>80.27%</td>
-    <td>0.00%</td>
-    <td>1.03x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>inception_v3</td>
-    <td>ImageNet</td>
     <td>69.42%</td>
     <td>69.54%</td>
     <td>-0.17%</td>
-    <td>1.84x</td>
+    <td>1.96x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>peleenet</td>
-    <td>ImageNet</td>
     <td>71.59%</td>
     <td>72.08%</td>
     <td>-0.68%</td>
-    <td>1.28x</td>
+    <td>1.43x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>yolo_v3</td>
-    <td>Coco2017</td>
     <td>24.42%</td>
     <td>24.54%</td>
     <td>-0.51%</td>
-    <td>1.64x</td>
+    <td>1.74x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>se_resnext50_32x4d</td>
-    <td>ImageNet</td>
     <td>79.04%</td>
     <td>79.08%</td>
     <td>-0.05%</td>
-    <td>1.73x</td>
+    <td>1.87x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>mobilenet_v2</td>
-    <td>ImageNet</td>
     <td>70.63%</td>
     <td>71.86%</td>
     <td>-1.70%</td>
+    <td>1.75x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>3dunet</td>
+    <td>85.31%</td>
+    <td>85.30%</td>
+    <td>0.01%</td>
+    <td>1.84x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>distilbert_base_mrpc</td>
+    <td>81.34%</td>
+    <td>80.99%</td>
+    <td>0.43%</td>
+    <td>1.78x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>albert_base_mrpc</td>
+    <td>88.34%</td>
+    <td>88.50%</td>
+    <td>-0.18%</td>
+    <td>1.48x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>funnel_mrpc</td>
+    <td>91.79%</td>
+    <td>92.26%</td>
+    <td>-0.51%</td>
+    <td>1.40x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>mbart_wnli</td>
+    <td>56.34%</td>
+    <td>56.34%</td>
+    <td>0.00%</td>
+    <td>2.06x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>t5_wmt_en_ro</td>
+    <td>24.36</td>
+    <td>24.52</td>
+    <td>-0.66%</td>
     <td>1.60x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
+    <td>marianmt_wmt_en_ro</td>
+    <td>22.33</td>
+    <td>22.23</td>
+    <td>0.46%</td>
+    <td>2.11x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>pegasus_billsum</td>
+    <td>51.1</td>
+    <td>51.21</td>
+    <td>-0.23%</td>
+    <td>2.00x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>rnnt</td>
+    <td>91.55</td>
+    <td>92.55</td>
+    <td>-1.08%</td>
+    <td>3.10x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>reformer_crime_and_punishment</td>
+    <td>6.55</td>
+    <td>6.5</td>
+    <td>0.79%</td>
+    <td>1.07x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>xlm-roberta-base_mrpc</td>
+    <td>87.93%</td>
+    <td>88.62%</td>
+    <td>-0.78%</td>
+    <td>1.34x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>flaubert_mrpc</td>
+    <td>80.69%</td>
+    <td>80.19%</td>
+    <td>0.62%</td>
+    <td>1.43x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>barthez_mrpc</td>
+    <td>83.23%</td>
+    <td>83.81%</td>
+    <td>-0.68%</td>
+    <td>1.81x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>longformer_mrpc</td>
+    <td>90.65%</td>
+    <td>91.46%</td>
+    <td>-0.88%</td>
+    <td>1.30x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>layoutlm_mrpc</td>
+    <td>81.22%</td>
+    <td>78.01%</td>
+    <td>4.12%</td>
+    <td>1.86x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>deberta_mrpc</td>
+    <td>91.07%</td>
+    <td>90.91%</td>
+    <td>0.17%</td>
+    <td>1.46x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>dlrm_fx</td>
+    <td>80.19%</td>
+    <td>80.27%</td>
+    <td>-0.10%</td>
+    <td>1.25x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>resnet18_fx</td>
+    <td>69.61%</td>
+    <td>69.76%</td>
+    <td>-0.22%</td>
+    <td>2.17x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>xlm_roberta_mrpc</td>
+    <td>88.47%</td>
+    <td>88.24%</td>
+    <td>0.27%</td>
+    <td>1.76x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>xlnet_base_mrpc</td>
+    <td>89.62%</td>
+    <td>89.47%</td>
+    <td>0.17%</td>
+    <td>1.27x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>transfo_xl_mrpc</td>
+    <td>81.74%</td>
+    <td>81.20%</td>
+    <td>0.66%</td>
+    <td>1.38x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.5.0+cpu</td>
+    <td>ctrl_mrpc</td>
+    <td>81.76%</td>
+    <td>82.00%</td>
+    <td>-0.29%</td>
+    <td>2.49x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_base_mrpc</td>
+    <td>88.90%</td>
+    <td>88.73%</td>
+    <td>0.19%</td>
+    <td>2.10x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_base_cola</td>
+    <td>59.06%</td>
+    <td>58.84%</td>
+    <td>0.37%</td>
+    <td>2.23x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_base_sts-b</td>
+    <td>88.40%</td>
+    <td>89.27%</td>
+    <td>-0.97%</td>
+    <td>2.13x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_base_sst-2</td>
+    <td>91.51%</td>
+    <td>91.86%</td>
+    <td>-0.37%</td>
+    <td>2.32x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_base_rte</td>
+    <td>69.31%</td>
+    <td>69.68%</td>
+    <td>-0.52%</td>
+    <td>2.03x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_large_mrpc</td>
+    <td>87.45%</td>
+    <td>88.33%</td>
+    <td>-0.99%</td>
+    <td>2.65x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_large_squad</td>
+    <td>92.85</td>
+    <td>93.05</td>
+    <td>-0.21%</td>
+    <td>1.92x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_large_qnli</td>
+    <td>91.20%</td>
+    <td>91.82%</td>
+    <td>-0.68%</td>
+    <td>2.59x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_large_rte</td>
+    <td>71.84%</td>
+    <td>72.56%</td>
+    <td>-0.99%</td>
+    <td>1.34x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
+    <td>bert_large_cola</td>
+    <td>62.74%</td>
+    <td>62.57%</td>
+    <td>0.27%</td>
+    <td>2.67x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.6.0a0+24aac32</td>
     <td>gpt_wikitext</td>
-    <td>WIKI Text</td>
-    <td>60.06%</td>
-    <td>60.20%</td>
+    <td>60.06</td>
+    <td>60.2</td>
     <td>-0.23%</td>
     <td>1.15x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.5.0+cpu</td>
+    <td>1.6.0a0+24aac32</td>
     <td>roberta_base_mrpc</td>
-    <td>MRPC</td>
     <td>85.08%</td>
     <td>85.51%</td>
     <td>-0.51%</td>
@@ -624,33 +782,12 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.5.0+cpu</td>
+    <td>1.6.0a0+24aac32</td>
     <td>camembert_base_mrpc</td>
-    <td>MRPC</td>
     <td>83.57%</td>
     <td>84.22%</td>
     <td>-0.77%</td>
-    <td>2.16x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0+cpu</td>
-    <td>blendcnn</td>
-    <td>MRPC</td>
-    <td>68.40%</td>
-    <td>68.40%</td>
-    <td>0.00%</td>
-    <td>1.50x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>ipex</td>
-    <td>resnet50_ipex</td>
-    <td>ImageNet</td>
-    <td>75.80%</td>
-    <td>76.13%</td>
-    <td>-0.44%</td>
-    <td>1.66x</td>
+    <td>2.18x</td>
   </tr>
 </tbody>
 </table>
@@ -658,20 +795,19 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
 
 ### Quantization-aware training models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
-    <th rowspan="2">version</th>
-    <th rowspan="2">model</th>
-    <th rowspan="2">dataset</th>
+    <th rowspan="2">Version</th>
+    <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
     <th>Performance speed up</th>
   </tr>
   <tr>
     <td>INT8 Tuning Accuracy</td>
     <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio[(INT8-FP32)/FP32]</td>
+    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
     <td>Realtime Latency Ratio[FP32/INT8]</td>
   </tr>
 </thead>
@@ -680,21 +816,19 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>resnet18_qat</td>
-    <td>ImageNet</td>
     <td>69.76%</td>
     <td>69.76%</td>
     <td>0.01%</td>
-    <td>1.76x</td>
+    <td>2.05x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.5.0+cpu</td>
     <td>resnet50_qat</td>
-    <td>ImageNet</td>
     <td>76.37%</td>
     <td>76.13%</td>
     <td>0.32%</td>
-    <td>2.67x</td>
+    <td>2.56x</td>
   </tr>
 </tbody>
 </table>
@@ -702,21 +836,20 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
 
 ### MXNet models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
-    <th rowspan="2">Dataset</th>
     <th colspan="3">Accuracy</th>
     <th>Performance speed up</th>
   </tr>
   <tr>
-    <td>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy</td>
-    <td>FP32 Accuracy&nbsp;&nbsp;&nbsp;Baseline</td>
-    <td>Acc Ratio&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency&nbsp;&nbsp;&nbsp;Ratio[FP32/INT8]</td>
+    <td>INT8 Tuning Accuracy</td>
+    <td>FP32 Accuracy Baseline</td>
+    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
+    <td>Realtime Latency Ratio[FP32/INT8]</td>
   </tr>
 </thead>
 <tbody>
@@ -724,81 +857,82 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>resnet50v1</td>
-    <td>ImageNet</td>
     <td>76.03%</td>
     <td>76.33%</td>
     <td>-0.39%</td>
-    <td>3.13x</td>
+    <td>3.23x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>inceptionv3</td>
-    <td>ImageNet</td>
     <td>77.80%</td>
-    <td></td>
+    <td>77.64%</td>
     <td>0.21%</td>
-    <td>2.77x</td>
+    <td>2.73x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>mobilenet1.0</td>
-    <td>ImageNet</td>
     <td>71.71%</td>
     <td>72.22%</td>
     <td>-0.71%</td>
-    <td>2.38x</td>
+    <td>2.51x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>mobilenetv2_1.0</td>
-    <td>ImageNet</td>
     <td>70.77%</td>
     <td>70.87%</td>
     <td>-0.14%</td>
-    <td>2.67x</td>
-  </tr>
-  <tr>
-    <td>mxnet</td>
-    <td>1.7.0</td>
-    <td>resnet18_v1</td>
-    <td>ImageNet</td>
-    <td>70.00%</td>
-    <td>70.14%</td>
-    <td>-0.21%</td>
-    <td>3.13x</td>
-  </tr>
-  <tr>
-    <td>mxnet</td>
-    <td>1.7.0</td>
-    <td>squeezenet1.0</td>
-    <td>ImageNet</td>
-    <td>56.89%</td>
-    <td>56.96%</td>
-    <td>-0.13%</td>
     <td>2.63x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
+    <td>resnet18_v1</td>
+    <td>70.00%</td>
+    <td>70.14%</td>
+    <td>-0.21%</td>
+    <td>3.12x</td>
+  </tr>
+  <tr>
+    <td>mxnet</td>
+    <td>1.7.0</td>
+    <td>squeezenet1.0</td>
+    <td>56.89%</td>
+    <td>56.96%</td>
+    <td>-0.13%</td>
+    <td>2.61x</td>
+  </tr>
+  <tr>
+    <td>mxnet</td>
+    <td>1.7.0</td>
+    <td>ssd-resnet50_v1</td>
+    <td>80.21%</td>
+    <td>80.23%</td>
+    <td>-0.03%</td>
+    <td>4.76x</td>
+  </tr>
+  <tr>
+    <td>mxnet</td>
+    <td>1.7.0</td>
     <td>ssd-mobilenet1.0</td>
-    <td>VOC</td>
     <td>74.94%</td>
     <td>75.54%</td>
     <td>-0.79%</td>
-    <td>3.74x</td>
+    <td>3.69x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>resnet152_v1</td>
-    <td>ImageNet</td>
     <td>78.31%</td>
     <td>78.54%</td>
     <td>-0.29%</td>
-    <td>3.14x</td>
+    <td>3.25x</td>
   </tr>
 </tbody>
 </table>
@@ -806,75 +940,76 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
 
 ### ONNX Models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
-    <th rowspan="2">Dataset</th>
     <th colspan="3">Accuracy</th>
+    <th>Performance speed up</th>
   </tr>
   <tr>
-    <td>INT8&nbsp;&nbsp;&nbsp;Tuning Accuracy</td>
-    <td>FP32 Accuracy&nbsp;&nbsp;&nbsp;Baseline</td>
-    <td>Acc Ratio&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</td>
+    <td>INT8 Tuning Accuracy</td>
+    <td>FP32 Accuracy Baseline</td>
+    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
+    <td>Realtime Latency Ratio[FP32/INT8]</td>
   </tr>
 </thead>
 <tbody>
   <tr>
-    <td>ONNX RT</td>
-    <td>1.6.0 (opset11+)</td>
-    <td>resnet50_v1_5</td>
-    <td>ImageNet</td>
-    <td>73.60%</td>
-    <td>74.00%</td>
-    <td>-0.54%</td>
-  </tr>
-  <tr>
-    <td>ONNX RT</td>
-    <td></td>
-    <td>vgg16</td>
-    <td>ImageNet</td>
-    <td>68.86%</td>
-    <td>69.44%</td>
-    <td>-0.84%</td>
-  </tr>
-  <tr>
-    <td>ONNX RT</td>
-    <td></td>
+    <td>onnxrt</td>
+    <td>1.6.0</td>
     <td>bert_base_mrpc</td>
-    <td>MRPC</td>
     <td>85.29%</td>
     <td>86.03%</td>
     <td>-0.85%</td>
+    <td>2.07x</td>
   </tr>
   <tr>
-    <td>ONNX RT</td>
-    <td></td>
-    <td>MobileBERT</td>
-    <td>MRPC</td>
-    <td>0.8603</td>
-    <td>0.8627</td>
-    <td>-0.28%</td>
+    <td>onnxrt</td>
+    <td>1.6.0</td>
+    <td>vgg16</td>
+    <td>69.43%</td>
+    <td>69.44%</td>
+    <td>-0.01%</td>
+    <td>1.20x</td>
   </tr>
   <tr>
-    <td>ONNX RT</td>
-    <td></td>
-    <td>RoBERTa</td>
-    <td>MRPC</td>
-    <td>0.8873</td>
-    <td>0.8946</td>
-    <td>-0.82%</td>
+    <td>onnxrt</td>
+    <td>1.6.0</td>
+    <td>ssd_mobilenet_v2</td>
+    <td>24.02%</td>
+    <td>24.68%</td>
+    <td>-2.67%</td>
+    <td>1.09x</td>
   </tr>
   <tr>
-    <td>ONNX RT</td>
-    <td></td>
-    <td>DistilBERT</td>
-    <td>MRPC</td>
-    <td>0.8505</td>
-    <td>0.8456</td>
+    <td>onnxrt</td>
+    <td>1.6.0</td>
+    <td>distilbert_base_mrpc</td>
+    <td>85.05%</td>
+    <td>84.56%</td>
     <td>0.58%</td>
+    <td>2.21x</td>
+  </tr>
+  <tr>
+    <td>onnxrt</td>
+    <td>1.6.0</td>
+    <td>mobilebert_mrpc</td>
+    <td>86.03%</td>
+    <td>86.28%</td>
+    <td>-0.29%</td>
+    <td>1.21x</td>
+  </tr>
+  <tr>
+    <td>onnxrt</td>
+    <td>1.6.0</td>
+    <td>roberta_base_mrpc</td>
+    <td>88.73%</td>
+    <td>89.46%</td>
+    <td>-0.82%</td>
+    <td>2.01x</td>
   </tr>
 </tbody>
 </table>
