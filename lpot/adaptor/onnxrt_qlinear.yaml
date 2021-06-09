@@ -24,7 +24,7 @@
   ops: &common_ops
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip', 
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-        'FusedConv', 'GlobalAveragePool']     
+        'FusedConv', 'GlobalAveragePool', 'Add']     
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
@@ -75,7 +75,7 @@
   ops: &ops_1_7
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split']
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
     fp32: ['*'] # '*' means all op types
 
   capabilities:

@@ -65,6 +65,10 @@ quantization:                                        # optional. tuning constrai
      'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
      'weight': {'dtype': ['fp32'], 'scheme':['sym']}
      },
+    'add': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },
   }
 
 evaluation:                                          # optional. used to config evaluation process.

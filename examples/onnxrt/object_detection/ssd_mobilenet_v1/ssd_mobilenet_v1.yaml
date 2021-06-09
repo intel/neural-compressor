@@ -64,6 +64,10 @@ quantization:                                        # optional. tuning constrai
      'Postprocessor/convert_scores':{
       'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
      'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },
+     'add':{
+      'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
      }
   }
 
