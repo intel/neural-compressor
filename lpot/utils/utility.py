@@ -33,7 +33,8 @@ from tempfile import NamedTemporaryFile
 import os.path as osp
 import cpuinfo
 import numpy as np
-import threading, _thread
+import threading
+import psutil
 
 def singleton(cls):
     instances = {}
@@ -62,16 +63,31 @@ class LazyImport(object):
 
         return getattr(self.module, name)
 
+def timeout_terminate():
+    current_system_pid = os.getpid()
+    ThisSystem = psutil.Process(current_system_pid)
+    
+    log = logging.getLogger()
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(message)s',
+        "%Y-%m-%d %H:%M:%S")
+    stdout_handler.setFormatter(formatter)
+    if log.hasHandlers():
+        log.removeHandler(log.handlers[0])
+        log.addHandler(stdout_handler)
+    log.info("Specified timeout is reached! "
+                "Not found any quantized model which meet accuracy goal. Exit...")
+    ThisSystem.terminate() 
+    
 @contextmanager
 def time_limit(seconds):
     if seconds == 0:
         seconds = threading.TIMEOUT_MAX
-    timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
+    timer = threading.Timer(seconds, timeout_terminate)
     timer.start()
     try:
         yield
-    except KeyboardInterrupt:
-        logging.getLogger().info("Specified timeout is reached!")
     finally:
         # if the action ends in specified time, timer is canceled
         timer.cancel()
