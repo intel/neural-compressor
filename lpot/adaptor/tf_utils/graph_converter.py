@@ -56,7 +56,7 @@ from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from tensorflow.python.framework import tensor_util
 
-TF_SUPPORTED_MAX_VERSION = '2.4.0'
+TF_SUPPORTED_MAX_VERSION = '2.5.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 class GraphConverter:
@@ -143,6 +143,8 @@ class GraphConverter:
             if (hasattr(python, "pywrap_tensorflow")
                     and hasattr(python.pywrap_tensorflow, "IsMklEnabled")):
                 from tensorflow.python.pywrap_tensorflow import IsMklEnabled
+            elif hasattr(python.util, "_pywrap_util_port"):
+                from tensorflow.python.util._pywrap_util_port import IsMklEnabled
             else:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
             if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
@@ -158,6 +160,10 @@ class GraphConverter:
                         ' between {} and {} if meet problem').format(tf.version.VERSION,
                                                                      TF_SUPPORTED_MIN_VERSION,
                                                                      TF_SUPPORTED_MAX_VERSION))
+            if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
+                self.logger.warning("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0"
+                                    " when Tensorflow 2.5.0 installed.")
+
             if not is_supported_version:
                 raise ValueError(
                     str('Please install Intel® Optimizations for TensorFlow'
@@ -613,7 +619,7 @@ class GraphConverter:
     def _fuse_requantize_with_fused_quantized_node(self):
         if self.fake_quant:
             self._tmp_graph_def = FreezeFakeQuantOpOptimizer(
-                self._tmp_graph_def).do_transformation() 
+                self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FuseConvRequantizeTransformer(
             self._tmp_graph_def,

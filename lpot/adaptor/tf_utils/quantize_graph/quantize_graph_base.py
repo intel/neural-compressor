@@ -252,8 +252,10 @@ class QuantizeNodeBase():
                                                all_input_names)
         add_op_function(original_node, quantized_op_node)
         self.add_output_graph_node(quantized_op_node)
+        deq_type = dtypes.quint8 if self._find_relu_node(original_node) else dtypes.qint8
         self._intel_cpu_add_dequantize_result_node(quantized_op_name,
-                                                   original_node.name)
+                                                   original_node.name,
+                                                   dtype=deq_type)
 
     def _add_eightbit_prologue_nodes(self, original_node):
         namespace_prefix = original_node + "_eightbit"

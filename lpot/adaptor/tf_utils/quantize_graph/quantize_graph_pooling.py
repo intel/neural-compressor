@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import tensorflow as tf
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
@@ -24,18 +24,21 @@ from .quantize_graph_common import QuantizeGraphHelper as helper
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
     def _add_pool_function(self, original_node, quantized_op_node):
-        helper.set_attr_dtype(quantized_op_node, "T", dtypes.quint8)
-        helper.copy_attr(quantized_op_node, "ksize",
-                         original_node.attr["ksize"])
-        helper.copy_attr(quantized_op_node, "strides",
-                         original_node.attr["strides"])
-        helper.copy_attr(quantized_op_node, "padding",
-                         original_node.attr["padding"])
+        pooling_type = dtypes.quint8 if tf.version.VERSION < '2.5.0' or \
+            self._find_relu_node(original_node) else dtypes.qint8
+        helper.set_attr_dtype(quantized_op_node, "T", pooling_type)
+        helper.copy_attr(quantized_op_node, "ksize", original_node.attr["ksize"])
+        helper.copy_attr(quantized_op_node, "strides", original_node.attr["strides"])
+        helper.copy_attr(quantized_op_node, "padding", original_node.attr["padding"])
 
     def _apply_pool_quantization(self):
         for _, v in self.node_name_mapping.items():
-            if v.node.name == self.start_node_name and self._find_relu_node(
-                    v.node):
+            # Tensorflow 2.5.0 enabled the s8 input for pooling op.
+            # If the tf version is lower than 2.5.0, we need to confirm the input
+            # data type of pooling is unsigned.
+            if v.node.name == self.start_node_name and \
+                (tf.version.VERSION >= '2.5.0' or
+                    tf.version.VERSION < '2.5.0' and self._find_relu_node(v.node)):
                 self.eightbitize_single_input_tensor_node(
                     v.node, self._add_pool_function)
             else:
