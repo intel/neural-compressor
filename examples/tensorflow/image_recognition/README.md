@@ -271,7 +271,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
           --input_model=/PATH/TO/densenet169.pb --output_model=./lpot_densenet169
   ```
 
-### 19. Nasnet-mobile
+### 19. Nasnet-mobile* 
 
   ```shell
   cd examples/tensorflow/image_recognition

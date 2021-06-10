@@ -16,7 +16,7 @@ Flask-SocketIO
 gevent
 gevent-websocket
 psutil
-ruamel.yaml
+Pillow
 pycocotools-windows; sys_platform != 'linux'
 pycocotools; sys_platform == 'linux'
 opencv-python

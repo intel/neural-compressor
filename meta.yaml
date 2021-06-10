@@ -33,7 +33,7 @@ requirements:
     - gevent
     - gevent-websocket
     - psutil
-    - ruamel.yaml
+    - Pillow
     - requests
 test:
   imports:
