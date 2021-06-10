@@ -28,7 +28,7 @@ from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
-from ..utils.utility import CpuInfo
+from ..utils.utility import CpuInfo, time_limit
 from ..model import BaseModel as LpotModel
 
 class Graph_Optimization():
@@ -176,7 +176,8 @@ class Graph_Optimization():
             self._eval_func,
             _resume)
 
-        self.strategy.traverse()
+        with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+            self.strategy.traverse()
 
         if self.strategy.best_qmodel:
             logger.info(

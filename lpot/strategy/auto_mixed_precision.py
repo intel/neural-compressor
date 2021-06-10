@@ -19,7 +19,6 @@ import copy
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
-from ..utils.utility import Timeout
 
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
@@ -178,48 +177,46 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         return
 
     def traverse(self):
+        # get fp32 model baseline
+        if self.baseline is None and self.eval_dataloader:
+            logger.info('Getting FP32 model baseline...')
+            self.baseline = self._evaluate(self.model)
+            # record the FP32 baseline
+            self._add_tuning_history()
+            logger.info('FP32 baseline is: ' +
+                        ('[{:.4f}, {:.4f}]'.format(*self.baseline)
+                            if self.baseline else 'None'))
 
-        with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
-            # get fp32 model baseline
-            if self.baseline is None and self.eval_dataloader:
-                logger.info('Getting FP32 model baseline...')
-                self.baseline = self._evaluate(self.model)
-                # record the FP32 baseline
-                self._add_tuning_history()
-                logger.info('FP32 baseline is: ' +
-                            ('[{:.4f}, {:.4f}]'.format(*self.baseline)
-                             if self.baseline else 'None'))
+        trials_count = 0
+        for tune_cfg in self.next_tune_cfg():
+            # add tune_cfg here as quantize use tune_cfg
+            tune_cfg['advance'] = self.cfg.quantization.advance
+            trials_count += 1
+            tuning_history = self._find_tuning_history(tune_cfg)
+            if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
+                self.last_tune_result = tuning_history['last_tune_result']
+                self.best_tune_result = tuning_history['best_tune_result']
+                logger.debug('This tuning config was evaluated, skip!')
+                continue
 
-            trials_count = 0
-            for tune_cfg in self.next_tune_cfg():
-                # add tune_cfg here as quantize use tune_cfg
-                tune_cfg['advance'] = self.cfg.quantization.advance
-                trials_count += 1
-                tuning_history = self._find_tuning_history(tune_cfg)
-                if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
-                    self.last_tune_result = tuning_history['last_tune_result']
-                    self.best_tune_result = tuning_history['best_tune_result']
-                    logger.debug('This tuning config was evaluated, skip!')
-                    continue
+            logger.debug('Dump current graph optimization configuration:')
+            logger.debug(tune_cfg)
+            self.last_qmodel = self.adaptor.quantize(
+                tune_cfg, self.model, self.calib_dataloader, self.q_func)
+            assert self.last_qmodel
+            if self.eval_dataloader:
+                self.last_tune_result = self._evaluate(self.last_qmodel)
 
-                logger.debug('Dump current graph optimization configuration:')
-                logger.debug(tune_cfg)
-                self.last_qmodel = self.adaptor.quantize(
-                    tune_cfg, self.model, self.calib_dataloader, self.q_func)
-                assert self.last_qmodel
-                if self.eval_dataloader:
-                    self.last_tune_result = self._evaluate(self.last_qmodel)
+                need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+                # record the tuning history
+                saved_tune_cfg = copy.deepcopy(tune_cfg)
+                saved_last_tune_result = copy.deepcopy(self.last_tune_result)
+                self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
+            else:
+                # If the eval_dataloader was not specified under the config yaml file,
+                # We only converted the model with customized precisions.
+                self.best_qmodel = self.last_qmodel
+                need_stop = True
 
-                    need_stop = self.stop(t, trials_count)
-                    # record the tuning history
-                    saved_tune_cfg = copy.deepcopy(tune_cfg)
-                    saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-                    self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
-                else:
-                    # If the eval_dataloader was not specified under the config yaml file,
-                    # We only converted the model with customized precisions.
-                    self.best_qmodel = self.last_qmodel
-                    need_stop = True
-
-                if need_stop:
-                    break
+            if need_stop:
+                break

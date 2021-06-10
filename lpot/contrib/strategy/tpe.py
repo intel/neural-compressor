@@ -22,7 +22,6 @@ from functools import partial
 import numpy as np
 import hyperopt as hpo
 from hyperopt import fmin, hp, STATUS_OK, Trials
-from lpot.utils.utility import Timeout
 from lpot.utils import logger
 from lpot.strategy.strategy import strategy_registry, TuneStrategy
 
@@ -206,37 +205,36 @@ class TpeTuneStrategy(TuneStrategy):
             status = self._configure_hpopt_search_space_and_params(self.opwise_tune_cfgs)
 
         if status:
-            with Timeout(self.cfg.tuning.exit_policy.timeout) as t:
-                trials_count = len(self.hpopt_trials.trials) + 1
-                # get fp32 model baseline
-                if self.baseline is None:
-                    logger.info('Getting FP32 model baseline...')
-                    self.baseline = self._evaluate(self.model)
-                    self._add_tuning_history()
-                logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline)
-                                                    if self.baseline else 'None'))
-                if not self.objective.relative:
-                    self.loss_function_config['acc_th'] =\
-                        (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
-                # start trials
-                exit = False
-                while not exit:
-                    self.cfg_evaluated = False
-                    logger.info('Trial iteration start: {} / {}'.format(
-                        trials_count, self.max_trials))
-                    fmin(partial(self.object_evaluation, model=self.model),
-                        space=self.hpopt_search_space,
-                        algo=self._algo,
-                        max_evals=trials_count,
-                        trials=self.hpopt_trials,
-                        show_progressbar=False)
-                    trials_count += 1
-                    if pd is not None:
-                        self._save_trials(trials_file)
-                        self._update_best_result(best_result_file)
-                    self._save()
-                    if self.stop(t, trials_count):
-                        exit = True
+            trials_count = len(self.hpopt_trials.trials) + 1
+            # get fp32 model baseline
+            if self.baseline is None:
+                logger.info('Getting FP32 model baseline...')
+                self.baseline = self._evaluate(self.model)
+                self._add_tuning_history()
+            logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline)
+                                                if self.baseline else 'None'))
+            if not self.objective.relative:
+                self.loss_function_config['acc_th'] =\
+                    (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
+            # start trials
+            exit = False
+            while not exit:
+                self.cfg_evaluated = False
+                logger.info('Trial iteration start: {} / {}'.format(
+                    trials_count, self.max_trials))
+                fmin(partial(self.object_evaluation, model=self.model),
+                    space=self.hpopt_search_space,
+                    algo=self._algo,
+                    max_evals=trials_count,
+                    trials=self.hpopt_trials,
+                    show_progressbar=False)
+                trials_count += 1
+                if pd is not None:
+                    self._save_trials(trials_file)
+                    self._update_best_result(best_result_file)
+                self._save()
+                if self.stop(self.cfg.tuning.exit_policy.timeout, trials_count):
+                    exit = True
         else:
             logger.info('Can\'t create search space for input model!')
 
@@ -419,9 +417,6 @@ class TpeTuneStrategy(TuneStrategy):
         """Check if need to stop traversing the tuning space, either accuracy goal is met
            or timeout is reach.
 
-        Args:
-            timeout (Timeout): The timeout object instantiated in utils.py
-
         Returns:
             bool: True if need stop, otherwise False
         """
@@ -436,17 +431,19 @@ class TpeTuneStrategy(TuneStrategy):
             else:
                 del self.last_qmodel
 
-        logger.info(
-            'Tune result is: ' +
-            ('[{:.4f}, {:.4f}]'.format(
-                *self.last_tune_result) if self.last_tune_result else 'None') +
-            ' Best tune result is: ' +
-            ('[{:.4f}, {:.4f}]'.format(
-                *self.best_tune_result) if self.best_tune_result else 'None'))
+        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0], 
+                                                                str(self.objective.measurer),
+                                                                self.last_tune_result[1]) \
+                                                                if self.last_tune_result else 'n/a'
+        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0], 
+                                                                str(self.objective.measurer),
+                                                                self.best_tune_result[1]) \
+                                                                if self.best_tune_result else 'n/a'
+        logger.info('Tune {} result is: {}, Best tune result is: {}'.format(trials_count,
+                                                                            last_tune_msg,
+                                                                            best_tune_msg))
 
-        if timeout.seconds != 0 and timeout.timed_out:
-            need_stop = True
-        elif timeout.seconds == 0 and self.best_tune_result:
+        if timeout == 0 and self.best_tune_result:
             need_stop = True
         elif trials_count >= self.cfg.tuning.exit_policy.max_trials:
             need_stop = True

@@ -23,6 +23,7 @@ from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
+from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel as LpotModel
 
@@ -167,7 +168,8 @@ class Quantization(object):
             self._eval_func,
             _resume)
 
-        self.strategy.traverse()
+        with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+            self.strategy.traverse()
 
         if self.strategy.best_qmodel:
             logger.info(

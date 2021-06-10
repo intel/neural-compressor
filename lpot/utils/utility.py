@@ -33,6 +33,7 @@ from tempfile import NamedTemporaryFile
 import os.path as osp
 import cpuinfo
 import numpy as np
+import threading, _thread
 
 def singleton(cls):
     instances = {}
@@ -61,28 +62,19 @@ class LazyImport(object):
 
         return getattr(self.module, name)
 
-
-class Timeout(object):
-    """Timeout class to check if spending time is beyond target.
-
-       Args:
-           seconds (optional, integar): the timeout value, 0 means early stop.
-    """
-
-    def __init__(self, seconds=0):
-        self.seconds = seconds
-
-    def __enter__(self):
-        self.die_after = time.time() + self.seconds
-        return self
-
-    def __exit__(self, type, value, traceback):
-        pass
-
-    @property
-    def timed_out(self):
-        return time.time() > self.die_after
-
+@contextmanager
+def time_limit(seconds):
+    if seconds == 0:
+        seconds = threading.TIMEOUT_MAX
+    timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
+    timer.start()
+    try:
+        yield
+    except KeyboardInterrupt:
+        logging.getLogger().info("Specified timeout is reached!")
+    finally:
+        # if the action ends in specified time, timer is canceled
+        timer.cancel()
 
 def get_size(obj, seen=None):
     """Recursively finds size of objects"""
