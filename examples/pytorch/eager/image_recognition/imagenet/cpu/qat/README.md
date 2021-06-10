@@ -157,8 +157,10 @@ After prepare step is done, we just need update main.py like below.
 ```python
 def training_func_for_lpot(model):
     epochs = 8
-    iters = 30
     optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    prev_loss = 100
+    loss_increase_times = 0
+    patience = 2
     for nepoch in range(epochs):
         model.train()
         cnt = 0
@@ -170,8 +172,24 @@ def training_func_for_lpot(model):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            if cnt >= iters:
-                break
+                    
+            if cnt % 10 == 1 or cnt == len(train_loader) + 1:                        
+                print('[{}/{}, {}/{}] Loss : {:.8}'.format(
+                                nepoch+1, epochs, cnt, len(train_loader), loss.item()))
+
+                   
+                if cnt % 10 == 1 or cnt == len(train_loader) + 1:
+                    _, curr_loss = validate(val_loader, model, criterion, args)
+                    print("The current val loss: ", curr_loss)
+                    if curr_loss > prev_loss:
+                        loss_increase_times += 1
+                        print('No improvement times: ', loss_increase_times)
+                    if loss_increase_times >= patience:
+                        print("Early stopping")
+                        return 
+
+                    prev_loss = curr_loss
+
         if nepoch > 3:
             # Freeze quantizer parameters
             model.apply(torch.quantization.disable_observer)
@@ -240,4 +258,13 @@ without buildin training functionet
 ```Shell
 cd examples/pytorch/eager/image_recognition/imagenet/cpu/qat
 python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
+```
+
+### 4. MobileNetV2
+
+without buildin training functionet
+
+```Shell
+cd examples/pytorch/eager/image_recognition/imagenet/cpu/qat
+python main.py -t -a mobilenet_v2 --pretrained --config /path/to/config_file /path/to/imagenet
 ```

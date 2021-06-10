@@ -16,6 +16,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models.quantization as models
 
+
 use_gpu = False
 if use_gpu:
     import torch.backends.cudnn as cudnn
@@ -249,8 +250,10 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         def training_func_for_lpot(model):
             epochs = 8
-            iters = 30
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+            prev_loss = None
+            loss_increase_times = 0
+            patience = 2
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -262,8 +265,26 @@ def main_worker(gpu, ngpus_per_node, args):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    if cnt >= iters:
-                        break
+                    
+                    if cnt % 10 == 1 or cnt == len(train_loader) + 1:                        
+                        print('[{}/{}, {}/{}] loss : {:.8}'.format(
+                                nepoch+1, epochs, cnt, len(train_loader), loss.item()))
+
+                   
+                    if cnt % 10 == 1 or cnt == len(train_loader) + 1:
+                            _, curr_loss = validate(val_loader, model, criterion, args)
+                            print("The current val loss: ", curr_loss)
+
+                            if prev_loss is None:
+                                prev_loss = curr_loss
+                            if curr_loss > prev_loss:
+                                loss_increase_times += 1
+                                print('No improvement times: ', loss_increase_times)
+                            if loss_increase_times >= patience:
+                                print("Early stopping")
+                                return 
+
+                            prev_loss = curr_loss
 
                 if nepoch > 3:
                     # Freeze quantizer parameters
@@ -413,7 +434,7 @@ def validate(val_loader, model, criterion, args):
         print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
               .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
-    return top1.avg
+    return top1.avg, losses.avg
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
