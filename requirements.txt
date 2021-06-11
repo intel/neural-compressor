@@ -20,3 +20,4 @@ ruamel.yaml
 pycocotools-windows; sys_platform != 'linux'
 pycocotools; sys_platform == 'linux'
 opencv-python
+sigopt

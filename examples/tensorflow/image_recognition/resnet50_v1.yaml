@@ -13,19 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-model:                                               # mandatory. used to specify model specific information.
+model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50_v1
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 50, 100                           # optional. default value is 100. used to set how many samples should be used in calibration.
+    sampling_size: 50, 100                           # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:
       batch_size: 10
       dataset:
         ImageRecord:
-          root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
+          root: /home2/changwa1/sig/LowPrecisionInferenceTool/examples/tensorflow/image_recognition/sub_imagenet         # NOTE: modify to calibration dataset location if needed
       transform:
+        ParseDecodeImagenet: {}
         ResizeCropImagenet: 
           height: 224
           width: 224
@@ -41,8 +42,9 @@ evaluation:                                          # optional. required if use
       batch_size: 32
       dataset:
         ImageRecord:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+          root: /home2/changwa1/sig/LowPrecisionInferenceTool/examples/tensorflow/image_recognition/sub_imagenet          # NOTE: modify to evaluation dataset location if needed
       transform:
+        ParseDecodeImagenet: {}
         ResizeCropImagenet: 
           height: 224
           width: 224
@@ -55,13 +57,17 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageRecord:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+          root: /home2/changwa1/sig/LowPrecisionInferenceTool/examples/tensorflow/image_recognition/sub_imagenet          # NOTE: modify to evaluation dataset location if needed
       transform:
+        ParseDecodeImagenet: {}
         BilinearImagenet:
           height: 224
           width: 224
 
 tuning:
+  strategy:
+    name: sigopt
+    sigopt_api_token: WECSOKFVSWZNKNOPOMMIILBOXJHNMOBWPIKLKEGXSDRPCIGR
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
   exit_policy:

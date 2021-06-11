@@ -607,8 +607,8 @@ schema = Schema({
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): {
-        Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES),
+        Optional('strategy', default={'name': 'basic','sigopt_api_token':None}): {
+            'name': And(str, lambda s: s in STRATEGIES),'sigopt_api_token':str,
             Optional('accuracy_weight', default=1.0): float,
             Optional('latency_weight', default=1.0): float
         } ,
