@@ -268,7 +268,7 @@ class TensorFlowAdaptor(Adaptor):
         self.quantize_config['advance'] = deep_get(tuning_cfg, 'advance')
         fp32_ops = []
         bf16_ops = []
-
+        int8_ops = []
         dispatched_op_names = [j[0] for j in tuning_cfg['op']]
 
         invalid_op_names = [i for i in self.quantize_config['op_wise_config']
@@ -301,6 +301,7 @@ class TensorFlowAdaptor(Adaptor):
             is_asymmetric = False
             if 'activation' in tuning_cfg['op'][each_op_info]:
                 is_asymmetric = tuning_cfg['op'][each_op_info]['activation']['scheme'] == 'asym'
+            int8_ops.append(op_name)
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
                                                                algorithm,
                                                                is_asymmetric,
@@ -310,37 +311,41 @@ class TensorFlowAdaptor(Adaptor):
         int8_sum_count = 0
         bf16_sum_count = 0
         log_length = 50
-        logger.info('|' + 'Mixed Precision Statistics'.center(log_length, "*") + '|')
-        for i in self._init_op_stat:
-            if len(self._init_op_stat[i]) == 0:
-                continue
-            count = 0
-            for j in self.quantize_config['op_wise_config'].keys():
-                if j in self._init_op_stat[i]:
-                    count += 1
-            int8_sum_count += count
-            logger.info('|' + 'INT8 {}: {} '.format(i, count).ljust(log_length) + '|')
-            valid_bf16_ops = [name for name in self.bf16_ops if name in self._init_op_stat[i]]
-            bf16_count = len(valid_bf16_ops)
 
-            if bf16_count > 0:
-                logger.info(('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) + '|'))
-            bf16_sum_count += bf16_count
+        if int8_ops:
+            logger.info('Start to run model quantization...')
 
-        overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
+            logger.info('|' + 'Mixed Precision Statistics'.center(log_length, "*") + '|')
+            for i in self._init_op_stat:
+                if len(self._init_op_stat[i]) == 0:
+                    continue
+                count = 0
+                for j in self.quantize_config['op_wise_config'].keys():
+                    if j in self._init_op_stat[i]:
+                        count += 1
+                int8_sum_count += count
+                logger.info('|' + 'INT8 {}: {} '.format(i, count).ljust(log_length) + '|')
+                valid_bf16_ops = [name for name in self.bf16_ops if name in self._init_op_stat[i]]
+                bf16_count = len(valid_bf16_ops)
 
-        if overall_ops_count > 0:
-            int8_percent = float(int8_sum_count / overall_ops_count)
-            bf16_percent = float(bf16_sum_count / overall_ops_count)
-            logger.info(('|' + 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(
-                int8_percent,
-                int8_sum_count,
-                overall_ops_count,
-                bf16_percent,
-                bf16_sum_count,
-                overall_ops_count)
-                  .ljust(log_length) + '|'))
-        logger.info('|' +  '*' * log_length + '|')
+                if bf16_count > 0:
+                    logger.info('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) + '|')
+                bf16_sum_count += bf16_count
+
+            overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
+
+            if overall_ops_count > 0:
+                int8_percent = float(int8_sum_count / overall_ops_count)
+                bf16_percent = float(bf16_sum_count / overall_ops_count)
+                logger.info(('|' + 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(
+                    int8_percent,
+                    int8_sum_count,
+                    overall_ops_count,
+                    bf16_percent,
+                    bf16_sum_count,
+                    overall_ops_count)
+                    .ljust(log_length) + '|'))
+            logger.info('|' +  '*' * log_length + '|')
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -357,7 +362,6 @@ class TensorFlowAdaptor(Adaptor):
             tf.compat.v1.GraphDef: the quantized model
         """
         assert q_func is None, "quantization aware training mode is not support on tensorflow"
-        logger.info('Start to run model quantization...')
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
