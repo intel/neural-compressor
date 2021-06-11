@@ -57,7 +57,11 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
 
         dequantize_node_name = res[0]
         quantize_node_name = res[-1]
-        if found_meta_op_flag and len(res) > 2:
+        deq_node = self.graph_info[dequantize_node_name].node
+        quant_node = self.graph_info[quantize_node_name].node
+
+        if found_meta_op_flag and len(res) > 2 and \
+            quant_node.attr['mode'].s.decode() == deq_node.attr['mode'].s.decode():
             deq_min_range = self.graph_info[dequantize_node_name].node.input[1]
             deq_max_range = self.graph_info[dequantize_node_name].node.input[2]
             quant_output_min = quantize_node_name + ':1'

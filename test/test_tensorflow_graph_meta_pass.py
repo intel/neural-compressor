@@ -43,7 +43,7 @@ def build_fake_yaml():
     f.close()
 
 
-class TestConvBiasAddAddReluFusion(unittest.TestCase):
+class TestMetaPass(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
@@ -53,7 +53,57 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
         os.remove('fake_yaml.yaml')
 
     @disable_random()
-    def test_tensorflow_graph_meta_pass(self):
+    def test_tensorflow_graph_meta_pass_with_different_mode(self):
+
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        normed = tf.compat.v1.layers.batch_normalization(conv)
+
+        relu = tf.nn.relu(normed)
+        sq = tf.squeeze(relu, [0])
+        reshape = tf.reshape(sq, [729, 16])
+        conv_weights2 = tf.compat.v1.get_variable("weight2", [16, 729],
+                                                  initializer=tf.compat.v1.random_normal_initializer())
+
+        matmul = tf.matmul(reshape, conv_weights2)
+        # normed2 = tf.compat.v1.layers.batch_normalization(matmul)
+        bias = tf.compat.v1.get_variable("bias", [729],
+                                         initializer=tf.compat.v1.random_normal_initializer())
+        normed2 = tf.nn.bias_add(matmul, bias, name='bias_add')
+
+        relu6 = tf.nn.relu6(normed2)
+        reshape2 = tf.reshape(relu6, [1, 729, 729, 1], name='op_to_store')
+
+        out_name = reshape2.name.split(':')[0]
+
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from lpot.experimental import Quantization, common
+
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
+            found_reshape = False
+            for i in output_graph.graph_def.node:
+                if i.op == 'Reshape':
+                    found_reshape = True
+                    break
+
+            self.assertEqual(found_reshape, True)
+
+    @disable_random()
+    def test_tensorflow_graph_meta_pass_with_same_mode(self):
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
