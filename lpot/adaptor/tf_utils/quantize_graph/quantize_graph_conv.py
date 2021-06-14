@@ -50,9 +50,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             'DepthwiseConv2dNative': self.apply_conv_single_fusion,
         }
 
-    def get_fusion_list(self):
-        return self.fusion_mapping.keys()
-
     def apply_conv_single_fusion(self, match_node_name):
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
@@ -333,7 +330,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
     def apply_the_transform(self):
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
-
         if matched_node_name:
             self.output_graph = graph_pb2.GraphDef()
             fusion_name = ''.join(matched_rule)
@@ -353,14 +349,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.info("Unknown match {}".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph
+                return self.input_graph, []
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
 
-            return self.output_graph
+            return self.output_graph, matched_node_name
 
         self.logger.debug("No more match, exit...")
-        return self.input_graph
+        return self.input_graph, []

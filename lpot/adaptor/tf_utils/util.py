@@ -235,9 +235,13 @@ def collate_tf_preds(results):
         results = zip(*results)
         collate_results = []
         for output in results:
-           collate_results.append(np.concatenate(output))
+            if isinstance(output[0], np.ndarray):
+                collate_results.append(np.concatenate(output))
+            elif np.isscalar(output[0]):
+                collate_results.extend(output)
     elif isinstance(batch, np.ndarray):
         collate_results = np.concatenate(results)
+
     return collate_results
 
 def get_input_node_names(graph_def):

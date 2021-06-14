@@ -70,6 +70,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 dtypes.as_dtype(v.node.attr["T"].type) == dtypes.float32 and \
                     not re.search(r'map(_\d+)?/while', v.node.name):
                 self._apply_concatv2_transform(v.node)
+                self.quantizable_node_names.append(v.node.name)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(v.node)
@@ -79,8 +80,9 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         return 1
 
     def apply_the_transform(self):
+        self.quantizable_node_names = []
         self._apply_concatv2_quantization()
         self._reset_output_node_maps()
         if self.remove_redundant_quant_flag:
             self.output_graph = self.remove_redundant_quantization(self.output_graph)
-        return self.output_graph
+        return self.output_graph, self.quantizable_node_names

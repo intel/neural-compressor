@@ -19,8 +19,8 @@ import copy
 
 import re
 import logging
-import numpy as np
 from collections import namedtuple
+import numpy as np
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import attr_value_pb2
@@ -546,6 +546,8 @@ class GraphAnalyzer():
 
         for end_node_name in end_node_names:
             # Update start node's output info
+            if end_node_name not in self.node_name_details:
+                continue
             if start_node_name and end_node_name in self.node_name_details[GraphRewriterHelper. \
                 node_name_from_input(start_node_name)].outputs:
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(
@@ -813,3 +815,40 @@ class GraphRewriterHelper():
                                     bias_scale + value * relative_scale)))
 
         return int32_bias
+
+    @staticmethod
+    def gen_valid_sampling_log(log_path):
+        def gen_per_iter(data):
+            res = []
+            requant_tmp = []
+            for i in data:
+                if i.find("__print__;__requant_") == -1:
+                    res.append(i)
+                else:
+                    requant_tmp.append(i)
+            sorted_requant = sorted(requant_tmp)
+            odd_list = sorted_requant[::2]
+            even_list = sorted_requant[1::2]
+            for index, value in enumerate(even_list):
+                min_value = str(min(0, float(value.split(':')[1][1:-1])))
+                mixed_str = value.split(':')[0] + '_max:[' + \
+                    min_value + ']' + odd_list[index].split(':')[1]
+                res.append(mixed_str)
+            return res
+        with open(log_path) as f:
+            valid_data = [i.strip() for i in f.readlines() if i.startswith(';')]
+
+        first_line = valid_data[0].rsplit(':')[0]
+
+        iterations = 0
+        for i in valid_data:
+            if i.startswith(first_line):
+                iterations += 1
+
+        step = len(valid_data) / iterations
+        final_res = []
+
+        for i in range(iterations):
+            final_res.extend(gen_per_iter(valid_data[int(i*step): int(step*( i+ 1))]))
+
+        return final_res

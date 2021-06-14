@@ -116,7 +116,7 @@ class FreezeValueTransformer(GraphRewriterBase):
         lines = self._get_valid_log()
         temp_min = {}
         temp_max = {}
-        pattern_def = r"{};{}:\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, self.postfix)
+        pattern_def = r"{};{}:\[\-?\d+\.?\d*e?-?\+?\d*\]".format(print_suffix, self.postfix)
         for i in lines:
             if not re.search(pattern_def, i):
                 continue
@@ -163,6 +163,8 @@ class FreezeValueTransformer(GraphRewriterBase):
         :return: transformed graph
         """
         for node_name, value in max_name_value.items():
+            if node_name not in self.graph_info:
+                continue
             new_node = node_def_pb2.NodeDef()
             new_node.op = "Const"
             new_node_postfix = "/frozen_{}_only".format(''.join(
@@ -189,6 +191,9 @@ class FreezeValueTransformer(GraphRewriterBase):
         :return: transformed graph
         """
         for node_name, value in max_name_value.items():
+            if node_name not in self.graph_info:
+                continue
+
             min_node = node_def_pb2.NodeDef()
             min_node.op = "HostConst" if self.device == "gpu" else "Const"
             min_node_postfix = "/frozen_min"
@@ -224,6 +229,7 @@ class FreezeValueTransformer(GraphRewriterBase):
     def do_transformation(self):
         if self.postfix == '__requant_min_max':
             range_data = self._parse_requantization_ranges()
+
             return self.generate_output_graph_ranges(range_data)
 
         max_name_value = self._parse_max_min_log()

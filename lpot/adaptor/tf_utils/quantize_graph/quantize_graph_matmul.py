@@ -47,12 +47,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         # workaround for RNN model like LTSM.
         if weight_node.op != 'Const':
             self.output_graph = self.input_graph
-            return
+            return []
 
         for i in self.node_name_mapping:
             if weight_node.name in self.node_name_mapping[i].output:
                 self.output_graph = self.input_graph
-                return
+                return []
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -103,6 +103,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
+        return match_node_name
 
     def apply_matmul_biasadd_fusion(self, match_node_name):
         skip_node_name = match_node_name[1:]
@@ -116,13 +117,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         # workaround for RNN model like LTSM.
         if weight_node.op != 'Const':
             self.output_graph = self.input_graph
-            return
+            return []
 
         for i in self.node_name_mapping:
             if weight_node.input and not weight_node.input[0].startswith('^') \
                     and weight_node.name in self.node_name_mapping[i].output:
                 self.output_graph = self.input_graph
-                return
+                return []
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -173,6 +174,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
+        return match_node_name
 
     def get_longest_fuse(self):
         self._get_op_list()
@@ -187,18 +189,18 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = graph_pb2.GraphDef()
             fusion_name = ''.join(matched_rule)
             if fusion_name in self.fusion_mapping:
-                self.fusion_mapping[fusion_name](matched_node_name)
+                matched_nodes = self.fusion_mapping[fusion_name](matched_node_name)
             else:
                 self.logger.info("Unknown match {}".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph
+                return self.input_graph, []
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
-            return self.output_graph
+            return self.output_graph, matched_nodes
 
         self.logger.debug("No more match, exit...")
-        return self.input_graph
+        return self.input_graph, []

@@ -38,7 +38,7 @@ class TestBiasCorrection(unittest.TestCase):
                 "Conv2D": (False, 'minmax', False, 7.0),
             }
 
-            int8_graph_def = QuantizeGraphForIntel(output_graph_def, outputs,
+            int8_graph_def, _ = QuantizeGraphForIntel(output_graph_def, outputs,
                                                    op_wise_config, op_wise_sequences,
                                                   'cpu').do_transform()
         correct_graph_def = BiasCorrection(

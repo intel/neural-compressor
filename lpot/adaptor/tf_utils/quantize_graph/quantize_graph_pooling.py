@@ -41,6 +41,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                     tf.version.VERSION < '2.5.0' and self._find_relu_node(v.node)):
                 self.eightbitize_single_input_tensor_node(
                     v.node, self._add_pool_function)
+                self.quantizable_node_names.append(v.node.name)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(v.node)
@@ -50,8 +51,9 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
         return 1
 
     def apply_the_transform(self):
+        self.quantizable_node_names = []
         self._apply_pool_quantization()
         self._reset_output_node_maps()
         if self.remove_redundant_quant_flag:
             self.output_graph = self.remove_redundant_quantization(self.output_graph)
-        return self.output_graph
+        return self.output_graph, self.quantizable_node_names

@@ -19,8 +19,10 @@
 import copy
 import os
 import logging
+import tempfile
 import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
+from tensorflow.python.framework import tensor_util
 from tensorflow.python.platform import gfile
 from lpot.utils.utility import get_all_fp32_data
 from lpot.utils.utility import get_tensor_histogram
@@ -49,12 +51,12 @@ from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
-from .graph_rewriter.int8.insert_logging import InsertLoggingTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
-from tensorflow.python.framework import tensor_util
+from lpot.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
+from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 TF_SUPPORTED_MAX_VERSION = '2.5.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -92,7 +94,7 @@ class GraphConverter:
         self.bf16_ops = bf16_ops
         self.recipes = recipes
         self.fake_quant = fake_quant
-
+        self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
         self.data_loader = data_loader
@@ -109,6 +111,12 @@ class GraphConverter:
                                            self.model.framework_specific_info,
                                            **self.model.kwargs)
         self._fp32_model.graph_def = self.model.graph_def
+
+        self._sampling_model = TensorflowModel(self.model._model,
+                                          self.model.framework_specific_info,
+                                          **self.model.kwargs)
+        self._sampling_model.graph_def = self.model.graph_def
+
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
     def _inference(self, model):
@@ -205,13 +213,11 @@ class GraphConverter:
         :return:
         """
         model = self._tmp_model
-
         if len(self.op_wise_config) > 0:
             model = self.quantize()
 
         if len(self.bf16_ops) > 0:
             model = self.bf16_convert()
-
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
         post_cse_graph_def.library.CopyFrom(self.model.graph_def.library)
         model.graph_def = post_cse_graph_def
@@ -469,9 +475,22 @@ class GraphConverter:
                                                     self._fp32_print_data,
                                                     True)
 
-                self._insert_logging()
-                self._generate_calibration_data(self._int8_logged_model_path,
-                                                self._calibration_data)
+                sampling_cfg = copy.deepcopy(self.model.framework_specific_info)
+                sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+                for i in self.quantized_node_info:
+                    sampling_graph_def, output_names = InsertPrintMinMaxNode(
+                        sampling_graph_def, i[0], i[-1]).do_transformation()
+                    sampling_cfg['output_tensor_names'].extend(output_names)
+
+                if self.quantized_node_info:
+                    sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
+                    self._sampling_model.graph_def = sampling_graph_def
+                    self._sampling_model.output_tensor_names = sampling_cfg['output_tensor_names']
+                    tmp_dump_file = tempfile.mkstemp(suffix='.log')[1]
+                    with CaptureOutputToFile(tmp_dump_file):
+                        self._inference(self._sampling_model)
+                    self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
+
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
@@ -520,7 +539,7 @@ class GraphConverter:
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names)
 
-        self._tmp_graph_def = QuantizeGraphForIntel(
+        self._tmp_graph_def, self.quantized_node_info = QuantizeGraphForIntel(
             self._tmp_graph_def,
             self._tmp_model.output_node_names,
             self.op_wise_config,
@@ -532,34 +551,6 @@ class GraphConverter:
         if self.debug:
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_dynamic_range_model_path)
-
-    def _insert_logging(self):
-        int8_dynamic_range_graph_def = graph_pb2.GraphDef()
-        int8_dynamic_range_graph_def.CopyFrom(self._tmp_graph_def)
-        # TODO need to insert op-wise logging op.
-        self._tmp_graph_def = InsertLoggingTransformer(
-            self._tmp_graph_def,
-            target_op_types=[
-             "RequantizationRange",
-             "RequantizationRangePerChannel"],
-             message="__requant_min_max:").do_transformation()
-
-        self._tmp_graph_def = InsertLoggingTransformer(
-            self._tmp_graph_def,
-            target_op_types=["Min"],
-            message="__min:").do_transformation()
-
-        self._tmp_graph_def = InsertLoggingTransformer(
-            self._tmp_graph_def,
-            target_op_types=["Max"],
-            message="__max:").do_transformation()
-
-        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-
-        self._tmp_model.graph_def = self._tmp_graph_def
-        self._tmp_model.save(self._int8_logged_model_path)
-
-        self._tmp_graph_def.CopyFrom(int8_dynamic_range_graph_def)
 
     def _generate_calibration_data(self, tmp_path, output_data, enable_kl_algo=False):
 

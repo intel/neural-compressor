@@ -131,41 +131,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_kl.yaml')
-        # os.remove(self.kl_log_path)
         os.remove(self.calibration_log_path)
-
-    # def test_kl(self):
-    #     import tensorflow.compat.v1 as tf
-    #     tf.disable_v2_behavior()
-
-    #     from lpot.experimental import Quantization
-
-    #     quantizer = Quantization('fake_yaml_kl.yaml')
-    #     dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)
-    #     dataloader = quantizer.dataloader(dataset)
-    #     output_graph = quantizer(
-    #         self.constant_graph,
-    #         q_dataloader=dataloader,
-    #         eval_dataloader=dataloader
-    #     )
-
-    #     with open(self.calibration_log_path) as f:
-    #         data = f.readlines()
-
-    #     found_min_str = False
-    #     found_max_str = False
-    #     for i in data:
-    #         if i.find('__print__;__max') != -1:
-    #             found_max_str = True
-    #         if i.find('__print__;__min') != -1:
-    #             found_min_str = True
-
-    #     self.assertEqual(os.path.exists(self.kl_log_path), True)
-
-    #     self.assertEqual(os.path.exists(self.calibration_log_path), True)
-    #     self.assertGreater(len(data), 1)
-    #     self.assertEqual(found_min_str, True)
-    #     self.assertEqual(found_max_str, True)
 
     def test_dump_tensor_to_disk(self):
         import tensorflow.compat.v1 as tf
@@ -182,18 +148,14 @@ class TestGraphDumpToDisk(unittest.TestCase):
         with open(self.calibration_log_path) as f:
             data = f.readlines()
 
-        found_min_str = False
-        found_max_str = False
+        found_kl = False
         for i in data:
-            if i.find('__print__;__max') != -1:
-                found_max_str = True
-            if i.find('__print__;__min') != -1:
-                found_min_str = True
+            if i.find('Relu_1__print__;__KL:') != -1:
+                found_kl = True
 
         self.assertEqual(os.path.exists(self.calibration_log_path), True)
         self.assertGreater(len(data), 1)
-        self.assertEqual(found_min_str, True)
-        self.assertEqual(found_max_str, True)
+        self.assertEqual(found_kl, True)
 
 
 if __name__ == '__main__':

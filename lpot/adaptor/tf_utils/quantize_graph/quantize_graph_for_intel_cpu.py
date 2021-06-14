@@ -61,6 +61,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.device = device
         self.fake_quant = fake_quant
 
+        self.all_quantizable_node = []
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
         self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
@@ -80,12 +81,17 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
 
-                self.input_graph = self.transformers[node.op](
+                self.input_graph, quantizable_node_names = self.transformers[node.op](
                     input_graph=self.input_graph,
                     patterns=self.op_wise_seq[node.op],
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
                     op_wise_cfg=self.op_wise_config[node.name],
                     start_node_name=node.name, device=self.device, \
                     fake_quant=self.fake_quant).apply_the_transform()
-
-        return self.remove_dead_nodes(self.input_graph, self.output_node_names)
+                if quantizable_node_names:
+                    if node.op in ('ConcatV2', 'MaxPool', 'AvgPool'):
+                        self.all_quantizable_node.extend([[i] for i in quantizable_node_names])
+                    else:
+                        self.all_quantizable_node.append(quantizable_node_names)
+        return self.remove_dead_nodes(self.input_graph, self.output_node_names), \
+            self.all_quantizable_node
