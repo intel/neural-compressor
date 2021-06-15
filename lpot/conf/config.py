@@ -429,6 +429,12 @@ dataset_schema = Schema({
         Optional('anno_dir'): str,
         Optional('num_cores'): int,
     },
+    Optional('COCONpy'): {
+        'root': str,
+        'npy_dir': str,
+        Optional('anno_dir'): str,
+        Optional('num_cores'): int,
+    },
     Optional('ImagenetRaw'): {
         'data_path': str,
         Optional('image_list'): str,

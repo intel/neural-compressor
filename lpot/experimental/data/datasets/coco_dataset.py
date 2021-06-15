@@ -205,3 +205,65 @@ class COCORaw(Dataset):
         if self.transform is not None:
             sample= self.transform(sample)
         return sample
+
+@dataset_registry(dataset_type="COCONpy", framework="onnxrt_qlinearops, \
+                    onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
+class COCONpy(Dataset):
+    """Configuration for Coco npy dataset.
+
+    Please arrange data in this way:  
+        /root/npy_dir/1.jpg.npy  
+        /root/npy_dir/2.jpg.npy  
+        ...  
+        /root/npy_dir/n.jpg.npy  
+        /root/anno_dir  
+    
+    Args: root (str): Root directory of dataset.
+          npy_dir (str, default='val2017'): npy file directory.
+          anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
+    """
+    def __init__(self, root, npy_dir='val2017', \
+            anno_dir='annotations/instances_val2017.json', transform=None, filter=None):
+        import json
+        import os
+        import numpy as np
+        from pycocotools.coco import COCO
+        from lpot.experimental.metric.coco_label_map import category_map
+        self.image_list = []
+        npy_path = os.path.join(root, npy_dir)
+        anno_path = os.path.join(root, anno_dir)
+        coco = COCO(anno_path)
+        img_ids = coco.getImgIds()
+        cat_ids = coco.getCatIds()
+        for idx, img_id in enumerate(img_ids):
+            img_info = {}
+            labels = []
+            ids = []
+            img_detail = coco.loadImgs(img_id)[0]
+            ids.append(img_detail['file_name'].encode('utf-8'))
+            pic_height = img_detail['height']
+            pic_width = img_detail['width']
+
+            ann_ids = coco.getAnnIds(imgIds=img_id,catIds=cat_ids)
+            anns = coco.loadAnns(ann_ids)
+            for ann in anns:
+                bbox = ann['bbox']
+                category_id = ann['category_id']
+                if len(bbox) == 0:
+                    continue
+                labels.append((np.array(category_id), np.array(bbox)))
+            npy_file = os.path.join(npy_path, img_detail['file_name'])
+            npy_file = npy_file + ".npy"
+            if not os.path.exists(npy_file):
+                continue
+
+            image = np.load(npy_file)
+            self.image_list.append(
+                (image, labels))
+
+    def __len__(self):
+        return len(self.image_list)
+
+    def __getitem__(self, index):
+        sample = self.image_list[index]
+        return sample

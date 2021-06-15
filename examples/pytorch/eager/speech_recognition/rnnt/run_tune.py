@@ -22,7 +22,7 @@ import os
 from pathlib import Path
 import re
 
-MLPERF_CONF = Path(os.path.dirname(os.path.realpath(__file__))) / "../mlperf.conf"
+MLPERF_CONF = Path(os.path.dirname(os.path.realpath(__file__))) / "../../../utils/MLPerf/mlperf.conf"
 MLPERF_CONF = MLPERF_CONF.resolve()
 
 

@@ -692,6 +692,163 @@ class TestDataloader(unittest.TestCase):
         os.remove('test_1.jpg')
         os.remove('anno.json')
 
+    def test_coco_npy(self):
+        import json
+        import collections
+        from lpot.data import TRANSFORMS
+        import mxnet as mx
+        import cv2
+        import numpy as np
+
+        def maybe_resize(img, dims):
+            img = np.array(img, dtype=np.float32)
+            if len(img.shape) < 3 or img.shape[2] != 3:
+                # some images might be grayscale
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            if dims != None:
+                im_height, im_width, _ = dims
+                img = cv2.resize(img, (im_width, im_height), interpolation=cv2.INTER_LINEAR)
+            return img
+
+        def convert_npy(src):
+            img = cv2.imread(src)
+            dims = [100, 100, 3]
+            image_format="NHWC"
+            need_transpose = True if image_format == "NCHW" else False
+            img = maybe_resize(img, dims)
+            mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+            std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+            img = img / 255. - mean
+            img = img / std
+            if need_transpose:
+                img = img.transpose([2, 0, 1])
+            return img
+
+        random_array = np.random.random_sample([100,100,3]) * 255
+        random_array = random_array.astype(np.uint8)
+        im = Image.fromarray(random_array)
+        im.save('test_0.jpg')
+        im.save('test_1.jpg')
+        im_npy = convert_npy('test_0.jpg')
+        np.save('test_0.jpg.npy', im_npy)
+        np.save('test_1.jpg.npy', im_npy)
+        
+        fake_dict = {
+            'info': {
+                'description': 'COCO 2017 Dataset', 
+                'url': 'http://cocodataset.org', 
+                'version': '1.0', 
+                'year': 2017,
+                'contributor': 'COCO Consortium',
+                'date_created': '2017/09/01'
+            },
+            'licenses':{
+                    
+            },
+            'images':[{
+                'file_name': 'test_0.jpg',
+                'height': 100,
+                'width': 100,
+                'id': 0
+            },
+            {
+                'file_name': 'test_1.jpg',
+                'height': 100,
+                'width': 100,
+                'id': 1
+            },
+            {
+                'file_name': 'test_2.jpg',
+                'height': 100,
+                'width': 100,
+                'id': 2
+            }],
+            'annotations':[{
+                'category_id': 18,
+                'id': 1767,
+                'iscrowd': 0,
+                'image_id': 0,
+                'bbox': [473.07, 395.93, 38.65, 28.67],
+            },
+            {
+                'category_id': 18,
+                'id': 1768,
+                'iscrowd': 0,
+                'image_id': 1,
+                'bbox': [473.07, 395.93, 38.65, 28.67],
+            },
+            {
+                'category_id': 18,
+                'id': 1769,
+                'iscrowd': 0,
+                'image_id': 2,
+                'bbox': [],
+            }],
+            'categories':[{
+                'supercategory': 'animal',
+                'id': 18,
+                'name': 'dog'
+            }]
+        }
+        fake_json = json.dumps(fake_dict)
+        with open('anno.json', 'w') as f:
+            f.write(fake_json)
+
+        args = {'COCONpy': {'root': './', 'npy_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('tensorflow', args, None, None)
+        dataloader = DATALOADERS['tensorflow'](ds)
+        for image, label in dataloader:
+            self.assertEqual(image[0].shape, (100,100,3))
+
+        args = {'COCONpy': {'root': './', 'npy_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('onnxrt_qlinearops', args, None, None)
+        dataloader = DATALOADERS['onnxrt_qlinearops'](ds)
+        for image, label in dataloader:
+            self.assertEqual(image[0].shape, (100,100,3))
+
+        args = {'COCONpy': {'root': './', 'npy_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('mxnet', args, None, None)
+        def collate(batch):
+            elem = batch[0]
+            if isinstance(elem, mx.ndarray.NDArray):
+                return mx.nd.stack(*batch)
+            elif isinstance(elem, collections.abc.Sequence):
+                batch = zip(*batch)
+                return [collate(samples) for samples in batch]
+            elif isinstance(elem, collections.abc.Mapping):
+                return {key: collate([d[key] for d in batch]) for key in elem}
+            elif isinstance(elem, np.ndarray):
+                return np.stack(batch)
+            else:
+                return batch
+        dataloader = DATALOADERS['mxnet'](ds, collate_fn=collate)
+        for image, label in dataloader:
+            self.assertEqual(image[0].shape, (100,100,3))
+
+        args = {'COCONpy': {'root': './', 'npy_dir': '', 'anno_dir': 'anno.json'}}
+        ds = create_dataset('pytorch', args, None, None)
+        def collate(batch):
+            elem = batch[0]
+            if isinstance(elem, collections.abc.Mapping):
+                return {key: collate([d[key] for d in batch]) for key in elem}
+            elif isinstance(elem, collections.abc.Sequence):
+                batch = zip(*batch)
+                return [collate(samples) for samples in batch]
+            elif isinstance(elem, np.ndarray):
+                return np.stack(batch)
+            else:
+                return batch
+        dataloader = DATALOADERS['pytorch'](dataset=ds, collate_fn=collate)
+        for image, label in dataloader:
+            self.assertEqual(image[0].shape, (100,100,3))
+
+        os.remove('test_0.jpg')
+        os.remove('test_1.jpg')
+        os.remove('test_0.jpg.npy')
+        os.remove('test_1.jpg.npy')
+        os.remove('anno.json')
+
     def test_tensorflow_imagenet_dataset(self):
         import tensorflow as tf
         tf.compat.v1.disable_eager_execution() 
