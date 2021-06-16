@@ -23,7 +23,7 @@ tuning:
   accuracy_criterion:
     relative: 0.01                               # the tuning target of accuracy loss percentage: 1%
   exit_policy:
-    timeout: 100                                 # tuning timeout (seconds)
+    timeout: 0                                 # tuning timeout (seconds)
   random_seed: 100                               # random seed
 
 
