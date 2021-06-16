@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ..experimental.pruning_recipes.patterns import patterns
+
 PRUNERS = {}
 
 def pruner_registry(cls):
@@ -80,6 +82,12 @@ class Pruner:
             self.weights = self.model.get_all_weight_names()
 
         self.is_last_epoch = False
+
+        # TBD, add pattern in config
+        if hasattr(local_config, 'pattern'):
+            self.pattern = patterns[local_config.pattern]()
+        else:
+            self.pattern = patterns['tile_pattern_1x1']()
         self.masks = {}
 
     def on_epoch_begin(self, epoch):
@@ -93,6 +101,9 @@ class Pruner:
 
     def on_batch_end(self):
         raise NotImplementedError
+
+    def on_post_grad(self):
+        pass
 
     def update_sparsity(self, epoch):
         """ update sparsity goals according to epoch numbers

@@ -62,6 +62,12 @@ class Pruning:
         for pruner in self.pruners:
             pruner.on_batch_begin(batch_id)
 
+    def on_post_grad(self):
+        """ called after gradient computed """
+        """ usually for getting gradients """
+        for pruner in self.pruners:
+            pruner.on_post_grad()
+
     def on_batch_end(self):
         """ called on the end of batches"""
         for pruner in self.pruners:
@@ -161,6 +167,7 @@ class Pruning:
                 'on_epoch_end': self.on_epoch_end,
                 'on_batch_start': self.on_batch_begin,
                 'on_batch_end': self.on_batch_end,
+                'on_post_grad': self.on_post_grad
             }
             self._pruning_func = create_train_func(self.framework, \
                                                    self.train_dataloader, \
@@ -227,9 +234,9 @@ class Pruning:
     def eval_dataloader(self, dataloader):
         """Set Data loader for evaluation of pruned model.
            It is iterable and the batched data should consists of yield (input, _).
-           the input in the batched data will be used for model inference, so it 
+           the input in the batched data will be used for model inference, so it
            should satisfy the input format of specific model.
-           User only need to set eval_dataloader when eval_dataloader can not be 
+           User only need to set eval_dataloader when eval_dataloader can not be
            configured from yaml file.
 
            Args:
