@@ -56,18 +56,13 @@ class TestParamsFeeder(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @patch(
-        "lpot.ux.components.configuration_wizard.params_feeder.framework_extensions",
-        {
-            "framework_foo": ["foo"],
-            "framework_baz": [
-                "baz",
-                "bas",
-            ],
-        },
-    )
+    @patch("lpot.ux.components.configuration_wizard.params_feeder.ModelRepository.get_frameworks")
     @patch("lpot.ux.components.configuration_wizard.params_feeder.load_model_config")
-    def test_get_frameworks(self, mocked_load_model_config: MagicMock) -> None:
+    def test_get_frameworks(
+        self,
+        mocked_load_model_config: MagicMock,
+        mocked_get_frameworks: MagicMock,
+    ) -> None:
         """Test get_frameworks function."""
         mocked_load_model_config.return_value = {
             "__help__framework_foo": "framework_foo is in known frameworks, so should be inculded",
@@ -86,6 +81,10 @@ class TestParamsFeeder(unittest.TestCase):
                 "domain1": {},
             },
         }
+        mocked_get_frameworks.return_value = [
+            "framework_baz",
+            "framework_foo",
+        ]
         expected = [
             {
                 "name": "framework_foo",

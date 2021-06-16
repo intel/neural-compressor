@@ -20,6 +20,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.components.optimization import Optimizations
 from lpot.ux.utils.consts import Precisions
 from lpot.ux.utils.exceptions import ClientErrorException, InternalException
@@ -88,7 +89,7 @@ class Workload(JsonSerializer):
                     f'Could not found dataset in specified location: "{dataset_path}".',
                 )
 
-        if not os.path.isfile(self.model_path):
+        if not ModelRepository.is_model_path(self.model_path):
             raise ClientErrorException(
                 f'Could not found model in specified location: "{self.model_path}".',
             )
@@ -221,7 +222,10 @@ class Workload(JsonSerializer):
         else:
             raise ClientErrorException(f"Mode {self.mode} is not supported.")
 
-        return output_name + "." + get_file_extension(self.model_path)
+        if os.path.isfile(self.model_path):
+            output_name += "." + get_file_extension(self.model_path)
+
+        return output_name
 
 
 class WorkloadMigrator:

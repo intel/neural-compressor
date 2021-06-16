@@ -53,7 +53,7 @@ class Graph(JsonSerializer):
             source = self.get_node(source_id)
             target = self.get_node(target_id)
         except NotFoundException as err:
-            log.error(
+            log.debug(
                 f"Got an error: {str(err)} while attempted "
                 f"to add an Edge from {source_id} to {target_id}",
             )

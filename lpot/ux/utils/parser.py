@@ -55,9 +55,9 @@ class OptimizationParser(Parser):
                     for key in self.patterns:
                         prog = re.compile(self.patterns[key])
                         match = prog.search(line)
-                        if match and match.groupdict().get("accuracy"):
-                            accuracy = str(match.groupdict().get("accuracy"))
-                            self.metric.insert_data(key, accuracy)
+                        if match and match.groupdict().get(key):
+                            requested_value = str(match.groupdict().get(key))
+                            self.metric.insert_data(key, requested_value)
         parsed_data: Dict[str, Any] = self.metric.serialize()  # type: ignore
         return parsed_data
 
@@ -66,15 +66,16 @@ class OptimizationParser(Parser):
         """Set patterns to get metrics from lines."""
         return {
             "acc_input_model": r".*FP32 baseline is:\s+\[("
-            r"(accuracy:\s+(?P<accuracy>(\d+(\.\d+)?)))?"
+            r"(accuracy:\s+(?P<acc_input_model>(\d+(\.\d+)?)))?"
             r"(duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
             r"(memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
             r")*\]",
             "acc_optimized_model": r".*Best tune result is:\s+\[("
-            r"(accuracy:\s+(?P<accuracy>(\d+(\.\d+)?)))?"
+            r"(accuracy:\s+(?P<acc_optimized_model>(\d+(\.\d+)?)))?"
             r"(duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
             r"(memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
             r")*\]",
+            "path_optimized_model": r".*Save quantized model at (?P<path_optimized_model>.*)",
         }
 
 

@@ -8,7 +8,8 @@
     </table>
   </mat-drawer>
 
-  <button type="button" mat-raised-button class="hw-info-button" color="primary" (click)="drawer.toggle()">
+  <button id="system-info-btn" type="button" mat-raised-button class="hw-info-button" color="primary"
+    (click)="drawer.toggle()">
     <img class="hw-info-img" src="./../../assets/004a-information-solid.svg">
     System info
   </button>
@@ -42,8 +43,8 @@
         <p *ngIf="model['yaml']" class="form-field">
           {{ getFileNameFromPath(model['yaml']) }}
         </p>
-        <button *ngIf="!model['yaml'] && !showSpinnerConfig[index]" mat-icon-button color="primary"
-          (click)="downloadConfig(model, index)" matTooltip="Download config .yaml file">
+        <button id="download-config-btn" *ngIf="!model['yaml'] && !showSpinnerConfig[index]" mat-icon-button
+          color="primary" (click)="downloadConfig(model, index)" matTooltip="Download config .yaml file">
           <img src="./../../assets/160b-download-outlined-blue.svg">
         </button>
         <mat-spinner *ngIf="showSpinnerConfig[index]" [diameter]="25"></mat-spinner>
@@ -52,8 +53,8 @@
         <p *ngIf="model['model_path']" class="form-field">
           {{ getFileNameFromPath(model['model_path']) }}
         </p>
-        <button *ngIf="!model['model_path'] && !showSpinnerModel[index]" mat-icon-button color="primary"
-          (click)="downloadModel(model, index)" matTooltip="Download the model">
+        <button id="download-model-btn" *ngIf="!model['model_path'] && !showSpinnerModel[index]" mat-icon-button
+          color="primary" (click)="downloadModel(model, index)" matTooltip="Download the model">
           <img src="./../../assets/160b-download-outlined-blue.svg">
         </button>
         <mat-spinner *ngIf="showSpinnerModel[index]" [diameter]="25"></mat-spinner>
@@ -62,14 +63,15 @@
         <mat-form-field class="form-field">
           <input matInput class="input" placeholder="set location" [(ngModel)]="model['dataset_path']">
         </mat-form-field>
-        <button mat-raised-button color="primary" class="browse" (click)="openDialog('datasets', index)">
+        <button id="choose-dataset-btn" mat-raised-button color="primary" class="browse"
+          (click)="openDialog('datasets', index)">
           <img src="./../../assets/050a-folder-solid-white.svg">
           Choose dataset
         </button>
       </td>
       <td class="cell" [ngClass]="model['added'] ? 'success' : null">
-        <button *ngIf="!model['added']" mat-flat-button color="accent" [disabled]="!isModelFilled(model)"
-          (click)="saveWorkload(model)">&#65291;
+        <button id="save-workload-btn" *ngIf="!model['added']" mat-flat-button color="accent"
+          [disabled]="!isModelFilled(model)" (click)="saveWorkload(model)">&#65291;
           Add to my models</button>
         <p *ngIf="model['added']">Model successfully added.</p>
       </td>

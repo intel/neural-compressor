@@ -8,7 +8,8 @@
     </table>
   </mat-drawer>
 
-  <button type="button" mat-raised-button class="hw-info-button" color="primary" (click)="drawer.toggle()">
+  <button id="system-info-btn" type="button" mat-raised-button class="hw-info-button" color="primary"
+    (click)="drawer.toggle()">
     <img class="hw-info-img" src="./../../assets/004a-information-solid.svg">
     System info
   </button>
@@ -17,7 +18,8 @@
   <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
     [style.display]="showSpinner ? 'block' : 'none'">
   </mat-spinner>
-  <button mat-raised-button color="accent" [routerLink]="['/config-wizard']" queryParamsHandling="preserve">
+  <button id="new-config-btn" mat-raised-button color="accent" [routerLink]="['/config-wizard']"
+    queryParamsHandling="preserve">
     &#65291; Create new configuration
   </button>
   <br>
@@ -125,18 +127,23 @@
         {{ model['optimization_time'] }}
       </td>
       <td class="cell">
-        <a class="file-button" href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}" target="_blank">
+        <a class="file-button"
+          href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}"
+          target="_blank">
           Show config
         </a>
       </td>
       <td class="cell">
-        <a class="file-button" href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}" target="_blank">
+        <a class="file-button"
+          href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}"
+          target="_blank">
           Show output
         </a>
       </td>
       <td class="cell">
         <a *ngIf="model['code_template_path']" class="file-button"
-          href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}" target="_blank">
+          href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}"
+          target="_blank">
           Show code template
         </a>
       </td>

@@ -123,8 +123,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
 
         for benchmark_mode in benchmark_modes:
             benchmark_count += 1
-
-            response_data = benchmark_model(
+            response_data = benchmark_model_and_respond_to_ui(
                 response_data=response_data,
                 workload=workload,
                 workdir=workdir,
@@ -136,7 +135,37 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
                 benchmark_total=benchmark_total,
             )
 
-    mq.post_success("benchmark_finish", response_data)
+
+def benchmark_model_and_respond_to_ui(
+    response_data: dict,
+    workload: Workload,
+    workdir: Workdir,
+    model: str,
+    model_path: str,
+    model_precision: str,
+    benchmark_mode: str,
+    benchmark_count: int,
+    benchmark_total: int,
+) -> dict:
+    """Benchmark model and update UI."""
+    try:
+        response_data = benchmark_model(
+            response_data=response_data,
+            workload=workload,
+            workdir=workdir,
+            model=model,
+            model_path=model_path,
+            model_precision=model_precision,
+            benchmark_mode=benchmark_mode,
+            benchmark_count=benchmark_count,
+            benchmark_total=benchmark_total,
+        )
+        mq.post_success("benchmark_finish", response_data)
+        return response_data
+    except ClientErrorException as err:
+        log.error(f"Benchmark failed: {str(err)}.")
+        mq.post_failure("benchmark_finish", {"message": "failed", "id": workload.id})
+        raise
 
 
 def benchmark_model(
@@ -178,8 +207,6 @@ def benchmark_model(
     logs = [os.path.join(workload.workload_path, f"{log_name}.txt")]
 
     if not proc.is_ok:
-        log.error("Benchmark failed.")
-        mq.post_failure("benchmark_finish", {"message": "failed", "id": request_id})
         raise ClientErrorException("Benchmark failed during execution.")
 
     parser = BenchmarkParserFactory.get_parser(benchmark_mode, logs)

@@ -15,6 +15,7 @@
 """Graph optimization script."""
 
 import argparse
+import sys
 from typing import Any, Optional
 
 try:
@@ -120,7 +121,10 @@ def optimize_graph_config(
     graph_optimizer = Graph_Optimization(config)
     graph_optimizer.model = input_graph
     optimized_model = graph_optimizer()
-    optimized_model.save(output_graph)
+    if optimized_model is not None:
+        optimized_model.save(output_graph)
+    else:
+        sys.exit(100)
 
 
 if __name__ == "__main__":

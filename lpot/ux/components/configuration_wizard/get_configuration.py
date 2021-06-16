@@ -14,10 +14,10 @@
 # limitations under the License.
 """Configuration to yaml."""
 
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
+from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.utils.exceptions import ClientErrorException
 
 
@@ -29,7 +29,7 @@ def get_predefined_configuration(
     from lpot.ux.utils.workload.config import Config
 
     model_path = data.get("model_path", "")
-    if not os.path.isfile(model_path):
+    if not ModelRepository.is_model_path(model_path):
         raise ClientErrorException(
             f"Could not find model in specified path: {model_path}.",
         )
