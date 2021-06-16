@@ -280,8 +280,18 @@ class TestPytorchAdaptor(unittest.TestCase):
             torch.tensor(100.))
 
     def test_update_weights(self):
-        self.lpot_model.update_weights("fc.bias", torch.zeros([1000]))
+        self.lpot_model.update_weights('fc.bias', torch.zeros([1000]))
         assert int(torch.sum(self.lpot_model.get_weight("fc.bias"))) == 0
+
+    def test_get_gradient(self):
+        with self.assertRaises(AssertionError):
+            self.lpot_model.get_gradient('fc.bias')
+
+        for name, tensor in self.lpot_model._model.named_parameters():
+            if name == 'fc.bias':
+                tensor.grad = torch.zeros_like(tensor)
+                break
+        assert torch.equal(self.lpot_model.get_gradient('fc.bias'), torch.zeros_like(tensor))
 
     def test_report_sparsity(self):
         df, total_sparsity = self.lpot_model.report_sparsity()

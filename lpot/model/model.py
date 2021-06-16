@@ -814,7 +814,7 @@ class PyTorchBaseModel(BaseModel):
         return names
 
     def get_weight(self, tensor_name):
-        """Get weight value
+        """ Get weight value
 
         Args:
             tensor_name (string): weight name
@@ -829,7 +829,7 @@ class PyTorchBaseModel(BaseModel):
                 return state_dict[name]
 
     def update_weights(self, tensor_name, new_tensor):
-        """Update weight value
+        """ Update weight value
 
         Args:
             tensor_name (string): weight name
@@ -845,8 +845,22 @@ class PyTorchBaseModel(BaseModel):
                 state_dict[name] = new_tensor
         self._model.load_state_dict(state_dict)
 
+    def get_gradient(self, tensor_name):
+        """ Get gradients of specific tensor
+
+        Args:
+            tensor_name (string): weight name
+
+        Returns:
+            (tensor): gradient tensor
+        """
+        for name, tensor in self._model.named_parameters():
+            if name == tensor_name:
+                assert tensor.grad is not None, 'please call backward() before get_gradient'
+                return tensor.grad
+
     def report_sparsity(self):
-        """Get sparsity of the model
+        """ Get sparsity of the model
 
         Args:
 

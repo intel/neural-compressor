@@ -45,18 +45,19 @@ class BasicMagnitudePruner(Pruner):
         for weight in self.weights:
             tensor = np.array(self.model.get_weight(weight))
             if len(tensor.shape) in self.tensor_dims:
+                reduced_tensor = self.pattern.reduce(tensor)
                 if self.method == "per_channel":
-                    tensor_flat = tensor.copy().reshape([tensor.shape[0], tensor.shape[1], -1])
+                    tensor_flat = reduced_tensor.reshape(list(tensor.shape)[:-2], -1)
                     tensor_flat.sort(axis=-1)
-                    threshold = tensor_flat[:, :, int(self.sparsity * tensor_flat.shape[-1])]
+                    threshold = tensor_flat[..., int(self.sparsity * tensor_flat.shape[-1])]
                     threshold = np.expand_dims(np.expand_dims(threshold, -1), -1)
-                    threshold = np.repeat(threshold, tensor.shape[-1], axis=-1)
-                    threshold = np.repeat(threshold, tensor.shape[-2], axis=-2)
-                    self.masks[weight] = threshold < tensor
+                    threshold = np.repeat(threshold, reduced_tensor.shape[-1], axis=-1)
+                    threshold = np.repeat(threshold, reduced_tensor.shape[-2], axis=-2)
                 else:
-                    tensor_flat = sorted(np.abs(tensor.flatten()))
+                    tensor_flat = sorted(np.abs(reduced_tensor.flatten()))
                     threshold = float(tensor_flat[int(len(tensor_flat) * self.sparsity)])
-                    self.masks[weight] = threshold < np.abs(tensor)
+                reduced_mask = threshold < np.abs(reduced_tensor)
+                self.masks[weight] = self.pattern.repeat_mask(reduced_mask)
 
     def on_epoch_end(self):
         if self.is_last_epoch:

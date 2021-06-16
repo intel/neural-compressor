@@ -188,7 +188,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):    # 
                                            options: 'ptq_dynamic', 'qat'.
 
         Returns:
-            fx_op_cfgs (dict): dictionary of quantization configure that meets 
+            fx_op_cfgs (dict): dictionary of quantization configure that meets
                                the requirements of torch.fx
 
     example: fx_op_cfgs = {"": default_qconfig,
@@ -346,7 +346,7 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
                          quantization configuration, qconfig applies to all submodules of a
                          given module unless qconfig for the submodules are specified (when
                          the submodule already has qconfig attribute)
-        is_qat_convert (bool): flag that specified this function is used to QAT prepare 
+        is_qat_convert (bool): flag that specified this function is used to QAT prepare
                                for pytorch 1.7 or above.
         white_list (list): list of quantizable op types in pytorch
     Return:
@@ -858,7 +858,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         return q_model
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, 
+                 metric=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Execute the evaluate process on the specified model.
 
@@ -967,6 +967,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             on_epoch_end = hooks['on_epoch_end']
             on_batch_start = hooks['on_batch_start']
             on_batch_end = hooks['on_batch_end']
+            on_post_grad = hooks['on_post_grad']
         for nepoch in range(start_epochs, end_epochs):
             model.train()
             cnt = 0
@@ -981,6 +982,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                 loss = criterion(output, target)
                 optimizer.zero_grad()
                 loss.backward()
+                if hooks is not None:
+                    on_post_grad()
                 optimizer.step()
                 if hooks is not None:
                     on_batch_end()
@@ -1457,7 +1460,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                             summary[op_name] = {}
                             for index in range(len(value)):
                                 summary[op_name].update(
-                                    {op_name + ".output" + 
+                                    {op_name + ".output" +
                                      str(index): dequantize(value[index]).numpy()
                                      if value[index].is_quantized else value[index].numpy()})
                         else:
