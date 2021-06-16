@@ -15,6 +15,7 @@
 """Generic tuning script."""
 
 import argparse
+import sys
 from typing import Any
 
 try:
@@ -72,7 +73,10 @@ def tune_model(
     quantizer = Quantization(config)
     quantizer.model = common.Model(input_graph)
     quantized_model = quantizer()
-    quantized_model.save(output_graph)
+    if quantized_model is not None:
+        quantized_model.save(output_graph)
+    else:
+        sys.exit(100)
 
 
 if __name__ == "__main__":

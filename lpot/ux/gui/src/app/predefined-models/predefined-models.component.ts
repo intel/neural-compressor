@@ -13,11 +13,12 @@
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { sha256 } from 'js-sha256';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { FileBrowserFilter, ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
+declare var require: any;
+var shajs = require('sha.js')
 
 @Component({
   selector: 'app-predefined-models',
@@ -150,7 +151,7 @@ export class PredefinedModelsComponent implements OnInit {
   saveWorkload(model) {
     let workload = {};
     const dateTime = Date.now();
-    workload['id'] = sha256(String(dateTime));
+    workload['id'] = shajs('sha384').update(String(dateTime)).digest('hex');
     workload['config_path'] = model['yaml'];
     workload['dataset_path'] = model['dataset_path'];
     workload['model_path'] = model['model_path'];

@@ -19,8 +19,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { SocketService } from '../services/socket.service';
 import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { ErrorComponent } from '../error/error.component';
-import { sha256 } from 'js-sha256';
 import { GraphComponent } from '../graph/graph.component';
+declare var require: any;
+var shajs = require('sha.js')
 
 @Component({
   selector: 'app-import-model',
@@ -56,6 +57,10 @@ export class ImportModelComponent implements OnInit {
     input: [],
     output: []
   };
+  textBox = {
+    inputs: false,
+    outputs: false
+  };
   graph = {};
 
   frameworkVersion: string;
@@ -82,7 +87,7 @@ export class ImportModelComponent implements OnInit {
 
   ngOnInit() {
     const dateTime = Date.now();
-    this.id = sha256(String(dateTime));
+    this.id = shajs('sha384').update(String(dateTime)).digest('hex');
 
     this.setDefaultValues();
 
@@ -143,24 +148,30 @@ export class ImportModelComponent implements OnInit {
             this.frameworkWarning = result['data']['message'];
           } else {
             this.firstFormGroup.get('framework').setValue(result['data']['framework']);
-            if (result['data']['framework'] === 'tensorflow') {
-              this.isFieldRequired('firstFormGroup', 'input', true);
-              this.isFieldRequired('firstFormGroup', 'output', true);
-            } else {
-              this.isFieldRequired('firstFormGroup', 'input', false);
-              this.isFieldRequired('firstFormGroup', 'output', false);
-            }
             this.getPossibleValues();
             this.frameworkVersion = result['data']['framework_version'];
             ['inputs', 'outputs'].forEach(param => {
               this[param] = result['data'][param];
-              if (result['data'][param]) {
-                const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
-                if (nonCustomParams.length === 1) {
-                  this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
-                } else if (nonCustomParams.includes('softmax_tensor')) {
-                  this.firstFormGroup.get(param.slice(0, -1)).setValue(['softmax_tensor']);
+              if (Array.isArray(result['data'][param])) {
+                this.isFieldRequired('firstFormGroup', 'input', true);
+                this.isFieldRequired('firstFormGroup', 'output', true);
+                if (result['data'][param].length === 0) {
+                  this.textBox[param] = true;
+                } else if (result['data'][param].length === 1) {
+                  this.textBox[param] = true;
+                  this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
+                } else {
+                  this.textBox[param] = false;
+                  const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
+                  if (nonCustomParams.length === 1) {
+                    this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
+                  } else if (nonCustomParams.includes('softmax_tensor')) {
+                    this.firstFormGroup.get(param.slice(0, -1)).setValue(['softmax_tensor']);
+                  }
                 }
+              } else {
+                this.isFieldRequired('firstFormGroup', 'input', false);
+                this.isFieldRequired('firstFormGroup', 'output', false);
               }
             });
           }
@@ -527,10 +538,10 @@ export class ImportModelComponent implements OnInit {
   }
 
   getBoundaryNodes(type: 'input' | 'output') {
-    if (this.firstFormGroup.get(type + 'Other').value) {
+    if (this.firstFormGroup.get(type + 'Other').value.length) {
       return [this.firstFormGroup.get(type + 'Other').value];
     }
-    if (this.order[type]) {
+    if (this.order[type].length) {
       return this.order[type];
     }
     if (typeof this.firstFormGroup.get(type).value === 'string') {

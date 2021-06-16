@@ -15,17 +15,12 @@
 """Configuration to yaml."""
 
 import json
-import os
 from typing import Any, Dict
 
-from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.components.model.repository import ModelRepository
+from lpot.ux.utils.exceptions import ClientErrorException, NotFoundException
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.utils import (
-    check_module,
-    framework_extensions,
-    get_framework_from_path,
-    get_module_version,
-)
+from lpot.ux.utils.utils import check_module, get_module_version
 from lpot.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -46,26 +41,21 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
         )
         return
 
-    if not os.path.isfile(model_path):
-        message = "Could not found model in specified path."
-        mq.post_error(
-            "boundary_nodes_finish",
-            {"message": message, "code": 404, "id": request_id},
-        )
-        return
-
     try:
         mq.post_success(
             "boundary_nodes_start",
             {"message": "started", "id": request_id},
         )
-        framework = get_framework_from_path(model_path)
-        if framework is None:
-            supported_frameworks = list(framework_extensions.keys())
+        model_repository = ModelRepository()
+        try:
+            model = model_repository.get_model(model_path)
+        except NotFoundException:
+            supported_frameworks = model_repository.get_frameworks()
             raise ClientErrorException(
                 f"Framework for specified model is not yet supported. "
                 f"Supported frameworks are: {', '.join(supported_frameworks)}.",
             )
+        framework = model.get_framework_name()
         try:
             check_module(framework)
         except ClientErrorException:

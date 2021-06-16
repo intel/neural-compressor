@@ -38,6 +38,7 @@ class Metric(JsonSerializer):
         self._optimization_time: Optional[float] = None
         self._size_input_model: Optional[float] = None
         self._size_optimized_model: Optional[float] = None
+        self._path_optimized_model: Optional[str] = None
 
     @property
     def acc_input_model(self) -> Optional[float]:
@@ -146,6 +147,16 @@ class Metric(JsonSerializer):
     def size_optimized_model(self, value: str) -> None:
         """Set optimized  model size optimized from value."""
         self._size_optimized_model = float(value)
+
+    @property
+    def path_optimized_model(self) -> Optional[str]:
+        """Get optimized model path."""
+        return self._path_optimized_model
+
+    @path_optimized_model.setter
+    def path_optimized_model(self, value: str) -> None:
+        """Set optimized model path."""
+        self._path_optimized_model = value
 
     @property
     def optimization_time(self) -> Optional[float]:

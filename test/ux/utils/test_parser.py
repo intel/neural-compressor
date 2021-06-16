@@ -48,6 +48,7 @@ class TestTuningParser(unittest.TestCase):
             "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
             "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] Save quantized model at /foo/bar/baz.pb",
             "a b c d",
         ]
 
@@ -58,6 +59,7 @@ class TestTuningParser(unittest.TestCase):
             {
                 "acc_input_model": 0.1234,
                 "acc_optimized_model": 0.9988,
+                "path_optimized_model": "/foo/bar/baz.pb",
             },
             parsed,
         )
@@ -70,10 +72,12 @@ class TestTuningParser(unittest.TestCase):
             "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
             "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.2345, duration (seconds): 0.6789], Best tune result is: [accuracy: 0.2345, duration (seconds): 0.6789]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] Save quantized model at /a/b/c.pb",
             "a b c d",
             "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
             "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] Save quantized model at /foo/bar/baz.pb",
         ]
 
         tuning_parser = OptimizationParser(["file.log"])
@@ -83,6 +87,7 @@ class TestTuningParser(unittest.TestCase):
             {
                 "acc_input_model": 0.1234,
                 "acc_optimized_model": 0.9988,
+                "path_optimized_model": "/foo/bar/baz.pb",
             },
             parsed,
         )

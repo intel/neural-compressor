@@ -36,11 +36,6 @@ dataset_locations = {
     },
 }
 
-framework_extensions = {
-    "tensorflow": ["pb"],
-    "onnxrt": ["onnx"],
-}
-
 support_boundary_nodes = ["tensorflow"]
 
 
@@ -77,21 +72,19 @@ def get_framework_from_path(model_path: str) -> Optional[str]:
 
     :param model_path: Path to model.
     """
-    extension = get_file_extension(model_path)
-    for framework, extensions in framework_extensions.items():
-        if extension in extensions:
-            return framework
-    return None
+    from lpot.ux.components.model.repository import ModelRepository
+
+    model_repository = ModelRepository()
+    try:
+        model = model_repository.get_model(model_path)
+        return model.get_framework_name()
+    except NotFoundException:
+        return None
 
 
 def get_file_extension(path: str) -> str:
     """Get file extension without leading dot."""
     return os.path.splitext(path)[1][1:]
-
-
-def is_model_file(path: str) -> bool:
-    """Check if given path is a model of supported framework."""
-    return get_framework_from_path(path) is not None
 
 
 def is_dataset_file(path: str) -> bool:
@@ -206,39 +199,21 @@ def _load_json_as_list(path: str) -> list:
 
 def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
     """Update model's input and output nodes in config file."""
-    boundary_nodes: Dict[str, Optional[List[Any]]] = {
-        "inputs": None,
-        "outputs": None,
+    from lpot.ux.components.model.repository import ModelRepository
+
+    model_repository = ModelRepository()
+    model = model_repository.get_model(model_path)
+
+    return {
+        "inputs": model.get_input_nodes(),
+        "outputs": model.get_output_nodes(),
     }
-    framework = get_framework_from_path(model_path)
-    if framework is None:
-        raise Exception("Could not find framework for specified model.")
-    check_module(framework)
-    # Inputs are only required for TF models
-    if framework not in support_boundary_nodes:
-        return boundary_nodes
-
-    if framework == "tensorflow":
-        from lpot.utils.logger import Logger
-
-        Logger().get_logger().setLevel(log.level)
-        from lpot.model.model import TensorflowModel
-
-        model = TensorflowModel(model_path)
-
-        inputs = getattr(model, "input_node_names", [])
-        outputs = getattr(model, "output_node_names", [])
-        outputs += ["custom"]
-        boundary_nodes["inputs"] = inputs
-        boundary_nodes["outputs"] = list(set(outputs))
-        return boundary_nodes
-    return {}
 
 
 def check_module(module_name: str) -> None:
     """Check if module exists. Raise exception when not found."""
     if module_name == "onnxrt":
-        module_name = "onnx"
+        module_name = "onnxruntime"
     module = find_spec(module_name)
     if module is None:
         raise ClientErrorException(f"Could not find {module_name} module.")
@@ -248,7 +223,7 @@ def get_module_version(module_name: str) -> str:
     """Check module version. Raise exception when not found."""
     version = None
     if module_name == "onnxrt":
-        module_name = "onnx"
+        module_name = "onnxruntime"
     command = [
         "python",
         "-c",
@@ -258,7 +233,7 @@ def get_module_version(module_name: str) -> str:
     proc.run(args=command)
     if proc.is_ok:
         for line in proc.output:
-            version = line
+            version = line.strip()
     proc.remove_logs()
     if version is None:
         raise ClientErrorException(f"Could not found version of {module_name} module.")

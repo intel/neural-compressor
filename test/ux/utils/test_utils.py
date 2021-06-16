@@ -17,6 +17,7 @@
 import inspect
 import os
 import unittest
+from unittest.mock import MagicMock, patch
 
 from lpot.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
 from lpot.ux.utils.utils import (
@@ -28,7 +29,6 @@ from lpot.ux.utils.utils import (
     is_dataset_file,
     is_development_env,
     is_hidden,
-    is_model_file,
     load_dataloader_config,
     load_help_lpot_params,
     load_model_config,
@@ -48,13 +48,13 @@ class TestUtils(unittest.TestCase):
         """Test if path is correctly recognized as hidden."""
         path = ".ssh"
         result = is_hidden(path)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_is_not_hidden(self) -> None:
         """Test if path is correctly recognized as not hidden."""
         path = "home"
         result = is_hidden(path)
-        self.assertEqual(result, False)
+        self.assertFalse(result)
 
     def test_get_dataset_path(self) -> None:
         """Test getting dataset path."""
@@ -77,11 +77,14 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(Exception):
             get_dataset_path(framework, domain)
 
-    def test_get_tensorflow_framework_from_path(self) -> None:
+    @patch("lpot.ux.components.model.tensorflow.frozen_pb.get_model_type")
+    def test_get_tensorflow_framework_from_path(self, mocked_get_model_type: MagicMock) -> None:
         """Test getting framework name from path."""
+        mocked_get_model_type.return_value = "frozen_pb"
         path = "/home/user/model.pb"
         result = get_framework_from_path(path)
         self.assertEqual(result, "tensorflow")
+        mocked_get_model_type.assert_called_with(path)
 
     def test_get_onnx_framework_from_path(self) -> None:
         """Test getting framework name from path."""
@@ -113,41 +116,17 @@ class TestUtils(unittest.TestCase):
         result = get_file_extension(path)
         self.assertEqual(result, "")
 
-    def test_pb_is_model_file(self) -> None:
-        """Test if pb file is recognized correctly."""
-        path = "/home/user/model.pb"
-        result = is_model_file(path)
-        self.assertEqual(result, True)
-
-    def test_onnx_is_model_file(self) -> None:
-        """Test if onnx file is recognized correctly."""
-        path = "/home/user/model.onnx"
-        result = is_model_file(path)
-        self.assertEqual(result, True)
-
-    def test_ckpt_is_model_file(self) -> None:
-        """Test if ckpt file is recognized correctly."""
-        path = "/home/user/model.onnx.ckpt"
-        result = is_model_file(path)
-        self.assertEqual(result, False)
-
-    def test_mp3_is_model_file(self) -> None:
-        """Test if mp3 file is recognized correctly."""
-        path = "/home/user/favourite_song.mp3"
-        result = is_model_file(path)
-        self.assertEqual(result, False)
-
     def test_record_is_dataset_file(self) -> None:
         """Test if record is a valid dataset file."""
         path = "/home/user/dataset.record"
         result = is_dataset_file(path)
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_pbtxt_is_dataset_file(self) -> None:
         """Test if record is a valid dataset file."""
         path = "/home/user/dataset.pbtxt"
         result = is_dataset_file(path)
-        self.assertEqual(result, False)
+        self.assertFalse(result)
 
     def test_get_predefined_tf_image_recognition_config_path(self) -> None:
         """Test getting predefined config path for TF image recognition models."""

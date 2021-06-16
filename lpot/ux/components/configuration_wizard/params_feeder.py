@@ -19,11 +19,11 @@ from typing import Any, Dict, List, Optional
 from lpot.experimental.metric.metric import framework_metrics
 from lpot.objective import OBJECTIVES
 from lpot.strategy import STRATEGIES
+from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.utils import (
     check_module,
     filter_transforms,
-    framework_extensions,
     load_dataloader_config,
     load_help_lpot_params,
     load_model_config,
@@ -69,12 +69,13 @@ class Feeder:
     @staticmethod
     def get_frameworks() -> List[dict]:
         """Get list of available frameworks."""
+        supported_frameworks = ModelRepository.get_supported_frameworks()
         frameworks = []
         models_config = load_model_config()
         for framework in models_config.keys():
             if framework.startswith("__help__"):
                 continue
-            if framework not in framework_extensions.keys():
+            if framework not in supported_frameworks:
                 continue
             help_msg = models_config.get(f"__help__{framework}", "")
             frameworks.append({"name": framework, "help": help_msg})

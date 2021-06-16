@@ -17,8 +17,9 @@
 import os
 from typing import Any, Dict, List
 
+from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
-from lpot.ux.utils.utils import is_dataset_file, is_hidden, is_model_file, verify_file_path
+from lpot.ux.utils.utils import is_dataset_file, is_hidden, verify_file_path
 
 
 def get_directory_entries(
@@ -86,6 +87,7 @@ def create_entry(path: str, is_directory: bool) -> Dict:
     return {
         "name": path,
         "type": entry_type,
+        "is_model": ModelRepository.is_model_path(path),
     }
 
 
@@ -147,7 +149,7 @@ def is_directory_entry(entry: Dict) -> bool:
 
 def is_model_or_directory_entry(entry: Dict) -> bool:
     """Return if given entry should be shown on model list."""
-    return is_model_file(entry["name"]) or is_directory_entry(entry)
+    return entry["is_model"] or is_directory_entry(entry)
 
 
 def is_dataset_or_directory_entry(entry: Dict) -> bool:

@@ -16,18 +16,16 @@
 
 from typing import Any, Dict, List, Optional
 
+from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import (
-    framework_extensions,
     get_model_zoo_config_path,
     get_model_zoo_model_path,
     get_module_version,
     load_model_config,
 )
-
-SUPPORTED_FRAMEWORKS = list(framework_extensions.keys())
 
 
 def list_models(data: dict) -> List[Dict[str, Any]]:
@@ -41,7 +39,10 @@ def get_available_models(workspace_path: Optional[str]) -> List[Dict[str, Any]]:
     """Get available models from Examples."""
     model_list = []
     full_list = load_model_config()
-    for framework in SUPPORTED_FRAMEWORKS:
+
+    supported_frameworks = ModelRepository.get_supported_frameworks()
+
+    for framework in supported_frameworks:
         try:
             framework_version = get_module_version(framework)
         except Exception:
