@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tensorflow as tf
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
@@ -68,7 +67,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             pad_node = graph_info[node_combination[0]].node
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
-            if any(padding_tensor) and tf.version.VERSION < '2.5.0':
+            if any(padding_tensor):
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)
             cur_graph.remove_node(pad_node.input[1])
