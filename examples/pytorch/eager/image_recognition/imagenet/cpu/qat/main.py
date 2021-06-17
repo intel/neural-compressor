@@ -15,6 +15,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models.quantization as models
+import numpy
 
 
 use_gpu = False
@@ -233,16 +234,25 @@ def main_worker(gpu, ngpus_per_node, args):
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
+    val_dataset = datasets.ImageFolder(valdir, transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize,
-        ])),
+        ]))
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset,
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
-
+    
+    numpy.random.seed(2021)
+    indices = numpy.random.choice(len(val_dataset), 1000, replace=False)
+    dataset_subset = torch.utils.data.Subset(val_dataset, indices)
+    val_loader_earlystop = torch.utils.data.DataLoader(
+        dataset_subset,
+        batch_size=args.batch_size, shuffle=False,
+        num_workers=args.workers, pin_memory=True)
+    
     if args.evaluate:
         validate(val_loader, model, criterion, args)
         return
@@ -265,14 +275,13 @@ def main_worker(gpu, ngpus_per_node, args):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    
+
                     if cnt % 10 == 1 or cnt == len(train_loader) + 1:                        
                         print('[{}/{}, {}/{}] loss : {:.8}'.format(
                                 nepoch+1, epochs, cnt, len(train_loader), loss.item()))
 
-                   
                     if cnt % 10 == 1 or cnt == len(train_loader) + 1:
-                            _, curr_loss = validate(val_loader, model, criterion, args)
+                            _, curr_loss = validate(val_loader_earlystop, model, criterion, args)
                             print("The current val loss: ", curr_loss)
 
                             if prev_loss is None:
