@@ -73,6 +73,21 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'ConvTranspose1d': &cap_static_s8_1_7_ConvTranspose1d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl', 'minmax']
+                        },
+                    },
+          'ConvTranspose2d': *cap_static_s8_1_7_ConvTranspose1d,
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],

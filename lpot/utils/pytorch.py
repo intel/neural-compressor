@@ -28,7 +28,7 @@ import copy
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
                                  lambda loader, node: tuple(loader.construct_sequence(node)))
 
-def load(checkpoint_dir, model):
+def load(checkpoint_dir, model, **kwargs):
     """Execute the quantize process on the specified model.
 
     Args:
@@ -106,9 +106,11 @@ def load(checkpoint_dir, model):
                 q_model = torch._fx.symbolic_trace(q_model)
             if tune_cfg['approach'] == "quant_aware_training":
                 q_model.train()
-                q_model = prepare_qat_fx(q_model, fx_op_cfgs)
+                q_model = prepare_qat_fx(q_model, fx_op_cfgs,
+                                         prepare_custom_config_dict=kwargs['kwargs'])
             else:
-                q_model = prepare_fx(q_model, fx_op_cfgs)
+                q_model = prepare_fx(q_model, fx_op_cfgs,
+                                     prepare_custom_config_dict=kwargs['kwargs'])
             q_model = convert_fx(q_model)
             weights = torch.load(weights_file)
             q_model.load_state_dict(weights)

@@ -798,6 +798,7 @@ class PyTorchBaseModel(BaseModel):
         self._model = model
         self.tune_cfg = None
         self.is_quantized = False
+        self.kwargs = kwargs if kwargs else None
 
     def get_all_weight_names(self):
         """Get weight names

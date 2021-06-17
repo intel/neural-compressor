@@ -21,7 +21,6 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models.quantization as quantize_models
-import torchvision.models as models
 
 import subprocess
 
@@ -143,7 +142,6 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
-    pytorch_version = get_torch_version()
     #args.gpu = gpu
     #affinity = subprocess.check_output("lscpu | grep 'NUMA node[0-9]' | awk '{ print $4 }' | awk -F',' '{ print $1 }'", shell=True)
     #os.environ['OMP_NUM_THREADS'] = '28'
@@ -166,10 +164,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # create model
     if args.pretrained:
         print("=> using pre-trained model '{}'".format(args.arch))
-        if pytorch_version >= '1.7':
-            model = models.__dict__[args.arch](pretrained=True)
-        else:
-            model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
+        model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
     else:
         print("=> creating model '{}'".format(args.arch))
         model = quantize_models.__dict__[args.arch]()
@@ -272,8 +267,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         from lpot.experimental import Quantization, common
         model.eval()
-        if pytorch_version < '1.7':
-            model.fuse_model()
+        model.fuse_model()
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer()
@@ -282,8 +276,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.benchmark or args.accuracy_only:
         model.eval()
-        if pytorch_version < '1.7':
-            model.fuse_model()
+        model.fuse_model()
         if args.int8:
             from lpot.utils.pytorch import load
             new_model = load(
@@ -318,12 +311,6 @@ def main_worker(gpu, ngpus_per_node, args):
                 'optimizer' : optimizer.state_dict(),
             }, is_best)
 
-def get_torch_version():
-    try:
-        torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
-    return torch_version
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')
