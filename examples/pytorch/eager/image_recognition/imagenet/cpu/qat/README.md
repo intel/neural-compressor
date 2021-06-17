@@ -55,7 +55,6 @@ quantization:                                        # optional. required for QA
   approach: quant_aware_training       
   train:
     end_epoch: 8
-    iteration: 30
     optimizer:
       SGD:
         learning_rate: 0.0001
@@ -179,7 +178,7 @@ def training_func_for_lpot(model):
 
                    
                 if cnt % 10 == 1 or cnt == len(train_loader) + 1:
-                    _, curr_loss = validate(val_loader, model, criterion, args)
+                    _, curr_loss = validate(val_loader_earlystop, model, criterion, args)
                     print("The current val loss: ", curr_loss)
                     if curr_loss > prev_loss:
                         loss_increase_times += 1
@@ -241,9 +240,10 @@ python main_buildin.py -t -a resnet18 --pretrained --config ./conf_buildin.yaml 
 ```
 
 without buildin training functionet
-
+```shell
 cd examples/pytorch/eager/image_recognition/imagenet/cpu/qat
 python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
+```
 ### 3. ResNext101_32x8d
 
 
