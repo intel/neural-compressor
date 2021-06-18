@@ -8,8 +8,8 @@ from lpot.experimental.pruning_recipes.patterns import patterns
 
 class TestPruningPattern(unittest.TestCase):
 
-    tensor_4d = np.random.random([1,100,224,224])
-    tensor_2d = np.random.random([512,256])
+    tensor_4d = np.random.random([1,100,2240,2240])
+    tensor_2d = np.random.random([5120,2560])
 
     def test_tile_pattern(self):
         for tensor in [self.tensor_2d, self.tensor_4d]:
