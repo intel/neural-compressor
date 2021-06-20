@@ -73,6 +73,9 @@ def build_fake_bf16_rnn_yaml():
                     \"lstm_1/while/MatMul_2\": {
                        \"activation\":  {\"dtype\": [\"bf16\"]},
                      },
+                    \"lstm_1/while/MatMul_3\": {
+                       \"activation\":  {\"dtype\": [\"bf16\"]},
+                     },
                    }
         evaluation:
           accuracy:
@@ -81,6 +84,8 @@ def build_fake_bf16_rnn_yaml():
         tuning:
             accuracy_criterion:
               relative: 0.05
+            exit_policy:
+              performance_only: True
         '''
     with open('fake_bf16_rnn.yaml',"w",encoding="utf-8") as f:
         f.write(fake_yaml)

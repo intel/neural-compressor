@@ -55,8 +55,10 @@ from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
+from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 from lpot.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+
 
 TF_SUPPORTED_MAX_VERSION = '2.5.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -455,6 +457,19 @@ class GraphConverter:
 
         return final_result
 
+    def _analysis_rnn_model(self):
+        g = GraphAnalyzer()
+        g.graph = self._tmp_graph_def
+        graph_info = g.parse_graph()
+        rnn_pattern = [['TensorArrayV3'], ['Enter'], ['TensorArrayReadV3'], \
+            ['MatMul'], ['BiasAdd']]
+        target_nodes = g.query_fusion_pattern_nodes(rnn_pattern)
+        res = {}
+        for i in target_nodes:
+            if i[-3] not in self.bf16_ops and i[-3] not in self.fp32_ops:
+                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr['frame_name'].s.decode()
+
+        return res
 
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:
@@ -466,6 +481,10 @@ class GraphConverter:
         """
         try:
             self._quantize_graph()
+            self._rnn_details = self._analysis_rnn_model()
+            self.quantized_node_info.extend(self._rnn_details.keys())
+            self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
+
             if self.fake_quant:
                 self._fuse_requantize_with_fused_quantized_node()
             else:
@@ -478,8 +497,9 @@ class GraphConverter:
                 sampling_cfg = copy.deepcopy(self.model.framework_specific_info)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
                 for i in self.quantized_node_info:
+                    frame_name = self._rnn_details[i] if i in self._rnn_details else None
                     sampling_graph_def, output_names = InsertPrintMinMaxNode(
-                        sampling_graph_def, i[0], i[-1]).do_transformation()
+                        sampling_graph_def, i[0], i[-1], frame_name).do_transformation()
                     sampling_cfg['output_tensor_names'].extend(output_names)
 
                 if self.quantized_node_info:
@@ -597,6 +617,9 @@ class GraphConverter:
             device=self.device,
             ).do_transformation()
 
+        self._tmp_graph_def = QuantizedRNNConverter(
+            self._tmp_graph_def, self._calibration_data, self._rnn_details).do_transformation()
+
         if 'scale_propagation_max_pooling' in self.recipes and \
                 self.recipes['scale_propagation_max_pooling']:
             self._tmp_graph_def = ScaleProPagationTransformer(
@@ -622,7 +645,6 @@ class GraphConverter:
 
             self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
                 self._tmp_graph_def).do_transformation()
-
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
