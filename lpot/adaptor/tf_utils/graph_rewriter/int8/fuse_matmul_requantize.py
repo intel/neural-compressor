@@ -93,40 +93,43 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
 
-            bias_node = self.graph_info[new_node.input[2]].node
+            bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
-            min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
-            max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
+            if max_filter_node.op == 'Const':
+                min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
+                max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
 
-            max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
-            min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
+                max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
+                min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
-            weights_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[1]].node.attr['value'].tensor)
-            bias_tensor = tensor_util.MakeNdarray(
-                self.graph_info[new_node.input[2]].node.attr['value'].tensor)
-            is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
-            input_range = max_input_value - min_input_value if is_min_first else max(
-                    abs(max_input_value), abs(min_input_value))
+                weights_tensor = tensor_util.MakeNdarray(
+                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(
+                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
+                input_range = max_input_value - min_input_value if is_min_first else max(
+                        abs(max_input_value), abs(min_input_value))
 
-            int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
-                                                    input_range, max_input_value,
-                                                    min_input_value,
-                                                    max_filter_value, min_filter_value)
-            bias_node.attr['dtype'].CopyFrom(
-                attr_value_pb2.AttrValue(
-                    type=float32_type if self.device == 'gpu' else qint32_type))
-            bias_node.attr['value'].CopyFrom(
-                attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
-                    bias_tensor if self.device == 'gpu' else int32_bias, dtypes.
-                    float32 if self.device == 'gpu' else dtypes.int32, bias_tensor.shape)))
+                int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                        input_range, max_input_value,
+                                                        min_input_value,
+                                                        max_filter_value, min_filter_value)
 
-            bias_node.attr['value'].tensor.dtype = float32_type \
-                                    if self.device == 'gpu' else qint32_type
-            new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
-                                            if self.device == 'gpu' else qint32_type))
+                bias_node.attr['dtype'].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        type=float32_type if self.device == 'gpu' else qint32_type))
+                bias_node.attr['value'].CopyFrom(
+                    attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+                        bias_tensor if self.device == 'gpu' else int32_bias, dtypes.
+                        float32 if self.device == 'gpu' else dtypes.int32, bias_tensor.shape)))
 
+                bias_node.attr['value'].tensor.dtype = float32_type \
+                                        if self.device == 'gpu' else qint32_type
+                new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
+            else:
+                new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
             self.graph_analyzer.remove_node(requantize_node_name)
