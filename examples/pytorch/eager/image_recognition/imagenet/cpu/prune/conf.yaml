@@ -26,7 +26,7 @@ pruning:
       batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/imagenet
+          root: /path/to/imagenet/train              # NOTE: modify to your training dataset location if needed
       transform:
         RandomResizedCrop:
           size: 224
@@ -74,7 +74,7 @@ evaluation:                                          # optional. required if use
       batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/imagenet                    # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/imagenet/val                # NOTE: modify to your evaluation dataset location if needed
       transform:
         Resize:
           size: 256
