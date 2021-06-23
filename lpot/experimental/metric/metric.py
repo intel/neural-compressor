@@ -22,7 +22,6 @@ from lpot.utils import logger
 from sklearn.metrics import accuracy_score
 import numpy as np
 
-torch_ignite = LazyImport('ignite')
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
@@ -36,14 +35,7 @@ class TensorflowMetrics(object):
 @singleton
 class PyTorchMetrics(object):
     def __init__(self):
-        self.metrics = {
-            "topk": WrapPyTorchMetric(
-                torch_ignite.metrics.TopKCategoricalAccuracy),
-            "Accuracy": WrapPyTorchMetric(
-                torch_ignite.metrics.Accuracy),
-            "Loss": WrapPyTorchMetric(
-                PyTorchLoss),
-        }
+        self.metrics = {}
         self.metrics.update(PYTORCH_METRICS)
 
 @singleton
@@ -68,7 +60,6 @@ class ONNXRTITMetrics(object):
     def __init__(self):
         self.metrics = {}
         self.metrics.update(ONNXRT_IT_METRICS)
-
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
@@ -274,49 +265,6 @@ def _shape_validate(preds, labels):
            of labels {} does not match shape of predictions {}'.format(labels.shape, preds.shape)
     return preds, labels
 
-@metric_registry('topk', 'mxnet')
-class MxnetTopK(BaseMetric):
-    """Computes top k predictions accuracy.
-
-    Args:
-        k (int): Number of top elements to look at for computing accuracy.
-    """
-    def __init__(self, k=1):
-        self.k = k
-        self.num_correct = 0
-        self.num_sample = 0
-
-    def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
-        preds, labels = _topk_shape_validate(preds, labels)
-        preds = preds.argsort()[..., -self.k:]
-        if self.k == 1:
-            correct = accuracy_score(preds, labels, normalize=False)
-            self.num_correct += correct
-
-        else:
-            for p, l in zip(preds, labels):
-                # get top-k labels with np.argpartition
-                # p = np.argpartition(p, -self.k)[-self.k:]
-                l = l.astype('int32')
-                if l in p:
-                    self.num_correct += 1
-
-        self.num_sample += len(labels)
-
-    def reset(self):
-        """clear preds and labels storage"""
-        self.num_correct = 0
-        self.num_sample = 0
-
-    def result(self):
-        """calculate metric"""
-        if self.num_sample == 0:
-            logger.warning("sample num is 0 can't calculate topk")
-            return 0
-        else:
-            return self.num_correct / self.num_sample
-
 @metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class F1(BaseMetric):
     """Computes the F1 score of a binary classification problem.
@@ -367,7 +315,7 @@ def _accuracy_type_check(preds, labels):
            update_type = 'multilabel'
    return update_type
 
-@metric_registry('Accuracy', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('Accuracy', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Accuracy(BaseMetric):
     """Computes accuracy classification score.
 
@@ -443,7 +391,7 @@ class PyTorchLoss():
                                       before it can be computed.")
         return self._sum.item() / self._num_examples
         
-@metric_registry('Loss', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('Loss', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Loss(BaseMetric):
     """A dummy metric for directly printing loss, it calculates the average of predictions.
 
@@ -596,8 +544,8 @@ class TensorflowTopK(BaseMetric):
         else:
             return self.num_correct / self.num_sample
 
-@metric_registry('topk', 'onnxrt_qlinearops, onnxrt_integerops')
-class ONNXRTTopK(BaseMetric):
+@metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+class GeneralTopK(BaseMetric):
     """Computes top k predictions accuracy.
 
     Args:
@@ -638,7 +586,6 @@ class ONNXRTTopK(BaseMetric):
             return 0
         else:
             return self.num_correct / self.num_sample
-
 
 @metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowMAP(BaseMetric):
