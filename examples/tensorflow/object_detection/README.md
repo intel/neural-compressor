@@ -39,6 +39,9 @@ pip install -r requirements.txt
 ### 5. Prepare Dataset
 
 #### Automatic dataset download
+
+> **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
+
 Run the `prepare_dataset.sh` script located in `examples/tensorflow/object_detection`.
 
 Usage:
