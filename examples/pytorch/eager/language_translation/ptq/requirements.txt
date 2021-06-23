@@ -13,7 +13,6 @@ sacremoses
 lpot
 tensorboard
 scikit-learn
-pytorch-ignite
 
 pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
 

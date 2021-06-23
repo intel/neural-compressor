@@ -3,6 +3,5 @@ tensorboard
 scikit-learn
 seqeval
 lpot
-pytorch-ignite
 
 rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability
