@@ -95,6 +95,7 @@ class Embeddings(nn.Module):
         position_ids = position_ids.unsqueeze(0).expand_as(input_ids)                      # (bs, max_seq_length)
 
         word_embeddings = self.word_embeddings(input_ids)                   # (bs, max_seq_length, dim)
+        position_ids = position_ids.contiguous()
         position_embeddings = self.position_embeddings(position_ids)        # (bs, max_seq_length, dim)
 
         embeddings = word_embeddings + position_embeddings  # (bs, max_seq_length, dim)
@@ -255,7 +256,6 @@ class TransformerBlock(nn.Module):
         self.output_attentions = config.output_attentions
 
         assert config.dim % config.n_heads == 0
-        self.quant = QuantStub()
 
         self.attention = MultiHeadSelfAttention(config)
         self.sa_layer_norm = nn.LayerNorm(normalized_shape=config.dim, eps=1e-12)

@@ -17,7 +17,7 @@ Our example comes from MLPerf Inference Benchmark Suite
   ```
   Check your gcc version with command : **gcc -v**
 
-  GCC7 or above is needed(FBGEMM needed).
+  GCC5 or above is needed.
 
   ```shell
   cd examples/pytorch/utils/MLPerf/loadgen

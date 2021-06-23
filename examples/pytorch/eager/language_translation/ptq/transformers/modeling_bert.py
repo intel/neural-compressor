@@ -165,8 +165,6 @@ class BertEmbeddings(nn.Module):
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.bf16 = bf16
-        self.quant = QuantStub()
-        self.dequant = DeQuantStub()
 
     def forward(self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None):
         if input_ids is not None:
@@ -184,15 +182,14 @@ class BertEmbeddings(nn.Module):
 
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
+        position_ids = position_ids.contiguous()
         position_embeddings = self.position_embeddings(position_ids)
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
         embeddings = inputs_embeds + position_embeddings + token_type_embeddings
         if self.bf16:
             embeddings = embeddings.to(torch.bfloat16)
-        # embeddings = self.quant(embeddings)
         embeddings = self.LayerNorm(embeddings)
-        # embeddings = self.dequant(embeddings)
         embeddings = self.dropout(embeddings)
         return embeddings
 
@@ -322,9 +319,7 @@ class BertSelfOutput(nn.Module):
             hidden_states = hidden_states.to_dense()
         hidden_states = self.dropout(hidden_states)
         hidden_states_input = hidden_states + input_tensor
-        # hidden_states_input = self.quant(hidden_states_input)
         hidden_states = self.LayerNorm(hidden_states_input)
-        # hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 
@@ -386,7 +381,6 @@ class BertIntermediate(nn.Module):
             hidden_states = hidden_states.to_mkldnn()
         hidden_states = self.quant(hidden_states)
         hidden_states = self.dense(hidden_states)
-        # #hidden_states = self.dequant(hidden_states)
         hidden_states = self.dequant(hidden_states)
         if self.mkldnn_train:
             hidden_states = hidden_states.to_dense()
@@ -414,9 +408,7 @@ class BertOutput(nn.Module):
             hidden_states = hidden_states.to_dense()
         hidden_states = self.dropout(hidden_states)
         hidden_states_input = hidden_states + input_tensor
-        # hidden_states_input = self.quant(hidden_states_input)
         hidden_states = self.LayerNorm(hidden_states_input)
-        # hidden_states = self.dequant(hidden_states)
         return hidden_states
 
 

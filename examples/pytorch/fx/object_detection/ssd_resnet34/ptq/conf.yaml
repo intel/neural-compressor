@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. used to specify model specific information.
   name: ssd_resnet34
-  framework: pytorch                                 # mandatory. this model runs on pytorch framework
+  framework: pytorch_fx                              # mandatory. this model runs on pytorch framework
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # mandatory. default value is post_training_dynamic_quant.   

@@ -92,6 +92,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
                       "pytorch": PyTorchDatasets,
                       "pytorch_ipex": PyTorchDatasets,
+                      "pytorch_fx": PyTorchDatasets,
                       "onnxrt_qlinearops": ONNXRTQLDatasets,
                       "onnxrt_integerops": ONNXRTITDatasets}
 
@@ -109,7 +110,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 class DATASETS(object):
     def __init__(self, framework):
         assert framework in ["tensorflow", "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
-                             "pytorch", "pytorch_ipex"], \
+                             "pytorch", "pytorch_ipex", "pytorch_fx"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.datasets = framework_datasets[framework]().datasets
 
@@ -123,6 +124,7 @@ TENSORFLOW_DATASETS = {}
 MXNET_DATASETS = {}
 PYTORCH_DATASETS = {}
 PYTORCHIPEX_DATASETS = {}
+PYTORCHFX_DATASETS = {}
 ONNXRTQL_DATASETS = {}
 ONNXRTIT_DATASETS = {}
 
@@ -130,6 +132,7 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                      "mxnet": MXNET_DATASETS,
                      "pytorch": PYTORCH_DATASETS,
                      "pytorch_ipex": PYTORCHIPEX_DATASETS,
+                     "pytorch_fx": PYTORCHFX_DATASETS,
                      "onnxrt_integerops": ONNXRTQL_DATASETS,
                      "onnxrt_qlinearops": ONNXRTIT_DATASETS}
 
@@ -154,6 +157,7 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
                 "mxnet",
                 "pytorch",
                 "pytorch_ipex",
+                "pytorch_fx",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops"
             ], "The framework support tensorflow mxnet pytorch onnxrt"

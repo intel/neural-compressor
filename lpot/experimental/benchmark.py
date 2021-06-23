@@ -165,7 +165,7 @@ class Benchmark(object):
         if 'onnxrt' in framework.lower():
             framework_specific_info.update({"backend": framework.lower().split('_')[-1], \
                                             'workspace_path': cfg.tuning.workspace.path})
-        if framework == 'pytorch_ipex' or framework == 'pytorch':
+        if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None,
                                             "benchmark": True})
