@@ -163,6 +163,7 @@ class FreezeValueTransformer(GraphRewriterBase):
         :return: transformed graph
         """
         for node_name, value in max_name_value.items():
+            node_name = node_name.replace(":", "__port__").replace("^", "__hat__")
             if node_name not in self.graph_info:
                 continue
             new_node = node_def_pb2.NodeDef()

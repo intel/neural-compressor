@@ -52,7 +52,8 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
         output_names = []
         for node_pair_names in insert_node_pairs:
             for index, each_node_name in enumerate(node_pair_names):
-                node_name_prefix = each_node_name + self.signature
+                name_with_sig = each_node_name + self.signature
+                node_name_prefix = name_with_sig.replace(":", "__port__").replace("^", "__hat__")
                 reshape_dims_name = node_name_prefix + "_reshape_dims"
                 reduction_dims_name = node_name_prefix + "_reduction_dims"
 
