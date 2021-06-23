@@ -16,10 +16,10 @@
 
 import re
 
-from lpot.model.model import get_model_type
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.utils import check_module, get_module_version
 
+from ..model_type_getter import get_model_type
 from .model import TensorflowModel as TFModel
 
 
