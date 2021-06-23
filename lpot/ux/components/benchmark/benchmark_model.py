@@ -19,13 +19,6 @@ from typing import Any
 
 from lpot.ux.components.benchmark import Benchmarks
 
-try:
-    import tensorflow as tf
-
-    tf.compat.v1.disable_eager_execution()
-except Exception as err:
-    print(err)
-
 
 def parse_args() -> Any:
     """Parse input arguments."""
@@ -77,8 +70,26 @@ def benchmark_model(
     evaluator(benchmark_mode)
 
 
+def set_eager_execution(input_graph: str) -> None:
+    """Set eager execution as required by model."""
+    from lpot.ux.components.model.model_type_getter import get_model_type
+
+    model_type = get_model_type(input_graph)
+
+    try:
+        import tensorflow as tf
+
+        if "keras" == model_type:
+            tf.compat.v1.enable_eager_execution()
+        else:
+            tf.compat.v1.disable_eager_execution()
+    except Exception as err:
+        print(err)
+
+
 if __name__ == "__main__":
     args = parse_args()
+    set_eager_execution(args.input_graph)
     benchmark_model(
         input_graph=args.input_graph,
         config=args.config,

@@ -21,6 +21,7 @@ from lpot.ux.utils.exceptions import NotFoundException
 from .model import Model
 from .onnxrt.model import OnnxrtModel
 from .tensorflow.frozen_pb import FrozenPbModel
+from .tensorflow.keras import KerasModel
 from .tensorflow.meta_graph import MetaGraphModel
 
 
@@ -31,6 +32,7 @@ class ModelRepository:
         """Initialize class."""
         self.model_types: List[Type[Model]] = [
             FrozenPbModel,
+            KerasModel,
             MetaGraphModel,
             OnnxrtModel,
         ]

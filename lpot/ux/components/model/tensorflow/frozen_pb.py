@@ -14,8 +14,7 @@
 # limitations under the License.
 """Tensorflow frozen pb model."""
 
-from lpot.model.model import get_model_type
-
+from ..model_type_getter import get_model_type
 from .model import TensorflowModel as TFModel
 
 

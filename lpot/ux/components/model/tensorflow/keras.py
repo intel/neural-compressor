@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tensorflow frozen pb model."""
+"""Tensorflow keras model."""
 
 from typing import Any, List, Optional
 
@@ -20,21 +20,21 @@ from ..model_type_getter import get_model_type
 from .model import TensorflowModel as TFModel
 
 
-class MetaGraphModel(TFModel):
-    """MetaGraph model."""
+class KerasModel(TFModel):
+    """Keras model."""
 
     def get_input_nodes(self) -> Optional[List[Any]]:
         """Get model input nodes."""
-        return []
+        return None
 
     def get_output_nodes(self) -> Optional[List[Any]]:
         """Get model output nodes."""
-        return []
+        return None
 
     @staticmethod
     def supports_path(path: str) -> bool:
         """Check if given path is of supported model."""
         try:
-            return "checkpoint" == get_model_type(path)
+            return "keras" == get_model_type(path)
         except ValueError:
             return False
