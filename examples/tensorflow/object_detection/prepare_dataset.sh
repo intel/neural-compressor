@@ -83,10 +83,10 @@ function divide_tf_records_by_dataset {
 }
 
 function convert {
-  cd models/research || exit
+  cd models/research
   protoc object_detection/protos/*.proto --python_out=.
-  export PYTHONPATH=$PYTHONPATH:./models/research
-  export PYTHONPATH=$PYTHONPATH:./models/research/slim
+  export PYTHONPATH=$PYTHONPATH:$(pwd)
+  export PYTHONPATH=$PYTHONPATH:$(pwd)/slim
   python ./object_detection/dataset_tools/create_coco_tf_record.py --logtostderr \
     --train_image_dir=empty_dir \
     --val_image_dir="${VAL_IMAGE_DIR}" \
