@@ -171,6 +171,57 @@ class BilinearImagenetTransform(BaseTransform):
 
         return (image, label)
 
+@transform_registry(transform_type="BilinearImagenet", \
+                    process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops")
+class OnnxBilinearImagenetTransform(BaseTransform):
+    """Combination of a series of transforms which is applicable to images in Imagenet.
+
+    Args:
+        height: Height of the result
+        width:Width of the result  
+        central_fraction(float, default=0.875):fraction of size to crop
+        mean_value(list, default=[0.0,0.0,0.0]):means for each channel
+        scale(float, default=1.0):std value
+
+    Returns:
+        tuple of processed image and label
+    """
+
+    def __init__(self, height, width, central_fraction=0.875,
+                 mean_value=[0.0,0.0,0.0], scale=1.0):
+        self.height = height
+        self.width = width
+        self.mean_value = mean_value
+        self.scale = scale
+        self.central_fraction = central_fraction
+
+    def __call__(self, sample):
+        image, label = sample
+        if isinstance(image, np.ndarray):
+            image = image.astype('float32') / 255. 
+        img_shape = image.shape
+        depth = img_shape[2]
+        img_hd = float(img_shape[0])
+        bbox_h_start = int((img_hd - img_hd * self.central_fraction) / 2)
+        img_wd = float(img_shape[1])
+        bbox_w_start = int((img_wd - img_wd * self.central_fraction) / 2)
+
+        bbox_h_size = img_shape[0] - bbox_h_start * 2
+        bbox_w_size = img_shape[1] - bbox_w_start * 2
+
+        image = image[bbox_h_start:bbox_h_start+bbox_h_size, bbox_w_start:bbox_w_start+bbox_w_size]
+
+        if self.height and self.width:
+            image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_LINEAR)
+        
+        image = np.subtract(image, 0.5)
+        image = np.multiply(image, 2.0)
+        means = np.broadcast_to(self.mean_value, image.shape)
+        image = (image - means) * self.scale
+        image = image.astype(np.float32)
+
+        return (image, label)
+
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops")
 class ONNXResizeCropImagenetTransform(BaseTransform):
@@ -221,4 +272,26 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
         image = ((image - self.mean_value)/self.std_value).astype(np.float32)
         return (image.transpose(2, 0, 1), label)
 
+@transform_registry(transform_type="ResizeWithAspectRatio", \
+                    process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops")
+class ResizeWithAspectRatio(BaseTransform):
+    def __init__(self, height, width, scale=87.5, inter_pol=cv2.INTER_AREA):
+        self.height = height
+        self.width = width
+        self.scale = scale
+        self.inter_pol = inter_pol
 
+    def __call__(self, sample):
+        (img, label) = sample
+        assert len(img.shape) == 3
+        height, width, _ = img.shape
+        new_height = int(100. * self.height / self.scale) 
+        new_width = int(100. * self.width / self.scale)
+        if height > width:
+            w = new_width
+            h = int(new_height * height / width)
+        else:
+            h = new_height
+            w = int(new_width * width / height)
+        img = cv2.resize(img, (w, h), interpolation=self.inter_pol)
+        return img, label

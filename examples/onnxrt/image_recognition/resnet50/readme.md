@@ -8,6 +8,8 @@ onnx: 1.7.0
 onnxruntime: 1.6.0+
 
 ### Prepare model
+
+#### ResNet 50 from torchvision
 Please refer to [pytorch official guide](https://pytorch.org/docs/stable/onnx.html) for detailed model export. The following is a simple example:
 
 ```python
@@ -31,12 +33,21 @@ torch.onnx.export(model,               # model being run
                                 'output' : {0 : 'batch_size'}})
 ```
 
+#### ResNet 50 from MLPerf
+Please refer to [MLPerf Inference Benchmarks for Image Classification and Object Detection Tasks](https://github.com/mlcommons/inference/tree/master/vision/classification_and_detection#mlperf-inference-benchmarks-for-image-classification-and-object-detection-tasks) for model details. Use [tf2onnx tool](https://github.com/onnx/tensorflow-onnx) to convert tensorflow model to onnx model.
+
+```bash
+wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
+
+python -m tf2onnx.convert --input resnet50_v1.pb --output resnet50_v1.onnx --inputs-as-nchw input_tensor:0 --inputs input_tensor:0 --outputs softmax_tensor:0 --opset 11
+```
+
 ### Evaluating
 To evaluate the model, run `main.py` with the path to the model:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=resnet50_v1_5.yaml \
+                   --config=resnet50_v1_5.yaml \  # or resnet50_v1_5_mlperf.yaml for ResNet50 from MLPerf
                    --output_model=path/to/save
 ```
 ### Advanced 

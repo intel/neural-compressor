@@ -331,6 +331,10 @@ transform_schema = Schema({
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float
     },
+    Optional('ResizeWithAspectRatio'):{
+        'height': And(int, lambda s: s > 0),
+        'width': And(int, lambda s: s > 0),
+    },
     Optional('ParseDecodeImagenet'): Or({}, None),
     Optional('ToArray'): Or({}, None),
     Optional('QuantizedInput'): {
@@ -343,7 +347,7 @@ transform_schema = Schema({
 })
 
 postprocess_schema = Schema({
-    Optional('LabelShift'):  And(int, lambda s: s > 0),
+    Optional('LabelShift'):  int,
     Optional('SquadV1'): {
         'label_file': str,
         'vocab_file': str

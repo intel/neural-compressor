@@ -58,6 +58,15 @@ class TestONNXITImagenetTransform(unittest.TestCase):
         self.assertEqual(len(resized_input[0]), 224)
         self.assertEqual(len(resized_input[0][0]), 224)
 
+    def testResizeWithAspectRatio(self):
+        transforms = TRANSFORMS('onnxrt_integerops', "preprocess")
+        transform = transforms['ResizeWithAspectRatio'](height=224, width=224)
+        sample = (self.img, 0)
+        result = transform(sample)
+        resized_input = result[0]
+        self.assertEqual(len(resized_input), 256)
+        self.assertEqual(len(resized_input[0]), 256)
+        self.assertEqual(len(resized_input[0][0]), 3)
 
 class TestTensorflowImagenetTransform(unittest.TestCase):
     tf.compat.v1.disable_v2_behavior()
@@ -68,6 +77,15 @@ class TestTensorflowImagenetTransform(unittest.TestCase):
         sample = (rand_input, 0)
         result = transform(sample)
         resized_input = result[0].eval(session=tf.compat.v1.Session())
+        self.assertEqual(len(resized_input), 224)
+        self.assertEqual(len(resized_input[0]), 224)
+        self.assertEqual(len(resized_input[0][0]), 3)
+
+        transforms = TRANSFORMS('onnxrt_qlinearops', "preprocess")
+        transform = transforms['BilinearImagenet'](height=224, width=224)
+        rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
+        sample = (rand_input, 0)
+        result = transform(sample)
         self.assertEqual(len(resized_input), 224)
         self.assertEqual(len(resized_input[0]), 224)
         self.assertEqual(len(resized_input[0][0]), 3)
