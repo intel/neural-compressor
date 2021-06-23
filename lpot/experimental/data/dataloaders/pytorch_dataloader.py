@@ -23,12 +23,13 @@ torch = LazyImport('torch')
 class PyTorchDataLoader(BaseDataLoader):
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory):
+                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
         drop_last = False if last_batch == 'rollover' else True
         assert len(dataset) != 0, \
                     "Warning: Dataset is empty, Please check dataset path!"
         return torch.utils.data.DataLoader(
             dataset,
+            shuffle=shuffle,
             batch_size=batch_size,
             collate_fn=collate_fn,
             drop_last=drop_last,

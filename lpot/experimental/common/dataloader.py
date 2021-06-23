@@ -19,8 +19,8 @@ from ..data import DATALOADERS
 
 class DataLoader(object):
     """This class is just a wrapper of the information needed to build a dataloader,
-       it can't yield batched data and only in this Quantization/Benchmark object's 
-       setter method a 'real' calib_dataloader will be created, 
+       it can't yield batched data and only in this Quantization/Benchmark object's
+       setter method a 'real' calib_dataloader will be created,
        the reason is we have to know the framework info
        and only after the Quantization/Benchmark object created then
        framework infomation can be known. Future we will support
@@ -29,7 +29,7 @@ class DataLoader(object):
 
     def __init__(self, dataset, batch_size=1, collate_fn=None,
                  last_batch='rollover', sampler=None, batch_sampler=None,
-                 num_workers=0, pin_memory=False):
+                 num_workers=0, pin_memory=False, shuffle=False):
         assert hasattr(dataset, '__iter__') or \
                hasattr(dataset, '__getitem__'), \
                "dataset must implement __iter__ or __getitem__ magic method!"
@@ -41,12 +41,13 @@ class DataLoader(object):
         self.batch_sampler = batch_sampler
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.shuffle = shuffle
 
 def _generate_common_dataloader(dataloader, framework):
     if not isinstance(dataloader, DataLoader):
         assert hasattr(dataloader, '__iter__') and \
             hasattr(dataloader, 'batch_size'), \
-            'dataloader must implement __iter__ method and batch_size attribute' 
+            'dataloader must implement __iter__ method and batch_size attribute'
         return dataloader
     else:
         return DATALOADERS[framework](
@@ -57,5 +58,6 @@ def _generate_common_dataloader(dataloader, framework):
             sampler=dataloader.sampler,
             batch_sampler=dataloader.batch_sampler,
             num_workers=dataloader.num_workers,
-            pin_memory=dataloader.pin_memory)
+            pin_memory=dataloader.pin_memory,
+            shuffle=dataloader.shuffle)
 

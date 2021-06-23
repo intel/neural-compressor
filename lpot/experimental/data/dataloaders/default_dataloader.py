@@ -44,7 +44,8 @@ class DefaultDataLoader(BaseDataLoader):
     """
 
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
-                  sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+                 sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
+                 shuffle=False):
         self.dataset = dataset
         self.last_batch = last_batch
         self.sampler = sampler
@@ -53,6 +54,7 @@ class DefaultDataLoader(BaseDataLoader):
         self.pin_memory = pin_memory
         self.collate_fn = collate_fn
         self._batch_size = batch_size
+        self.shuffle = shuffle
         if self.collate_fn == None:
             self.collate_fn = default_collate
 
@@ -73,7 +75,8 @@ class DefaultDataLoader(BaseDataLoader):
             sampler=self.sampler,
             batch_sampler=self.batch_sampler,
             num_workers=self.num_workers,
-            pin_memory=self.pin_memory)
+            pin_memory=self.pin_memory,
+            shuffle=self.shuffle)
 
     def _generate_sampler(self, dataset):
         if hasattr(dataset, "__getitem__"):
@@ -86,7 +89,7 @@ class DefaultDataLoader(BaseDataLoader):
             raise ValueError("dataset type only support (index, iter)")
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory):
+                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
 
         drop_last = False if last_batch == 'rollover' else True
         sampler = self._generate_sampler(dataset)
@@ -96,7 +99,6 @@ class DefaultDataLoader(BaseDataLoader):
         for batched_indices in self.batch_sampler:
             try:
                 data = self.fetcher(batched_indices)
-
                 yield data
             except StopIteration:
                 return
