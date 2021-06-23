@@ -154,6 +154,7 @@ class BF16Convert(GraphRewriterBase):
         for each_input in bf16_node_inputs:
             each_input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
                 each_input)]
+
             each_input_node = each_input_detail.node
             # Const + Cast => Const optimization
             if each_input_node.op == "Const":
@@ -268,4 +269,6 @@ class BF16Convert(GraphRewriterBase):
         """
         self._model_bf16_convert()
 
-        return self.cur_graph.dump_graph()
+        converted_graph_def = self.cur_graph.dump_graph()
+        converted_graph_def.library.CopyFrom(self.model.library)
+        return converted_graph_def
