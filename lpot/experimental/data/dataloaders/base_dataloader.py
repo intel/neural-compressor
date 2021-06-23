@@ -26,7 +26,8 @@ class BaseDataLoader(object):
     """
 
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
-                 sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+                 sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
+                 shuffle=False):
 
         self.dataset = dataset
         self.collate_fn = collate_fn
@@ -35,6 +36,7 @@ class BaseDataLoader(object):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self._batch_size = batch_size
+        self.shuffle = shuffle
 
         self.dataloader = self._generate_dataloader(
             self.dataset,
@@ -44,7 +46,8 @@ class BaseDataLoader(object):
             sampler=sampler,
             batch_sampler=batch_sampler,
             num_workers=num_workers,
-            pin_memory=pin_memory)
+            pin_memory=pin_memory,
+            shuffle=shuffle)
 
     def batch(self, batch_size, last_batch='rollover'):
         self._batch_size = batch_size
@@ -56,7 +59,8 @@ class BaseDataLoader(object):
             self.sampler,
             self.batch_sampler,
             self.num_workers,
-            self.pin_memory)
+            self.pin_memory,
+            self.shuffle)
 
     @property
     def batch_size(self):
@@ -66,6 +70,6 @@ class BaseDataLoader(object):
         return iter(self.dataloader)
 
     @abstractmethod
-    def _generate_dataloader(self, dataset, batch_size, last_batch,
-                             collate_fn, sampler, batch_sampler, num_workers, pin_memory):
+    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
+                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
         raise NotImplementedError

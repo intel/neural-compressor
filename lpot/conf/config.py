@@ -48,7 +48,7 @@ def constructor_register(cls):
 
 @constructor_register
 class Pruner():
-    def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None, 
+    def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None,
                  target_sparsity=None, update_frequency=1, prune_type='basic_magnitude',
                  method='per_tensor', names=[]):
         self.start_epoch = start_epoch
@@ -61,7 +61,7 @@ class Pruner():
                                          'now only support {}'.format(PRUNERS.keys())
         self.prune_type = prune_type
         self.method = method
-        self.names= names 
+        self.names= names
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -153,8 +153,8 @@ def list_to_tuple(data):
                 result.append(tuple([int(s) for s in item]))
             return result
         else:
-            return tuple([int(s) for s in data])   
-        
+            return tuple([int(s) for s in data])
+
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
         data = float(data.strip('%')) / 100
@@ -255,7 +255,7 @@ transform_schema = Schema({
         Optional('scale'): And(list, lambda s: all(isinstance(i, float) for i in s)),
         Optional('ratio'): And(list, lambda s: all(isinstance(i, float) for i in s)),
         Optional('interpolation'): And(
-            str, 
+            str,
             lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('AlignImageChannel'): {
@@ -270,7 +270,7 @@ transform_schema = Schema({
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0)),
         Optional('interpolation'): And(
-            str, 
+            str,
             lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('RandomHorizontalFlip'): Or({}, None),
@@ -285,7 +285,7 @@ transform_schema = Schema({
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
                     And(int, lambda s: s > 0)),
         Optional('interpolation'): And(
-            str, 
+            str,
             lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('RandomCrop'): {
@@ -381,8 +381,8 @@ dataset_schema = Schema({
         'root': str,
     },
     Optional('dummy_v2'): {
-        'input_shape': And(Or(str, list), Use(list_to_tuple)), 
-        Optional('label_shape'): And(Or(str, list), Use(list_to_tuple)), 
+        'input_shape': And(Or(str, list), Use(list_to_tuple)),
+        Optional('label_shape'): And(Or(str, list), Use(list_to_tuple)),
         Optional('low'): Or(
             float,
             And(int, Use(input_int_to_float)),
@@ -396,7 +396,7 @@ dataset_schema = Schema({
         Optional('dtype'): And(Or(str, list), Use(input_to_list)),
     },
     Optional('dummy'): {
-        'shape': And(Or(str, list), Use(list_to_tuple)), 
+        'shape': And(Or(str, list), Use(list_to_tuple)),
         Optional('low'): Or(
             float,
             And(int, Use(input_int_to_float)),
@@ -452,6 +452,7 @@ dataloader_schema = Schema({
     'dataset': dataset_schema,
     Optional('filter'): filter_schema,
     Optional('transform'): transform_schema,
+    Optional('shuffle'): bool,
 })
 
 configs_schema = Schema({
@@ -487,7 +488,7 @@ train_schema = Schema({
     Optional('iteration'): int,
     Optional('frequency'): int,
     # TODO reserve for multinode training support
-    Optional('hostfile'): str    
+    Optional('hostfile'): str
 })
 
 weight_compression_schema = Schema({
@@ -519,7 +520,7 @@ schema = Schema({
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True},
-                                      'model_wise': {'weight': {'bit': [7.0]}, 
+                                      'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}}}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -641,8 +642,8 @@ schema = Schema({
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
                 Optional('mAP'): {
                     Optional('anno_path'): str,
-                    Optional('iou_thrs', default=0.5): 
-                            Or(And(str, lambda s: s in ['0.5:0.05:0.95']), 
+                    Optional('iou_thrs', default=0.5):
+                            Or(And(str, lambda s: s in ['0.5:0.05:0.95']),
                                And(float, lambda s: s <= 1.0 and s >= 0.0)),
                     Optional('map_points', default=0): And(int, lambda s: s in [0, 11, 101])
                 },
@@ -652,7 +653,7 @@ schema = Schema({
                 Optional('VOCmAP'): {
                     Optional('anno_path'): str
                 },
-                Optional('SquadF1'): Or({}, None), 
+                Optional('SquadF1'): Or({}, None),
                 Optional('MSE'): {
                     Optional('compare_label'): bool
                 },
@@ -821,7 +822,7 @@ class Conf(object):
 
                     if is_regex and re.match(k, k_op[0]):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
-                        
+
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
 

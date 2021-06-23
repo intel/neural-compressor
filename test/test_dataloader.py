@@ -25,7 +25,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         self.assertRaises(RuntimeError, create_dataloader, 'pytorch', dataloader_args)
- 
+
         dataloader_args = {
             'batch_size': 2,
             'dataset': {"CIFAR100": {'root': './', 'train':False, 'download':False}},
@@ -33,14 +33,14 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         self.assertRaises(RuntimeError, create_dataloader, 'pytorch', dataloader_args)
- 
+
         dataloader_args = {
             'dataset': {"MNIST": {'root': './test', 'train':False, 'download':False}},
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
         self.assertRaises(RuntimeError, create_dataloader, 'pytorch', dataloader_args)
- 
+
         dataloader_args = {
             'batch_size': 2,
             'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
@@ -52,7 +52,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24))
             break
-            
+
         dataloader_args = {
             'batch_size': 2,
             'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
@@ -64,7 +64,21 @@ class TestBuiltinDataloader(unittest.TestCase):
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24))
             break
- 
+
+        dataloader_args = {
+            'batch_size': 2,
+            'shuffle': True,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        self.assertEqual(dataloader.dataloader.sampler.__class__.__name__, 'RandomSampler')
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24))
+            break
+
     def test_mxnet_dataset(self):
         dataloader_args = {
             'batch_size': 2,
@@ -88,7 +102,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         self.assertRaises(RuntimeError, create_dataloader, 'mxnet', dataloader_args)
- 
+
         dataloader_args = {
             'batch_size': 2,
             'dataset': {"MNIST": {'root': './', 'train':True, 'download':True}},
@@ -96,7 +110,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('mxnet', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24,1))
@@ -109,12 +123,23 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('mxnet', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24,1))
             break
 
+        dataloader_args = {
+            'batch_size': 2,
+            'shuffle': True,
+            'dataset': {"MNIST": {'root': './', 'train':True, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        with self.assertLogs() as cm:
+            dataloader = create_dataloader('mxnet', dataloader_args)
+        self.assertEqual(cm.output, ['WARNING:root:Shuffle is not supported yet in' \
+                         ' MXNetDataLoader, ignoring shuffle keyword.'])
 
     def test_tf_dataset(self):
         dataloader_args = {
@@ -139,7 +164,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         self.assertRaises(RuntimeError, create_dataloader, 'tensorflow', dataloader_args)
- 
+
         dataloader_args = {
             'batch_size': 2,
             'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
@@ -147,7 +172,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('tensorflow', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24))
@@ -160,11 +185,23 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('tensorflow', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24))
             break
+
+        dataloader_args = {
+            'batch_size': 2,
+            'shuffle': True,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        with self.assertLogs() as cm:
+            dataloader = create_dataloader('tensorflow', dataloader_args)
+        self.assertEqual(cm.output, ['WARNING:root:Shuffle is not supported yet in' \
+                         ' TensorflowDataLoader, ignoring shuffle keyword.'])
 
     def test_onnx_dataset(self):
         dataloader_args = {
@@ -173,7 +210,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
-        self.assertRaises(RuntimeError, create_dataloader, 
+        self.assertRaises(RuntimeError, create_dataloader,
                             'onnxrt_qlinearops', dataloader_args)
 
         dataloader_args = {
@@ -182,7 +219,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
-        self.assertRaises(RuntimeError, create_dataloader, 
+        self.assertRaises(RuntimeError, create_dataloader,
                             'onnxrt_qlinearops', dataloader_args)
 
         dataloader_args = {
@@ -190,9 +227,9 @@ class TestBuiltinDataloader(unittest.TestCase):
             'transform': {'Resize': {'size': 24}},
             'filter': None
         }
-        self.assertRaises(RuntimeError, create_dataloader, 
+        self.assertRaises(RuntimeError, create_dataloader,
                                 'onnxrt_qlinearops', dataloader_args)
- 
+
         dataloader_args = {
             'batch_size': 2,
             'dataset': {"MNIST": {'root': './', 'train':False, 'download':True}},
@@ -200,7 +237,7 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('onnxrt_qlinearops', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24,1))
@@ -213,11 +250,23 @@ class TestBuiltinDataloader(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('onnxrt_qlinearops', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24,1))
             break
+
+        dataloader_args = {
+            'batch_size': 2,
+            'shuffle': True,
+            'dataset': {"FashionMNIST": {'root': './', 'train':False, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None
+        }
+        with self.assertLogs() as cm:
+            dataloader = create_dataloader('onnxrt_qlinearops', dataloader_args)
+        self.assertEqual(cm.output, ['WARNING:root:Shuffle is not supported yet' \
+                         ' in ONNXRTDataLoader, ignoring shuffle keyword.'])
 
 class TestImagenetRaw(unittest.TestCase):
     @classmethod
@@ -230,12 +279,12 @@ class TestImagenetRaw(unittest.TestCase):
         im.save('val/test.jpg')
         with open('val/val.txt', 'w') as f:
             f.write('test.jpg   0')
-    
+
     @classmethod
     def tearDownClass(cls):
         if os.path.exists('val'):
             shutil.rmtree('val')
-       
+
     def test_tensorflow(self):
         dataloader_args = {
             'dataset': {"ImagenetRaw": {'data_path': './val', 'image_list':None}},
@@ -322,7 +371,7 @@ class TestImagenetRaw(unittest.TestCase):
             break
         # test old api
         eval_dataset = create_dataset('onnxrt_integerops', {'Imagenet':{'root':'./'}}, None, None)
-        dataloader = DataLoader('onnxrt_integerops', dataset=eval_dataset, batch_size=1) 
+        dataloader = DataLoader('onnxrt_integerops', dataset=eval_dataset, batch_size=1)
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (100,100,3))
             break
@@ -365,7 +414,7 @@ class TestImagenetRaw(unittest.TestCase):
             'transform': None,
             'filter': None
         }
-        self.assertRaises(ValueError, create_dataloader, 
+        self.assertRaises(ValueError, create_dataloader,
                             'onnxrt_qlinearops', dataloader_args)
 
 
@@ -379,12 +428,12 @@ class TestImageFolder(unittest.TestCase):
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
         im.save('val/0/test.jpg')
-    
+
     @classmethod
     def tearDownClass(cls):
         if os.path.exists('val'):
             shutil.rmtree('val')
-       
+
     def test_tensorflow(self):
         dataloader_args = {
             'dataset': {"ImageFolder": {'root': './val'}},
@@ -392,7 +441,7 @@ class TestImageFolder(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('tensorflow', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (24,24,3))
             break
@@ -404,7 +453,7 @@ class TestImageFolder(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('pytorch', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (3,24,24))
             break
@@ -416,7 +465,7 @@ class TestImageFolder(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('mxnet', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (24,24,3))
             break
@@ -428,7 +477,7 @@ class TestImageFolder(unittest.TestCase):
             'filter': None
         }
         dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
-        
+
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (24,24,3))
             break
@@ -548,13 +597,13 @@ class TestDataloader(unittest.TestCase):
         with tf.io.TFRecordWriter('test.record') as writer:
             writer.write(example.SerializeToString())
         eval_dataset = create_dataset(
-            'tensorflow', 
-            {'COCORecord':{'root':'test.record'}}, 
+            'tensorflow',
+            {'COCORecord':{'root':'test.record'}},
             {'RandomVerticalFlip': {},
             'RandomHorizontalFlip': {},
             'CropResize':{'x':0, 'y':0, 'width':10, 'height':10, 'size':[5,5]},
             'Transpose':{'perm': [2, 0, 1]}
-            }, 
+            },
             None)
         dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for inputs, labels in dataloader:
@@ -575,15 +624,15 @@ class TestDataloader(unittest.TestCase):
         im.save('test_1.jpg')
         fake_dict = {
             'info': {
-                'description': 'COCO 2017 Dataset', 
-                'url': 'http://cocodataset.org', 
-                'version': '1.0', 
+                'description': 'COCO 2017 Dataset',
+                'url': 'http://cocodataset.org',
+                'version': '1.0',
                 'year': 2017,
                 'contributor': 'COCO Consortium',
                 'date_created': '2017/09/01'
             },
             'licenses':{
-                    
+
             },
             'images':[{
                 'file_name': 'test_0.jpg',
@@ -694,7 +743,7 @@ class TestDataloader(unittest.TestCase):
 
     def test_tensorflow_imagenet_dataset(self):
         import tensorflow as tf
-        tf.compat.v1.disable_eager_execution() 
+        tf.compat.v1.disable_eager_execution()
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
@@ -714,7 +763,7 @@ class TestDataloader(unittest.TestCase):
         eval_dataset = create_dataset(
             'tensorflow', {'ImageRecord':{'root':'./'}}, None, None)
 
-        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1) 
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels.shape, (1, 1))
@@ -722,7 +771,7 @@ class TestDataloader(unittest.TestCase):
         # test old api
         eval_dataset = create_dataset(
             'tensorflow', {'Imagenet':{'root':'./'}}, None, None)
-        dataloader = DataLoader('tensorflow', dataset=eval_dataset, batch_size=1) 
+        dataloader = DataLoader('tensorflow', dataset=eval_dataset, batch_size=1)
         for (inputs, labels) in dataloader:
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels.shape, (1, 1))
@@ -744,42 +793,42 @@ class TestDataloader(unittest.TestCase):
             [0,0,0,0,0,0,0]]
         ]]
         with self.assertRaises(AssertionError):
-            create_dataset('pytorch', {'bert': {'dataset':dataset, 'task':'test'}}, 
+            create_dataset('pytorch', {'bert': {'dataset':dataset, 'task':'test'}},
                             None, None)
 
         ds = create_dataset(
-            'pytorch', 
+            'pytorch',
             {'bert': {'dataset':dataset, 'task':'classifier', 'model_type':'distilbert'}},
             None, None)
         self.assertEqual(len(ds), 1)
         self.assertEqual(3, len(ds[0][0]))
 
         ds = create_dataset(
-            'pytorch', 
+            'pytorch',
             {'bert': {'dataset':dataset, 'task':'classifier', 'model_type':'bert'}},
             None, None)
         self.assertEqual(4, len(ds[0][0]))
-        
+
         ds = create_dataset(
             'pytorch', {'bert': {'dataset':dataset, 'task':'squad'}}, None, None)
         self.assertEqual(3, len(ds[0][0]))
 
         ds = create_dataset(
-            'pytorch', 
+            'pytorch',
             {'bert': {'dataset':dataset, 'task':'squad', 'model_type':'distilbert'}},
             None, None)
         self.assertEqual(2, len(ds[0][0]))
 
         ds = create_dataset(
-            'pytorch', 
+            'pytorch',
             {'bert': {'dataset':dataset, 'task':'squad', 'model_type':'xlnet'}},
             None, None)
         self.assertEqual(5, len(ds[0][0]))
-        
+
     def test_tensorflow_dummy(self):
         datasets = DATASETS('tensorflow')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
-        
+
         data_loader = DATALOADERS['tensorflow'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
@@ -837,7 +886,7 @@ class TestDataloader(unittest.TestCase):
         with self.assertRaises(AssertionError):
             dataset = datasets['dummy_v2'](\
                 input_shape=(256, 256, 3), dtype=['float32', 'int8'])
- 
+
     def test_style_transfer_dataset(self):
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
@@ -877,17 +926,17 @@ class TestDataloader(unittest.TestCase):
     #     import tensorflow as tf
     #     dataset = tf.data.Dataset.from_tensors(dataset)
     #     data_loader = DATALOADERS['tensorflow'](dataset)
- 
+
     #     iterator = iter(data_loader)
     #     data = next(iterator)
     #     self.assertEqual(data[0][1], 2)
- 
+
     def test_pytorch_dummy(self):
         datasets = DATASETS('pytorch')
         transform = TRANSFORMS('pytorch', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=[(4, 256, 256, 3), (4, 1)], \
             high=[10., 10.], low=[0., 0.], transform=transform)
-        
+
         data_loader = DATALOADERS['pytorch'](dataset)
         iterator = iter(data_loader)
         data, label = next(iterator)
@@ -897,12 +946,12 @@ class TestDataloader(unittest.TestCase):
         iterator = iter(data_loader)
         data, label = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
- 
+
     def test_mxnet_dummy(self):
         datasets = DATASETS('mxnet')
         transform = TRANSFORMS('mxnet', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=(4, 256, 256, 3), transform=transform)
-        
+
         data_loader = DATALOADERS['mxnet'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
@@ -915,12 +964,12 @@ class TestDataloader(unittest.TestCase):
 
         dataset = datasets['dummy'](shape=(4, 256, 256, 3), label=True)
         self.assertEqual(dataset[0][1], 0)
- 
+
     def test_onnxrt_qlinear_dummy(self):
         datasets = DATASETS('onnxrt_qlinearops')
         transform = TRANSFORMS('onnxrt_qlinearops', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=(4, 256, 256, 3), transform=transform)
-        
+
         data_loader = DATALOADERS['onnxrt_qlinearops'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)

@@ -47,11 +47,12 @@ class Benchmark(object):
         return self.exp_benchmarker.results
 
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
-                   sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
+                   sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
+                   shuffle=False):
         return DATALOADERS[self.exp_benchmarker.framework](dataset=dataset,
                           batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
                           sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
-                          pin_memory=pin_memory)
+                          pin_memory=pin_memory, shuffle=shuffle)
 
     def metric(self, name, metric_cls, **kwargs):
         from .experimental.common import Metric as LpotMetric

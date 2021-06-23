@@ -25,6 +25,7 @@ from .default_dataloader import default_collate
 from .default_dataloader import DefaultDataLoader
 from ..datasets.bert_dataset import TensorflowBertDataset
 from .base_dataloader import BaseDataLoader
+import logging
 
 tf = LazyImport('tensorflow')
 lpot = LazyImport('lpot')
@@ -56,10 +57,13 @@ class TFDataDataLoader(BaseDataLoader):
 
     def _generate_dataloader(self, dataset, batch_size=1, last_batch='rollover', \
                              collate_fn=None, sampler=None, batch_sampler=None, \
-                             num_workers=None, pin_memory=None):
+                             num_workers=None, pin_memory=None, shuffle=False):
         drop_last = False if last_batch == 'rollover' else True
+        if shuffle:
+            logging.warning('Shuffle is not supported yet in TFDataLoader, ' \
+                            'ignoring shuffle keyword.')
 
-        def check_dynamic_shape(element_spec): 
+        def check_dynamic_shape(element_spec):
             if isinstance(element_spec, collections.abc.Sequence):
                 return any([check_dynamic_shape(ele) for ele in element_spec])
             elif isinstance(element_spec, tf.TensorSpec):
@@ -103,11 +107,14 @@ class TFDataDataLoader(BaseDataLoader):
                 except OutOfRangeError:
                     data_sess.close()
                     return
-            
+
 class TensorflowBertDataLoader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory):
+                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
 
+        if shuffle:
+            logging.warning('Shuffle is not supported yet in TensorflowBertDataLoader, ' \
+                            'ignoring shuffle keyword.')
         def bert_collate_fn(batch):
             elem = batch[0]
             return elem
@@ -130,13 +137,18 @@ class TensorflowDataLoader(BaseDataLoader):
     """
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, \
-                sampler, batch_sampler, num_workers, pin_memory):
+                sampler, batch_sampler, num_workers, pin_memory, shuffle):
 
+        if shuffle:
+            logging.warning('Shuffle is not supported yet in TensorflowDataLoader, ' \
+                            'ignoring shuffle keyword.')
         if isinstance(dataset, tf.data.Dataset):
             return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
         elif isinstance(dataset, TensorflowBertDataset):
             return TensorflowBertDataLoader(dataset, batch_size, last_batch,
-                        collate_fn, sampler, batch_sampler, num_workers, pin_memory)
+                        collate_fn, sampler, batch_sampler, num_workers,
+                        pin_memory, shuffle)
         else:
             return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
-                                     sampler, batch_sampler, num_workers, pin_memory)
+                                     sampler, batch_sampler, num_workers,
+                                     pin_memory, shuffle)

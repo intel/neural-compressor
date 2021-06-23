@@ -18,10 +18,16 @@
 from lpot.utils.utility import LazyImport
 from .base_dataloader import BaseDataLoader
 from .default_dataloader import DefaultDataLoader
+import logging
 
 class ONNXRTDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory):
-        return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
-                                 sampler, batch_sampler, num_workers, pin_memory)
+                             sampler, batch_sampler, num_workers, pin_memory,
+                             shuffle):
+        if shuffle:
+            logging.warning('Shuffle is not supported yet in ONNXRTDataLoader, ' \
+                            'ignoring shuffle keyword.')
 
+        return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
+                                 sampler, batch_sampler, num_workers, pin_memory,
+                                 shuffle)
