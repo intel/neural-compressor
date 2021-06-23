@@ -31,6 +31,8 @@ from .fold_batch_norm import FoldBatchNormNodesOptimizer
 from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
+from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
+from .dummy_biasadd import InjectDummyBiasAddOptimizer
 from .grappler_pass import GrapplerOptimizer
 
 class PreOptimization():
@@ -93,7 +95,7 @@ class PreOptimization():
 
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def, 
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
             self.input_node_names, self.output_node_names).do_transformation()
 
         self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
@@ -106,6 +108,15 @@ class PreOptimization():
         #TODO we should handle all control ops elegantly not bypass it.
         self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
             self._tmp_graph_def).do_transformation()
+
+        #TODO we need to remove below optimizer once the TF enabled the single
+        # matmul op quantization
+        self._tmp_graph_def = InjectDummyBiasAddOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = FuseTransposeReshapeOptimizer(
+            self._tmp_graph_def).do_transformation()
+
         self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 

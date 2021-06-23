@@ -196,10 +196,11 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
         y = tf.constant(y_data, dtype=tf.float32, shape=[3136, 1])
         z = tf.matmul(reshape, y)
+        relu1 = tf.nn.relu(z)
         y_data_1 = np.random.random([1, 1])
         y_1 = tf.constant(y_data_1, dtype=tf.float32, shape=[1, 1])
 
-        z_2nd_matmul = tf.matmul(z, y_1)
+        z_2nd_matmul = tf.matmul(relu1, y_1)
         relu6 = tf.nn.relu6(z_2nd_matmul, name='op_to_store')
 
         out_name = relu6.name.split(':')[0]
