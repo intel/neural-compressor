@@ -241,6 +241,37 @@ class TestGraphMatMulFusion(unittest.TestCase):
             self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
+    def test_matmul_with_nan(self):
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            nan_array = np.empty((2,2), dtype=np.float32)
+            nan_array[:] = np.NaN
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            z = tf.matmul(x, nan_array, name='no_quant_matmul')
+            z = tf.identity(z, name='op_to_store')
+            found_quantized_matmul = True
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from lpot.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == 'MatMul':
+                        found_quantized_matmul = False
+                        break
+            self.assertEqual(found_quantized_matmul, False)
+
+    @disable_random()
     def test_matmul_with_reshape_transpose(self):
         g = tf.Graph()
         with g.as_default():
