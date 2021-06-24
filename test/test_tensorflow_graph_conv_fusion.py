@@ -273,7 +273,42 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
             self.assertEqual(quantize_v2_count, 1)
 
+    @disable_random()
+    def test_conv_fusion_with_max_pooling(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
 
+        relu = tf.nn.relu(x)
+        pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_weights = tf.compat.v1.get_variable("weight2", [3, 3, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(pooling, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        biasadd = tf.compat.v1.layers.batch_normalization(conv, name='op_to_store')
+        out_name = biasadd.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+
+            from lpot.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer()
+
+            quantized_pool_data_type = None
+            quantized_conv_data_type = None
+            for i in output_graph.graph_def.node:
+                if i.op.find("QuantizedMaxPool") != -1:
+                    quantized_pool_data_type = i.attr['T'].type
+                if i.op.find("QuantizedConv2D") != -1:
+                    quantized_conv_data_type = i.attr['Tinput'].type
+
+            self.assertNotEqual(quantized_pool_data_type, None)
+            self.assertEqual(quantized_pool_data_type, quantized_conv_data_type)
 class TestGraphConvFusion(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
     pb_path = '/tmp/.lpot/resnet50_fp32_pretrained_model.pb'
