@@ -3,12 +3,6 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool.
 
-> **Note**
->
-> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> * LPOT requires users to complete these two manual steps before triggering auto-tuning process.
->   For details, please refer to https://pytorch.org/docs/stable/quantization.html
-
 # Prerequisite
 
 ### 1. Installation
@@ -31,7 +25,7 @@ train  val
 ### 1. ResNet50
 
 ```Shell
-cd examples/pytorch/eager/image_recognition/imagenet/cpu/qat
+cd examples/pytorch/fx/image_recognition/imagenet/qat
 python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
 ```
 
@@ -40,14 +34,14 @@ For ResNet50 model, we can get int8 0.7614 accuracy vs fp32 0.7613.
 ### 2. ResNet18
 
 ```Shell
-cd examples/pytorch/eager/image_recognition/imagenet/cpu/qat
+cd examples/pytorch/fx/image_recognition/imagenet/qat
 python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
 ```
 
 ### 3. ResNext101_32x8d
 
 ```Shell
-cd examples/pytorch/eager/image_recognition/imagenet/cpu/qat
+cd examples/pytorch/fx/image_recognition/imagenet/qat
 python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
 ```
 
@@ -97,14 +91,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 
 ### Prepare
 
-PyTorch quantization requires two manual steps:
-
-1. Add QuantStub and DeQuantStub for all quantizable ops.
-2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu.
-
-Torchvision provide quantized_model, so we didn't do these steps above for all torchvision models. Please refer [torchvision](https://github.com/pytorch/vision/tree/master/torchvision/models/quantization)
-
-The related code please refer to examples/pytorch/eager/image_recognition/imagenet/cpu/qat/main.py.
+The related code please refer to examples/pytorch/fx/image_recognition/imagenet/cpu/qat/main.py.
 
 ### Code Update
 

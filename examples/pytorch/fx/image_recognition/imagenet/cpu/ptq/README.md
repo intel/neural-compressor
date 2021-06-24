@@ -3,12 +3,6 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool(LPOT).
 
-> **Note**
->
-> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> * LPOT supposes user have done these two steps before invoking LPOT interface.
->   For details, please refer to https://pytorch.org/docs/stable/quantization.html
-
 # Prerequisite
 
 ### 1. Installation
@@ -84,28 +78,11 @@ lpot_model.save("Path_to_save_configure_file")
 * loading model:
 
 ```python
-# Without IPEX
-model                 # fp32 model
 from lpot.utils.pytorch import load
 quantized_model = load(
     os.path.join(Path, 'best_configure.yaml'),
-    os.path.join(Path, 'best_model_weights.pt'), model)
+    os.path.join(Path, 'best_model_weights.pt'), fp32_model)
 
-# With IPEX
-import intel_pytorch_extension as ipex 
-model                 # fp32 model
-model.to(ipex.DEVICE)
-try:
-    new_model = torch.jit.script(model)
-except:
-    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
-ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
-                                "best_configure.json")
-conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
-with torch.no_grad():
-    for i, (input, target) in enumerate(val_loader):
-        with ipex.AutoMixPrecision(conf, running_mode='inference'):
-            output = new_model(input.to(ipex.DEVICE))
 ```
 
 Please refer to [Sample code](./main.py).
@@ -200,13 +177,6 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 
 ### Prepare
 
-PyTorch quantization requires two manual steps:
-
-1. Add QuantStub and DeQuantStub for all quantizable ops.
-2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu.
-
-Torchvision provide quantized_model, so we didn't do these steps above for all torchvision models. Please refer [torchvision](https://github.com/pytorch/vision/tree/master/torchvision/models/quantization)
-
 The related code please refer to examples/pytorch/fx/image_recognition/imagenet/cpu/ptq/main.py.
 
 ### Code Update
@@ -250,56 +220,5 @@ tune_0_acc0.73  tune_1_acc0.71 tune_2_acc0.72
 "tune_0_acc0.73" means FP32 baseline is accuracy 0.73, and the best tune result is tune_2 with accuracy 0.72. You may want to compare them in tensorboard. It will demonstrate the output tensor and weight of each op in "Histogram", you can also find the tune config of each tuning run in "Text":
 
 ```bash
-tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.72
-```
-
-### Tuning With Intel PyTorch Extension
-
-1. Write Yaml Config File
-
-Add 'backend' field to Yaml Configure and the same for other fields.
-
-```yaml
-  model:
-  name: imagenet
-  framework: pytorch_ipex 
-```
-
-2. Tuning With LPOT
-
-```python
-  from lpot.experimental import Quantization, common
-  quantizer = Quantization("./conf_ipex.yaml")
-  quantizer.model = common.Model(model)
-  lpot_model = quantizer()
-  lpot_model.save("Path_to_save_configure_file")
-```
-
-3. Saving and Run ipex model
-
-* Saving model
-
-```python
-  lpot_model.save("Path_to_save_configure_file")
-```
-
-Here, lpot_model is the result of LPOT tuning. It is LPOT.model class, so it has "save" API.
-
-* Run ipex model:
-
-```python
-import intel_pytorch_extension as ipex 
-model                 # fp32 model
-model.to(ipex.DEVICE)
-try:
-    new_model = torch.jit.script(model)
-except:
-    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
-ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
-                                "best_configure.json")
-conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
-with torch.no_grad():
-    for i, (input, target) in enumerate(val_loader):
-        with ipex.AutoMixPrecision(conf, running_mode='inference'):
-            output = new_model(input.to(ipex.DEVICE))
+tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.7
 ```

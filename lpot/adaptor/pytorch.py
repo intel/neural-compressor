@@ -784,11 +784,12 @@ class PyTorchAdaptor(TemplateAdaptor):
                 q_model.model.eval()
                 fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
                 if self.version < '1.8' and not \
-                    isinstance(q_model.model, torch._fx.graph_module.GraphModule):
+                  isinstance(q_model.model, torch._fx.graph_module.GraphModule):
                     q_model.model = torch._fx.symbolic_trace(q_model.model)
                 if self.approach == 'quant_aware_training':
                     q_model.model.train()
-                    q_model.model = prepare_qat_fx(q_model.model, fx_op_cfgs)
+                    q_model.model = prepare_qat_fx(q_model.model, fx_op_cfgs,
+                      prepare_custom_config_dict=q_model.kwargs['kwargs'])
                     if q_func is None:
                         assert False, \
                             "quantization aware training mode requires q_function to train"
@@ -796,7 +797,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                         q_func(q_model.model)
                     q_model.model.eval()
                 else:
-                    q_model.model = prepare_fx(q_model.model, fx_op_cfgs)
+                    q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
+                                               prepare_custom_config_dict=q_model.kwargs['kwargs'])
                     if self.approach == 'post_training_static_quant':
                         iterations = tune_cfg.get('calib_iteration', 1)
                         self.model_calibration(q_model.model, dataloader, iterations)
