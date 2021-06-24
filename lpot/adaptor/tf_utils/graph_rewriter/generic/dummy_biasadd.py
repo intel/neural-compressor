@@ -29,12 +29,12 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()
-
+        valid_ops = ('BiasAdd', 'Add', 'AddV2', 'AddN')
         target_nodes = g.query_fusion_pattern_nodes([['MatMul'], ])
         for i in target_nodes:
             next_node_names = graph_info[i[0]].outputs
             if next_node_names and len(next_node_names) == 1 and \
-                graph_info[Helper.node_name_from_input(next_node_names[0])].node.op == 'BiasAdd':
+                graph_info[Helper.node_name_from_input(next_node_names[0])].node.op in valid_ops:
                 continue
             bias_node_name = i[0] + '_dummy_biasadd'
             bias_const_node_name = i[0] + '_fake_const'
