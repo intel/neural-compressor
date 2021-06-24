@@ -980,6 +980,18 @@ class PyTorchModel(PyTorchBaseModel):
         return op_map
 
 
+class PyTorchFXModel(PyTorchModel):
+    """Build PyTorchFXModel object
+
+    Args:
+        model (onnx model): model path 
+        framework_specific_info (dict): information about model and framework
+    """
+ 
+    def __init__(self, model, framework_specific_info={}, **kwargs):
+        super(PyTorchFXModel, self).__init__(model, framework_specific_info={}, **kwargs)
+
+
 class PyTorchIpexModel(PyTorchBaseModel):
     """Build PyTorchIpexModel object
 
@@ -1067,5 +1079,6 @@ MODELS = {'tensorflow': TensorflowModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel,
           'pytorch_ipex': PyTorchIpexModel,
+          'pytorch_fx': PyTorchFXModel,
           'onnxrt_qlinearops': ONNXModel,
           'onnxrt_integerops': ONNXModel,}

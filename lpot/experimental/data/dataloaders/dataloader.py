@@ -24,6 +24,7 @@ DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
                "pytorch": PyTorchDataLoader,
                "pytorch_ipex": PyTorchDataLoader,
+               "pytorch_fx": PyTorchDataLoader,
                "onnxrt_qlinearops": ONNXRTDataLoader,
                "onnxrt_integerops": ONNXRTDataLoader}
 

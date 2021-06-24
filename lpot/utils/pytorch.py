@@ -79,45 +79,46 @@ def load(checkpoint_dir, model, **kwargs):
         white_list = \
             tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+            tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
+            {torch.nn.LayerNorm, torch.nn.Embedding}
     elif version < '1.8':
         white_list = \
             tq.quantization_mappings.get_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            tq.quantization_mappings.get_qconfig_propagation_list()
+            tq.quantization_mappings.get_qconfig_propagation_list() - \
+            {torch.nn.LayerNorm, torch.nn.Embedding}
     else:
         white_list = \
             tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            tq.quantization_mappings.get_default_qconfig_propagation_list()
+            tq.quantization_mappings.get_default_qconfig_propagation_list() - \
+            {torch.nn.LayerNorm, torch.nn.Embedding}
 
     if tune_cfg['approach'] == "post_training_dynamic_quant":
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
     else:
         op_cfgs = _cfg_to_qconfig(tune_cfg)
 
-    try:                         # pragma: no cover
+    if tune_cfg['framework'] == "pytorch_fx":             # pragma: no cover
         # For torch.fx approach
-        if version >= '1.7':
-            q_model = copy.deepcopy(model.eval())
-            from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
-            fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
-            if version < '1.8':
-                q_model = torch._fx.symbolic_trace(q_model)
-            if tune_cfg['approach'] == "quant_aware_training":
-                q_model.train()
-                q_model = prepare_qat_fx(q_model, fx_op_cfgs,
-                                         prepare_custom_config_dict=kwargs['kwargs'])
-            else:
-                q_model = prepare_fx(q_model, fx_op_cfgs,
-                                     prepare_custom_config_dict=kwargs['kwargs'])
-            q_model = convert_fx(q_model)
-            weights = torch.load(weights_file)
-            q_model.load_state_dict(weights)
-            return q_model
-    except Exception as e:      # pragma: no cover
-        logger.info("The model can't be convert to fx graph! Just use eager mode!")
-        logger.info(str(e))
+        assert version >= '1.8', \
+                      "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
+        from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
+        q_model = copy.deepcopy(model.eval())
+        fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
+        if tune_cfg['approach'] == "quant_aware_training":
+            q_model.train()
+            q_model = prepare_qat_fx(q_model, fx_op_cfgs,
+                                     prepare_custom_config_dict=kwargs
+                                     if kwargs != {} else None)
+        else:
+            q_model = prepare_fx(q_model, fx_op_cfgs,
+                                 prepare_custom_config_dict=kwargs
+                                 if kwargs != {} else None)
+        q_model = convert_fx(q_model)
+        weights = torch.load(weights_file)
+        q_model.load_state_dict(weights)
+        return q_model
 
     q_model = copy.deepcopy(model.eval())
     _propagate_qconfig(q_model, op_cfgs, white_list=white_list, approach=tune_cfg['approach'])

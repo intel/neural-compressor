@@ -79,6 +79,8 @@ class Embeddings(nn.Module):
         pos = torch.arange(seq_len, dtype=torch.long, device=x.device)
         pos = pos.unsqueeze(0).expand_as(x) # (S,) -> (B, S)
 
+        if not pos.is_contiguous():
+            pos = pos.contiguous()
         e = self.tok_embed(x) + self.pos_embed(pos) + self.seg_embed(seg)
         return self.drop(self.norm(e))
 

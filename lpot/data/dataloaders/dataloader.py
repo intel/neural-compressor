@@ -28,8 +28,8 @@ class DataLoader(object):
                  last_batch='rollover', sampler=None, batch_sampler=None,
                  num_workers=0, pin_memory=False):
 
-        assert framework in ('tensorflow', 'pytorch', 'pytorch_ipex', 'onnxrt_qlinearops', \
-                             'onnxrt_integerops', 'mxnet'), \
+        assert framework in ('tensorflow', 'pytorch', 'pytorch_ipex', 'pytorch_fx', \
+                             'onnxrt_qlinearops', 'onnxrt_integerops', 'mxnet'), \
                              "framework support tensorflow pytorch mxnet onnxruntime"
         return DATALOADERS[framework](dataset=dataset,
                                       batch_size=batch_size,

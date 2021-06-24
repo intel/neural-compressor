@@ -868,6 +868,8 @@ if __name__ == "__main__":
         for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_ld):
             if j >= args.warmup_iter:
                 start = time_wrap(False)
+            if not lS_i_test.is_contiguous():
+                lS_i_test = lS_i_test.contiguous()
             Z = model(X_test, lS_o_test, lS_i_test)
             S = Z.detach().cpu().numpy()  # numpy array
             T = T.detach().cpu().numpy()  # numpy array
