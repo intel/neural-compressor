@@ -14,7 +14,7 @@ Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 wget https://github.com/onnx/models/raw/master/vision/classification/resnet/model/resnet50-v1-12.onnx
 ```
 
-### Quantziation
+### Quantization
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx

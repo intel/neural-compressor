@@ -1,7 +1,7 @@
 # Example: inference with pretrained nnU-Net models
 
 This is a step-by-step example on how to run inference with pretrained nnU-Net models on the Prostate dataset of the 
-Medical Segemtnation Decathlon.
+Medical Segmentation Decathlon.
 
 1) Install nnU-Net by following the instructions [here](../readme.md#installation). Make sure to set all relevant paths, 
 also see [here](setting_up_paths.md). This step is necessary so that nnU-Net knows where to store trained models.
@@ -32,17 +32,17 @@ always contain the T2 image and 0001.nii.gz the ADC image. Whenever you are usin
     ```bash
     nnUNet_print_pretrained_model_info Task005_Prostate
     ```
-   to obtain information on which modality needs to get which number. The outpput for Prostate is the following:
+   to obtain information on which modality needs to get which number. The output for Prostate is the following:
     
         Prostate Segmentation. 
         Segmentation targets are peripheral and central zone, 
         input modalities are 0: T2, 1: ADC. 
         Also see Medical Segmentation Decathlon, http://medicaldecathlon.com/
 6) The script we ran in 3) automatically converted the test data for us and stored them in
-`$nnUNet_raw_data_base/nnUNet_raw_data/Task005_Prostate/imagesTs`. Note that you need to to this conversion youself when 
+`$nnUNet_raw_data_base/nnUNet_raw_data/Task005_Prostate/imagesTs`. Note that you need to to this conversion yourself when 
 using other than Medcial Segmentation Decathlon datasets. No worries. Doing this is easy (often as simple as appending 
 a _0000 to the file name if only one input modality is required). Instructions can be found here [here](data_format_inference.md).
-7) You can now predict the Prostate test cases with the pretrained model. We exemplarily use the 3D full resoltion U-Net here:
+7) You can now predict the Prostate test cases with the pretrained model. We exemplarily use the 3D full resolution U-Net here:
     ```bash
     nnUNet_predict -i $nnUNet_raw_data_base/nnUNet_raw_data/Task005_Prostate/imagesTs/ -o OUTPUT_DIRECTORY -t 5 -m 3d_fullres
     ``` 
@@ -69,4 +69,4 @@ a _0000 to the file name if only one input modality is required). Instructions c
    (optional!) is a file that gives nnU-Net information on how to postprocess the ensemble. These files were also 
    downloaded as part of the pretrained model weights and are located at `RESULTS_FOLDER/nnUNet/ensembles/
    Task005_Prostate/ensemble_2d__nnUNetTrainerV2__nnUNetPlansv2.1--3d_fullres__nnUNetTrainerV2__nnUNetPlansv2.1/postprocessing.json`. 
-   We will make the postprocessing files more accssible in a future (soon!) release.
+   We will make the postprocessing files more accessible in a future (soon!) release.

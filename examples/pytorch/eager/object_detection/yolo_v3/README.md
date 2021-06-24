@@ -56,7 +56,7 @@ Here we integrate PyTorch YOLO V3 with Intel® Low Precision Optimization Tool b
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning.
 
 ```yaml
 #conf.yaml

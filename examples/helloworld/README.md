@@ -15,5 +15,5 @@ The following Hello World examples are available:
 *  Customized dataloader and metric, with Keras saved model: [tf_example2](../../examples/helloworld/tf_example2/README.md)
 *  TensorFlow slim model: [tf_example3](../../examples/helloworld/tf_example3/README.md)
 *  TensorFlow checkpoint: [tf_example4](../../examples/helloworld/tf_example4/README.md)
-*  Enable benchmark for performanace and accuracy measurement: [tf_example5](../../examples/helloworld/tf_example5/README.md)
+*  Enable benchmark for performance and accuracy measurement: [tf_example5](../../examples/helloworld/tf_example5/README.md)
 

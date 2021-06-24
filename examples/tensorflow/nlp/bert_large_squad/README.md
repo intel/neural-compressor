@@ -9,7 +9,7 @@ This document is used to list steps of reproducing TensorFlow Intel® Low Precis
 ### 1. Installation
 ```shell
 # Install Intel® Low Precision Optimization Tool
-pip instal lpot
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow 1.15 up2
 Check your python version and use pip install 1.15.0 up2 from links below:
@@ -77,7 +77,7 @@ This is a tutorial of how to enable bert model with Intel® Low Precision Optimi
 For bert, we applied the first one as we  already have built-in dataset and metric for bert squad task. 
 
 ### Write Yaml config file
-In examples directory, there is a bert.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evalation function at internal lpot.
+In examples directory, there is a bert.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal lpot.
 
 ```yaml
 model: 

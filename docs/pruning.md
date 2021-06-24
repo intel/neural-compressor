@@ -18,9 +18,9 @@ A common method for introducing sparsity in weights and activations is called **
 
 The pruning process is similar to quantization-aware training (QAT). Intel® Low Precision Optimization Tool will do related model transformation during training and retrain the model to meet the accuracy goal.
 
-We implemented two kinds of object: Pruner and PrunePolicy. First, we define a sparsity goal (model-wise or op-wise, depending on whether there are ops not suitable for pruning) and the way to reach the sparsity goal (usually we increase the sparsity target linearly as the epoches). The pruner is in singleton mode, and will update the sparsity goal and schedule all PrunePolicy during different phases of training.
+We implemented two kinds of object: Pruner and PrunePolicy. First, we define a sparsity goal (model-wise or op-wise, depending on whether there are ops not suitable for pruning) and the way to reach the sparsity goal (usually we increase the sparsity target linearly as the epochs). The pruner is in singleton mode, and will update the sparsity goal and schedule all PrunePolicy during different phases of training.
 
-PrunePolicy carries different pruning algos. For example, MagnitudePrunePolicy sets thresholds of absolute value so that elements whose absolute value lower than the threshold will be zeroed. The zeroing process happens at the beginning and end of each minibatch iteration.
+PrunePolicy carries different pruning algos. For example, MagnitudePrunePolicy sets thresholds of absolute value so that elements whose absolute value lower than the threshold will be zeroed. The zeroing process happens at the beginning and end of each mini batch iteration.
 
 ## Usage
 
@@ -28,7 +28,7 @@ Pruning configs need to be added into yaml as a ```pruning``` field.
 
 
 ```yaml
-pruning:                                             # mandotory only for pruning.
+pruning:                                             # mandatory only for pruning.
   train:
     start_epoch: 0
     end_epoch: 10
@@ -81,9 +81,9 @@ Or users can pass in ``def train`` by themselves and insert ``pruner`` manually 
 We provide examples of both 2 usages. For completely Yaml config, please refer to [resnet example](examples/pytorch/eager/image_recognition/imagenet/cpu/prune/conf.yaml). For users' training function, please refer to [BERT example](examples/pytorch/eager/language_translation/prune/conf.yaml).
 
 ### Pruning config
-We dived the pruning into 2 kinds: ``weight compression`` and ``activation compression``, the laster is WIP. ``weight compression`` means zeroing the weight matrixs.
+We divide the pruning into 2 kinds: ``weight compression`` and ``activation compression``, the last is WIP. ``weight compression`` means zeroing the weight matrix.
 
-For ``weight_compression``, we dived params into global parameters and local paramers in different ``pruners``. Global prameters may contain **start_epoch** (on which epoch pruning begins), **end_epoch** (on which epoch pruning ends), **initial_sparsity** (initial sparsity goal default 0), **target_sparsity** (target sparsity goal) and **frequency** (of updating sparsity). At least one pruner instance needs to be defined under specific algos (currently only ``basic_magnitude`` supported). You can override all global params in a specific pruner using field names and specify names of which weight of model to be pruned. If no weight is specified, all weights of the model will be pruned.
+For ``weight_compression``, we dived params into global parameters and local parameters in different ``pruners``. Global parameters may contain **start_epoch** (on which epoch pruning begins), **end_epoch** (on which epoch pruning ends), **initial_sparsity** (initial sparsity goal default 0), **target_sparsity** (target sparsity goal) and **frequency** (of updating sparsity). At least one pruner instance needs to be defined under specific algos (currently only ``basic_magnitude`` supported). You can override all global params in a specific pruner using field names and specify names of which weight of model to be pruned. If no weight is specified, all weights of the model will be pruned.
 
 ## Example of user pass-in training function
 

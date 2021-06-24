@@ -24,9 +24,9 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad tu
 
 ### 2. Dataset
 
-  The script `finetune_classifier.py` will download GLUE dataset automaticly to the directory **~/.mxnet/datasets/glue_mrpc/**, for more GLUE dataset informations, see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/src/gluonnlp/data/glue.py#L590).
+  The script `finetune_classifier.py` will download GLUE dataset automatically to the directory **~/.mxnet/datasets/glue_mrpc/**, for more GLUE dataset informations, see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/src/gluonnlp/data/glue.py#L590).
 
-  The script `finetune_squad.py` will download SQuAD dataset automaticly to the directory **~/.mxnet/datasets/squad/**, for more SQuAD dataset informations, see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/src/gluonnlp/data/question_answering.py#L36).
+  The script `finetune_squad.py` will download SQuAD dataset automatically to the directory **~/.mxnet/datasets/squad/**, for more SQuAD dataset informations, see [here](https://github.com/dmlc/gluon-nlp/blob/5dc6b9c9fab9e99b155554a50466c514b879ea84/src/gluonnlp/data/question_answering.py#L36).
 
 
 ### 3. Finetune model
@@ -84,7 +84,7 @@ We integrate MXNet BERT_base MRPC/Squad with Intel® Low Precision Optimization 
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning. 
 
 
 ```

@@ -7,7 +7,7 @@ Here is a quick summary of what you should take care of when migrating from `pyt
 
 The main breaking change when migrating from `pytorch-pretrained-bert` to `transformers` is that the models forward method always outputs a `tuple` with various elements depending on the model and the configuration parameters.
 
-The exact content of the tuples for each model are detailled in the models' docstrings and the [documentation](https://huggingface.co/transformers/).
+The exact content of the tuples for each model detailed in the models' docstrings and the [documentation](https://huggingface.co/transformers/).
 
 In pretty much every case, you will be fine by taking the first element of the output as the output you previously used in `pytorch-pretrained-bert`.
 
@@ -27,7 +27,7 @@ loss = outputs[0]
 # In transformers you can also have access to the logits:
 loss, logits = outputs[:2]
 
-# And even the attention weigths if you configure the model to output them (and other outputs too, see the docstrings and documentation)
+# And even the attention weights if you configure the model to output them (and other outputs too, see the docstrings and documentation)
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', output_attentions=True)
 outputs = model(input_ids, labels=labels)
 loss, logits, attentions = outputs

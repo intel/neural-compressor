@@ -75,7 +75,7 @@ tuning:
   random_seed: 9527
 ```
 
-Here we choose built-in optimizer, criterion, matirc and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited tuning time until accuracy target is met, but the result maybe is not a model of best accuracy and performance.
+Here we choose built-in optimizer, criterion, metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited tuning time until accuracy target is met, but the result maybe is not a model of best accuracy and performance.
 
 ##### Prepare
 
@@ -110,7 +110,7 @@ The quantizer() function will return a best quantized model during timeout const
 
 ##### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning.
 
 ```yaml
 #conf.yaml

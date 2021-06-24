@@ -188,7 +188,7 @@ As Inception V1 is a typical image recognition model, use Top-K as metric which 
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning. 
 
 
 ```yaml
@@ -263,14 +263,14 @@ There are three preparation steps in here:
 ```shell
 pip install intel-tensorflow==1.15.2 lpot
 ```
-2. Prepare the ImageNet dataset and pretrainined ckpt file
+2. Prepare the ImageNet dataset and pretrained ckpt file
 ```shell
 wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz
 ```
 
 ### code update
 
-This tool support tune and benchmark the model, when in the tune phase, make sure to use get_slim_graph to get the slim graph and thransfer to the tool
+This tool support tune and benchmark the model, when in the tune phase, make sure to use get_slim_graph to get the slim graph and transfer to the tool
 
 ```python
 

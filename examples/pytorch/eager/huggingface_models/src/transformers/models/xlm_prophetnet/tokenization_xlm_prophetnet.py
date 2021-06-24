@@ -56,7 +56,7 @@ def load_vocab(vocab_file):
 
 class XLMProphetNetTokenizer(PreTrainedTokenizer):
     """
-    Adapted from :class:`~transfomers.RobertaTokenizer` and class:`~transfomers.XLNetTokenizer`. Based on
+    Adapted from :class:`~Transformers.RobertaTokenizer` and class:`~Transformers.XLNetTokenizer`. Based on
     `SentencePiece <https://github.com/google/sentencepiece>`__.
 
     This tokenizer inherits from :class:`~transformers.PreTrainedTokenizer` which contains most of the main methods.

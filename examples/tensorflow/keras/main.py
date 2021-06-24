@@ -42,7 +42,7 @@ class eval_classifier_optimized_graph:
     arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 
     arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
-    arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode, support performence and accuracy')
+    arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode, support performance and accuracy')
 
     self.args = arg_parser.parse_args()
 

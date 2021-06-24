@@ -452,7 +452,7 @@ class MAE(BaseMetric):
 
 @metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
-    """Computes Root Mean Squred Error (RMSE) loss.
+    """Computes Root Mean Squared Error (RMSE) loss.
 
     Args:
         compare_label (bool): Whether to compare label. False if there are no labels 

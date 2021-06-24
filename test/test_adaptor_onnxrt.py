@@ -156,7 +156,7 @@ def export_onnx_model(model, path):
                     do_constant_folding=True,  # whether to execute constant folding for optimization
                     input_names = ["input"],   # the model"s input names
                     output_names = ["output"], # the model"s output names
-                    dynamic_axes={"input" : {0 : "batch_size"},    # variable lenght axes
+                    dynamic_axes={"input" : {0 : "batch_size"},    # variable length axes
                                   "output" : {0 : "batch_size"}})
 
 def build_ir3_model():

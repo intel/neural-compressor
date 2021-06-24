@@ -2,7 +2,7 @@
 
 * Show "Predefined examples"
 * select a model from the table, import the model
-* Show hardware enviroment
+* Show hardware environment
 * import dataset from UX frontend to host
 * select dataset on host
 * autogenerate a dataset (1.3)

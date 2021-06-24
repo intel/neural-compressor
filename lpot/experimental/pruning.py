@@ -90,7 +90,7 @@ class Pruning:
               including dataloaders used in training and evaluation phases
               and pruning tuning settings.
 
-              For this usage, only model parameter is mandotory.
+              For this usage, only model parameter is mandatory.
 
            b) Partial yaml configuration: User specifies dataloaders used in training
               and evaluation phase by code.
@@ -102,7 +102,7 @@ class Pruning:
               After that, User specifies fp32 "model", training dataset "p_dataloader"
               and evaluation dataset "eval_dataloader".
 
-              For this usage, model, p_dataloader and eval_dataloader parameters are mandotory.
+              For this usage, model, p_dataloader and eval_dataloader parameters are mandatory.
 
            c) Partial yaml configuration: User specifies dataloaders used in training phase
               by code.
@@ -112,7 +112,7 @@ class Pruning:
               The "eval_func" tells the tuner whether the pruned model meets
               the accuracy criteria. If not, the Tuner starts a new training and tuning flow.
 
-              For this usage, model, q_dataloader and eval_func parameters are mandotory.
+              For this usage, model, q_dataloader and eval_func parameters are mandatory.
 
         Returns:
             pruned model: best pruned model found, otherwise return None

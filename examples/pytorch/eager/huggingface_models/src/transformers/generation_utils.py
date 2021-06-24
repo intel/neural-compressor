@@ -1226,7 +1226,7 @@ class GenerationMixin:
             # argmax
             next_tokens = torch.argmax(next_tokens_scores, dim=-1)
 
-            # add code that transfomers next_tokens to tokens_to_add
+            # add code that Transformers next_tokens to tokens_to_add
             if eos_token_id is not None:
                 assert pad_token_id is not None, "If eos_token_id is defined, make sure that pad_token_id is defined."
                 next_tokens = next_tokens * unfinished_sequences + (pad_token_id) * (1 - unfinished_sequences)
@@ -1436,7 +1436,7 @@ class GenerationMixin:
             probs = F.softmax(next_token_scores, dim=-1)
             next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
 
-            # add code that transfomers next_tokens to tokens_to_add
+            # add code that Transformers next_tokens to tokens_to_add
             if eos_token_id is not None:
                 assert pad_token_id is not None, "If eos_token_id is defined, make sure that pad_token_id is defined."
                 next_tokens = next_tokens * unfinished_sequences + (pad_token_id) * (1 - unfinished_sequences)

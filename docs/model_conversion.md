@@ -26,6 +26,6 @@ After this conversion is done, user could measure the accuracy or performance on
     from lpot.experimental import Benchmark, common
     evaluator = Benchmark('/path/to/yaml')
     evaluator.model = common.Model('/path/to/quantized/saved_model')
-    evaluator.b_dataloader = ...       # create benchmark dataloder like examples/tensorflow/qat/benchmark.py
+    evaluator.b_dataloader = ...       # create benchmark dataloader like examples/tensorflow/qat/benchmark.py
     evaluator('accuracy')
   ```

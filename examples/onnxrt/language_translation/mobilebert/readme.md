@@ -19,7 +19,7 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 ### Prepare model
 Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/notebooks/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export. The following is a simple example.
 
-Use [Huggingface Transfomers](https://github.com/huggingface/transformers/tree/v2.2.1) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/master/examples/text-classification#mrpc) example with command like:
+Use [Huggingface Transformers](https://github.com/huggingface/transformers/tree/v2.2.1) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/master/examples/text-classification#mrpc) example with command like:
 ```shell
 export OUT_DIR=/path/to/out_dir/
 python ./run_glue.py \ 

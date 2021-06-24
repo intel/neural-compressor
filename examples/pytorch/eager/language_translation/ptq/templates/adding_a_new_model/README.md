@@ -59,4 +59,4 @@ You can then finish the addition step by adding imports for your classes in the 
 - [ ] add a link to your conversion script in the main conversion utility (currently in `__main__` but will be moved to the `commands` subfolder in the near future)
 - [ ] edit the PyTorch to TF 2.0 conversion script to add your model in the `convert_pytorch_checkpoint_to_tf2.py` file
 - [ ] add a mention of your model in the doc: `README.md` and the documentation itself at `docs/source/pretrained_models.rst`.
-- [ ] upload the pretrained weigths, configurations and vocabulary files.
+- [ ] upload the pretrained weights, configurations and vocabulary files.

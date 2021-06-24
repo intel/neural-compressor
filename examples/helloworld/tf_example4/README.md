@@ -8,7 +8,7 @@ This example is used to demonstrate how to quantize a TensorFlow checkpoint and 
     python ./open_model_zoo/tools/downloader/downloader.py --name rfcn-resnet101-coco-tf --output_dir model 
     ```
 
-2. Run quantizaiton
+2. Run quantization
 We will create a dummy dataloader and only need to add the following lines for quantization to create an int8 model.
     ```python
     quantizer = Quantization('./conf.yaml')

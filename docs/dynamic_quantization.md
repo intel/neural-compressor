@@ -4,7 +4,8 @@
 
 > Dynamic quantization currently only supports the onnxruntime backend.
 
-As a [quantization](./Quantization.md) class, dynamic quantization allows users to determine the scale factor for activations dynamically based on the data range that's observed at runtime as opposed to using other methods that entail multiplying a float point value by some scale factor and then rounding the result to a whole number. As noted in [PyTorch documentation][PyTorch-DynQuant], this "ensures that the scale factor is 'tuned' so that as much signal as possible about each observed dataset is preserved." Since it does not use a lot of tuning parameters, dynamic quantization is a good match for NLP models.
+As a [quantization](./Quantization.md) class, dynamic quantization allows users to determine the scale factor for activations dynamically based on the data range that's observed at runtime as opposed to using other methods that entail multiplying a float point value by some scale factor and then rounding the result to a whole number. As noted in [PyTorch documentation][PyTorch-Dynamic-Quantization], this "ensures that the scale factor is 'tuned' so that as much signal as possible about each observed dataset is preserved." Since it does not use a lot of tuning parameters, dynamic quantization is a good match for NLP models.
+
 
 The onnxruntime bert_base model provides an example where users can create a specific quantization method like the following yaml:
 
@@ -29,4 +30,4 @@ tuning:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
 ```
-[PyTorch-DynQuant]: https://pytorch.org/tutorials/recipes/recipes/dynamic_quantization.html
+[PyTorch-Dynamic-Quantization]: https://pytorch.org/tutorials/recipes/recipes/dynamic_quantization.html

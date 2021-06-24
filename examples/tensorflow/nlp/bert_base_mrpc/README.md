@@ -9,7 +9,7 @@ This document is used to list steps of reproducing TensorFlow Intel® Low Precis
 ### 1. Installation
 ```shell
 # Install Intel® Low Precision Optimization Tool
-pip instal lpot
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow 1.15 up2
 Check your python version and use pip install 1.15.0 up2 from links below:
@@ -42,7 +42,7 @@ bash prepare_model.sh --dataset_location=./data --output_dir=./model
 ```
 
 ## Run Command
-Make sure the data and model has been generated succesfully, located at ./data and ./model
+Make sure the data and model has been generated successfully, located at ./data and ./model
 And your output_model will located at ./output_model like the command below
   ```shell
     python run_classifier.py \
@@ -73,7 +73,7 @@ This is a tutorial of how to enable bert model with Intel® Low Precision Optimi
 For bert, we applied the first one as we  already have write dataset and metric for bert mrpc task. 
 
 ### Write Yaml config file
-In examples directory, there is a mrpc.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evalation function at internal lpot.
+In examples directory, there is a mrpc.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal lpot.
 
 ```yaml
 model:

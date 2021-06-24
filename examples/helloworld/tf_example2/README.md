@@ -30,7 +30,7 @@ python train.py
   python test.py 
   ```
 ## Introduction 
-This exmaple can demonstrate the steps to do quantization on Keras generated saved model with customized dataloader and metric. 
+This example can demonstrate the steps to do quantization on Keras generated saved model with customized dataloader and metric. 
 ### 1.Add inputs and outputs information into conf.yaml, to get the input and output tensor name please refer to helloworld/train.py.  
 
 ### 2.Define a customer dataloader for mnist  
@@ -53,7 +53,7 @@ class Dataset(object):
 ```
 
 ### 3.Define a customized metric  
-This customized metric will caculate accuracy.
+This customized metric will calculate accuracy.
 ```python
 class MyMetric(object):
   def __init__(self, *args):

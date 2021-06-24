@@ -80,7 +80,7 @@ We provide Deeplab model pretrained on PASCAL VOC 2012, Using mIOU as metric whi
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning. 
 
 
 ```yaml
