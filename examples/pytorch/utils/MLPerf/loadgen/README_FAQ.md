@@ -12,7 +12,7 @@ On GitHub: https://github.com/mlperf/inference/issues/new
 ## Q: Can I make local modifications to the LoadGen for submission?
 **A:**
 No. To keep the playing field level, please upstream any local
-modificiations you need to make. Ideally upstream such changes behind a runtime
+modifications you need to make. Ideally upstream such changes behind a runtime
 flag or via an abstract interface the client can implement. This will help
 with testability.
 

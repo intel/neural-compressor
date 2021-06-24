@@ -9,9 +9,9 @@ This document is used to list steps of reproducing TensorFlow keras Intel® Low 
 ### 1. Installation
 ```shell
 # Install Intel® Low Precision Optimization Tool
-pip instal lpot
+pip install lpot
 ```
-### 2. Install Intel Tensorflow and TensorFLow Model Optimization
+### 2. Install Intel Tensorflow and TensorFlow Model Optimization
 ```shell
 pip install intel-tensorflow==2.4.0
 pip install tensorflow_model_optimization==0.5.0

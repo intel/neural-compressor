@@ -71,7 +71,7 @@ class Quantization(object):
               including dataloaders used in calibration and evaluation phases
               and quantization tuning settings.
 
-              For this usage, only model parameter is mandotory.
+              For this usage, only model parameter is mandatory.
 
            b) Partial yaml configuration: User specifies dataloaders used in calibration
               and evaluation phase by code.
@@ -87,7 +87,7 @@ class Quantization(object):
               the tuner whether the quantized model meets the accuracy criteria. If not,
               the tuner starts a new calibration and tuning flow.
 
-              For this usage, model, calib_dataloader and eval_dataloader parameters are mandotory.
+              For this usage, model, calib_dataloader and eval_dataloader parameters are mandatory.
 
            c) Partial yaml configuration: User specifies dataloaders used in calibration phase
               by code.
@@ -97,7 +97,7 @@ class Quantization(object):
               The "eval_func" tells the tuner whether the quantized model meets
               the accuracy criteria. If not, the Tuner starts a new calibration and tuning flow.
 
-              For this usage, model, calib_dataloader and eval_func parameters are mandotory.
+              For this usage, model, calib_dataloader and eval_func parameters are mandatory.
 
         Returns:
             quantized model: best qanitized model found, otherwise return None

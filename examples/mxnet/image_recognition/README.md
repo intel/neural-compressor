@@ -110,7 +110,7 @@ Intel® Low Precision Optimization Tool supports two usages:
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandatory item for tuning. 
 
 
 ```

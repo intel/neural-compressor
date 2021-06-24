@@ -22,7 +22,7 @@ the `lpot.experimental` package.
 The major differences between the default user-facing APIs and the experimental APIs are:
 
 1. The experimental APIs abstract the `lpot.experimental.common.Model` concept to cover those cases whose weight and graph files are stored separately.
-2. The experimental APIs unifiy the calling style of the `Quantization`, `Pruning`, and `Benchmark` classes by setting model, calibration dataloader, evaluation dataloader, and metric through class attributes rather than passing them as function inputs.
+2. The experimental APIs unify the calling style of the `Quantization`, `Pruning`, and `Benchmark` classes by setting model, calibration dataloader, evaluation dataloader, and metric through class attributes rather than passing them as function inputs.
 3. The experimental APIs refine LPOT built-in transforms/datasets/metrics by unifying the APIs cross different framework backends.
 
 ## Experimental user-facing APIs
@@ -203,7 +203,7 @@ To learn how to use this API, refer to the [benchmarking document](../docs/bench
 
 ## Default user-facing APIs
 
-The default user-facing APIs exist for backwards compatiblity from the v1.0 release. Refer to [v1.1 API](https://github.com/intel/lpot/blob/v1.1/docs/introduction.md) to understand how the default user-facing APIs work.
+The default user-facing APIs exist for backwards compatibility from the v1.0 release. Refer to [v1.1 API](https://github.com/intel/lpot/blob/v1.1/docs/introduction.md) to understand how the default user-facing APIs work.
 
 View the [HelloWorld example](/examples/helloworld/tf_example6) that uses default user-facing APIs for user reference. 
 

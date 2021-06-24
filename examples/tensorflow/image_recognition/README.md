@@ -314,7 +314,7 @@ As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning. 
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning. 
 
 
 ```yaml
@@ -394,7 +394,7 @@ pip install intel-tensorflow==1.15.2 lpot
 git clone -b v1.6.0 https://github.com/IntelAI/models intelai_models
 cd intelai_models/models/image_recognition/tensorflow/resnet50v1_5/inference
 ```
-3. Prepare the ImageNet dataset and pretrainined PB file
+3. Prepare the ImageNet dataset and pretrained PB file
 ```shell
 wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
 ```

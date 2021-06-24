@@ -31,8 +31,8 @@ Our example comes from MLPerf Inference Benchmark Suite
 
 | dataset | download link | 
 | ---- | ---- | 
-| coco (validation) | http://imagecocodataset.org/zips/val2017.zip | 
-| coco (annotations) | http://imagecocodataset.org/annotationannotations_trainval2017.zip |
+| coco (validation) | http://images.cocodataset.org/zips/val2017.zip | 
+| coco (annotations) | http://images.cocodataset.org/annotations/annotations_trainval2017.zip |
 
   ```shell
   cd examples/pytorch/fx/object_detection/ssd_resnet34/ptq

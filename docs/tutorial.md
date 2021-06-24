@@ -9,7 +9,7 @@ The following diagram shows steps for enabling model with LPOT:
 
 ## Usage Examples
 
-To write lanuncher code, a user needs to prepare four components:
+To write launcher code, a user needs to prepare four components:
 
 *	`Dataloader/Dataset`
 *	`Model`
@@ -24,7 +24,7 @@ LPOT also supports registering custom datasets and custom metrics by code.
 
 As for model, LPOT abstract a common API, named [lpot.experimental.common.Model](../lpot/experimental/common/model.py), to cover the case in which model, weight, and other necessary info are separately stored. Refer to [model](./model.md) to learn how to use it.
 
-Postprocess is treated as a specical transform by LPOT which is only needed when a model output is mismatching with the expected input of LPOT built-in metrics. If a user is using a custom metric, the postprocess is not needed as the custom metric implementation needed ensures it can handle the model output correctly. On the other hand, the postprocess logic becomes part of the custom metric implementation.
+Postprocess is treated as a special transform by LPOT which is only needed when a model output is mismatching with the expected input of LPOT built-in metrics. If a user is using a custom metric, the postprocess is not needed as the custom metric implementation needed ensures it can handle the model output correctly. On the other hand, the postprocess logic becomes part of the custom metric implementation.
 
 The example below shows how to enable LPOT on TensorFlow mobilenet_v1 with a built-in dataloader, dataset, and metric.
 
@@ -122,7 +122,7 @@ q_model = quantizer()
 >
 > In the customized dataset, the `__getitem__()` interface must be implemented and return a single sample and label. In this example, it returns the (image, label) pair. The user can return (image, 0) for a label-free case.
 
-In the customized metric, the update() function records the predicted result of each mini-batch. The result() function is invoked by LPOT at the end of the evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from the customerized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
+In the customized metric, the update() function records the predicted result of each mini-batch. The result() function is invoked by LPOT at the end of the evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from the customized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
 
 ```yaml
 # conf.yaml

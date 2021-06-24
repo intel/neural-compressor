@@ -64,7 +64,7 @@ class Pruning:
               including dataloaders used in training and evaluation phases
               and pruning tuning settings.
 
-              For this usage, only model parameter is mandotory.
+              For this usage, only model parameter is mandatory.
 
            b) Partial yaml configuration: User specifies dataloaders used in training
               and evaluation phase by code.
@@ -80,7 +80,7 @@ class Pruning:
               the tuner whether the pruned model meets the accuracy criteria. If not,
               the tuner starts a new training and tuning flow.
 
-              For this usage, model, q_dataloader and eval_dataloader parameters are mandotory.
+              For this usage, model, q_dataloader and eval_dataloader parameters are mandatory.
 
            c) Partial yaml configuration: User specifies dataloaders used in training phase
               by code.
@@ -90,7 +90,7 @@ class Pruning:
               The "eval_func" tells the tuner whether the pruned model meets
               the accuracy criteria. If not, the Tuner starts a new training and tuning flow.
 
-              For this usage, model, q_dataloader and eval_func parameters are mandotory.
+              For this usage, model, q_dataloader and eval_func parameters are mandatory.
 
         Args:
             model (object):                        For PyTorch model, it's torch.nn.model

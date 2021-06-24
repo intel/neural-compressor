@@ -5,7 +5,7 @@ This example is used to demonstrate how to utilize LPOT builtin dataloader and m
 1. Download the FP32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 
-2. Update the root of dataset in conf.ymal
+2. Update the root of dataset in conf.yaml
 The configuration will create a dataloader of Imagenet and it will do Bilinear resampling to resize the image to 224x224. And it will create a TopK metric function for evaluation.   
 ```yaml
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
@@ -41,7 +41,7 @@ evaluation:                                          # optional. required if use
 
 ```
 
-3. Run quantizaiton
+3. Run quantization
 We only need to add the following lines for quantization to create an int8 model.
 ```python
     from lpot.experimental import Quantization, common

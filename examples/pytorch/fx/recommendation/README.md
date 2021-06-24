@@ -62,10 +62,10 @@ Intel® Low Precision Optimization Tool supports two usages:
 
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
 
-As DLRM's matrics is 'f1', so customer should provide evaluation function 'eval_func', it's suitable for the second use case.
+As DLRM's metrics is 'f1', so customer should provide evaluation function 'eval_func', it's suitable for the second use case.
 
 ### Write Yaml config file
-In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.
 ```yaml
 model:
   name: dlrm
@@ -89,7 +89,7 @@ PyTorch quantization requires two manual steps:
   1. Add QuantStub and DeQuantStub for all quantizable ops.
   2. Fuse possible patterns, such as Linear + Relu.
 
-It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to develop a code to automatically do that.
+It's intrinsic limitation of PyTorch quantization imperative path. No way to develop a code to automatically do that.
 The related code changes please refer to examples/pytorch/fx/recommendation/dlrm_s_pytorch_tune.py.
 
 ### code update

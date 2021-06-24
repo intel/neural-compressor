@@ -7,7 +7,7 @@ With the importance of a dataloader, different frameworks can have their own Dat
 
 The dataloader takes a dataset as the input parameter and loads data from the dataset when needed.
 
-A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inhereting from the Dataset class by implementing `__iter__` method or `__getitem__` method, while implementing `__getitem__` method, `__len__` method is recommended.
+A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inheriting from the Dataset class by implementing `__iter__` method or `__getitem__` method, while implementing `__getitem__` method, `__len__` method is recommended.
 
 A dataset uses transform as its data process component. Transform contains three parts, aiming at different parts of the life cycle of data processing:
 
@@ -19,7 +19,7 @@ A dataset uses transform as its data process component. Transform contains three
 
 A general transform can be used in both preprocessing and postprocessing; one can also implement a specific transform by inheriting from the Transform class by implementing the `__call__` method. Usually, a dataloader will use the transform for preprocessing and the postprocessing transform is used to give the right processed data to the metric to update. Transforms also compose together to be one and serially implement the transforms.
 
-Transform for preprocessing will be launched in the dataset `__getitem__` or `__next__` method; that means the transform is used after the dataloader has loaded batched data and before the data is given to the model for inference. That helps reduce the memory compared with load and process all data at once. Transform for postprocessing is used in evaluation function of the internal LPOT to process the inferenced data and the processed data is used by metric. 
+Transform for preprocessing will be launched in the dataset `__getitem__` or `__next__` method; that means the transform will be used after the dataloader has loaded batched data and before the data given to the model for inference. That helps reduce the memory compared with load and process all data at once. Transform for postprocessing is used in evaluation function of the internal LPOT to process the inference data and the processed data used by metric. 
 
 # How to use it
 

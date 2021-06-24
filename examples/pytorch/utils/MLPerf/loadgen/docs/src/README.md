@@ -14,7 +14,7 @@ If you are using the gn build flow, you may run:
     ninja -C out/Release generate_doxygen_html
 
 * This will output the documentation to out/Release/gen/loadgen/docs/gen and
-avoid poluting the source directory.
+avoid polluting the source directory.
 
 ## Manually
 

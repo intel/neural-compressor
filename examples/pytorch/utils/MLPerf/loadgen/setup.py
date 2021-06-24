@@ -22,7 +22,7 @@
 #  This setup.py can be used stand-alone, without the use of an external
 #  build system. This will polute your source tree with output files
 #  and binaries. Use one of the gn build targets instead if you want
-#  to avoid poluting the source tree.
+#  to avoid polluting the source tree.
 
 from setuptools import Extension
 from setuptools import setup

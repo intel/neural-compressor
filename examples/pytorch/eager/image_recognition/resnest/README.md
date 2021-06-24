@@ -55,7 +55,7 @@ As ResNest series are typical classification models, use Top-K as metric which i
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning.
 
 ```yaml
 #conf.yaml
@@ -135,7 +135,7 @@ PyTorch quantization requires two manual steps:
 1. Add QuantStub and DeQuantStub for all quantizable ops.
 2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu.
 
-It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to develop a code to automatically do that.
+It's intrinsic limitation of PyTorch quantization imperative path. No way to develop a code to automatically do that.
 
 The related code changes please refer to examples/pytorch/eager/image_recognition/resnest/resnest/torch/resnet.py and examples/pytorch/eager/image_recognition/resnest/resnest/torch/splat.py.
 

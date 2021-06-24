@@ -8,11 +8,11 @@ This example is used to demonstrate how to utilize LPOT builtin dataloader and m
 wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz
 tar -xvf inception_v1_2016_08_28.tar.gz
 
-* Instanll dependencies
+* Install dependencies
 pip install -r requirements.txt
 
 
-2. Config dataloader in conf.ymal
+2. Config dataloader in conf.yaml
 The configuration will help user to create a dataloader of Imagenet and it will do Bilinear resampling to resize the image to 224x224. It also creates a TopK metric function for evaluation.  
 
 ```yaml
@@ -46,13 +46,13 @@ evaluation:                                          # optional. required if use
 
 ```
 
-3. Run quantizaiton
+3. Run quantization
 * Run Command
   The cmd of quantization and predict with the quantized model 
   ```shell
   python test.py 
   ```
-* In order to do quanzation for slim models, we need to get graph from slim .ckpt first. 
+* In order to do quantization for slim models, we need to get graph from slim .ckpt first. 
 ```python
     from lpot.experimental import Quantization, common
     quantizer = Quantization('./conf.yaml')

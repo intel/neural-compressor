@@ -2,7 +2,7 @@ Details **TBD**
 Please update conf.yaml with /PATH/TO/ImageNet
 ### Prepare dataset
 ```shell
-pip install -r requiremnets.txt
+pip install -r requirements.txt
 ```
 ### Run pretraining
 ```shell

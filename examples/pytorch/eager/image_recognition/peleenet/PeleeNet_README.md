@@ -2,7 +2,7 @@
 PeleeNet: An efficient DenseNet architecture for mobile devices
 
 An implementation of PeleeNet in PyTorch. PeleeNet is an efficient Convolutional Neural Network (CNN) architecture built with
-conventional convolution. Compared to other efficient architectures,PeleeNet has a great speed advantage and esay to be applied to the computer vision tasks other than image classification. 
+conventional convolution. Compared to other efficient architectures,PeleeNet has a great speed advantage and easy to be applied to the computer vision tasks other than image classification. 
 
 For more information, check the paper:
 [Pelee: A Real-Time Object Detection System on Mobile Devices](https://arxiv.org/pdf/1804.06882.pdf) (NeurIPS 2018)

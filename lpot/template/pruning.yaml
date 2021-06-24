@@ -19,7 +19,7 @@ model:                                               # mandatory. lpot uses this
 
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 
-pruning:                                             # mandotory only for pruning.
+pruning:                                             # mandatory only for pruning.
   train:
     start_epoch: 0
     end_epoch: 10

@@ -15,7 +15,7 @@ Hereby, many pipeline settings depend directly or indirectly on the properties o
 and display a complex co-dependence: image size, for example, affects the patch size, which in 
 turn affects the required receptive field of the network, a factor that itself influences several other 
 hyperparameters in the pipeline. As a result, pipelines that were developed on one (type of) dataset are inherently 
-incomaptible with other datasets in the domain.
+incompatible with other datasets in the domain.
 
 **nnU-Net is the first segmentation method that is designed to deal with the dataset diversity found in the somain. It 
 condenses and automates the keys decisions for designing a successful segmentation pipeline for any given dataset.**
@@ -133,7 +133,7 @@ all the way to ensembling. After running nnU-Net, the trained model(s) can be ap
 
 ### Dataset conversion
 nnU-Net expects datasets in a structured format. This format closely (but not entirely) follows the data structure of 
-the [Medical Segmentation Decthlon](http://medicaldecathlon.com/). Please read 
+the [Medical Segmentation Decathlon](http://medicaldecathlon.com/). Please read 
 [this](documentation/dataset_conversion.md) for information on how to convert datasets to be compatible with nnU-Net.
 
 ### Experiment planning and preprocessing
@@ -276,7 +276,7 @@ but very useful for debugging ;-)
 has ended). This is what is used for both validation and inference.
 - network_architecture.pdf (only if hiddenlayer is installed!): a pdf document with a figure of the network architecture in it.
 - progress.png: A plot of the training (blue) and validation (red) loss during training. Also shows an approximation of 
-the evlauation metric (green). This approximation is the average Dice score of the foreground classes. It should, 
+the evaluation metric (green). This approximation is the average Dice score of the foreground classes. It should, 
 however, only to be taken with a grain of salt because it is computed on randomly drawn patches from the validation 
 data at the end of each epoch, and the aggregation of TP, FP and FN for the Dice computation treats the patches as if 
 they all originate from the same volume ('global Dice'; we do not compute a Dice for each validation case and then 
@@ -312,7 +312,7 @@ CUDA_VISIBLE_DEVICES=0,1,2... nnUNet_train_DP CONFIGURATION nnUNetTrainerV2_DP T
 Note that nnUNetTrainerV2 was replaced with nnUNetTrainerV2_DP. Just like before, CONFIGURATION can be 2d, 3d_lowres or 
 3d_fullres. TASK_NAME_OR_ID refers to the task you would like to train and FOLD is the fold of the cross-validation. 
 GPUS (integer value) specifies the number of GPUs you wish to train on. To specify which GPUs you want to use, please make use of the 
-CUDA_VISIBLE_DEVICES envorinment variable to specify the GPU ids (specify as many as you configure with -gpus GPUS).
+CUDA_VISIBLE_DEVICES environment variable to specify the GPU ids (specify as many as you configure with -gpus GPUS).
 --dbs, if set, will distribute the batch size across GPUs. So if nnUNet configures a batch size of 2 and you run on 2 GPUs
 , each GPU will run with a batch size of 1. If you omit --dbs, each GPU will run with the full batch size (2 for each GPU 
 in this example for a total of batch size 4).
@@ -464,7 +464,7 @@ nnU-Net is guaranteed to run on GPUs with 11GB of memory. Many configurations ma
 configure nnU-Net to use a different amount of GPU memory, simply adapt the reference value for the GPU memory estimation 
 accordingly (with some slack because the whole thing is not an exact science!). For example, in 
 [experiment_planner_baseline_3DUNet_v21_11GB.py](nnunet/experiment_planning/experiment_planner_baseline_3DUNet_v21_11GB.py) 
-we provide an example that attempts to maximise the usage of GPU memory on 11GB as opposed to the default which leaves 
+we provide an example that attempts to maximize the usage of GPU memory on 11GB as opposed to the default which leaves 
 much more headroom). This is simply achieved by this line:
 
 ```python

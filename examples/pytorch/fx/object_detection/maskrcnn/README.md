@@ -38,7 +38,7 @@ cd examples/pytorch/object_detection/maskrcnn/
 sh download_weights.sh
 ```
 
-Or you alse can link your weights to pytorch folder
+Or you else can link your weights to pytorch folder
 
 ```bash
 ln -s /path/of/weights pytorch/e2e_mask_rcnn_R_50_FPN_1x.pth
@@ -97,7 +97,7 @@ Here we integrate PyTorch maskrcnn with Intel® Low Precision Optimization Tool 
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is a template.yaml. We could remove most of items and only keep mandatory item for tuning.
 
 ```yaml
 #conf.yaml
@@ -122,7 +122,7 @@ Here we set accuracy target as tolerating 0.01 relative accuracy loss of baselin
 
 ### Prepare
 
-The related code please refer to examples/pytorch/fx/object_delection/maskrcnn/pytorch/tools/test_net.py.
+The related code please refer to examples/pytorch/fx/object_detection/maskrcnn/pytorch/tools/test_net.py.
 
 ### Code Update
 

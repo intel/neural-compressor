@@ -73,7 +73,7 @@ As SE_ResNext series are typical classification models, use Top-K as metric whic
 
 ### Write Yaml Config File
 
-In examples directory, there is conf.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.
 
 ```
 model:                                               # mandatory. used to specify model specific information.
@@ -154,7 +154,7 @@ PyTorch quantization requires two manual steps:
 1. Add QuantStub and DeQuantStub for all quantizable ops.
 2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu. In bert model, there is no fuse pattern.
 
-It's intrinsic limitation of PyTorch quantizaiton imperative path. No way to develop a code to automatically do that.
+It's intrinsic limitation of PyTorch quantization imperative path. No way to develop a code to automatically do that.
 The related code changes please refer to examples/pytorch/eager/image_recognition/se_resnext/pretrainedmodels/models/senet.py.
 
 ### Code Update

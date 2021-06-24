@@ -18,7 +18,7 @@ Recommend python 3.6 or higher version.
 
 ```shell
 # Install Intel® Low Precision Optimization Tool
-pip instal lpot
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -116,7 +116,7 @@ tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 wget --no-check-certificate https://zenodo.org/record/3345892/files/tf_ssd_resnet34_22.1.zip?download=1 -o ssd_resnet34.zip
 unzip ssd_resnet34.zip
 ```
-You need to install intel-tensoeflow==2.4.0 to enable ssd_resnet34 model.
+You need to install intel-tensorflow==2.4.0 to enable ssd_resnet34 model.
 
 ## Run Command
 

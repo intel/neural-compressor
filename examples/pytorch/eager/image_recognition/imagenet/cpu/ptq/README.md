@@ -117,7 +117,7 @@ As ResNet18/50/101 series are typical classification models, use Top-K as metric
 
 ### Write Yaml Config File
 
-In examples directory, there is a template.yaml. We could remove most of items and only keep mandotory item for tuning.
+In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning.
 
 ```yaml
 model:

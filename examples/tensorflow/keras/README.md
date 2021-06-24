@@ -9,7 +9,7 @@ This document is used to list steps of reproducing TensorFlow keras Intel® Low 
 ### 1. Installation
 ```shell
 # Install Intel® Low Precision Optimization Tool
-pip instal lpot
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -37,6 +37,6 @@ Otherwise, if users do not download dataset in advance, please set the dataset r
 ## Run Command
   ```shell
   bash run_tuning.sh --config=resnet50_fashion.yaml --input_model=./resnet50_fashion --output_model=./result
-  bash run_benchmark.sh --config=resnet50_fashion.yaml --input_model=./resnet50_fashion --mode=performence
+  bash run_benchmark.sh --config=resnet50_fashion.yaml --input_model=./resnet50_fashion --mode=performance
   ```
 

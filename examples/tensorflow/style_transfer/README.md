@@ -9,7 +9,7 @@ This document is used to list steps of reproducing TensorFlow style transfer Int
 ### 1. Installation
 ```shell
 # Install Intel® Low Precision Optimization Tool
-pip instal lpot
+pip install lpot
 ```
 ### 2. Install Intel Tensorflow
 ```shell

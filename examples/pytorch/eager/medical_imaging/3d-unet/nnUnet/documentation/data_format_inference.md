@@ -30,5 +30,5 @@ unique identifier, followed by a 4-digit modality identifier. Here is an example
     Task002 only has one modality, so each case only has one _0000.nii.gz file.
   
 
-The segmentations in the output folder will be named INDENTIFIER.nii.gz (omitting the modality identifier).
+The segmentation in the output folder will be named IDENTIFIER.nii.gz (omitting the modality identifier).
    
