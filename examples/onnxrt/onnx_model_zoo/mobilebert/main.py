@@ -130,7 +130,7 @@ def main():
                                                                             max_seq_length, doc_stride, max_query_length)
 
     dataset = squadDataset(input_ids, input_mask, segment_ids, 1) 
-    eval_dataloader = DataLoader(dataset, batch_size=1)
+    eval_dataloader = DataLoader(dataset, batch_size=batch_size)
 
     def eval_func(model):
         return evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
@@ -146,6 +146,7 @@ def main():
 
     if args.benchmark and args.mode == "accuracy":
         results = evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
+        print("Batch size = %d" % batch_size)
         print("Accuracy: %.5f" % results)
 
     if args.benchmark and args.mode == "performance":

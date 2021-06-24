@@ -169,6 +169,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         logger.info("  %s = %s", key, str(result[key]))
     
     if args.benchmark and args.mode == "accuracy":
+        print("Batch size = %d" % args.eval_batch_size)
         print("Accuracy: %.5f" % (100 - result['perplexity']))
     
     return 100 - result['perplexity']
