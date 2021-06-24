@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import numpy as np
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -21,6 +22,7 @@ from tensorflow.python.framework import dtypes
 
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
+from tensorflow.python.framework import tensor_util
 
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
@@ -46,6 +48,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         # FIXME We only quantize the MatMul op which second input node type is const. This is a
         # workaround for RNN model like LTSM.
         if weight_node.op != 'Const':
+            self.output_graph = self.input_graph
+            return []
+
+        weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+
+        if np.any(np.isnan(weights_content)):
             self.output_graph = self.input_graph
             return []
 
@@ -116,6 +124,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         # FIXME We only quantize the MatMul op which second input node type is const. This is a
         # workaround for RNN model like LTSM.
         if weight_node.op != 'Const':
+            self.output_graph = self.input_graph
+            return []
+
+        weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+
+        if np.any(np.isnan(weights_content)):
             self.output_graph = self.input_graph
             return []
 
