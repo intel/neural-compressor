@@ -190,6 +190,8 @@ class QuantizeNodeBase():
     def _find_relu_node(self, node):
         if node.op in ("Relu", "Relu6") or node.op.find("AndRelu") != -1:
             return True
+        elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
+            return True
         elif (node.op.find("QuantizedConv") != -1
               or node.op.find("QuantizedDepthwiseConv") != -1 or
               node.op.find("QuantizedMatMul") != -1
