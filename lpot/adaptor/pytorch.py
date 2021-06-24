@@ -1789,7 +1789,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                         input = input.to(ipex.DEVICE)  # pylint: disable=no-member
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
                         output = model_(input)
-                label = label.to(ipex.DEVICE)
+                label = label.to("cpu")
+                output = output.to("cpu")
                 if measurer is not None:
                     measurer.end()
                 if postprocess is not None:
