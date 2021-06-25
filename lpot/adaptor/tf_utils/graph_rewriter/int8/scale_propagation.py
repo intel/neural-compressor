@@ -65,11 +65,16 @@ class ScaleProPagationTransformer(GraphRewriterBase):
 
         for match in target_nodes:
             pre_node_name = match[0]
+
             pre_node = self.graph_info[pre_node_name].node
 
             output_nodes_count = len(set(self.graph_info[pre_node_name].outputs))
 
             if output_nodes_count > 1:
+                continue
+            # Skip transformation if avgpool has multi output nodes.
+            pooling_nodes_count = len(set(self.graph_info[match[1]].outputs))
+            if pooling_nodes_count > 1:
                 continue
 
             if pre_node.op == 'QuantizeV2':
@@ -87,7 +92,6 @@ class ScaleProPagationTransformer(GraphRewriterBase):
 
             requantize_min_value = (requantize_min.attr['value'].tensor.float_val)[0]
             requantize_max_value = (requantize_max.attr['value'].tensor.float_val)[0]
-
             self._create_new_const_node(pre_node_name + '_cac_requantize_min_value',
                                         requantize_min_value, pre_node.input[pre_min_index])
             self._create_new_const_node(pre_node_name + '_cac_requantize_max_value',
