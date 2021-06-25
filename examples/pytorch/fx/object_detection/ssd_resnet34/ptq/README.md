@@ -9,15 +9,17 @@ Our example comes from MLPerf Inference Benchmark Suite
 # Prerequisite
 
 ### 1. Installation
-  Recommend python 3.6 or higher version.
+
+PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
   ```shell
   cd examples/pytorch/fx/object_detection/ssd_resnet34/ptq
   pip install -r requirements.txt
   ```
-  Check your gcc version with command : **gcc -v**
 
-  GCC5 or above is needed.
+Check your gcc version with command : **gcc -v**
+
+GCC5 or above is needed.
 
   ```shell
   cd examples/pytorch/utils/MLPerf/loadgen

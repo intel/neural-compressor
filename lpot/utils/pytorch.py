@@ -80,19 +80,19 @@ def load(checkpoint_dir, model, **kwargs):
             tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
             tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
-            {torch.nn.LayerNorm, torch.nn.Embedding}
+            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
     elif version < '1.8':
         white_list = \
             tq.quantization_mappings.get_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
             tq.quantization_mappings.get_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.Embedding}
+            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
     else:
         white_list = \
             tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
             tq.quantization_mappings.get_default_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.Embedding}
+            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
 
     if tune_cfg['approach'] == "post_training_dynamic_quant":
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])

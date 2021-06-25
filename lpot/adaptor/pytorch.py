@@ -362,19 +362,19 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
             torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if approach == 'post_training_dynamic_quant' else \
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
-            {torch.nn.LayerNorm, torch.nn.Embedding}
+            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
     elif version < '1.8' and white_list is None:
         white_list = \
             torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
             if approach == 'post_training_dynamic_quant' else \
             torch.quantization.quantization_mappings.get_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.Embedding}
+            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
     elif white_list is None:
         white_list = \
             torch.quantization.quantization_mappings.get_default_dynamic_quant_module_mappings() \
             if approach == 'post_training_dynamic_quant' else \
             torch.quantization.quantization_mappings.get_default_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.Embedding}
+            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
 
     _propagate_qconfig_recursively(model, '', op_qcfgs, white_list=white_list)
 
@@ -723,19 +723,19 @@ class PyTorchAdaptor(TemplateAdaptor):
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
                 if self.approach == 'post_training_dynamic_quant' else \
                 tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
-                    {torch.nn.LayerNorm, torch.nn.Embedding}
+                    {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
         elif self.version < '1.8':
             self.white_list = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings() \
                 if self.approach == 'post_training_dynamic_quant' else \
                 tq.quantization_mappings.get_qconfig_propagation_list() - \
-                    {torch.nn.LayerNorm, torch.nn.Embedding}
+                    {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
         else:
             self.white_list = \
                 tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
                 if self.approach == 'post_training_dynamic_quant' else \
                 tq.quantization_mappings.get_default_qconfig_propagation_list() - \
-                    {torch.nn.LayerNorm, torch.nn.Embedding}
+                    {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
 
         # for tensorboard
         self.dump_times = 0
@@ -1018,6 +1018,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
                     type(child) != torch.quantization.stubs.DeQuantStub and not \
                         isinstance(child, torch.nn.LayerNorm) and not \
+                        isinstance(child, torch.nn.InstanceNorm3d) and not \
                         isinstance(child, torch.nn.Embedding):
                 quantizable_ops.append((
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]

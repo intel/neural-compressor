@@ -7,6 +7,8 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 ### 1. Installation
 
+PyTorch 1.8 or higher version is needed with pytorch_fx backend.
+
 ```Shell
 pip install -r requirements.txt
 ```
