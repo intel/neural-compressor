@@ -14,13 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import tensorflow as tf
 
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-
 class FusePadWithConv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv2D
     Pad + Conv2D --> Conv2D
@@ -67,11 +67,14 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             pad_node = graph_info[node_combination[0]].node
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
-            if any(padding_tensor):
+
+            if any(padding_tensor) and tf.version.VERSION != '1.15.0-up3' : # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)
             cur_graph.remove_node(pad_node.input[1])
             conv_node = graph_info[node_combination[1]].node
             Helper.set_attr_int_list(conv_node, "padding_list", padding_tensor)
+            if any(padding_tensor) and tf.version.VERSION == '1.15.0-up3': # pragma: no cover
+                Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
 
         return cur_graph.dump_graph()

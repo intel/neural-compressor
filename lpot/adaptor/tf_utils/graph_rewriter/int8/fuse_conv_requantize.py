@@ -35,7 +35,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
         "QuantizedDepthwiseConv2DWithBiasAndRelu",
         "QuantizedConv2DWithBias",
     ], ['RequantizePerChannel', 'Requantize']]
-    sum_pattern = [["QuantizedConv2DWithBiasSumAndRelu"], ['RequantizePerChannel', 'Requantize']]
+    sum_pattern = [["QuantizedConv2DWithBiasSumAndRelu", "QuantizedConv2DWithBiasReluAndSum"],
+                     ['RequantizePerChannel', 'Requantize']]
 
     def __init__(self, model, device='cpu'):
         super().__init__(model)
@@ -90,6 +91,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["strides"].CopyFrom(quantized_node.attr['strides'])
             if 'padding' in quantized_node.attr:
                 new_node.attr["padding"].CopyFrom(quantized_node.attr['padding'])
+            if 'alpha' in quantized_node.attr:
+                new_node.attr["alpha"].CopyFrom(quantized_node.attr['alpha'])
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
             max_filter_node = self.graph_info[new_node.input[6]].node
@@ -142,7 +145,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
 
             if quantized_node.op == "QuantizedConv2D" or \
-                    quantized_node.op == "QuantizedConv2DWithBias":
+                    quantized_node.op == "QuantizedConv2DWithBias" or \
+                    'alpha' in quantized_node.attr:
                 new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=int8_type))
             else:
                 new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
@@ -199,12 +203,21 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
-            new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+            if "alpha" in quantized_node.attr:
+                new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=int8_type))
+            else:
+                new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
 
             new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
-            if summand_op_type == int8_type:
+            if quantized_node_op == 'QuantizedConv2DWithBiasReluAndSum':
+                new_node.op = 'QuantizedConv2DWithBiasReluAndSumAndRequantize'
+                if "alpha" in quantized_node.attr:
+                    new_node.attr["alpha"].CopyFrom(quantized_node.attr['alpha'])
+
+            elif summand_op_type == int8_type:
                 new_node.op = "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize"
+
             new_node.attr["Tsummand"].CopyFrom(attr_value_pb2.AttrValue(type=summand_op_type))
 
             self.graph_analyzer.replace_single_node(
