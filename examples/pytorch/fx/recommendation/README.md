@@ -19,7 +19,8 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
 # Prerequisite
 
 ### 1. Installation
-  Recommend python 3.6 or higher version.
+
+PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
   ```shell
   # Install dependency

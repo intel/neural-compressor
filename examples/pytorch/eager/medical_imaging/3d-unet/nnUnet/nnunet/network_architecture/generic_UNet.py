@@ -77,7 +77,7 @@ class ConvDropoutNormNonlin(nn.Module):
             x = self.dropout(x)
         version = get_torch_version()
         if version >= '1.7':
-            return self.lrelu(self.instnorm(x))
+            return self.lrelu(self.quant(self.instnorm(self.dequant(x))))
         else:
             return self.quant(self.lrelu(self.instnorm(self.dequant(x))))
 
