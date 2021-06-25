@@ -40,6 +40,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             'Conv2DBiasAddAddRelu': self.apply_conv_biasadd_addn_relu_fusion,
             'Conv2DBiasAddRelu6': self.apply_conv_biasadd_relu_fusion,
             'Conv2DBiasAddRelu': self.apply_conv_biasadd_relu_fusion,
+            'Conv2DBiasAddLeakyRelu': self.apply_conv_biasadd_relu_fusion,
+            'Conv2DBiasAddLeakyReluAddV2': self.apply_conv_biasadd_addn_relu_fusion,
             'Conv2DAddRelu6': self.apply_conv_biasadd_relu_fusion,
             'Conv2DAddRelu': self.apply_conv_biasadd_relu_fusion,
             'DepthwiseConv2dNativeAddRelu6':
@@ -124,6 +126,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         Arguments:
             match_node_name {[type]} -- [description]
         """
+
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
@@ -154,26 +157,37 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 is_relu6 = self.node_name_mapping[relu_node_name].node.op == "Relu6"
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
+                is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
+                quantized_conv_node_op = 'QuantizedDepthwiseConv2DWithBiasAndRelu'
+                if node.op == "Conv2D" or is_leakyrelu:
+                    quantized_conv_node_op = "QuantizedConv2DWithBiasAndRelu"
                 quantized_conv_node = helper.create_node(
-                    "QuantizedConv2DWithBiasAndRelu" if node.op == "Conv2D"
-                    else "QuantizedDepthwiseConv2DWithBiasAndRelu",
+                    quantized_conv_node_op,
                     quantized_node_name, quantized_node_input_names)
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
+                    helper.copy_attr(quantized_conv_node, "alpha",
+                    self.node_name_mapping[relu_node_name].node.attr["alpha"])
                 if node.op != 'DepthwiseConv2dNative' and "padding_list" in node.attr:
                     helper.copy_attr(quantized_conv_node, "padding_list",
                     node.attr["padding_list"])
                 helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
-                input_data_type = dtypes.quint8 if self._find_relu_node(
-                    node) else dtypes.qint8
+                input_data_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
                 helper.set_attr_dtype(quantized_conv_node, "Tinput", input_data_type)
                 helper.set_attr_dtype(quantized_conv_node, "Tfilter",dtypes.qint8)
                 helper.set_attr_dtype(quantized_conv_node, "out_type", dtypes.qint32)
                 self.add_output_graph_node(quantized_conv_node)
-                quantize_down_name = self._add_quantize_down_nodes(
-                    node, quantized_node_name, dtypes.quint8, is_relu6)
-                self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, relu_node_name)
+                if not is_leakyrelu:
+                    quantize_down_name = self._add_quantize_down_nodes(
+                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                    self._intel_cpu_add_dequantize_result_node(
+                        quantize_down_name, relu_node_name)
+                else:
+                    quantize_down_name = self._add_quantize_down_nodes(
+                        node, quantized_node_name, dtypes.qint8, False)
+                    self._intel_cpu_add_dequantize_result_node(
+                        quantize_down_name, relu_node_name, dtype=dtypes.qint8)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -251,7 +265,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
         weight_name = normal_inputs[1]
-        weight_node = self.node_name_mapping[weight_name].node
+
+        third_node = self.node_name_mapping[match_node_name[2]].node
+        forth_node = self.node_name_mapping[match_node_name[3]].node
+        is_leakyrelu_add_fusion = third_node.op == 'LeakyRelu' and forth_node.op.find('Add') != -1
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -273,48 +290,55 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.debug("apply_conv_biasadd_addn_relu_fusion")
 
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
-                bias_node_name = self.node_name_mapping[
-                    match_node_name[1]].node.input[1]
-                relu_node_name = match_node_name[3]
-                is_relu6 = self.node_name_mapping[
-                    relu_node_name].node.op == "Relu6"
 
-                sum_index = 1 if match_node_name[1] == self.node_name_mapping[
-                    match_node_name[2]].node.input[0] else 0
+                bias_node_name = self.node_name_mapping[match_node_name[1]].node.input[1]
+                leaky_offset = 1 if is_leakyrelu_add_fusion else 0
+                if is_leakyrelu_add_fusion:
+                    relu_node_name = match_node_name[2]
+                else:
+                    relu_node_name = match_node_name[3]
+                is_relu6 = self.node_name_mapping[relu_node_name].node.op == "Relu6"
+
+                sum_index = 1 if match_node_name[1 + leaky_offset] == self.node_name_mapping[
+                    match_node_name[2 + leaky_offset]].node.input[0] else 0
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
                 ] + all_input_names[2:] + [
                     self.node_name_mapping[
-                        match_node_name[2]].node.input[sum_index]
+                        match_node_name[2 + leaky_offset]].node.input[sum_index]
                 ] + control_inputs
 
-                quantized_conv_node = helper.create_node(
-                    "QuantizedConv2DWithBiasSumAndRelu", quantized_node_name,
+                node_op = "QuantizedConv2DWithBiasReluAndSum" if is_leakyrelu_add_fusion \
+                            else "QuantizedConv2DWithBiasSumAndRelu"
+
+                quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
-                helper.copy_attr(quantized_conv_node, "strides",
-                                 node.attr["strides"])
-                helper.copy_attr(quantized_conv_node, "padding",
-                                 node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
+                helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
                 if "padding_list" in node.attr:
                     helper.copy_attr(quantized_conv_node, "padding_list",
                                      node.attr["padding_list"])
-                helper.copy_attr(quantized_conv_node, "dilations",
-                                 node.attr["dilations"])
+                helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
                 input_data_type = dtypes.quint8 if self._find_relu_node(
                     node) else dtypes.qint8
-                helper.set_attr_dtype(quantized_conv_node, "Tinput",
-                                      input_data_type)
-                helper.set_attr_dtype(quantized_conv_node, "Tfilter",
-                                      dtypes.qint8)
-                helper.set_attr_dtype(quantized_conv_node, "out_type",
-                                      dtypes.qint32)
+                helper.set_attr_dtype(quantized_conv_node, "Tinput", input_data_type)
+                helper.set_attr_dtype(quantized_conv_node, "Tfilter", dtypes.qint8)
+                helper.set_attr_dtype(quantized_conv_node, "out_type", dtypes.qint32)
+                if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
+                    helper.copy_attr(quantized_conv_node, "alpha",
+                    self.node_name_mapping[relu_node_name].node.attr["alpha"])
                 self.add_output_graph_node(quantized_conv_node)
 
-                quantize_down_name = self._add_quantize_down_nodes(
-                    node, quantized_node_name, dtypes.quint8, is_relu6)
-
-                self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, relu_node_name)
+                if is_leakyrelu_add_fusion:
+                    quantize_down_name = self._add_quantize_down_nodes(
+                                        node, quantized_node_name, dtypes.qint8, False)
+                    self._intel_cpu_add_dequantize_result_node(
+                        quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
+                else:
+                    quantize_down_name = self._add_quantize_down_nodes(
+                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                    self._intel_cpu_add_dequantize_result_node(
+                        quantize_down_name, relu_node_name)
 
             else:
                 new_node = node_def_pb2.NodeDef()

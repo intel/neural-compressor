@@ -603,7 +603,8 @@ class TensorflowMAP(BaseMetric):
         map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
                           11-point interpolated AP, 0 for area under PR curve.
     """
-    def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0):
+    def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0, \
+        map_key='DetectionBoxes_Precision/mAP'):
         from .coco_label_map import category_map
         if anno_path:
             import os
@@ -624,6 +625,7 @@ class TensorflowMAP(BaseMetric):
             [cat for cat in self.category_map]) #index
         self.iou_thrs = iou_thrs
         self.map_points = map_points
+        self.map_key = map_key
 
 
     def update(self, predicts, labels, sample_weight=None):
@@ -731,7 +733,7 @@ class TensorflowMAP(BaseMetric):
                 for key, value in iter(box_metrics.items())
             }
 
-            return box_metrics['DetectionBoxes_Precision/mAP']
+            return box_metrics[self.map_key]
 
 @metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowCOCOMAP(TensorflowMAP):
@@ -743,8 +745,9 @@ class TensorflowCOCOMAP(TensorflowMAP):
                         Set to "0.5:0.05:0.95" for standard COCO thresholds.
         map_points (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.
     """
-    def __init__(self, anno_path=None, iou_thrs=None, map_points=None):
-        super(TensorflowCOCOMAP, self).__init__(anno_path, iou_thrs, map_points)
+    def __init__(self, anno_path=None, iou_thrs=None, map_points=None, \
+        map_key='DetectionBoxes_Precision/mAP'):
+        super(TensorflowCOCOMAP, self).__init__(anno_path, iou_thrs, map_points, map_key)
         self.iou_thrs = '0.5:0.05:0.95'
         self.map_points = 101
 
@@ -757,8 +760,9 @@ class TensorflowVOCMAP(TensorflowMAP):
         iou_thrs (float or str): Intersection over union threshold. Set to 0.5.
         map_points (int): The way to calculate mAP. Set to 0 for area under PR curve.
     """
-    def __init__(self, anno_path=None, iou_thrs=None, map_points=None):
-        super(TensorflowVOCMAP, self).__init__(anno_path, iou_thrs, map_points)
+    def __init__(self, anno_path=None, iou_thrs=None, map_points=None, \
+        map_key='DetectionBoxes_Precision/mAP'):
+        super(TensorflowVOCMAP, self).__init__(anno_path, iou_thrs, map_points, map_key)
         self.iou_thrs = 0.5
         self.map_points = 0
 

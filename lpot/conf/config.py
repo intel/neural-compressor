@@ -238,7 +238,8 @@ transform_schema = Schema({
     Optional('ResizeWithRatio'):{
         Optional('min_dim'): int,
         Optional('max_dim'): int,
-        Optional('padding'): bool
+        Optional('padding'): bool,
+        Optional('constant_value'): int
     },
     Optional('CropToBoundingBox'): {
         'offset_height': int,
@@ -658,7 +659,8 @@ schema = Schema({
                     Optional('map_points', default=0): And(int, lambda s: s in [0, 11, 101])
                 },
                 Optional('COCOmAP'): {
-                    Optional('anno_path'): str
+                    Optional('anno_path'): str,
+                    Optional('map_key', default='DetectionBoxes_Precision/mAP'): str
                 },
                 Optional('VOCmAP'): {
                     Optional('anno_path'): str

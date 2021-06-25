@@ -188,14 +188,17 @@ class QuantizeNodeBase():
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
-        if node.op in ("Relu", "Relu6") or node.op.find("AndRelu") != -1:
+        if node.op in ("Relu", "Relu6") or \
+            (node.op.find("AndRelu") != -1 and 'alpha' not in node.attr):
+            return True
+        elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
         elif (node.op.find("QuantizedConv") != -1
               or node.op.find("QuantizedDepthwiseConv") != -1 or
               node.op.find("QuantizedMatMul") != -1
-              ) and node.op.find("Relu") == -1:
+              ) and (node.op.find("Relu") == -1 or 'alpha' in node.attr):
             return False
         elif self._need_to_check(node.op):
             input_node = self.node_name_mapping[helper.node_name_from_input(
@@ -266,8 +269,7 @@ class QuantizeNodeBase():
                 self.node_name_mapping[original_node].node.input[0]))
         input_names = []
         min_max_names = []
-        for each_input_name in self.node_name_mapping[
-                original_node].node.input[:1]:
+        for each_input_name in self.node_name_mapping[original_node].node.input[:1]:
             if each_input_name[0] == '^':
                 continue
             input_node_name = helper.node_name_from_input(each_input_name)
@@ -283,8 +285,7 @@ class QuantizeNodeBase():
                 elif self.output_node_maps[input_node_name].op == "Dequantize":
                     dtype = dtypes.DType(
                         self.output_node_maps[input_node_name].attr["T"].type)
-                elif self._find_relu_node(
-                        self.node_name_mapping[original_node].node):
+                elif self._find_relu_node(self.node_name_mapping[original_node].node):
                     dtype = dtypes.quint8
                 else:
                     dtype = dtypes.qint8
@@ -560,12 +561,10 @@ class QuantizeNodeBase():
                 [original_input_name, min_input_name, max_input_name])
 
         helper.set_attr_dtype(quantize_input_node, "T", dtype)
-
         helper.set_attr_string(quantize_input_node, "mode",
                                b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
         if not self.is_asymmetric:
-            helper.set_attr_string(quantize_input_node, "round_mode",
-                                   b"HALF_TO_EVEN")
+            helper.set_attr_string(quantize_input_node, "round_mode", b"HALF_TO_EVEN")
         # if FLAGS.model_name in ["wide_deep_large_ds"]:
         #    set_attr_string(quantize_input_node, "mode", b"MIN_FIRST")
         # else:

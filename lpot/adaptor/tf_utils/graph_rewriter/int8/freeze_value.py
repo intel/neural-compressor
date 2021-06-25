@@ -138,14 +138,16 @@ class FreezeValueTransformer(GraphRewriterBase):
 
             if key not in res:
                 res[key] = []
-            # Avoid the out of the index error.
+
             if target_min_index > len(temp_min[key]) - 1:
                 target_min_index = len(temp_min[key]) - 1
-
             res[key].append(sorted(temp_min[key])[target_min_index])
 
         for key in temp_max:
             target_max_index = int(np.floor(len(temp_max[key]) * self.threshold)) - 1
+
+            if target_max_index > len(temp_max[key]) - 1:
+                target_max_index = len(temp_max[key]) - 1
 
             res[key].append(sorted(temp_max[key])[target_max_index])
 

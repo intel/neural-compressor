@@ -446,10 +446,11 @@ class ResizeWithRatio(BaseTransform):
         tuple of processed image and label
     """
  
-    def __init__(self, min_dim=800, max_dim=1365, padding=False):
+    def __init__(self, min_dim=800, max_dim=1365, padding=False, constant_value=0):
         self.min_dim = min_dim
         self.max_dim = max_dim
         self.padding = padding
+        self.constant_value = constant_value
 
     def __call__(self, sample):
         image, label = sample
@@ -471,9 +472,13 @@ class ResizeWithRatio(BaseTransform):
             pad_param = [[(self.max_dim-h)//2, self.max_dim-h-(self.max_dim-h)//2],
                          [(self.max_dim-w)//2, self.max_dim-w-(self.max_dim-w)//2],
                          [0, 0]]
-            bbox = np.divide(np.array(bbox) * [h, w, h, w] + [(self.max_dim-h)//2, \
-                (self.max_dim-w)//2, (self.max_dim-h)//2, (self.max_dim-w)//2], self.max_dim)
-            image = np.pad(image, pad_param, mode='constant', constant_values=0)
+            if not isinstance(bbox, np.ndarray):
+                bbox = np.array(bbox)
+            resized_box = bbox * [height, width, height, width] * scale
+            moved_box = (resized_box + [(self.max_dim-h)//2, (self.max_dim-w)//2, \
+                (self.max_dim-h)//2, (self.max_dim-w)//2])
+            bbox = moved_box / [self.max_dim, self.max_dim, self.max_dim, self.max_dim]
+            image = np.pad(image, pad_param, mode='constant', constant_values=self.constant_value)
         return image, (bbox, str_label, int_label, image_id)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
@@ -495,10 +500,11 @@ class TensorflowResizeWithRatio(BaseTransform):
         tuple of processed image and label
     """
  
-    def __init__(self, min_dim=800, max_dim=1365, padding=False):
+    def __init__(self, min_dim=800, max_dim=1365, padding=False, constant_value=0):
         self.min_dim = min_dim
         self.max_dim = max_dim
         self.padding = padding
+        self.constant_value = constant_value
 
     def __call__(self, sample):
         image, label = sample
@@ -526,9 +532,11 @@ class TensorflowResizeWithRatio(BaseTransform):
                 pad_param = [[(self.max_dim-h)//2, self.max_dim-h-(self.max_dim-h)//2],
                              [(self.max_dim-w)//2, self.max_dim-w-(self.max_dim-w)//2],
                              [0, 0]]
-                bbox = tf.math.divide(bbox * [h, w, h, w] + [(self.max_dim-h)//2, \
-                    (self.max_dim-w)//2, (self.max_dim-h)//2, (self.max_dim-w)//2], self.max_dim)
-                image = tf.pad(image, pad_param)
+                resized_box = bbox * [height, width, height, width] * scale
+                moved_box = (resized_box + [(self.max_dim-h)//2, (self.max_dim-w)//2, \
+                    (self.max_dim-h)//2, (self.max_dim-w)//2])
+                bbox = moved_box / [self.max_dim, self.max_dim, self.max_dim, self.max_dim]
+                image = tf.pad(image, pad_param, constant_values=self.constant_value)
         else:
             transform = ResizeWithRatio(self.min_dim, self.max_dim, self.padding)
             image, (bbox, str_label, int_label, image_id) = transform(sample)
