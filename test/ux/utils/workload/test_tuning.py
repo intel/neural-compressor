@@ -33,10 +33,12 @@ class TestStrategyConfig(unittest.TestCase):
             "name": "mse",
             "accuracy_weight": 0.5,
             "latency_weight": 1.0,
+            "sigopt_api_token": "abcdefg",
         }
         strategy = Strategy(data)
 
         self.assertEqual(strategy.name, "mse")
+        self.assertEqual(strategy.sigopt_api_token, "abcdefg")
         self.assertEqual(strategy.accuracy_weight, 0.5)
         self.assertEqual(strategy.latency_weight, 1.0)
 
@@ -45,6 +47,7 @@ class TestStrategyConfig(unittest.TestCase):
         strategy = Strategy()
 
         self.assertEqual(strategy.name, "basic")
+        self.assertIsNone(strategy.sigopt_api_token)
         self.assertIsNone(strategy.accuracy_weight)
         self.assertIsNone(strategy.latency_weight)
 
@@ -52,6 +55,7 @@ class TestStrategyConfig(unittest.TestCase):
         """Test Strategy config serializer."""
         data = {
             "name": "bayesian",
+            "sigopt_api_token": "abcdefg",
             "accuracy_weight": 0.5,
             "latency_weight": 1.0,
         }
@@ -62,6 +66,7 @@ class TestStrategyConfig(unittest.TestCase):
             result,
             {
                 "name": "bayesian",
+                "sigopt_api_token": "abcdefg",
                 "accuracy_weight": 0.5,
                 "latency_weight": 1.0,
             },

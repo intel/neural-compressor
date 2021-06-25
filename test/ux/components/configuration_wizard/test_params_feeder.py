@@ -570,7 +570,7 @@ class TestParamsFeeder(unittest.TestCase):
 
     @patch(
         "lpot.ux.components.configuration_wizard.params_feeder.STRATEGIES",
-        {"strategy1": {}, "strategy2": {}, "strategy3": {}},
+        {"strategy1": {}, "strategy2": {}, "strategy3": {}, "sigopt": {}},
     )
     @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
     def test_get_strategies(

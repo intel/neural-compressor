@@ -161,6 +161,8 @@ class Feeder:
         help_dict = load_help_lpot_params("strategies")
         strategies = []
         for strategy in STRATEGIES.keys():
+            if "sigopt" == strategy:
+                continue
             help_msg = help_dict.get(f"__help__{strategy}", "")
             strategies.append({"name": strategy, "help": help_msg})
         return strategies

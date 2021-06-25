@@ -29,6 +29,7 @@ class Strategy(JsonSerializer):
         super().__init__()
         # [Required] One of lpot.strategy.STRATEGIES
         self.name: str = data.get("name", "basic")
+        self.sigopt_api_token: Optional[str] = data.get("sigopt_api_token", None)
 
         self.accuracy_weight: Optional[float] = data.get("accuracy_weight", None)
         self.latency_weight: Optional[float] = data.get("latency_weight", None)
