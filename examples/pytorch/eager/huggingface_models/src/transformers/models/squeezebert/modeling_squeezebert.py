@@ -50,6 +50,14 @@ SQUEEZEBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 ]
 
 
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:
+        assert False, 'Got an unknow version of torch: {}'.format(e)
+    return torch_version
+
+
 class SqueezeBertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
 
@@ -139,10 +147,18 @@ class ConvDropoutLayerNorm(nn.Module):
         self.conv1d = nn.Conv1d(in_channels=cin, out_channels=cout, kernel_size=1, groups=groups)
         self.layernorm = SqueezeBertLayerNorm(cout)
         self.dropout = nn.Dropout(dropout_prob)
+        self.torch_version = get_torch_version()
+        if self.torch_version >= '1.6':
+            self.quant = QuantStub()
+            self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
+        if self.torch_version >= '1.6':
+            hidden_states = self.quant(hidden_states)
         x = self.conv1d(hidden_states)
         x = self.dropout(x)
+        if self.torch_version >= '1.6':
+            x = self.dequant(x)
         x = x + input_tensor
         x = self.layernorm(x)
         return x
@@ -157,9 +173,17 @@ class ConvActivation(nn.Module):
         super().__init__()
         self.conv1d = nn.Conv1d(in_channels=cin, out_channels=cout, kernel_size=1, groups=groups)
         self.act = ACT2FN[act]
+        self.torch_version = get_torch_version()
+        if self.torch_version >= '1.6':
+            self.quant = QuantStub()
+            self.dequant = DeQuantStub()
 
     def forward(self, x):
+        if self.torch_version >= '1.6':
+            x = self.quant(x)
         output = self.conv1d(x)
+        if self.torch_version >= '1.6':
+            output = self.dequant(output)
         return self.act(output)
 
 
@@ -188,6 +212,11 @@ class SqueezeBertSelfAttention(nn.Module):
 
         self.matmul_qk = MatMulWrapper()
         self.matmul_qkv = MatMulWrapper()
+
+        self.torch_version = get_torch_version()
+        if self.torch_version >= '1.6':
+            self.quant = QuantStub()
+            self.dequant = DeQuantStub()
 
     def transpose_for_scores(self, x):
         """
@@ -224,6 +253,8 @@ class SqueezeBertSelfAttention(nn.Module):
 
         The attention_mask data layout is [N, W], and it does not need to be transposed.
         """
+        if self.torch_version >= '1.6':
+            hidden_states = self.quant(hidden_states)
         mixed_query_layer = self.query(hidden_states)
         mixed_key_layer = self.key(hidden_states)
         mixed_value_layer = self.value(hidden_states)
@@ -233,6 +264,10 @@ class SqueezeBertSelfAttention(nn.Module):
         value_layer = self.transpose_for_scores(mixed_value_layer)
 
         # Take the dot product between "query" and "key" to get the raw attention scores.
+        if self.torch_version >= '1.6':
+            query_layer = self.dequant(query_layer)
+            key_layer = self.dequant(key_layer)
+            value_layer = self.dequant(value_layer)
         attention_score = self.matmul_qk(query_layer, key_layer)
         attention_score = attention_score / math.sqrt(self.attention_head_size)
         # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
