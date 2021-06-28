@@ -139,7 +139,12 @@ class Pruning:
                                             self._model, \
                                             pruner,
                                             self.cfg.pruning.approach.weight_compression))
-            # TODO, add gradient_sensativity
+                if pruner.prune_type == 'pattern_lock':
+                    self.pruners.append(PRUNERS['PatternLock'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
+# TODO, add gradient_sensativity
 
         if self._train_dataloader is None and self._pruning_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader

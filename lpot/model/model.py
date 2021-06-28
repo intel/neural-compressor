@@ -849,6 +849,21 @@ class PyTorchBaseModel(BaseModel):
                 state_dict[name] = new_tensor
         self._model.load_state_dict(state_dict)
 
+    def prune_weights_(self, tensor_name, mask):
+        """ Prune weight in place according to tensor_name with mask
+
+        Args:
+            tensor_name (string): weight name
+            mask (tensor): pruning mask
+
+        Returns:
+
+        """
+        state_dict = self._model.state_dict()
+        for name in state_dict:
+            if name == tensor_name:
+                state_dict[name].masked_fill_(mask, 0.)
+
     def get_gradient(self, tensor_name):
         """ Get gradients of specific tensor
 

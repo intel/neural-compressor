@@ -255,7 +255,7 @@ python run_clm.py \
 >
 > dataset_config_name : just for dialogpt: wikitext-2-raw-v1.
 
-# Start to lpot tune
+# Start to lpot tune for Model Quantization
 ```shell
 cd examples/pytorch/eager/huggingface_models
 ```
@@ -298,6 +298,40 @@ sh run_tuning.sh --topology=topology_name --input_model=/path/to/checkpoint/dir
 > topology_name can be one of {dialogpt_wikitext, reformer_crime_and_punishment}
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir 
+
+
+# Start to lpot tune for Model Pruning
+
+Below are example NLP tasks for model pruning together with task specific fine-tuning.
+It requires the pre-trained bert-base sparsity model `Intel/bert-base-uncased-sparse-70-unstructured` from Intel Huggingface portal.
+The pruning configuration is specified in yaml file i.e. prune.yaml.
+
+## MNLI task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_prune.py --task_name mnli --max_length 128
+       --model_name_or_path Intel/bert-base-uncased-sparse-70-unstructured
+       --per_device_train_batch_size 32 --learning_rate 5e-5 --num_train_epochs 3 --output_dir /path/to/output_dir
+       --prune --config prune.yaml --output_model /path/to/output/model.pt --seed 5143
+```
+
+## SST-2 task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_prune.py --task_name sst2 --max_length 128
+       --model_name_or_path Intel/bert-base-uncased-sparse-70-unstructured
+       --per_device_train_batch_size 32 --learning_rate 2e-5 --num_train_epochs 3 --output_dir /path/to/output_dir
+       --prune --config prune.yaml --output_model /path/to/output/model.pt --seed 5143
+```
+
+## QnA task
+```bash
+python examples/question-answering/run_qa_no_trainer_prune.py
+       --model_name_or_path Intel/bert-base-uncased-sparse-70-unstructured --dataset_name squad
+       --max_seq_length 384 --doc_stride 128 --weight_decay 0.01 --num_warmup_steps 900 --learning_rate 1e-4
+       --num_train_epochs 2 --per_device_train_batch_size 12 --output_dir /path/to/output_dir
+       --prune --config prune.yaml --output_model /path/to/output/model.pt --seed 5143
+```
 
 
 Examples of enabling Intel® Low Precision Optimization Tool
