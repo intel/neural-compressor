@@ -649,6 +649,44 @@ class TestTFTransorm(unittest.TestCase):
         with self.assertRaises(ValueError):
             TestTFTransorm.transforms["RandomResizedCrop"](**args)
 
+    def testSquadV1(self):
+        import urllib
+        import json
+        vocab_url = "https://raw.githubusercontent.com/microsoft/SDNet/master/bert_vocab_files/bert-large-uncased-vocab.txt"
+        urllib.request.urlretrieve(vocab_url, "./vocab.txt")
+        label = [{
+            "paragraphs":[
+                {'context': 
+                    'Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season.',
+                'qas': [{
+                    'answers': [
+                        {'answer_start': 177, 'text': 'Denver Broncos'}, 
+                        {'answer_start': 177, 'text': 'Denver Broncos'}, 
+                        {'answer_start': 177, 'text': 'Denver Broncos'}], 
+                    'question': 'Which NFL team represented the AFC at Super Bowl 50?', 
+                    'id': '56be4db0acb8001400a502ec'}]
+                }
+            ]
+        }]
+        fake_json = json.dumps({'data': label})
+        with open('dev.json', 'w') as f:
+            f.write(fake_json)
+        args = {
+            'label_file': './dev.json',
+            'vocab_file': './vocab.txt'
+        }
+        post_transforms = TRANSFORMS('tensorflow', 'postprocess')
+        squadv1 = post_transforms['SquadV1'](**args)
+        
+        preds_0 = np.array([1000000000])
+        preds_1 = np.random.uniform(low=-12.3, high=6.8, size=(1,384))
+        preds_2 = np.random.uniform(low=-10.8, high=7.4, size=(1,384))
+        preds = [preds_0, preds_1, preds_2]
+        result = squadv1((preds, label))
+        self.assertTrue(result[1][0]['paragraphs'][0]['qas'][0]['id'] in result[0])
+        os.remove('dev.json')
+        os.remove('vocab.txt')
+ 
 class TestAlignImageChannel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

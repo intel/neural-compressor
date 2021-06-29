@@ -494,6 +494,67 @@ class TestDataloader(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (1, 256, 256, 3))
 
+    def test_tensorflow_bert(self):
+        import collections
+        import tensorflow as tf
+        import json
+        label = [{
+            "paragraphs":[
+                {'context': 
+                    'Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season.',
+                'qas': [{
+                    'answers': [
+                        {'answer_start': 177, 'text': 'Denver Broncos'}, 
+                        {'answer_start': 177, 'text': 'Denver Broncos'}, 
+                        {'answer_start': 177, 'text': 'Denver Broncos'}], 
+                    'question': 'Which NFL team represented the AFC at Super Bowl 50?', 
+                    'id': '56be4db0acb8001400a502ec'}]
+                }
+            ]
+        }]
+        fake_json = json.dumps({'data': label, 'version': '1.1'})
+        with open('dev.json', 'w') as f:
+            f.write(fake_json)
+        unique_id = 1000000000
+        example_index = 0
+        doc_span_index = 0
+        tokens = ['[SEP]', 'super', 'bowl', '50', 'was', 'an', 'american', 'football', 'game', 'to', 'determine', \
+            'the', 'champion', 'of', 'the', 'national', 'football', 'league', '(', 'nfl', ')', 'for', 'the', \
+            '2015', 'season', '.', '[SEP]']
+        token_to_orig_map = {13: 0, 14: 1, 15: 2, 16: 3, 17: 4, 18: 5, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, \
+            26: 13, 27: 14, 28: 15, 29: 16, 30: 17, 31: 17, 32: 17, 33: 18, 34: 19, 35: 20, 36: 21, 37: 21, \
+            38: 22, 39: 23, 40: 24, 41: 25}
+        token_is_max_context = {13: True, 14: True, 15: True, 16: True, 17: True, 18: True, 19: True, 20: True, 21: True, 22: True, \
+            23: True, 24: True, 25: True, 26: True, 27: True, 28: True, 29: True, 30: True, 31: True, 32: True, 33: True, 34: True, \
+            35: True, 36: True, 37: True, 38: True, 39: True, 40: True, 41: True}
+        input_ids = [101, 2029, 5088, 2136, 3421, 1996, 10511, 2012, 3565, 4605, 2753, 1029, 102, 3565, 4605, 2753,\
+            1007, 2005, 1996, 2325, 2161, 1012, 1996, 2137, 2374, 3034, 1006]
+        input_mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        segment_ids = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        with tf.io.TFRecordWriter('./test.record') as writer:
+            features = collections.OrderedDict()
+            features["unique_ids"] = tf.train.Feature(
+                int64_list=tf.train.Int64List(value=list([unique_id])))
+            features["input_ids"] = tf.train.Feature(
+                int64_list=tf.train.Int64List(value=list(input_ids)))
+            features["input_mask"] = tf.train.Feature(
+                int64_list=tf.train.Int64List(value=list(input_mask)))
+            features["segment_ids"] = tf.train.Feature(
+                int64_list=tf.train.Int64List(value=list(segment_ids)))
+            tf_example = tf.train.Example(features=tf.train.Features(feature=features))
+            writer.write(tf_example.SerializeToString())
+        eval_dataset = create_dataset(
+            'tensorflow',
+            {'bert':{'root':'test.record', 'label_file': './dev.json'}},
+            None,
+            None)
+        dataloader = DATALOADERS['tensorflow'](dataset=eval_dataset, batch_size=1)
+        for inputs, labels in dataloader:
+            self.assertEqual(inputs[1], 1)
+            self.assertEqual(len(labels), 1)
+        os.remove('test.record')
+        os.remove('dev.json')
+
     def test_onnx_imagenet(self):
         os.makedirs('val', exist_ok=True)
         os.makedirs('val/0', exist_ok=True)
