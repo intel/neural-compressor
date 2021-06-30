@@ -33,6 +33,7 @@ from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
 from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
 from .dummy_biasadd import InjectDummyBiasAddOptimizer
+from .convert_add_to_biasadd import ConvertAddToBiasAddOptimizer
 from .grappler_pass import GrapplerOptimizer
 
 class PreOptimization():
@@ -112,6 +113,9 @@ class PreOptimization():
         #TODO we need to remove below optimizer once the TF enabled the single
         # matmul op quantization
         self._tmp_graph_def = InjectDummyBiasAddOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = ConvertAddToBiasAddOptimizer(
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FuseTransposeReshapeOptimizer(
