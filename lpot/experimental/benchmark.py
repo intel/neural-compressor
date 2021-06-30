@@ -113,7 +113,7 @@ class Benchmark(object):
                 instance_log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
-            else:
+            else:  # pragma: no cover
                 # (TODO) should also add log to win32 benchmark
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
         
@@ -123,7 +123,7 @@ class Benchmark(object):
         set_env_var('LPOT_ENV_CONF', True, overwrite_existing=True)
         if sys.platform in ['linux']:
             p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
-        elif sys.platform in ['win32']:
+        elif sys.platform in ['win32']:  # pragma: no cover
             p = subprocess.Popen(multi_instance_cmd, start_new_session=True, shell=True) # nosec
         try:
             p.communicate()
@@ -134,7 +134,7 @@ class Benchmark(object):
         if sys.platform in ['linux'] and os.system('numactl --show >/dev/null 2>&1') == 0:
             return 'OMP_NUM_THREADS={} numactl --localalloc --physcpubind={}'.format(\
                 len(core_list), ','.join(core_list.astype(str)))
-        elif sys.platform in ['win32']:
+        elif sys.platform in ['win32']:  # pragma: no cover
             # (TODO) should we move the hw_info from ux?
             from lpot.ux.utils.hw_info import get_number_of_sockets
             num_of_socket = int(get_number_of_sockets())
