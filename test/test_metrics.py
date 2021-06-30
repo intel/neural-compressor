@@ -3,6 +3,7 @@ import numpy as np
 import unittest
 from lpot.metric import METRICS
 from lpot.experimental.metric.f1 import evaluate
+from lpot.experimental.metric.evaluate_squad import evaluate as evaluate_squad
 from lpot.experimental.metric import bleu
 
 class TestMetrics(unittest.TestCase):
@@ -55,6 +56,17 @@ class TestMetrics(unittest.TestCase):
         preds = {'56be4db0acb8001400a502ec': 'Denver Broncos'}
         f1 = evaluate(preds, label)
         self.assertEqual(f1, 100.)
+        dataset = [{'paragraphs':\
+            [{'qas':[{'answers': [{'answer_start': 177, 'text': 'Denver Broncos'}, \
+                                  {'answer_start': 177, 'text': 'Denver Broncos'}, \
+                                  {'answer_start': 177, 'text': 'Denver Broncos'}], \
+                      'question': 'Which NFL team represented the AFC at Super Bowl 50?', \
+                      'id': '56be4db0acb8001400a502ec'}]}]}]
+        predictions = {'56be4db0acb8001400a502ec': 'Denver Broncos'}
+        f1_squad = evaluate_squad(dataset,predictions)
+        self.assertEqual(f1_squad['f1'], 100.)
+        self.assertEqual(f1_squad['exact_match'], 100.)
+        
 
     def test_pytorch_F1(self):
         metrics = METRICS('pytorch')
