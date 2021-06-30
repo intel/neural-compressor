@@ -112,6 +112,17 @@ class TestMetricConfig(unittest.TestCase):
                 },
             )
 
+    def test_unnamed_metric_serializer(self) -> None:
+        """Test unnamed metric config serializer."""
+        data = {
+            "param": 1,
+            "other param": 2,
+        }
+        metric = Metric(data)
+        result = metric.serialize()
+
+        self.assertDictEqual(result, {})
+
 
 class TestConfigsConfig(unittest.TestCase):
     """Configs config tests."""

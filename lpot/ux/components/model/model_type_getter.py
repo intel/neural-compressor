@@ -27,7 +27,7 @@ def get_model_type(model_path: str) -> str:
     except KeyError:
         try:
             model_type = lpot_get_model_type(model_path)
-        except ValueError:
+        except Exception:
             model_type = "not a model"
         model_type_cache[model_path] = model_type
         return model_type

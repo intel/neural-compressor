@@ -17,6 +17,7 @@
 
 import unittest
 from typing import Any, Dict, List, Optional, Union
+from unittest.mock import MagicMock, patch
 
 from lpot.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
 from lpot.ux.utils.exceptions import ClientErrorException
@@ -36,7 +37,7 @@ class TestParser(unittest.TestCase):
     def _assert_parses_float_failure(self, value: Any) -> None:
         self._assert_parses_failure(value, float)
 
-    def _assert_parses_to_expecte_int(self, value: Any, expected: int) -> None:
+    def _assert_parses_to_expected_int(self, value: Any, expected: int) -> None:
         self._assert_parses_to_expected_type(value, expected, int)
 
     def _assert_parses_int_failure(self, value: Any) -> None:
@@ -117,19 +118,19 @@ class TestValueParser(TestParser):
 
     def test_float_to_int(self) -> None:
         """Test float value parsing to int."""
-        self._assert_parses_to_expecte_int(11.1, 11)
+        self._assert_parses_to_expected_int(11.1, 11)
 
     def test_int_to_int(self) -> None:
         """Test int value parsing."""
-        self._assert_parses_to_expecte_int(11, 11)
+        self._assert_parses_to_expected_int(11, 11)
 
     def test_string_to_int(self) -> None:
         """Test parsing string to int."""
-        self._assert_parses_to_expecte_int("11", 11)
+        self._assert_parses_to_expected_int("11", 11)
 
     def test_string_with_whitespace_to_int(self) -> None:
         """Test parsing string with whitespace to int."""
-        self._assert_parses_to_expecte_int(" \t \t 11 \t \t ", 11)
+        self._assert_parses_to_expected_int(" \t \t 11 \t \t ", 11)
 
     def test_int_parsing_failure(self) -> None:
         """Test parsing failure."""
@@ -254,6 +255,12 @@ class TestTransformParser(TestParser):
             {"dtype": "float32"},
             {"dtype": "float32"},
         )
+
+    def test_parses_empty_data(self) -> None:
+        """Test parsing data without transforms."""
+        parsed = self.parser.parse({})
+
+        self.assertIsNone(parsed.get("transform", None))
 
     def _build_input_with_transform(self, name: str, params: Optional[dict]) -> dict:
         """Build fake data with single Transform."""
@@ -499,6 +506,72 @@ class TestDataloaderParser(TestParser):
 
         self.assertEqual(q_dataloader_params, expected_params)
         self.assertEqual(eval_dataloader_params, expected_params)
+
+
+class TestEvaluationParser(TestParser):
+    """Test evaluation part of parser."""
+
+    def test_non_positive_cores_per_instance_fails(self) -> None:
+        """Test parsing evaluation with non positive cores per instance."""
+        with self.assertRaisesRegex(
+            ClientErrorException,
+            "At least one core per instance must be used.",
+        ):
+            self.parser.parse(
+                {
+                    "evaluation": {
+                        "cores_per_instance": 0,
+                    },
+                },
+            )
+
+    @patch("lpot.ux.components.configuration_wizard.configuration_parser.HWInfo")
+    def test_too_big_num_cores_fails(self, mocked_hw_info: MagicMock) -> None:
+        """Test parsing evaluation with non positive cores per instance."""
+        mocked_hw_info.return_value.cores = 4
+        with self.assertRaisesRegex(
+            ClientErrorException,
+            "Requested 10 cores per instance, while only 4 available.",
+        ):
+            self.parser.parse(
+                {
+                    "evaluation": {
+                        "cores_per_instance": 10,
+                    },
+                },
+            )
+
+    def test_non_positive_instances_fails(self) -> None:
+        """Test parsing evaluation with non positive cores per instance."""
+        with self.assertRaisesRegex(
+            ClientErrorException,
+            "At least one instance must be used.",
+        ):
+            self.parser.parse(
+                {
+                    "evaluation": {
+                        "cores_per_instance": 1,
+                        "instances": 0,
+                    },
+                },
+            )
+
+    @patch("lpot.ux.components.configuration_wizard.configuration_parser.HWInfo")
+    def test_too_big_instances_fails(self, mocked_hw_info: MagicMock) -> None:
+        """Test parsing evaluation with non positive cores per instance."""
+        mocked_hw_info.return_value.cores = 12
+        with self.assertRaisesRegex(
+            ClientErrorException,
+            "Attempted to use 4 instances, while only 3 allowed.",
+        ):
+            self.parser.parse(
+                {
+                    "evaluation": {
+                        "cores_per_instance": 4,
+                        "instances": 4,
+                    },
+                },
+            )
 
 
 if __name__ == "__main__":

@@ -12,19 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Logger test."""
 
-"""Constant values."""
+import logging
+import unittest
 
-github_info = {
-    "user": "intel",
-    "repository": "lpot",
-    "tag": "v1.5",
-}
+from lpot.ux.utils.logger import change_log_level, log
 
 
-class Precisions:
-    """Precisions enumeration."""
+class TestLogger(unittest.TestCase):
+    """Logger tests."""
 
-    INT8 = "int8"
-    FP32 = "fp32"
-    MIXED = "bf16,fp32"
+    def test_changing_log_level(self) -> None:
+        """Test default values."""
+        change_log_level(logging.INFO)
+        self.assertEqual(logging.INFO, log.level)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -365,6 +365,42 @@ class TestTuningConfig(unittest.TestCase):
         with self.assertRaises(ClientErrorException):
             tuning.set_max_trials("abc")
 
+    def test_set_performance_only(self) -> None:
+        """Test setting performance_only in Tuning config."""
+        tuning = Tuning()
+        tuning.set_performance_only(True)
+        self.assertIsNotNone(tuning.exit_policy)
+        self.assertTrue(tuning.exit_policy.performance_only)
+
+    def test_set_performance_only_with_exit_policy(self) -> None:
+        """Test overwriting performance_only in Tuning config."""
+        tuning = Tuning(
+            {
+                "exit_policy": {
+                    "performance_only": "true",
+                },
+            },
+        )
+        self.assertIsNotNone(tuning.exit_policy)
+        self.assertTrue(tuning.exit_policy.performance_only)
+
+        tuning.set_performance_only(False)
+        self.assertIsNotNone(tuning.exit_policy)
+        self.assertFalse(tuning.exit_policy.performance_only)
+
+    def test_set_performance_only_from_string(self) -> None:
+        """Test overwriting performance_only in Tuning config."""
+        tuning = Tuning()
+        tuning.set_performance_only("true")
+        self.assertIsNotNone(tuning.exit_policy)
+        self.assertTrue(tuning.exit_policy.performance_only)
+
+    def test_set_performance_only_invalid_string(self) -> None:
+        """Test overwriting performance_only in Tuning config."""
+        tuning = Tuning()
+        with self.assertRaises(ClientErrorException):
+            tuning.set_performance_only("abc")
+
     def test_set_random_seed(self) -> None:
         """Test setting random_seed in Tuning config."""
         tuning = Tuning()

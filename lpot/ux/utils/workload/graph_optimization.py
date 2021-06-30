@@ -36,20 +36,12 @@ class GraphOptimization(JsonSerializer):
 
     def set_precisions(self, precisions: Union[str, List[str]]) -> None:
         """Update graph_optimization precisions in config."""
-        try:
-
-            if isinstance(precisions, str):
-                self.precisions = precisions.replace(" ", "")
-            elif isinstance(precisions, list):
-                self.precisions = ",".join(precision.strip() for precision in precisions)
-            else:
-                raise ClientErrorException(
-                    "Precision should be comma separated string with "
-                    "precisions or list of string precisions",
-                )
-        except ValueError:
+        if isinstance(precisions, str):
+            self.precisions = precisions.replace(" ", "")
+        elif isinstance(precisions, list):
+            self.precisions = ",".join(precision.strip() for precision in precisions)
+        else:
             raise ClientErrorException(
-                "The precisions value is not valid. "
-                "Precision should be comma separated string with precisions or "
-                "list of string precisions",
+                "Precision should be comma separated string with "
+                "precisions or list of string precisions",
             )

@@ -14,20 +14,18 @@
 # limitations under the License.
 """Default Model Reader."""
 
+from abc import ABC, abstractmethod
+
 from ..graph import Graph
 
 
-class Reader:
+class Reader(ABC):
     """Empty model reader."""
 
-    def __init__(self) -> None:
-        """Construct the reader."""
-        pass
-
+    @abstractmethod
     def read(self, model_path: str) -> Graph:
         """Read a graph."""
-        raise NotImplementedError
 
+    @abstractmethod
     def ensure_model_readable(self, model_path: str) -> None:
         """Throw Exception if can't read model."""
-        raise NotImplementedError

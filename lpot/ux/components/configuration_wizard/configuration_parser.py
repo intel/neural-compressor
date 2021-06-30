@@ -121,7 +121,8 @@ class ConfigurationParser:
 
         if instances > max_number_of_instances:
             raise ClientErrorException(
-                f"Attempted to use {instances}," f" while only {max_number_of_instances} allowed.",
+                f"Attempted to use {instances} instances, "
+                f"while only {max_number_of_instances} allowed.",
             )
 
         if "evaluation" in data:

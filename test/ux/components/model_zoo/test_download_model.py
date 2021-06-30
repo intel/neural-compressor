@@ -12,26 +12,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Consts test."""
+"""Download model test."""
 
 import unittest
+from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.consts import github_info
+from lpot.ux.components.model_zoo.download_model import download_model
 
 
-class TestConsts(unittest.TestCase):
-    """Consts tests."""
+class TestDownloadModel(unittest.TestCase):
+    """DownloadModel tests."""
 
-    def __init__(self, *args: str, **kwargs: str) -> None:
-        """Consts tests constructor."""
-        super().__init__(*args, **kwargs)
+    @patch("lpot.ux.components.model_zoo.download_model.Downloader")
+    def test_download_model(self, downloader_mock: MagicMock) -> None:
+        """Test download_model."""
+        data = {
+            "id": "some request id",
+        }
 
-    def test_github_info(self) -> None:
-        """Test if path is correctly recognized as hidden."""
-        self.assertIs(type(github_info), dict)
-        self.assertEqual(github_info.get("user"), "intel")
-        self.assertEqual(github_info.get("repository"), "lpot")
-        self.assertEqual(github_info.get("tag"), "v1.5")
+        download_model(data)
+
+        downloader_mock.assert_called_once_with(data)
+        downloader_mock.return_value.download_model.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -18,7 +18,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from lpot.ux.components.graph.graph_reader import GraphReader
-from lpot.ux.components.graph.reader.reader import Reader
 from lpot.ux.utils.exceptions import ClientErrorException
 
 
@@ -38,24 +37,6 @@ class TestGraphReader(unittest.TestCase):
         with self.assertRaises(ClientErrorException):
             graph_reader.ensure_model_readable("foo.txt")
         mocked_reader_repository_find.assert_called_once_with("foo.txt")
-
-    @patch("lpot.ux.components.graph.reader.reader.Reader.ensure_model_readable")
-    @patch("lpot.ux.components.graph.reader.repository.GraphReaderRepository.find")
-    def test_ensure_model_readable(
-        self,
-        mocked_reader_repository_find: MagicMock,
-        mocked_reader_ensure_model_readable: MagicMock,
-    ) -> None:
-        """Test ensure_model_readable."""
-        mocked_reader_repository_find.return_value = Reader()
-        mocked_reader_ensure_model_readable.side_effect = ClientErrorException
-
-        graph_reader = GraphReader()
-
-        with self.assertRaises(ClientErrorException):
-            graph_reader.ensure_model_readable("foo.txt")
-        mocked_reader_repository_find.assert_called_once_with("foo.txt")
-        mocked_reader_ensure_model_readable.assert_called_once_with("foo.txt")
 
 
 if __name__ == "__main__":

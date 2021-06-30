@@ -153,7 +153,7 @@ class TestModelConfig(unittest.TestCase):
                 "name": "model_name",
                 "framework": "framework_name",
                 "inputs": ["input"],
-                "outputs": ["predict", "softmax"],
+                "outputs": ["predict"],
             },
         )
         result = model_config.serialize()
@@ -161,7 +161,7 @@ class TestModelConfig(unittest.TestCase):
             "name": "model_name",
             "framework": "framework_name",
             "inputs": "input",
-            "outputs": ["predict", "softmax"],
+            "outputs": "predict",
         }
         self.assertDictEqual(result, expected)
 

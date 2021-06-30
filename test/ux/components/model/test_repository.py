@@ -28,17 +28,30 @@ class TestModelRepository(unittest.TestCase):
         result = ModelRepository.is_model_path(path)
         self.assertTrue(result)
 
-    def test_ckpt_is_model_path(self) -> None:
-        """Test if ckpt file is recognized correctly."""
-        path = "/home/user/model.onnx.ckpt"
-        result = ModelRepository.is_model_path(path)
-        self.assertFalse(result)
-
     def test_mp3_is_model_path(self) -> None:
         """Test if mp3 file is recognized correctly."""
         path = "/home/user/favourite_song.mp3"
         result = ModelRepository.is_model_path(path)
         self.assertFalse(result)
+
+    def test_get_frameworks(self) -> None:
+        """Test getting frameworks."""
+        expected = ["onnxrt", "tensorflow"]
+
+        repository = ModelRepository()
+        actual = repository.get_frameworks()
+
+        self.assertEqual(expected, actual)
+
+    def test_framework_from_path_for_known_model(self) -> None:
+        """Test get_framework_from_path."""
+        actual = ModelRepository.get_framework_from_path("/home/user/model.onnx")
+        self.assertEqual("onnxrt", actual)
+
+    def test_framework_from_path_for_unknown_model(self) -> None:
+        """Test get_framework_from_path."""
+        actual = ModelRepository.get_framework_from_path("/home/user/favourite_song.mp3")
+        self.assertIsNone(actual)
 
 
 if __name__ == "__main__":

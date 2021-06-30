@@ -16,6 +16,7 @@
 
 import unittest
 
+from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.workload.dataloader import Dataloader, Dataset, Filter, LabelBalance, Transform
 
 
@@ -279,6 +280,39 @@ class TestDataloaderConfig(unittest.TestCase):
         self.assertIsNotNone(dataloader.filter)
         self.assertIsNotNone(dataloader.filter.LabelBalance)
         self.assertEqual(dataloader.filter.LabelBalance.size, 1)
+
+    def test_dataloader_constructor_fails_for_multiple_datasets(self) -> None:
+        """Test dataloader config constructor."""
+        data = {
+            "last_batch": "rollover",
+            "batch_size": 2,
+            "dataset": {
+                "TestDataset": {
+                    "dataset_param": "/some/path",
+                    "bool_param": True,
+                    "list_param": ["item1", "item2"],
+                },
+                "TestDataset2": {
+                    "dataset_param": "/some/path",
+                    "bool_param": True,
+                    "list_param": ["item1", "item2"],
+                },
+            },
+            "transform": {
+                "TestTransform": {"shape": [1000, 224, 224, 3], "some_op": True},
+                "AnotherTestTransform": {"shape": [10, 299, 299, 3], "some_op": False},
+            },
+            "filter": {
+                "LabelBalance": {"size": 1},
+            },
+        }
+
+        with self.assertRaisesRegex(
+            ClientErrorException,
+            "There can be specified only one dataset per dataloader. "
+            "Found keys: TestDataset, TestDataset2.",
+        ):
+            Dataloader(data)
 
     def test_dataloader_constructor_defaults(self) -> None:
         """Test dataloader config constructor defaults."""

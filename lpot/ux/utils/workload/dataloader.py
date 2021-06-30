@@ -108,7 +108,7 @@ class Dataloader(JsonSerializer):
         if len(dataset_data.keys()) > 1:
             raise ClientErrorException(
                 "There can be specified only one dataset per dataloader. "
-                f"Found keys: {dataset_data.keys()}.",
+                f"Found keys: {', '.join(dataset_data.keys())}.",
             )
         for key, val in dataset_data.items():
             self.dataset = Dataset(key, val)

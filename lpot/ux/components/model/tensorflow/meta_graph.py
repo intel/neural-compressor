@@ -34,7 +34,4 @@ class MetaGraphModel(TFModel):
     @staticmethod
     def supports_path(path: str) -> bool:
         """Check if given path is of supported model."""
-        try:
-            return "checkpoint" == get_model_type(path)
-        except ValueError:
-            return False
+        return "checkpoint" == get_model_type(path)

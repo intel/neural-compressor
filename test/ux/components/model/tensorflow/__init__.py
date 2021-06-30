@@ -12,19 +12,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Constant values."""
-
-github_info = {
-    "user": "intel",
-    "repository": "lpot",
-    "tag": "v1.5",
-}
-
-
-class Precisions:
-    """Precisions enumeration."""
-
-    INT8 = "int8"
-    FP32 = "fp32"
-    MIXED = "bf16,fp32"
+"""The components package contains all test for UX Model tensorflow component."""

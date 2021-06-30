@@ -34,7 +34,4 @@ class KerasModel(TFModel):
     @staticmethod
     def supports_path(path: str) -> bool:
         """Check if given path is of supported model."""
-        try:
-            return "keras" == get_model_type(path)
-        except ValueError:
-            return False
+        return "keras" == get_model_type(path)
