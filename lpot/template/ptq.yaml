@@ -99,7 +99,10 @@ evaluation:                                          # optional. used to config 
 
 tuning:
   strategy:
-    name: basic                                      # optional. default value is basic. other values are bayesian, mse.
+    name: basic                                      # optional. default value is basic. other values are bayesian, mse, sigopt.
+    sigopt_api_token: YOUR-ACCOUNT-API-TOKEN             # optional. Necessary if strategy name is sigopt.
+    sigopt_project_id: PROJECT-ID                    # optional. Necessary if strategy name is sigopt.
+    sigopt_experiment_name: lpot-tune                # optional. default is lpot-tune if strategy name is sigopt.
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
   objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.

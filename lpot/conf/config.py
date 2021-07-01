@@ -622,7 +622,9 @@ schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES),
+            'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
+            Optional('sigopt_project_id'): str, 
+            Optional('sigopt_experiment_name', default='lpot-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
             Optional('latency_weight', default=1.0): float
         } ,

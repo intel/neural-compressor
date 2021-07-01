@@ -35,6 +35,7 @@ requirements:
     - psutil
     - Pillow
     - requests
+    - sigopt
 test:
   imports:
     - lpot

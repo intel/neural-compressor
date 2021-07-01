@@ -305,6 +305,32 @@ tuning:
   random_seed: 9527
 
 ```
+### SigOpt
+
+#### Design
+
+`SigOpt` strategy is to use [SigOpt Optimization Loop](https://app.sigopt.com/docs/overview/optimization) method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as constraint and optimize for latency to improve the performance. [SigOpt Projects](https://app.sigopt.com/) can show the result of each tuning experiment.
+
+#### Usage
+
+Compare to `Basic`, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt`.`sigopt_experiment_name` is optional, the default name is `lpot-tune`.
+
+```yaml
+tuning:
+  strategy:
+    name: sigopt
+    sigopt_api_token: YOUR-ACCOUNT-API-TOKEN
+    sigopt_project_id: PROJECT-ID
+    sigopt_experiment_name: lpot-tune
+  accuracy_criterion:
+    relative:  0.01
+  exit_policy:
+    timeout: 0
+  random_seed: 9527
+
+```
+
+For details, [how to use sigopt strategy in lpot](./sigopt_strategy.md) is available.
 
 ## Customize a New Tuning Strategy
 

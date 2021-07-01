@@ -12,3 +12,4 @@ tf_slim
 pillow>=8.2.0
 transformers
 tensorflow_model_optimization
+sigopt
