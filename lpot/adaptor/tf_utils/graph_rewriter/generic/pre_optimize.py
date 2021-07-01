@@ -35,6 +35,7 @@ from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
 from .dummy_biasadd import InjectDummyBiasAddOptimizer
 from .convert_add_to_biasadd import ConvertAddToBiasAddOptimizer
 from .grappler_pass import GrapplerOptimizer
+from .fuse_conv_with_math import FuseConvWithMathOptimizer
 
 class PreOptimization():
     def __init__(self, model, optimization):
@@ -119,6 +120,9 @@ class PreOptimization():
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FuseTransposeReshapeOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = FuseConvWithMathOptimizer(
             self._tmp_graph_def).do_transformation()
 
         self._excluded_node_names.extend(excluded_node_names)

@@ -15,9 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import tensor_util as tu
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
@@ -41,12 +42,22 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
         insert_node_pairs = []
         top_node = graph_info[self.pre_node_name].node
-
         if top_node.op == 'ConcatV2':
             for i in range(top_node.attr['N'].i):
                 insert_node_pairs.append([top_node.input[i], self.post_node_name])
         else:
             refresh_pre_node_name = graph_info[self.pre_node_name].node.input[0]
+            # Check the Conv2D could be fused with previous Pad or not.
+            # If so, we need to update the pre-node name correspondingly.
+            refresh_pre_node = graph_info[refresh_pre_node_name].node
+            if refresh_pre_node.op == 'Pad' and top_node.op == 'Conv2D':
+                pad_const_node_name = refresh_pre_node.input[1]
+                pad_const_node = graph_info[pad_const_node_name].node
+                padding_tensor = tu.MakeNdarray(pad_const_node.attr["value"].tensor).flatten()
+                if not any(padding_tensor) or \
+                    (any(padding_tensor) and tf.version.VERSION == '1.15.0-up3'):
+                    refresh_pre_node_name = refresh_pre_node.input[0]
+
             insert_node_pairs.append([refresh_pre_node_name, self.post_node_name])
 
         output_names = []
