@@ -32,10 +32,12 @@ from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
 from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
+from .convert_leakyrelu import ConvertLeakyReluOptimizer
 from .dummy_biasadd import InjectDummyBiasAddOptimizer
 from .convert_add_to_biasadd import ConvertAddToBiasAddOptimizer
 from .grappler_pass import GrapplerOptimizer
 from .fuse_conv_with_math import FuseConvWithMathOptimizer
+
 
 class PreOptimization():
     def __init__(self, model, optimization):
@@ -109,6 +111,9 @@ class PreOptimization():
 
         #TODO we should handle all control ops elegantly not bypass it.
         self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = ConvertLeakyReluOptimizer(
             self._tmp_graph_def).do_transformation()
 
         #TODO we need to remove below optimizer once the TF enabled the single

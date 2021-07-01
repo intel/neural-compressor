@@ -733,6 +733,13 @@ class GraphRewriterHelper():
         """Set the node's attr which data type is int.
         """
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
+
+    @staticmethod
+    def set_attr_float(node, key, value):
+        """Set the node's attr which data type is float.
+        """
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
+
     @staticmethod
     def set_attr_bool(node, key, value):
         """Set the node's attr which data type is bool.
