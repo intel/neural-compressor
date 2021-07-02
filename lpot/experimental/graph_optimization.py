@@ -176,23 +176,27 @@ class Graph_Optimization():
             self._eval_func,
             _resume)
 
-        with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
-            self.strategy.traverse()
+        try:
+            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+                self.strategy.traverse()
+        except Exception as e:
+            if e is not KeyboardInterrupt:
+                logger.info("Unexpected exception {} happened during turing!".format(repr(e)))
+        finally: 
+            if self.strategy.best_qmodel:
+                logger.info(
+                    "Specified timeout or max trials is reached! "
+                    "Found a converted model which meet accuracy goal. Exit...")
+                self.strategy.deploy_config()
+            else:
+                logger.info(
+                    "Specified timeout or max trials is reached! "
+                    "Not found any converted model which meet accuracy goal. Exit...")
 
-        if self.strategy.best_qmodel:
-            logger.info(
-                "Specified timeout or max trials is reached! "
-                "Found a converted model which meet accuracy goal. Exit...")
-            self.strategy.deploy_config()
-        else:
-            logger.info(
-                "Specified timeout or max trials is reached! "
-                "Not found any converted model which meet accuracy goal. Exit...")
+            logger.info("Graph optimization is done. Please invoke model.save() to save " \
+                        "optimized model to disk")
 
-        logger.info("Graph optimization is done. Please invoke model.save() to save " \
-                    "optimized model to disk")
-
-        return self.strategy.best_qmodel
+            return self.strategy.best_qmodel
 
     def dataset(self, dataset_type, *args, **kwargs):
         from .data import DATASETS
