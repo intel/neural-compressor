@@ -174,9 +174,9 @@ class TestTensorflowModel(unittest.TestCase):
         tf.compat.v1.reset_default_graph()
         inception_ckpt_url = \
             'http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz'
-        dst_path = '.lpot/slim/inception_v1_2016_08_28.tar.gz'
+        dst_path = '/tmp/.lpot/slim/inception_v1_2016_08_28.tar.gz'
         if not os.path.exists(dst_path):
-            os.system("mkdir -p .lpot/slim")
+            os.system("mkdir -p /tmp/.lpot/slim")
             os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
             os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
 
@@ -223,9 +223,9 @@ class TestTensorflowModel(unittest.TestCase):
 
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
-        dst_path = 'saved_model.tar.gz'
+        dst_path = '/tmp/.lpot/saved_model.tar.gz'
         if not os.path.exists(dst_path):
-          os.system("wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
+          os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
         
         os.system("tar -xvf {}".format(dst_path))
         model = TensorflowModel('ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
