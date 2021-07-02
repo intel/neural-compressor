@@ -210,6 +210,37 @@ class TestGraphMatMulFusion(unittest.TestCase):
             self.assertEqual(found_quantized_matmul, False)
 
     @disable_random()
+    def test_disable_matmul_fusion_with_transpose_b_true(self):
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)
+            z = tf.nn.relu6(z, name='op_to_store')
+            found_quantized_matmul = False
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from lpot.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
+                        found_quantized_matmul = True
+                        break
+            self.assertEqual(found_quantized_matmul, False)
+
+    @disable_random()
     def test_matmul_with_dummy_biasadd(self):
         g = tf.Graph()
         with g.as_default():
