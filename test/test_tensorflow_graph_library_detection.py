@@ -8,7 +8,7 @@ import tensorflow as tf
 from lpot.adaptor.tf_utils.util import read_graph
 from lpot.adaptor.tf_utils.graph_converter import GraphConverter
 from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.model.model import TensorflowModel
+from lpot.experimental.common.model import Model
 class TestGraphLibraryDetection(unittest.TestCase):
     efficientnet_b0_model_url = 'https://raw.githubusercontent.com/SkyAI/inference_benchmark/435c7ca2577830025ca5f6cbce8480db16f76a61/efficientnet-b0.pb'
     pb_path = '/tmp/.lpot/efficientnet-b0.pb'
@@ -27,13 +27,12 @@ class TestGraphLibraryDetection(unittest.TestCase):
 
         qt_config = {'calib_iteration':1, 'op_wise_config':{}}
         original_graphdef = read_graph(self.pb_path)
-        framework_info = {
-            'name': 'test',
-            'input_tensor_names': 'input_tensor',
-            'output_tensor_names': 'softmax_tensor',
-            'workspace_path': "/tmp/test.pb"
-        }
-        model = TensorflowModel(self.pb_path, framework_info)
+        model = Model(self.pb_path)
+        model.name = 'test'
+        model.input_tensor_names = ['input_tensor']
+        model.output_tensor_names = ['softmax_tensor']
+        model.workspace_path = '/tmp/test.pb'
+
         converter = GraphConverter(model,
                                    int8_sequences=op_wise_sequences,
                                    qt_config=qt_config

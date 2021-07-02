@@ -17,6 +17,7 @@
 
 import copy
 import os
+import functools
 from abc import abstractmethod
 from lpot.utils.utility import LazyImport, compute_sparsity
 from lpot.utils import logger
@@ -78,7 +79,7 @@ def get_model_type(model):
                 return 'checkpoint'
             elif is_saved_model_format(model):
                 # it's very ugly tf version issue, in tf2.3 keras.load can
-                # load saved model from tf backend, but tf2.4 it will crash
+                #batch_size_(batch_size), load saved model from tf backend, but tf2.4 it will crash
                 try:
                     model = tf.keras.models.load_model(model)
                     if isinstance(model, tf.keras.Model):
@@ -103,27 +104,32 @@ def get_model_fwk_name(model):
     """
     def _is_onnxruntime(model):
         try:
+            ort.InferenceSession(model.SerializeToString())
+        except:
+            pass
+        else:
+            return 'onnxruntime'
+        try:
             ort.InferenceSession(model)
         except:
-            return False
+            pass
         else:
-            return True
+            return 'onnxruntime'
+        return 'NA'
 
     def _is_pytorch(model):
         try:
-            is_torch = isinstance(model, torch.nn.Module)
+            return 'pytorch' if isinstance(model, torch.nn.Module) else 'NA'
         except:
-            return False
-        else:
-            return is_torch
+            return 'NA'
 
     def _is_tensorflow(model):
         try:
-            get_model_type(model)
-        except Exception as e:
-            return False
+            model_type = get_model_type(model)
+        except:
+            return 'NA'
         else:
-            return True
+            return 'tensorflow,' + model_type
 
     def _is_mxnet(model):
         try:
@@ -131,18 +137,15 @@ def get_model_fwk_name(model):
             (hasattr(model, '__len__') and len(model) > 1 and \
             isinstance(model[0], mx.symbol.Symbol))
         except:
-            return False
+            return 'NA'
         else:
-            return is_mxnet
+            return 'mxnet'
 
-    checker = {'tensorflow': _is_tensorflow,
-                'pytorch': _is_pytorch,
-                'onnxruntime': _is_onnxruntime,
-                'mxnet': _is_mxnet
-                }
+    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
 
-    for fwk_name, handler in checker.items():
-        if handler(model):
+    for handler in checker:
+        fwk_name = handler(model)
+        if fwk_name != 'NA':
             return fwk_name
 
     return 'NA'
@@ -185,27 +188,6 @@ def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
     from tensorflow.python.lib.io import file_io
     file_io.write_string_to_file(export_saved_model, saved_model.SerializeToString())
 
-def create_session_with_input_output(model, input_tensor_names, \
-    output_tensor_names, **kwargs):
-    """Create session
-
-    Args:
-        model (string or model object): model pah or model object
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-
-    Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
-        
-    """
- 
-    model_type = get_model_type(model)
-    sess, input_tensor_names, output_tensor_names = SESSIONS[model_type](
-        model, input_tensor_names, output_tensor_names, **kwargs)
-    return sess, input_tensor_names, output_tensor_names
-
 def validate_graph_node(graph_def, node_names):
     """Validate nodes exist in the graph_def
 
@@ -217,10 +199,10 @@ def validate_graph_node(graph_def, node_names):
     if len(node_names) == 0:
         return False
     all_node_name = [node.name for node in graph_def.node]
-    for user_input_name in node_names:
-        if user_input_name not in all_node_name:
-            logger.info(str("Input node name {} doesn't exist in the model, " +
-                "please check the yaml.").format(user_input_name))
+    for user_name in node_names:
+        if user_name not in all_node_name:
+            logger.info(str("Node name {} doesn't exist in the model, " +
+                "please check the yaml.").format(user_name))
             return False
     return True
 
@@ -406,7 +388,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
     from .nets_factory import TFSlimNetsFactory
     factory = TFSlimNetsFactory()
-    assert 'name' in kwargs, 'model name should be included in slim checkpoint....'
+    assert 'name' in kwargs, 'model name should be set in slim checkpoint....'
     assert kwargs['name'] in factory.default_slim_models, \
         'only support topology {}'.format(factory.default_slim_models)
     net = copy.deepcopy(factory.networks_map[kwargs['name']])
@@ -560,66 +542,64 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
             'estimator': estimator_session,
             'slim': slim_session,}
 
-class TensorflowModel(object):
-    """Build LPOT TensorflowModel object
-
-    Args:
-        model (string or tensorflow model object): model path or model object
-        framework_specific_info (dict): 
-            information about model and framework, such as input_tensor_names, 
-            input_tensor_names, workspace_path and name
-        kwargs (dict): other required parameters, like input_fn
-
-    Returns:
-        TensorflowModel object
-    """
- 
-    def __new__(cls, model, framework_specific_info={}, **kwargs):
-        model_type = get_model_type(model)
-        return TENSORFLOW_MODELS[model_type](model, framework_specific_info, **kwargs)
-
 class TensorflowBaseModel(BaseModel):
     """Build TensorflowBaseModel object
 
     Args:
         model (string or tensorflow model object): model path or model object
-        framework_specific_info (dict): 
-            information about model and framework, such as input_tensor_names, 
-            input_tensor_names, workspace_path and name
         kwargs (dict): other required parameters, like input_fn
 
     """
  
-    def __init__(self, model, framework_specific_info={}, **kwargs):
-        self.framework_specific_info = framework_specific_info
-        input_tensor_names = deep_get(framework_specific_info, 'input_tensor_names', [])
-        output_tensor_names = deep_get(framework_specific_info, 'output_tensor_names', [])
-        self.workspace_path = deep_get(framework_specific_info, 'workspace_path', './')
-        self.kwargs = copy.deepcopy(kwargs)
-        kwargs.update({'name': deep_get(framework_specific_info, 'name')})
+    def __init__(self, model, **kwargs):
+
         self._model = model
-        self.sess, self._input_tensor_names, self._output_tensor_names = \
-            create_session_with_input_output(
-                model, input_tensor_names, output_tensor_names, **kwargs)
-
-        deep_set(framework_specific_info, 'input_tensor_names', self._input_tensor_names)
-        deep_set(framework_specific_info, 'output_tensor_names', self._output_tensor_names)
-
-        # sess_global_initialize(self.sess)
-        self.iter_op = None
-        if 'MakeIterator' in [node.op for node in self.sess.graph.as_graph_def().node]:
-            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
-
-        tf.compat.v1.get_variable_scope().reuse_variables()
+        self._name = ''
+        self.kwargs = kwargs
         self._graph_info = {}
+        self._input_tensor_names = []
+        self._output_tensor_names = []
+        self._model_type = ''
+        self._sess = None
+        self.iter_op = None
+        self._workspace_path = ''
+
+    def framework(self):
+        return 'tensorflow'
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self.kwargs.update({'name': name})
+        self._name = name
+
+    @property
+    def workspace_path(self):
+        return self._workspace_path 
+
+    @workspace_path.setter
+    def workspace_path(self, path):
+        self._workspace_path = path
+
+    @property
+    def model_type(self):
+        return self._model_type
+
+    @model_type.setter
+    def model_type(self, model_type):
+        assert model_type in SESSIONS, 'model type not supported....' 
+        self._model_type = model_type
 
     @property
     def model(self):
-        return self.sess.graph
+        return self.graph
 
     @property
     def graph_def(self):
-        return self.sess.graph.as_graph_def()
+        return self.graph.as_graph_def()
 
     @property
     def graph_info(self):
@@ -629,64 +609,108 @@ class TensorflowBaseModel(BaseModel):
         return self._graph_info
 
     @property
+    def sess(self):
+        if self._sess is None:
+            self._load_sess(self._model, **self.kwargs)
+        return self._sess
+
+    @property
     def graph(self):
         return self.sess.graph
 
     @graph_def.setter
     def graph_def(self, graph_def):
-        self.sess.close()
-        self.sess, self._input_tensor_names, self._output_tensor_names = \
-            create_session_with_input_output(graph_def, self._input_tensor_names, \
-                self._output_tensor_names)
+        if self._sess is not None:
+            self._sess.close()
+        output_sess =  SESSIONS['graph_def'](graph_def,\
+                                             self._input_tensor_names, \
+                                             self._output_tensor_names)
+
+        self._sess = output_sess[0]
+        self._input_tensor_names = output_sess[1]
+        self._output_tensor_names = output_sess[2]
         if self.iter_op:
-            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
+            self.iter_op = self._sess.graph.get_operation_by_name('MakeIterator')
+        self.model_type = 'graph_def'
+
+    def _load_sess(self, model, **kwargs):
+        logger.info('loading session....')
+        if self.name:
+            kwargs.update({'name': self.name})
+        # assert self.model_type, 'model type not set....'
+        output_sess = SESSIONS[self.model_type](model,
+                                                self._input_tensor_names, \
+                                                self._output_tensor_names,
+                                                **kwargs)
+        self._sess = output_sess[0]
+        self._input_tensor_names = output_sess[1]
+        self._output_tensor_names = output_sess[2]
+
+        op_list = [node.op for node in self._sess.graph.as_graph_def().node]
+        if 'MakeIterator' in op_list:
+            self.iter_op = self._sess.graph.get_operation_by_name(\
+                'MakeIterator')
+
+        tf.compat.v1.get_variable_scope().reuse_variables()
+        return self._sess
 
     @property
     def input_tensor_names(self):
-        return self._input_tensor_names
+        if len(self._input_tensor_names) == 0:
+            self._load_sess(self._model, **self.kwargs)
+        return copy.deepcopy(self._input_tensor_names)
 
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
-        assert validate_graph_node(\
-            self.sess.graph.as_graph_def(), tensor_to_node(tensor_names)), \
-                'tensor names should not be None or empty'
+        if len(tensor_names) == 0:
+            logger.warn('input tensor names should not be empty...')
+            return
         self._input_tensor_names = tensor_names
+        assert validate_graph_node(\
+            self.graph_def, tensor_to_node(tensor_names)), \
+                'tensor names should not be None or empty'
 
     @property
     def output_tensor_names(self):
-        return self._output_tensor_names
+        if len(self._output_tensor_names) == 0:
+            self._load_sess(self._model, **self.kwargs)
+        return copy.deepcopy(self._output_tensor_names)
 
     @output_tensor_names.setter
     def output_tensor_names(self, tensor_names):
-        assert validate_graph_node(\
-            self.sess.graph.as_graph_def(), tensor_to_node(tensor_names)), \
-                'tensor names should not be None or empty'
+        if len(tensor_names) == 0:
+            logger.warn('output tensor names should not be empty...')
+            return
         self._output_tensor_names = tensor_names
+        # first assign and then validate for checkpoint case
+        assert validate_graph_node(\
+            self.graph_def, tensor_to_node(tensor_names)), \
+                'tensor names {} not in graph'.format(tensor_names)
 
     # input/output node names and input/output tensor
     # come from input/output tensor names, so do not support assign these values
     @property
     def input_node_names(self):
-        return tensor_to_node(self._input_tensor_names)
+        return copy.deepcopy(tensor_to_node(self.input_tensor_names))
 
     @property
     def output_node_names(self):
-        output_node_names = tensor_to_node(self._output_tensor_names)
+        output_node_names = tensor_to_node(self.output_tensor_names)
         if self.iter_op is not None:
             output_node_names.append('MakeIterator')
-        return output_node_names
+        return copy.deepcopy(output_node_names)
 
     @property
     def input_tensor(self):
         from lpot.adaptor.tf_utils.util import get_tensor_by_name
         return [get_tensor_by_name(\
-            self.sess.graph, x) for x in self._input_tensor_names]
+            self.graph, x) for x in self.input_tensor_names]
 
     @property
     def output_tensor(self):
         from lpot.adaptor.tf_utils.util import get_tensor_by_name
         return [get_tensor_by_name(\
-            self.sess.graph, x) for x in self._output_tensor_names]
+            self.graph, x) for x in self.output_tensor_names]
 
     def save(self, root=None):
         if not root:
@@ -703,21 +727,23 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
  
     @property
     def graph_def(self):
-        return self.sess.graph.as_graph_def() 
+        return self.graph.as_graph_def() 
 
     @graph_def.setter
     def graph_def(self, graph_def):
+        if self._sess is not None:
+            self._sess.close()
         temp_saved_model_path = os.path.join(self.workspace_path, 'temp_saved_model')
         replace_graph_def_of_saved_model(self._model, temp_saved_model_path, graph_def)
         self._model = temp_saved_model_path
-        self.sess.close()
-        self.sess, self._input_tensor_names, self._output_tensor_names = \
-            create_session_with_input_output(self._model, \
-                self._input_tensor_names, self._output_tensor_names)
-
-    @property
-    def graph(self):
-        return self.sess.graph
+        output_sess = SESSIONS[self.model_type](self._model, \
+                                     self._input_tensor_names,\
+                                     self._output_tensor_names)
+        self._sess = output_sess[0]
+        self._input_tensor_names = output_sess[1]
+        self._output_tensor_names = output_sess[2]
+        if self.iter_op:
+            self.iter_op = self._sess.graph.get_operation_by_name('MakeIterator')
 
     def save(self, root=None):
         if not root:
@@ -750,7 +776,8 @@ class TensorflowKerasModel(TensorflowBaseModel):
         builder = tf.compat.v1.saved_model.builder.SavedModelBuilder(root)
         sigs = {}
         with tf.compat.v1.Session(graph=tf.Graph()) as sess:
-            tf.import_graph_def(self.sess.graph.as_graph_def(), name="")
+            #(TODO) not directly use self._sess.graph, use self.graph
+            tf.import_graph_def(self.graph.as_graph_def(), name="")
             g = tf.compat.v1.get_default_graph()
             inp = [get_tensor_by_name(g, x) for x in self._input_tensor_names]
             out = [get_tensor_by_name(g, x) for x in self._output_tensor_names]
@@ -773,18 +800,23 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
         graph_def = self.sess.graph.as_graph_def()
         graph_def = _parse_ckpt_bn_input(graph_def)
         return graph_util.convert_variables_to_constants(
-            sess=self.sess,
+            sess=self._sess,
             input_graph_def=graph_def,
             output_node_names=self.output_node_names)
 
     @graph_def.setter
     def graph_def(self, graph_def):
-        self.sess.close()
-        self.sess, self._input_tensor_names, self._output_tensor_names = \
-            create_session_with_input_output(graph_def, self._input_tensor_names, \
-                self._output_tensor_names)
+        if self._sess is not None:
+            self._sess.close()
+        output_sess = SESSIONS['graph_def'](graph_def,
+                                            self._input_tensor_names, \
+                                            self._output_tensor_names)
+        self._sess = output_sess[0]
+        self._input_tensor_names = output_sess[1]
+        self._output_tensor_names = output_sess[2]
         if self.iter_op:
-            self.iter_op = self.sess.graph.get_operation_by_name('MakeIterator')
+            self.iter_op = self._sess.graph.get_operation_by_name('MakeIterator')
+        self.model_type = 'graph_def'
 
 TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'graph_def': TensorflowBaseModel,
@@ -795,13 +827,22 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'saved_model': TensorflowSavedModelModel,
                      'keras': TensorflowKerasModel,}
 
+class TensorflowModel(object):
+
+    def __new__(cls, model_type, root, **kwargs):
+        model = TENSORFLOW_MODELS[model_type](root, **kwargs)
+        model.model_type = model_type
+        return model
 
 class PyTorchBaseModel(BaseModel):
-    def __init__(self, model, framework_specific_info={}, **kwargs):
+    def __init__(self, model, **kwargs):
         self._model = model
         self.tune_cfg = None
         self.is_quantized = False
         self.kwargs = kwargs if kwargs else None
+
+    def framework(self):
+        return 'pytorch'
 
     def get_all_weight_names(self):
         """Get weight names
@@ -927,47 +968,51 @@ class PyTorchBaseModel(BaseModel):
 
         return df, total_sparsity
 
-
 class PyTorchModel(PyTorchBaseModel):
     """Build PyTorchModel object
 
     Args:
-        model (onnx model): model path 
-        framework_specific_info (dict): information about model and framework
+        model (pytorch model): model path 
     """
  
-    def __init__(self, model, framework_specific_info={}, **kwargs):
-        super(PyTorchModel, self).__init__(model, framework_specific_info={}, **kwargs)
+    def __init__(self, model, **kwargs):
+        super(PyTorchModel, self).__init__(model, **kwargs)
 
+        self._model = model
+        self.tune_cfg= None
+        self._workspace_path = ''
+
+    @property
+    def workspace_path(self):
+        return self._workspace_path
+
+    @workspace_path.setter
+    def workspace_path(self, path):
         from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig
-        if bool(framework_specific_info):
-            workspace_path = framework_specific_info['workspace_path']
-            tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
-                                         'best_configure.yaml')
-            weights_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
-                                        'best_model_weights.pt')
-            assert os.path.exists(
-                tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
-            assert os.path.exists(
-                weights_file), "weight file %s didn't exist" % weights_file
-            self._model = copy.deepcopy(model.eval())
-            with open(tune_cfg_file, 'r') as f:
-                tune_cfg = yaml.safe_load(f)
+        workspace_path = path
+        tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
+                                     'best_configure.yaml')
+        weights_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
+                                    'best_model_weights.pt')
+        assert os.path.exists(
+            tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
+        assert os.path.exists(
+            weights_file), "weight file %s didn't exist" % weights_file
+        self._model = copy.deepcopy(self._model.eval())
+        with open(tune_cfg_file, 'r') as f:
+            tune_cfg = yaml.safe_load(f)
 
-            op_cfgs = _cfg_to_qconfig(tune_cfg)
-            _propagate_qconfig(self._model, op_cfgs)
-            # sanity check common API misusage
-            if not any(hasattr(m, 'qconfig') and m.qconfig for m in self._model.modules()):
-                logger.warn("None of the submodule got qconfig applied. Make sure you "
-                            "passed correct configuration through `qconfig_dict` or "
-                            "by assigning the `.qconfig` attribute directly on submodules")
-            torch.quantization.add_observer_(self._model)
-            torch.quantization.convert(self._model, inplace=True)
-            weights = torch.load(weights_file)
-            self._model.load_state_dict(weights)
-        else:
-            self._model = model
-            self.tune_cfg= None
+        op_cfgs = _cfg_to_qconfig(tune_cfg)
+        _propagate_qconfig(self._model, op_cfgs)
+        # sanity check common API misusage
+        if not any(hasattr(m, 'qconfig') and m.qconfig for m in self._model.modules()):
+            logger.warn("None of the submodule got qconfig applied. Make sure you "
+                        "passed correct configuration through `qconfig_dict` or "
+                        "by assigning the `.qconfig` attribute directly on submodules")
+        torch.quantization.add_observer_(self._model)
+        torch.quantization.convert(self._model, inplace=True)
+        weights = torch.load(weights_file)
+        self._model.load_state_dict(weights)
 
     @property
     def model(self):
@@ -1003,11 +1048,10 @@ class PyTorchFXModel(PyTorchModel):
 
     Args:
         model (onnx model): model path 
-        framework_specific_info (dict): information about model and framework
     """
  
-    def __init__(self, model, framework_specific_info={}, **kwargs):
-        super(PyTorchFXModel, self).__init__(model, framework_specific_info={}, **kwargs)
+    def __init__(self, model, **kwargs):
+        super(PyTorchFXModel, self).__init__(model, **kwargs)
 
 
 class PyTorchIpexModel(PyTorchBaseModel):
@@ -1015,25 +1059,28 @@ class PyTorchIpexModel(PyTorchBaseModel):
 
     Args:
         model (onnx model): model path 
-        framework_specific_info (dict): information about model and framework, like workspace_path
     """
  
-    def __init__(self, model, framework_specific_info={}, **kwargs):
-        super(PyTorchIpexModel, self).__init__(model, framework_specific_info={}, **kwargs)
-        if bool(framework_specific_info):
-            workspace_path = framework_specific_info['workspace_path']
-            tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
-                                         'best_configure.json')
-            assert os.path.exists(
-                tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
+    def __init__(self, model, **kwargs):
+        super(PyTorchIpexModel, self).__init__(model, **kwargs)
+        self._model = model
+        self.tune_cfg= None
+        self._workspace_path = ''
 
-            with open(tune_cfg_file, 'r') as f:
-                self.tune_cfg= json.load(f)
+    @property
+    def workspace_path(self):
+        return self._workspace_path
 
-            self._model = model
-        else:
-            self._model = model
-            self.tune_cfg= None
+    @workspace_path.setter
+    def workspace_path(self, path):
+        self._workspace_path = path 
+        tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(path)),
+                                     'best_configure.json')
+        assert os.path.exists(
+            tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
+
+        with open(tune_cfg_file, 'r') as f:
+            self.tune_cfg= json.load(f)
 
     @property
     def model(self):
@@ -1060,12 +1107,13 @@ class MXNetModel(BaseModel):
 
     Args:
         model (mxnet model): model path 
-        framework_specific_info (dict): information about model and framework
     """
  
-    def __init__(self, model, framework_specific_info={}, **kwargs):
+    def __init__(self, model, **kwargs):
         self._model = model
-        self.framework_specific_info = framework_specific_info
+
+    def framework(self):
+        return 'mxnet'
 
     @property
     def model(self):
@@ -1098,5 +1146,4 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch': PyTorchModel,
           'pytorch_ipex': PyTorchIpexModel,
           'pytorch_fx': PyTorchFXModel,
-          'onnxrt_qlinearops': ONNXModel,
-          'onnxrt_integerops': ONNXModel,}
+          'onnxruntime': ONNXModel}

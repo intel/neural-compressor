@@ -20,7 +20,7 @@ from abc import abstractmethod
 class BaseModel:
     ''' base class of all lpot.model, will play graph role'''
 
-    def __init__(self, model, framework_specific_info, **kwargs): 
+    def __init__(self, model, **kwargs): 
         pass
 
     @property
@@ -37,3 +37,9 @@ class BaseModel:
     def save(self, root, *args, **kwargs):
         ''' abstract method of model saving'''
         raise NotImplementedError
+
+    @abstractmethod
+    def framework(self):
+        ''' abstract method of model framework'''
+        raise NotImplementedError
+    

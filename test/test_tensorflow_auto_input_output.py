@@ -4,8 +4,8 @@
 import unittest
 import os
 from lpot.adaptor.tensorflow import TensorFlowAdaptor
-from lpot.model.model import TensorflowModel, validate_graph_node
-
+from lpot.experimental.common.model import Model as TensorflowModel
+from lpot.model.model import validate_graph_node
 
 class TestTFAutoDetectInputOutput(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'

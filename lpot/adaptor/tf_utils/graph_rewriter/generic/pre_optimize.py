@@ -19,7 +19,6 @@
 import logging
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 from lpot.utils.utility import dump_elapsed_time
-from lpot.model.model import TensorflowModel
 
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer
@@ -43,10 +42,7 @@ class PreOptimization():
     def __init__(self, model, optimization):
         self.model = model
         self.optimization = optimization
-        self.output_node_names = model.output_node_names
-        self.input_node_names = model.input_node_names
-        if model.iter_op is not None:
-            self.output_node_names.append('MakeIterator')
+
 
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = model.graph_def
@@ -54,6 +50,7 @@ class PreOptimization():
         self.logger = logging.getLogger()
         self._tmp_graph_def = None
         self._excluded_node_names = []
+
 
     def get_excluded_node_names(self):
         """Get the excluded node name
@@ -80,18 +77,26 @@ class PreOptimization():
         """
         self.logger.debug("Start to pre optimize input model...")
 
-        origin_model = TensorflowModel(self.model._model,
-                                       self.model.framework_specific_info,
-                                       **self.model.kwargs)
+        from lpot.experimental.common import Model
+
+        origin_model = Model(self.model._model, **self.model.kwargs)
+        origin_model.name = self.model.name
+        origin_model.model_type = self.model.model_type
+        origin_model.input_tensor_names = self.model.input_tensor_names
+        origin_model.output_tensor_names = self.model.output_tensor_names
+        origin_model.workspace_path = self.model.workspace_path
+
+        output_node_names = self.model.output_node_names
+        input_node_names = self.model.input_node_names
 
         self._tmp_graph_def = ConvertLayoutOptimizer(
-            self.model.graph_def, self.output_node_names).do_transformation()
+            self.model.graph_def, output_node_names).do_transformation()
 
         self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, self.output_node_names, self.optimization).do_transformation()
+            self._tmp_graph_def, output_node_names, self.optimization).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=self.output_node_names).do_transformation()
+            self._tmp_graph_def, protected_nodes=output_node_names).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -100,7 +105,7 @@ class PreOptimization():
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
-            self.input_node_names, self.output_node_names).do_transformation()
+            input_node_names, output_node_names).do_transformation()
 
         self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
 

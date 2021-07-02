@@ -25,7 +25,8 @@ from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
-from ..model import BaseModel as LpotModel
+from .common import Model as LpotModel
+from ..model import BaseModel
 
 
 class Quantization(object):
@@ -105,7 +106,7 @@ class Quantization(object):
         """
         cfg = self.conf.usr_cfg
 
-        assert isinstance(self._model, LpotModel), 'need set your Model for quantization....'
+        assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
@@ -287,24 +288,20 @@ class Quantization(object):
                        make sure the name is in supported slim model list.
 
         """
-        from .common import Model as LpotModel
-        from ..model import MODELS
-        if not isinstance(user_model, LpotModel):
+        if not isinstance(user_model, BaseModel):
             logger.warning('force convert user raw model to lpot model, ' +
                 'better initialize lpot.experimental.common.Model and set....')
-            user_model = LpotModel(user_model)
+            self._model = LpotModel(user_model)
+        else:
+            self._model = user_model
 
-        framework_model_info = {}
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':
-            framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': cfg.model.inputs,
-                 'output_tensor_names': cfg.model.outputs,
-                 'workspace_path': cfg.tuning.workspace.path})
+            self._model.name = cfg.model.name
+            self._model.input_tensor_names = cfg.model.inputs
+            self._model.output_tensor_names = cfg.model.outputs
+            self._model.workspace_path = cfg.tuning.workspace.path
 
-        self._model = MODELS[self.framework](\
-            user_model.root, framework_model_info, **user_model.kwargs)
 
     @property
     def metric(self):

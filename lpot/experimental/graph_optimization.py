@@ -22,14 +22,14 @@ import tempfile
 import sys
 import numpy as np
 import yaml
-from lpot.model.model import get_model_fwk_name
 from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
 from ..utils.utility import CpuInfo, time_limit
-from ..model import BaseModel as LpotModel
+from .common import Model as LpotModel
+from ..model import BaseModel
 
 class Graph_Optimization():
     """Graph_Optimization class automatically searches for optimal quantization recipes for low
@@ -53,7 +53,6 @@ class Graph_Optimization():
 
     def __init__(self, conf_fname=None):
         self.conf_name = conf_fname
-        self.user_model = None
         self._model = None
 
         self._eval_dataloader = None
@@ -63,7 +62,7 @@ class Graph_Optimization():
         self._input = []
         self._output = []
         self.conf = None
-        self.__init_env(self.conf_name, self.model)
+        self.__init_env(conf_fname, self._model)
 
     def __init_env(self, conf_fname, model_obj):
         if self.conf:
@@ -126,22 +125,16 @@ class Graph_Optimization():
 
         """
 
-        self.__init_env(self.conf_name, self.user_model)
+        assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
+        self.__init_env(self.conf_name, self._model)
 
-        framework_model_info = {}
         cfg = self.conf.usr_cfg
+
         if self.framework == 'tensorflow':
-            framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': cfg.model.inputs,
-                 'output_tensor_names': cfg.model.outputs,
-                 'workspace_path': cfg.tuning.workspace.path})
-        from ..model import MODELS
-
-        self._model = MODELS[self.framework](\
-            self.user_model.root, framework_model_info, **self.user_model.kwargs)
-
-        assert isinstance(self._model, LpotModel), 'need set your Model for quantization....'
+            self._model.name = cfg.model.name
+            self._model.input_tensor_names = cfg.model.inputs
+            self._model.output_tensor_names = cfg.model.outputs
+            self._model.workspace_path = cfg.tuning.workspace.path
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
@@ -206,11 +199,10 @@ class Graph_Optimization():
         default_yaml_template = {'model': {'framework': 'tensorflow', 'name': 'resnet50'},
                                            'device': 'cpu',
                                            'graph_optimization': {'precisions': ['bf16, fp32']}}
-        fwk_name = get_model_fwk_name(model_obj.root)
-        if fwk_name != 'tensorflow':
+        if model_obj.framework() != 'tensorflow':
             logger.info('Graph optimization only supports Tensorflow at current stage.')
             sys.exit(0)
-        default_yaml_template['model']['framework'] = get_model_fwk_name(model_obj.root)
+        default_yaml_template['model']['framework'] = model_obj.framework()
 
         if self._precisions == ['bf16'] and not CpuInfo().bf16:
             if os.getenv('FORCE_BF16') == '1':
@@ -309,15 +301,13 @@ class Graph_Optimization():
                        make sure the name is in supported slim model list.
 
         """
-        from .common import Model as LpotModel
 
-        if not isinstance(user_model, LpotModel):
+        if not isinstance(user_model, BaseModel):
             logger.warning('force convert user raw model to lpot model, '
                            'better initialize lpot.common.Model and set....')
-
-            self.user_model = LpotModel(user_model)
+            self._model = LpotModel(user_model)
         else:
-            self.user_model = user_model
+            self._model = user_model
 
     @property
     def metric(self):

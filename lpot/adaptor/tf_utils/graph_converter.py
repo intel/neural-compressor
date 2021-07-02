@@ -31,7 +31,7 @@ from lpot.utils.utility import CaptureOutputToFile
 from lpot.utils.utility import str2array
 from lpot.utils.utility import Dequantize, DequantizeWeight
 from lpot.conf.dotdict import deep_get
-from lpot.model.model import TensorflowModel
+from lpot.experimental.common import Model
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
@@ -86,6 +86,9 @@ class GraphConverter:
         self.logger = logging.getLogger()
         self.debug = bool(self.logger.level == logging.DEBUG)
         self.model = model
+        #(TODO) does it right to make the internal model format as graph_def
+        self.input_tensor_names = self.model.input_tensor_names
+        self.output_tensor_names = self.model.output_tensor_names
         # quantize specific config
         self.calib_iteration = qt_config['calib_iteration'] if not fake_quant else 0
         self.op_wise_config = qt_config['op_wise_config']
@@ -109,15 +112,16 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
-        self._fp32_model = TensorflowModel(self.model._model,
-                                           self.model.framework_specific_info,
-                                           **self.model.kwargs)
-        self._fp32_model.graph_def = self.model.graph_def
 
-        self._sampling_model = TensorflowModel(self.model._model,
-                                          self.model.framework_specific_info,
-                                          **self.model.kwargs)
-        self._sampling_model.graph_def = self.model.graph_def
+
+        self._fp32_model = Model(self.model._model, **self.model.kwargs)
+        self._fp32_model.graph_def = self.model.graph_def
+        self._fp32_model.input_tensor_names = self.input_tensor_names
+        self._fp32_model.output_tensor_names = self.output_tensor_names
+
+        self._sampling_model = Model(self.model._model, **self.model.kwargs)
+        self._sampling_model.input_tensor_names = self.input_tensor_names
+        self._sampling_model.output_tensor_names = self.output_tensor_names
 
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
@@ -125,11 +129,11 @@ class GraphConverter:
         """Run the calibration on the input graph
 
         Args:
-            model(TensorflowModel): input TensorflowModel
+            model(TensorflowBaseModel): input TensorflowBaseModel
         """
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
-
+        
         self.logger.info("Sampling data...")
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
@@ -199,10 +203,10 @@ class GraphConverter:
 
         self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
         # to keep temp model
-        self._tmp_model = TensorflowModel(self.model._model, \
-                                          self.model.framework_specific_info,
-                                          **self.model.kwargs)
-        self._tmp_model.graph_def = self.model.graph_def
+        self._tmp_model = Model(self.model._model, **self.model.kwargs)
+        self._tmp_model.input_tensor_names = self.input_tensor_names
+        self._tmp_model.output_tensor_names = self.output_tensor_names
+    
 
     def convert(self):
         """Do convert, including:
@@ -419,7 +423,9 @@ class GraphConverter:
 
         tmp_dump_file = os.path.join(work_dir, 'kl.log')
 
-        model = TensorflowModel(sorted_graph, self._tmp_model.framework_specific_info)
+        model = Model(sorted_graph)
+        model.input_tensor_names = self.input_tensor_names
+        model.output_tensor_names = self.output_tensor_names
         with CaptureOutputToFile(tmp_dump_file):
             self._inference(model)
 
@@ -494,18 +500,17 @@ class GraphConverter:
                                                     self._fp32_print_data,
                                                     True)
 
-                sampling_cfg = copy.deepcopy(self.model.framework_specific_info)
+                output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
                 for i in self.quantized_node_info:
                     frame_name = self._rnn_details[i] if i in self._rnn_details else None
                     sampling_graph_def, output_names = InsertPrintMinMaxNode(
                         sampling_graph_def, i[0], i[-1], frame_name).do_transformation()
-                    sampling_cfg['output_tensor_names'].extend(output_names)
-
+                    output_tensor_names.extend(output_names)
                 if self.quantized_node_info:
                     sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
                     self._sampling_model.graph_def = sampling_graph_def
-                    self._sampling_model.output_tensor_names = sampling_cfg['output_tensor_names']
+                    self._sampling_model.output_tensor_names = output_tensor_names
                     tmp_dump_file = tempfile.mkstemp(suffix='.log')[1]
                     with CaptureOutputToFile(tmp_dump_file):
                         self._inference(self._sampling_model)
@@ -578,10 +583,10 @@ class GraphConverter:
 
         self.logger.debug("Generating calibration data and saving to {}".format(tmp_dump_file))
 
-        model = TensorflowModel(tmp_path,
-                                self._tmp_model.framework_specific_info,
-                                **self._tmp_model.kwargs)
-
+        model = Model(tmp_path, **self._tmp_model.kwargs)
+        model.input_tensor_names = self.input_tensor_names
+        model.output_tensor_names = self.output_tensor_names
+         
         with CaptureOutputToFile(tmp_dump_file):
             self._inference(model)
 

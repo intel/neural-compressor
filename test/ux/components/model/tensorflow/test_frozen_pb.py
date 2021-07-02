@@ -35,7 +35,7 @@ class TestFrozenPbModel(unittest.TestCase):
         get_model_type_mock.side_effect = self._get_model_type
 
         lpot_tensorflow_model_patcher = patch(
-            "lpot.ux.components.model.tensorflow.model.LpotTensorflowModel",
+            "lpot.ux.components.model.tensorflow.model.LpotModel",
         )
         self.addCleanup(lpot_tensorflow_model_patcher.stop)
         lpot_model_instance_mock = lpot_tensorflow_model_patcher.start()

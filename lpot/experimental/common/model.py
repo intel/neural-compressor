@@ -15,10 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+from lpot.model.model import get_model_fwk_name, MODELS
+from lpot.utils import logger
+
 class Model(object):
     """common Model just collect the infos to construct a Model
     """
-    def __init__(self, root, **kwargs):
+    def __new__(cls, root, **kwargs):
         """Wrap raw framework model format or path with specific infos
 
         Args:
@@ -32,5 +36,16 @@ class Model(object):
                                   model = Model(estimator_object, input_fn=estimator_input_fn)
                    
         """
-        self.root = root
-        self.kwargs = kwargs
+        framework = get_model_fwk_name(root)
+        if framework == 'NA':
+            logger.error('Model framework not supported....')
+            sys.exit(0)
+            
+        if framework.split(',')[0] == "tensorflow":
+            model_type = framework.split(',')[-1]
+            model = MODELS['tensorflow'](model_type, root, **kwargs)
+        else:
+            model = MODELS[framework](root, **kwargs)
+        return model
+    
+

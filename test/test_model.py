@@ -11,7 +11,8 @@ import mxnet.gluon.nn as nn
 import mxnet as mx
 import tensorflow as tf
 import lpot.model.model as LpotModel
-from lpot.model.model import TensorflowModel, get_model_fwk_name
+from lpot.model.model import get_model_fwk_name
+from lpot.experimental.common.model import Model
 
 def build_graph():
     try:
@@ -107,28 +108,28 @@ class TestTensorflowModel(unittest.TestCase):
 
     def test_graph(self):
         graph = build_graph()
-        self.assertRaises(ValueError, TensorflowModel, 'test')
-        fwk_info = {'input_tensor_names': ['x'], 'output_tensor_names': ['op_to_store']}
-        model = TensorflowModel(graph.as_graph_def(), fwk_info)
+        model = Model(graph)
+        model.input_tensor_names = ['x']
+        model.output_tensor_names = ['op_to_store']
+
         self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
         self.assertEqual(model.input_node_names[0], 'x')
         self.assertEqual(model.output_node_names[0], 'op_to_store')
         model.save('model_test.pb')
 
-        model.graph_def = 'model_test.pb'
+        model = Model('model_test.pb')
         self.assertEqual(model.input_tensor_names[0], 'x')
         self.assertEqual(model.output_tensor_names[0], 'op_to_store')
         self.assertEqual(model.input_tensor[0].name, 'x:0')
         self.assertEqual(model.output_tensor[0].name, 'op_to_store:0')
-
-        with self.assertRaises(AssertionError):
-            model.input_tensor_names = []
+        # test empty input tensor names can't set
+        model.input_tensor_names = []
         with self.assertRaises(AssertionError):
             model.input_tensor_names = ['test']
         model.input_tensor_names = ['x_1']
 
-        with self.assertRaises(AssertionError):
-            model.output_tensor_names = []
+        # test empty output tensor names can't set
+        model.output_tensor_names = []
         with self.assertRaises(AssertionError):
             model.output_tensor_names = ['test']
         model.output_tensor_names = ['op_to_store_1']
@@ -148,8 +149,8 @@ class TestTensorflowModel(unittest.TestCase):
             model_fn, model_dir=None, config=None, params=None, warm_start_from=None
             )
         with self.assertRaises(AssertionError):
-            model = TensorflowModel(estimator)
-        model = TensorflowModel(estimator, input_fn=input_fn)
+            graph_def = Model(estimator).graph_def
+        model = Model(estimator, input_fn=input_fn)
         self.assertEqual(model.output_tensor_names[0], 'dense_2/BiasAdd:0')
 
     def test_ckpt(self):
@@ -161,8 +162,9 @@ class TestTensorflowModel(unittest.TestCase):
                   mobilenet_ckpt_url, dst_path))
 
         os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
-        fwk_info = {'output_tensor_names': ['MobilenetV1/Predictions/Reshape_1']}
-        model = TensorflowModel('./ckpt', fwk_info)
+        model = Model('./ckpt')
+        model.output_tensor_names = ['MobilenetV1/Predictions/Reshape_1']
+        
         self.assertGreaterEqual(len(model.input_tensor_names), 1)
         self.assertEqual(len(model.output_tensor_names), 1)
         graph_def = model.graph_def
@@ -178,13 +180,13 @@ class TestTensorflowModel(unittest.TestCase):
         if not os.path.exists(dst_path):
             os.system("mkdir -p /tmp/.lpot/slim")
             os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
-        os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
 
+        os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
         if tf.version.VERSION > '2.0.0':
             return
         from tf_slim.nets import inception  
-        fwk_info = {'name': 'inception_v1'}
-        model = TensorflowModel('./ckpt/inception_v1.ckpt', fwk_info)
+        model = Model('./slim_ckpt/inception_v1.ckpt')
+        model.name = 'inception_v1'
         graph_def = model.graph_def
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
@@ -198,20 +200,20 @@ class TestTensorflowModel(unittest.TestCase):
         num_classes = 1001
         factory.register('inceptionv1', model_func, input_shape, \
             arg_scope, num_classes=num_classes)
-        os.system('rm -rf ckpt')
+        os.system('rm -rf slim_ckpt')
 
     def test_keras_saved_model(self):
         if tf.version.VERSION < '2.2.0':
             return
         keras_model = build_keras()
-        self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
+        self.assertEqual('tensorflow', get_model_fwk_name(keras_model).split(',')[0])
 
-        model = TensorflowModel(keras_model)
+        model = Model(keras_model)
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
         keras_model.save('./simple_model')
         # load from path
-        model = TensorflowModel('./simple_model')
+        model = Model('./simple_model')
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
 
@@ -227,11 +229,11 @@ class TestTensorflowModel(unittest.TestCase):
           os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
         
         os.system("tar -xvf {}".format(dst_path))
-        model = TensorflowModel('ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
+        model = Model('ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
         from tensorflow.python.framework import graph_util  
         graph_def = graph_util.convert_variables_to_constants(
             sess=model.sess,
-            input_graph_def=model.sess.graph_def,
+            input_graph_def=model.graph_def,
             output_node_names=model.output_node_names)
      
         model.graph_def = graph_def
@@ -244,11 +246,10 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertTrue(isinstance(model.graph, tf.compat.v1.Graph))
         model.save(tmp_saved_model_path)
         # load again to make sure model can be loaded
-        model = TensorflowModel(tmp_saved_model_path)
+        model = Model(tmp_saved_model_path)
         os.system('rm -rf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03')
         os.system('rm -rf temp_saved_model')
         os.system('rm -rf {}'.format(tmp_saved_model_path))
-        os.system('rm saved_model.tar.gz')
 
 def export_onnx_model(model, path):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
@@ -280,7 +281,7 @@ class TestONNXModel(unittest.TestCase):
 
     def test_model(self):
         self.assertEqual('onnxruntime', get_model_fwk_name(self.cnn_export_path))
-        model = MODELS['onnxrt_integerops'](self.cnn_model)
+        model = MODELS['onnxruntime'](self.cnn_model)
         self.assertEqual(True, isinstance(model, LpotModel.ONNXModel))
         self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
 
@@ -292,21 +293,21 @@ class TestPyTorchModel(unittest.TestCase):
     def testPyTorch(self):
         import torchvision
         from lpot.model.model import PyTorchModel, PyTorchIpexModel
-        fwk = {'workspace_path': './pytorch'}
         ori_model = torchvision.models.mobilenet_v2()
         self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
         pt_model.model = ori_model
+        pt_model = PyTorchModel(torchvision.models.mobilenet_v2())
         with self.assertRaises(AssertionError):
-            pt_model = PyTorchModel(torchvision.models.mobilenet_v2(), fwk)
+            pt_model.workspace_path = './pytorch'
         
         ipex_model = PyTorchIpexModel(ori_model)
         self.assertTrue(ipex_model.model)
         ipex_model.model = ori_model
+        ipex_model = PyTorchModel(torchvision.models.mobilenet_v2())
         with self.assertRaises(AssertionError):
-            ipex_model = PyTorchModel(torchvision.models.mobilenet_v2(), fwk)
+            ipex_model.workspace_path = './pytorch'
         ipex_model.save('./')
-        os.remove('./best_configure.json')
 
 def load_mxnet_model(symbol_file, param_file):
     symbol = mx.sym.load(symbol_file)
@@ -348,7 +349,6 @@ class TestMXNetModel(unittest.TestCase):
         model.save('./test')
         self.assertEqual(True, os.path.exists('test-symbol.json'))
         self.assertEqual(True, os.path.exists('test-0000.params'))
-
 
         net = load_mxnet_model('test-symbol.json', 'test-0000.params')
         model.model = net

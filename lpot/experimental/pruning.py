@@ -21,7 +21,7 @@ from ..pruners import PRUNERS
 from ..utils import logger
 from ..utils.utility import singleton
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
-from ..model import BaseModel, MODELS
+from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 
@@ -278,21 +278,19 @@ class Pruning:
                        Best practice is to set from a initialized lpot.experimental.common.Model.
 
         """
-        if not isinstance(user_model, Model):
+        if not isinstance(user_model, BaseModel):
             logger.warning('force convert user raw model to lpot model, ' +
                 'better initialize lpot.experimental.common.Model and set....')
-            user_model = Model(user_model)
-        framework_model_info = {}
+            self._model = Model(user_model)
+        else:
+            self._model = user_model
+
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':
-            framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': cfg.model.inputs,
-                 'output_tensor_names': cfg.model.outputs,
-                 'workspace_path': cfg.tuning.workspace.path})
-
-        self._model = MODELS[self.framework](\
-            user_model.root, framework_model_info, **user_model.kwargs)
+            self._model.name = cfg.model.name
+            self._model.input_tensor_names = cfg.model.inputs
+            self._model.output_tensor_names = cfg.model.outputs
+            self._model.workspace_path = cfg.tuning.workspace.path
 
     @property
     def pruning_func(self):

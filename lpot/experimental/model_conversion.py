@@ -23,7 +23,6 @@ import sys
 import datetime
 import numpy as np
 import yaml
-from lpot.model.model import get_model_fwk_name
 from lpot.adaptor import FRAMEWORKS
 from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
@@ -31,7 +30,8 @@ from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader, create_eval_func
 from ..utils.utility import CpuInfo
-from ..model import BaseModel as LpotModel
+from .common import Model as LpotModel
+from ..model import BaseModel
 
 class ModelConversion():
     """ModelConversion class is used to convert one model format to another.
@@ -205,31 +205,23 @@ class ModelConversion():
                        make sure the name is in supported slim model list.
 
         """
-        from .common import Model as LpotModel
-        from ..model import MODELS
-        if not isinstance(user_model, LpotModel):
+        if not isinstance(user_model, BaseModel):
             logger.warning('force convert user raw model to lpot model, ' +
                 'better initialize lpot.experimental.common.Model and set....')
-            user_model = LpotModel(user_model)
+            self._model = LpotModel(user_model)
+        else:
+            self._model = user_model
 
-        fwk_name = get_model_fwk_name(user_model.root)
-        if fwk_name != self.framework:
-            logger.info('Model conversion only supports Tensorflow at current stage.')
-            sys.exit(0)
+        assert self.framework == 'tensorflow', \
+            'Model conversion only supports Tensorflow at current stage.'
 
         if not self.conf:
             self._gen_yaml()
 
-        framework_model_info = {}
         cfg = self.conf.usr_cfg
-        framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': [],
-                 'output_tensor_names': [],
-                 'workspace_path': cfg.tuning.workspace.path})
-
-        self._model = MODELS[self.framework](\
-            user_model.root, framework_model_info, **user_model.kwargs) 
+        if self.framework == 'tensorflow':
+            self._model.name = cfg.model.name
+            self._model.workspace_path = cfg.tuning.workspace.path
 
     @property
     def metric(self):

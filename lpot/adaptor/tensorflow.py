@@ -114,8 +114,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         import tensorflow as tf
         from .tf_utils.util import iterator_sess_run
-
-        outputs = copy.deepcopy(model.output_tensor_names)
+        outputs = model.output_tensor_names
 
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
@@ -135,7 +134,7 @@ class TensorFlowAdaptor(Adaptor):
             if os.path.isdir(temp_dir):
                 import shutil
                 shutil.rmtree(temp_dir, ignore_errors=True)
-            writer = tf.compat.v1.summary.FileWriter(temp_dir, model.sess.graph)
+            writer = tf.compat.v1.summary.FileWriter(temp_dir, model.graph)
 
             cur_graph = GraphAnalyzer()
             cur_graph.graph = model.graph_def

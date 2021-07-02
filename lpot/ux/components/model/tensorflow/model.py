@@ -16,7 +16,8 @@
 import os.path
 from typing import Any, List, Optional
 
-from lpot.model.model import TensorflowModel as LpotTensorflowModel
+from lpot.experimental.common.model import Model as LpotModel
+from lpot.model.base_model import BaseModel
 from lpot.utils.logger import Logger
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import check_module
@@ -30,7 +31,7 @@ class TensorflowModel(Model):
     def __init__(self, path: str) -> None:
         """Initialize object."""
         super().__init__(path)
-        self._lpot_model_instance: Optional[LpotTensorflowModel] = None
+        self._lpot_model_instance: Optional[BaseModel] = None
 
     def get_input_nodes(self) -> Optional[List[Any]]:
         """Get model input nodes."""
@@ -45,7 +46,7 @@ class TensorflowModel(Model):
         return getattr(self.lpot_model_instance, "output_node_names", []) + ["custom"]
 
     @property
-    def lpot_model_instance(self) -> LpotTensorflowModel:
+    def lpot_model_instance(self) -> BaseModel:
         """Get LPOT Model instance."""
         self._ensure_lpot_model_instance()
         return self._lpot_model_instance
@@ -56,10 +57,8 @@ class TensorflowModel(Model):
             return
         model_name = os.path.splitext(os.path.basename(self.path))[0]
         Logger().get_logger().setLevel(log.level)
-        self._lpot_model_instance = LpotTensorflowModel(
-            self.path,
-            {"name": model_name},
-        )
+        self._lpot_model_instance = LpotModel(self.path)
+        self._lpot_model_instance.name = model_name
 
     @staticmethod
     def get_framework_name() -> str:

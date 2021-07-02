@@ -39,7 +39,7 @@ def find_by_name(item_name, item_list):
 
 
 class ONNXModel(BaseModel):
-    def __init__(self, model, framework_specific_info={}, **kwargs):
+    def __init__(self, model, **kwargs):
         self._model = model
         self.node_name_counter = {}
         self._graph_info = {}
@@ -48,6 +48,9 @@ class ONNXModel(BaseModel):
         self._get_input_name_to_nodes()
         self._output_name_to_node = {}
         self._get_output_name_to_node()
+
+    def framework(self):
+        return 'onnxruntime'
 
     @property
     def model(self):

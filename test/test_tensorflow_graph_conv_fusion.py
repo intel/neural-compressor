@@ -21,7 +21,6 @@ def build_fake_yaml():
           name: fake_yaml
           framework: tensorflow
           inputs: input
-          outputs: op_to_store
         device: cpu
         quantization:
           model_wise:

@@ -28,7 +28,6 @@ from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
-from ..model import MODELS
 from ..model import BaseModel
 from .data import TRANSFORMS
 from .metric import METRICS
@@ -295,22 +294,20 @@ class Benchmark(object):
                        make sure the name is in supported slim model list.
         
         """
-        if not isinstance(user_model, LpotModel):
+        if not isinstance(user_model, BaseModel):
             logger.warning('force convert user raw model to lpot model, ' + 
                 'better initialize lpot.experimental.common.Model and set....')
-            user_model = LpotModel(user_model)
+            self._model = LpotModel(user_model)
+        else:
+            self._model = user_model
 
-        framework_model_info = {}
         cfg = self.conf.usr_cfg
+        # (TODO) ugly to set these params, but tensorflow need
         if self.framework == 'tensorflow':
-            framework_model_info.update(
-                {'name': cfg.model.name,
-                 'input_tensor_names': cfg.model.inputs,
-                 'output_tensor_names': cfg.model.outputs,
-                 'workspace_path': cfg.tuning.workspace.path})
-
-        self._model = MODELS[self.framework](\
-            user_model.root, framework_model_info, **user_model.kwargs)
+            self._model.name = cfg.model.name
+            self._model.input_tensor_names = cfg.model.inputs
+            self._model.output_tensor_names = cfg.model.outputs
+            self._model.workspace_path = cfg.tuning.workspace.path
 
     @property
     def metric(self):

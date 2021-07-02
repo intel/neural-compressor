@@ -44,8 +44,6 @@ def build_fake_yaml_2():
         model:
           name: fake_yaml
           framework: tensorflow
-          inputs: x
-          outputs: op_to_store
         device: cpu
         evaluation:
           accuracy:
