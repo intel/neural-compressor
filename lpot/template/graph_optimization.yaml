@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0                                         # optional. reserved for future use. if not specified, a supported version would be written back to user yaml.
+
 model:                                               # mandatory. used to specify model specific information.
   name: ssd_mobilenet_v1
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
@@ -21,7 +23,7 @@ model:                                               # mandatory. used to specif
 
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 
-graph_optimization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+graph_optimization:                                  # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   precisions: fp32, bf16
 
   op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 

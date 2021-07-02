@@ -22,6 +22,7 @@ from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
 from ..pruners import PRUNERS
 from ..utils import logger
+from ..version import __version__
 import re
 import copy
 import itertools
@@ -525,6 +526,11 @@ schema = Schema({
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
     },
+    Optional('version', default=float(__version__.split('.')[0])): And(
+                                          Or(float, 
+                                             And(int, Use(input_int_to_float)),
+                                             And(str, Use(input_int_to_float))),
+                                          lambda s: s == float(__version__.split('.')[0])),
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \
                                       'calibration': {'sampling_size': [100]}, \
@@ -734,7 +740,24 @@ class Conf(object):
             with open(cfg_fname, 'r') as f:
                 content = f.read()
                 cfg = yaml.safe_load(content)
-                return schema.validate(cfg)
+                validated_cfg = schema.validate(cfg)
+
+            # if user yaml doesn't include version field, lpot will write a supported version
+            # into it.
+            if 'version' not in cfg:
+                leading_whitespace = re.search(r"[ \t]*model\s*:", 
+                                               content).group().split("model")[0]
+                content = re.sub(r'model\s*:', 
+                                 'version: {}\n\n{}model:'.format(
+                                                               float(__version__.split('.')[0]),
+                                                               leading_whitespace
+                                                           ),
+                                 content)
+                with open(cfg_fname, 'w') as f:
+                    f.write(content)
+
+            return validated_cfg
+                    
         except Exception as e:
             logger.error("{}".format(e))
             raise RuntimeError(

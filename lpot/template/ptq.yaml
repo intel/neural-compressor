@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0                                         # optional. reserved for future use. if not specified, a supported version would be written back to user yaml.
+
 model:                                               # mandatory. used to specify model specific information.
   name: ssd_mobilenet_v1                             # mandatory. the model name.
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.

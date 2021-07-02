@@ -58,6 +58,37 @@ class TestConf(unittest.TestCase):
         helper(test)
         self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
 
+    def test_version(self):
+        test = '''
+        version: 2.0
+
+        model:
+          name: version_yaml 
+          framework: mxnet
+        '''
+        helper(test)
+        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
+
+        test = '''
+        model:
+          name: version_yaml 
+          framework: mxnet
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.version, 1.0)
+
+        test = '''
+        version: 1.0
+
+        model:
+          name: version_yaml 
+          framework: mxnet
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.version, 1.0)
+
     def test_calibration(self):
         test = '''
         model:
