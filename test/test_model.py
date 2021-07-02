@@ -178,7 +178,7 @@ class TestTensorflowModel(unittest.TestCase):
         if not os.path.exists(dst_path):
             os.system("mkdir -p /tmp/.lpot/slim")
             os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
-            os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
+        os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
 
         if tf.version.VERSION > '2.0.0':
             return
@@ -199,7 +199,6 @@ class TestTensorflowModel(unittest.TestCase):
         factory.register('inceptionv1', model_func, input_shape, \
             arg_scope, num_classes=num_classes)
         os.system('rm -rf ckpt')
-        os.system('rm -rf .lpot/slim')
 
     def test_keras_saved_model(self):
         if tf.version.VERSION < '2.2.0':
