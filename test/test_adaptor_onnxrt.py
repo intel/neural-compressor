@@ -143,6 +143,13 @@ def build_non_MSE_yaml():
 def eval_func(model):
     return 1.0
 
+def get_torch_version():
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:
+        assert False, 'Got an unknow version of torch: {}'.format(e)
+    return torch_version
+
 def export_onnx_model(model, path):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
     torch_out = model(x)
@@ -257,8 +264,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         q_config = {'fused Conv_0': {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8}}}
         adaptor.q_config = q_config
-        adaptor.set_tensor(q_model, {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
-        adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random([32])})
+        version = get_torch_version()
+        if version >= '1.7':
+            adaptor.set_tensor(q_model, {'545': np.random.random([32, 3, 3, 3])})
+            adaptor.set_tensor(q_model, {'546': np.random.random([32])})
+        else:
+            adaptor.set_tensor(q_model, {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
+            adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random([32])})
 
     def test_adaptor(self):
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
