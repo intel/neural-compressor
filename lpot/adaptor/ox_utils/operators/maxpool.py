@@ -18,8 +18,9 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
-from onnxruntime.quantization.quant_utils import QuantizedValue, QuantizedValueType
+from onnxruntime.quantization.quant_utils import QuantizedValueType
 from onnx import onnx_pb as onnx_proto
+from lpot.adaptor.ox_utils.util import QuantizedValue
 
 
 class QMaxPool(QuantOperatorBase):

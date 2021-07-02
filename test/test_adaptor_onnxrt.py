@@ -9,7 +9,7 @@ import onnx
 import numpy as np
 
 from onnx import onnx_pb as onnx_proto
-from onnx import version_converter, helper, TensorProto, numpy_helper
+from onnx import helper, TensorProto, numpy_helper
 from lpot.adaptor import FRAMEWORKS
 from lpot.data import DATASETS, DATALOADERS
 from lpot.experimental import Quantization, common
@@ -189,6 +189,7 @@ def build_ir3_model():
     graph.initializer.add().CopyFrom(X1_bias)  
     graph.input.extend([weight])
     model = helper.make_model(graph)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     model.ir_version = 3
     return model
 

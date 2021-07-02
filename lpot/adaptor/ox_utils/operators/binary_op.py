@@ -19,9 +19,9 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, \
-                                                 QuantizedValue, QuantizedValueType
+                                                 QuantizedValueType
 from onnx import onnx_pb as onnx_proto
-
+from lpot.adaptor.ox_utils.util import QuantizedValue
 
 class QLinearBinaryOp(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):

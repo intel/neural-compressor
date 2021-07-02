@@ -19,7 +19,8 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, \
-                                                 QuantizedValue, QuantizedValueType
+                                                 QuantizedValueType
+from lpot.adaptor.ox_utils.util import QuantizedValue                                                 
 class QGlobalAveragePool(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)

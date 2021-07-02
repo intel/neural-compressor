@@ -34,7 +34,7 @@ def create_cv_session():
                                       pads=[1, 1, 1, 1])
     relu_node = onnx.helper.make_node('Relu', ['C'], ['D'], name='relu')
     graph = helper.make_graph([conv_node, relu_node], 'test_graph_1', [A, B], [D], [B_init])
-    model = helper.make_model(graph)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
 
     dataset = TestDataset2()
     dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
@@ -52,8 +52,7 @@ def create_nlp_session():
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [10, 4])
     node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='gather')
     graph = helper.make_graph([node], 'test_graph_1', [A, B], [C], [A_init, B_init])
-    model = helper.make_model(graph)
-
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     datasets = DATASETS('onnxrt_qlinearops')
     dataset = datasets['dummy'](shape=(100, 4), label=True)
     dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
@@ -520,8 +519,7 @@ class TestAugment(unittest.TestCase):
         graph.initializer.add().CopyFrom(X3_bias)
         graph.initializer.add().CopyFrom(X5_weight)
         graph.initializer.add().CopyFrom(X5_bias)
-        
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
         data_reader = TestDataset()
         augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
         augment = ONNXRTAugment(ONNXModel(model), data_reader,['Conv', 'MatMul'], augmented_model_path)

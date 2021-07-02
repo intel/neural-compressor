@@ -18,10 +18,10 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
-from onnxruntime.quantization.quant_utils import find_by_name, get_mul_node, QuantizedValue, \
+from onnxruntime.quantization.quant_utils import find_by_name, get_mul_node, \
                                                  QuantizedValueType, attribute_to_kwarg
 from onnx import onnx_pb as onnx_proto
-
+from lpot.adaptor.ox_utils.util import QuantizedValue
 
 class ConvInteger(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):

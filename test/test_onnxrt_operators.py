@@ -266,8 +266,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                           pads=[1, 1, 1, 1])
         relu_node = onnx.helper.make_node('Relu', ['C'], ['D'], name='Relu')
         graph = helper.make_graph([conv_node, relu_node], 'test_graph_1', [A, B], [D])
-        model = helper.make_model(graph)
-
+        model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = "./onnxrt_test/optimized_model.onnx"  
@@ -292,7 +291,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                           pads=[1, 1, 1, 1])
         clip_node = onnx.helper.make_node('Clip', ['C'], ['D'], name='Clip')
         graph = helper.make_graph([conv_node, clip_node], 'test_graph_1', [A, B], [D])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
 
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED

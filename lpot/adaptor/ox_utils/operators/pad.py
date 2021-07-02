@@ -18,10 +18,10 @@
 
 import numpy
 import onnx
-from onnxruntime.quantization.quant_utils import QuantizedValue, QuantizedValueType, \
+from onnxruntime.quantization.quant_utils import QuantizedValueType, \
                                                  attribute_to_kwarg
 from .base_operator import QuantOperatorBase
-
+from lpot.adaptor.ox_utils.util import QuantizedValue
 
 class QPad(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):

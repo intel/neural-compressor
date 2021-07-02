@@ -67,12 +67,12 @@
       level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
 -
   version:
-    name: '1.7.0'
+    name: 'default'
 
   precisions: 
     <<: *common_precisions
 
-  ops: &ops_1_7
+  ops:
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
         'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
@@ -83,4 +83,3 @@
 
   graph_optimization: 
     <<: *default_optimization
--

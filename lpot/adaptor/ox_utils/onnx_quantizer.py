@@ -31,14 +31,14 @@ import numpy as np
 from onnx import onnx_pb as onnx_proto
 from onnxruntime import SessionOptions, InferenceSession, GraphOptimizationLevel
 
-from onnxruntime.quantization.quant_utils import QuantizationMode, QuantizedValueType, \
-                                 QuantizedInitializer, QuantizedValue
+from onnxruntime.quantization.quant_utils import QuantizationMode, QuantizedValueType
 from onnxruntime.quantization.quant_utils import find_by_name, get_elem_index, get_mul_node, \
                                 generate_identified_filename, attribute_to_kwarg, type_to_name
-from onnxruntime.quantization.quant_utils import QuantType, onnx_domain, __producer__, __version__
+from onnxruntime.quantization.quant_utils import onnx_domain, __producer__, __version__
 
 from lpot.adaptor.ox_utils.registry import CreateOpQuantizer, CreateDefaultOpQuantizer
-from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zo, quantize_data
+from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zo, quantize_data, \
+                                       QuantizedValue, QuantizedInitializer
 from lpot.model.onnx_model import ONNXModel
 
 

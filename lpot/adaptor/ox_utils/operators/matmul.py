@@ -19,8 +19,9 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from onnxruntime.quantization.quant_utils import find_by_name, get_mul_node, \
-                                                 QuantizedValue, QuantizedValueType
+                                                 QuantizedValueType
 from onnx import onnx_pb as onnx_proto
+from lpot.adaptor.ox_utils.util import QuantizedValue
 '''
     Used when quantize mode is QuantizationMode.IntegerOps.
 '''

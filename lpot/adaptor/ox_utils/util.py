@@ -18,7 +18,8 @@
 
 import os
 import numpy as np
-from onnx import onnx_pb as onnx_proto         
+from onnx import onnx_pb as onnx_proto  
+from onnxruntime.quantization.quant_utils import QuantType       
 
 def collate_preds(results):
     batch = results[0]
@@ -137,3 +138,52 @@ def dequantize_data(tensor_value, scale_value, zo_value, axis=0):
             new_tensor_value = np.concatenate((new_tensor_value, \
                                                new_per_channel_tensor_value), 0)
         return new_tensor_value
+
+class QuantizedValue:
+    '''
+    Represents a linearly quantized value (input\output\intializer)
+    '''
+    def __init__(self,
+                 name,
+                 new_quantized_name,
+                 scale_name,
+                 zero_point_name,
+                 quantized_value_type,
+                 axis=None,
+                 qType=QuantType.QUInt8):
+        self.original_name = name
+        self.q_name = new_quantized_name
+        self.scale_name = scale_name
+        self.zp_name = zero_point_name
+        self.value_type = quantized_value_type
+        self.axis = axis
+        self.qType = qType
+
+class QuantizedInitializer:
+    '''
+        Represents a linearly quantized weight input from ONNX operators
+    '''
+    def __init__(self,
+                 name,
+                 initializer,
+                 rmins,
+                 rmaxs,
+                 zero_points,
+                 scales,
+                 data=[],
+                 quantized_data=[],
+                 axis=None,
+                 qType=QuantType.QUInt8):
+        self.name = name
+        self.initializer = initializer  # TensorProto initializer in ONNX graph
+        self.rmins = rmins  # List of minimum range for each axis
+        self.rmaxs = rmaxs  # List of maximum range for each axis
+        # 1D tensor of zero points computed for each axis. scalar if axis is empty
+        self.zero_points = zero_points
+        self.scales = scales  # 1D tensor of scales computed for each axis. scalar if axis is empty
+        self.data = data  # original data from initializer TensorProto
+        self.quantized_data = quantized_data  # weight-packed data from data
+        # Scalar to specify which dimension in the initializer to weight pack.
+        self.axis = axis
+        # If empty, single zero point and scales computed from a single rmin and rmax
+        self.qType = qType
