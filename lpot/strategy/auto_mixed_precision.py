@@ -183,9 +183,11 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
-            logger.info('FP32 baseline is: ' +
-                        ('[{:.4f}, {:.4f}]'.format(*self.baseline)
-                            if self.baseline else 'None'))
+            baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
+                                                        str(self.objective.measurer),
+                                                        self.baseline[1]) \
+                                                        if self.baseline else 'n/a'
+            logger.info('FP32 baseline is: {}'.format(baseline_msg))
 
         trials_count = 0
         for tune_cfg in self.next_tune_cfg():

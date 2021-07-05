@@ -286,7 +286,7 @@ class TuneStrategy(object):
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
-        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0], 
+        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
                                                                 str(self.objective.measurer),
                                                                 self.baseline[1]) \
                                                                 if self.baseline else 'n/a'
