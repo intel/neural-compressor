@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-  output_model=saved_results
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
