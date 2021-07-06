@@ -10,6 +10,11 @@ LPOT UX is only available on Linux based hosts.
    ```shell
    lpot_ux
    ```
+   > **Note**: TF 2.5.0 requires setting environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 for INT8 quantization:
+    ```shell
+    TF_ENABLE_MKL_NATIVE_FORMAT=0 lpot_ux
+    ```
+
 2. The server prints information on how to access the Web UI.
 
    An example message looks like this: 
