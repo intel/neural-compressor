@@ -6,6 +6,7 @@ This example load a language translation model and confirm its accuracy and spee
 ### Environment
 onnx: 1.7.0
 onnxruntime: 1.6.0+
+transformers: 3.2.0
 
 ### Prepare dataset
 Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip).

@@ -233,11 +233,6 @@ def main():
     if args.block_size <= 0:
         args.block_size = tokenizer.max_len_single_sentence  # Our input block size will be the max possible for the model
     args.block_size = min(args.block_size, tokenizer.max_len_single_sentence)
-    model = model_class.from_pretrained(args.model_name_or_path,
-                                        from_tf=bool('.ckpt' in args.model_name_or_path),
-                                        config=config,
-                                        cache_dir=args.cache_dir if args.cache_dir else None)
-    model.to(args.device)
     
     logger.info("Training/evaluation parameters %s", args)
             
@@ -251,6 +246,20 @@ def main():
         evaluate(args, model, tokenizer)
         
     if args.tune:
+        # GPT2 optimizer
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
+        opt_options = BertOptimizationOptions('gpt2')
+        opt_options.enable_embed_layer_norm = False
+
+        model_optimizer = optimizer.optimize_model(
+            args.model_path,
+            'gpt2',
+            num_heads=12,
+            hidden_size=768,
+            optimization_options=opt_options)
+        model = model_optimizer.model  
+
         from lpot.experimental import Quantization, common
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)

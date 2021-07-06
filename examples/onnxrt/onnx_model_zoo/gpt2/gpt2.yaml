@@ -10,16 +10,91 @@ quantization:
      'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
      'weight': {'dtype': ['fp32'], 'scheme':['sym']}
      },
-     'Gemm_*': {
+     'Gather_19':{
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },     
+    'Attention_1_matmul':{
      'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
      'weight': {'dtype': ['fp32'], 'scheme':['sym']}
      },
+    'Attention_3_matmul':{
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },   
+    'Attention_5_matmul':{
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },       
+    'FullyConnect_MatMul36':{
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },
+    'FullyConnect_MatMul33': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },   
+    'FullyConnect_MatMul30': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     }, 
+    'FullyConnect_MatMul27': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },    
+    'FullyConnect_MatMul24': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },  
+    'FullyConnect_MatMul23': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },  
+    'FullyConnect_MatMul20': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },     
+    'FullyConnect_MatMul15': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     }, 
+    'FullyConnect_MatMul14': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },
+    'FullyConnect_MatMul12': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     }, 
+    'FullyConnect_MatMul11': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },    
+    'FullyConnect_MatMul9': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },    
+    'FullyConnect_MatMul8': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     }, 
+    'FullyConnect_MatMul6': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },
+    'FullyConnect_MatMul3': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },    
+    'FullyConnect_MatMul2': {
+     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     },                                          
    }
 
 tuning:
   accuracy_criterion:
-    relative:  0.02                                 # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+    relative:  0.01                                 # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
   exit_policy:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
-    max_trials: 1000
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
