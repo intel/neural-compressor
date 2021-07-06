@@ -83,7 +83,7 @@ We provide examples of both 2 usages. For completely Yaml config, please refer t
 ### Pruning config
 We divide the pruning into 2 kinds: ``weight compression`` and ``activation compression``, the last is WIP. ``weight compression`` means zeroing the weight matrix.
 
-For ``weight_compression``, we dived params into global parameters and local parameters in different ``pruners``. Global parameters may contain **start_epoch** (on which epoch pruning begins), **end_epoch** (on which epoch pruning ends), **initial_sparsity** (initial sparsity goal default 0), **target_sparsity** (target sparsity goal) and **frequency** (of updating sparsity). At least one pruner instance needs to be defined under specific algos (currently only ``basic_magnitude`` supported). You can override all global params in a specific pruner using field names and specify names of which weight of model to be pruned. If no weight is specified, all weights of the model will be pruned.
+For ``weight_compression``, we dived params into global parameters and local parameters in different ``pruners``. Global parameters may contain **start_epoch** (on which epoch pruning begins), **end_epoch** (on which epoch pruning ends), **initial_sparsity** (initial sparsity goal default 0), **target_sparsity** (target sparsity goal) and **frequency** (of updating sparsity). At least one pruner instance needs to be defined under specific algos (currently ``basic_magnitude`` and ``gradient_sensitivity`` are supported). You can override all global params in a specific pruner using field names and specify names of which weight of model to be pruned. If no weight is specified, all weights of the model will be pruned.
 
 ## Example of user pass-in training function
 

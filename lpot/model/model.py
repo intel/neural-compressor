@@ -22,7 +22,7 @@ from abc import abstractmethod
 from lpot.utils.utility import LazyImport, compute_sparsity
 from lpot.utils import logger
 from lpot.conf.dotdict import deep_get, deep_set
-from lpot.conf import config as cfg 
+from lpot.conf import config as cfg
 from lpot.model.base_model import BaseModel
 from lpot.model.onnx_model import ONNXModel
 
@@ -45,7 +45,7 @@ def get_model_type(model):
     Returns:
         type (string): model type
     """
- 
+
     from lpot.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
     if isinstance(model, tf.Graph):
         return 'graph'
@@ -158,7 +158,7 @@ def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
         output_model (string): output path
         graph_def (tf.compat.v1.GraphDef): processed graph_def
     """
- 
+
     model_variables_dir = os.path.join(input_model, 'variables')
     os.makedirs(output_model, exist_ok=True)
     export_variables_dir = os.path.join(output_model, 'variables')
@@ -235,7 +235,7 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with tf.compat.v1.Graph
 
     Args:
-        model (tf.compat.v1.Graph): tf.compat.v1.Graph object 
+        model (tf.compat.v1.Graph): tf.compat.v1.Graph object
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
 
@@ -244,7 +244,7 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -259,7 +259,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with tf.compat.v1.GraphDef
 
     Args:
-        model (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object 
+        model (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
 
@@ -268,7 +268,7 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     graph = tf.Graph()
     try:
         with graph.as_default():
@@ -291,7 +291,7 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with frozen pb
 
     Args:
-        model (string): model path 
+        model (string): model path
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
 
@@ -300,7 +300,7 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     graph_def = tf.compat.v1.GraphDef()
     model = model if model.endswith('.pb') else model + '.pb'
     with open(model, 'rb') as f:
@@ -321,7 +321,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     assert tf.version.VERSION > '2.1.0', 'keras model need tensorflow version > 2.1.0....'
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     if not isinstance(model, tf.keras.Model):
@@ -355,7 +355,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
     grappler_meta_graph_def = saver.export_meta_graph(
         graph_def=graph_def, graph=frozen_model.graph)
-    
+
     # Add a collection 'train_op' so that Grappler knows the outputs.
     fetch_collection = meta_graph_pb2.CollectionDef()
     for array in model.output_names:
@@ -384,7 +384,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
     from .nets_factory import TFSlimNetsFactory
     factory = TFSlimNetsFactory()
@@ -434,7 +434,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     assert output_tensor_names is not None and len(output_tensor_names) > 0, \
         'outputs should not be None of checkpoint....'
 
@@ -474,7 +474,7 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     assert 'input_fn' in kwargs, 'input func should be supplied for estimator session....'
     with tf.Graph().as_default() as g:
       features, input_hooks = model._get_features_from_input_fn(
@@ -519,7 +519,7 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -550,7 +550,7 @@ class TensorflowBaseModel(BaseModel):
         kwargs (dict): other required parameters, like input_fn
 
     """
- 
+
     def __init__(self, model, **kwargs):
 
         self._model = model
@@ -578,7 +578,7 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def workspace_path(self):
-        return self._workspace_path 
+        return self._workspace_path
 
     @workspace_path.setter
     def workspace_path(self, path):
@@ -590,7 +590,7 @@ class TensorflowBaseModel(BaseModel):
 
     @model_type.setter
     def model_type(self, model_type):
-        assert model_type in SESSIONS, 'model type not supported....' 
+        assert model_type in SESSIONS, 'model type not supported....'
         self._model_type = model_type
 
     @property
@@ -724,10 +724,10 @@ class TensorflowBaseModel(BaseModel):
         logger.info("Save quantized model at %s" % pb_file)
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
- 
+
     @property
     def graph_def(self):
-        return self.graph.as_graph_def() 
+        return self.graph.as_graph_def()
 
     @graph_def.setter
     def graph_def(self, graph_def):
@@ -840,6 +840,13 @@ class PyTorchBaseModel(BaseModel):
         self.tune_cfg = None
         self.is_quantized = False
         self.kwargs = kwargs if kwargs else None
+        self.input_args = []
+        self.input_kwargs = {}
+
+    def __call__(self, *args, **kwargs):
+        self.input_args = args
+        self.input_kwargs = kwargs
+        return self._model(*args, **kwargs)
 
     def framework(self):
         return 'pytorch'
@@ -883,12 +890,11 @@ class PyTorchBaseModel(BaseModel):
         Returns:
 
         """
-        new_tensor = torch.Tensor(new_tensor)
-        state_dict = self._model.state_dict()
-        for name in state_dict:
-            if name == tensor_name:
-                state_dict[name] = new_tensor
-        self._model.load_state_dict(state_dict)
+        # TODO: copy tensor option to new tensor is better
+        new_tensor = torch.tensor(new_tensor).float()
+        module_index = '.'.join(tensor_name.split('.')[:-1])
+        module = dict(self._model.named_modules())[module_index]
+        setattr(module, tensor_name.split('.')[-1], torch.nn.Parameter(new_tensor))
 
     def prune_weights_(self, tensor_name, mask):
         """ Prune weight in place according to tensor_name with mask
@@ -905,19 +911,44 @@ class PyTorchBaseModel(BaseModel):
             if name == tensor_name:
                 state_dict[name].masked_fill_(mask, 0.)
 
-    def get_gradient(self, tensor_name):
+    # TODO: maybe a hook is better than wrapper
+    def get_inputs(self, input_index=None, input_name=None):
+        """Get inputs of model
+
+        Args:
+            input_index: index of input tensor
+            input_name: name of input tensor
+
+        Returns:
+            tensor: input tensor
+        """
+        if input_index is not None:
+            return self.input_args[input_index]
+        elif input_name is not None:
+            return self.input_kwargs[input_name]
+        else:
+            logger.error("No index key used to retrieve input."
+                         " Please use input_index or input_name.")
+
+    def get_gradient(self, input_tensor):
         """ Get gradients of specific tensor
 
         Args:
-            tensor_name (string): weight name
+            input_tensor (string or tensor): weight name or a tensor
 
         Returns:
             (tensor): gradient tensor
         """
-        for name, tensor in self._model.named_parameters():
-            if name == tensor_name:
-                assert tensor.grad is not None, 'please call backward() before get_gradient'
-                return tensor.grad
+        if isinstance(input_tensor, str):
+            for name, tensor in self._model.named_parameters():
+                if name == input_tensor:
+                    assert tensor.grad is not None, 'please call backward() before get_gradient'
+                    return tensor.grad
+        elif isinstance(input_tensor, torch.Tensor):
+            assert input_tensor.grad is not None, 'please call backward() before get_gradient'
+            return input_tensor.grad
+        else:
+            logger.error("Expect str or torch.Tensor in get_gradient, but got %s." % type(tensor))
 
     def report_sparsity(self):
         """ Get sparsity of the model
@@ -972,9 +1003,9 @@ class PyTorchModel(PyTorchBaseModel):
     """Build PyTorchModel object
 
     Args:
-        model (pytorch model): model path 
+        model (pytorch model): model path
     """
- 
+
     def __init__(self, model, **kwargs):
         super(PyTorchModel, self).__init__(model, **kwargs)
 
@@ -1047,9 +1078,9 @@ class PyTorchFXModel(PyTorchModel):
     """Build PyTorchFXModel object
 
     Args:
-        model (onnx model): model path 
+        model (onnx model): model path
     """
- 
+
     def __init__(self, model, **kwargs):
         super(PyTorchFXModel, self).__init__(model, **kwargs)
 
@@ -1058,9 +1089,9 @@ class PyTorchIpexModel(PyTorchBaseModel):
     """Build PyTorchIpexModel object
 
     Args:
-        model (onnx model): model path 
+        model (onnx model): model path
     """
- 
+
     def __init__(self, model, **kwargs):
         super(PyTorchIpexModel, self).__init__(model, **kwargs)
         self._model = model
@@ -1073,7 +1104,7 @@ class PyTorchIpexModel(PyTorchBaseModel):
 
     @workspace_path.setter
     def workspace_path(self, path):
-        self._workspace_path = path 
+        self._workspace_path = path
         tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(path)),
                                      'best_configure.json')
         assert os.path.exists(
@@ -1106,9 +1137,9 @@ class MXNetModel(BaseModel):
     """Build MXNetModel object
 
     Args:
-        model (mxnet model): model path 
+        model (mxnet model): model path
     """
- 
+
     def __init__(self, model, **kwargs):
         self._model = model
 

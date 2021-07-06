@@ -48,7 +48,7 @@ from transformers import glue_compute_metrics as compute_metrics
 from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
 from transformers import glue_convert_examples_to_features as convert_examples_to_features
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
+from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, BertForSequenceClassification
 
 from processors import glue_output_modes as output_modes
 from processors import glue_processors as processors
@@ -58,6 +58,7 @@ from processors import collate_fn
 from callback.optimization.adamw import AdamW
 from callback.lr_scheduler import get_linear_schedule_with_warmup
 from callback.progressbar import ProgressBar
+from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
@@ -78,8 +79,8 @@ def get_argparse():
                         help="Path to pre-trained model or shortcut name selected in the list")
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="The name of the task to train selected in the list: ")
-    #parser.add_argument("--output_dir", default=None, type=str, required=True,
-    #                    help="The output directory where the model predictions and checkpoints will be written.")
+    parser.add_argument("--output_dir", default=None, type=str, required=True,
+                        help="The output directory where the model predictions and checkpoints will be written.")
     parser.add_argument("--output_model", default=None, type=str, required=True,
                         help="The output dierectory for the trained model.")
     ## Other parameters
@@ -98,6 +99,8 @@ def get_argparse():
                         help="Whether to run eval on the dev set.")
     parser.add_argument("--do_predict", action='store_true',
                         help="Whether to run the model in inference mode on the test set.")
+    parser.add_argument( "--do_prune", action="store_true",
+                        help="Whether to prune the model on the dev set. This prunes the model to the target number of heads and the number of FFN states.")
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--per_gpu_train_batch_size", default=8, type=int,
@@ -126,25 +129,18 @@ def get_argparse():
                         help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action='store_true',
                         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number")
-    parser.add_argument("--no_cuda", action='store_true',
-                        help="Avoid using CUDA when available")
     parser.add_argument('--overwrite_output_dir', action='store_true',
                         help="Overwrite the content of the output directory")
     parser.add_argument('--overwrite_cache', action='store_true',
                         help="Overwrite the cached training and evaluation sets")
     parser.add_argument('--seed', type=int, default=42,
                         help="Random seed for initialization")
-    parser.add_argument("--local_rank", type=int, default=-1,
-                        help="For distributed training: local_rank")
     parser.add_argument('--prune', action='store_true',
                         help="Prune the model with a certain sparsity ratio and acc")
     parser.add_argument("--config", default=None, help="tuning config")
     return parser.parse_args()
 
 def load_and_cache_examples(args, task, tokenizer, data_type='train'):
-    if args.local_rank not in [-1, 0] and not evaluate:
-        torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
-
     processor = processors[task]()
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
@@ -177,12 +173,9 @@ def load_and_cache_examples(args, task, tokenizer, data_type='train'):
                                                 label_list=label_list,
                                                 max_seq_length=args.max_seq_length,
                                                 output_mode=output_mode)
-        if args.local_rank in [-1, 0]:
-            logger.info("Saving features into cached file %s", cached_features_file)
-            torch.save(features, cached_features_file)
+        logger.info("Saving features into cached file %s", cached_features_file)
+        torch.save(features, cached_features_file)
 
-    if args.local_rank == 0 and not evaluate:
-        torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
     # Convert to Tensors and build dataset
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
@@ -204,12 +197,10 @@ def evaluate(args, model, tokenizer, prefix=""):
     #for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
     for eval_task in eval_task_names:
         eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, data_type='dev')
-        #if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
-        #    os.makedirs(eval_output_dir)
 
-        args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+        args.eval_batch_size = args.per_gpu_eval_batch_size
         # Note that DistributedSampler samples randomly
-        eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
+        eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,
                                      collate_fn=collate_fn)
 
@@ -242,8 +233,6 @@ def evaluate(args, model, tokenizer, prefix=""):
                 out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
             pbar(step)
         print(' ')
-        if 'cuda' in str(args.device):
-            torch.cuda.empty_cache()
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
             preds = np.argmax(preds, axis=1)
@@ -256,21 +245,18 @@ def evaluate(args, model, tokenizer, prefix=""):
             logger.info("  %s = %s", key, str(result[key]))
     return results
 
-def take_eval_steps(args, model, tokenizer, prune, prefix=""):
+def take_head_train_steps(args, model, tokenizer, prune, prefix=""):
+    model_ = model.model
      # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     #eval_outputs_dirs = (args.output_dir, args.output_dir + '-MM') if args.task_name == "mnli" else (args.output_dir,)
 
     results = {}
-    #for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
     for eval_task in eval_task_names:
         eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, data_type='dev')
-        #if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
-        #    os.makedirs(eval_output_dir)
-
-        args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+        args.eval_batch_size = 1
         # Note that DistributedSampler samples randomly
-        eval_sampler = SequentialSampler(eval_dataset) if args.local_rank == -1 else DistributedSampler(eval_dataset)
+        eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,
                                      collate_fn=collate_fn)
 
@@ -282,8 +268,77 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
         nb_eval_steps = 0
         preds = None
         out_label_ids = None
-        model = model.model
-        model.eval()
+        model_.eval()
+
+        # To calculate head prune
+        head_mask = torch.ones(model_.config.num_hidden_layers, model_.config.num_attention_heads).to(args.device)
+        head_mask.requires_grad_(requires_grad=True)
+
+        pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
+        for step, batch in enumerate(eval_dataloader):
+            batch = tuple(t.to(args.device) for t in batch)
+            inputs = {'input_ids': batch[0],
+                      'attention_mask': batch[1],
+                      'labels': batch[3]}
+            outputs = model(output_attentions=True, **inputs, head_mask=head_mask)
+
+            tmp_eval_loss, logits = outputs[:2]
+
+            tmp_eval_loss.backward()
+
+            eval_loss += tmp_eval_loss.mean().item()
+            prune.on_batch_end()
+            nb_eval_steps += 1
+            if preds is None:
+                preds = logits.detach().cpu().numpy()
+                out_label_ids = inputs['labels'].detach().cpu().numpy()
+            else:
+                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+                out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
+            pbar(step)
+        prune.on_epoch_end()
+        eval_loss = eval_loss / nb_eval_steps
+        if args.output_mode == "classification":
+            preds = np.argmax(preds, axis=1)
+        elif args.output_mode == "regression":
+            preds = np.squeeze(preds)
+        result = compute_metrics(eval_task, preds, out_label_ids)
+        results.update(result)
+        logger.info("***** Eval results before pruning {} *****".format(prefix))
+        for key in sorted(result.keys()):
+            logger.info("  %s = %s", key, str(result[key]))
+    return results
+
+def take_eval_steps(args, model, tokenizer, prune, prefix=""):
+    target_num_heads = prune.cfg['pruning']['approach']['weight_compression']['pruners'][0].parameters['target']
+    model_ = model.model
+    for submodule in model_.bert.encoder.layer:
+        submodule.attention.self.num_attention_heads = target_num_heads
+        submodule.attention.self.all_head_size = target_num_heads * submodule.attention.self.attention_head_size
+
+     # Loop to handle MNLI double evaluation (matched, mis-matched)
+    eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
+
+    results = {}
+    for eval_task in eval_task_names:
+        eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, data_type='dev')
+
+        args.eval_batch_size = 1
+        # Note that DistributedSampler samples randomly
+        eval_sampler = SequentialSampler(eval_dataset)
+        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,
+                                     collate_fn=collate_fn)
+
+        # Eval!
+        logger.info("***** Running evaluation {} *****".format(prefix))
+        logger.info("  Num examples = %d", len(eval_dataset))
+        logger.info("  Batch size = %d", args.eval_batch_size)
+        eval_loss = 0.0
+        nb_eval_steps = 0
+        preds = None
+        out_label_ids = None
+        model_.eval()
+
         pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
         for step, batch in enumerate(eval_dataloader):
             batch = tuple(t.to(args.device) for t in batch)
@@ -292,7 +347,7 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
                           'attention_mask': batch[1],
                           'labels': batch[3]}
                 #inputs['token_type_ids'] = batch[2]
-                outputs = model(**inputs)
+                outputs = model_(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
@@ -303,8 +358,6 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
             pbar(step)
-        if 'cuda' in str(args.device):
-            torch.cuda.empty_cache()
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
             preds = np.argmax(preds, axis=1)
@@ -317,8 +370,7 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
             logger.info("  %s = %s", key, str(result[key]))
     return results
 
-def take_train_steps(args, model, tokenizer, train_dataloader, prune):
-    model = model.model
+def train(args, model, tokenizer, train_dataloader):
     if args.max_steps > 0:
         num_training_steps = args.max_steps
         args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
@@ -340,28 +392,20 @@ def take_train_steps(args, model, tokenizer, train_dataloader, prune):
     logger.info("  Num examples = %d", len(train_dataset))
     logger.info("  Num Epochs = %d", args.num_train_epochs)
     logger.info("  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size)
-    logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d",
-                args.train_batch_size * args.gradient_accumulation_steps * (
-                    torch.distributed.get_world_size() if args.local_rank != -1 else 1))
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", num_training_steps)
 
     for epoch in range(int(args.num_train_epochs)):
         pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
         model.train()
-        prune.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
-            prune.on_batch_begin(step)
             batch = tuple(t.to(args.device) for t in batch)
             inputs = {'input_ids': batch[0],
                       'attention_mask': batch[1],
                       'labels': batch[3]}
-            #inputs['token_type_ids'] = batch[2]
             outputs = model(**inputs)
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 
-            if args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
 
@@ -374,84 +418,37 @@ def take_train_steps(args, model, tokenizer, train_dataloader, prune):
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
 
-            prune.on_batch_end()
-            if step >= 20:
-                break;
-            if args.local_rank in [-1, 0] and args.logging_steps > 0 and step % args.logging_steps == 20:
+            if args.logging_steps > 0 and step % args.logging_steps == 20:
                 # Log metrics
-                if args.local_rank == -1:  # Only evaluate when single GPU otherwise metrics may not average well
-                    evaluate(args, model, tokenizer)
+                evaluate(args, model, tokenizer)
 
-            #if args.local_rank in [-1, 0] and args.save_steps > 0 and step % args.save_steps  == 20:
-            #    # Save model checkpoint
-            #    output_dir = os.path.join(args.output_dir, 'checkpoint-{}'.format(step + epoch * args.save_steps))
-            #    if not os.path.exists(output_dir):
-            #        os.makedirs(output_dir)
-            #    model_to_save = model.module if hasattr(model,
-            #                                            'module') else model  # Take care of distributed/parallel training
-            #    model_to_save.save_pretrained(output_dir)
-            #    torch.save(args, os.path.join(output_dir, 'training_args.bin'))
-            #    torch.save(model, os.path.join(output_dir, 'model.bin'))
-            #    logger.info("Saving model checkpoint to %s", output_dir)
             pbar(step, {'loss': loss.item()})
-        prune.on_epoch_end()
         print(" ")
-        if 'cuda' in str(args.device):
-            torch.cuda.empty_cache()
 
-def train(args, train_dataset, model, tokenizer):
-    args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
-    train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
-    train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size,
-                                  collate_fn=collate_fn)
+def prune_by_lpot(args, task_name, model, tokenizer, prefix="", use_tqdm=True):
+    from lpot.experimental import Pruning, common
     def train_func(model):
-        return take_train_steps(args, model, tokenizer, train_dataloader, prune)
+        return take_head_train_steps(args, model, tokenizer, prune, prefix="")
 
     def eval_func(model):
-        return take_eval_steps(args, model, tokenizer, prune)
+        return take_eval_steps(args, model, tokenizer, prune, prefix="")
 
-    if args.prune:
-        from lpot.experimental import Pruning, common
-        prune = Pruning(args.config)
-        prune.model = common.Model(model)
-        prune.train_dataloader = train_dataloader
-        prune.pruning_func = train_func
-        prune.eval_dataloader = train_dataloader
-        prune.eval_func = eval_func
-        model = prune()
-        torch.save(model, args.output_model)
+    # eval datasets.
+    prune = Pruning(args.config)
+    prune.model = common.Model(model)
+    prune.pruning_func = train_func
+    prune.eval_func = eval_func
+    model = prune()
 
 if __name__ == "__main__":
     args = get_argparse()
     args.task_name = args.task_name.lower()
-    #if not os.path.exists(args.output_dir):
-    #    os.mkdir(args.output_dir)
-    #args.output_dir = args.output_dir + '{}'.format(args.model_type)
-    #if not os.path.exists(args.output_dir):
-    #    os.mkdir(args.output_dir)
-    #if os.path.exists(args.output_dir) and os.listdir(
-    #        args.output_dir) and args.do_train and not args.overwrite_output_dir:
-    #    raise ValueError(
-    #        "Output directory ({}) already exists and is not empty. Use --overwrite_output_dir to overcome.".format(
-    #            args.output_dir))
-   # Setup CUDA, GPU & distributed training
-    if args.local_rank == -1 or args.no_cuda:
-        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        args.n_gpu = torch.cuda.device_count()
-    else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        torch.cuda.set_device(args.local_rank)
-        device = torch.device("cuda", args.local_rank)
-        torch.distributed.init_process_group(backend='nccl')
-        args.n_gpu = 1
-    #args.device = device
     args.device = "cpu"
     # Set seed
     random.seed(args.seed)
     os.environ['PYTHONHASHSEED'] = str(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
     # some cudnn methods can be random even after fixing the seed
     # unless you tell it to be deterministic
     torch.backends.cudnn.deterministic = True
@@ -461,21 +458,29 @@ if __name__ == "__main__":
     args.output_mode = output_modes[args.task_name]
     label_list = processor.get_labels()
     num_labels = len(label_list)
-    # Load pretrained model and tokenizer
-    if args.local_rank not in [-1, 0]:
-        torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
 
     args.model_type = args.model_type.lower()
-    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    model = DistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased')
-    if args.local_rank == 0:
-        torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
     model.to(args.device)
     logger.info("Training/evaluation parameters %s", args)
 
     # Training
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, data_type='train')
-        train(args, train_dataset, model, tokenizer)
+        args.train_batch_size = args.per_gpu_train_batch_size
+        train_sampler = RandomSampler(train_dataset)
+        train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size,
+                                      collate_fn=collate_fn)
+        train(args, model, tokenizer, train_dataloader)
+        model.config.save_pretrained(args.output_dir + "/trained" )
 
-    # Save model
+        model.save_pretrained(args.output_dir + "/trained" )
+        tokenizer.save_pretrained(args.output_dir + "/trained" )
+
+    # eval
+    if args.do_eval:
+        evaluate(args, model, tokenizer)
+
+    if args.do_prune:
+        prune_by_lpot(args, args.task_name, model, tokenizer, prefix="")

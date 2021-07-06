@@ -186,14 +186,15 @@ def gather_results(predictions, gt):
 def take_train_steps(args, model, train_dataloader, eval_dataloader, train_sampler, metric, prune):
     # Optimizer
     # Split weights in two groups, one with weight decay and the other not.
+    model_ = model.model
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+            "params": [p for n, p in model_.named_parameters() if not any(nd in n for nd in no_decay)],
             "weight_decay": args.weight_decay,
         },
         {
-            "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
+            "params": [p for n, p in model_.named_parameters() if any(nd in n for nd in no_decay)],
             "weight_decay": 0.0,
         },
     ]
@@ -231,12 +232,12 @@ def take_train_steps(args, model, train_dataloader, eval_dataloader, train_sampl
     completed_steps = 0
 
     for epoch in range(args.num_train_epochs):
-        model.train()
+        model_.train()
         train_sampler.set_epoch(epoch) if rank != -1 else None
         prune.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             prune.on_batch_begin(step)
-            outputs = model(**batch)
+            outputs = model_(**batch)
             loss = outputs.loss
             loss = loss / args.gradient_accumulation_steps
             loss.backward()
@@ -252,9 +253,9 @@ def take_train_steps(args, model, train_dataloader, eval_dataloader, train_sampl
 
             prune.on_batch_end()
 
-        model.eval()
+        model_.eval()
         for step, batch in enumerate(eval_dataloader):
-            outputs = model(**batch)
+            outputs = model_(**batch)
             predictions = outputs.logits.argmax(dim=-1)
             pred, gt = gather_results(predictions, batch["labels"])
             metric.add_batch(predictions=pred, references=gt)

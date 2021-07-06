@@ -144,7 +144,11 @@ class Pruning:
                                             self._model, \
                                             pruner,
                                             self.cfg.pruning.approach.weight_compression))
-# TODO, add gradient_sensativity
+                elif pruner.prune_type == 'gradient_sensitivity':
+                    self.pruners.append(PRUNERS['GradientSensitivity'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
 
         if self._train_dataloader is None and self._pruning_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader
@@ -177,7 +181,7 @@ class Pruning:
             self._pruning_func = create_train_func(self.framework, \
                                                    self.train_dataloader, \
                                                    self.adaptor, train_cfg, hooks=hooks)
-        self._pruning_func(self._model.model)
+        self._pruning_func(self._model)
         logger.info('Model pruning is done. Start to evaluate the pruned model...')
         if self._eval_func is None:
             # eval section in yaml file should be configured.

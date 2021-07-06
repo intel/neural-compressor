@@ -362,6 +362,13 @@ class TestPytorchAdaptor(unittest.TestCase):
                 self.lpot_model.get_weight("fc.bias")),
             torch.tensor(100.))
 
+    def test_get_input(self):
+        model = copy.deepcopy(self.lpot_model)
+        model.model.eval().fuse_model()
+        rand_input = torch.rand(100, 3, 256, 256).float()
+        model(rand_input)
+        assert torch.equal(model.get_inputs(input_index=0), rand_input)
+
     def test_update_weights(self):
         self.lpot_model.update_weights('fc.bias', torch.zeros([1000]))
         assert int(torch.sum(self.lpot_model.get_weight("fc.bias"))) == 0
@@ -375,6 +382,11 @@ class TestPytorchAdaptor(unittest.TestCase):
                 tensor.grad = torch.zeros_like(tensor)
                 break
         assert torch.equal(self.lpot_model.get_gradient('fc.bias'), torch.zeros_like(tensor))
+
+        rand_input = torch.rand(100, 3, 256, 256).float()
+        rand_input.grad = torch.ones_like(rand_input)
+        assert torch.equal(self.lpot_model.get_gradient(rand_input),
+                           torch.ones_like(rand_input))
 
     def test_report_sparsity(self):
         df, total_sparsity = self.lpot_model.report_sparsity()

@@ -112,7 +112,7 @@ class Pruner:
             epoch (int): the epoch number
 
         Returns:
-            sprsity (float): sparsity target in this epoch
+            sparsity (float): sparsity target in this epoch
         """
         if self.start_epoch == self.end_epoch:
             return self.initial_sparsity

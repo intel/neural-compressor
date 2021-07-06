@@ -53,6 +53,28 @@ function run_tuning {
                --seed=42 \
                --prune \
                --config=${config}
+    elif [ "${topology}" = "bert_SST-2" ]; then
+        python bert.py \
+               --model_type=bert \
+               --model_name_or_path=bert \
+               --task_name=SST-2 \
+               --do_train \
+               --do_eval \
+               --do_lower_case \
+               --data_dir=${data_dir}/SST-2/ \
+               --max_seq_length=128 \
+               --per_gpu_train_batch_size=32 \
+               --per_gpu_eval_batch_size=16 \
+               --learning_rate=5e-5 \
+               --num_train_epochs=15.0 \
+               --max_grad_norm=1.0 \
+               --logging_steps=2105 \
+               --save_steps=2105 \
+               --output_model=${output_model} \
+               --seed=42 \
+               --do_prune \
+               --output_dir ./test \
+               --config=${config}
     fi
 }
 

@@ -51,7 +51,7 @@ def constructor_register(cls):
 class Pruner():
     def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None,
                  target_sparsity=None, update_frequency=1, prune_type='basic_magnitude',
-                 method='per_tensor', names=[]):
+                 method='per_tensor', names=[], parameters=None):
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
         self.update_frequency = update_frequency
@@ -63,6 +63,7 @@ class Pruner():
         self.prune_type = prune_type
         self.method = method
         self.names= names
+        self.parameters = parameters
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -527,7 +528,7 @@ schema = Schema({
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
-                                          Or(float, 
+                                          Or(float,
                                              And(int, Use(input_int_to_float)),
                                              And(str, Use(input_int_to_float))),
                                           lambda s: s == float(__version__.split('.')[0])),
@@ -629,7 +630,7 @@ schema = Schema({
         'workspace': {'path': default_workspace}}): {
         Optional('strategy', default={'name': 'basic'}): {
             'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
-            Optional('sigopt_project_id'): str, 
+            Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='lpot-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
             Optional('latency_weight', default=1.0): float
@@ -745,9 +746,9 @@ class Conf(object):
             # if user yaml doesn't include version field, lpot will write a supported version
             # into it.
             if 'version' not in cfg:
-                leading_whitespace = re.search(r"[ \t]*model\s*:", 
+                leading_whitespace = re.search(r"[ \t]*model\s*:",
                                                content).group().split("model")[0]
-                content = re.sub(r'model\s*:', 
+                content = re.sub(r'model\s*:',
                                  'version: {}\n\n{}model:'.format(
                                                                float(__version__.split('.')[0]),
                                                                leading_whitespace
@@ -757,7 +758,7 @@ class Conf(object):
                     f.write(content)
 
             return validated_cfg
-                    
+
         except Exception as e:
             logger.error("{}".format(e))
             raise RuntimeError(

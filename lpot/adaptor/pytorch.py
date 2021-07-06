@@ -40,7 +40,7 @@ def get_torch_version():
     try:
         torch_version = torch.__version__.split('+')[0]
     except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
+        assert False, 'Got an unknown version of torch: {}'.format(e)
     return torch_version
 
 
@@ -949,7 +949,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        optimizer = optimizer_tuple[0](model.parameters(), **optimizer_tuple[1])
+        model_ = model.model
+        optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
@@ -961,7 +962,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             on_batch_end = hooks['on_batch_end']
             on_post_grad = hooks['on_post_grad']
         for nepoch in range(start_epochs, end_epochs):
-            model.train()
+            model_.train()
             cnt = 0
             if hooks is not None:
                 on_epoch_start(nepoch)
