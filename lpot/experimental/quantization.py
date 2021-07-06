@@ -178,7 +178,7 @@ class Quantization(object):
                 self.strategy.traverse()
         except Exception as e:
             if e is not KeyboardInterrupt:
-                logger.info("Unexpected exception {} happened during turing!".format(repr(e)))
+                logger.error("Unexpected exception {} happened during turing!".format(repr(e)))
         finally:
             if self.strategy.best_qmodel:
                 logger.info(
@@ -186,7 +186,7 @@ class Quantization(object):
                     "Found a quantized model which meet accuracy goal. Exit...")
                 self.strategy.deploy_config()
             else:
-                logger.info(
+                logger.error(
                     "Specified timeout or max trials is reached! "
                     "Not found any quantized model which meet accuracy goal. Exit...")
 

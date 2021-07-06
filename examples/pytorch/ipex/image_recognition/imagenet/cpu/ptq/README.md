@@ -28,55 +28,57 @@ train  val
 
 # Run
 
-### 1. ResNet50
+### 1. ResNet18 With Intel PyTorch Extension
 
 ```shell
 cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
-python main.py -t -a resnet50 --pretrained /path/to/imagenet
+python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet
+```
+or
+```shell
+cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
+bash run_tuning.sh --topology=resnet18_ipex --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnet18_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
-### 2. ResNet18
+### 2. ResNet50 With Intel PyTorch Extension
 
 ```shell
 cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
-python main.py -t -a resnet18 --pretrained /path/to/imagenet
+python main.py -t -a resnet50 --ipex --pretrained /path/to/imagenet
+```
+or
+```shell
+cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
+bash run_tuning.sh --topology=resnet50_ipex --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnet50_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
-### 3. ResNext101_32x8d
+### 3. ResNext101_32x8d With Intel PyTorch Extension
 
 ```shell
 cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
-python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
+python main.py -t -a resnext101_32x8d --ipex --pretrained /path/to/imagenet
+```
+or
+```shell
+cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
+bash run_tuning.sh --topology=resnext101_32x8d_ipex --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnext101_32x8d_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
-### 4. InceptionV3
+### 4. Mobilenet_v2 With Intel PyTorch Extension
 
 ```shell
 cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
-python main.py -t -a inception_v3 --pretrained /path/to/imagenet
+python main.py -t -a mobilenet_v2 --ipex --pretrained /path/to/imagenet
 ```
-
-### 5. Mobilenet_v2
-
+or
 ```shell
 cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
-python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
+bash run_tuning.sh --topology=mobilenet_v2_ipex --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=mobilenet_v2_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
-
-### 6. ResNet50 dump tensors for debug
-
-```shell
-  cd examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq
-  python main_dump_tensors.py -t -a resnet50 --pretrained /path/to/imagenet
-```
-
-### 7. ResNet50 With Intel PyTorch Extension
-
-```shell
-  cd examples/pytorch/ipex/image_recognition/imagenet/cpu/PTQ
-  python main.py -t -a resnet50 -j 0 --pretrained --ipex /path/to/imagenet
-```
-
 # Saving and loading model:
 
 * Saving model:

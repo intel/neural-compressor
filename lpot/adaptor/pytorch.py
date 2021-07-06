@@ -797,7 +797,11 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.tune_cfg["framework"] = "pytorch"
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
 
-        q_model = copy.deepcopy(model)
+        try:
+            q_model = copy.deepcopy(model)
+        except Exception as e:                              # pragma: no cover
+            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            q_model = model
         if self.approach == 'quant_aware_training':
             q_model.model.train()
         else:
@@ -1656,7 +1660,11 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
             (dict): quantized model
         """
 
-        model_ = copy.deepcopy(model)
+        try:
+            model_ = copy.deepcopy(model)
+        except Exception as e:                              # pragma: no cover
+            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            model_ = model
         try:
             q_model = torch.jit.script(model_.model.eval().to(ipex.DEVICE))
         except:
@@ -1956,7 +1964,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
-        q_model = copy.deepcopy(model)
+        try:
+            q_model = copy.deepcopy(model)
+        except Exception as e:                              # pragma: no cover
+            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            q_model = model
         q_model.model.eval()
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
         if self.approach == 'quant_aware_training':

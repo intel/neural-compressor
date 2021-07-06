@@ -99,12 +99,18 @@ def load(checkpoint_dir, model, **kwargs):
     else:
         op_cfgs = _cfg_to_qconfig(tune_cfg)
 
+    model.eval()
+    try:
+        q_model = copy.deepcopy(model)
+    except Exception as e:
+        logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+        q_model = model
+
     if tune_cfg['framework'] == "pytorch_fx":             # pragma: no cover
         # For torch.fx approach
         assert version >= '1.8', \
                       "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
-        q_model = copy.deepcopy(model.eval())
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
         if tune_cfg['approach'] == "quant_aware_training":
             q_model.train()
@@ -120,7 +126,6 @@ def load(checkpoint_dir, model, **kwargs):
         q_model.load_state_dict(weights)
         return q_model
 
-    q_model = copy.deepcopy(model.eval())
     _propagate_qconfig(q_model, op_cfgs, white_list=white_list, approach=tune_cfg['approach'])
     # sanity check common API misusage
     if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
