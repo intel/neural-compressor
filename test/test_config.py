@@ -360,7 +360,7 @@ class TestConf(unittest.TestCase):
           op_wise: {
             'conv1': {
               'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax'], 'scheme':['sym']},
-              'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
+              'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['minmax']}
             },
             'conv2': {
               'activation':  {'dtype': ['fp32']},

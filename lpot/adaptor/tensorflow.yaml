@@ -49,7 +49,7 @@
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
+                        'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['int8', 'fp32'],
@@ -88,7 +88,7 @@
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
+                        'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -185,7 +185,7 @@
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
+                        'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['int8', 'fp32'],
@@ -224,7 +224,7 @@
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
+                        'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -321,7 +321,7 @@
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
+                        'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],

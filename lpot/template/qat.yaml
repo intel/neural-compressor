@@ -66,7 +66,7 @@ quantization:                                        # optional. required for QA
   op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
          'conv1': {
            'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
-           'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
+           'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['minmax']}
          },
          'pool1': {
            'activation': {'dtype': ['int8'], 'scheme': ['sym'], 'granularity': ['per_tensor'], 'algorithm': ['minmax', 'kl']},

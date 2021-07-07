@@ -36,7 +36,7 @@ class GraphOptimizationConfig(unittest.TestCase):
                     "granularity": "per_channel",
                     "scheme": "asym",
                     "dtype": "bf16",
-                    "algorithm": "kl",
+                    "algorithm": "minmax",
                 },
                 "activation": {
                     "granularity": "per_tensor",
@@ -57,7 +57,7 @@ class GraphOptimizationConfig(unittest.TestCase):
                     "granularity": "per_channel",
                     "scheme": "asym",
                     "dtype": "bf16",
-                    "algorithm": "kl",
+                    "algorithm": "minmax",
                 },
                 "activation": {
                     "granularity": "per_tensor",
@@ -102,7 +102,7 @@ class GraphOptimizationConfig(unittest.TestCase):
                     "granularity": "per_channel",
                     "scheme": "asym",
                     "dtype": "bf16",
-                    "algorithm": "kl",
+                    "algorithm": "minmax",
                 },
                 "activation": {
                     "granularity": "per_tensor",
@@ -124,7 +124,7 @@ class GraphOptimizationConfig(unittest.TestCase):
                         "granularity": "per_channel",
                         "scheme": "asym",
                         "dtype": "bf16",
-                        "algorithm": "kl",
+                        "algorithm": "minmax",
                     },
                     "activation": {
                         "granularity": "per_tensor",

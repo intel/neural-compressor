@@ -103,7 +103,7 @@ class TestConfig(unittest.TestCase):
                         "granularity": "per_channel",
                         "scheme": "asym",
                         "dtype": "bf16",
-                        "algorithm": "kl",
+                        "algorithm": "minmax",
                     },
                     "activation": {
                         "granularity": "per_tensor",
@@ -429,7 +429,7 @@ class TestConfig(unittest.TestCase):
                             "granularity": "per_channel",
                             "scheme": "asym",
                             "dtype": "bf16",
-                            "algorithm": "kl",
+                            "algorithm": "minmax",
                         },
                         "activation": {
                             "granularity": "per_tensor",

@@ -237,7 +237,7 @@ class TestWiseConfigConfig(unittest.TestCase):
                 "granularity": "per_channel",
                 "scheme": "asym",
                 "dtype": "bf16",
-                "algorithm": "kl",
+                "algorithm": "minmax",
             },
             "activation": {
                 "granularity": "per_tensor",
@@ -252,7 +252,7 @@ class TestWiseConfigConfig(unittest.TestCase):
         self.assertEqual(wise_config.weight.granularity, "per_channel")
         self.assertEqual(wise_config.weight.scheme, "asym")
         self.assertEqual(wise_config.weight.dtype, "bf16")
-        self.assertEqual(wise_config.weight.algorithm, "kl")
+        self.assertEqual(wise_config.weight.algorithm, "minmax")
 
         self.assertIsNotNone(wise_config.activation)
         self.assertEqual(wise_config.activation.granularity, "per_tensor")
@@ -274,7 +274,7 @@ class TestWiseConfigConfig(unittest.TestCase):
                 "granularity": "per_channel",
                 "scheme": "asym",
                 "dtype": "bf16",
-                "algorithm": "kl",
+                "algorithm": "minmax",
             },
             "activation": {
                 "granularity": "per_tensor",
@@ -294,7 +294,7 @@ class TestWiseConfigConfig(unittest.TestCase):
                     "granularity": "per_channel",
                     "scheme": "asym",
                     "dtype": "bf16",
-                    "algorithm": "kl",
+                    "algorithm": "minmax",
                 },
                 "activation": {
                     "granularity": "per_tensor",

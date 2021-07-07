@@ -21,7 +21,7 @@ def build_fake_yaml():
                 granularity: per_tensor
                 scheme: sym
                 dtype: int8
-                algorithm: kl
+                algorithm: minmax
         evaluation:
           accuracy:
             metric:

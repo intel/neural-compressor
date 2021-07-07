@@ -180,7 +180,7 @@ ops_schema = Schema({
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         Optional('algorithm', default=None): And(
             list,
-            lambda s: all(i in ['minmax', 'kl'] for i in s)),
+            lambda s: all(i in ['minmax'] for i in s)),
         Optional('bit', default=None):  And(
             Or(float, list),
             Use(input_to_list_float),
@@ -586,7 +586,7 @@ schema = Schema({
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['minmax', 'kl'] for i in s)),
+                    lambda s: all(i in ['minmax'] for i in s)),
                 Optional('bit', default=[7.0]):  And(
                     Or(float, list),
                     Use(input_to_list_float),

@@ -72,7 +72,7 @@ def build_mxnet_kl():
             weight:
               dtype: int8
               scheme: asym
-              algorithm: kl
+              algorithm: minmax
             activation:
               dtype: int8
               scheme: asym
