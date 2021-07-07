@@ -82,8 +82,8 @@ class PreOptimization():
         origin_model = Model(self.model._model, **self.model.kwargs)
         origin_model.name = self.model.name
         origin_model.model_type = self.model.model_type
-        origin_model.input_tensor_names = self.model.input_tensor_names
         origin_model.output_tensor_names = self.model.output_tensor_names
+        origin_model.input_tensor_names = self.model.input_tensor_names
         origin_model.workspace_path = self.model.workspace_path
 
         output_node_names = self.model.output_node_names

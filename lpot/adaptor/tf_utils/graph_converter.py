@@ -87,8 +87,8 @@ class GraphConverter:
         self.debug = bool(self.logger.level == logging.DEBUG)
         self.model = model
         #(TODO) does it right to make the internal model format as graph_def
-        self.input_tensor_names = self.model.input_tensor_names
         self.output_tensor_names = self.model.output_tensor_names
+        self.input_tensor_names = self.model.input_tensor_names
         # quantize specific config
         self.calib_iteration = qt_config['calib_iteration'] if not fake_quant else 0
         self.op_wise_config = qt_config['op_wise_config']
@@ -116,12 +116,12 @@ class GraphConverter:
 
         self._fp32_model = Model(self.model._model, **self.model.kwargs)
         self._fp32_model.graph_def = self.model.graph_def
-        self._fp32_model.input_tensor_names = self.input_tensor_names
         self._fp32_model.output_tensor_names = self.output_tensor_names
+        self._fp32_model.input_tensor_names = self.input_tensor_names
 
         self._sampling_model = Model(self.model._model, **self.model.kwargs)
-        self._sampling_model.input_tensor_names = self.input_tensor_names
         self._sampling_model.output_tensor_names = self.output_tensor_names
+        self._sampling_model.input_tensor_names = self.input_tensor_names
 
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
@@ -204,8 +204,8 @@ class GraphConverter:
         self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
         # to keep temp model
         self._tmp_model = Model(self.model._model, **self.model.kwargs)
-        self._tmp_model.input_tensor_names = self.input_tensor_names
         self._tmp_model.output_tensor_names = self.output_tensor_names
+        self._tmp_model.input_tensor_names = self.input_tensor_names
     
 
     def convert(self):
@@ -424,8 +424,8 @@ class GraphConverter:
         tmp_dump_file = os.path.join(work_dir, 'kl.log')
 
         model = Model(sorted_graph)
-        model.input_tensor_names = self.input_tensor_names
         model.output_tensor_names = self.output_tensor_names
+        model.input_tensor_names = self.input_tensor_names
         with CaptureOutputToFile(tmp_dump_file):
             self._inference(model)
 
@@ -584,8 +584,8 @@ class GraphConverter:
         self.logger.debug("Generating calibration data and saving to {}".format(tmp_dump_file))
 
         model = Model(tmp_path, **self._tmp_model.kwargs)
-        model.input_tensor_names = self.input_tensor_names
         model.output_tensor_names = self.output_tensor_names
+        model.input_tensor_names = self.input_tensor_names
          
         with CaptureOutputToFile(tmp_dump_file):
             self._inference(model)

@@ -23,11 +23,10 @@ from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
-from ..utils.utility import time_limit
+from ..utils.utility import time_limit, set_backend
 from ..utils.create_obj_from_config import create_dataloader
 from .common import Model as LpotModel
 from ..model import BaseModel
-
 
 class Quantization(object):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -62,6 +61,7 @@ class Quantization(object):
         self._calib_func = None
         self._eval_dataloader = None
         self._eval_func = None
+        set_backend(self.framework)
 
     def __call__(self):
         """The main entry point of automatic quantization tuning.
@@ -298,8 +298,9 @@ class Quantization(object):
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':
             self._model.name = cfg.model.name
-            self._model.input_tensor_names = cfg.model.inputs
+            # (TODO) ugly tensorflow should use outputs before inputs on checkpoint case
             self._model.output_tensor_names = cfg.model.outputs
+            self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
 
 

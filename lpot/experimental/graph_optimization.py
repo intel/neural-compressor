@@ -27,7 +27,7 @@ from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
-from ..utils.utility import CpuInfo, time_limit
+from ..utils.utility import CpuInfo, time_limit, set_backend
 from .common import Model as LpotModel
 from ..model import BaseModel
 
@@ -63,6 +63,7 @@ class Graph_Optimization():
         self._output = []
         self.conf = None
         self.__init_env(conf_fname, self._model)
+        set_backend('tensorflow')
 
     def __init_env(self, conf_fname, model_obj):
         if self.conf:
@@ -132,8 +133,8 @@ class Graph_Optimization():
 
         if self.framework == 'tensorflow':
             self._model.name = cfg.model.name
-            self._model.input_tensor_names = cfg.model.inputs
             self._model.output_tensor_names = cfg.model.outputs
+            self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
 
         # when eval_func is set, will be directly used and eval_dataloader can be None

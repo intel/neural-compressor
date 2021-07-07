@@ -18,6 +18,7 @@
 import sys
 from lpot.model.model import get_model_fwk_name, MODELS
 from lpot.utils import logger
+from lpot.utils.utility import get_backend
 
 class Model(object):
     """common Model just collect the infos to construct a Model
@@ -36,14 +37,18 @@ class Model(object):
                                   model = Model(estimator_object, input_fn=estimator_input_fn)
                    
         """
+        backend = get_backend()
         framework = get_model_fwk_name(root)
         if framework == 'NA':
             logger.error('Model framework not supported....')
             sys.exit(0)
             
-        if framework.split(',')[0] == "tensorflow":
+        if framework.split(',')[0] == 'tensorflow':
             model_type = framework.split(',')[-1]
             model = MODELS['tensorflow'](model_type, root, **kwargs)
+        elif framework == 'pytorch':
+            assert backend != 'NA', 'please set pytorch backend'
+            model = MODELS[backend](root, **kwargs)
         else:
             model = MODELS[framework](root, **kwargs)
         return model

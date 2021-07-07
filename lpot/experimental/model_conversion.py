@@ -29,7 +29,7 @@ from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader, create_eval_func
-from ..utils.utility import CpuInfo
+from ..utils.utility import CpuInfo, set_backend
 from .common import Model as LpotModel
 from ..model import BaseModel
 
@@ -66,6 +66,7 @@ class ModelConversion():
         self._destination = None
 
         self.conf = Conf(conf_fname) if conf_fname else None
+        set_backend(self.framework)
 
     def __call__(self):
         """The main entry point of model conversion process.

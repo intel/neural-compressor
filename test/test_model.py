@@ -203,7 +203,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf slim_ckpt')
 
     def test_keras_saved_model(self):
-        if tf.version.VERSION < '2.2.0':
+        if tf.version.VERSION < '2.3.0':
             return
         keras_model = build_keras()
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model).split(',')[0])

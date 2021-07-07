@@ -62,6 +62,8 @@ def get_model_type(model):
                 # Warning: TF compatibility issue to load saved model. TF 2.3 keras.load
                 # can load saved model from TF backend, but TF 2.4 cannot.
                 try:
+                    if tf.version.VERSION < '2.3.0':
+                        logger.warn('keras model below tensorflow 2.3.0 may have problem...')
                     model = tf.keras.models.load_model(model)
                     if isinstance(model, tf.keras.Model):
                         return 'keras'
@@ -81,6 +83,8 @@ def get_model_type(model):
                 # it's very ugly tf version issue, in tf2.3 keras.load can
                 #batch_size_(batch_size), load saved model from tf backend, but tf2.4 it will crash
                 try:
+                    if tf.version.VERSION < '2.3.0':
+                        logger.warn('keras model below tensorflow 2.3.0 may have problem...')
                     model = tf.keras.models.load_model(model)
                     if isinstance(model, tf.keras.Model):
                         return 'keras'
@@ -149,44 +153,6 @@ def get_model_fwk_name(model):
             return fwk_name
 
     return 'NA'
-
-def replace_graph_def_of_saved_model(input_model, output_model, graph_def):
-    """update graph_def of saved model
-
-    Args:
-        input_model (string): the origin input model path
-        output_model (string): output path
-        graph_def (tf.compat.v1.GraphDef): processed graph_def
-    """
-
-    model_variables_dir = os.path.join(input_model, 'variables')
-    os.makedirs(output_model, exist_ok=True)
-    export_variables_dir = os.path.join(output_model, 'variables')
-    export_saved_model = os.path.join(output_model,'saved_model.pb')
-
-    checkpoint_file = os.path.join(export_variables_dir, 'checkpoint')
-    os.makedirs(export_variables_dir, exist_ok=True)
-
-    with open(checkpoint_file, 'w') as f:
-        f.write("model_checkpoint_path: \"variables\"\n")
-    from tensorflow.python.saved_model import loader_impl
-    saved_model = loader_impl.parse_saved_model(input_model)
-    meta_graph = saved_model.meta_graphs[0]
-    # not all saved model have variables
-    try:
-        with tf.compat.v1.Session(graph=tf.Graph()) as sess:
-            loaded = tf.compat.v1.saved_model.loader.load(sess, ["serve"], input_model)
-            # sess.run('init_all_tables')
-            saver = tf.compat.v1.train.Saver()
-            saver.save(sess,
-                       os.path.join(export_variables_dir, 'variables'),
-                       write_meta_graph=False,
-                       write_state=False)
-    except:
-        logger.info('no variables in the saved model')
-    meta_graph.graph_def.CopyFrom(graph_def)
-    from tensorflow.python.lib.io import file_io
-    file_io.write_string_to_file(export_saved_model, saved_model.SerializeToString())
 
 def validate_graph_node(graph_def, node_names):
     """Validate nodes exist in the graph_def
@@ -321,8 +287,8 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
-
-    assert tf.version.VERSION > '2.1.0', 'keras model need tensorflow version > 2.1.0....'
+ 
+    assert tf.version.VERSION >= '2.3.0', 'keras model need tensorflow version >= 2.3.0....'
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     if not isinstance(model, tf.keras.Model):
         model = tf.keras.models.load_model(model)
@@ -396,28 +362,28 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     arg_scope = net.pop('arg_scope')()
     inputs_shape = net.pop('input_shape')
     kwargs = net
-    images = tf.compat.v1.placeholder(name='input', dtype=tf.float32, \
-        shape=inputs_shape)
-
     import tf_slim as slim
-    with tf.compat.v1.Session() as sess:
-        with slim.arg_scope(arg_scope) as scope:  # pylint: disable=not-context-manager
-            model_func(images, is_training=False, **kwargs)
-        graph_def = sess.graph.as_graph_def()
-        output_tensor_names = output_tensor_names if len(output_tensor_names) > 0 \
-            else [graph_def.node[-1].name]
+    with tf.Graph().as_default():
+        images = tf.compat.v1.placeholder(name='input', dtype=tf.float32, \
+            shape=inputs_shape)
+        with tf.compat.v1.Session() as sess:
+            with slim.arg_scope(arg_scope) as scope:  # pylint: disable=not-context-manager
+                model_func(images, is_training=False, **kwargs)
+            graph_def = sess.graph.as_graph_def()
+            output_tensor_names = output_tensor_names if len(output_tensor_names) > 0 \
+                else [graph_def.node[-1].name]
 
-        from tensorflow.python.tools.freeze_graph import freeze_graph_with_def_protos
-        graph_def = freeze_graph_with_def_protos(
-            input_graph_def=graph_def,
-            input_saver_def=None,
-            input_checkpoint=model,
-            output_node_names=','.join(output_tensor_names),
-            restore_op_name='save/restore_all',
-            filename_tensor_name='save/Const:0',
-            output_graph='',
-            clear_devices=True,
-            initializer_nodes='')
+            from tensorflow.python.tools.freeze_graph import freeze_graph_with_def_protos
+            graph_def = freeze_graph_with_def_protos(
+                input_graph_def=graph_def,
+                input_saver_def=None,
+                input_checkpoint=model,
+                output_node_names=','.join(output_tensor_names),
+                restore_op_name='save/restore_all',
+                filename_tensor_name='save/Const:0',
+                output_graph='',
+                clear_devices=True,
+                initializer_nodes='')
 
     return graph_def_session(graph_def, ['input'], output_tensor_names)
 
@@ -519,16 +485,26 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
-
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
     sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
     loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
-    input_tensor_names = [i.name for _, i in \
-        loader.signature_def['serving_default'].inputs.items()]
-    output_tensor_names = [i.name for _, i in \
-        loader.signature_def['serving_default'].outputs.items()]
+    if len(input_tensor_names) == 0:
+        input_tensor_names = [i.name for _, i in \
+            loader.signature_def['serving_default'].inputs.items()]
+    else:
+        assert validate_graph_node(\
+            sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)), \
+                'tensor names {} not in the graph'.format(input_tensor_names)
+
+    if len(output_tensor_names) == 0:
+        output_tensor_names = [i.name for _, i in \
+            loader.signature_def['serving_default'].outputs.items()]
+    else:
+        assert validate_graph_node(\
+            sess.graph.as_graph_def(), tensor_to_node(output_tensor_names)), \
+                'tensor names {} not in the graph'.format(output_tensor_names)
 
     return sess, input_tensor_names, output_tensor_names
 
@@ -668,7 +644,7 @@ class TensorflowBaseModel(BaseModel):
         self._input_tensor_names = tensor_names
         assert validate_graph_node(\
             self.graph_def, tensor_to_node(tensor_names)), \
-                'tensor names should not be None or empty'
+                'tensor names {} not in graph'.format(tensor_names)
 
     @property
     def output_tensor_names(self):
@@ -724,41 +700,6 @@ class TensorflowBaseModel(BaseModel):
         logger.info("Save quantized model at %s" % pb_file)
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
-
-    @property
-    def graph_def(self):
-        return self.graph.as_graph_def()
-
-    @graph_def.setter
-    def graph_def(self, graph_def):
-        if self._sess is not None:
-            self._sess.close()
-        temp_saved_model_path = os.path.join(self.workspace_path, 'temp_saved_model')
-        replace_graph_def_of_saved_model(self._model, temp_saved_model_path, graph_def)
-        self._model = temp_saved_model_path
-        output_sess = SESSIONS[self.model_type](self._model, \
-                                     self._input_tensor_names,\
-                                     self._output_tensor_names)
-        self._sess = output_sess[0]
-        self._input_tensor_names = output_sess[1]
-        self._output_tensor_names = output_sess[2]
-        if self.iter_op:
-            self.iter_op = self._sess.graph.get_operation_by_name('MakeIterator')
-
-    def save(self, root=None):
-        if not root:
-            root = cfg.default_workspace
-        root = os.path.abspath(os.path.expanduser(root))
-        os.makedirs(root, exist_ok=True)
-        assert root != self._model, 'saved location should be different with original saved ' \
-                                    'model path'
-        import shutil
-        file_names = os.listdir(self._model)
-        for f in file_names:
-            shutil.move(os.path.join(self._model, f), root)
-        logger.info("Save quantized model at %s" % root)
-
-class TensorflowKerasModel(TensorflowBaseModel):
 
     def save(self, root=None):
         if not root:
@@ -825,7 +766,7 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'estimator': TensorflowBaseModel,
                      'slim': TensorflowBaseModel,
                      'saved_model': TensorflowSavedModelModel,
-                     'keras': TensorflowKerasModel,}
+                     'keras': TensorflowSavedModelModel,}
 
 class TensorflowModel(object):
 

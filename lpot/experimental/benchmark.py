@@ -26,6 +26,7 @@ from ..objective import OBJECTIVES
 from ..conf.config import Conf
 from ..conf.dotdict import DotDict
 from ..utils import logger
+from ..utils.utility import set_backend
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
@@ -82,6 +83,7 @@ class Benchmark(object):
         self._model = None
         self._b_dataloader = None
         self._results = {}
+        set_backend(self.framework)
 
     def __call__(self, mode='performance'):
         cfg = self.conf.usr_cfg
@@ -305,8 +307,8 @@ class Benchmark(object):
         # (TODO) ugly to set these params, but tensorflow need
         if self.framework == 'tensorflow':
             self._model.name = cfg.model.name
-            self._model.input_tensor_names = cfg.model.inputs
             self._model.output_tensor_names = cfg.model.outputs
+            self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
 
     @property

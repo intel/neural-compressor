@@ -44,6 +44,13 @@ def singleton(cls):
         return instances[cls]
     return _singleton
 
+def set_backend(backend):
+    global __BACKEND
+    __BACKEND = backend
+
+def get_backend():
+    global __BACKEND
+    return __BACKEND
 
 class LazyImport(object):
     """Lazy import python module till use

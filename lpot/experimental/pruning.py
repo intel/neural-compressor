@@ -19,7 +19,7 @@
 from ..conf.config import Conf
 from ..pruners import PRUNERS
 from ..utils import logger
-from ..utils.utility import singleton
+from ..utils.utility import singleton, time_limit, set_backend
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from ..model import BaseModel
 from .common import Model
@@ -51,6 +51,7 @@ class Pruning:
         self._eval_dataloader = None
         self.adaptor = None
         self.pruners = []
+        set_backend(self.framework)
 
     def on_epoch_begin(self, epoch):
         """ called on the begining of epochs"""
@@ -292,8 +293,8 @@ class Pruning:
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':
             self._model.name = cfg.model.name
-            self._model.input_tensor_names = cfg.model.inputs
             self._model.output_tensor_names = cfg.model.outputs
+            self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
 
     @property
