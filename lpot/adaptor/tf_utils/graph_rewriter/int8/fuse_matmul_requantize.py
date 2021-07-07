@@ -53,6 +53,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         self.graph_info = self.graph_analyzer.parse_graph()
         self.version = tf.version.VERSION if tf.version.VERSION in self.fuse_patterns \
              else 'default'
+        self.eps = 1e-5
 
     def do_transformation(self):
         float32_type = dtypes.float32.as_datatype_enum
@@ -96,6 +97,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
+
             if max_filter_node.op == 'Const':
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
@@ -111,6 +113,11 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
 
+                if  -self.eps <= input_range <= self.eps:
+                    input_range += self.eps
+
+                if -self.eps <= max_input_value - min_input_value <= self.eps:
+                    max_input_value += self.eps
                 int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
                                                         input_range, max_input_value,
                                                         min_input_value,
@@ -161,7 +168,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model
-
+        self.eps = 1e-05
         self.graph_info = self.graph_analyzer.parse_graph()
 
     def do_transformation(self):
@@ -209,11 +216,11 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
             is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
 
-            if last_node.op.find('Requantize') != -1 or last_node.op.find('QuantizeV2') != -1:
+            bias_node = self.graph_info[new_node.input[2]].node
+            max_input_node = self.graph_info[last_node.input[-1]].node
+            min_input_node = self.graph_info[last_node.input[-2]].node
 
-                bias_node = self.graph_info[new_node.input[2]].node
-                max_input_node = self.graph_info[last_node.input[-1]].node
-                min_input_node = self.graph_info[last_node.input[-2]].node
+            if last_node.op.find('Requantize') != -1 or last_node.op.find('QuantizeV2') != -1:
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
 
@@ -228,6 +235,11 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
 
+                if -self.eps <= input_range <= self.eps:
+                    input_range += self.eps
+
+                if -self.eps <= max_input_value - min_input_value <= self.eps:
+                    max_input_value += self.eps
                 int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
                                                                    input_range,
                                                                    max_input_value,

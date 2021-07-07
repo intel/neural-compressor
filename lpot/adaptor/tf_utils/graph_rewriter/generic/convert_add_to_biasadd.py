@@ -36,10 +36,14 @@ class ConvertAddToBiasAddOptimizer(GraphRewriterBase):
         target_nodes = g.query_fusion_pattern_nodes([['MatMul'], ['Add', 'AddV2']])
         for i in target_nodes:
             successor_node_names = graph_info[i[1]].outputs
-
+            matmul_input_name = graph_info[i[0]].node.input[0]
+            matmul_input_node = graph_info[Helper.node_name_from_input(matmul_input_name)].node
+            #Fixme below two lines was added due to MatMul kernel limitation for matmul input type
+            # should be quint8.
+            if matmul_input_node.op == 'Const':
+                continue
             add_second_input_name = graph_info[i[1]].node.input[1]
             add_second_const_node = graph_info[add_second_input_name].node
-
             if add_second_const_node.op != 'Const':
                 continue
             bias_tensor = tensor_util.MakeNdarray(add_second_const_node.attr['value'].tensor)

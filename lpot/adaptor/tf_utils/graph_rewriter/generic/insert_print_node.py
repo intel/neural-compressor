@@ -49,7 +49,7 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
             refresh_pre_node_name = graph_info[self.pre_node_name].node.input[0]
             # Check the Conv2D could be fused with previous Pad or not.
             # If so, we need to update the pre-node name correspondingly.
-            refresh_pre_node = graph_info[refresh_pre_node_name].node
+            refresh_pre_node = graph_info[Helper.node_name_from_input(refresh_pre_node_name)].node
             if refresh_pre_node.op == 'Pad' and top_node.op == 'Conv2D':
                 pad_const_node_name = refresh_pre_node.input[1]
                 pad_const_node = graph_info[pad_const_node_name].node
