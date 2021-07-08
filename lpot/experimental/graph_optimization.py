@@ -173,9 +173,10 @@ class Graph_Optimization():
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
+        except KeyboardInterrupt:
+            pass
         except Exception as e:
-            if e is not KeyboardInterrupt:
-                logger.info("Unexpected exception {} happened during turing!".format(repr(e)))
+            logger.info("Unexpected exception {} happened during turing!".format(repr(e)))
         finally: 
             if self.strategy.best_qmodel:
                 logger.info(

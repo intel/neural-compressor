@@ -176,9 +176,10 @@ class Quantization(object):
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
+        except KeyboardInterrupt:
+            pass
         except Exception as e:
-            if e is not KeyboardInterrupt:
-                logger.error("Unexpected exception {} happened during turing!".format(repr(e)))
+            logger.error("Unexpected exception {} happened during turing!".format(repr(e)))
         finally:
             if self.strategy.best_qmodel:
                 logger.info(
