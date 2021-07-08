@@ -68,7 +68,7 @@ pruning:
                      'bert.encoder.layer.*.intermediate.dense.bias',
                    ]
             parameters: {
-                          target: 600,
+                          target: 2000,
                           normalize: False,
                           stride: 1,
                           transpose: False,
@@ -85,7 +85,7 @@ pruning:
                      'bert.encoder.layer.*.output.dense.weight',
                    ]
             parameters: {
-                          target: 600,
+                          target: 2000,
                           normalize: False,
                           stride: 1,
                           transpose: True,

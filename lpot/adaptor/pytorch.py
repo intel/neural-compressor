@@ -954,8 +954,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        model_ = model.model
-        optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
+        optimizer = optimizer_tuple[0](model.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
@@ -967,7 +966,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             on_batch_end = hooks['on_batch_end']
             on_post_grad = hooks['on_post_grad']
         for nepoch in range(start_epochs, end_epochs):
-            model_.train()
+            model.train()
             cnt = 0
             if hooks is not None:
                 on_epoch_start(nepoch)
@@ -2003,7 +2002,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
 
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, 
+                 metric=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Execute the evaluate process on the specified model.
 
@@ -2085,7 +2084,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
         Returns:
             None
         """
-        optimizer = optimizer_tuple[0](model.parameters(), **optimizer_tuple[1])
+        model_ = model.model
+        optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
@@ -2096,7 +2096,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
             on_batch_start = hooks['on_batch_start']
             on_batch_end = hooks['on_batch_end']
         for nepoch in range(start_epochs, end_epochs):
-            model.train()
+            model_.train()
             cnt = 0
             if hooks is not None:
                 on_epoch_start(nepoch)
@@ -2105,7 +2105,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
                     on_batch_start(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = model(image)
+                output = model_(image)
                 loss = criterion(output, target)
                 optimizer.zero_grad()
                 loss.backward()

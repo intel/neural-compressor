@@ -61,20 +61,19 @@ class TestPatternLock(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         def training_func_for_lpot(model):
-            model_ = model.model
             epochs = 2
             iters = 30
             criterion = nn.CrossEntropyLoss()
-            optimizer = torch.optim.SGD(model_.parameters(), lr=0.0001)
+            optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             for nepoch in range(epochs):
-                model_.train()
+                model.train()
                 cnt = 0
                 prune.on_epoch_begin(nepoch)
                 for i, (image, target) in enumerate(dummy_dataloader):
                     prune.on_batch_begin(cnt)
                     print('.', end='')
                     cnt += 1
-                    output = model_(image)
+                    output = model(image)
                     loss = criterion(output, target)
                     optimizer.zero_grad()
                     loss.backward()

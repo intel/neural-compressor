@@ -18,6 +18,8 @@
 import copy
 import os
 import functools
+import inspect
+from collections import OrderedDict
 from abc import abstractmethod
 from lpot.utils.utility import LazyImport, compute_sparsity
 from lpot.utils import logger
@@ -287,7 +289,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
- 
+
     assert tf.version.VERSION >= '2.3.0', 'keras model need tensorflow version >= 2.3.0....'
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     if not isinstance(model, tf.keras.Model):
@@ -778,16 +780,36 @@ class TensorflowModel(object):
 class PyTorchBaseModel(BaseModel):
     def __init__(self, model, **kwargs):
         self._model = model
+        assert isinstance(model, torch.nn.Module), "model should be pytorch nn.Module."
+        model.register_forward_pre_hook(self.generate_forward_input_hook())
+
         self.tune_cfg = None
         self.is_quantized = False
         self.kwargs = kwargs if kwargs else None
-        self.input_args = []
-        self.input_kwargs = {}
+        # skip input argument 'self' in forward
+        self.input_args = OrderedDict().fromkeys(inspect.getargspec(model.forward).args[1:], None)
 
-    def __call__(self, *args, **kwargs):
-        self.input_args = args
-        self.input_kwargs = kwargs
-        return self._model(*args, **kwargs)
+    @property
+    def model(self):
+        """ Getter to model """
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        """ Setter to model """
+        self._model = model
+        model.register_forward_pre_hook(self.generate_forward_input_hook())
+
+    def generate_forward_input_hook(self):
+        def actual_forward_hook(module, input):
+            args, _, _, values = inspect.getargvalues(inspect.stack()[1].frame)
+            # intersection update kw arguments
+            self.input_args.update(values['kwargs'])
+            # update arguments
+            for (single_input, single_arg) in zip(values['input'],
+                    list(self.input_args.keys())[:len(values['input'])]):
+                self.input_args[single_arg] = single_input
+        return actual_forward_hook
 
     def framework(self):
         return 'pytorch'
@@ -852,24 +874,16 @@ class PyTorchBaseModel(BaseModel):
             if name == tensor_name:
                 state_dict[name].masked_fill_(mask, 0.)
 
-    # TODO: maybe a hook is better than wrapper
-    def get_inputs(self, input_index=None, input_name=None):
+    def get_inputs(self, input_name=None):
         """Get inputs of model
 
         Args:
-            input_index: index of input tensor
             input_name: name of input tensor
 
         Returns:
             tensor: input tensor
         """
-        if input_index is not None:
-            return self.input_args[input_index]
-        elif input_name is not None:
-            return self.input_kwargs[input_name]
-        else:
-            logger.error("No index key used to retrieve input."
-                         " Please use input_index or input_name.")
+        return self.input_args[input_name]
 
     def get_gradient(self, input_tensor):
         """ Get gradients of specific tensor
@@ -949,8 +963,6 @@ class PyTorchModel(PyTorchBaseModel):
 
     def __init__(self, model, **kwargs):
         super(PyTorchModel, self).__init__(model, **kwargs)
-
-        self._model = model
         self.tune_cfg= None
         self._workspace_path = ''
 
@@ -985,14 +997,6 @@ class PyTorchModel(PyTorchBaseModel):
         torch.quantization.convert(self._model, inplace=True)
         weights = torch.load(weights_file)
         self._model.load_state_dict(weights)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        self._model = model
 
     def save(self, root=None):
         if not root:
@@ -1035,7 +1039,6 @@ class PyTorchIpexModel(PyTorchBaseModel):
 
     def __init__(self, model, **kwargs):
         super(PyTorchIpexModel, self).__init__(model, **kwargs)
-        self._model = model
         self.tune_cfg= None
         self._workspace_path = ''
 
@@ -1053,14 +1056,6 @@ class PyTorchIpexModel(PyTorchBaseModel):
 
         with open(tune_cfg_file, 'r') as f:
             self.tune_cfg= json.load(f)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        self._model = model
 
     def save(self, root=None):
         if not root:

@@ -85,6 +85,41 @@ We divide the pruning into 2 kinds: ``weight compression`` and ``activation comp
 
 For ``weight_compression``, we dived params into global parameters and local parameters in different ``pruners``. Global parameters may contain **start_epoch** (on which epoch pruning begins), **end_epoch** (on which epoch pruning ends), **initial_sparsity** (initial sparsity goal default 0), **target_sparsity** (target sparsity goal) and **frequency** (of updating sparsity). At least one pruner instance needs to be defined under specific algos (currently ``basic_magnitude`` and ``gradient_sensitivity`` are supported). You can override all global params in a specific pruner using field names and specify names of which weight of model to be pruned. If no weight is specified, all weights of the model will be pruned.
 
+Additional parameters is required ``gradient_sensitivity`` prune_type, which is defined in ``parameters`` field:
+
+```yaml
+- !Pruner
+    start_epoch: 0
+    end_epoch: 1
+    prune_type: gradient_sensitivity
+    update_frequency: 1
+    names: [
+             'bert.encoder.layer.0.attention.output.dense.weight',
+           ]
+    parameters: {
+                  target: 8,
+                  transpose: True,
+                  stride: 64,
+                  index: 0,
+                  normalize: True,
+                  importance_inputs: ['head_mask'],
+                  importance_metric: abs_gradient
+                }
+
+```
+
+Those parameters determined how a weight is pruned, including the pruning target and the calculation of weight's importance. it contains:
+
+- target: the pruning target for weight.
+- stride: each stride of the pruned weight.
+- transpose: whether to transpose weight before prune.
+- normalize: whether to normalize the calculated importance.
+- index: the index of calculated importance.
+- importance_inputs: inputs of the importance calculation for weight.
+- importance_metric: the metric used in importance calculation, currently ``abs_gradient`` and ``weighted_gradient`` are supported.
+
+Use above yaml parameters as example, assume the 'bert.encoder.layer.0.attention.output.dense.weight' in the shape of [N, 12\*64]. The target 8 and stride 64 specify weight shape after pruning will be [N, 8\*64]. Transpose set to True indicates the weight is pruned at dim 1 and should be transposed to [12\*64, N] before pruning. importance_input and importance_metric specify the actual input and metric to calculate importance matrix.
+
 ## Example of user pass-in training function
 
 Users pass a modified training function to Intel® Low Precision Optimization Tool. The following is part of example from BERT training:

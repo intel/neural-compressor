@@ -282,7 +282,6 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
         nb_eval_steps = 0
         preds = None
         out_label_ids = None
-        model = model.model
         model.eval()
         pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
         for step, batch in enumerate(eval_dataloader):
@@ -318,7 +317,6 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
     return results
 
 def take_train_steps(args, model, tokenizer, train_dataloader, prune):
-    model = model.model
     if args.max_steps > 0:
         num_training_steps = args.max_steps
         args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1

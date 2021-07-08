@@ -124,15 +124,13 @@ class TestGradientSensitivity(unittest.TestCase):
         prune = Pruning('fake.yaml')
 
         def training_func_for_lpot(model):
-            model_ = model.model
-
             inputs = {'input_ids': torch.rand([1,12]).long(),
                       'attention_mask': torch.rand([1,12]).long(),
                       'labels': torch.tensor([1]).long()}
-            model_.eval()
+            model.eval()
 
             # To calculate head prune
-            head_mask = torch.ones(model_.config.num_hidden_layers, model_.config.num_attention_heads)
+            head_mask = torch.ones(model.config.num_hidden_layers, model.config.num_attention_heads)
             head_mask.requires_grad_(requires_grad=True)
 
             outputs = model(output_attentions=True, **inputs, head_mask=head_mask)

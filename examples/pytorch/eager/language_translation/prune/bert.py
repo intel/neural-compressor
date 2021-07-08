@@ -246,7 +246,6 @@ def evaluate(args, model, tokenizer, prefix=""):
     return results
 
 def take_head_train_steps(args, model, tokenizer, prune, prefix=""):
-    model_ = model.model
      # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     #eval_outputs_dirs = (args.output_dir, args.output_dir + '-MM') if args.task_name == "mnli" else (args.output_dir,)
@@ -254,7 +253,7 @@ def take_head_train_steps(args, model, tokenizer, prune, prefix=""):
     results = {}
     for eval_task in eval_task_names:
         eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, data_type='dev')
-        args.eval_batch_size = 1
+        args.eval_batch_size = args.per_gpu_eval_batch_size
         # Note that DistributedSampler samples randomly
         eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,
@@ -268,10 +267,10 @@ def take_head_train_steps(args, model, tokenizer, prune, prefix=""):
         nb_eval_steps = 0
         preds = None
         out_label_ids = None
-        model_.eval()
+        model.eval()
 
         # To calculate head prune
-        head_mask = torch.ones(model_.config.num_hidden_layers, model_.config.num_attention_heads).to(args.device)
+        head_mask = torch.ones(model.config.num_hidden_layers, model.config.num_attention_heads).to(args.device)
         head_mask.requires_grad_(requires_grad=True)
 
         pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
@@ -311,8 +310,7 @@ def take_head_train_steps(args, model, tokenizer, prune, prefix=""):
 
 def take_eval_steps(args, model, tokenizer, prune, prefix=""):
     target_num_heads = prune.cfg['pruning']['approach']['weight_compression']['pruners'][0].parameters['target']
-    model_ = model.model
-    for submodule in model_.bert.encoder.layer:
+    for submodule in model.bert.encoder.layer:
         submodule.attention.self.num_attention_heads = target_num_heads
         submodule.attention.self.all_head_size = target_num_heads * submodule.attention.self.attention_head_size
 
@@ -323,7 +321,7 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
     for eval_task in eval_task_names:
         eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, data_type='dev')
 
-        args.eval_batch_size = 1
+        args.eval_batch_size = args.per_gpu_eval_batch_size
         # Note that DistributedSampler samples randomly
         eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size,
@@ -337,7 +335,7 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
         nb_eval_steps = 0
         preds = None
         out_label_ids = None
-        model_.eval()
+        model.eval()
 
         pbar = ProgressBar(n_total=len(eval_dataloader), desc="Evaluating")
         for step, batch in enumerate(eval_dataloader):
@@ -347,7 +345,7 @@ def take_eval_steps(args, model, tokenizer, prune, prefix=""):
                           'attention_mask': batch[1],
                           'labels': batch[3]}
                 #inputs['token_type_ids'] = batch[2]
-                outputs = model_(**inputs)
+                outputs = model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1

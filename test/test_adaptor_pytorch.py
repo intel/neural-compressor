@@ -358,11 +358,11 @@ class TestPytorchAdaptor(unittest.TestCase):
             torch.tensor(100.))
 
     def test_get_input(self):
-        model = copy.deepcopy(self.lpot_model)
+        model = MODELS['pytorch'](torchvision.models.quantization.resnet18())
         model.model.eval().fuse_model()
         rand_input = torch.rand(100, 3, 256, 256).float()
-        model(rand_input)
-        assert torch.equal(model.get_inputs(input_index=0), rand_input)
+        model.model(rand_input)
+        assert torch.equal(model.get_inputs('x'), rand_input)
 
     def test_update_weights(self):
         self.lpot_model.update_weights('fc.bias', torch.zeros([1000]))

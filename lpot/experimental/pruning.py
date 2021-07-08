@@ -182,7 +182,12 @@ class Pruning:
             self._pruning_func = create_train_func(self.framework, \
                                                    self.train_dataloader, \
                                                    self.adaptor, train_cfg, hooks=hooks)
-        self._pruning_func(self._model)
+            # lpot create pruning function uses lpot model
+            self._pruning_func(self._model)
+        else:
+            # user defined pruning function uses FWK model
+            self._pruning_func(self._model.model)
+
         logger.info('Model pruning is done. Start to evaluate the pruned model...')
         if self._eval_func is None:
             # eval section in yaml file should be configured.
@@ -195,7 +200,10 @@ class Pruning:
                                             eval_cfg.accuracy.metric, \
                                             eval_cfg.accuracy.postprocess, \
                                             fp32_baseline = False)
-        score = self._eval_func(self._model)
+            score = self._eval_func(self._model)
+        else:
+            score = self._eval_func(self._model.model)
+
         logger.info('Pruned model score is: ' + str(score))
         return self._model
 
