@@ -62,6 +62,7 @@ MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
 SUPPORTED_INTEL_SPARSITY_MODELS = {
     'Intel/bert-base-uncased-sparse-70-unstructured',
     'Intel/bert-base-uncased-mnli-sparse-70-unstructured',
+    'Intel/bert-base-uncased-mnli-sparse-70-unstructured-no-classifier',
     'Intel/bert-base-uncased-sparse-1_2',
 }
 

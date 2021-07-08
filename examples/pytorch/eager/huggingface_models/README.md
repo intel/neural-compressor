@@ -324,7 +324,28 @@ python examples/text-classification/run_glue_no_trainer_prune.py --task_name sst
        --prune --config prune.yaml --output_model /path/to/output/model.pt --seed 5143
 ```
 
+## QQP task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_prune.py --task_name qqp --max_length 128
+       --model_name_or_path Intel/bert-base-uncased-mnli-sparse-70-unstructured-no-classifier
+       --seed 42 --per_device_train_batch_size 32 --learning_rate 5e-5 --num_train_epochs 3
+       --weight_decay 0.1 --num_warmup_steps 1700 --output_dir /path/to/output_dir
+       --prune --config prune.yaml --output_model /path/to/output/model.pt
+```
+
+## QNLI task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_prune.py --task_name qnli --max_length 128
+       --model_name_or_path Intel/bert-base-uncased-mnli-sparse-70-unstructured-no-classifier
+       --seed 42 --per_device_train_batch_size 32 --learning_rate 5e-5 --num_train_epochs 3
+       --weight_decay 0.1 --num_warmup_steps 500 --output_dir /path/to/output_dir
+       --prune --config prune.yaml --output_model /path/to/output/model.pt
+```
+
 ## QnA task
+
 ```bash
 python examples/question-answering/run_qa_no_trainer_prune.py
        --model_name_or_path Intel/bert-base-uncased-sparse-70-unstructured --dataset_name squad
