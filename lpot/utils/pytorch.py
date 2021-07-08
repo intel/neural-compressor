@@ -17,6 +17,7 @@
 
 from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
 from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
+from ..adaptor.pytorch import PT18_VERSION, PT17_VERSION
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
@@ -56,32 +57,32 @@ def load(checkpoint_dir, model, **kwargs):
 
     version = get_torch_version()
     if tune_cfg['approach'] != "post_training_dynamic_quant":
-        if version < '1.7':
+        if version < PT17_VERSION:
             q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
-        elif version < '1.8':
+        elif version < PT18_VERSION:
             q_mapping = \
                 tq.quantization_mappings.get_static_quant_module_mappings()
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_static_quant_module_mappings()
     else:
-        if version < '1.7':
+        if version < PT17_VERSION:
             q_mapping = \
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
-        elif version < '1.8':
+        elif version < PT18_VERSION:
             q_mapping = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
 
-    if version < '1.7':
+    if version < PT17_VERSION:
         white_list = \
             tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
             tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
             {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif version < '1.8':
+    elif version < PT18_VERSION:
         white_list = \
             tq.quantization_mappings.get_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
@@ -108,7 +109,7 @@ def load(checkpoint_dir, model, **kwargs):
 
     if tune_cfg['framework'] == "pytorch_fx":             # pragma: no cover
         # For torch.fx approach
-        assert version >= '1.8', \
+        assert version >= PT18_VERSION, \
                       "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])

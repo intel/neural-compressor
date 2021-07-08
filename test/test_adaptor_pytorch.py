@@ -7,6 +7,7 @@ import unittest
 import os
 from lpot.adaptor import FRAMEWORKS
 from lpot.model import MODELS
+from lpot.adaptor.pytorch import PT18_VERSION, PT17_VERSION
 import lpot.adaptor.pytorch as lpot_torch
 from lpot.experimental import Quantization, common
 from lpot.utils.pytorch import load
@@ -19,6 +20,8 @@ try:
     TEST_IPEX = True
 except:
     TEST_IPEX = False
+
+PT_VERSION = lpot_torch.get_torch_version()
 
 
 def build_ptq_yaml():
@@ -279,14 +282,6 @@ def build_qat_yaml():
         f.write(fake_yaml)
 
 
-def get_torch_version():
-    try:
-        torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
-    return torch_version
-
-
 def eval_func(model):
     # switch to evaluate mode
     model.eval()
@@ -456,8 +451,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
         a = load_array('saved/dump_tensor/activation_iter1.npz')
         w = load_array('saved/dump_tensor/weight.npz')
-        version = get_torch_version()
-        if version >= '1.8':
+        if PT_VERSION >= PT18_VERSION:
           self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
                           a['conv1.0'].item()['conv1.0.output0'].shape[1])
         else:
@@ -519,8 +513,7 @@ class TestPytorchAdaptor(unittest.TestCase):
               fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
-        version = get_torch_version()
-        if version >= '1.8':
+        if PT_VERSION >= PT18_VERSION:
             model.model.dequant.qconfig = torch.quantization.default_qconfig
         lpot_torch._fallback_quantizable_ops_recursively(
             model.model, '', fallback_ops, white_list=self.adaptor.white_list)
@@ -532,8 +525,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(np.allclose(y, qy, **tol))
 
     def test_fx_quant(self):
-        version = get_torch_version()
-        if version >= '1.8':
+        if PT_VERSION >= PT18_VERSION:
             model_origin = torchvision.models.resnet18()
 
             # run fx_quant in lpot and save the quantized GraphModule
@@ -577,8 +569,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 decoded = self.decoder(output)
                 return decoded, hidden
 
-        version = get_torch_version()
-        if version >= '1.8':
+        if PT_VERSION >= PT18_VERSION:
             model = LSTMModel(
                 ntoken = 10,
                 ninp = 512,
@@ -595,7 +586,7 @@ class TestPytorchAdaptor(unittest.TestCase):
 
             # Load configure and weights by lpot.utils
             model_fx = load("./saved_dynamic_fx", model, **{'a':1})
-            if version >= '1.8':
+            if PT_VERSION >= PT18_VERSION:
                 self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             else:
                 self.assertTrue(isinstance(model_fx, torch._fx.graph_module.GraphModule))

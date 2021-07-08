@@ -19,6 +19,7 @@ import copy
 from lpot.experimental import quantization
 import os
 from collections import OrderedDict
+from distutils.version import StrictVersion
 import yaml
 from functools import partial
 from lpot.utils.utility import dump_elapsed_time
@@ -35,13 +36,17 @@ REDUCE_RANGE = False if CpuInfo().vnni else True
 logger.debug("reduce range:")
 logger.debug(REDUCE_RANGE)
 
+PT18_VERSION = StrictVersion("1.8")
+PT17_VERSION = StrictVersion("1.7")
+PT16_VERSION = StrictVersion("1.6")
 
 def get_torch_version():
     try:
         torch_version = torch.__version__.split('+')[0]
     except ValueError as e:
         assert False, 'Got an unknown version of torch: {}'.format(e)
-    return torch_version
+    version = StrictVersion(torch_version)
+    return version
 
 
 def get_ops_recursively(model, prefix, ops={}):
@@ -55,7 +60,7 @@ def get_ops_recursively(model, prefix, ops={}):
             None
         """
         version = get_torch_version()
-        if version < '1.7':
+        if version < PT17_VERSION:
             white_list = \
                (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
                 set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
@@ -64,7 +69,7 @@ def get_ops_recursively(model, prefix, ops={}):
                 set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.keys()) |
                 set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.keys()) |
                 torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST)
-        elif version < '1.8':
+        elif version < PT18_VERSION:
             white_list = torch.quantization.get_compare_output_module_list()
         else:
             white_list = torch.quantization.get_default_compare_output_module_list()
@@ -169,7 +174,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                         activation=activation_observer, weight=weights_observer)
             else:
                 version = get_torch_version()
-                if version < '1.6':
+                if version < PT16_VERSION:
                     qconfig = torch.quantization.QConfigDynamic(weight=weights_observer)
                 else:
                     qconfig = torch.quantization.QConfigDynamic(
@@ -237,7 +242,7 @@ def _observer(algorithm, scheme, granularity, dtype, observer_type='post_trainin
     Returns:
         oberser (object)
     """
-    if observer_type == 'post_training_dynamic_quant' and get_torch_version() >= '1.6':
+    if observer_type == 'post_training_dynamic_quant' and get_torch_version() >= PT16_VERSION:
         return torch.quantization.default_dynamic_quant_observer
     if scheme == 'placeholder':         # pragma: no cover
         return torch.quantization.PlaceholderObserver
@@ -357,13 +362,13 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
     version = get_torch_version()
     # there is accuracy issue in quantized LayerNorm op and embedding op in pytorch <1.8.1,
     # so remove it here
-    if version < '1.7' and white_list is None:
+    if version < PT17_VERSION and white_list is None:
         white_list = \
             torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if approach == 'post_training_dynamic_quant' else \
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
             {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif version < '1.8' and white_list is None:
+    elif version < PT18_VERSION and white_list is None:
         white_list = \
             torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
             if approach == 'post_training_dynamic_quant' else \
@@ -477,7 +482,7 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_lis
             self.add_module('dequant', torch.quantization.DeQuantStub())
             self.add_module('module', module)
             version = get_torch_version()
-            if version >= '1.8':
+            if version >= PT18_VERSION:
                 self.dequant.qconfig = module.qconfig
             module.qconfig = None
             self.train(module.training)
@@ -580,28 +585,28 @@ class TemplateAdaptor(Adaptor):
         if 'approach' in framework_specific_info:
             self.approach = framework_specific_info['approach']
             if framework_specific_info['approach'] == "post_training_static_quant":
-                if self.version < '1.7':
+                if self.version < PT17_VERSION:
                     self.q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
-                elif self.version < '1.8':
+                elif self.version < PT18_VERSION:
                     self.q_mapping = \
                         tq.quantization_mappings.get_static_quant_module_mappings()
                 else:
                     self.q_mapping = \
                         tq.quantization_mappings.get_default_static_quant_module_mappings()
             elif framework_specific_info['approach'] == "quant_aware_training":
-                if self.version < '1.7':
+                if self.version < PT17_VERSION:
                     self.q_mapping = tq.default_mappings.DEFAULT_QAT_MODULE_MAPPING
-                elif self.version < '1.8':
+                elif self.version < PT18_VERSION:
                     self.q_mapping = \
                         tq.quantization_mappings.get_qat_module_mappings()
                 else:
                     self.q_mapping = \
                         tq.quantization_mappings.get_default_qat_module_mappings()
             elif framework_specific_info['approach'] == "post_training_dynamic_quant":
-                if self.version < '1.7':
+                if self.version < PT17_VERSION:
                     self.q_mapping = \
                         tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
-                elif self.version < '1.8':
+                elif self.version < PT18_VERSION:
                     self.q_mapping = \
                         tq.quantization_mappings.get_dynamic_quant_module_mappings()
                 else:
@@ -718,13 +723,13 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # there is accuracy issue in quantized LayerNorm op and embedding op in pytorch <1.8.1,
         # so remove it here
-        if self.version < '1.7':
+        if self.version < PT17_VERSION:
             self.white_list = \
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
                 if self.approach == 'post_training_dynamic_quant' else \
                 tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
                     {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-        elif self.version < '1.8':
+        elif self.version < PT18_VERSION:
             self.white_list = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings() \
                 if self.approach == 'post_training_dynamic_quant' else \
@@ -806,7 +811,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             q_model.model.train()
         else:
             q_model.model.eval()
-        if self.version < '1.7' or self.approach != 'quant_aware_training':
+        if self.version < PT17_VERSION or self.approach != 'quant_aware_training':
             _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list,
                                approach=self.approach)
             # sanity check common API misusage
@@ -820,7 +825,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model.model, dataloader, iterations)
         elif self.approach == 'quant_aware_training':
-            if self.version >= '1.7':       # pragma: no cover
+            if self.version >= PT17_VERSION:       # pragma: no cover
                 _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True,
                                    white_list=self.white_list)
                 torch.quantization.convert(q_model.model, mapping=self.q_mapping,
@@ -1188,7 +1193,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             if white_list is None:
                 white_list = \
                    torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
-                   if self.version < '1.7' else \
+                   if self.version < PT17_VERSION else \
                    torch.quantization.quantization_mappings.get_qconfig_propagation_list()
 
             if type(module) in white_list and type(module) != torch.nn.Sequential:
@@ -1234,12 +1239,12 @@ class PyTorchAdaptor(TemplateAdaptor):
             return model
 
         # create properties
-        if self.version < '1.7':
+        if self.version < PT17_VERSION:
             white_list = self.white_list | \
                 (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
                  set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
                  set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
-        elif self.version < '1.8':
+        elif self.version < PT18_VERSION:
             white_list = torch.quantization.get_compare_output_module_list()
         else:
             white_list = torch.quantization.get_default_compare_output_module_list()
@@ -1409,7 +1414,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def inspect_tensor(self, model, dataloader, op_list=None, iteration_list=None,
                        inspect_type='activation', save_to_disk=False):
-        if self.version > '1.7':
+        if self.version > PT17_VERSION:
             from torch.fx import GraphModule
             if type(model.model) == GraphModule:
                 assert False, "Inspect_tensor didn't support fx graph model now!"
@@ -1886,7 +1891,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
     """
     def __init__(self, framework_specific_info):
         super(PyTorch_FXAdaptor, self).__init__(framework_specific_info)
-        assert self.version >= '1.8', \
+        assert self.version >= PT18_VERSION, \
                       "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         import torch.quantization as tq
         """
@@ -2163,7 +2168,8 @@ class PyTorchQuery(QueryBackendCapability):
         for sub_data in data:
             if sub_data['version']['name'] == 'default':
                 return sub_data
-            if self.version >= sub_data['version']['name']:
+            sub_data_version = StrictVersion(sub_data['version']['name'])
+            if self.version >= sub_data_version:
                 return sub_data
 
     def _one_shot_query(self):
