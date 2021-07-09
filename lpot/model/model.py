@@ -643,10 +643,11 @@ class TensorflowBaseModel(BaseModel):
         if len(tensor_names) == 0:
             logger.warn('input tensor names should not be empty...')
             return
-        self._input_tensor_names = tensor_names
-        assert validate_graph_node(\
-            self.graph_def, tensor_to_node(tensor_names)), \
+        if self._sess is not None:
+            assert validate_graph_node(\
+                self.graph_def, tensor_to_node(tensor_names)), \
                 'tensor names {} not in graph'.format(tensor_names)
+        self._input_tensor_names = tensor_names
 
     @property
     def output_tensor_names(self):
@@ -659,11 +660,11 @@ class TensorflowBaseModel(BaseModel):
         if len(tensor_names) == 0:
             logger.warn('output tensor names should not be empty...')
             return
-        self._output_tensor_names = tensor_names
-        # first assign and then validate for checkpoint case
-        assert validate_graph_node(\
-            self.graph_def, tensor_to_node(tensor_names)), \
+        if self._sess is not None:
+            assert validate_graph_node(\
+                self.graph_def, tensor_to_node(tensor_names)), \
                 'tensor names {} not in graph'.format(tensor_names)
+        self._output_tensor_names = tensor_names
 
     # input/output node names and input/output tensor
     # come from input/output tensor names, so do not support assign these values

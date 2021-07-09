@@ -122,17 +122,17 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(model.output_tensor_names[0], 'op_to_store')
         self.assertEqual(model.input_tensor[0].name, 'x:0')
         self.assertEqual(model.output_tensor[0].name, 'op_to_store:0')
-        # test empty input tensor names can't set
-        model.input_tensor_names = []
-        with self.assertRaises(AssertionError):
-            model.input_tensor_names = ['test']
-        model.input_tensor_names = ['x_1']
 
-        # test empty output tensor names can't set
-        model.output_tensor_names = []
+        # test wrong input tensor names can't set
         with self.assertRaises(AssertionError):
-            model.output_tensor_names = ['test']
+            model.input_tensor_names = ['wrong_input']
+        with self.assertRaises(AssertionError):
+            model.output_tensor_names = ['wrong_output']
+
+        # test right tensor
+        model.input_tensor_names = ['x_1']
         model.output_tensor_names = ['op_to_store_1']
+        self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
 
     def test_validate_graph_node(self):
         from lpot.model.model import validate_graph_node
