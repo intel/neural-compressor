@@ -374,3 +374,5 @@ class Benchmark(object):
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
         logger.info("{} registered to postprocess".format(user_postprocess.name))
 
+    def __repr__(self):
+        return 'Benchmark'

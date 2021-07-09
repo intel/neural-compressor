@@ -25,7 +25,6 @@ from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 
-@singleton
 class Pruning:
     """This is base class of pruning object.
 
@@ -346,3 +345,6 @@ class Pruning:
                          to make evaluation of the model executed.
         """
         self._eval_func = user_eval_func
+
+    def __repr__(self):
+        return 'Pruning'

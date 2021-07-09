@@ -314,3 +314,6 @@ class ModelConversion():
                                  return accuracy
         """
         self._eval_func = user_eval_func
+
+    def __repr__(self):
+        return 'ModelConversion'

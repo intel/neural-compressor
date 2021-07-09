@@ -401,3 +401,6 @@ class Graph_Optimization():
                                  return accuracy
         """
         self._eval_func = user_eval_func
+
+    def __repr__(self):
+        return 'GraphOptimization'

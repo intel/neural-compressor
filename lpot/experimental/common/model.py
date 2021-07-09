@@ -40,7 +40,7 @@ class Model(object):
         backend = get_backend()
         framework = get_model_fwk_name(root)
         if framework == 'NA':
-            logger.error('Model framework not supported....')
+            logger.error('Framework is not detected correctly from model format....')
             sys.exit(0)
             
         if framework.split(',')[0] == 'tensorflow':
