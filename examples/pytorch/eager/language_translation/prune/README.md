@@ -15,11 +15,3 @@ Pruning now support basic magnitude for distilbert and gradient sensitivity for 
 ```shell
 bash run_pruning.sh --topology=distilbert_SST-2 --data_dir=path/to/dataset --output_model=path/to/output_model --config=path/to/conf.yaml
 ```
-
-- Enable gradient sensitivity pruning example:
-
-```shell
-bash run_pruning.sh --topology=bert_SST-2 --data_dir=path/to/dataset --output_model=path/to/output_model --config=path/to/conf.yaml
-```
-
-An example yaml is provide as head_conf.yaml to support the algorithm from [FastFormers: Highly Efficient Transformer Models for Natural Language Understanding](https://arxiv.org/abs/2010.13382).

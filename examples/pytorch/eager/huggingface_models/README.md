@@ -354,6 +354,14 @@ python examples/question-answering/run_qa_no_trainer_prune.py
        --prune --config prune.yaml --output_model /path/to/output/model.pt --seed 5143
 ```
 
+For gradient sensitivity pruning methods, an example yaml is provide as head_conf.yaml to support the algorithm from https://arxiv.org/abs/2010.13382. SST-2 example is enabled by:
+
+```bash
+python examples/text-classification/run_glue_no_trainer_gradient_prune.py
+      --task_name sst2 --max_length 128 --per_device_train_batch_size 32 --learning_rate 2e-5 --num_train_epochs 3
+      --seed 5143 --model_name_or_path bert-base-uncased --config ./head_conf.yaml
+      --do_prune --do_eval --output_model /path/to/output/
+```
 
 Examples of enabling Intel® Low Precision Optimization Tool
 ============================================================
