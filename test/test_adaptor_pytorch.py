@@ -360,9 +360,11 @@ class TestPytorchAdaptor(unittest.TestCase):
     def test_get_input(self):
         model = MODELS['pytorch'](torchvision.models.quantization.resnet18())
         model.model.eval().fuse_model()
+        model.register_forward_pre_hook_for_model()
         rand_input = torch.rand(100, 3, 256, 256).float()
         model.model(rand_input)
         assert torch.equal(model.get_inputs('x'), rand_input)
+        model.remove_hooks_for_model()
 
     def test_update_weights(self):
         self.lpot_model.update_weights('fc.bias', torch.zeros([1000]))

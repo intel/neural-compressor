@@ -781,13 +781,14 @@ class PyTorchBaseModel(BaseModel):
     def __init__(self, model, **kwargs):
         self._model = model
         assert isinstance(model, torch.nn.Module), "model should be pytorch nn.Module."
-        model.register_forward_pre_hook(self.generate_forward_input_hook())
+        self.handles = []
 
         self.tune_cfg = None
         self.is_quantized = False
         self.kwargs = kwargs if kwargs else None
         # skip input argument 'self' in forward
-        self.input_args = OrderedDict().fromkeys(inspect.getargspec(model.forward).args[1:], None)
+        self.input_args = OrderedDict().fromkeys(
+                inspect.getfullargspec(model.forward).args[1:], None)
 
     @property
     def model(self):
@@ -798,10 +799,17 @@ class PyTorchBaseModel(BaseModel):
     def model(self, model):
         """ Setter to model """
         self._model = model
-        model.register_forward_pre_hook(self.generate_forward_input_hook())
 
-    def generate_forward_input_hook(self):
-        def actual_forward_hook(module, input):
+    def register_forward_pre_hook_for_model(self):
+        self.handles.append(
+                self.model.register_forward_pre_hook(self.generate_forward_pre_hook()))
+
+    def remove_hooks_for_model(self):
+        for handle in self.handles:
+            handle.remove()
+
+    def generate_forward_pre_hook(self):
+        def actual_forward_pre_hook(module, input):
             args, _, _, values = inspect.getargvalues(inspect.stack()[1].frame)
             # intersection update kw arguments
             self.input_args.update(values['kwargs'])
@@ -809,7 +817,7 @@ class PyTorchBaseModel(BaseModel):
             for (single_input, single_arg) in zip(values['input'],
                     list(self.input_args.keys())[:len(values['input'])]):
                 self.input_args[single_arg] = single_input
-        return actual_forward_hook
+        return actual_forward_pre_hook
 
     def framework(self):
         return 'pytorch'

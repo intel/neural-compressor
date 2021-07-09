@@ -167,6 +167,8 @@ class Pruning:
 
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
+        if 'pytorch' in self.framework:
+            self._model.register_forward_pre_hook_for_model()
         if self._pruning_func is None:
             # train section of pruning section in yaml file should be configured.
             train_cfg = self.cfg.pruning.train
@@ -187,6 +189,8 @@ class Pruning:
         else:
             # user defined pruning function uses FWK model
             self._pruning_func(self._model.model)
+        if 'pytorch' in self.framework:
+            self._model.remove_hooks_for_model()
 
         logger.info('Model pruning is done. Start to evaluate the pruned model...')
         if self._eval_func is None:
