@@ -17,7 +17,7 @@ version: 1.0                                         # optional. reserved for fu
 
 model:                                               # mandatory. lpot uses this module name and framework name to decide where to save tuning history and deploy yaml.
   name: resnet50v1.5
-  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 device: cpu                                          # optional. default value is cpu. other value is gpu.
 

@@ -17,7 +17,7 @@ version: 1.0                                         # optional. reserved for fu
 
 model:                                               # mandatory. used to specify model specific information.
   name: ssd_mobilenet_v1
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
   outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
