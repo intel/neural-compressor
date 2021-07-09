@@ -517,10 +517,7 @@ class TestGraphOptimization(unittest.TestCase):
                     found_cast_op = True
                     break
 
-            if CpuInfo().bf16:
-                self.assertEqual(found_cast_op, False)
-            else:
-                self.assertEqual(found_cast_op, True)
+        self.assertEqual(found_cast_op, True)
 
 class TestGraphOptmizationFP32(unittest.TestCase):
 

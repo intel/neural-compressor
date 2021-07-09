@@ -24,13 +24,13 @@ from ..graph_util import GraphRewriterHelper as Helper
 
 
 class InjectDummyBiasAddOptimizer(GraphRewriterBase):
-    @dump_elapsed_time("Pass InjectDummyiasAddOptimizer")
+    @dump_elapsed_time("Pass InjectDummyBiasAddOptimizer")
     def do_transformation(self):
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()
         valid_ops = ('BiasAdd', 'Add', 'AddV2', 'AddN')
-        target_nodes = g.query_fusion_pattern_nodes([['MatMul'], ])
+        target_nodes = g.query_fusion_pattern_nodes([['MatMul'],])
         for i in target_nodes:
             next_node_names = graph_info[i[0]].outputs
             if next_node_names and len(next_node_names) == 1 and \
