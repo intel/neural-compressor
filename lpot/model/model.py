@@ -739,6 +739,8 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
 
     @property
     def graph_def(self):
+        if self.model_type == 'graph_def':
+            return self.sess.graph.as_graph_def()
         from lpot.adaptor.tf_utils.util import _parse_ckpt_bn_input
         from tensorflow.python.framework import graph_util
         graph_def = self.sess.graph.as_graph_def()
