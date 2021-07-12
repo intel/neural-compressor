@@ -539,7 +539,7 @@ class TensorflowBaseModel(BaseModel):
         self._output_tensor_names = []
         self._model_type = ''
         self._sess = None
-        self.iter_op = None
+        self._iter_op = None
         self._workspace_path = ''
 
     def framework(self):
@@ -607,8 +607,6 @@ class TensorflowBaseModel(BaseModel):
         self._sess = output_sess[0]
         self._input_tensor_names = output_sess[1]
         self._output_tensor_names = output_sess[2]
-        if self.iter_op:
-            self.iter_op = self._sess.graph.get_operation_by_name('MakeIterator')
         self.model_type = 'graph_def'
 
     def _load_sess(self, model, **kwargs):
@@ -624,14 +622,19 @@ class TensorflowBaseModel(BaseModel):
         self._input_tensor_names = output_sess[1]
         self._output_tensor_names = output_sess[2]
 
-        op_list = [node.op for node in self._sess.graph.as_graph_def().node]
-        if 'MakeIterator' in op_list:
-            self.iter_op = self._sess.graph.get_operation_by_name(\
-                'MakeIterator')
-
         tf.compat.v1.get_variable_scope().reuse_variables()
         return self._sess
 
+    @property
+    def iter_op(self):
+        if self._sess is None:
+            self._load_sess(self._model, **self.kwargs)
+        op_list = [node.op for node in self._sess.graph.as_graph_def().node]
+        if 'MakeIterator' in op_list:
+            self._iter_op = self._sess.graph.get_operation_by_name(\
+                'MakeIterator')
+        return self._iter_op
+    
     @property
     def input_tensor_names(self):
         if len(self._input_tensor_names) == 0:
@@ -760,8 +763,6 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
         self._sess = output_sess[0]
         self._input_tensor_names = output_sess[1]
         self._output_tensor_names = output_sess[2]
-        if self.iter_op:
-            self.iter_op = self._sess.graph.get_operation_by_name('MakeIterator')
         self.model_type = 'graph_def'
 
 TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
