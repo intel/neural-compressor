@@ -1,4 +1,4 @@
-{% set version = "1.4" %}
+{% set version = "1.5" %}
 {% set buildnumber = 0 %}
 package:
   name: lpot
