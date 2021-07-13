@@ -618,7 +618,6 @@ class TemplateAdaptor(Adaptor):
         self.fp32_results = []
         self.fp32_preds_as_label = False
 
-
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
@@ -1980,8 +1979,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
         if self.approach == 'quant_aware_training':
             q_model.model.train()
             q_model.model = prepare_qat_fx(q_model.model, fx_op_cfgs,
-              prepare_custom_config_dict=q_model.kwargs
-              if q_model.kwargs is not None else None)
+              prepare_custom_config_dict=q_model.kwargs['prepare_custom_config_dict']
+              if q_model.kwargs is not None and
+              q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
             if q_func is None:
                 assert False, \
                     "quantization aware training mode requires q_function to train"
@@ -1990,13 +1990,19 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
             q_model.model.eval()
         else:
             q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
-                                       prepare_custom_config_dict=q_model.kwargs
-                                       if q_model.kwargs is not None else None)
+              prepare_custom_config_dict=q_model.kwargs['prepare_custom_config_dict']
+              if q_model.kwargs is not None and
+              q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
             if self.approach == 'post_training_static_quant':
                 iterations = tune_cfg.get('calib_iteration', 1)
                 self.model_calibration(q_model.model, dataloader, iterations)
-        q_model.model = convert_fx(q_model.model)
+        q_model.model = convert_fx(q_model.model, debug=True,
+          convert_custom_config_dict=q_model.kwargs['convert_custom_config_dict']
+          if q_model.kwargs is not None and
+          q_model.kwargs.__contains__('convert_custom_config_dict') else None)
+
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
+
         if self.is_baseline:
             self.is_baseline = False
         return q_model

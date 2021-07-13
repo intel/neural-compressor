@@ -116,13 +116,15 @@ def load(checkpoint_dir, model, **kwargs):
         if tune_cfg['approach'] == "quant_aware_training":
             q_model.train()
             q_model = prepare_qat_fx(q_model, fx_op_cfgs,
-                                     prepare_custom_config_dict=kwargs
-                                     if kwargs != {} else None)
+              prepare_custom_config_dict=kwargs['prepare_custom_config_dict']
+              if kwargs and kwargs.__contains__('prepare_custom_config_dict') else None)
         else:
             q_model = prepare_fx(q_model, fx_op_cfgs,
-                                 prepare_custom_config_dict=kwargs
-                                 if kwargs != {} else None)
-        q_model = convert_fx(q_model)
+              prepare_custom_config_dict=kwargs['prepare_custom_config_dict']
+              if kwargs and kwargs.__contains__('prepare_custom_config_dict') else None)
+        q_model = convert_fx(q_model,
+          convert_custom_config_dict=kwargs['convert_custom_config_dict']
+          if kwargs and kwargs.__contains__('convert_custom_config_dict') else None)
         weights = torch.load(weights_file)
         q_model.load_state_dict(weights)
         return q_model

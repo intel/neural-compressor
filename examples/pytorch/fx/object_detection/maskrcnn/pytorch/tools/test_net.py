@@ -157,9 +157,12 @@ def main():
     if args.tune:
         from lpot.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
-        data_loaders_val = make_data_loader(cfg, is_train=False, is_distributed=distributed, is_calib=True)
+        data_loaders_val = make_data_loader(cfg, is_train=False,
+                                            is_distributed=distributed, is_calib=True)
         cal_dataloader = MASKRCNN_DataLoader(data_loaders_val)
-        quantizer.model = common.Model(model, **prepare_custom_config_dict)
+        quantizer.model = common.Model(model,
+                                       **{'prepare_custom_config_dict': prepare_custom_config_dict}
+                                      )
         quantizer.calib_dataloader = cal_dataloader
         quantizer.eval_func = eval_func
         q_model = quantizer()
@@ -169,7 +172,7 @@ def main():
     if args.int8:
         from lpot.utils.pytorch import load
         model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model,
-                                     **prepare_custom_config_dict)
+                     **{'prepare_custom_config_dict': prepare_custom_config_dict})
     if args.benchmark:
         iters = args.iter
         eval_func(model)

@@ -535,12 +535,16 @@ class TestPytorchAdaptor(unittest.TestCase):
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_func = eval_func
-            quantizer.model = common.Model(model_origin, **{'a':1})
+            quantizer.model = common.Model(model_origin,
+                                           **{'prepare_custom_config_dict': {'a': 1},
+                                              'convert_custom_config_dict': {'a': 1}})
             q_model = quantizer()
             q_model.save('./saved_static_fx')
 
             # Load configure and weights by lpot.utils
-            model_fx = load("./saved_static_fx", model_origin, **{'a':1})
+            model_fx = load("./saved_static_fx", model_origin,
+                            **{'prepare_custom_config_dict': {'a': 1},
+                               'convert_custom_config_dict': {'a': 1}})
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
     def test_fx_dynamic_quant(self):
@@ -582,12 +586,16 @@ class TestPytorchAdaptor(unittest.TestCase):
             # run fx_quant in lpot and save the quantized GraphModule
             model.eval()
             quantizer = Quantization('fx_dynamic_yaml.yaml')
-            quantizer.model = common.Model(model, **{'a':1})
+            quantizer.model = common.Model(model,
+                                           **{'prepare_custom_config_dict': {'a': 1},
+                                              'convert_custom_config_dict': {'a': 1}})
             q_model = quantizer()
             q_model.save('./saved_dynamic_fx')
 
             # Load configure and weights by lpot.utils
-            model_fx = load("./saved_dynamic_fx", model, **{'a':1})
+            model_fx = load("./saved_dynamic_fx", model,
+                            **{'prepare_custom_config_dict': {'a': 1},
+                               'convert_custom_config_dict': {'a': 1}})
             if PT_VERSION >= PT18_VERSION:
                 self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             else:
