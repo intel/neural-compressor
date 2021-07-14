@@ -85,7 +85,18 @@ class LabelShift(BaseTransform):
 
     def __call__(self, sample):
         images, labels = sample
-        labels = np.array(labels) - self.label_shift
+        if isinstance(labels, np.ndarray):
+            labels = labels - self.label_shift
+        elif isinstance(labels, list):
+            if isinstance(labels[0], tuple):
+                labels = [tuple(np.array(label) - self.label_shift) for label in labels]
+            elif isinstance(labels[0], np.ndarray):
+                labels = [label - self.label_shift for label in labels]
+            else:
+                labels = np.array(labels) - self.label_shift
+                labels = labels.tolist()
+        else:
+            labels = np.array(labels) - self.label_shift
         return images, labels
 
 class ParseDecodeImagenet():

@@ -393,7 +393,10 @@ class ONNXRTAdaptor(Adaptor):
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
         for idx, batch in enumerate(dataloader):
-            labels = batch[1]
+            if not isinstance(batch[1], list):
+                labels = [batch[1]]
+            else:
+                labels = batch[1]
             if measurer is not None:
                 for i in range(len_inputs):
                     # in case dataloader contains non-array input

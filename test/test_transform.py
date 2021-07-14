@@ -109,6 +109,20 @@ class TestTensorflowImagenetTransform(unittest.TestCase):
         sample = (rand_input, 1001)
         label = transform(sample)[1]
         self.assertEqual(label, 1000)
+        self.assertTrue(isinstance(label, np.int64))
+        
+        label = transform((rand_input, [(1,2,3)]))[1]
+        self.assertTrue(isinstance(label, list))
+        self.assertTrue(isinstance(label[0], tuple))
+
+        label = transform((rand_input, [[1,2,3]]))[1]
+        self.assertTrue(isinstance(label, list))
+        self.assertTrue(isinstance(label[0], list))
+
+        label = transform((rand_input, [np.array([1,2,3])]))[1]
+        self.assertTrue(isinstance(label, list))
+        self.assertTrue(isinstance(label[0], np.ndarray))
+
     
     def testQuantizedInput(self):
         transforms = TRANSFORMS('tensorflow', "preprocess")

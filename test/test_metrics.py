@@ -873,7 +873,11 @@ class TestMetrics(unittest.TestCase):
         mae.update(predicts2, labels2)
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.5)
-
+        
+        self.assertRaises(AssertionError, mae.update, [1], [1, 2])
+        self.assertRaises(AssertionError, mae.update, 1, [1,2])
+        self.assertRaises(AssertionError, mae.update, [1, 2], [1])
+        self.assertRaises(AssertionError, mae.update, 1, np.array([1,2]))
 
     def test_rmse(self):
         predicts1 = [1, 0, 0, 1]

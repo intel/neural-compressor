@@ -264,8 +264,9 @@ def _shape_validate(preds, labels):
         labels = [np.array(labels)]
     else:
         labels = [np.array(label) for label in labels]
-    assert all([pred.shape == label.shape for (pred, label) in zip(preds, labels)]), 'shape \
-           of labels {} does not match shape of predictions {}'.format(labels.shape, preds.shape)
+    for (pred, label) in zip(preds, labels):
+        assert pred.shape == label.shape, \
+            'Shape mismatch, label shape {} vs pred shape {}'.format(label.shape, pred.shape)
     return preds, labels
 
 @metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
