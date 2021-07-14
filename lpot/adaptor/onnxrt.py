@@ -136,7 +136,7 @@ class ONNXRTAdaptor(Adaptor):
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
                                       weight=(inspect_type!='activation'))
         if save_to_disk:
-            np.savez(tensors, os.path.join(self.work_space, 'dumped_tensors.npz'))
+            np.savez(os.path.join(self.work_space, 'dumped_tensors.npz'), tensors)
         return tensors
 
     def set_tensor(self, model, tensor_dict):
@@ -392,24 +392,27 @@ class ONNXRTAdaptor(Adaptor):
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
-        for idx, batch in enumerate(dataloader):
-            if not isinstance(batch[1], list):
-                labels = [batch[1]]
+        for idx, (inputs, labels) in enumerate(dataloader):
+            if not isinstance(labels, list):
+                labels = [labels]
+            if len_inputs == 1:
+                ort_inputs.update({inputs_names[0]: inputs})
             else:
-                labels = batch[1]
-            if measurer is not None:
+                assert len_inputs == len(inputs), \
+                    'number of input tensors must align with graph inputs'  
+            
                 for i in range(len_inputs):
                     # in case dataloader contains non-array input
-                    if not isinstance(batch[i], np.ndarray):
-                        ort_inputs.update({inputs_names[i]: np.array(batch[i])})
+                    if not isinstance(inputs[i], np.ndarray):
+                        ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
                     else:
-                        ort_inputs.update({inputs_names[i]: batch[i]})
+                        ort_inputs.update({inputs_names[i]: inputs[i]})   
+
+            if measurer is not None:
                 measurer.start()
                 predictions = session.run(None, ort_inputs)
                 measurer.end()
             else:
-                for i in range(len_inputs):
-                    ort_inputs.update({inputs_names[i]: batch[i]})
                 predictions = session.run(None, ort_inputs)
 
             if self.fp32_preds_as_label:

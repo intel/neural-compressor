@@ -18,6 +18,20 @@ model:                                               # mandatory. used to specif
   framework: onnxrt_integerops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+    metric:
+      GLUE: 
+        task: mrpc
+    dataloader:
+      batch_size: 8
+      dataset:
+        bert:
+          data_dir: /path/to/dataset
+          model_name_or_path: google/mobilebert-uncased
+          max_seq_length: 128
+          task: mrpc
+          model_type: mobilebert
+          dynamic_length: False            
   performance:                                       # optional. used to benchmark performance of passing model.
     warmup: 10
     iteration: 100
@@ -25,20 +39,30 @@ evaluation:                                          # optional. required if use
       cores_per_instance: 4
       num_of_instance: 7
     dataloader:
-      batch_size: 1
+      batch_size: 8
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
-      transform:
-        ResizeCropImagenet:
-          height: 224
-          width: 224
-          mean_value: [0.485, 0.456, 0.406]
+        bert:
+          data_dir: /path/to/dataset
+          model_name_or_path: google/mobilebert-uncased
+          max_seq_length: 128
+          task: mrpc
+          model_type: mobilebert
+          dynamic_length: True 
 
 quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant.                                   
   calibration:
     sampling_size: 8
+    dataloader:
+      batch_size: 8
+      dataset:
+        bert:
+          data_dir: /path/to/dataset
+          model_name_or_path: google/mobilebert-uncased
+          max_seq_length: 128
+          task: mrpc
+          model_type: mobilebert
+          dynamic_length: False    
   op_wise: {
      'MatMul_2469': {
         'activation':  {'dtype': ['fp32']},

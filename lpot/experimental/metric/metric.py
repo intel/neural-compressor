@@ -25,6 +25,7 @@ import numpy as np
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
+transformers = LazyImport('transformers')
 
 @singleton
 class TensorflowMetrics(object):
@@ -816,3 +817,51 @@ class mIOU(BaseMetric):
         np.diag(self.hist))
         mean_iu = np.nanmean(iu)
         return mean_iu
+
+@metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops')
+class ONNXRTGLUE(BaseMetric):
+    """Computes GLUE score. 
+
+    Args:
+        task (str, default=mrpc): The name of the task. 
+                                  Choices include mrpc, qqp, qnli, rte, 
+                                  sts-b, cola, mnli, wnli. 
+                                  
+    """    
+    def __init__(self, task='mrpc'):
+        assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
+            'mnli', 'wnli'], 'Unsupported task type'
+        self.pred_list = None
+        self.label_list = None
+        self.task = task
+
+    def update(self, preds, labels):
+        """add preds and labels to storage"""
+        if isinstance(preds, list) and len(preds) == 1:
+            preds = preds[0]
+        if isinstance(labels, list) and len(labels) == 1:
+            labels = labels[0]
+        preds = np.reshape(preds, (-1,2))
+        if self.pred_list is None:
+            self.pred_list = preds
+            self.label_list = labels
+        else:
+            self.pred_list = np.append(self.pred_list, preds, axis=0)
+            self.label_list = np.append(self.label_list, labels, axis=0)
+            
+    def reset(self):
+        """clear preds and labels storage"""
+        self.pred_list = None
+        self.label_list = None
+
+    def result(self):
+        """calculate metric"""
+        output_mode = transformers.glue_output_modes[self.task]
+        
+        if output_mode == "classification":
+            processed_preds = np.argmax(self.pred_list, axis=1)
+        elif output_mode == "regression":
+            processed_preds = np.squeeze(self.pred_list)
+        result = transformers.glue_compute_metrics(\
+            self.task, processed_preds, self.label_list) 
+        return result["acc"]            

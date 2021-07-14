@@ -230,7 +230,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
 
-    def test_adaptor(self):
+    def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,

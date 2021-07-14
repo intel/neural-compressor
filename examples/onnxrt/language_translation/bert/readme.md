@@ -30,11 +30,10 @@ bash prepare_model.sh --input_dir=./MRPC \
 ```
 
 ### Evaluating
-To evaluate the model, run `bert_base.py` with the path to the model:
+To evaluate the model, run `main.py` with the path to the model:
 
 ```bash
-bash run_tuning.sh --topology=bert_base_MRPC \ 
-                   --dataset_location=$GLUE_DIR/$TASK_NAME \ 
+bash run_tuning.sh --config=bert.yaml \ 
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```

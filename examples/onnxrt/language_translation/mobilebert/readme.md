@@ -50,11 +50,10 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
 ```
 
 ### Evaluating
-To evaluate the model, run `mobilebert.py` with the path to the model:
+To evaluate the model, run `main.py` with the path to the model:
 
 ```bash
-bash run_tuning.sh --topology=mobilebert_MRPC \ 
-                   --dataset_location=$GLUE_DIR/$TASK_NAME \ 
+bash run_tuning.sh --config=mobilebert.yaml \ 
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```

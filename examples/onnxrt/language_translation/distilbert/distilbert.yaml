@@ -21,8 +21,33 @@ quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant.                                   
   calibration:
     sampling_size: 8, 16, 32
+    dataloader:
+      batch_size: 8
+      dataset:
+        bert:
+          data_dir: /path/to/dataset
+          model_name_or_path: distilbert-base-uncased
+          max_seq_length: 128
+          task: mrpc
+          model_type: distilbert
+          dynamic_length: False
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+    metric:
+      GLUE: 
+        task: mrpc                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    dataloader:
+      batch_size: 8
+      dataset:
+        bert:
+          data_dir: /path/to/dataset
+          model_name_or_path: distilbert-base-uncased
+          max_seq_length: 128
+          task: mrpc
+          model_type: distilbert
+          dynamic_length: False
+          
   performance:                                       # optional. used to benchmark performance of passing model.
     warmup: 10
     iteration: 100
@@ -30,15 +55,15 @@ evaluation:                                          # optional. required if use
       cores_per_instance: 4
       num_of_instance: 7
     dataloader:
-      batch_size: 1
+      batch_size: 8
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
-      transform:
-        ResizeCropImagenet:
-          height: 224
-          width: 224
-          mean_value: [0.485, 0.456, 0.406]
+        bert:
+          data_dir: /path/to/dataset
+          model_name_or_path: distilbert-base-uncased
+          max_seq_length: 128
+          task: mrpc
+          model_type: distilbert
+          dynamic_length: True
 
 tuning:
   accuracy_criterion:

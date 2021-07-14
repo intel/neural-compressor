@@ -37,6 +37,40 @@ class TestMetrics(unittest.TestCase):
         with self.assertRaises(ValueError):
             bleu.update(['a','b'], ('c',))
 
+    def test_onnxrt_GLUE(self):
+        metrics = METRICS('onnxrt_qlinearops')
+        glue = metrics['GLUE']('mrpc')
+        preds = [np.array(
+            [[-3.2443411,  3.0909934],
+             [2.0500996, -2.3100944],
+             [1.870293 , -2.0741048],
+             [-2.8377204,  2.617834],
+             [2.008347 , -2.0215416],
+             [-2.9693947,  2.7782154],
+             [-2.9949608,  2.7887983],
+             [-3.0623112,  2.8748074]])
+        ]
+        labels = [np.array([1, 0, 0, 1, 0, 1, 0, 1])]
+        glue.update(preds, labels)
+        self.assertEqual(glue.result(), 0.875)
+        preds_2 = [np.array(
+            [[-3.1296735,  2.8356276],
+             [-3.172515 ,  2.9173899],
+             [-3.220131 ,  3.0916846],
+             [2.1452675, -1.9398905],
+             [1.5475761, -1.9101546],
+             [-2.9797182,  2.721741],
+             [-3.2052834,  2.9934788],
+             [-2.7451005,  2.622343]])
+        ]
+        labels_2 = [np.array([1, 1, 1, 0, 0, 1, 1, 1])]
+        glue.update(preds_2, labels_2)
+        self.assertEqual(glue.result(), 0.9375)        
+        
+        glue.reset()
+        glue.update(preds, labels)
+        self.assertEqual(glue.result(), 0.875)
+
     def test_tensorflow_F1(self):
         metrics = METRICS('tensorflow')
         F1 = metrics['F1']()

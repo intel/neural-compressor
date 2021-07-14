@@ -453,6 +453,16 @@ dataset_schema = Schema({
         Optional('resize_shape'): And(Or(str, list), Use(input_to_list_int)),
         Optional('image_format'): str,
     },
+    Optional('bert'): {
+        'data_dir': str,
+        'model_name_or_path': str,
+        Optional('max_seq_length'): int,
+        Optional('do_lower_case'): bool,
+        Optional('task'): str,
+        Optional('model_type'): str,
+        Optional('dynamic_length'): bool,
+        Optional('evaluate'): bool
+    },
     # TO BE DEPRECATED!
     Optional('Imagenet'): {
         'root': str,
@@ -691,6 +701,9 @@ schema = Schema({
                 Optional('F1'): Or({}, None),
                 Optional('mIOU'): {
                     Optional('num_classes'): int
+                },
+                Optional('GLUE'): {
+                    Optional('task'): str
                 },
             },
             Optional('configs'): configs_schema,

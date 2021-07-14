@@ -1212,6 +1212,65 @@ class TestDataloader(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
+    def test_onnx_bert(self):
+        import csv
+        os.mkdir('./MRPC')
+        with open('./MRPC/msr_paraphrase_test.txt', 'a') as f:
+            f.write('Quality #1 ID   #2 ID   #1 String   #2 String\n')
+            f.write("1   1089874 1089925 PCCW 's chief operating officer , Mike Butcher , and Alex Arena , the chief financial officer , will report directly to Mr So . Current Chief Operating Officer Mike Butcher and Group Chief Financial Officer Alex Arena will report to So .")
+        with open('./MRPC/msr_paraphrase_train.txt', 'a') as f:
+            f.write('Quality #1 ID   #2 ID   #1 String   #2 String\n')
+            f.write("""1   702876  702977  Amrozi accused his brother , whom he called " the witness " , of deliberately distorting his evidence . Referring to him as only " the witness " , Amrozi accused his brother of deliberately distorting his evidence .""")
+        with open('./MRPC/dev.tsv', 'a') as f:
+            tsv_w = csv.writer(f, delimiter='\t')
+            tsv_w.writerow(['Quality', '#1 ID', '#2 ID', '#1 String', '#2 String']) 
+            tsv_w.writerow(['1', '1355540', '1355592', "He said the foodservice pie business doesn 'tfit thecompany 's long-term growth strategy .", "The foodservice pie businessdoes notfit our long-term growth strategy ."])
+        with open('./MRPC/dev_ids.tsv', 'a') as f:
+            tsv_w = csv.writer(f, delimiter='\t')
+            tsv_w.writerow(['1606495', '1606619'])
+        with open('./MRPC/test.tsv', 'a') as f:
+            tsv_w = csv.writer(f, delimiter='\t')
+            tsv_w.writerow(['index', '#1 ID', '#2 ID', '#1 String', '#2 String'])
+            tsv_w.writerow(['0', '1089874', '1089925', "PCCW 's chief operating officer , Mike Butcher , and Alex Arena , the chief financial officer , will report directly to Mr So .", "Current Chief Operating Officer Mike Butcher and Group Chief Financial Officer Alex Arena will report to So ."])
+        with open('./MRPC/train.tsv', 'a') as f:
+            tsv_w = csv.writer(f, delimiter='\t')
+            tsv_w.writerow(['Quality', '#1 ID', '#2 ID', '#1 String', '#2 String'])
+            tsv_w.writerow(['1', '702876', '702977', """Amrozi accused his brother , whom he called " the witness " , of deliberately distorting his evidence .""", """Referring to him as only " the witness " , Amrozi accused his brother of deliberately distorting his evidence ."""])
+
+        datasets = DATASETS('onnxrt_integerops')
+        args = {'bert': 
+                    {'data_dir': './MRPC', 
+                     'model_name_or_path': 'bert-base-uncased',
+                     'dynamic_length': True
+                     }}
+        ds = create_dataset('onnxrt_qlinearops', args, None, None)
+
+        ds = create_dataset('onnxrt_qlinearops', args, None, None)
+        dataloader = DATALOADERS['onnxrt_qlinearops'](ds)
+        for inputs, label in dataloader:
+            self.assertEqual(len(inputs), 3)
+            self.assertEqual(inputs[0].shape[1], 48)
+            self.assertEqual(len(label), 1)
+            break
+        shutil.rmtree('./dataset_cached')        
+        
+        args = {'bert': 
+                    {'data_dir': './MRPC', 
+                     'model_type': 'roberta',
+                     'model_name_or_path': 'roberta-base',
+                     'dynamic_length': False
+                     }}
+        ds = create_dataset('onnxrt_qlinearops', args, None, None)
+        dataloader = DATALOADERS['onnxrt_qlinearops'](ds)
+        for inputs, label in dataloader:
+            self.assertEqual(len(inputs), 2)
+            self.assertEqual(inputs[0].shape[1], 128)
+            self.assertEqual(len(label), 1)
+            break            
+ 
+        shutil.rmtree('./MRPC')
+        shutil.rmtree('./dataset_cached')
+
 
 if __name__ == "__main__":
     unittest.main()
