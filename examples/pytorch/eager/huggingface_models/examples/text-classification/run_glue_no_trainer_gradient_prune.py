@@ -25,6 +25,8 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 from tqdm.auto import tqdm
 
+import numpy as np
+
 import transformers
 from transformers import (
     AdamW,
@@ -147,6 +149,10 @@ def parse_args():
                         help="evaluate model")
     parser.add_argument('--do_prune', action='store_true',
                         help="do gradient sensitivity pruning on trained model.")
+    parser.add_argument('--use_onnx', action='store_true',
+                        help="use onnx for inference")
+    parser.add_argument('--quantization', action='store_true',
+                        help="int8 quantization")
     parser.add_argument("--config", default=None, help="pruning config")
     args = parser.parse_args()
 
@@ -172,7 +178,6 @@ def take_eval_steps(args, model, eval_dataloader, metric, prune):
     for submodule in model.bert.encoder.layer:
         submodule.attention.self.num_attention_heads = target_num_heads
         submodule.attention.self.all_head_size = target_num_heads * submodule.attention.self.attention_head_size
-    eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
     logger.info("***** Running eval *****")
     logger.info(f"  Num examples = {len(eval_dataloader) }")
     model.eval()
@@ -193,7 +198,6 @@ def take_train_steps(args, model, eval_dataloader, metric, prune):
     logger.info("***** Running pruning *****")
     logger.info(f"  Num examples = {len(eval_dataloader)}")
     # Only show the progress bar once on each machine.
-    eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
     nb_eval_steps = 0
     preds = None
     out_label_ids = None
@@ -231,6 +235,55 @@ def take_train_steps(args, model, eval_dataloader, metric, prune):
     eval_metric = metric.compute()
     logger.info(f"eval_metric : {eval_metric}")
     prune.on_epoch_end()
+
+def export_onnx_model(args, model):
+    with torch.no_grad():
+        inputs = {'input_ids':      torch.ones(1,args.max_length, dtype=torch.int64),
+                  'attention_mask': torch.ones(1,args.max_length, dtype=torch.int64),
+                  'token_type_ids': torch.ones(1,args.max_length, dtype=torch.int64)}
+        _ = model(**inputs)
+
+        onnx_model_path = args.output_model + '/model.onnx'
+        symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+        torch.onnx.export(model, (inputs['input_ids'],
+                                  inputs['attention_mask'],
+                                  inputs['token_type_ids']),
+                          onnx_model_path,
+                          opset_version=11,
+                          do_constant_folding=True,
+                          input_names=['input_ids',
+                                       'attention_mask',
+                                       'token_type_ids'],
+                          output_names=['output'],
+                          dynamic_axes={'input_ids': symbolic_names,
+                                        'attention_mask' : symbolic_names,
+                                        'token_type_ids' : symbolic_names})
+        print("ONNX Model exported to {}".format(onnx_model_path))
+
+def evaluate_onnxrt(args, model, eval_dataloader, metric, onnx_options=None):
+    from onnxruntime import ExecutionMode, InferenceSession, SessionOptions
+    session = InferenceSession(model.SerializeToString(), onnx_options)
+
+    # Eval!
+    logger.info("***** Running onnx evaluation  *****")
+    #eval_loss = 0.0
+    #nb_eval_steps = 0
+    preds = None
+    out_label_ids = None
+    for batch in tqdm(eval_dataloader, desc="Evaluating"):
+        batch = dict((k, v.detach().cpu().numpy()) for k, v in batch.items())
+        ort_inputs = {'input_ids': batch['input_ids'],
+                      'attention_mask': batch['attention_mask'],
+                      'token_type_ids': batch['token_type_ids']}
+        logits = session.run(None, ort_inputs)[0]
+        predictions = torch.from_numpy(logits).argmax(dim=-1)
+        metric.add_batch(
+            predictions=predictions,
+            references=torch.from_numpy(batch["labels"]),
+        )
+
+    eval_metric = metric.compute()
+    logger.info(f"onnx eval metric: {eval_metric}")
 
 def main():
     args = parse_args()
@@ -424,6 +477,42 @@ def main():
     if args.task_name is not None:
         metric = load_metric("glue", args.task_name)
 
+    # Pruning
+    if args.do_prune:
+        # TODO: To remove eval baseline
+        # Eval first for baseline
+        model.eval()
+        eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
+        for step, batch in enumerate(eval_dataloader):
+            outputs = model(**batch)
+            predictions = outputs.logits.argmax(dim=-1)
+            metric.add_batch(
+                predictions=predictions,
+                references=batch["labels"],
+            )
+
+        eval_metric = metric.compute()
+        logger.info(f"before prune eval metric: {eval_metric}")
+
+        prune_eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
+        prune_eval_dataloader = tqdm(prune_eval_dataloader, desc="Evaluating")
+        from lpot.experimental import Pruning, common
+        def train_func(model):
+            return take_train_steps(args, model, prune_eval_dataloader, metric, prune)
+
+        def eval_func(model):
+            return take_eval_steps(args, model, prune_eval_dataloader, metric, prune)
+
+        # eval datasets.
+        prune = Pruning(args.config)
+        prune.model = common.Model(model)
+        prune.pruning_func = train_func
+        prune.eval_func = eval_func
+        model = prune()
+        model.save(args.output_model)
+        # change to framework model for further use
+        model = model.model
+
     if args.do_train:
         # Train!
         total_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps
@@ -455,6 +544,9 @@ def main():
 
                 if completed_steps >= args.max_train_steps:
                     break
+        # required when actual steps and max train steps doesn't match
+        progress_bar.close()
+        torch.save(model.state_dict(), args.output_model + '/retrained_model.pth')
 
     if args.do_eval:
         eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
@@ -474,25 +566,6 @@ def main():
     if args.task_name is not None:
         metric = load_metric("glue", args.task_name)
 
-    # Pruning
-    if args.do_prune:
-        from lpot.experimental import Pruning, common
-        def train_func(model):
-            return take_train_steps(args, model, eval_dataloader, metric, prune)
-
-        def eval_func(model):
-            return take_eval_steps(args, model, eval_dataloader, metric, prune)
-
-        # eval datasets.
-        prune = Pruning(args.config)
-        prune.model = common.Model(model)
-        prune.pruning_func = train_func
-        prune.eval_func = eval_func
-        model = prune()
-        model.save(args.output_model)
-        # change to framework model for further use
-        model = model.model
-
     if args.task_name == "mnli":
         # Final evaluation on mismatched validation set
         eval_dataset = processed_datasets["validation_mismatched"]
@@ -511,6 +584,49 @@ def main():
 
         eval_metric = metric.compute()
         logger.info(f"mnli-mm: {eval_metric}")
+
+    if args.use_onnx:
+        export_onnx_model(args, model)
+        from onnxruntime.quantization import quantize_dynamic, QuantType
+        from onnxruntime import ExecutionMode, InferenceSession, SessionOptions
+
+        from onnxruntime.transformers import optimizer
+        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
+
+        import onnx
+        onnx_opt_model = onnx.load(args.output_model + "/model.onnx")
+        if args.quantization:
+            logger.info(f"quantize onnx model ... ")
+            quantize_dynamic(args.output_model + "/model.onnx",
+                             args.output_model + "/model.onnx",
+                             op_types_to_quantize=['MatMul', 'Attention'],
+                             weight_type=QuantType.QInt8,
+                             per_channel=True,
+                             reduce_range=True,
+                             extra_options={'WeightSymmetric': False, 'MatMulConstBOnly': True})
+
+        # onnx_options = SessionOptions()
+        # onnx_options.intra_op_num_threads = args.threads_per_instance
+        # onnx_options.execution_mode = ExecutionMode.ORT_SEQUENTIAL
+        onnx_options = None
+
+        opt_options = BertOptimizationOptions('bert')
+        opt_options.enable_embed_layer_norm = False
+
+        logger.info(f"optimize onnx model ... ")
+        model_optimizer = optimizer.optimize_model(
+            args.output_model + '/model.onnx',
+            'bert',
+            num_heads=0,
+            hidden_size=0,
+            optimization_options=opt_options)
+        onnx_model = model_optimizer.model
+
+        logger.info(f"executing onnx model ... ")
+
+        eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
+        eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
+        evaluate_onnxrt(args, onnx_model, eval_dataloader, metric, onnx_options)
 
 if __name__ == "__main__":
     main()
