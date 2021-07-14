@@ -78,7 +78,7 @@ Most of pruning methods need ``training`` to keep the accuracy. There are two wa
 
 Or users can pass in ``def train`` by themselves and insert ``pruner`` manually like the previous version. This is more suitable for complex and customize training function like NLP tasks especially text-generation models. 
 
-We provide examples of both 2 usages. For completely Yaml config, please refer to [resnet example](examples/pytorch/eager/image_recognition/imagenet/cpu/prune/conf.yaml). For users' training function, please refer to [BERT example](examples/pytorch/eager/language_translation/prune/conf.yaml).
+We provide examples of both 2 usages. For completely Yaml config, please refer to [resnet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/prune/conf.yaml). For users' training function, please refer to [BERT example](../examples/pytorch/eager/language_translation/prune/conf.yaml).
 
 ### Pruning config
 We divide the pruning into 2 kinds: ``weight compression`` and ``activation compression``, the last is WIP. ``weight compression`` means zeroing the weight matrix.
