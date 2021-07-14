@@ -19,7 +19,7 @@ import copy
 from lpot.experimental import quantization
 import os
 from collections import OrderedDict
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 import yaml
 from functools import partial
 from lpot.utils.utility import dump_elapsed_time
@@ -36,16 +36,16 @@ REDUCE_RANGE = False if CpuInfo().vnni else True
 logger.debug("reduce range:")
 logger.debug(REDUCE_RANGE)
 
-PT18_VERSION = StrictVersion("1.8")
-PT17_VERSION = StrictVersion("1.7")
-PT16_VERSION = StrictVersion("1.6")
+PT18_VERSION = LooseVersion("1.8")
+PT17_VERSION = LooseVersion("1.7")
+PT16_VERSION = LooseVersion("1.6")
 
 def get_torch_version():
     try:
         torch_version = torch.__version__.split('+')[0]
     except ValueError as e:
         assert False, 'Got an unknown version of torch: {}'.format(e)
-    version = StrictVersion(torch_version)
+    version = LooseVersion(torch_version)
     return version
 
 
@@ -2175,7 +2175,7 @@ class PyTorchQuery(QueryBackendCapability):
         for sub_data in data:
             if sub_data['version']['name'] == 'default':
                 return sub_data
-            sub_data_version = StrictVersion(sub_data['version']['name'])
+            sub_data_version = LooseVersion(sub_data['version']['name'])
             if self.version >= sub_data_version:
                 return sub_data
 
