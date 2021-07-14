@@ -6,8 +6,8 @@ quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant.
   op_wise: {
      'Gather_*': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      }
    }
 

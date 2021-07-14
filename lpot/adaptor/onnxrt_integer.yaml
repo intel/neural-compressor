@@ -58,11 +58,13 @@
           'default': {
             'weight': {
                         'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                         }

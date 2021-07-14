@@ -41,12 +41,12 @@ quantization:
     sampling_size: 8
   op_wise: {
      'bert/encoder/layer_2/output/dense/MatMul': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'bert/encoder/layer_10/output/dense/MatMul': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
    }
   

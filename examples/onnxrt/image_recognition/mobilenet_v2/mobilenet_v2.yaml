@@ -33,12 +33,12 @@ quantization:                                        # optional. tuning constrai
           mean_value: [0.485, 0.456, 0.406]
   op_wise: {
      'Gather_*': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'Gemm_174_MatMul': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      }
      } 
 

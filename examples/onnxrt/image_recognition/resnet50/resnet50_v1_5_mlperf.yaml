@@ -42,8 +42,8 @@ quantization:                                        # optional. tuning constrai
           perm: [2, 0, 1]
   op_wise: {
     'gemm_MatMul': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
     }
   }
   

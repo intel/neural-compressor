@@ -42,32 +42,32 @@ quantization:                                        # optional. tuning constrai
       scheme: sym
   op_wise: {
     'Postprocessor/BatchMultiClassNonMaxSuppression/mul': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'Mul__161':{
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'Mul__166':{
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'Shape__7732':{
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'Gather__*': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+     'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'Postprocessor/convert_scores':{
-      'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+      'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      },
      'add':{
-      'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+      'activation':  {'dtype': ['fp32']},
+     'weight': {'dtype': ['fp32']}
      }
   }
 

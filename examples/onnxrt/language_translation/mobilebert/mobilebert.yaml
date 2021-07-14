@@ -41,8 +41,8 @@ quantization:
     sampling_size: 8
   op_wise: {
      'MatMul_2469': {
-        'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-        'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+        'activation':  {'dtype': ['fp32']},
+        'weight': {'dtype': ['fp32']}
      }
   } 
 
