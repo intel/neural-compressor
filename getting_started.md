@@ -56,14 +56,14 @@ for post-installation instructions.
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.6 or 3.7 or 3.8
+- Python version: 3.6 or 3.7 or 3.8 or 3.9
 
 - Download and install [anaconda](https://anaconda.org/).
 
 - Create a virtual environment named lpot in anaconda:
 
     ```shell
-    # Here we install python 3.7 for instance. You can also choose python 3.6 & 3.8.
+    # Here we install python 3.7 for instance. You can also choose python 3.6, 3.8, or 3.9.
     conda create -n lpot python=3.7
     conda activate lpot
     ```
@@ -108,10 +108,10 @@ View LPOT [Documentation](docs/doclist.rst) for getting started, deep dive, and 
 
 Intel® Low Precision Optimization Tool supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
 
-* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, and Cooper Lake)
+* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
 * future Intel Xeon Scalable processor (code name Sapphire Rapids)
 
-Intel® Low Precision Optimization Tool requires installing the pertinent Intel-optimized framework version for TensorFlow, PyTorch, and MXNet.
+Intel® Low Precision Optimization Tool requires installing the pertinent Intel-optimized framework version for TensorFlow, PyTorch, MXNet and ONNX runtime.
 
 ### Validated Hardware/Software Environment
 
@@ -127,14 +127,23 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
 </thead>
 <tbody>
   <tr>
-    <td class="tg-nrix" rowspan="13">Cascade Lake<br><br>Cooper Lake<br><br>Skylake</td>
-    <td class="tg-nrix" rowspan="13">CentOS 7.8<br><br>Ubuntu 18.04</td>
-    <td class="tg-nrix" rowspan="13">3.6<br><br>3.7<br><br>3.8</td>
-    <td class="tg-cly1" rowspan="7">TensorFlow</td>
+    <td class="tg-nrix" rowspan="18">Cascade Lake<br><br>Cooper Lake<br><br>Skylake<br><br>Ice Lake</td>
+    <td class="tg-nrix" rowspan="18">CentOS 8.3<br><br>Ubuntu 18.04</td>
+    <td class="tg-nrix" rowspan="18">3.6<br><br>3.7<br><br>3.8<br><br>3.9</td>
+    <td class="tg-cly1" rowspan="9">TensorFlow</td>
+    <td class="tg-7zrl">2.5.0</td>
+  </tr>
+  <tr>
     <td class="tg-7zrl">2.4.0</td>
   </tr>
   <tr>
+    <td class="tg-7zrl">2.3.0</td>
+  </tr>
+  <tr>
     <td class="tg-7zrl">2.2.0</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">2.1.0</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.15.0 UP1</td>
@@ -143,20 +152,20 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
     <td class="tg-7zrl">1.15.0 UP2</td>
   </tr>
   <tr>
-    <td class="tg-7zrl">2.3.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">2.1.0</td>
+    <td class="tg-7zrl">1.15.0 UP3</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.15.2</td>
   </tr>
   <tr>
-    <td class="tg-7zrl" rowspan="3">PyTorch</td>
+    <td class="tg-7zrl" rowspan="4">PyTorch</td>
     <td class="tg-7zrl">1.5.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.6.0+cpu</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">1.8.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">IPEX</td>
@@ -169,8 +178,14 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
     <td class="tg-7zrl">1.6.0</td>
   </tr>
   <tr>
-    <td class="tg-7zrl">ONNX Runtime</td>
+    <td class="tg-7zrl" rowspan="3">ONNX Runtime</td>
     <td class="tg-7zrl">1.6.0</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">1.7.0</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">1.8.0</td>
   </tr>
 </tbody>
 </table>
