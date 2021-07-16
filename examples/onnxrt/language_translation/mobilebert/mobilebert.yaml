@@ -25,7 +25,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 8
       dataset:
-        bert:
+        GLUE:
           data_dir: /path/to/dataset
           model_name_or_path: google/mobilebert-uncased
           max_seq_length: 128
@@ -41,7 +41,7 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 8
       dataset:
-        bert:
+        GLUE:
           data_dir: /path/to/dataset
           model_name_or_path: google/mobilebert-uncased
           max_seq_length: 128
@@ -56,7 +56,7 @@ quantization:
     dataloader:
       batch_size: 8
       dataset:
-        bert:
+        GLUE:
           data_dir: /path/to/dataset
           model_name_or_path: google/mobilebert-uncased
           max_seq_length: 128

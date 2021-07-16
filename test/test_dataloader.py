@@ -1238,7 +1238,7 @@ class TestDataloader(unittest.TestCase):
             tsv_w.writerow(['1', '702876', '702977', """Amrozi accused his brother , whom he called " the witness " , of deliberately distorting his evidence .""", """Referring to him as only " the witness " , Amrozi accused his brother of deliberately distorting his evidence ."""])
 
         datasets = DATASETS('onnxrt_integerops')
-        args = {'bert': 
+        args = {'GLUE': 
                     {'data_dir': './MRPC', 
                      'model_name_or_path': 'bert-base-uncased',
                      'dynamic_length': True
@@ -1254,7 +1254,7 @@ class TestDataloader(unittest.TestCase):
             break
         shutil.rmtree('./dataset_cached')        
         
-        args = {'bert': 
+        args = {'GLUE': 
                     {'data_dir': './MRPC', 
                      'model_type': 'roberta',
                      'model_name_or_path': 'roberta-base',

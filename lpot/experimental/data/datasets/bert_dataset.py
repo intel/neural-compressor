@@ -85,7 +85,7 @@ class PytorchBertDataset(Dataset):
             sample = (inputs, example_indices)
         return sample
 
-@dataset_registry(dataset_type="bert", framework="onnxrt_qlinearops, \
+@dataset_registry(dataset_type="GLUE", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class ONNXRTBertDataset(Dataset):
     """Dataset used for model Bert.

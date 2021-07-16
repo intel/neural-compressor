@@ -453,7 +453,7 @@ dataset_schema = Schema({
         Optional('resize_shape'): And(Or(str, list), Use(input_to_list_int)),
         Optional('image_format'): str,
     },
-    Optional('bert'): {
+    Optional('GLUE'): {
         'data_dir': str,
         'model_name_or_path': str,
         Optional('max_seq_length'): int,
