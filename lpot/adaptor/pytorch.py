@@ -25,6 +25,7 @@ from functools import partial
 from lpot.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo
+from ..utils.utility import OpPrecisionStatistics
 from ..utils import logger
 from .query import QueryBackendCapability
 
@@ -1996,11 +1997,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
             if self.approach == 'post_training_static_quant':
                 iterations = tune_cfg.get('calib_iteration', 1)
                 self.model_calibration(q_model.model, dataloader, iterations)
-        q_model.model = convert_fx(q_model.model, debug=True,
+        q_model.model = convert_fx(q_model.model,
           convert_custom_config_dict=q_model.kwargs['convert_custom_config_dict']
           if q_model.kwargs is not None and
           q_model.kwargs.__contains__('convert_custom_config_dict') else None)
 
+        self._dump_model_op_stastics(q_model.model)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
 
         if self.is_baseline:
@@ -2123,6 +2125,45 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
                     break
             if hooks is not None:
                 on_epoch_end()
+
+    def _dump_model_op_stastics(self, model):
+        modules = dict(model.named_modules())
+        quantized_ops_table = dict()
+        quantized_mode = False
+        res = {}
+        for node in model.graph.nodes:
+            if node.op == 'call_module':
+                op_type = str(type(modules[node.target]).__name__)
+            elif node.op == 'call_function':
+                op_type = str(node.target.__name__)
+            else:
+                op_type = node.target
+            # skip input and output
+            if not "quantize_per" in op_type and not quantized_mode:
+                continue
+            # skip zero_pioint and scale
+            if "zero_point" in op_type or "scale" in op_type:
+                continue
+            #build initial dict
+            if op_type not in res.keys():
+                res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+
+            if "quantize_per" in op_type and not quantized_mode:
+                res[op_type]['INT8'] += 1
+                quantized_mode = True
+            elif "dequantize" in op_type and quantized_mode:
+                res[op_type]['INT8'] += 1
+                quantized_mode = False
+            else:
+                if quantized_mode:
+                    res[op_type]['INT8'] += 1
+                else:
+                    res[op_type]['FP32'] += 1
+
+        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
+                        res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
+
+        OpPrecisionStatistics(output_data).print_stat()
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,

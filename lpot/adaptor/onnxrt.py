@@ -25,6 +25,7 @@ import numpy as np
 from lpot.adaptor.adaptor import adaptor_registry, Adaptor
 from lpot.adaptor.query import QueryBackendCapability
 from lpot.utils.utility import LazyImport, dump_elapsed_time
+from ..utils.utility import OpPrecisionStatistics
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -102,7 +103,65 @@ class ONNXRTAdaptor(Adaptor):
         quantizer.quantize_model()
         model.model = quantizer.model.model
         self.q_config = q_config # update so other methods can know current configs
+    
+        self._dump_model_op_stastics(model)
         return model
+
+    def _dump_model_op_stastics(self, model):
+        fp32_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
+            precision='int8')
+ 
+        if self.backend == "qlinearops":
+            int8_op_list = ["QLinearConv", "QLinearMatMul", "QAttention",
+                            "QLinearMul", "QLinearRelu", "QLinearClip",
+                            "QLinearLeakyRelu", "QLinearSigmoid", "MaxPool",
+                            "EmbedLayerNormalization", "QLinearGlobalAveragePool", 
+                            "QLinearAdd", "Pad", "Split", "Gather",
+                            "QuantizeLinear", "DequantizeLinear"
+            ]
+        else:
+            int8_op_list = ["ConvInteger", "MatMulInteger", "QAttention",
+                            "DynamicQuantizeLSTM", "Gather", "EmbedLayerNormalization",
+                            "DynamicQuantizeLinear"
+            ]
+
+        res = {}
+        for op_type in fp32_op_list:
+            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+        for op_type in ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]:
+            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+
+        for node in model.model.graph.node:
+            possible_int8_res = [name for name in int8_op_list if node.op_type.find(name) != -1]
+
+            if any(possible_int8_res):
+                if self.backend == "qlinearops":
+                    if node.op_type == "QuantizeLinear" or node.op_type == "DequantizeLinear" \
+                            or node.op_type == "DynamicQuantizeLinear":
+                        origin_op_type = node.op_type
+                    else:
+                        origin_op_type = possible_int8_res[0].split('QLinear')[-1]
+                else:
+                    origin_op_type = possible_int8_res[0].split('Integer')[0]
+                
+                if node.op_type == "Pad" or node.op_type == "Split" \
+                        or node.op_type == "Gather":
+                    if any([output.endswith('_quantized') for output in node.output]):
+                        origin_op_type = node.op_type
+                    else:
+                        res[node.op_type]['FP32'] += 1
+                        continue
+ 
+                if origin_op_type == "QAttention":
+                    origin_op_type = "Attention"
+                res[origin_op_type]['INT8'] += 1
+            
+            elif node.op_type in fp32_op_list:
+                res[node.op_type]['FP32'] += 1
+
+        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
+            res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
+        OpPrecisionStatistics(output_data).print_stat()
 
     def _get_quantize_params(self, model, data_loader, q_config, iterations):
         from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment

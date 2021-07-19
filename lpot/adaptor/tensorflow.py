@@ -23,6 +23,7 @@ import numpy as np
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
+from ..utils.utility import OpPrecisionStatistics
 from ..utils import logger
 from ..conf.dotdict import deep_get
 tensorflow = LazyImport('tensorflow')
@@ -50,7 +51,7 @@ class TensorFlowAdaptor(Adaptor):
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.optimization = deep_get(self.framework_specific_info, 'optimization', {})
         os.makedirs(self.work_dir, exist_ok=True)
-        
+
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
 
@@ -307,44 +308,6 @@ class TensorFlowAdaptor(Adaptor):
                                                                weight_bit)
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
-        int8_sum_count = 0
-        bf16_sum_count = 0
-        log_length = 50
-
-        if int8_ops:
-            logger.info('Start to run model quantization...')
-
-            logger.info('|' + 'Mixed Precision Statistics'.center(log_length, "*") + '|')
-            for i in self._init_op_stat:
-                if len(self._init_op_stat[i]) == 0:
-                    continue
-                count = 0
-                for j in self.quantize_config['op_wise_config'].keys():
-                    if j in self._init_op_stat[i]:
-                        count += 1
-                int8_sum_count += count
-                logger.info('|' + 'INT8 {}: {} '.format(i, count).ljust(log_length) + '|')
-                valid_bf16_ops = [name for name in self.bf16_ops if name in self._init_op_stat[i]]
-                bf16_count = len(valid_bf16_ops)
-
-                if bf16_count > 0:
-                    logger.info('|' + 'BF16 {}: {}'.format(i, bf16_count).ljust(log_length) + '|')
-                bf16_sum_count += bf16_count
-
-            overall_ops_count = sum([len(v) for _, v in self._init_op_stat.items()])
-
-            if overall_ops_count > 0:
-                int8_percent = float(int8_sum_count / overall_ops_count)
-                bf16_percent = float(bf16_sum_count / overall_ops_count)
-                logger.info(('|' + 'Overall: INT8 {:.2%} ({}/{}) BF16 {:.2%} ({}/{})'.format(
-                    int8_percent,
-                    int8_sum_count,
-                    overall_ops_count,
-                    bf16_percent,
-                    bf16_sum_count,
-                    overall_ops_count)
-                    .ljust(log_length) + '|'))
-            logger.info('|' +  '*' * log_length + '|')
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -365,15 +328,59 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(model,
+        converted_model = GraphConverter(model,
                                    qt_config=self.quantize_config,
                                    recipes=self.recipes,
                                    int8_sequences=self.op_wise_sequences,
                                    fp32_ops=self.fp32_ops,
                                    bf16_ops=self.bf16_ops,
-                                   data_loader=data_loader)
+                                   data_loader=data_loader).convert()
 
-        return converter.convert()
+        self._dump_model_op_stastics(converted_model.graph_def)
+
+        return converted_model
+
+    def _dump_model_op_stastics(self, model_graphdef):
+        fp32_op_list = self.query_handler.get_op_types_by_precision(precision='uint8')
+        int8_op_prefix_list = ['QuantizedConv2D', 'QuantizedDepthwise',
+                               'QuantizedMaxPool', 'QuantizedAvgPool',
+                               'QuantizedConcatV2', 'QuantizedMatMul']
+        from tensorflow.python.framework import dtypes
+
+        res = {}
+        for op_type in fp32_op_list:
+            res[op_type] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
+        res['QuantizeV2'] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
+        res['Dequantize'] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
+        res['Cast'] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
+        fp32_op_list.extend(['QuantizeV2', 'Dequantize', 'Cast'])
+        for i in model_graphdef.node:
+            if i.op == 'Const':
+                continue
+            possible_int8_res = [name for name in int8_op_prefix_list if i.op.find(name) != -1]
+
+            if any(possible_int8_res):
+                origin_op_type = possible_int8_res[0].split('Quantized')[-1]
+                if origin_op_type == 'Depthwise':
+                    origin_op_type = 'DepthwiseConv2dNative'
+                res[origin_op_type]['INT8'] += 1
+
+            if i.op in fp32_op_list:
+                if 'T' not in i.attr and i.op != 'Cast':
+                    continue
+                if i.attr['T'].type == dtypes.bfloat16:
+                    res[i.op]['BF16'] += 1
+                elif i.attr['T'].type in (dtypes.quint8,dtypes.qint8):
+                    res[i.op]['INT8'] += 1
+                elif i.op == 'Cast':
+                    res[i.op]['BF16'] += 1
+                else:
+                    res[i.op]['FP32'] += 1
+
+        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
+                        res[op_type]['BF16'], res[op_type]['FP32']] for op_type in fp32_op_list]
+
+        OpPrecisionStatistics(output_data).print_stat()
 
     def _query_quantizable_ops(self, matched_nodes):
         """Collect the op-wise configuration for quantization.
@@ -419,7 +426,7 @@ class TensorFlowAdaptor(Adaptor):
                 if exclude_first_quantizable_op and \
                     (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
                     self.unify_op_type_mapping[node_op].find("matmul") != -1):
-                    exclude_first_quantizable_op = False 
+                    exclude_first_quantizable_op = False
                     self.exclude_node_names.append(node_name)
                     continue
                 self._init_op_stat[node_op].append(node_name)
@@ -757,9 +764,9 @@ class TensorFlowAdaptor(Adaptor):
         '''
         assert source.lower() == 'qat' and destination.lower() == 'default'
         capability = self.query_fw_capability(model)
-        print(capability['opwise'])
+
         quantize_config = {'op_wise_config': {}}
-        for each_op_info in capability['opwise']: 
+        for each_op_info in capability['opwise']:
             op_name = each_op_info[0]
             op_type = each_op_info[1]
 

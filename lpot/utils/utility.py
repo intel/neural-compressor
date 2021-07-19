@@ -31,9 +31,11 @@ import logging
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 import os.path as osp
+import threading, _thread
 import cpuinfo
 import numpy as np
-import threading, _thread
+from lpot.utils import logger
+import prettytable as pt
 
 def singleton(cls):
     instances = {}
@@ -291,3 +293,33 @@ class CaptureOutputToFile(object):
         os.dup2(self.orig_stream_dup, self.orig_stream_fileno)
         os.close(self.orig_stream_dup)
         self.tmp_file.close()
+
+
+class OpPrecisionStatistics():
+    def __init__(self, data, output_handle=logger.info):
+        self.field_names = ["Op Type", "Total", "INT8", "BF16", "FP32"]
+        self.data = data
+        self.output_handle = output_handle
+        self.tb = pt.PrettyTable(min_table_width=40)
+
+    def print_stat(self):
+        valid_field_names = []
+        for index, value in enumerate(self.field_names):
+            if index < 2:
+                valid_field_names.append(value)
+                continue
+
+            if any(i[index] for i in self.data):
+                valid_field_names.append(value)
+        self.tb.field_names = valid_field_names
+        for i in self.data:
+            tmp_data = []
+            for index, value in enumerate(i):
+                if self.field_names[index] in valid_field_names:
+                    tmp_data.append(value)
+            if any(tmp_data[1:]):
+                self.tb.add_row(tmp_data)
+        lines = self.tb.get_string().split('\n')
+        self.output_handle('|' + 'Mixed Precision Statistics'.center(len(lines[0]) - 2, "*") + '|')
+        for i in lines:
+            self.output_handle(i)
