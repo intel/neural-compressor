@@ -64,6 +64,7 @@ class ONNXRTAugment:
         self.augmented_model_path = augmented_model_path
         self.iterations = iterations
         self.augment_nodes = []
+        self.dequantized_output = {}
         self.already_quantized = 'DequantizeLinear' in \
                                  [node.op_type for node in self.model.graph.node]
 
@@ -75,7 +76,7 @@ class ONNXRTAugment:
         :param output_only(bool): whether to dump output_only
         :return: augmented ONNX model
         '''
-
+        self.dequantized_output.clear()
         model = copy.deepcopy(self.model)
         model_nodes_names = [node.name for node in model.graph.node]
 
@@ -199,8 +200,9 @@ class ONNXRTAugment:
                 for i in range(len(session.get_inputs())):
                     ort_inputs.update({session.get_inputs()[i].name: batch[i]})
                 intermediate_outputs.append(session.run(None, ort_inputs))
-        node_output_names = [session.get_outputs()[i].name.replace('_output', '') for i in
-                             range(len(intermediate_outputs[0]))]
+        node_output_names = [output.name if output.name not in self.dequantized_output \
+                             else self.dequantized_output[output.name] \
+                             for output in session.get_outputs()]
         output_dicts_list = [
             dict(zip(node_output_names, intermediate_output)) for intermediate_output in
             intermediate_outputs
@@ -221,6 +223,7 @@ class ONNXRTAugment:
         ''' helper funtion to dequantize activation'''
         added_nodes, added_output = self._add_dequantize_node(activation_tensor_name, \
                                                               scale_tensor, zo_tensor)
+        self.dequantized_output[added_output] = activation_tensor_name
         return added_nodes, added_output
 
     def _dequantize_weight(self, weight_tensor_name, scale_tensor, zo_tensor):
@@ -237,7 +240,7 @@ class ONNXRTAugment:
             added_node, added_output = self._add_dequantize_node(weight_tensor_name, 
                                                                  scale_tensor,\
                                                                  zo_tensor)
-        
+        self.dequantized_output[added_output] = weight_tensor_name
         return added_nodes, added_output
 
     def _add_dequantize_node(self, tensor_name, scale_tensor, zo_tensor):
