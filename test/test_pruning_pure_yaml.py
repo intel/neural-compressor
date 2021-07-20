@@ -50,7 +50,7 @@ def build_fake_yaml():
 
             - !Pruner
                 target_sparsity: 0.6
-                prune_type: basic_magnitude
+                prune_type: gradient_sensitivity
                 update_frequency: 2
                 names: ['layer1.0.conv2.weight']
     evaluation:
