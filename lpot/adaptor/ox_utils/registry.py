@@ -44,6 +44,7 @@ IntegerOpsRegistry.update(CommonOpsRegistry)
 
 QLinearOpsRegistry = {
     "Conv": QLinearConv,
+    "Attention": AttentionQuant,
     "FusedConv": QLinearConv,
     "MatMul": QLinearMatMul,
     "Add": QLinearBinaryOp,

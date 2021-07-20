@@ -22,6 +22,7 @@ import logging
 from collections import OrderedDict
 import yaml
 import numpy as np
+from distutils.version import StrictVersion
 from lpot.adaptor.adaptor import adaptor_registry, Adaptor
 from lpot.adaptor.query import QueryBackendCapability
 from lpot.utils.utility import LazyImport, dump_elapsed_time
@@ -29,8 +30,10 @@ from ..utils.utility import OpPrecisionStatistics
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
+ONNXRT152_VERSION = StrictVersion("1.5.2")
 
 logger = logging.getLogger()
+
 
 class ONNXRTAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
@@ -74,8 +77,8 @@ class ONNXRTAdaptor(Adaptor):
         """
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         model = self.pre_optimized_model if self.pre_optimized_model else model
-        ort_version = [int(i) for i in ort.__version__.split(".")]
-        if ort_version < [1, 5, 2]:
+        ort_version = StrictVersion(ort.__version__)
+        if ort_version < ONNXRT152_VERSION:
             logger.warning('quantize input need onnxruntime version > 1.5.2')
             return model
         if model.model.opset_import[0].version < 11:

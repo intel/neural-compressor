@@ -29,11 +29,12 @@ import numpy as np
 import onnx
 import onnxruntime
 import onnx.numpy_helper as numpy_helper
-from onnx import helper, TensorProto
+from onnx import helper, TensorProto, shape_inference
+from distutils.version import StrictVersion
 from lpot.model.onnx_model import ONNXModel
 
 logger = logging.getLogger()
-
+ONNX18_VERSION = StrictVersion("1.8.0")
 
 class ONNXRTAugment:
     '''augment input model to dump tensor or for calibration'''
@@ -77,6 +78,9 @@ class ONNXRTAugment:
         :return: augmented ONNX model
         '''
         self.dequantized_output.clear()
+        onnx_version = StrictVersion(onnx.__version__)
+        if onnx_version < ONNX18_VERSION:
+            logger.warning('Static quantization for NLP model is supported by onnx >= 1.8.0')  
         model = copy.deepcopy(self.model)
         model_nodes_names = [node.name for node in model.graph.node]
 
@@ -99,13 +103,13 @@ class ONNXRTAugment:
                 new_white_nodes.append(new_white_node)
             self.white_nodes = new_white_nodes
 
-        initializer_names = [i.name for i in model.graph.initializer]
+        initializers = {i.name: i.data_type for i in model.graph.initializer}
         for node in model.graph.node: # pylint: disable=no-member
             should_be_dump = ((node.op_type in self.dump_op_types) and
                                    (node.name not in self.black_nodes)) or \
                                    (node.name in self.white_nodes)
             if should_be_dump:
-                if not output_only:
+                if not output_only and onnx_version < ONNX18_VERSION:
                     if node.op_type == "Attention":
                         if len(node.input) >= 3:
                             logger.debug("indice input {} of attention node {} is integer"
@@ -119,23 +123,36 @@ class ONNXRTAugment:
                         tensors_to_dump.update(node.input[:-1])
                     else:
                         tensors_to_dump.update(node.input)
+                elif not output_only and not onnx_version < ONNX18_VERSION:
+                    tensors_to_dump.update(node.input)
                 else:
                     for input in node.input:
-                        if input in initializer_names:
+                        if input in initializers:
                             tensors_to_dump.add(input)
                 tensors_to_dump.update(node.output)
 
         tensors_tmp = set()
         if activation_only:
             for tensor in tensors_to_dump:
-                if tensor not in initializer_names: # pylint: disable=no-member
+                if tensor not in initializers: # pylint: disable=no-member
                     tensors_tmp.add(tensor)
             tensors_to_dump = tensors_tmp
 
+        value_info = shape_inference.infer_shapes(model).graph.value_info
+        value_info = {item.name: item.type.tensor_type.elem_type for item in value_info}
+        for input in model.graph.input:
+            value_info[input.name] = input.type.tensor_type.elem_type
+        for output in model.graph.output:
+            value_info[output.name] = output.type.tensor_type.elem_type
         for tensor in tensors_to_dump:
             if self.augment_nodes:
                 for augment_node_type in self.augment_nodes:
                     if augment_node_type in ['ReduceMin', 'ReduceMax']:
+                        if tensor in initializers and initializers[tensor] != 1:
+                            continue
+                        if onnx_version >= ONNX18_VERSION and tensor in value_info \
+                            and value_info[tensor] != 1:
+                            continue
                         # dump tensor for calibration
                         augment_node_name = tensor + "_" + augment_node_type
                         augment_node = onnx.helper.make_node(augment_node_type, [tensor],
@@ -186,19 +203,26 @@ class ONNXRTAugment:
         session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), None)
 
         intermediate_outputs = []
-
-        for idx, batch in enumerate(self.dataloader):
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
+            if len_inputs == 1:
+                ort_inputs.update({inputs_names[0]: inputs})
+            else:
+                assert len_inputs == len(inputs), \
+                    'number of input tensors must align with graph inputs'
+                for i in range(len_inputs):
+                    if not isinstance(inputs[i], np.ndarray):
+                        ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                    else:
+                        ort_inputs.update({inputs_names[i]: inputs[i]})
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break    
                 if idx in self.iterations:
-                    for i in range(len(session.get_inputs())):
-                        ort_inputs.update({session.get_inputs()[i].name: batch[i]})
                     intermediate_outputs.append(session.run(None, ort_inputs))
             else:
-                for i in range(len(session.get_inputs())):
-                    ort_inputs.update({session.get_inputs()[i].name: batch[i]})
                 intermediate_outputs.append(session.run(None, ort_inputs))
         node_output_names = [output.name if output.name not in self.dequantized_output \
                              else self.dequantized_output[output.name] \

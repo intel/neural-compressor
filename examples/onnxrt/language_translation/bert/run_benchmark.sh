@@ -10,7 +10,6 @@ function main {
 
 # init params
 function init_params {
-
   for var in "$@"
   do
     case $var in

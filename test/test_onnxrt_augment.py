@@ -47,14 +47,17 @@ def create_nlp_session():
     b_value = np.random.randint(2, size=(10)).astype(np.int32)
     B_init = helper.make_tensor('B', TensorProto.INT32, [10],
                                 b_value.reshape(10).tolist())
-    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [100, 4])
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 100, 4])
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [100, 4])
+    squeeze = onnx.helper.make_node('Squeeze', ['A'], ['D'], name='squeeze')
     B = helper.make_tensor_value_info('B', TensorProto.INT32, [10])
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [10, 4])
-    node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='gather')
-    graph = helper.make_graph([node], 'test_graph_1', [A, B], [C], [A_init, B_init])
+    node = onnx.helper.make_node('Gather', ['D', 'B'], ['C'], name='gather')
+    graph = helper.make_graph([squeeze, node], 'test_graph_1', [A], [C], [B_init])
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     datasets = DATASETS('onnxrt_qlinearops')
-    dataset = datasets['dummy'](shape=(100, 4), label=True)
+    dataset = datasets['dummy_v2'](input_shape=(100, 4), label_shape=(1,))
+    
     dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)
     return model, dataloader 
 
@@ -63,15 +66,15 @@ class TestDataset(Dataset):
 
     def __init__(self):
         data_list = []
-        data_list.append(np.array([[[[[0.45,0.60,0.75]],
+        data_list.append((np.array([[[[0.45,0.60,0.75]],
                                      [[0.25,0.50,0.75]],
-                                     [[0.90,0.70,0.50]]]]]).astype(np.float32))
-        data_list.append(np.array([[[[[0.62,0.94,0.38]],
+                                     [[0.90,0.70,0.50]]]]).astype(np.float32), 0))
+        data_list.append((np.array([[[[0.62,0.94,0.38]],
                                      [[0.70,0.13,0.07]],
-                                     [[0.89,0.75,0.84]]]]]).astype(np.float32))
-        data_list.append(np.array([[[[[0.64,0.24,0.97]],
+                                     [[0.89,0.75,0.84]]]]).astype(np.float32), 0))
+        data_list.append((np.array([[[[0.64,0.24,0.97]],
                                      [[0.82,0.58,0.27]],
-                                     [[0.019,0.34,0.02]]]]]).astype(np.float32))
+                                     [[0.019,0.34,0.02]]]]).astype(np.float32), 0))
         self.data_list = data_list
         
     def __len__(self):

@@ -4,8 +4,16 @@
 This example load a language translation model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/). 
 
 ### Environment
+
+#### Dynamic quantization environment:
+
 onnx: 1.7.0
 onnxruntime: 1.6.0+
+
+#### Static quantization environment:
+
+onnx: 1.8.0+
+onnxruntime: 1.7.0+
 
 ### Prepare dataset
 download the GLUE data with `prepare_data.sh` script.
