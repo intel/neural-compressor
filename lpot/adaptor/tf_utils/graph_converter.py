@@ -60,7 +60,7 @@ from lpot.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import Inser
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 
-TF_SUPPORTED_MAX_VERSION = '2.5.0'
+TF_SUPPORTED_MAX_VERSION = '2.6.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 class GraphConverter:
@@ -163,6 +163,9 @@ class GraphConverter:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
             if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
                 is_supported_version = True
+
+            if tf.version.VERSION == '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
+                is_supported_version = True
         except Exception as e:
             raise ValueError(e)
         finally:
@@ -177,6 +180,10 @@ class GraphConverter:
             if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
                 self.logger.warning("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0"
                                     " when Tensorflow 2.5.0 installed.")
+
+            if tf.version.VERSION == '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+                self.logger.warning("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1"
+                                    " when Tensorflow 2.6.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(

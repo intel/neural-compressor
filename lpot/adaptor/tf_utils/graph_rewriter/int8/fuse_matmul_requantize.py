@@ -32,6 +32,8 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
     """Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
     """
     fuse_patterns = {
+        "2.6.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
+            ('Softmax',)],
         "2.5.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
                   ('Softmax',)],
         "2.4.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],

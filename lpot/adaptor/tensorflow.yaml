@@ -384,7 +384,7 @@
 
 -
   version:
-    name: '2.3.0'
+    name: '2.6.0'
 
   precisions:
     <<: *common_precisions
@@ -404,6 +404,25 @@
 -
   version:
     name: '2.5.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+  grappler_optimization:
+    << : *common_grappler_optimization
+
+-
+  version:
+    name: '2.3.0'
 
   precisions:
     <<: *common_precisions
