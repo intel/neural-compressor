@@ -42,6 +42,8 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                   ('Softmax',)],
         "2.2.0":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
                    ('Softmax',)],
+        "1.15.0-up3":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
+                        ('Softmax',)],
         "1.15.0-up2":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
                         ('Softmax',)],
         "default": []}
