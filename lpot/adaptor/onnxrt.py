@@ -152,7 +152,8 @@ class ONNXRTAdaptor(Adaptor):
                     if any([output.endswith('_quantized') for output in node.output]):
                         origin_op_type = node.op_type
                     else:
-                        res[node.op_type]['FP32'] += 1
+                        if node.op_type in res:
+                            res[node.op_type]['FP32'] += 1
                         continue
  
                 if origin_op_type == "QAttention":
