@@ -834,6 +834,16 @@ class ONNXRTGLUE(BaseMetric):
         self.pred_list = None
         self.label_list = None
         self.task = task
+        self.return_key = {
+            "cola": "mcc",
+            "mrpc": "acc",
+            "sts-b": "corr",
+            "qqp": "acc",
+            "mnli": "mnli/acc",
+            "qnli": "acc",
+            "rte": "acc",
+            "wnli": "acc"
+        }
 
     def update(self, preds, labels):
         """add preds and labels to storage"""
@@ -841,7 +851,6 @@ class ONNXRTGLUE(BaseMetric):
             preds = preds[0]
         if isinstance(labels, list) and len(labels) == 1:
             labels = labels[0]
-        preds = np.reshape(preds, (-1,2))
         if self.pred_list is None:
             self.pred_list = preds
             self.label_list = labels
@@ -864,4 +873,4 @@ class ONNXRTGLUE(BaseMetric):
             processed_preds = np.squeeze(self.pred_list)
         result = transformers.glue_compute_metrics(\
             self.task, processed_preds, self.label_list) 
-        return result["acc"]            
+        return result[self.return_key[self.task]]            
