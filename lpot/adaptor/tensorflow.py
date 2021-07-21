@@ -341,7 +341,8 @@ class TensorFlowAdaptor(Adaptor):
         return converted_model
 
     def _dump_model_op_stastics(self, model_graphdef):
-        fp32_op_list = self.query_handler.get_op_types_by_precision(precision='uint8')
+        fp32_op_list = copy.deepcopy(
+            self.query_handler.get_op_types_by_precision(precision='uint8'))
         int8_op_prefix_list = ['QuantizedConv2D', 'QuantizedDepthwise',
                                'QuantizedMaxPool', 'QuantizedAvgPool',
                                'QuantizedConcatV2', 'QuantizedMatMul']
@@ -376,7 +377,6 @@ class TensorFlowAdaptor(Adaptor):
                     res[i.op]['BF16'] += 1
                 else:
                     res[i.op]['FP32'] += 1
-
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in fp32_op_list]
 

@@ -2128,7 +2128,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
 
     def _dump_model_op_stastics(self, model):
         modules = dict(model.named_modules())
-        quantized_ops_table = dict()
         quantized_mode = False
         res = {}
         for node in model.graph.nodes:
