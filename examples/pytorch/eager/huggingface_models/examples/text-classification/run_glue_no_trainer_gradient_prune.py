@@ -151,9 +151,11 @@ def parse_args():
                         help="do gradient sensitivity pruning on trained model.")
     parser.add_argument('--use_onnx', action='store_true',
                         help="use onnx for inference")
+    parser.add_argument("--onnx_model_name", type=str, default="model.onnx", help="name for saved onnx model.")
     parser.add_argument('--quantization', action='store_true',
                         help="int8 quantization")
     parser.add_argument("--config", default=None, help="pruning config")
+    parser.add_argument("--core_per_instance", type=int, default=-1, help="cores per instance.")
     args = parser.parse_args()
 
     # Sanity checks
@@ -243,12 +245,12 @@ def export_onnx_model(args, model):
                   'token_type_ids': torch.ones(1,args.max_length, dtype=torch.int64)}
         _ = model(**inputs)
 
-        onnx_model_path = args.output_model + '/model.onnx'
+        onnx_saved_model = os.path.join(args.output_model, args.onnx_model_name)
         symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
         torch.onnx.export(model, (inputs['input_ids'],
                                   inputs['attention_mask'],
                                   inputs['token_type_ids']),
-                          onnx_model_path,
+                          onnx_saved_model,
                           opset_version=11,
                           do_constant_folding=True,
                           input_names=['input_ids',
@@ -258,7 +260,7 @@ def export_onnx_model(args, model):
                           dynamic_axes={'input_ids': symbolic_names,
                                         'attention_mask' : symbolic_names,
                                         'token_type_ids' : symbolic_names})
-        print("ONNX Model exported to {}".format(onnx_model_path))
+        print("ONNX Model exported to {}".format(onnx_saved_model))
 
 def evaluate_onnxrt(args, model, eval_dataloader, metric, onnx_options=None):
     from onnxruntime import ExecutionMode, InferenceSession, SessionOptions
@@ -594,28 +596,29 @@ def main():
         from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
 
         import onnx
-        onnx_opt_model = onnx.load(args.output_model + "/model.onnx")
+        onnx_saved_model = os.path.join(args.output_model, args.onnx_model_name)
+        onnx_opt_model = onnx.load(onnx_saved_model)
         if args.quantization:
             logger.info(f"quantize onnx model ... ")
-            quantize_dynamic(args.output_model + "/model.onnx",
-                             args.output_model + "/model.onnx",
+            quantize_dynamic(onnx_saved_model,
+                             onnx_saved_model,
                              op_types_to_quantize=['MatMul', 'Attention'],
                              weight_type=QuantType.QInt8,
                              per_channel=True,
                              reduce_range=True,
                              extra_options={'WeightSymmetric': False, 'MatMulConstBOnly': True})
 
-        # onnx_options = SessionOptions()
-        # onnx_options.intra_op_num_threads = args.threads_per_instance
-        # onnx_options.execution_mode = ExecutionMode.ORT_SEQUENTIAL
-        onnx_options = None
+        onnx_options = SessionOptions()
+        if args.core_per_instance > 0:
+            onnx_options.intra_op_num_threads = args.core_per_instance
+        onnx_options.execution_mode = ExecutionMode.ORT_SEQUENTIAL
 
         opt_options = BertOptimizationOptions('bert')
         opt_options.enable_embed_layer_norm = False
 
         logger.info(f"optimize onnx model ... ")
         model_optimizer = optimizer.optimize_model(
-            args.output_model + '/model.onnx',
+            onnx_saved_model,
             'bert',
             num_heads=0,
             hidden_size=0,
