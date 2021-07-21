@@ -17,6 +17,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
+from lpot.ux.components.graph.graph import Graph
+
 
 class Model(ABC):
     """Abstract model class."""
@@ -42,6 +44,10 @@ class Model(ABC):
             klass = self.__class__
             model_name = ".".join([klass.__module__, klass.__qualname__])
             raise AttributeError(f"Model path: {path} is not supported by {model_name} class.")
+
+    def get_model_graph(self) -> Graph:
+        """Get model graph."""
+        raise NotImplementedError(f"Reading graph for model {self.path} is not supported.")
 
     @staticmethod
     @abstractmethod

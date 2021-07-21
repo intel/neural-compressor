@@ -16,6 +16,7 @@
 
 from typing import Any, List, Optional
 
+from ...graph.graph import Graph
 from ..model_type_getter import get_model_type
 from .model import TensorflowModel as TFModel
 
@@ -30,6 +31,10 @@ class MetaGraphModel(TFModel):
     def get_output_nodes(self) -> Optional[List[Any]]:
         """Get model output nodes."""
         return []
+
+    def get_model_graph(self) -> Graph:
+        """Get model graph."""
+        raise NotImplementedError("Reading graph for MetaGraph is not supported.")
 
     @staticmethod
     def supports_path(path: str) -> bool:

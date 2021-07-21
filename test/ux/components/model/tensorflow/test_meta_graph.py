@@ -91,6 +91,15 @@ class TestMetaGraphModel(unittest.TestCase):
         self.assertEqual([], model.get_input_nodes())
         self.assertEqual([], model.get_output_nodes())
 
+    def test_get_model_graph(self) -> None:
+        """Test getting Graph of a model."""
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "Reading graph for MetaGraph is not supported.",
+        ):
+            model = MetaGraphModel("/path/to/meta_graph/")
+            model.get_model_graph()
+
 
 if __name__ == "__main__":
     unittest.main()

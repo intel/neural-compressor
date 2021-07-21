@@ -72,6 +72,15 @@ class TestOnnxrtModel(unittest.TestCase):
         ):
             OnnxrtModel("/path/to/model.pb")
 
+    def test_get_model_graph(self) -> None:
+        """Test getting Graph of a model."""
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "Reading graph for model /path/to/model.onnx is not supported.",
+        ):
+            model = OnnxrtModel("/path/to/model.onnx")
+            model.get_model_graph()
+
 
 if __name__ == "__main__":
     unittest.main()

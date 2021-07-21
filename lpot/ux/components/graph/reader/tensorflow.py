@@ -14,40 +14,39 @@
 # limitations under the License.
 """Tensorflow Graph reader."""
 
-import os
 from typing import Dict, List, Optional
 
 from tensorflow.core.framework.attr_value_pb2 import AttrValue
 from tensorflow.core.framework.node_def_pb2 import NodeDef
 from tensorflow.python.framework.dtypes import _TYPE_TO_STRING
 
-from lpot.adaptor.tf_utils.util import read_graph
 from lpot.ux.utils.exceptions import NotFoundException
 
+from ...model.model import Model
 from ..attribute import Attribute
 from ..graph import Graph
 from ..node import Node
-from .reader import Reader
 
 
-class TensorflowReader(Reader):
+class TensorflowReader:
     """Graph Reader for Tensorflow."""
 
-    def __init__(self) -> None:
+    def __init__(self, model: Model) -> None:
         """Initialize object."""
-        super().__init__()
         self._hidden_node_ids: Dict[str, bool] = {}
+        self.model: Model = model
 
-    def ensure_model_readable(self, model_path: str) -> None:
-        """Throw Exception if can't read model."""
-        if not os.path.isfile(model_path):
-            raise NotFoundException(f"Unable to find {model_path} model")
-
-    def read(self, model_path: str) -> Graph:
+    def read(self) -> Graph:
         """Read a graph."""
-        self.ensure_model_readable(model_path)
+        self._hidden_node_ids = {}
 
-        graph_def = read_graph(model_path)
+        from ...model.tensorflow.model import TensorflowModel
+
+        if not isinstance(self.model, TensorflowModel):
+            raise NotFoundException(f"{self.model.path} is not Tensorflow model.")
+
+        graph_def = self.model.lpot_model_instance.graph_def
+
         graph = Graph()
 
         for node_def in graph_def.node:

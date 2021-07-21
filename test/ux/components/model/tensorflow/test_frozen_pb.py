@@ -17,6 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from lpot.ux.components.graph.graph import Graph
 from lpot.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
 
 
@@ -96,6 +97,19 @@ class TestFrozenPbModel(unittest.TestCase):
             ["first output node", "second output node", "custom"],
             model.get_output_nodes(),
         )
+
+    @patch("lpot.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    def test_get_model_graph(self, mocked_tensorflow_graph_reader: MagicMock) -> None:
+        """Test getting Graph of a model."""
+        expected = Graph()
+
+        mocked_tensorflow_graph_reader.return_value.read.return_value = expected
+
+        model = FrozenPbModel("/path/to/frozen_pb.pb")
+
+        self.assertEqual(expected, model.get_model_graph())
+
+        mocked_tensorflow_graph_reader.assert_called_once_with(model)
 
 
 if __name__ == "__main__":

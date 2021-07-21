@@ -12,31 +12,49 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Test GraphReader."""
+"""Test Edge."""
 
 import unittest
 from unittest.mock import MagicMock, patch
 
+from lpot.ux.components.graph.graph import Graph
 from lpot.ux.components.graph.graph_reader import GraphReader
-from lpot.ux.utils.exceptions import ClientErrorException
 
 
 class TestGraphReader(unittest.TestCase):
     """Test GraphReader class."""
 
-    @patch("lpot.ux.components.graph.reader.repository.GraphReaderRepository.find")
-    def test_ensure_model_readable_fails_for_unknown_framework(
+    @patch("lpot.ux.components.graph.graph_reader.Collapser")
+    @patch("lpot.ux.components.graph.graph_reader.ModelRepository")
+    def test_read(
         self,
-        mocked_reader_repository_find: MagicMock,
+        mocked_model_repository: MagicMock,
+        mocked_collapser: MagicMock,
     ) -> None:
-        """Test ensure_model_readable fail when not supported framework."""
-        mocked_reader_repository_find.side_effect = ClientErrorException
+        """Test read."""
+        model_path = "/path/to/model.file"
+        expanded_groups = ["a", "b", "a/c"]
+
+        model_graph = Graph()
+        collapsed_graph = Graph()
+
+        mocked_model = MagicMock("lpot.ux.components.model.Model").return_value
+        mocked_model.get_model_graph.return_value = model_graph
+
+        mocked_model_repository.return_value.get_model.return_value = mocked_model
+
+        mocked_collapser.return_value.collapse.return_value = collapsed_graph
 
         graph_reader = GraphReader()
+        self.assertIs(collapsed_graph, graph_reader.read(model_path, expanded_groups))
 
-        with self.assertRaises(ClientErrorException):
-            graph_reader.ensure_model_readable("foo.txt")
-        mocked_reader_repository_find.assert_called_once_with("foo.txt")
+        mocked_model_repository.assert_called_once_with()
+        mocked_model_repository.return_value.get_model.assert_called_once_with(model_path)
+
+        mocked_model.get_model_graph.assert_called_once_with()
+
+        mocked_collapser.assert_called_once_with(expanded_groups)
+        mocked_collapser.return_value.collapse.assert_called_once_with(model_graph)
 
 
 if __name__ == "__main__":
