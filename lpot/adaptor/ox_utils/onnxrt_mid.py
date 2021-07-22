@@ -185,20 +185,29 @@ class ONNXRTAugment:
         session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), None)
 
         intermediate_outputs = []
-
-        for idx, batch in enumerate(self.dataloader):
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
             if self.iterations != []:
                 if idx > max(self.iterations):
                     break    
                 if idx in self.iterations:
-                    for i in range(len(session.get_inputs())):
-                        ort_inputs.update({session.get_inputs()[i].name: batch[i]})
+                    for i in range(len_inputs):
+                        # in case dataloader contains non-array input
+                        if not isinstance(inputs[i], np.ndarray):
+                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                        else:
+                            ort_inputs.update({inputs_names[i]: inputs[i]})   
                     intermediate_outputs.append(session.run(None, ort_inputs))
             else:
-                for i in range(len(session.get_inputs())):
-                    ort_inputs.update({session.get_inputs()[i].name: batch[i]})
-                intermediate_outputs.append(session.run(None, ort_inputs))
+                for i in range(len_inputs):
+                    # in case dataloader contains non-array input
+                    if not isinstance(inputs[i], np.ndarray):
+                        ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                    else:
+                        ort_inputs.update({inputs_names[i]: inputs[i]}) 
+                intermediate_outputs.append(session.run(None, ort_inputs)) 
         node_output_names = [session.get_outputs()[i].name.replace('_output', '') for i in
                              range(len(intermediate_outputs[0]))]
         output_dicts_list = [
