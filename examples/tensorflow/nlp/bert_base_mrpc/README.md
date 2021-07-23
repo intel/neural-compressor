@@ -28,7 +28,7 @@ cd examples/tensorflow/nlp/bert_base_mrpc
 python prepare_dataset.py --tasks='MRPC' --output_dir=./data
 ```
 
-### 4. Prepare Pretrained model
+### 4. Prepare pretrained model
 
 #### Automatic model download
 Run the `prepare_model.sh` script located in `examples/tensorflow/nlp/bert_base_mrpc`.
@@ -42,8 +42,8 @@ bash prepare_model.sh --dataset_location=./data --output_dir=./model
 ```
 
 ## Run Command
-Make sure the data and model has been generated successfully, located at ./data and ./model
-And your output_model will located at ./output_model like the command below
+Make sure the data and model have been generated successfully which located at ./data and ./model respectively.
+And your output_model will be located at ./output_model like the command below
   ```shell
     python run_classifier.py \
       --task_name=MRPC \
@@ -58,7 +58,7 @@ And your output_model will located at ./output_model like the command below
       --output_dir=model \
       --output_model=output_model \
       --config=mrpc.yaml \
-      --tune \
+      --tune
   ```
 
 Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
