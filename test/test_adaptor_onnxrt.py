@@ -267,8 +267,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.q_config = q_config
         version = get_torch_version()
         if version >= '1.7':
-            adaptor.set_tensor(q_model, {'545': np.random.random([32, 3, 3, 3])})
-            adaptor.set_tensor(q_model, {'546': np.random.random([32])})
+            adaptor.set_tensor(q_model, 
+                {self.mb_v2_model.graph.node[0].input[1]: np.random.random([32, 3, 3, 3])})
+            adaptor.set_tensor(q_model,
+                {self.mb_v2_model.graph.node[0].input[2]: np.random.random([32])})
         else:
             adaptor.set_tensor(q_model, {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
             adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random([32])})
