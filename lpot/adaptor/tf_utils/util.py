@@ -243,17 +243,11 @@ def collate_tf_preds(results):
 
     return collate_results
 
-def get_input_node_names(graph_def):
+def get_input_output_node_names(graph_def):
     g = GraphAnalyzer()
     g.graph = graph_def
     g.parse_graph()
-    return g.get_graph_input_output()[0]
-
-def get_output_node_names(graph_def):
-    g = GraphAnalyzer()
-    g.graph = graph_def
-    g.parse_graph()
-    return g.get_graph_input_output()[1]
+    return g.get_graph_input_output()
 
 def fix_ref_type_of_graph_def(graph_def):
     # according to https://github.com/onnx/tensorflow-onnx/issues/77

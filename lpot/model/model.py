@@ -187,16 +187,20 @@ def validate_and_inference_input_output(graph_def, \
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
+    from lpot.adaptor.tf_utils.util import get_input_output_node_names 
+    temp_output_tensor_names = []
+    if validate_graph_node(graph_def, tensor_to_node(input_tensor_names)):
+        input_tensor_names = input_tensor_names
+    else:
+        input_tensor_names, temp_output_tensor_names = get_input_output_node_names(graph_def)
 
-    from lpot.adaptor.tf_utils.util import get_input_node_names
-    input_tensor_names = input_tensor_names if validate_graph_node(\
-        graph_def, tensor_to_node(input_tensor_names)) else \
-        get_input_node_names(graph_def)
+    if validate_graph_node(graph_def, tensor_to_node(output_tensor_names)):
+        output_tensor_names = output_tensor_names
+    elif temp_output_tensor_names:
+        output_tensor_names = temp_output_tensor_names
+    else:
+        _, output_tensor_names = get_input_output_node_names(graph_def)
 
-    from lpot.adaptor.tf_utils.util import get_output_node_names
-    output_tensor_names = output_tensor_names if validate_graph_node(\
-        graph_def, tensor_to_node(output_tensor_names)) else \
-        get_output_node_names(graph_def)
     return input_tensor_names, output_tensor_names
 
 def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
@@ -395,7 +399,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     Args:
         model (string): model path
         input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
+        output_tensor_names (list of string): validated output_tensor_names of model
 
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
@@ -421,11 +425,11 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
         sess.run(tf.compat.v1.global_variables_initializer())
         saver.restore(sess, os.path.join(model, ckpt_prefix))
 
-    from lpot.adaptor.tf_utils.util import get_input_node_names
-    input_tensor_names = input_tensor_names if validate_graph_node(\
-        sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)) else \
-        get_input_node_names(sess.graph.as_graph_def())
-
+    from lpot.adaptor.tf_utils.util import get_input_output_node_names 
+    if validate_graph_node(sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)):
+        input_tensor_names = input_tensor_names
+    else:
+        input_tensor_names, _ = get_input_output_node_names(sess.graph.as_graph_def())
     return sess, input_tensor_names, output_tensor_names
 
 def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
