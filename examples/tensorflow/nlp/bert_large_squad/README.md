@@ -13,17 +13,23 @@ pip install lpot
 ```
 ### 2. Install Intel Tensorflow 1.15 up2
 Check your python version and use pip install 1.15.0 up2 from links below:
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl                
+https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
 
 ### 3. Prepare Dataset
+```shell
 wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip
+```
+
+```shell
 unzip wwm_uncased_L-24_H-1024_A-16.zip
+```
 
+```shell
 wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json -P wwm_uncased_L-24_H-1024_A-16
-
-wwm_uncased_L-24_H-1024_A-16. will be your data path
+```
+wwm_uncased_L-24_H-1024_A-16 folder will be located on your data path.
 
 #### Automatic dataset download
 Run the `prepare_dataset.sh` script located in `examples/tensorflow/nlp/bert_large_squad`.
@@ -34,7 +40,7 @@ cd examples/tensorflow/nlp/bert_large_squad
 bash prepare_dataset.sh --output_dir=./data
 ```
 
-Then create the tf_record file, you should config the tf_record path in yaml file.
+Then create the tf_record file and you need to config the tf_record path in yaml file.
 ```shell
 python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
 ```
@@ -165,4 +171,3 @@ After prepare step is done, we add tune and benchmark code to generate quantized
             print('Throughput: {:.3f} images/sec'.format(1./ latency))
 ```
 The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model under time constraint.
-
