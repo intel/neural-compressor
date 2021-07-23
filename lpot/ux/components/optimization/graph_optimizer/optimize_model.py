@@ -94,7 +94,10 @@ def optimize_graph(
         graph_optimizer.output = output
     graph_optimizer.model = input_graph
     optimized_model = graph_optimizer()
-    optimized_model.save(output_graph)
+    if optimized_model is not None:
+        optimized_model.save(output_graph)
+    else:
+        sys.exit(100)
 
 
 def optimize_graph_config(

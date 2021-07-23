@@ -23,6 +23,7 @@ from .onnxrt.model import OnnxrtModel
 from .tensorflow.frozen_pb import FrozenPbModel
 from .tensorflow.keras import KerasModel
 from .tensorflow.meta_graph import MetaGraphModel
+from .tensorflow.saved_model import SavedModelModel
 
 
 class ModelRepository:
@@ -35,6 +36,7 @@ class ModelRepository:
             KerasModel,
             MetaGraphModel,
             OnnxrtModel,
+            SavedModelModel,
         ]
 
     def get_model(self, path: str) -> Model:

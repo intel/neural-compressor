@@ -39,13 +39,15 @@ class TensorflowModel(Model):
         """Get model input nodes."""
         self.guard_requirements_installed()
 
-        return getattr(self.lpot_model_instance, "input_node_names", [])
+        # pylint: disable=maybe-no-member
+        return self.lpot_model_instance.input_node_names
 
     def get_output_nodes(self) -> Optional[List[Any]]:
         """Get model output nodes."""
         self.guard_requirements_installed()
 
-        return getattr(self.lpot_model_instance, "output_node_names", []) + ["custom"]
+        # pylint: disable=maybe-no-member
+        return self.lpot_model_instance.output_node_names + ["custom"]
 
     def get_model_graph(self) -> Graph:
         """Get model Graph."""
