@@ -161,7 +161,7 @@ def main():
         from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
         from lpot.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
         shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, max_seq_length)
-        dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64")
+        dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int64", label=True)
         dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
         
         from lpot.experimental import Benchmark, common
