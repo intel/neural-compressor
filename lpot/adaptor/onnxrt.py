@@ -258,6 +258,8 @@ class ONNXRTAdaptor(Adaptor):
         return new_bias_data
 
     def _pre_optimize(self, model, level=1):
+        from lpot.adaptor.ox_utils.util import split_shared_input
+        model = split_shared_input(model)
         sess_options = ort.SessionOptions()
         level = self.query_handler.get_graph_optimization() # pylint: disable=no-member
         sess_options.graph_optimization_level = level

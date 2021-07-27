@@ -1,4 +1,5 @@
 import sys
+import os
 import onnx
 from onnx import helper, TensorProto, numpy_helper
 import unittest
@@ -20,6 +21,40 @@ def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     init = numpy_helper.from_array(tensor, input_name)
     return init  
 
+class TestOnnxModelUtil(unittest.TestCase):
+    def setUp(self):
+        #   input
+        #    |
+        #   Mul
+        #    |  \
+        #    |    initializer
+        #    |  /
+        #   Mul
+        input0 = helper.make_tensor_value_info('input0', TensorProto.FLOAT, [1, 3])
+        output = helper.make_tensor_value_info('output', TensorProto.FLOAT, [1, 3])
+        
+        mul_weight = generate_input_initializer([], np.float32, 'mul_weight')
+       
+        mul_node_1 = onnx.helper.make_node('Mul', ['input0', 'mul_weight'], ['mul_1'], name='Mul1')
+        mul_node_2 = onnx.helper.make_node('Mul', ['mul_1', 'mul_weight'], ['output'], name= 'Mul2')
+        
+        graph = helper.make_graph([mul_node_1, mul_node_2], 'test_graph', [input0], [output])
+        graph.initializer.add().CopyFrom(mul_weight)
+
+        model = helper.make_model(graph)
+        test_model_path = './test_model.onnx'
+        onnx.save(model, test_model_path)
+        model = onnx.load(test_model_path)
+        self.model = ONNXModel(model)
+
+    def test_split_shared_input(self):
+        from lpot.adaptor.ox_utils.util import split_shared_input
+        model = split_shared_input(self.model)
+        self.assertIsNone(model.get_initializer('mul_weight_lpot_split_Mul1'))
+        self.assertIsNotNone(model.get_initializer('mul_weight_lpot_split_Mul2'))
+
+    def tearDown(self):
+        os.remove('./test_model.onnx')
 
 class TestOnnxModel(unittest.TestCase):
     def setUp(self):

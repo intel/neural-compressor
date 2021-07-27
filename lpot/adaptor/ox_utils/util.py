@@ -18,8 +18,26 @@
 
 import os
 import numpy as np
+from onnx import helper
 from onnx import onnx_pb as onnx_proto  
 from onnxruntime.quantization.quant_utils import QuantType       
+
+def split_shared_input(model):
+    for input_name, node_list in model.input_name_to_nodes.items():
+        if len(node_list) > 1 and input_name in [i.name for i in model.model.graph.initializer]:
+            for node in node_list[1:]:
+                for i, node_input_name in enumerate(node.input):
+                    if node_input_name == input_name:
+                        new_input_name = node_input_name + '_lpot_split_' + node.name
+                        new_input = helper.make_tensor(
+                                        new_input_name,
+                                        model.get_initializer(input_name).data_type,
+                                        model.get_initializer(input_name).dims,
+                                        model.get_initializer(input_name).raw_data,
+                                        True)
+                        model.add_initializer(new_input)
+                        node.input[i] = new_input_name
+    return model
 
 def collate_preds(results):
     batch = results[0]
