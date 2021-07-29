@@ -102,7 +102,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
    The naming convention of new dataset subclass should be something like ImageClassifier, user
    could choose this dataset by setting "imageclassifier" string in tuning.strategy field of yaml.
 
-   DATASETS variable is used to store all implelmented Dataset subclasses to support
+   DATASETS variable is used to store all implemented Dataset subclasses to support
    model specific dataset.
 """
 
@@ -185,7 +185,7 @@ class Dataset(object):
     #     raise NotImplementedError
 
 class IterableDataset(object):
-    """An iterable Dataset. Subclass iterable dataset should aslo implement a method:
+    """An iterable Dataset. Subclass iterable dataset should also implement a method:
     `__iter__` for interating over the samples of the dataset.
 
     """
@@ -256,23 +256,23 @@ class CIFAR10(Dataset):
     """Configuration for CIFAR10 and CIFAR100 database
 
     For CIFAR10: If download is True, it will download dataset to root/ and extract it
-                 automatically, otherwise user can download file from 
+                 automatically, otherwise user can download file from
                  https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to
                  root/ and extract it.
     For CIFAR100: If download is True, it will download dataset to root/ and extract it
-                  automatically, otherwise user can download file from 
+                  automatically, otherwise user can download file from
                   https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to
                   root/ and extract it.
 
     Args:
-        root (str): Root directory of dataset.  
-        train (bool, default=False): If True, creates dataset from train subset, 
+        root (str): Root directory of dataset.
+        train (bool, default=False): If True, creates dataset from train subset,
                                      otherwise from validation subset.
         transform (transform object, default=None):  transform to process input data.
-        filter (Filter objects, default=None): filter out examples according to specific 
-                                               conditions.  
-        download (bool, default=True): If true, downloads the dataset from the internet 
-                                       and puts it in root directory. If dataset is already 
+        filter (Filter objects, default=None): filter out examples according to specific
+                                               conditions.
+        download (bool, default=True): If true, downloads the dataset from the internet
+                                       and puts it in root directory. If dataset is already
                                        downloaded, it is not downloaded again.
     """
     url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
@@ -296,8 +296,8 @@ class CIFAR10(Dataset):
         'md5': '5ff9c542aee3614f3951f8cda6e48888',
     }
 
-    def __init__(self, root, train=False, transform=None, filter=None, 
-                    download=True): # pragma: no cover 
+    def __init__(self, root, train=False, transform=None, filter=None,
+                    download=True): # pragma: no cover
         self.root = root
         if download:
             self.download()
@@ -308,8 +308,8 @@ class CIFAR10(Dataset):
         if train:
             downloaded_list = self.train_list
         else:
-            downloaded_list = self.test_list        
-        
+            downloaded_list = self.test_list
+
         self.data = []
         self.targets = []
         for file_name, checksum in downloaded_list:
@@ -323,11 +323,11 @@ class CIFAR10(Dataset):
                     self.targets.extend(entry['fine_labels'])
         self.data = np.vstack(self.data).reshape(-1, 3, 32, 32)
         self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
-        
+
         self.load_meta()
         self.transform = transform
 
-    def load_meta(self): # pragma: no cover 
+    def load_meta(self): # pragma: no cover
         path = os.path.join(self.root, self.meta['filename'])
         if not check_integrity(path, self.meta['md5']):
             raise RuntimeError('Dataset metadata file not found or corrupted.' +
@@ -337,7 +337,7 @@ class CIFAR10(Dataset):
             self.classes = data[self.meta['key']]
         self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
 
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         if self.transform is not None:
             image, label = self.transform((image, label))
@@ -346,7 +346,7 @@ class CIFAR10(Dataset):
     def __len__(self): # pragma: no cover
         return len(self.data)
 
-    def download(self): # pragma: no cover 
+    def download(self): # pragma: no cover
         if self._check_integrity():
             print('Files already downloaded and verified')
             return
@@ -357,7 +357,7 @@ class CIFAR10(Dataset):
         print("Extracting {} to {}".format(archive, download_root))
         with tarfile.open(archive, 'r:gz') as tar:
             tar.extractall(path=download_root)
-        
+
     def _check_integrity(self): # pragma: no cover
         root = self.root
         for fentry in (self.train_list + self.test_list):
@@ -369,7 +369,7 @@ class CIFAR10(Dataset):
 
 @dataset_registry(dataset_type="CIFAR10", framework="pytorch", dataset_format='')
 class PytorchCIFAR10(CIFAR10):
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         image = Image.fromarray(image)
         if self.transform is not None:
@@ -378,7 +378,7 @@ class PytorchCIFAR10(CIFAR10):
 
 @dataset_registry(dataset_type="CIFAR10", framework="mxnet", dataset_format='')
 class MXNetCIFAR10(CIFAR10):
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         image = mx.nd.array(image)
         if self.transform is not None:
@@ -387,7 +387,7 @@ class MXNetCIFAR10(CIFAR10):
 
 @dataset_registry(dataset_type="CIFAR10", framework="tensorflow", dataset_format='')
 class TensorflowCIFAR10(CIFAR10):
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         if self.transform is not None:
             image, label = self.transform((image, label))
@@ -418,7 +418,7 @@ class CIFAR100(CIFAR10):
 
 @dataset_registry(dataset_type="CIFAR100", framework="pytorch", dataset_format='')
 class PytorchCIFAR100(CIFAR100):
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         image = Image.fromarray(image)
         if self.transform is not None:
@@ -428,7 +428,7 @@ class PytorchCIFAR100(CIFAR100):
 
 @dataset_registry(dataset_type="CIFAR100", framework="mxnet", dataset_format='')
 class MXNetCIFAR100(CIFAR100):
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         image = mx.nd.array(image)
         if self.transform is not None:
@@ -437,7 +437,7 @@ class MXNetCIFAR100(CIFAR100):
 
 @dataset_registry(dataset_type="CIFAR100", framework="tensorflow", dataset_format='')
 class TensorflowCIFAR100(CIFAR100):
-    def __getitem__(self, index): # pragma: no cover 
+    def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
         if self.transform is not None:
             image, label = self.transform((image, label))
@@ -451,25 +451,25 @@ class TensorflowCIFAR100(CIFAR100):
 @dataset_registry(dataset_type="MNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class MNIST(Dataset):
-    """Configuration for Modified National Institute of Standards and Technology database 
+    """Configuration for Modified National Institute of Standards and Technology database
        and FashionMNIST database
 
     For MNIST: If download is True, it will download dataset to root/MNIST/, otherwise user
                should put mnist.npz under root/MNIST/ manually.
     For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,
-                      otherwise user should put train-labels-idx1-ubyte.gz, 
-                      train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz 
+                      otherwise user should put train-labels-idx1-ubyte.gz,
+                      train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
                       and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.
-    
+
     Args:
-        root (str): Root directory of dataset.  
-        train (bool, default=False): If True, creates dataset from train subset, 
+        root (str): Root directory of dataset.
+        train (bool, default=False): If True, creates dataset from train subset,
                                      otherwise from validation subset.
         transform (transform object, default=None):  transform to process input data.
-        filter (Filter objects, default=None): filter out examples according to specific 
-                                               conditions.  
-        download (bool, default=True): If true, downloads the dataset from the internet 
-                                       and puts it in root directory. If dataset is already 
+        filter (Filter objects, default=None): filter out examples according to specific
+                                               conditions.
+        download (bool, default=True): If true, downloads the dataset from the internet
+                                       and puts it in root directory. If dataset is already
                                        downloaded, it is not downloaded again.
     """
     classes = ['0 - zero', '1 - one', '2 - two', '3 - three', '4 - four',
@@ -487,7 +487,7 @@ class MNIST(Dataset):
             self.download()
 
         self.read_data()
-        
+
     def read_data(self):
         for file_name, checksum in self.resource:
             file_path = os.path.join(self.root, os.path.basename(file_name))
@@ -499,7 +499,7 @@ class MNIST(Dataset):
                     self.data, self.targets = f['x_train'], f['y_train']
                 else:
                     self.data, self.targets = f['x_test'], f['y_test']
- 
+
     def __len__(self):
         return len(self.data)
 
@@ -517,10 +517,10 @@ class MNIST(Dataset):
     def download(self):
         for url, md5 in self.resource:
             filename = os.path.basename(url)
-            if os.path.exists(os.path.join(self.root, filename)): 
+            if os.path.exists(os.path.join(self.root, filename)):
                 continue
             else:
-                download_url(url, root=self.root, 
+                download_url(url, root=self.root,
                             filename=filename, md5=md5)
 
 @dataset_registry(dataset_type="MNIST", framework="pytorch", dataset_format='')
@@ -561,7 +561,7 @@ class TensorflowMNIST(MNIST):
                     onnxrt_integerops", dataset_format='')
 class FashionMNIST(MNIST):
     resource = [
-        ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/' + file_name, None) 
+        ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/' + file_name, None)
         for file_name in [
             'train-labels-idx1-ubyte.gz', 'train-images-idx3-ubyte.gz',
             't10k-labels-idx1-ubyte.gz', 't10k-images-idx3-ubyte.gz'
@@ -570,7 +570,7 @@ class FashionMNIST(MNIST):
 
     classes = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal',
                'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-    
+
     def read_data(self):
         import struct
         if self.train:
@@ -626,17 +626,17 @@ class TensorflowFashionMNIST(FashionMNIST):
 class ImageFolder(Dataset):
     """Configuration for ImageFolder
 
-    Expects the data folder to contain subfolders representing the classes to which 
+    Expects the data folder to contain subfolders representing the classes to which
     its images belong.
 
-    Please arrange data in this way:  
-        root/class_1/xxx.png  
-        root/class_1/xxy.png  
-        root/class_1/xxz.png  
-        ...  
-        root/class_n/123.png  
-        root/class_n/nsdf3.png  
-        root/class_n/asd932_.png  
+    Please arrange data in this way:
+        root/class_1/xxx.png
+        root/class_1/xxy.png
+        root/class_1/xxz.png
+        ...
+        root/class_n/123.png
+        root/class_n/nsdf3.png
+        root/class_n/asd932_.png
     Please put images of different categories into different folders.
 
     Args: root (str): Root directory of dataset.
@@ -660,7 +660,7 @@ class ImageFolder(Dataset):
 
     def __len__(self):
         return len(self.image_list)
- 
+
     def __getitem__(self, index):
         sample = self.image_list[index]
         label = sample[1]
@@ -702,9 +702,9 @@ class TensorflowTFRecordDataset(IterableDataset):
 
     Root is a full path to tfrecord file, which contains the file name.
 
-    Args: root (str): filename of dataset.  
-          transform (transform object, default=None):  transform to process input data.  
-          filter (Filter objects, default=None): filter out examples according 
+    Args: root (str): filename of dataset.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
     """
     def __new__(cls, root, transform=None, filter=None):
@@ -724,16 +724,16 @@ class TensorflowTFRecordDataset(IterableDataset):
 class TensorflowImageRecord(IterableDataset):
     """Configuration for ImageNet database in tf record format
 
-    Please arrange data in this way:  
-        root/validation-000-of-100  
-        root/validation-001-of-100  
-        ...  
-        root/validation-099-of-100  
+    Please arrange data in this way:
+        root/validation-000-of-100
+        root/validation-001-of-100
+        ...
+        root/validation-099-of-100
     The file name needs to follow this pattern: '* - * -of- *'
 
     Args: root (str): Root directory of dataset.
           transform (transform object, default=None):  transform to process input data.
-          filter (Filter objects, default=None): filter out examples according 
+          filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions
     """
 
@@ -745,7 +745,7 @@ class TensorflowImageRecord(IterableDataset):
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
             raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
-        
+
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
         from lpot.experimental.data.transforms.imagenet_transform import ParseDecodeImagenet
@@ -765,16 +765,16 @@ class TensorflowImageRecord(IterableDataset):
 class TensorflowVOCRecord(IterableDataset):
     """Configuration for PASCAL VOC 2012 database in tf record format
 
-    Please arrange data in this way:  
-        root/val-00000-of-00004.tfrecord  
-        root/val-00001-of-00004.tfrecord  
-        ...  
-        root/val-00003-of-00004.tfrecord  
+    Please arrange data in this way:
+        root/val-00000-of-00004.tfrecord
+        root/val-00001-of-00004.tfrecord
+        ...
+        root/val-00003-of-00004.tfrecord
     The file name needs to follow this pattern: 'val-*-of-*'
 
     Args: root (str): Root directory of dataset.
           transform (transform object, default=None):  transform to process input data.
-          filter (Filter objects, default=None): filter out examples according 
+          filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions
     """
     def __new__(cls, root, transform=None, filter=None):
@@ -784,7 +784,7 @@ class TensorflowVOCRecord(IterableDataset):
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
             raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
-        
+
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
         ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)

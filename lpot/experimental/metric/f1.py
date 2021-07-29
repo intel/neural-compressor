@@ -20,9 +20,6 @@ https://github.com/allenai/bi-att-flow/blob/master/squad/evaluate-v1.1.py """
 from collections import Counter, abc
 import string
 import re
-import argparse
-import json
-import sys
 from lpot.utils import logger
 
 def normalize_answer(s):
@@ -84,4 +81,3 @@ def evaluate(predictions, dataset):
 
     f1 = 100.0 * f1 / total
     return f1
-

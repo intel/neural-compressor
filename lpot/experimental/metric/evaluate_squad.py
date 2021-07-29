@@ -21,8 +21,6 @@ from __future__ import print_function
 from collections import Counter
 import string
 import re
-import argparse
-import json
 import sys
 
 

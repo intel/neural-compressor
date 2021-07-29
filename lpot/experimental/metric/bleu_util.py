@@ -57,7 +57,7 @@ def _get_ngrams_with_counter(segment, max_order):
             methods.
 
     Returns:
-        The Counter containing all n-grams upto max_order in segment
+        The Counter containing all n-grams up to max_order in segment
         with a count of how many times each n-gram occurred.
     """
     ngram_counts = collections.Counter()
@@ -132,5 +132,3 @@ def compute_bleu(reference_corpus, translation_corpus, max_order=4,
         bp = math.exp(1 - 1. / ratio) if ratio < 1.0 else 1.0
     bleu = geo_mean * bp
     return np.float32(bleu)
-
-

@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import collections
-import numpy as np
 from lpot.utils.utility import LazyImport
 from .base_dataloader import BaseDataLoader
 import logging
@@ -29,7 +27,6 @@ class MXNetDataLoader(BaseDataLoader):
         if shuffle:
             logging.warning('Shuffle is not supported yet in MXNetDataLoader, ' \
                             'ignoring shuffle keyword.')
-        drop_last = False if last_batch == 'rollover' else True
         return mx.gluon.data.DataLoader(
                 dataset,
                 batch_size=batch_size,

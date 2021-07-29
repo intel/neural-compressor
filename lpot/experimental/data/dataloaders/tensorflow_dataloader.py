@@ -69,7 +69,7 @@ class TFDataDataLoader(BaseDataLoader):
             elif isinstance(element_spec, tf.TensorSpec):
                 return True if element_spec.shape.num_elements() is None else False
             else:
-                raise ValueError('unrecognised element spec...')
+                raise ValueError('unrecognized element spec...')
 
         def squeeze_output(output):
             if isinstance(output, collections.abc.Sequence):
@@ -131,7 +131,7 @@ class TensorflowBertDataLoader(DefaultDataLoader):
                 return
 
 class TensorflowDataLoader(BaseDataLoader):
-    """DataLoader for frameework Tensorflow, if it's a tf.data.Dataset we will directly use
+    """DataLoader for framework Tensorflow, if it's a tf.data.Dataset we will directly use
        the dataloader in the other case will use DefaultDataLoader instead.
 
     """
