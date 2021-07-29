@@ -7,7 +7,7 @@ import yaml
 import tensorflow as tf
 
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
-
+from lpot.adaptor.tf_utils.util import get_input_output_node_names
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -141,6 +141,9 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         inputs, outputs = g.get_graph_input_output()
         self.assertEqual(inputs, self.inputs)
         self.assertEqual(outputs, self.outputs)
+        inputs, outputs = get_input_output_node_names(self.input_graph)
+        self.assertEqual(inputs, self.inputs)
+        self.assertEqual(outputs, self.outputs)
 
         input_graph = tf.compat.v1.GraphDef()
         with open('model_1.pb', "rb") as f:
@@ -149,6 +152,9 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.graph = input_graph
         g.parse_graph()
         inputs, outputs = g.get_graph_input_output()
+        self.assertEqual(inputs, ['sub'])
+        self.assertEqual(outputs, ['op_to_store'])
+        inputs, outputs = get_input_output_node_names(input_graph)
         self.assertEqual(inputs, ['sub'])
         self.assertEqual(outputs, ['op_to_store'])
 
@@ -161,6 +167,9 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         inputs, outputs = g.get_graph_input_output()
         self.assertEqual(inputs, [])
         self.assertEqual(outputs, [])
+        inputs, outputs = get_input_output_node_names(input_graph)
+        self.assertEqual(inputs, [])
+        self.assertEqual(outputs, [])
 
         input_graph = tf.compat.v1.GraphDef()
         with open('model_3.pb', "rb") as f:
@@ -169,6 +178,9 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.graph = input_graph
         g.parse_graph()
         inputs, outputs = g.get_graph_input_output()
+        self.assertEqual(inputs, [])
+        self.assertEqual(outputs, [])
+        inputs, outputs = get_input_output_node_names(input_graph)
         self.assertEqual(inputs, [])
         self.assertEqual(outputs, [])
 
