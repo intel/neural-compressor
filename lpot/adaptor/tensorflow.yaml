@@ -16,18 +16,18 @@
 ---
 -
   version:
-    name: '2.4.0'
-  
+    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '1.15.0-up1', '1.15.0-up2']
+
   precisions: &common_precisions
     names: int8, uint8, bf16, fp32
     valid_mixed_precisions: []
-  
+
   ops: &common_ops
     int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     bf16: ['Conv2D']  #TODO need to add more bf16 op types here
     fp32: ['*'] # '*' means all op types
-  
+
   capabilities: &common_capabilities
     int8: &ref_2_4_int8 {
           'Conv2D': {
@@ -154,17 +154,17 @@
   version:
     name: '1.15.0-up3'
 
-  precisions: 
+  precisions:
     names: int8, uint8, bf16, fp32
     valid_mixed_precisions: []
 
-  ops: 
+  ops:
     int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     bf16: ['Conv2D']  #TODO need to add more bf16 op types here
     fp32: ['*'] # '*' means all op types
 
-  capabilities: 
+  capabilities:
     int8: {
           'Conv2D': {
             'weight': {
@@ -243,7 +243,7 @@
                     },
           }
 
-  patterns: 
+  patterns:
     fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
         'Conv2D + Add + Relu',
         'Conv2D + Add + Relu6',
@@ -289,7 +289,7 @@
 
 -
   version:
-    name: 'default'
+    name: ['default', '1.15.0', '1.15.2', '2.0.0', '2.0.1']
 
   precisions: &default_precisions
     names: uint8, fp32
@@ -380,213 +380,3 @@
     dependency: True                                 # optional. grappler dependency optimizer,default value is True.
     debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
     loop: True                                       # optional. grappler loop optimizer,default value is True.
-
-
--
-  version:
-    name: '2.6.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *common_grappler_optimization
-
--
-  version:
-    name: '2.5.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *common_grappler_optimization
-
--
-  version:
-    name: '2.3.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *common_grappler_optimization
-
--
-  version:
-    name: '2.2.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '2.1.0'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '2.0.1'
-
-  precisions:
-    <<: *default_precisions
-
-  ops:
-    <<: *default_ops
-
-  capabilities:
-    << : *default_capabilities
-
-  patterns:
-    << : *default_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '2.0.0'
-
-  precisions:
-    <<: *default_precisions
-
-  ops:
-    <<: *default_ops
-
-  capabilities:
-    << : *default_capabilities
-
-  patterns:
-    << : *default_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '1.15.0-up2'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '1.15.0-up1'
-
-  precisions:
-    <<: *common_precisions
-
-  ops:
-    <<: *common_ops
-
-  capabilities:
-    << : *common_capabilities
-
-  patterns:
-    << : *common_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '1.15.2'
-
-  precisions:
-    <<: *default_precisions
-
-  ops:
-    <<: *default_ops
-
-  capabilities:
-    << : *default_capabilities
-
-  patterns:
-    << : *default_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization
-
--
-  version:
-    name: '1.15.0'
-
-  precisions:
-    <<: *default_precisions
-
-  ops:
-    <<: *default_ops
-
-  capabilities:
-    << : *default_capabilities
-
-  patterns:
-    << : *default_patterns
-
-  grappler_optimization:
-    << : *default_grappler_optimization

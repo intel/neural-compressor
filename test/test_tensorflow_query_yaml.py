@@ -64,7 +64,13 @@ class TestTFQueryYaml(unittest.TestCase):
         os.remove('fake_yaml_grappler.yaml')
 
     def test_unique_version(self):
-        registered_version_name = [i['version']['name'] for i in self.content]
+        versions = [i['version']['name'] for i in self.content]
+        registered_version_name = []
+        for i in versions:
+          if isinstance(i, list):
+            registered_version_name.extend(i)
+          else:
+            registered_version_name.append(i)
 
         self.assertEqual(len(registered_version_name), len(set(registered_version_name)))
 
