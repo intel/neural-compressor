@@ -84,6 +84,30 @@ def build_fake_yaml3():
         yaml.dump(y,f)
     f.close()
 
+def build_fake_yaml4():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+        tuning:
+          strategy:
+            name: fake
+          accuracy_criterion:
+            relative: 0.01
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml4.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
 def build_fake_model():
     try:
         graph = tf.Graph()
@@ -164,6 +188,7 @@ class TestQuantization(unittest.TestCase):
         build_fake_yaml()
         build_fake_yaml2()
         build_fake_yaml3()
+        build_fake_yaml4()
         build_fake_strategy()
 
     @classmethod
@@ -171,6 +196,7 @@ class TestQuantization(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')    
         os.remove('fake_yaml3.yaml')
+        os.remove('fake_yaml4.yaml')
         os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
@@ -201,6 +227,17 @@ class TestQuantization(unittest.TestCase):
         quantizer.model = self.constant_graph
         output_graph = quantizer(self.constant_graph, \
                                  q_dataloader=dataloader, eval_dataloader=dataloader)
+
+    def test_fully_quantize(self):
+        # test the case that neither metric and evaluation function is defined
+        # generate a fully quantized model
+        from lpot.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml4.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        output_graph = quantizer()
 
 if __name__ == "__main__":
     unittest.main()

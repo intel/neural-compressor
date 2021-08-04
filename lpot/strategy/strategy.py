@@ -284,52 +284,64 @@ class TuneStrategy(object):
         """The main traverse logic, which could be override by some concrete strategy which needs
            more hooks.
         """
-        # get fp32 model baseline
-        if self.baseline is None:
-            logger.info('Getting FP32 model baseline...')
-            self.baseline = self._evaluate(self.model)
-            # record the FP32 baseline
-            self._add_tuning_history()
-        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
-                                                                str(self.objective.measurer),
-                                                                self.baseline[1]) \
-                                                                if self.baseline else 'n/a'
-        logger.info('FP32 baseline is: {}'.format(baseline_msg))
-
-        trials_count = 0
-        for tune_cfg in self.next_tune_cfg():
-            # add tune_cfg here as quantize use tune_cfg
-            tune_cfg['advance'] = self.cfg.quantization.advance
-            trials_count += 1
-            tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
-                self.last_tune_result = tuning_history['last_tune_result']
-                self.best_tune_result = tuning_history['best_tune_result']
-                logger.debug('This tuning config was evaluated, skip!')
-                continue
-
-            logger.debug('Dump current tuning configuration:')
-            logger.debug(tune_cfg)
-            self.q_model = self.adaptor.quantize(
-                tune_cfg, self.model, self.calib_dataloader, self.q_func)
-            self.algo.calib_iter = tune_cfg['calib_iteration']
-            self.algo.q_model = self.q_model
-            # TODO align the api to let strategy has access to pre_optimized model
-            assert self.adaptor.pre_optimized_model
-            self.algo.origin_model = self.adaptor.pre_optimized_model
-            self.last_qmodel = self.algo()
-            assert self.last_qmodel
-            self.last_tune_result = self._evaluate(self.last_qmodel)
-
-            need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
-
-            # record the tuning history
-            saved_tune_cfg = copy.deepcopy(tune_cfg)
-            saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-            self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
-
-            if need_stop:
+        if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
+            self.cfg.evaluation.accuracy.metric) and self.eval_func is None:
+            logger.info('Neither evaluation function nor metric is defined')
+            logger.info('Generating a fully quantized model...')
+            for tune_cfg in self.next_tune_cfg():
+                tune_cfg['advance'] = self.cfg.quantization.advance
+                logger.debug('Dump current tuning configuration:')
+                logger.debug(tune_cfg)
+                self.q_model = self.adaptor.quantize(
+                    tune_cfg, self.model, self.calib_dataloader, self.q_func)
                 break
+        else:
+            # get fp32 model baseline
+            if self.baseline is None:
+                logger.info('Getting FP32 model baseline...')
+                self.baseline = self._evaluate(self.model)
+                # record the FP32 baseline
+                self._add_tuning_history()
+            baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
+                                                                    str(self.objective.measurer),
+                                                                    self.baseline[1]) \
+                                                                    if self.baseline else 'n/a'
+            logger.info('FP32 baseline is: {}'.format(baseline_msg))
+
+            trials_count = 0
+            for tune_cfg in self.next_tune_cfg():
+                # add tune_cfg here as quantize use tune_cfg
+                tune_cfg['advance'] = self.cfg.quantization.advance
+                trials_count += 1
+                tuning_history = self._find_tuning_history(tune_cfg)
+                if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
+                    self.last_tune_result = tuning_history['last_tune_result']
+                    self.best_tune_result = tuning_history['best_tune_result']
+                    logger.debug('This tuning config was evaluated, skip!')
+                    continue
+
+                logger.debug('Dump current tuning configuration:')
+                logger.debug(tune_cfg)
+                self.q_model = self.adaptor.quantize(
+                    tune_cfg, self.model, self.calib_dataloader, self.q_func)
+                self.algo.calib_iter = tune_cfg['calib_iteration']
+                self.algo.q_model = self.q_model
+                # TODO align the api to let strategy has access to pre_optimized model
+                assert self.adaptor.pre_optimized_model
+                self.algo.origin_model = self.adaptor.pre_optimized_model
+                self.last_qmodel = self.algo()
+                assert self.last_qmodel
+                self.last_tune_result = self._evaluate(self.last_qmodel)
+
+                need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+
+                # record the tuning history
+                saved_tune_cfg = copy.deepcopy(tune_cfg)
+                saved_last_tune_result = copy.deepcopy(self.last_tune_result)
+                self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
+
+                if need_stop:
+                    break
 
     def deploy_config(self):
         acc_dataloader_cfg = deep_get(self.cfg, 'evaluation.accuracy.dataloader')
@@ -412,7 +424,8 @@ class TuneStrategy(object):
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
         else:
-            assert self.cfg.evaluation.accuracy.metric is not None, \
+            assert self.cfg.evaluation and self.cfg.evaluation.accuracy and \
+                self.cfg.evaluation.accuracy.metric, \
                 'metric field of accuracy field of evaluation section should not be empty'
 
             postprocess_cfg = self.cfg.evaluation.accuracy.postprocess
