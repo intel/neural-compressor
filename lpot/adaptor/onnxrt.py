@@ -20,6 +20,7 @@ import os
 import copy
 import logging
 from collections import OrderedDict
+from collections.abc import KeysView
 import yaml
 import numpy as np
 from distutils.version import StrictVersion
@@ -192,6 +193,8 @@ class ONNXRTAdaptor(Adaptor):
         from lpot.model.onnx_model import ONNXModel
         if not isinstance(model, ONNXModel):
             model = ONNXModel(model)
+        if len(op_list) > 0 and isinstance(op_list, KeysView):
+            op_list = [item[0] for item in op_list]
         augment = ONNXRTAugment(model, data_loader, [], \
                   os.path.join(self.work_space, 'augment_for_inspect.onnx'), \
                   iterations=iteration_list,

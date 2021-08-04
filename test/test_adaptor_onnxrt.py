@@ -7,7 +7,7 @@ import torchvision
 import yaml
 import onnx
 import numpy as np
-
+from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
 from lpot.adaptor import FRAMEWORKS
@@ -227,6 +227,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("benchmark.yaml")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
+        os.remove("best_model.onnx")
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
 
@@ -246,6 +247,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type='weight')
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, inspect_type='all')
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, ["Conv_0"], inspect_type='activation')
+        op_list = OrderedDict()
+        op_list[("Conv_0", "Conv")] = None
+        adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, op_list.keys(), inspect_type='activation')
 
     def test_set_tensor(self):
         quantizer = Quantization("static.yaml")
@@ -266,14 +270,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_config = {'fused Conv_0': {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8}}}
         adaptor.q_config = q_config
         version = get_torch_version()
+        q_model.save('./best_model.onnx')
         if version >= '1.7':
-            adaptor.set_tensor(q_model, 
+            adaptor.set_tensor(onnx.load("best_model.onnx"), 
                 {self.mb_v2_model.graph.node[0].input[1]: np.random.random([32, 3, 3, 3])})
             adaptor.set_tensor(q_model,
                 {self.mb_v2_model.graph.node[0].input[2]: np.random.random([32])})
         else:
-            adaptor.set_tensor(q_model, {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
+            adaptor.set_tensor(onnx.load("best_model.onnx"), 
+                {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
             adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random([32])})
+
 
     def test_adaptor(self):
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
