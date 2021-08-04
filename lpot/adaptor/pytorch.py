@@ -220,6 +220,9 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):    # 
     fx_op_cfgs[""] = model_qconfig
     op_tuple_cfg_list = []
     for key, value in op_cfgs.items():
+        if key == "default_qconfig":
+            fx_op_cfgs[""] = value
+            continue
         op_tuple = (key, value)
         op_tuple_cfg_list.append(op_tuple)
     fx_op_cfgs["module_name"] = op_tuple_cfg_list
@@ -582,6 +585,8 @@ class TemplateAdaptor(Adaptor):
         self.query_handler = None
         self.approach = ''
         self.pre_optimized_model = None
+        self.default_qconfig = framework_specific_info['default_qconfig'] \
+            if 'default_qconfig' in framework_specific_info else None
 
         if 'approach' in framework_specific_info:
             self.approach = framework_specific_info['approach']
@@ -1967,6 +1972,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch_fx"
+        if self.default_qconfig is not None:
+            default_qconfig = self.default_qconfig
+            default_qconfig['activation']['dtype'] = \
+                self.default_qconfig['activation']['dtype'][0]
+            default_qconfig['weight']['dtype'] = self.default_qconfig['weight']['dtype'][0]
+            self.tune_cfg["op"][("default_qconfig", "")] = default_qconfig
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx

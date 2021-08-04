@@ -151,6 +151,10 @@ class TuneStrategy(object):
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update(
                 {"workspace_path": os.path.dirname(self.deploy_path)})
+            if self.cfg['quantization']['op_wise'] is not None \
+               and 'default_qconfig' in self.cfg['quantization']['op_wise']:
+                framework_specific_info.update(
+                    {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
 

@@ -63,6 +63,10 @@ quantization:                                        # optional. tuning constrai
            'activation':  {'dtype': ['fp32']},
            'weight': {'dtype': ['fp32']}
          }
+         'default_qconfig': {                       # optional. set default qconfig to fp32 for FX model
+           'activation':  {'dtype': ['fp32']},
+           'weight': {'dtype': ['fp32']}
+         }
        }
 
 evaluation:                                          # optional. used to config evaluation process.
