@@ -58,12 +58,6 @@ quantization:
   model_wise:
     weight:
       granularity: per_channel
-  op_wise: {
-             'MatMul': {
-               'activation':  {'dtype': ['fp32']},
-               'weight':  {'dtype': ['fp32']},
-             }
-           }
 tuning:
   accuracy_criterion:
     relative:  0.01   
