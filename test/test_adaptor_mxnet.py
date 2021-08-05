@@ -7,7 +7,6 @@ import mxnet as mx
 import mxnet.gluon.nn as nn
 
 sys.path.append('..')
-import lpot
 from lpot.experimental import Quantization, common
 
 def get_mlp_sym():
@@ -27,9 +26,6 @@ def get_conv_sym():
     out = mx.sym.FullyConnected(pool, num_hidden=10, flatten=True, name='fc')
 
     return out
-
-def eval_func(model):
-    return 1.0
 
 def build_mxnet():
     fake_yaml = '''
@@ -69,13 +65,7 @@ def build_mxnet_kl():
 
         quantization:
           model_wise:
-            weight:
-              dtype: int8
-              scheme: asym
-              algorithm: minmax
             activation:
-              dtype: int8
-              scheme: asym
               algorithm: kl
 
         tuning:
@@ -104,9 +94,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         self.conv_model = get_conv_sym()
         self.quantizer_1 = Quantization("./mxnet.yaml")
         self.quantizer_2 = Quantization("./mxnet_kl.yaml")
-        framework_specific_info = dict()
-        framework_specific_info['q_dataloader'] = None
-        self.adaptor = lpot.adaptor.mxnet.MxNetAdaptor(framework_specific_info)
+
         self.data_low = -1000
         self.data_high = 1000
 
@@ -147,7 +135,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         """
         Use Conv model to test KL calibration and user specific evaluate function.
         """
-        for shape in [(500, 3, 224, 224),]:
+        for shape in [(32, 3, 224, 224), ]:
             arg_shapes, _, _ = self.conv_model.infer_shape(data=shape)
 
             mod = mx.mod.Module(symbol=self.conv_model, context=mx.current_context())
@@ -157,29 +145,35 @@ class TestAdaptorMXNet(unittest.TestCase):
 
             arg_params, aux_params = mod.get_params()
             data = mx.nd.random.uniform(low=self.data_low, high=self.data_high,
-                                        shape=shape).astype('float32')
-            calib_data = mx.io.NDArrayIter(data=data, batch_size=shape[0])
+                                        shape=shape, dtype='float32')
+            label = mx.nd.random.randint(low=0, high=1, shape=(shape[0])).astype('float32')
+            calib_data = mx.io.NDArrayIter(data=data, label=label,  batch_size=shape[0])
 
             fp32_model = (self.conv_model, arg_params, aux_params)
             self.quantizer_2.model = common.Model(fp32_model)
             self.quantizer_2.calib_dataloader = calib_data
             self.quantizer_2.eval_dataloader = calib_data
-            self.quantizer_2.eval_func = eval_func
             qmodel = self.quantizer_2()
+            self.assertIsInstance(qmodel.model[0], mx.symbol.Symbol)
+            
             # test inspected_tensor
             inspect_tensor = self.quantizer_2.strategy.adaptor.inspect_tensor
             self.quantizer_2.model = fp32_model
-            inspected_tensor = inspect_tensor(self.quantizer_2.model, calib_data,
-                                              op_list=[('sg_mkldnn_conv_bn_act_0_output', 'CONV'),
-                                                       ('data', 'input')],
-                                              iteration_list=[0, 2, 4])
-            inspected_qtensor = inspect_tensor(qmodel, calib_data,
-                                               op_list=[('quantized_sg_mkldnn_conv_bn_act_0_output', 'CONV')],
-                                               iteration_list=[0])
+            insp = inspect_tensor(self.quantizer_2.model, calib_data,
+                                          op_list=[('sg_mkldnn_conv_bn_act_0', 'sg_mkldnn_conv'),
+                                                   ('data', 'input')],
+                                          iteration_list=[1, 2, 4])
+            qinsp = inspect_tensor(qmodel, calib_data,
+                                           op_list=[('sg_mkldnn_conv_bn_act_0', 'sg_mkldnn_conv')],
+                                           iteration_list=[1])
 
-            self.assertNotEqual(len(inspected_tensor), 0)
-            self.assertNotEqual(len(inspected_qtensor), 0)
-            self.assertIsInstance(qmodel.model[0], mx.symbol.Symbol)
+            self.assertNotEqual(len(insp['activation']), 0)
+            self.assertEqual(len(insp['activation']), len(qinsp['activation']))
+
+            for tensors, qtensors in zip(insp['activation'], qinsp['activation']):
+              for k in (set(tensors.keys()) & set(qtensors.keys())):
+                tensor, qtensor = tensors[k][k[0]], qtensors[k][k[0]]
+                self.assertEqual(tensor.shape, qtensor.shape)
 
     def test_gluon_model(self):
         """
@@ -187,7 +181,8 @@ class TestAdaptorMXNet(unittest.TestCase):
         """
         # create gluon model
         net = nn.HybridSequential()
-        net.add(nn.Dense(128, activation="relu"))
+        net.add(nn.Conv2D(1, (1, 1), activation="relu"))
+        net.add(nn.Flatten())
         net.add(nn.Dense(64, activation="relu"))
         net.add(nn.Dense(10))
         net.initialize()
@@ -196,19 +191,21 @@ class TestAdaptorMXNet(unittest.TestCase):
             def __init__(self, dataset, batch_size=1):
                 self.dataset = dataset
                 self.batch_size = batch_size
+                self._iter = None
 
             def __iter__(self):
-                for data, label in self.dataset:
-                    yield data, label
+              self._iter = iter(self.dataset)
+              return self
 
-            def __getitem__(self):
-                pass
+            def __next__(self):
+              data, label = self._iter.__next__()
+              data = mx.nd.reshape(data, (1, data.shape[-1], *data.shape[:-1])).astype('float32')
+              return (data, mx.nd.array(label, dtype='float32'))
 
         valid_dataset = mx.gluon.data.vision.datasets.FashionMNIST(train=False)
         q_dataloader = Quant_dataloader(valid_dataset)
         self.quantizer_1.model = common.Model(net)
         self.quantizer_1.calib_dataloader = q_dataloader
-        self.quantizer_1.eval_func = eval_func
         qmodel = self.quantizer_1()
         self.assertIsInstance(qmodel.model, mx.gluon.HybridBlock)
 
