@@ -48,7 +48,7 @@ def build_fake_yaml2():
     model:
       name: imagenet_prune
       framework: pytorch
-    
+
     pruning:
       train:
         start_epoch: 0
@@ -81,7 +81,7 @@ def build_fake_yaml2():
                 end_epoch: 3
                 prune_type: basic_magnitude
                 names: ['layer1.0.conv1.weight']
-    
+
             - !Pruner
                 start_epoch: 0
                 end_epoch: 4
@@ -89,7 +89,7 @@ def build_fake_yaml2():
                 prune_type: basic_magnitude
                 update_frequency: 2
                 names: ['layer1.0.conv2.weight']
-    
+
     evaluation:
       accuracy:
         metric:
@@ -104,19 +104,63 @@ def build_fake_yaml2():
     with open('fake2.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_fake_yaml3():
+    fake_yaml = """
+    model:
+      name: imagenet_qat
+      framework: pytorch
+
+    quantization:
+      approach: quant_aware_training
+      train:
+        start_epoch: 0
+        end_epoch: 4
+        iteration: 10
+        dataloader:
+          batch_size: 30
+          dataset:
+            dummy:
+              shape: [128, 3, 224, 224]
+              label: True
+        optimizer:
+          SGD:
+            learning_rate: 0.1
+            momentum: 0.1
+            nesterov: True
+            weight_decay: 0.1
+        criterion:
+          CrossEntropyLoss:
+            reduction: sum
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+    tuning:
+      accuracy_criterion:
+        relative:  0.01
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+    """
+    with open('fake3.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
+
 class TestPruning(unittest.TestCase):
 
     model = torchvision.models.resnet18()
+    q_model = torchvision.models.quantization.resnet18()
 
     @classmethod
     def setUpClass(cls):
         build_fake_yaml()
         build_fake_yaml2()
+        build_fake_yaml3()
 
     @classmethod
     def tearDownClass(cls):
         os.remove('fake.yaml')
         os.remove('fake2.yaml')
+        os.remove('fake3.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
@@ -165,6 +209,22 @@ class TestPruning(unittest.TestCase):
         scheduler.model = common.Model(self.model)
         scheduler.append(prune)
         opt_model = scheduler()
+
+    def test_combine(self):
+        from lpot.experimental import Pruning, common, Quantization
+        self.q_model.fuse_model()
+        quantizer = Quantization('./fake3.yaml')
+        prune = Pruning('./fake2.yaml')
+        scheduler = Scheduler()
+        scheduler.model = common.Model(self.q_model)
+        combination = scheduler.combine(prune, quantizer)
+        scheduler.append(combination)
+        opt_model = scheduler()
+        conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+                               0.97,
+                               delta=0.01)
+        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
 if __name__ == "__main__":
     unittest.main()

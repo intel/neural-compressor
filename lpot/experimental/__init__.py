@@ -15,10 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .component import Component
 from .quantization import Quantization
 from .pruning import Pruning
 from .benchmark import Benchmark
 from .graph_optimization import Graph_Optimization
 from .model_conversion import ModelConversion
 
-__all__ = ['Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization', 'ModelConversion']
+__all__ = ['Component', 'Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization', \
+           'ModelConversion']

@@ -187,7 +187,7 @@ def validate_and_inference_input_output(graph_def, \
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
-    from lpot.adaptor.tf_utils.util import get_input_output_node_names 
+    from lpot.adaptor.tf_utils.util import get_input_output_node_names
     temp_output_tensor_names = []
     if validate_graph_node(graph_def, tensor_to_node(input_tensor_names)):
         input_tensor_names = input_tensor_names
@@ -425,7 +425,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
         sess.run(tf.compat.v1.global_variables_initializer())
         saver.restore(sess, os.path.join(model, ckpt_prefix))
 
-    from lpot.adaptor.tf_utils.util import get_input_output_node_names 
+    from lpot.adaptor.tf_utils.util import get_input_output_node_names
     if validate_graph_node(sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)):
         input_tensor_names = input_tensor_names
     else:
@@ -638,7 +638,7 @@ class TensorflowBaseModel(BaseModel):
             self._iter_op = self._sess.graph.get_operation_by_name(\
                 'MakeIterator')
         return self._iter_op
-    
+
     @property
     def input_tensor_names(self):
         if len(self._input_tensor_names) == 0:
@@ -808,15 +808,16 @@ class PyTorchBaseModel(BaseModel):
         """ Setter to model """
         self._model = model
 
-    def register_forward_pre_hook_for_model(self):
+    def register_forward_pre_hook(self):
         self.handles.append(
                 self.model.register_forward_pre_hook(self.generate_forward_pre_hook()))
 
-    def remove_hooks_for_model(self):
+    def remove_hooks(self):
         for handle in self.handles:
             handle.remove()
 
     def generate_forward_pre_hook(self):
+        # a wrapper is needed to insert self into the actual hook
         def actual_forward_pre_hook(module, input):
             args, _, _, values = inspect.getargvalues(inspect.stack()[1].frame)
             # intersection update kw arguments
@@ -919,7 +920,8 @@ class PyTorchBaseModel(BaseModel):
             assert input_tensor.grad is not None, 'please call backward() before get_gradient'
             return input_tensor.grad
         else:
-            logger.error("Expect str or torch.Tensor in get_gradient, but got %s." % type(tensor))
+            logger.error("Expect str or torch.Tensor in get_gradient, "
+                         "but got %s." % type(input_tensor))
 
     def report_sparsity(self):
         """ Get sparsity of the model

@@ -16,18 +16,23 @@
 # limitations under the License.
 
 import os
+from itertools import permutations
 
 from ..conf.config import Conf
 from ..utils import logger
 from .common import Model as LpotModel
 from ..model import BaseModel
 from .common import Metric, Postprocess
+from ..strategy import STRATEGIES
 
 from .quantization import Quantization
 from .pruning import Pruning
 from .model_conversion import ModelConversion
 from .graph_optimization import Graph_Optimization
+from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from .benchmark import Benchmark
+from .component import Component
+from ..conf.dotdict import DotDict, deep_set, deep_get
 
 SUPPORTED_COMPONENTS = [
   Quantization,
@@ -35,6 +40,7 @@ SUPPORTED_COMPONENTS = [
   Graph_Optimization,
   ModelConversion,
   Benchmark,
+  Component
 ]
 
 class Scheduler(object):
@@ -66,12 +72,12 @@ class Scheduler(object):
        prune.pruning_func = ...                   # optional if it is configured in user yaml.
        prune.eval_dataloader = ...                # optional if it is configured in user yaml.
        prune.eval_func = ...                      # optional if it is configured in user yaml.
-       
+
        quantizer = Quantization('/path/to/quantization.yaml')
        quantizer.metric = ...                     # optional if it is configured in user yaml.
        quantizer.calib_dataloader = ...           # optional if it is configured in user yaml.
        quantizer.eval_dataloader = ...            # optional if it is configured in user yaml.
-       
+
        scheduler = Scheduler()
        scheduler.model(common.Model('/path/to/model'))
        scheduler.append(prune)
@@ -101,14 +107,14 @@ class Scheduler(object):
                                              lpot components, if its corresponding field is not
                                              configured in yaml and eval_func is not specified.
                postprocess (Postprocess):    Optional. Object initialized from common.Postprocess.
-               metric (Metric):              Optional. Object initialized from common.Metric. 
+               metric (Metric):              Optional. Object initialized from common.Metric.
                q_func (func):                Optional. Training function for Quantization-Aware
                                              Training and Pruning cases if user doesn't provide
                                              training info in user configuration yaml file.
                eval_func (func):             Optional. Evaluation function for Quantization-Aware
-                                             Training and Pruning, being None for other cases. 
+                                             Training and Pruning, being None for other cases.
                kwargs (named arguments):     Reserved for interface extension.
-        """ 
+        """
         for item in args:
             assert any([isinstance(item, supported_component) \
                         for supported_component in SUPPORTED_COMPONENTS])
@@ -139,8 +145,139 @@ class Scheduler(object):
 
             component.model = model
             model = component()
-            
+
         return model
+
+    def combine(self, *args):
+        """Combine lpot components into a new component.
+           Args:
+               args (Component): Components to be combined together. Input Component should be
+               supported in LPOT and pass the sanity check during combine. The illegal combination
+               (e.g. Components uses different frameworks) returns an error.
+
+            Returns:
+                Combined Component: The return component is created as base Component class.
+                It syncs input components configuration and creates dataloaders/functions
+                accordingly.
+        """
+        assert len(args) > 1, "Combine requires at least 2 components. Please check your inputs."
+        # check if input components are good for combine
+        self._combination_sanity_check(*args)
+        # create component for the combination
+        combination = []
+        for arg in args:
+            combination += [arg.__class__.__name__] \
+                    if arg.combination is None else arg.combination
+        new_component = Component(combination=combination)
+        self._combine_components(*args, dist_component=new_component)
+
+        return new_component
+
+    def _combination_sanity_check(self, *args):
+        TEMP_SUPPORTED_COMPONENTS = ['Quantization', 'Pruning']
+        checked_components = []
+        for component in args:
+            component_class = component.__class__.__name__
+            if component_class in TEMP_SUPPORTED_COMPONENTS and \
+                    component_class not in checked_components :
+                checked_components.append(component_class)
+            else:
+                logger.error("combination of {} is not supported.".format(
+                    checked_components + [component_class]))
+
+    def _combine_components(self, *args, dist_component=None):
+        """Actual implementation of combine(). It loops input component and sync-up status
+           to distance component.
+
+           Args:
+               args(tuple): input components.
+               dist_component(Component): the distance component for the combination
+
+           Returns: None
+        """
+        assert len(args) > 0, "Empty input detected in combine."
+        framework = args[0].framework
+        device = args[0].cfg.device
+        train_cfg = DotDict()
+        eval_cfg = DotDict()
+        tuning_cfg = DotDict()
+        for combine_component in args:
+            # check if config is valid
+            assert combine_component.framework == framework, "Combined components should have " \
+                    "same framework. Detect different frameworks: {} and {} are used.".format(
+                    framework, combine_component.framework )
+            assert combine_component.cfg.device == device, "Combined components should have " \
+                    "same device. Detect different device: {} and {} are used.".format(
+                    device, combine_component.cfg.device )
+
+            # sync configs
+            component_name = combine_component.__class__.__name__.lower()
+            component_cfg = getattr(combine_component.cfg,
+                                    component_name,
+                                    None)
+            assert combine_component is not None, "Please ensure field {} is configured " \
+                    "in input yaml".format(component_name)
+            # in case of key train/evaluation not exist, return an empty DotDict
+            component_train_cfg = component_cfg.get('train', DotDict())
+            # TODO: Assumption here: train phase is defined inside component yaml field.
+            # But eval is defined at root yaml field.
+            component_eval_cfg = combine_component.cfg.get('evaluation', DotDict())
+            component_tuning_cfg = combine_component.cfg.get('tuning', DotDict())
+            self._sync_config(train_cfg, component_train_cfg)
+            self._sync_config(eval_cfg, component_eval_cfg)
+            self._sync_config(tuning_cfg, component_tuning_cfg)
+            combine_component._model = self._model
+            if component_eval_cfg and component_train_cfg:
+                # create attributes if eval and train are defined in component config
+                combine_component.pre_process()
+            elif isinstance(combine_component, Pruning):
+                # if no eval/train configuration. Make minimal initialization
+                combine_component.generate_hooks()
+                combine_component.generate_pruners()
+
+            # sync hooks
+            if combine_component.hooks is None:
+                continue
+            for k, v in combine_component.hooks.items():
+                dist_component.register_hook(k, v)
+
+        # sync to dist component
+        dist_component_cfg = DotDict()
+        if dist_component is not None:
+            deep_set(dist_component_cfg, 'train', train_cfg)
+            deep_set(dist_component_cfg, 'evaluation', eval_cfg)
+            deep_set(dist_component_cfg, 'tuning', tuning_cfg)
+            deep_set(dist_component_cfg, 'device', device)
+            dist_component._model = self._model
+            dist_component.framework = framework
+            dist_component.cfg = dist_component_cfg
+
+    def _sync_config(self, dist_config, src_config):
+        """Sync the configuration between src and dist. It updates the missing keys in dist config
+           from src config. And check the value for same keys between src and dist.
+           Args:
+               dist_config(DotDict): dist configuration to sync
+               src_config(DotDict): src configuration to sync
+
+            Returns: None
+        """
+        # sync the config if dist and src configs are not empty
+        if dist_config and src_config:
+            # update missing keys in dist_config
+            for key in src_config.keys() - dist_config.keys():
+                dist_config[key] = src_config[key]
+            # check the same keys in dist and src whether is valid
+            for key in src_config.keys() & dist_config.keys():
+                if isinstance(dist_config[key], dict) and isinstance(src_config[key], dict):
+                    self._sync_config(dist_config[key], src_config[key])
+                elif dist_config[key] != src_config[key]:
+                    logger.warning("Different value {} and {} detected on key {}.".format(
+                                   dist_config[key], src_config[key], key) + \
+                                   " Using first key-value ({}: {}) pair as default".format(
+                                   key, dist_config[key]))
+        # update src config to dist if dist is empty.
+        elif not dist_config and src_config:
+            dist_config.update(src_config)
 
     @property
     def model(self):

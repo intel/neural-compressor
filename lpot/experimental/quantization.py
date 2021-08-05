@@ -19,16 +19,17 @@ import os
 import pickle
 import random
 import numpy as np
-from ..conf.config import Conf
+from .component import Component
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
-from ..utils.utility import time_limit, set_backend
+from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
+from ..adaptor import FRAMEWORKS
 from .common import Model as LpotModel
 from ..model import BaseModel
 
-class Quantization(object):
+class Quantization(Component):
     """Quantization class automatically searches for optimal quantization recipes for low
        precision model inference, achieving best tuning objectives like inference performance
        within accuracy loss constraints.
@@ -49,19 +50,110 @@ class Quantization(object):
     """
 
     def __init__(self, conf_fname):
-        self.conf = Conf(conf_fname)
-        cfg = self.conf.usr_cfg
-        self.framework = cfg.model.framework.lower()
-        seed = cfg.tuning.random_seed
+        super(Quantization, self).__init__()
+        self._init_with_conf(conf_fname)
+
+        seed = self.cfg.tuning.random_seed
         random.seed(seed)
         np.random.seed(seed)
-
-        self._model = None
         self._calib_dataloader = None
         self._calib_func = None
-        self._eval_dataloader = None
-        self._eval_func = None
-        set_backend(self.framework)
+
+    def _create_eval_dataloader(self, cfg):
+        # when eval_func is set, will be directly used and eval_dataloader can be None
+        if self._eval_func is None:
+            if self._eval_dataloader is None:
+                eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
+                if eval_dataloader_cfg is None:
+                    self._eval_func = self._fake_eval_func
+                else:
+                    if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
+                        in deep_get(cfg, 'evaluation.accuracy.dataloader.dataset', {}):
+                        deep_set(cfg, 'evaluation.accuracy.iteration', 10)
+
+                    self._eval_dataloader = create_dataloader(self.framework, \
+                                                              eval_dataloader_cfg)
+
+    def _create_calib_dataloader(self, cfg):
+        approach_cfg = deep_get(cfg, 'quantization.approach')
+        if self._calib_func:
+            assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
+                   'set for {}'.format(approach_cfg)
+            assert self._calib_dataloader is None, 'q_func has provided by user, ' \
+                   'calib_dataloader property should not be set.'
+
+        if self._calib_dataloader is None and self._calib_func is None:
+            if approach_cfg == 'post_training_static_quant':
+                calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
+                assert calib_dataloader_cfg is not None, \
+                       'dataloader field of calibration field of quantization section ' \
+                       'in yaml file should be configured as calib_dataloader property is NOT set!'
+                if deep_get(calib_dataloader_cfg, 'shuffle'):
+                    logger.warning("post_training_static_quant doesn't support shuffle in "
+                                   "dataloader, reset it to False")
+                    deep_set(calib_dataloader_cfg, 'shuffle', False)
+            elif approach_cfg == 'quant_aware_training':
+                calib_dataloader_cfg = deep_get(cfg, 'quantization.train.dataloader')
+                assert calib_dataloader_cfg is not None, \
+                       'dataloader field of train field of quantization section ' \
+                       'in yaml file should be configured as calib_dataloader property is NOT set!'
+            else:
+                calib_dataloader_cfg = None
+
+            if calib_dataloader_cfg:
+                self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
+
+    def pre_process(self):
+        """Prepare dataloaders, qfuncs for Component
+        """
+        cfg = self.conf.usr_cfg
+        assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
+
+        self._create_eval_dataloader(cfg)
+        self._create_calib_dataloader(cfg)
+        strategy = cfg.tuning.strategy.name.lower()
+        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
+
+        _resume = None
+        # check if interrupted tuning procedure exists. if yes, it will resume the
+        # whole auto tune process.
+        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
+                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
+        if self.resume_file:
+            assert os.path.exists(self.resume_file), \
+                "The specified resume file {} doesn't exist!".format(self.resume_file)
+            with open(self.resume_file, 'rb') as f:
+                _resume = pickle.load(f).__dict__
+
+        self.strategy = STRATEGIES[strategy](
+            self._model,
+            self.conf,
+            self._calib_dataloader,
+            self._calib_func,
+            self._eval_dataloader,
+            self._eval_func,
+            _resume)
+
+    def execute(self):
+        try:
+            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+                self.strategy.traverse()
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            logger.error("Unexpected exception {} happened during tuning!".format(repr(e)))
+        finally:
+            if self.strategy.best_qmodel:
+                logger.info(
+                    "Specified timeout or max trials is reached! "
+                    "Found a quantized model which meet accuracy goal. Exit...")
+                self.strategy.deploy_config()
+            else:
+                logger.error(
+                    "Specified timeout or max trials is reached! "
+                    "Not found any quantized model which meet accuracy goal. Exit...")
+
+            return self.strategy.best_qmodel
 
     def __call__(self):
         """The main entry point of automatic quantization tuning.
@@ -104,94 +196,7 @@ class Quantization(object):
             quantized model: best qanitized model found, otherwise return None
 
         """
-        cfg = self.conf.usr_cfg
-
-        assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
-
-        # when eval_func is set, will be directly used and eval_dataloader can be None
-        if self._eval_func is None:
-            if self._eval_dataloader is None:
-                eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
-                if eval_dataloader_cfg is None:
-                    self._eval_func = self._fake_eval_func
-                else:
-                    if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
-                        in deep_get(cfg, 'evaluation.accuracy.dataloader.dataset', {}):
-                        deep_set(cfg, 'evaluation.accuracy.iteration', 10)
-
-                    self._eval_dataloader = create_dataloader(self.framework, \
-                                                              eval_dataloader_cfg)
-
-        approach_cfg = deep_get(cfg, 'quantization.approach')
-        if self._calib_func:
-            assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
-                   'set for {}'.format(approach_cfg)
-            assert self._calib_dataloader is None, 'q_func has provided by user, ' \
-                   'calib_dataloader property should not be set.'
-
-        if self._calib_dataloader is None and self._calib_func is None:
-            if approach_cfg == 'post_training_static_quant':
-                calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
-                assert calib_dataloader_cfg is not None, \
-                       'dataloader field of calibration field of quantization section ' \
-                       'in yaml file should be configured as calib_dataloader property is NOT set!'
-                if deep_get(calib_dataloader_cfg, 'shuffle'):
-                    logger.warning("post_training_static_quant doesn't support shuffle in "
-                                   "dataloader, reset it to False")
-                    deep_set(calib_dataloader_cfg, 'shuffle', False)
-            elif approach_cfg == 'quant_aware_training':
-                calib_dataloader_cfg = deep_get(cfg, 'quantization.train.dataloader')
-                assert calib_dataloader_cfg is not None, \
-                       'dataloader field of train field of quantization section ' \
-                       'in yaml file should be configured as calib_dataloader property is NOT set!'
-            else:
-                calib_dataloader_cfg = None
-
-            if calib_dataloader_cfg:
-                self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
-
-        strategy = cfg.tuning.strategy.name.lower()
-        assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
-
-        _resume = None
-        # check if interrupted tuning procedure exists. if yes, it will resume the
-        # whole auto tune process.
-        self.resume_file = os.path.abspath(os.path.expanduser(cfg.tuning.workspace.resume)) \
-                           if cfg.tuning.workspace and cfg.tuning.workspace.resume else None
-        if self.resume_file:
-            assert os.path.exists(self.resume_file), \
-                "The specified resume file {} doesn't exist!".format(self.resume_file)
-            with open(self.resume_file, 'rb') as f:
-                _resume = pickle.load(f).__dict__
-
-        self.strategy = STRATEGIES[strategy](
-            self._model,
-            self.conf,
-            self._calib_dataloader,
-            self._calib_func,
-            self._eval_dataloader,
-            self._eval_func,
-            _resume)
-
-        try:
-            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
-                self.strategy.traverse()
-        except KeyboardInterrupt:
-            pass
-        except Exception as e:
-            logger.error("Unexpected exception {} happened during turing!".format(repr(e)))
-        finally:
-            if self.strategy.best_qmodel:
-                logger.info(
-                    "Specified timeout or max trials is reached! "
-                    "Found a quantized model which meet accuracy goal. Exit...")
-                self.strategy.deploy_config()
-            else:
-                logger.error(
-                    "Specified timeout or max trials is reached! "
-                    "Not found any quantized model which meet accuracy goal. Exit...")
-
-            return self.strategy.best_qmodel
+        return super(Quantization, self).__call__()
 
     def dataset(self, dataset_type, *args, **kwargs):
         from ..data import DATASETS
@@ -231,79 +236,6 @@ class Quantization(object):
         from .common import _generate_common_dataloader
         self._calib_dataloader = _generate_common_dataloader(
             dataloader, self.framework)
-
-    @property
-    def eval_dataloader(self):
-        return self._eval_dataloader
-
-    @eval_dataloader.setter
-    def eval_dataloader(self, dataloader):
-        """Set Data loader for evaluation, It is iterable and the batched data
-           should consists of a tuple like (input, label), when eval_dataloader is set,
-           user should configure postprocess(optional) and metric in yaml file or set
-           postprocess and metric cls. Notice evaluation dataloader will be used to
-           generate data for model inference, make sure the input data can be feed to model.
-
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data.
-                                      Another good practice is to use
-                                      lpot.experimental.common.DataLoader
-                                      to initialize a lpot dataloader object.
-                                      Notice lpot.experimental.common.DataLoader
-                                      is just a wrapper of the information needed to
-                                      build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' eval_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Quantization object created then
-                                      framework infomation can be known.
-                                      Future we will support creating iterable dataloader
-                                      from lpot.experimental.common.DataLoader
-
-        """
-        from .common import _generate_common_dataloader
-        self._eval_dataloader = _generate_common_dataloader(
-            dataloader, self.framework)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
-
-        Args:
-           user_model: user are supported to set model from original framework model format
-                       (eg, tensorflow frozen_pb or path to a saved model),
-                       but not recommended. Best practice is to set from a initialized
-                       lpot.experimental.common.Model.
-                       If tensorflow model is used, model's inputs/outputs will be
-                       auto inferenced, but sometimes auto inferenced
-                       inputs/outputs will not meet your requests,
-                       set them manually in config yaml file.
-                       Another corner case is slim model of tensorflow,
-                       be careful of the name of model configured in yaml file,
-                       make sure the name is in supported slim model list.
-
-        """
-        if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, ' +
-                'better initialize lpot.experimental.common.Model and set....')
-            self._model = LpotModel(user_model)
-        else:
-            self._model = user_model
-
-        cfg = self.conf.usr_cfg
-        if self.framework == 'tensorflow':
-            self._model.name = cfg.model.name
-            # (TODO) ugly tensorflow should use outputs before inputs on checkpoint case
-            self._model.output_tensor_names = cfg.model.outputs
-            self._model.input_tensor_names = cfg.model.inputs
-            self._model.workspace_path = cfg.tuning.workspace.path
-
 
     @property
     def metric(self):
@@ -400,32 +332,6 @@ class Quantization(object):
         """
         logger.warning('q_func is to be deprecated, please construct q_dataloader....')
         self._calib_func = user_q_func
-
-    @property
-    def eval_func(self):
-        logger.warning('eval_func not support getter....')
-        return None
-
-    @eval_func.setter
-    def eval_func(self, user_eval_func):
-        """ The evaluation function provided by user.
-
-        Args:
-            user_eval_func: This function takes model as parameter,
-                            and evaluation dataset and metrics should be
-                            encapsulated in this function implementation
-                            and outputs a higher-is-better accuracy scalar
-                            value.
-
-                            The pseudo code should be something like:
-
-                            def eval_func(model):
-                                 input, label = dataloader()
-                                 output = model(input)
-                                 accuracy = metric(output, label)
-                                 return accuracy
-        """
-        self._eval_func = user_eval_func
 
     def __repr__(self):
         return 'Quantization'

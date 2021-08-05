@@ -16,7 +16,6 @@
 # limitations under the License.
 
 import copy
-from lpot.experimental import quantization
 import os
 from collections import OrderedDict
 from distutils.version import LooseVersion
@@ -844,7 +843,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             if q_func is None:
                 assert False, "quantization aware training mode requires q_function to train"
             else:
-                q_func(q_model.model)
+                q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             q_model.model.eval()
 
         if self.approach == 'quant_aware_training':
@@ -946,6 +945,19 @@ class PyTorchAdaptor(TemplateAdaptor):
             self._post_eval_hook(model, accuracy=acc)
         return acc
 
+    def _pre_hook_for_qat(self):
+        # model.model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
+        self.model.model.qconfig = torch.quantization.QConfig(
+                            activation=torch.quantization.FakeQuantize.with_args(
+                                    dtype=torch.quint8,
+                                    qscheme=torch.per_tensor_affine,
+                                    reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_weight_fake_quant)
+        torch.quantization.prepare_qat(self.model.model, inplace=True)
+
+    def _post_hook_for_qat(self):
+        torch.quantization.convert(self.model.model, inplace=True)
+
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
 
@@ -960,25 +972,30 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         model_ = model.model
+        self.model = model
         optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
         if hooks is not None:
-            on_epoch_start = hooks['on_epoch_start']
+            pre_epoch_begin = hooks['pre_epoch_begin']
+            post_epoch_end = hooks['post_epoch_end']
+            on_epoch_begin = hooks['on_epoch_begin']
             on_epoch_end = hooks['on_epoch_end']
-            on_batch_start = hooks['on_batch_start']
+            on_batch_begin = hooks['on_batch_begin']
             on_batch_end = hooks['on_batch_end']
             on_post_grad = hooks['on_post_grad']
+        if hooks is not None:
+            pre_epoch_begin()
         for nepoch in range(start_epochs, end_epochs):
             model_.train()
             cnt = 0
             if hooks is not None:
-                on_epoch_start(nepoch)
+                on_epoch_begin(nepoch)
             for image, target in dataloader:
                 if hooks is not None:
-                    on_batch_start(cnt)
+                    on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = model_(image)
@@ -994,6 +1011,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                     break
             if hooks is not None:
                 on_epoch_end()
+        if hooks is not None:
+            post_epoch_end()
 
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -1998,7 +2017,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
                 assert False, \
                     "quantization aware training mode requires q_function to train"
             else:
-                q_func(q_model.model)
+                q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             q_model.model.eval()
         else:
             q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
@@ -2111,22 +2130,29 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
         if hooks is not None:
-            on_epoch_start = hooks['on_epoch_start']
+            pre_epoch_begin = hooks['pre_epoch_begin']
+            post_epoch_end = hooks['post_epoch_end']
+            on_epoch_begin = hooks['on_epoch_begin']
             on_epoch_end = hooks['on_epoch_end']
-            on_batch_start = hooks['on_batch_start']
+            on_batch_begin = hooks['on_batch_begin']
             on_batch_end = hooks['on_batch_end']
+            on_post_grad = hooks['on_post_grad']
+        if hooks is not None:
+            pre_epoch_begin()
         for nepoch in range(start_epochs, end_epochs):
             model_.train()
             cnt = 0
             if hooks is not None:
-                on_epoch_start(nepoch)
+                on_epoch_begin(nepoch)
             for image, target in dataloader:
                 if hooks is not None:
-                    on_batch_start(cnt)
+                    on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = model_(image)
                 loss = criterion(output, target)
+                if hooks is not None:
+                    on_post_grad()
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -2136,6 +2162,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
                     break
             if hooks is not None:
                 on_epoch_end()
+        if hooks is not None:
+            post_epoch_end()
 
     def _dump_model_op_stastics(self, model):
         modules = dict(model.named_modules())

@@ -105,6 +105,12 @@ class Pruner:
     def on_post_grad(self):
         pass
 
+    def pre_epoch_begin(self):
+        pass
+
+    def post_epoch_end(self):
+        pass
+
     def update_sparsity(self, epoch):
         """ update sparsity goals according to epoch numbers
 

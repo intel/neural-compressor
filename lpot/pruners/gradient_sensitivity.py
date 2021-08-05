@@ -30,6 +30,9 @@ class GradientSensitivityPruner(Pruner):
         self.elementwise_prune = False if local_config.parameters is not None else True
 
     def on_epoch_begin(self, epoch):
+        if epoch == self.start_epoch:
+            # register hook for FWK model to get actual input tensor
+            self.model.register_forward_pre_hook()
         if self.elementwise_prune:
             logger.debug("start pruning in epoch {}".format(str(epoch)))
             self.sparsity = self.update_sparsity(epoch)
@@ -68,6 +71,9 @@ class GradientSensitivityPruner(Pruner):
                                       self.importance,
                                       weight_name,
                                       self.parameters)
+        if self.is_last_epoch:
+            # remove hooks for FWK model to ensure model saving
+            self.model.remove_hooks()
 
     def parse_weight_name(self, weight_name_pattern):
         # check if asterisk is used to match bert layer indexes

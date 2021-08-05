@@ -129,6 +129,8 @@ def create_eval_func(framework, dataloader, adaptor,
         return adaptor.evaluate(model, dataloader, postprocess,
                                 metric, measurer, iteration,
                                 tensorboard, fp32_baseline)
+    # TODO: to find a better way
+    eval_func.builtin = True
 
     return eval_func
 
@@ -142,7 +144,7 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
         adaptor (obj): The object of adaptor.
         train_cfg (dict): The dict of training related config.
         hooks (dict): The dict of training hooks, supported keys are:
-                      on_epoch_start, on_epoch_end, on_batch_start, on_batch_end.
+                      on_epoch_begin, on_epoch_end, on_batch_begin, on_batch_end.
                       Their values are functions to be executed in adaptor layer.
 
     Returns:
@@ -166,5 +168,7 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
     def train_func(model):
         return adaptor.train(model, dataloader, optimizer_tuple=optimizer(),
                              criterion_tuple=criterion(), hooks=hooks, kwargs=default_dict)
+    # TODO: to find a better way
+    train_func.builtin = True
 
     return train_func

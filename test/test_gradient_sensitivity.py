@@ -163,6 +163,7 @@ class TestGradientSensitivity(unittest.TestCase):
             model.eval()
 
             # To calculate head prune
+            prune.on_epoch_begin(0)
             head_mask = torch.ones(model.config.num_hidden_layers, model.config.num_attention_heads)
             head_mask.requires_grad_(requires_grad=True)
 
@@ -212,6 +213,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+            prune_cv.pre_epoch_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -229,6 +231,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
                     if cnt >= iters:
                         break
                 prune_cv.on_epoch_end()
+            prune_cv.post_epoch_end()
         prune_cv.model = common.Model(self.cv_model)
         prune_cv.pruning_func = training_func_for_cv
         prune_cv.eval_dataloader = dummy_dataloader

@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from ..conf.config import Conf
+from .component import Component
 from ..pruners import PRUNERS
 from ..utils import logger
 from ..utils.utility import singleton, time_limit, set_backend
@@ -25,7 +24,7 @@ from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 
-class Pruning:
+class Pruning(Component):
     """This is base class of pruning object.
 
        Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
@@ -40,46 +39,142 @@ class Pruning:
     """
 
     def __init__(self, conf_fname):
-        self.conf = Conf(conf_fname)
-        self.cfg = self.conf.usr_cfg
-        self.framework = self.cfg.model.framework.lower()
-        self._model = None
-        self._pruning_func = None
-        self._train_dataloader = None
-        self._eval_func = None
-        self._eval_dataloader = None
-        self.adaptor = None
-        self.pruners = []
-        set_backend(self.framework)
+        super(Pruning, self).__init__()
+        self._init_with_conf(conf_fname)
 
-    def on_epoch_begin(self, epoch):
-        """ called on the begining of epochs"""
+        self._pruning_func = None
+        self.pruners = []
+
+    def _pre_epoch_begin(self):
+        """ called before training """
+        for pruner in self.pruners:
+            pruner.pre_epoch_begin()
+
+    def _on_epoch_begin(self, epoch):
+        """ called on the beginning of epochs"""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
-    def on_batch_begin(self, batch_id):
-        """ called on the begining of batches"""
+    def _on_batch_begin(self, batch_id):
+        """ called on the beginning of batches"""
         for pruner in self.pruners:
             pruner.on_batch_begin(batch_id)
 
-    def on_post_grad(self):
+    def _on_post_grad(self):
         """ called after gradient computed """
         """ usually for getting gradients """
         for pruner in self.pruners:
             pruner.on_post_grad()
 
-    def on_batch_end(self):
+    def _on_batch_end(self):
         """ called on the end of batches"""
         for pruner in self.pruners:
             pruner.on_batch_end()
 
-    def on_epoch_end(self):
+    def _on_epoch_end(self):
         """ called on the end of epochs"""
         for pruner in self.pruners:
             pruner.on_epoch_end()
         stats, sparsity = self._model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
+
+    def _post_epoch_end(self):
+        """ called after training """
+        for pruner in self.pruners:
+            pruner.post_epoch_end()
+
+    def pre_process(self):
+        framework_specific_info = {'device': self.cfg.device,
+                                   'random_seed': self.cfg.tuning.random_seed,
+                                   'workspace_path': self.cfg.tuning.workspace.path,
+                                   'q_dataloader': None}
+
+        if self.framework == 'tensorflow':
+            framework_specific_info.update(
+                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+
+        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+
+        self.generate_hooks()
+        self.generate_pruners()
+        assert isinstance(self._model, BaseModel), 'need set lpot Model for pruning....'
+
+        if self._train_dataloader is None and self._pruning_func is None:
+            train_dataloader_cfg = self.cfg.pruning.train.dataloader
+            assert train_dataloader_cfg is not None, \
+                   'dataloader field of train field of pruning section ' \
+                   'in yaml file should be configured as train_dataloader property is NOT set!'
+
+            self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
+
+        if self._eval_dataloader is None and self._eval_func is None:
+            eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
+            assert eval_dataloader_cfg is not None, \
+                   'dataloader field of evaluation ' \
+                   'in yaml file should be configured as eval_dataloader property is NOT set!'
+
+            self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
+
+        if self._pruning_func is None:
+            # train section of pruning section in yaml file should be configured.
+            train_cfg = self.cfg.pruning.train
+            assert train_cfg, "train field of pruning section in yaml file must " \
+                              "be configured for pruning if pruning_func is NOT set."
+            self._pruning_func = create_train_func(self.framework, \
+                                                   self.train_dataloader, \
+                                                   self.adaptor, train_cfg, hooks=self.hooks)
+        if self._eval_func is None:
+            # eval section in yaml file should be configured.
+            eval_cfg = self.cfg.evaluation
+            assert eval_cfg, "eval field of pruning section in yaml file must " \
+                              "be configured for pruning if eval_func is NOT set."
+            self._eval_func = create_eval_func(self.framework, \
+                                               self.eval_dataloader, \
+                                               self.adaptor, \
+                                               eval_cfg.accuracy.metric, \
+                                               eval_cfg.accuracy.postprocess, \
+                                               fp32_baseline = False)
+
+    def execute(self):
+        self._pruning_func(self._model \
+                if getattr(self._pruning_func, 'builtin', None) else self._model.model)
+        logger.info('Model pruning is done. Start to evaluate the pruned model...')
+        score = self._eval_func(self._model \
+                if getattr(self._eval_func, 'builtin', None) else self._model.model)
+
+        logger.info('Pruned model score is: ' + str(score))
+        return self._model
+
+    def generate_hooks(self):
+        # register hooks for pruning
+        self.register_hook('pre_epoch_begin', self._pre_epoch_begin)
+        self.register_hook('post_epoch_end', self._post_epoch_end)
+        self.register_hook('on_epoch_begin', self._on_epoch_begin)
+        self.register_hook('on_epoch_end', self._on_epoch_end)
+        self.register_hook('on_batch_begin', self._on_batch_begin)
+        self.register_hook('on_batch_end', self._on_batch_end)
+        self.register_hook('on_post_grad', self._on_post_grad)
+
+    def generate_pruners(self):
+        for name in self.cfg.pruning.approach:
+            assert name == 'weight_compression', 'now we only support weight_compression'
+            for pruner in self.cfg.pruning.approach.weight_compression.pruners:
+                if pruner.prune_type == 'basic_magnitude':
+                    self.pruners.append(PRUNERS['BasicMagnitude'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
+                if pruner.prune_type == 'pattern_lock':
+                    self.pruners.append(PRUNERS['PatternLock'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
+                elif pruner.prune_type == 'gradient_sensitivity':
+                    self.pruners.append(PRUNERS['GradientSensitivity'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
 
     def __call__(self):
         """The main entry point of pruning.
@@ -118,195 +213,7 @@ class Pruning:
             pruned model: best pruned model found, otherwise return None
 
         """
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
-
-        if self.framework == 'tensorflow':
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
-
-        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
-
-        assert isinstance(self._model, BaseModel), 'need set lpot Model for pruning....'
-
-        for name in self.cfg.pruning.approach:
-            assert name == 'weight_compression', 'now we only support weight_compression'
-            for pruner in self.cfg.pruning.approach.weight_compression.pruners:
-                if pruner.prune_type == 'basic_magnitude':
-                    self.pruners.append(PRUNERS['BasicMagnitude'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
-                if pruner.prune_type == 'pattern_lock':
-                    self.pruners.append(PRUNERS['PatternLock'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
-                elif pruner.prune_type == 'gradient_sensitivity':
-                    self.pruners.append(PRUNERS['GradientSensitivity'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
-
-        if self._train_dataloader is None and self._pruning_func is None:
-            train_dataloader_cfg = self.cfg.pruning.train.dataloader
-            assert train_dataloader_cfg is not None, \
-                   'dataloader field of train field of pruning section ' \
-                   'in yaml file should be configured as train_dataloader property is NOT set!'
-
-            self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
-
-        if self._eval_dataloader is None and self._eval_func is None:
-            eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
-            assert eval_dataloader_cfg is not None, \
-                   'dataloader field of evaluation ' \
-                   'in yaml file should be configured as eval_dataloader property is NOT set!'
-
-            self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
-
-        if 'pytorch' in self.framework:
-            self._model.register_forward_pre_hook_for_model()
-        if self._pruning_func is None:
-            # train section of pruning section in yaml file should be configured.
-            train_cfg = self.cfg.pruning.train
-            assert train_cfg, "train field of pruning section in yaml file must " \
-                              "be configured for pruning if pruning_func is NOT set."
-            hooks = {
-                'on_epoch_start': self.on_epoch_begin,
-                'on_epoch_end': self.on_epoch_end,
-                'on_batch_start': self.on_batch_begin,
-                'on_batch_end': self.on_batch_end,
-                'on_post_grad': self.on_post_grad
-            }
-            self._pruning_func = create_train_func(self.framework, \
-                                                   self.train_dataloader, \
-                                                   self.adaptor, train_cfg, hooks=hooks)
-            # lpot create pruning function uses lpot model
-            self._pruning_func(self._model)
-        else:
-            # user defined pruning function uses FWK model
-            self._pruning_func(self._model.model)
-        if 'pytorch' in self.framework:
-            self._model.remove_hooks_for_model()
-
-        logger.info('Model pruning is done. Start to evaluate the pruned model...')
-        if self._eval_func is None:
-            # eval section in yaml file should be configured.
-            eval_cfg = self.cfg.evaluation
-            assert eval_cfg, "eval field of pruning section in yaml file must " \
-                              "be configured for pruning if eval_func is NOT set."
-            self._eval_func = create_eval_func(self.framework, \
-                                            self.eval_dataloader, \
-                                            self.adaptor, \
-                                            eval_cfg.accuracy.metric, \
-                                            eval_cfg.accuracy.postprocess, \
-                                            fp32_baseline = False)
-            score = self._eval_func(self._model)
-        else:
-            score = self._eval_func(self._model.model)
-
-        logger.info('Pruned model score is: ' + str(score))
-        return self._model
-
-    @property
-    def train_dataloader(self):
-        """ Getter to train dataloader """
-        return self._train_dataloader
-
-    @train_dataloader.setter
-    def train_dataloader(self, dataloader):
-        """Set Data loader for training for pruning.
-           It is iterable and the batched data should consists of a tuple like
-           (input, label) if the training dataset containing label, or yield (input, _)
-           for label-free train dataset, the input in the batched data will be used for
-           model inference, so it should satisfy the input format of specific model.
-           In train process, label of data loader will not be used and
-           neither the postprocess and metric. User only need to set
-           train_dataloader when train_dataloader can not be configured from yaml file.
-
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data. Another good
-                                      practice is to use lpot.experimental.common.DataLoader
-                                      to initialize a lpot dataloader object. Notice
-                                      lpot.experimental.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' train_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Pruning object created then
-                                      framework infomation can be known.
-                                      Future we will support creating iterable dataloader
-                                      from lpot.experimental.common.DataLoader
-        """
-        from .common import _generate_common_dataloader
-        self._train_dataloader = _generate_common_dataloader(
-            dataloader, self.framework)
-
-    @property
-    def eval_dataloader(self):
-        """ Getter to eval dataloader """
-        return self._eval_dataloader
-
-    @eval_dataloader.setter
-    def eval_dataloader(self, dataloader):
-        """Set Data loader for evaluation of pruned model.
-           It is iterable and the batched data should consists of yield (input, _).
-           the input in the batched data will be used for model inference, so it
-           should satisfy the input format of specific model.
-           User only need to set eval_dataloader when eval_dataloader can not be
-           configured from yaml file.
-
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data. Another good
-                                      practice is to use lpot.experimental.common.DataLoader
-                                      to initialize a lpot dataloader object. Notice
-                                      lpot.experimental.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' train_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Pruning object created then
-                                      framework infomation can be known.
-                                      Future we will support creating iterable dataloader
-                                      from lpot.experimental.common.DataLoader
-        """
-        from .common import _generate_common_dataloader
-        self._eval_dataloader = _generate_common_dataloader(
-            dataloader, self.framework)
-
-    @property
-    def model(self):
-        """ Getter of model in lpot.model  """
-        return self._model
-
-    @model.setter
-    def model(self, user_model):
-        """Only support PyTorch model, it's torch.nn.model instance.
-
-        Args:
-           user_model: user are supported to set model from original PyTorch model format
-                       Best practice is to set from a initialized lpot.experimental.common.Model.
-
-        """
-        if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, ' +
-                'better initialize lpot.experimental.common.Model and set....')
-            self._model = Model(user_model)
-        else:
-            self._model = user_model
-
-        cfg = self.conf.usr_cfg
-        if self.framework == 'tensorflow':
-            self._model.name = cfg.model.name
-            self._model.output_tensor_names = cfg.model.outputs
-            self._model.input_tensor_names = cfg.model.inputs
-            self._model.workspace_path = cfg.tuning.workspace.path
+        return super(Pruning, self).__call__()
 
     @property
     def pruning_func(self):
@@ -326,25 +233,6 @@ class Pruning:
                          to make evaluation of the model executed.
         """
         self._pruning_func = user_pruning_func
-
-    @property
-    def eval_func(self):
-        """ not support get eval_func """
-        logger.warning('eval_func not support getter....')
-
-    @eval_func.setter
-    def eval_func(self, user_eval_func):
-        """Eval function for pruning.
-
-        Args:
-            user_eval_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If pruning_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed.
-        """
-        self._eval_func = user_eval_func
 
     def __repr__(self):
         return 'Pruning'
