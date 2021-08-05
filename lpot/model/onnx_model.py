@@ -40,7 +40,7 @@ def find_by_name(item_name, item_list):
 
 class ONNXModel(BaseModel):
     def __init__(self, model, **kwargs):
-        self._model = model
+        self._model = model if not isinstance(model, str) else onnx.load(model)
         self.node_name_counter = {}
         self._graph_info = {}
         self._get_graph_info()

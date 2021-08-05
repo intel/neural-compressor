@@ -51,6 +51,7 @@ class QMaxPool(QuantOperatorBase):
                                                 QuantizedValueType.Input)
         self.quantizer.quantized_value_map[node.output[0]] = quantized_output_value
 
+        node.name = node.name + "_quant" if node.name != "" else ""
         node.input[0] = quantized_input_value.q_name
         node.output[0] = quantized_output_value.q_name
         self.quantizer.new_nodes += [node]

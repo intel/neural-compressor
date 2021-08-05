@@ -5,6 +5,8 @@ import os
 import shutil
 import yaml
 import tensorflow as tf
+import torch
+import torchvision
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -58,6 +60,33 @@ def build_fake_yaml2():
         yaml.dump(y,f)
     f.close()
 
+def build_ox_yaml():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: onnxrt_qlinearops
+          inputs: input
+          outputs: output
+        evaluation:
+          accuracy:
+            metric:
+              Accuracy: {}
+        tuning:
+            strategy:
+              name: mse
+            accuracy_criterion:
+              relative: -0.01
+              higher_is_better: False
+            exit_policy:
+              max_trials: 3
+            workspace:
+              path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('ox_yaml.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
 def build_fake_model():
     try:
         graph = tf.Graph()
@@ -89,6 +118,38 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
+def build_ox_model():
+    path = "mb_v2.onnx"
+    model = torchvision.models.mobilenet_v2()
+
+    x = torch.randn(100, 3, 224, 224, requires_grad=True)
+    torch_out = model(x)
+
+    torch.onnx.export(model,
+                      x,
+                      path,
+                      export_params=True,
+                      opset_version=12,
+                      do_constant_folding=True,
+                      input_names = ["input"],
+                      output_names = ["output"],
+                      dynamic_axes={"input" : {0 : "batch_size"},
+                                    "output" : {0 : "batch_size"}})
+
+class dataset:
+    def __init__(self):
+        self.data = []
+        self.label = []
+        for i in range(10):
+            self.data.append(np.zeros((3, 224, 224)).astype(np.float32))
+            self.label.append(0)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        return self.data[index], self.label[index]
+
 class TestQuantization(unittest.TestCase):
 
     @classmethod
@@ -96,11 +157,15 @@ class TestQuantization(unittest.TestCase):
         self.constant_graph = build_fake_model()
         build_fake_yaml()
         build_fake_yaml2()
+        build_ox_model()
+        build_ox_yaml()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
+        os.remove('ox_yaml.yaml')
+        os.remove('mb_v2.onnx')
 
         shutil.rmtree("saved", ignore_errors=True)
 
@@ -120,6 +185,15 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
+        quantizer()
+
+    def test_ox_mse(self):
+        from lpot.experimental import Quantization, common
+        quantizer = Quantization('ox_yaml.yaml')
+        ds = dataset()
+        quantizer.calib_dataloader = common.DataLoader(ds)
+        quantizer.eval_dataloader = common.DataLoader(ds)
+        quantizer.model = common.Model('mb_v2.onnx')
         quantizer()
 
 if __name__ == "__main__":

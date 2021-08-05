@@ -127,8 +127,7 @@ class QLinearConv(QuantOperatorBase):
                               specified".format(node.output[0], node.name))
 
         qlinear_conv_output = node.output[0] + "_quantized"
-        qlinear_conv_name = qlinear_conv_name = node.name + "_quant" if \
-                                                node.name != "" else ""
+        qlinear_conv_name = node.name + "_quant" if node.name != "" else ""
 
         kwargs = {}
         for attribute in node.attribute:

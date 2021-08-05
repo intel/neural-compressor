@@ -98,9 +98,13 @@ class ONNXRTAugment:
             new_white_nodes = []
             for white_node in self.white_nodes:
                 new_white_node = white_node + "_quant"
-                assert new_white_node in model_nodes_names, "no quantized {} \
-                                                        in the graph".format(white_node)
-                new_white_nodes.append(new_white_node)
+                # nodes like Gather may not be quantized in int8 model
+                assert new_white_node in model_nodes_names or white_node in model_nodes_names, \
+                    "no {} or {} in the graph".format(white_node, new_white_node)
+                if new_white_node in model_nodes_names:
+                    new_white_nodes.append(new_white_node)
+                else:
+                    new_white_nodes.append(white_node)
             self.white_nodes = new_white_nodes
 
         initializers = {i.name: i.data_type for i in model.graph.initializer}

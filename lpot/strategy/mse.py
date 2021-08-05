@@ -150,8 +150,8 @@ class MSETuneStrategy(TuneStrategy):
                 dequantize_tensor_dict = quant_dump_content['activation'][0]
                 ops_mse = {
                     op: self.mse_metric_gap(
-                        fp32_tensor_dict[op][op[0]],
-                        dequantize_tensor_dict[op][op[0]]) for op in fp32_tensor_dict}
+                        list(fp32_tensor_dict[op].values())[0],
+                        list(dequantize_tensor_dict[op].values())[0]) for op in fp32_tensor_dict}
                 self.ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key],
                                           reverse=True)
 
@@ -159,6 +159,9 @@ class MSETuneStrategy(TuneStrategy):
                 ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
                 op_cfgs = copy.deepcopy(best_cfg)
                 for op in ordered_ops:
+                    if not isinstance(op, tuple):
+                        cfg_key = [item[0] for item in list(op_cfgs['op'].keys())]
+                        op = list(op_cfgs['op'].keys())[cfg_key.index(op)]
                     old_cfg = copy.deepcopy(op_cfgs['op'][op])
                     op_cfgs['op'][op]['activation'].clear()
                     op_cfgs['op'][op]['activation']['dtype'] = 'fp32'

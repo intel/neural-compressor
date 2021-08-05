@@ -40,6 +40,7 @@ class GatherQuant(QuantOperatorBase):
         (quantized_input_names, zero_point_names, scale_names, nodes) = \
             self.quantizer.quantize_inputs(node, [0])
 
+        node.name = node.name + "_quant" if node.name != "" else ""
         gather_new_output = node.output[0] + "_quantized"
 
         # Create an entry for this quantized value
