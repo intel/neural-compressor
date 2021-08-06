@@ -6,6 +6,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 # Prerequisite
 
 ### 1. Installation
+We verified examples with IPEX backend on Python 3.8, recommended.
 
 ```shell
 pip install -r requirements.txt
