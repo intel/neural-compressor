@@ -89,7 +89,6 @@ class ONNXRTAdaptor(Adaptor):
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
         model = copy.deepcopy(model)
-        self.quantizable_ops = self._query_quantizable_ops(model.model)
         q_config = self._cfg_to_qconfig(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
         if self.static:
