@@ -648,6 +648,13 @@ class TemplateAdaptor(Adaptor):
         Returns:
             q_capability (dictionary): tuning capability for each op from model.
         """
+        if isinstance(self, PyTorch_FXAdaptor):
+            from torch.quantization.quantize_fx import fuse_fx
+            model.model.eval()
+            model.model = fuse_fx(model.model, 
+              fuse_custom_config_dict=model.kwargs['prepare_custom_config_dict']
+              if model.kwargs is not None and
+              model.kwargs.__contains__('prepare_custom_config_dict') else None)
         self.pre_optimized_model = model
         quantizable_ops = []
         self._get_quantizable_ops_recursively(model.model, '', quantizable_ops)
@@ -853,6 +860,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
 
+        self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
         if self.is_baseline:
             self.is_baseline = False
 
@@ -1013,6 +1021,48 @@ class PyTorchAdaptor(TemplateAdaptor):
                 on_epoch_end()
         if hooks is not None:
             post_epoch_end()
+
+    def _dump_model_op_stastics(self, model, tune_cfg):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            model (object): input model
+            tune_cfg (dict): quantization config
+        Returns:
+            None
+        """
+        res = {}
+        modules = dict(model.named_modules())
+        # fetch quantizable ops supported in LPOT from tune_cfg
+        for key in tune_cfg['op']:
+            op_name = key[0]
+            op_type = str(type(modules[op_name])).rstrip('\'>').split('.')[-1]
+            if 'Functional' in op_type:
+                op_type = op_name.split('.')[-1]
+            if op_type not in res.keys():
+                res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+            value = tune_cfg['op'][key]
+            if value['activation']['dtype'] == 'fp32':
+                res[op_type]['FP32'] += 1
+            else:
+                res[op_type]['INT8'] += 1
+        # fetch other quantizable ops supported in PyTorch from model
+        for name, child in modules.items():
+            op_type = str(type(child)).rstrip('\'>').split('.')[-1]
+            if op_type == 'DeQuantize':
+                if op_type not in res.keys():
+                    res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                res[op_type]['INT8'] += 1
+            if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or op_type == 'Embedding':
+                logger.info("there is accuracy issue in quantized LayerNorm, \
+                            InstanceNorm3d and Embedding op, \
+                            so we removed them when fetching quantizable ops")
+                if op_type not in res.keys():
+                    res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                res[op_type]['FP32'] += 1
+        # show results to users
+        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
+                        res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
+        OpPrecisionStatistics(output_data).print_stat()
 
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -2031,10 +2081,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
           convert_custom_config_dict=q_model.kwargs['convert_custom_config_dict']
           if q_model.kwargs is not None and
           q_model.kwargs.__contains__('convert_custom_config_dict') else None)
-
-        self._dump_model_op_stastics(q_model.model)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
 
+        self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
         if self.is_baseline:
             self.is_baseline = False
         return q_model
@@ -2165,7 +2214,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
         if hooks is not None:
             post_epoch_end()
 
-    def _dump_model_op_stastics(self, model):
+    def _dump_model_op_stastics(self, model, tune_cfg):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            model (object): input model
+            tune_cfg (dict): quantization config
+        Returns:
+            None
+        """
         modules = dict(model.named_modules())
         quantized_mode = False
         res = {}
@@ -2187,16 +2243,17 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
                 res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
 
             if "quantize_per" in op_type and not quantized_mode:
-                res[op_type]['INT8'] += 1
                 quantized_mode = True
             elif "dequantize" in op_type and quantized_mode:
-                res[op_type]['INT8'] += 1
                 quantized_mode = False
-            else:
-                if quantized_mode:
-                    res[op_type]['INT8'] += 1
-                else:
-                    res[op_type]['FP32'] += 1
+            res[op_type]['INT8'] += 1
+        # fetch fp32 ops set by LPOT from tune_cfg
+        for key in tune_cfg['op']:
+            op_type = str(type(modules[key[0]])).rstrip('\'>').split('.')[-1]
+            value = tune_cfg['op'][key]
+            if value['activation']['dtype'] == 'fp32':
+                res[op_type]['INT8'] -= 1
+                res[op_type]['FP32'] += 1
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
