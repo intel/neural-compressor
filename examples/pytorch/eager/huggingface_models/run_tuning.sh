@@ -158,7 +158,7 @@ function run_tuning {
         model_type='xlm-mlm-en-2048'
     fi
 
-    sed -i "/name:/s|name:.*|name: $model_type|g" conf.yaml
+    sed -i "/: bert/s|name:.*|name: $model_type|g" conf.yaml
     sed -i "/approach:/s|approach:.*|approach: $approach|g" conf.yaml
 
     if [ "${SCRIPTS}" = "examples/text-classification/run_glue_tune.py" ];then
