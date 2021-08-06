@@ -17,6 +17,11 @@ https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
 
+Intel Tensorflow 2.5.0 also supports since LPOT 1.6 release.
+```python
+pip install intel-tensorflow==2.5.0
+```
+
 ### 3. Prepare Dataset
 ```shell
 wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip

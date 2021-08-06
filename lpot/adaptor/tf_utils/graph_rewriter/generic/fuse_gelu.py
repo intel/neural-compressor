@@ -15,17 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import tensorflow as tf
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 from tensorflow.python.framework import dtypes
 
 
-class FuseGeluOptimizer(GraphRewriterBase):
+class FuseGeluOptimizer(GraphRewriterBase): # pragma: no cover
     """Fuse Sqrt + RealDiv + Erf + AddV2 + Mul + Mul into Gelu op.
     """
 
     def do_transformation(self):
+        if tf.version.VERSION not in ('1.15.0-up2','1.15.0-up3'):
+            return self.model
+
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
