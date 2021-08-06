@@ -57,6 +57,10 @@ class FreezeValueTransformer(GraphRewriterBase):
 
         self.graph_info = self.cur_graph.parse_graph()
 
+        self.quantizeV2_min_max = {}
+        self.requant_min_max = {}
+        self.scale_info = {}
+
     def _get_valid_log(self):
         output = []
 
@@ -185,7 +189,12 @@ class FreezeValueTransformer(GraphRewriterBase):
                                               node_name)
             self.cur_graph.remove_node(node_name)
 
-        return GraphAnalyzer().dump_graph()
+            self.quantizeV2_min_max[node_name] = tensor_util.MakeNdarray(
+                                                    new_node.attr["value"].tensor
+                                                    )
+        self.scale_info[self.postfix[:-1]] = self.quantizeV2_min_max
+
+        return GraphAnalyzer().dump_graph(), self.scale_info
 
     def generate_output_graph_ranges(self, max_name_value):
         """
@@ -227,7 +236,21 @@ class FreezeValueTransformer(GraphRewriterBase):
                                               node_name + ':1')
             self.cur_graph.remove_node(node_name)
 
-        return GraphAnalyzer().dump_graph()
+            self.requant_min_max[node_name] = [
+                tensor_util.MakeNdarray(min_node.attr["value"].tensor),
+                tensor_util.MakeNdarray(max_node.attr["value"].tensor)
+                ]
+
+        self.scale_info[self.postfix] = self.requant_min_max
+        # {
+        #    "__requant_min_max":
+        #                {requant_range_name:[min,max],}
+        #    "__min":
+        #                {node_name_min:[min]}
+        #    "__max":
+        #                {node_name_max:[max]}
+        # }
+        return GraphAnalyzer().dump_graph(), self.scale_info
 
     def do_transformation(self):
         if self.postfix == '__requant_min_max':

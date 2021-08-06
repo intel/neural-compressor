@@ -21,64 +21,79 @@ except:
 
 torch.manual_seed(1)
 
+fake_ptq_yaml = '''
+    model:
+      name: imagenet
+      framework: pytorch
+
+    evaluation:
+      accuracy:
+        metric:
+          MSE:
+            compare_label: False
+      performance:
+        warmup: 5
+        iteration: 10
+
+    tuning:
+      accuracy_criterion:
+        absolute:  100.0
+        higher_is_better: False
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+fake_dynamic_yaml = '''
+    model:
+      name: imagenet
+      framework: pytorch
+
+    quantization:
+      approach: post_training_dynamic_quant
+    evaluation:
+      accuracy:
+        metric:
+          MSE:
+            compare_label: False
+      performance:
+        warmup: 5
+        iteration: 10
+
+    tuning:
+      accuracy_criterion:
+        absolute:  100.0
+        higher_is_better: False
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+
 def build_ptq_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch
-
-        evaluation:
-          accuracy:
-            metric:
-              MSE:
-                compare_label: False
-          performance:
-            warmup: 5
-            iteration: 10
-
-        tuning:
-          accuracy_criterion:
-            absolute:  100.0
-            higher_is_better: False
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
     with open('ptq_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+        f.write(fake_ptq_yaml)
 
 
 def build_dynamic_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch
-
-        quantization:
-          approach: post_training_dynamic_quant
-        evaluation:
-          accuracy:
-            metric:
-              MSE:
-                compare_label: False
-          performance:
-            warmup: 5
-            iteration: 10
-
-        tuning:
-          accuracy_criterion:
-            absolute:  100.0
-            higher_is_better: False
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
     with open('dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+        f.write(fake_dynamic_yaml)
+
+
+def build_fx_ptq_yaml():
+    fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
+    with open('fx_ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_fx_ptq_yaml)
+
+
+def build_fx_dynamic_yaml():
+    fake_fx_dynamic_yaml = fake_dynamic_yaml.replace('pytorch', 'pytorch_fx')
+    with open('fx_dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_fx_dynamic_yaml)
 
 
 def build_ipex_yaml():
@@ -125,23 +140,28 @@ class TestPytorchAdaptor(unittest.TestCase):
     def setUpClass(self):
         build_ptq_yaml()
         build_dynamic_yaml()
+        build_fx_ptq_yaml()
+        build_fx_dynamic_yaml()
 
     @classmethod
     def tearDownClass(self):
         os.remove('ptq_yaml.yaml')
         os.remove('dynamic_yaml.yaml')
+        os.remove('fx_ptq_yaml.yaml')
+        os.remove('fx_dynamic_yaml.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_quantization_saved(self):
         from lpot.utils.pytorch import load
 
-        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml']:
-            if fake_yaml == 'dynamic_yaml.yaml':
+        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', \
+                          'fx_dynamic_yaml.yaml', 'fx_ptq_yaml.yaml']:
+            if fake_yaml in ['dynamic_yaml.yaml', 'fx_dynamic_yaml.yaml']:
                 model = torchvision.models.quantization.resnet18()
             else:
                 model = copy.deepcopy(self.model)
-            if fake_yaml == 'ptq_yaml.yaml':
+            if fake_yaml in ['ptq_yaml.yaml', 'fx_ptq_yaml.yaml']:
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)

@@ -231,12 +231,15 @@ class TuneStrategy(object):
         #   {
         #     'version': __version__,
         #     'cfg': cfg1,
+        #     'framework': tensorflow
         #     'baseline': baseline1,
         #     'last_tune_result': last_tune_result1,
         #     'best_tune_result': best_tune_result1,
         #     'history': [
         #                  # tuning history under same yaml config
-        #                  {'tune_cfg': tune_cfg1, 'tune_result': tune_result1, ...},
+        #                  {'tune_cfg': tune_cfg1, 'tune_result': \
+        #                               tune_result1, 'q_config': q_config1, ...},
+
         #                   ...,
         #                ],
         #     # new fields added by subclass for resuming
@@ -338,7 +341,9 @@ class TuneStrategy(object):
                 # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-                self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
+                self._add_tuning_history(saved_tune_cfg,
+                                        saved_last_tune_result,
+                                        q_config=self.q_model.q_config)
 
                 if need_stop:
                     break
@@ -475,11 +480,11 @@ class TuneStrategy(object):
         else:
             del self.last_qmodel
 
-        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0], 
+        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0],
                                                                 str(self.objective.measurer),
                                                                 self.last_tune_result[1]) \
                                                                 if self.last_tune_result else 'n/a'
-        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0], 
+        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0],
                                                                 str(self.objective.measurer),
                                                                 self.best_tune_result[1]) \
                                                                 if self.best_tune_result else 'n/a'

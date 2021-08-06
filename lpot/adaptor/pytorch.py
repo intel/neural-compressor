@@ -185,7 +185,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
     return op_qcfgs
 
 
-def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):    # pragma: no cover
+def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     """Convert quantization config to a format that meets the requirements of torch.fx.
 
         Args:
@@ -587,7 +587,7 @@ class TemplateAdaptor(Adaptor):
         self.default_qconfig = framework_specific_info['default_qconfig'] \
             if 'default_qconfig' in framework_specific_info else None
 
-        if 'approach' in framework_specific_info:
+        if 'approach' in framework_specific_info:             # pragma: no cover
             self.approach = framework_specific_info['approach']
             if framework_specific_info['approach'] == "post_training_static_quant":
                 if self.version < PT17_VERSION:
@@ -734,13 +734,13 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # there is accuracy issue in quantized LayerNorm op and embedding op in pytorch <1.8.1,
         # so remove it here
-        if self.version < PT17_VERSION:
+        if self.version < PT17_VERSION:                         # pragma: no cover
             self.white_list = \
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
                 if self.approach == 'post_training_dynamic_quant' else \
                 tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
                     {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-        elif self.version < PT18_VERSION:
+        elif self.version < PT18_VERSION:                       # pragma: no cover
             self.white_list = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings() \
                 if self.approach == 'post_training_dynamic_quant' else \
@@ -836,7 +836,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model.model, dataloader, iterations)
         elif self.approach == 'quant_aware_training':
-            if self.version >= PT17_VERSION:       # pragma: no cover
+            if self.version >= PT17_VERSION:
                 _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True,
                                    white_list=self.white_list)
                 torch.quantization.convert(q_model.model, mapping=self.q_mapping,
@@ -844,7 +844,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                 _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list)
                 torch.quantization.add_observer_(q_model.model, self.white_list,
                                                  set(self.q_mapping.values()))
-            else:
+            else:                                                   # pragma: no cover
                 torch.quantization.add_observer_(q_model.model)
                 torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
             if q_func is None:
@@ -858,6 +858,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         else:
             torch.quantization.convert(q_model.model, mapping=self.q_mapping, inplace=True)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
+        if self.approach != 'post_training_dynamic_quant':
+            self._get_scale_zeropoint(q_model.model, self.tune_cfg)
+        q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
 
         self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
@@ -954,7 +957,6 @@ class PyTorchAdaptor(TemplateAdaptor):
         return acc
 
     def _pre_hook_for_qat(self):
-        # model.model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
         self.model.model.qconfig = torch.quantization.QConfig(
                             activation=torch.quantization.FakeQuantize.with_args(
                                     dtype=torch.quint8,
@@ -1117,6 +1119,27 @@ class PyTorchAdaptor(TemplateAdaptor):
                             self.fused_dict[op_name] = module_prefix
             else:
                 self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
+
+    def _get_scale_zeropoint(self, model, tune_cfg):
+        """get activation scale and zero_point for converted model.
+
+        Args:
+            model (dir): Int8 model converted from fp32 model. 
+                        scale and zero_point is set with calibration for each module
+            tune_cfg (object): This file saves scale and zero_point of \
+                            output activation of each quantized module.
+
+        Returns:
+            None
+        """
+        modules = dict(model.named_modules())
+        for key in tune_cfg['op']:
+            value = tune_cfg['op'][key]
+            assert isinstance(value, dict)
+            if hasattr(modules[key[0]], 'scale'):
+                value['activation']['scale'] = float(modules[key[0]].scale)
+            if hasattr(modules[key[0]], 'zero_point'):
+                value['activation']['zero_point'] = int(modules[key[0]].zero_point)
 
     def _pre_eval_hook(self, model, op_list=None, iteration_list=None):
         """The function is used to do some preprocession before evaluation phase.
@@ -1957,7 +1980,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
 
 
 @adaptor_registry
-class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no cover
+class PyTorch_FXAdaptor(TemplateAdaptor):
     """Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.
 
     Args:
@@ -2082,6 +2105,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
           if q_model.kwargs is not None and
           q_model.kwargs.__contains__('convert_custom_config_dict') else None)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
+        if self.approach != 'post_training_dynamic_quant':
+            self._get_scale_zeropoint(q_model.model, self.tune_cfg)
+        q_model.q_config = copy.deepcopy(self.tune_cfg)
 
         self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
         if self.is_baseline:
@@ -2159,6 +2185,20 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
 
         return acc
 
+    def _pre_hook_for_qat(self):                              # pragma: no cover
+        from torch.quantization.quantize_fx import prepare_qat_fx
+        qconfig = torch.quantization.QConfig(
+                            activation=torch.quantization.FakeQuantize.with_args(
+                                    dtype=torch.quint8,
+                                    qscheme=torch.per_tensor_affine,
+                                    reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_weight_fake_quant)
+        prepare_qat_fx(self.model.model, qconfig)
+
+    def _post_hook_for_qat(self):                              # pragma: no cover
+        from torch.quantization.quantize_fx import convert_fx
+        convert_fx(self.model.model)
+
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
 
@@ -2173,12 +2213,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
             None
         """
         model_ = model.model
+        self.model = model
         optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
-        if hooks is not None:
+        if hooks is not None:                              # pragma: no cover
             pre_epoch_begin = hooks['pre_epoch_begin']
             post_epoch_end = hooks['post_epoch_end']
             on_epoch_begin = hooks['on_epoch_begin']
@@ -2283,6 +2324,37 @@ class PyTorch_FXAdaptor(TemplateAdaptor):                           # pragma: no
                     str(child.__class__.__name__)))
             else:
                 self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
+
+    def _get_scale_zeropoint(self, model, tune_cfg):
+        """get activation scale and zero_point for converted model.
+
+        Args:
+            model (dir): Int8 model converted from fp32 model. 
+                        scale and zero_point is set with calibration for each module
+            tune_cfg (object): This file saves scale and zero_point of \
+                            output activation of each quantized module.
+
+        Returns:
+            None
+        """
+        # get scale and zero_point of modules.
+        modules = dict(model.named_modules())
+        for key in tune_cfg['op']:
+            value = tune_cfg['op'][key]
+            assert isinstance(value, dict)
+            if hasattr(modules[key[0]], 'scale'):
+                value['activation']['scale'] = float(modules[key[0]].scale)
+            if hasattr(modules[key[0]], 'zero_point'):
+                value['activation']['zero_point'] = int(modules[key[0]].zero_point)
+        # get scale and zero_point of getattr ops.
+        tune_cfg['get_attr'] = {}
+        for node in model.graph.nodes:
+            if node.op == 'get_attr':
+                result = getattr(model, node.target)
+                if 'scale' in node.target:
+                    tune_cfg['get_attr'][node.target] = float(result)
+                else:
+                    tune_cfg['get_attr'][node.target] = int(result)
 
 
 class PyTorchQuery(QueryBackendCapability):

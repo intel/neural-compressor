@@ -47,6 +47,7 @@ from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
+from .graph_rewriter.int8.freeze_value_without_calib import FreezeValueWithoutCalibTransformer
 from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
@@ -112,7 +113,12 @@ class GraphConverter:
         self._enable_kl_op_names = [
             k for k in self.op_wise_config if self.op_wise_config[k][1] == 'kl'
         ]
-
+        self.scale_info = {}
+        self.scale_info.update(qt_config)
+        self.scale_info.update({'recipes': self.recipes})
+        self.scale_info.update({'int8_sequences': self.int8_sequences})
+        self.scale_info.update({'bf16_ops': self.bf16_ops})
+        self.scale_info.update({'fp32_ops': self.fp32_ops})
 
         self._fp32_model = Model(self.model._model, **self.model.kwargs)
         self._fp32_model.graph_def = self.model.graph_def
@@ -133,7 +139,7 @@ class GraphConverter:
         """
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
-        
+
         self.logger.info("Sampling data...")
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
@@ -213,7 +219,6 @@ class GraphConverter:
         self._tmp_model = Model(self.model._model, **self.model.kwargs)
         self._tmp_model.output_tensor_names = self.output_tensor_names
         self._tmp_model.input_tensor_names = self.input_tensor_names
-    
 
     def convert(self):
         """Do convert, including:
@@ -238,7 +243,7 @@ class GraphConverter:
         if self.debug:
             model.save(self.output_graph)
             self.logger.info('Converted graph file is saved to: %s', self.output_graph)
-
+        model.q_config = self.scale_info
         return model
 
     def _get_fp32_print_node_names(self, specified_op_list):
@@ -593,7 +598,7 @@ class GraphConverter:
         model = Model(tmp_path, **self._tmp_model.kwargs)
         model.output_tensor_names = self.output_tensor_names
         model.input_tensor_names = self.input_tensor_names
-         
+
         with CaptureOutputToFile(tmp_dump_file):
             self._inference(model)
 
@@ -611,23 +616,25 @@ class GraphConverter:
                     self._kl_op_dict[key] = combine_histogram(self._kl_op_dict[key], fp32_data)
 
     def _freeze_requantization_ranges(self, additional_data=None):
-        self._tmp_graph_def = FreezeValueTransformer(
+        self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,
             '__max:').do_transformation()
-
-        self._tmp_graph_def = FreezeValueTransformer(
+        self._tmp_graph_def, quantizev2_min = FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,
             '__min:').do_transformation()
-
-        self._tmp_graph_def = FreezeValueTransformer(
+        self._tmp_graph_def, requant_min_max= FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,
             '__requant_min_max',
             tensor_data= additional_data,
             device=self.device,
             ).do_transformation()
+
+        self.scale_info.update(quantizev2_max)
+        self.scale_info.update(quantizev2_min)
+        self.scale_info.update(requant_min_max)
 
         self._tmp_graph_def = QuantizedRNNConverter(
             self._tmp_graph_def, self._calibration_data, self._rnn_details).do_transformation()

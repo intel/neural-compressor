@@ -43,6 +43,8 @@ def build_static_yaml():
           exit_policy:
             timeout: 0
           random_seed: 9527
+          workspace: 
+            path: ./lpot_workspace/recover/
         """
     with open("static.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
@@ -268,7 +270,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         q_config = {'fused Conv_0': {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8}}}
-        adaptor.q_config = q_config
+        adaptor.quantize_config = q_config
         version = get_torch_version()
         q_model.save('./best_model.onnx')
         if version >= '1.7':
@@ -304,6 +306,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.eval_dataloader = self.ir3_dataloader
             quantizer.model = common.Model(self.ir3_model)
             q_model = quantizer()
+
+            from lpot.utils.utility import recover
+            model = recover(self.ir3_model, './lpot_workspace/recover/history.snapshot', 0)
+            self.assertTrue(model.model == q_model.model)
 
         for mode in ["performance", "accuracy"]:
             fake_yaml = "benchmark.yaml"

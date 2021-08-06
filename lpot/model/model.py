@@ -545,6 +545,7 @@ class TensorflowBaseModel(BaseModel):
         self._sess = None
         self._iter_op = None
         self._workspace_path = ''
+        self._q_config = None
 
     def framework(self):
         return 'tensorflow'
@@ -557,6 +558,14 @@ class TensorflowBaseModel(BaseModel):
     def name(self, name):
         self.kwargs.update({'name': name})
         self._name = name
+        
+    @property
+    def q_config(self):
+        return self._q_config
+
+    @q_config.setter
+    def q_config(self, q_config):
+        self._q_config = q_config
 
     @property
     def workspace_path(self):
@@ -790,8 +799,9 @@ class PyTorchBaseModel(BaseModel):
         self._model = model
         assert isinstance(model, torch.nn.Module), "model should be pytorch nn.Module."
         self.handles = []
-
-        self.tune_cfg = None
+        self.tune_cfg= None
+        self.q_config = None
+        self._workspace_path = ''
         self.is_quantized = False
         self.kwargs = kwargs if kwargs else None
         # skip input argument 'self' in forward
@@ -981,8 +991,6 @@ class PyTorchModel(PyTorchBaseModel):
 
     def __init__(self, model, **kwargs):
         super(PyTorchModel, self).__init__(model, **kwargs)
-        self.tune_cfg= None
-        self._workspace_path = ''
 
     @property
     def workspace_path(self):
@@ -1057,8 +1065,6 @@ class PyTorchIpexModel(PyTorchBaseModel):
 
     def __init__(self, model, **kwargs):
         super(PyTorchIpexModel, self).__init__(model, **kwargs)
-        self.tune_cfg= None
-        self._workspace_path = ''
 
     @property
     def workspace_path(self):

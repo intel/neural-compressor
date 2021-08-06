@@ -48,9 +48,18 @@ class ONNXModel(BaseModel):
         self._get_input_name_to_nodes()
         self._output_name_to_node = {}
         self._get_output_name_to_node()
+        self._q_config = None
 
     def framework(self):
         return 'onnxruntime'
+
+    @property
+    def q_config(self):
+        return self._q_config
+
+    @q_config.setter
+    def q_config(self, q_config):
+        self._q_config = q_config
 
     @property
     def model(self):

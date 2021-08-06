@@ -49,7 +49,6 @@ class TensorFlowAdaptor(Adaptor):
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
-        self.optimization = deep_get(self.framework_specific_info, 'optimization', {})
         os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
@@ -335,6 +334,9 @@ class TensorFlowAdaptor(Adaptor):
                                    fp32_ops=self.fp32_ops,
                                    bf16_ops=self.bf16_ops,
                                    data_loader=data_loader).convert()
+        #just save framework_specific_info feature for recover
+        converted_model.q_config.update({'framework_specific_info': \
+                                            self.framework_specific_info})
 
         self._dump_model_op_stastics(converted_model.graph_def)
 
@@ -796,6 +798,28 @@ class TensorFlowAdaptor(Adaptor):
 
         return converter.convert()
 
+    @dump_elapsed_time("Pass recover model")
+    def recover_tuned_model(self, model, q_config):
+        """Execute the recover process on the specified model.
+
+            Args:
+                tune_cfg (dict): quantization configuration
+                model (tf.compat.v1.GraphDef): fp32 model
+                q_config (dict): recover configuration
+
+            Returns:
+                tf.compat.v1.GraphDef: the quantized model
+        """
+        from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization)
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
+        model.graph_def = self.pre_optimized_model.graph_def
+
+        from .tf_utils.graph_converter_without_calib import GraphConverterWithoutCalib
+        converter = GraphConverterWithoutCalib(model,
+                                            recover_config=q_config)
+
+        return converter.convert_without_calib()
 
 @singleton
 class TensorflowQuery(QueryBackendCapability):

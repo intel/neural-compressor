@@ -34,18 +34,20 @@ class PyTorchOptimizers(object):
         self.optimizers.update(PYTORCH_OPTIMIZERS)
 
 framework_optimizers = {"tensorflow": TensorflowOptimizers,
-                        "pytorch":    PyTorchOptimizers}
+                        "pytorch":    PyTorchOptimizers,
+                        "pytorch_fx": PyTorchOptimizers}
 
 # user/model specific optimizers will be registered here
 TENSORFLOW_OPTIMIZERS = {}
 PYTORCH_OPTIMIZERS= {}
 
 registry_optimizers = {"tensorflow": TENSORFLOW_OPTIMIZERS,
-                       "pytorch":    PYTORCH_OPTIMIZERS}
+                       "pytorch":    PYTORCH_OPTIMIZERS,
+                       "pytorch_fx": PYTORCH_OPTIMIZERS}
 
 class Optimizers(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "pytorch"), \
+        assert framework in ("tensorflow", "pytorch", "pytorch_fx"), \
                              "framework support tensorflow pytorch"
         self.optimizers = framework_optimizers[framework]().optimizers
 

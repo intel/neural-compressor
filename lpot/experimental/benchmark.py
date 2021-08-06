@@ -220,7 +220,7 @@ class Benchmark(object):
             else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
         assert len(self.objective.measurer.result_list()) > warmup, \
-            'itreation should larger than warmup'
+            'Iteration should larger than warmup'
 
         result_list = self.objective.measurer.result_list()[warmup:]
         latency = np.array(result_list).mean() / batch_size

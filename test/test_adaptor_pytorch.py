@@ -11,9 +11,11 @@ from lpot.adaptor.pytorch import PT18_VERSION, PT17_VERSION
 import lpot.adaptor.pytorch as lpot_torch
 from lpot.experimental import Quantization, common
 from lpot.utils.pytorch import load
+from lpot.utils.utility import recover
 import shutil
 import copy
 import numpy as np
+import yaml
 
 try:
     import intel_pytorch_extension as ipex
@@ -22,164 +24,162 @@ except:
     TEST_IPEX = False
 
 PT_VERSION = lpot_torch.get_torch_version()
+if PT_VERSION >= PT18_VERSION:
+    FX_MODE = True
+else:
+    FX_MODE = False
 
 
-def build_ptq_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch
+fake_dyn_yaml = '''
+    model:
+      name: imagenet
+      framework: pytorch
 
-        quantization:
-          op_wise: {
-                 'quant': {
-                   'activation':  {'dtype': ['fp32']},
-                   'weight': {'dtype': ['fp32']}
-                 },
-                 'layer1.0.conv1': {
-                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
-                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
-                 },
-                 'layer2.0.conv1': {
-                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
-                 },
-                 'layer3.0.conv1': {
-                   'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
-                 },
-                 'layer1.0.add_relu': {
-                   'activation':  {'dtype': ['fp32']},
-                   'weight': {'dtype': ['fp32']}
-                 }
-          }
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-          performance:
-            warmup: 5
-            iteration: 10
+    quantization:
+      approach: post_training_dynamic_quant
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+      performance:
+        warmup: 5
+        iteration: 10
 
-        tuning:
-          accuracy_criterion:
-            relative:  0.01
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
+    tuning:
+      accuracy_criterion:
+        relative:  0.01
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+
+fake_ptq_yaml = '''
+    model:
+      name: imagenet
+      framework: pytorch
+
+    quantization:
+      op_wise: {
+              'quant': {
+                'activation':  {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer1.0.conv1': {
+                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
+                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
+              },
+              'layer2.0.conv1': {
+                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              },
+              'layer3.0.conv1': {
+                'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              },
+              'layer1.0.add_relu': {
+                'activation':  {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              }
+      }
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+      performance:
+        warmup: 5
+        iteration: 10
+
+    tuning:
+      accuracy_criterion:
+        relative:  0.01
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+
+fake_qat_yaml = '''
+    model:
+      name: imagenet
+      framework: pytorch
+
+    quantization:
+      approach: quant_aware_training
+      train:
+        end_epoch: 2
+        iteration: 4
+        optimizer:
+          SGD:
+            learning_rate: 0.0001
+        criterion:
+          CrossEntropyLoss:
+            reduction: mean
+      op_wise: {
+              'quant': {
+                'activation':  {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer1.0.conv1': {
+                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
+                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
+              },
+              'layer2.0.conv1': {
+                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              },
+              'layer3.0.conv1': {
+                'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              },
+              'layer1.0.add_relu': {
+                'activation':  {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              }
+      }
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+
+    tuning:
+      accuracy_criterion:
+        relative:  0.01
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+
+def build_pytorch_yaml():
     with open('ptq_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+        f.write(fake_ptq_yaml)
 
-
-def build_dynamic_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch
-
-        quantization:
-          approach: post_training_dynamic_quant
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-          performance:
-            warmup: 5
-            iteration: 10
-
-        tuning:
-          accuracy_criterion:
-            relative:  0.01
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
     with open('dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+        f.write(fake_dyn_yaml)
+
+    with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_qat_yaml)
 
 
-def build_fx_ptq_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch_fx
-
-        quantization:
-          op_wise: {
-                 'quant': {
-                   'activation':  {'dtype': ['fp32']},
-                   'weight': {'dtype': ['fp32']}
-                 },
-                 'layer1.0.conv1': {
-                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
-                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
-                 },
-                 'layer2.0.conv1': {
-                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
-                 },
-                 'layer3.0.conv1': {
-                   'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
-                 },
-                 'layer1.0.add_relu': {
-                   'activation':  {'dtype': ['fp32']},
-                   'weight': {'dtype': ['fp32']}
-                 }
-          }
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-          performance:
-            warmup: 5
-            iteration: 10
-
-        tuning:
-          accuracy_criterion:
-            relative:  0.01
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
+def build_pytorch_fx_yaml():
+    fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_ptq_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+        f.write(fake_fx_ptq_yaml)
 
-
-def build_fx_dynamic_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch_fx
-
-        quantization:
-          approach: post_training_dynamic_quant
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-          performance:
-            warmup: 5
-            iteration: 10
-
-        tuning:
-          accuracy_criterion:
-            relative:  0.01
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
+    fake_fx_dyn_yaml = fake_dyn_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+        f.write(fake_fx_dyn_yaml)
+
+    fake_fx_qat_yaml = fake_qat_yaml.replace('pytorch', 'pytorch_fx')
+    with open('fx_qat_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_fx_qat_yaml)
 
 
 def build_ipex_yaml():
@@ -234,63 +234,13 @@ def build_dump_tensors_yaml():
         f.write(fake_yaml)
 
 
-def build_qat_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch
-
-        quantization:
-          approach: quant_aware_training
-          op_wise: {
-                 'quant': {
-                   'activation':  {'dtype': ['fp32']},
-                   'weight': {'dtype': ['fp32']}
-                 },
-                 'layer1.0.conv1': {
-                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
-                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
-                 },
-                 'layer2.0.conv1': {
-                   'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
-                 },
-                 'layer3.0.conv1': {
-                   'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                   'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
-                 },
-                 'layer1.0.add_relu': {
-                   'activation':  {'dtype': ['fp32']},
-                   'weight': {'dtype': ['fp32']}
-                 }
-          }
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-
-        tuning:
-          accuracy_criterion:
-            relative:  0.01
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
-    with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
-
-
 def eval_func(model):
     # switch to evaluate mode
     model.eval()
-
     with torch.no_grad():
         input = torch.randn(10, 3, 224, 224)
         # compute output
         output = model(input)
-
     return 0.0
 
 
@@ -298,7 +248,6 @@ def q_func(model):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
     # switch to evaluate mode
     model.train()
-
     input = torch.randn(1, 3, 224, 224)
     # compute output
     output = model(input)
@@ -306,11 +255,9 @@ def q_func(model):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-
     return
 
 
-@unittest.skipIf(TEST_IPEX, "TODO: Please wait to IPEX + PyTorch1.7 release")
 class TestPytorchAdaptor(unittest.TestCase):
     framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
@@ -324,12 +271,8 @@ class TestPytorchAdaptor(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        build_ptq_yaml()
-        build_dynamic_yaml()
-        build_qat_yaml()
+        build_pytorch_yaml()
         build_dump_tensors_yaml()
-        build_fx_ptq_yaml()
-        build_fx_dynamic_yaml()
 
     @classmethod
     def tearDownClass(self):
@@ -337,8 +280,6 @@ class TestPytorchAdaptor(unittest.TestCase):
         os.remove('dynamic_yaml.yaml')
         os.remove('qat_yaml.yaml')
         os.remove('dump_yaml.yaml')
-        os.remove('fx_ptq_yaml.yaml')
-        os.remove('fx_dynamic_yaml.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
@@ -401,15 +342,18 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
             quantizer.model = common.Model(model)
-            if fake_yaml == 'qat_yaml.yaml':
-                quantizer.q_func = q_func
-            else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights by lpot.utils
             saved_model = load("./saved", model)
+            # recover int8 model with only tune_cfg
+            tune_cfg_file = './saved/best_configure.yaml'
+            with open(tune_cfg_file, 'r') as f:
+                history_cfg = yaml.safe_load(f)
+            saved_model = load(model=model, \
+                                history_cfg=history_cfg)
             eval_func(saved_model)
             shutil.rmtree('./saved', ignore_errors=True)
         from lpot.experimental import Benchmark
@@ -420,6 +364,31 @@ class TestPytorchAdaptor(unittest.TestCase):
         evaluator()
         evaluator.model = common.Model(model)
         evaluator()
+
+        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
+            model = copy.deepcopy(self.model)
+            if fake_yaml == 'ptq_yaml.yaml':
+                model.eval().fuse_model()
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+            quantizer.model = common.Model(model)
+            if fake_yaml == 'qat_yaml.yaml':
+                quantizer.q_func = q_func
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_func = eval_func
+            q_model = quantizer()
+            q_model.save('./saved')
+            # Load configure and weights by lpot.utils
+            saved_model = load("./saved", model)
+            # recover int8 model with only tune_cfg
+            tune_cfg_file = './saved/best_configure.yaml'
+            with open(tune_cfg_file, 'r') as f:
+                history_cfg = yaml.safe_load(f)
+            saved_model = load(model=model, \
+                                history_cfg=history_cfg)
+            eval_func(saved_model)
+            shutil.rmtree('./saved', ignore_errors=True)
 
     def test_tensorboard(self):
         model = copy.deepcopy(self.lpot_model)
@@ -526,31 +495,110 @@ class TestPytorchAdaptor(unittest.TestCase):
         tol = {'atol': 1e-01, 'rtol': 1e-03}
         self.assertTrue(np.allclose(y, qy, **tol))
 
+
+@unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
+class TestPytorchIPEXAdaptor(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        build_ipex_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('ipex_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
+
+    def test_tuning_ipex(self):
+        from lpot.experimental import Quantization
+        model = torchvision.models.resnet18()
+        quantizer = Quantization('ipex_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        quantizer.model = common.Model(model)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        lpot_model = quantizer()
+        lpot_model.save('./saved')
+        try:
+            script_model = torch.jit.script(model.to(ipex.DEVICE))
+        except:
+            script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
+        from lpot.experimental import Benchmark
+        evaluator = Benchmark('ipex_yaml.yaml')
+        evaluator.model = common.Model(script_model)
+        evaluator.b_dataloader = common.DataLoader(dataset)
+        results = evaluator()
+
+
+@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+class TestPytorchFXAdaptor(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        build_pytorch_fx_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fx_ptq_yaml.yaml')
+        os.remove('fx_dynamic_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
+
     def test_fx_quant(self):
-        if PT_VERSION >= PT18_VERSION:
+        for fake_yaml in ['fx_dynamic_yaml.yaml', 'fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
             model_origin = torchvision.models.resnet18()
-
             # run fx_quant in lpot and save the quantized GraphModule
-            quantizer = Quantization('fx_ptq_yaml.yaml')
+            quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_func = eval_func
             quantizer.model = common.Model(model_origin,
-                                           **{'prepare_custom_config_dict': {'a': 1},
+                                            **{'prepare_custom_config_dict': {'a': 1},
                                               'convert_custom_config_dict': {'a': 1}})
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
-            q_model.save('./saved_static_fx')
-
-            # Load configure and weights by lpot.utils
-            model_fx = load("./saved_static_fx", model_origin,
+            q_model.save('./saved')
+            # Load configure and weights with lpot.utils
+            model_fx = load('./saved', model_origin,
                             **{'prepare_custom_config_dict': {'a': 1},
-                               'convert_custom_config_dict': {'a': 1}})
+                                'convert_custom_config_dict': {'a': 1}})
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+            eval_func(model_fx)
+            # recover int8 model with only tune_cfg
+            history_file = './saved/history.snapshot'
+            model_fx_recover = recover(model_origin, history_file, 0,\
+                            **{'prepare_custom_config_dict': {'a': 1},
+                                'convert_custom_config_dict': {'a': 1}})
+            self.assertEqual(model_fx.code, model_fx_recover.code)
+            shutil.rmtree('./saved', ignore_errors=True)
+
+        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+            model_origin = torchvision.models.resnet18()
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+            quantizer.model = common.Model(model_origin)
+            if fake_yaml == 'fx_qat_yaml.yaml':
+                quantizer.q_func = q_func
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_func = eval_func
+            q_model = quantizer()
+            q_model.save('./saved')
+            # Load configure and weights with lpot.utils
+            model_fx = load('./saved', model_origin,
+                            **{'prepare_custom_config_dict': {'a': 1},
+                                'convert_custom_config_dict': {'a': 1}})
+            self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+            eval_func(model_fx)
+            # recover int8 model with only tune_cfg
+            history_file = './saved/history.snapshot'
+            model_fx_recover = recover(model_origin, history_file, 0,\
+                            **{'prepare_custom_config_dict': {'a': 1},
+                                'convert_custom_config_dict': {'a': 1}})
+            self.assertEqual(model_fx.code, model_fx_recover.code)
+            shutil.rmtree('./saved', ignore_errors=True)
 
     def test_fx_dynamic_quant(self):
         # Model Definition
         class LSTMModel(nn.Module):
-            """Container module with an encoder, a recurrent module, and a decoder."""
+            '''Container module with an encoder, a recurrent module, and a decoder.'''
 
             def __init__(self, ntoken, ninp, nhid, nlayers, dropout=0.5):
                 super(LSTMModel, self).__init__()
@@ -575,64 +623,35 @@ class TestPytorchAdaptor(unittest.TestCase):
                 decoded = self.decoder(output)
                 return decoded, hidden
 
-        if PT_VERSION >= PT18_VERSION:
-            model = LSTMModel(
-                ntoken = 10,
-                ninp = 512,
-                nhid = 256,
-                nlayers = 5,
-            )
+        model = LSTMModel(
+            ntoken = 10,
+            ninp = 512,
+            nhid = 256,
+            nlayers = 5,
+        )
 
-            # run fx_quant in lpot and save the quantized GraphModule
-            model.eval()
-            quantizer = Quantization('fx_dynamic_yaml.yaml')
-            quantizer.model = common.Model(model,
-                                           **{'prepare_custom_config_dict': {'a': 1},
-                                              'convert_custom_config_dict': {'a': 1}})
-            q_model = quantizer()
-            q_model.save('./saved_dynamic_fx')
+        # run fx_quant in lpot and save the quantized GraphModule
+        model.eval()
+        quantizer = Quantization('fx_dynamic_yaml.yaml')
+        quantizer.model = common.Model(model,
+                                        **{'prepare_custom_config_dict': {'a': 1},
+                                          'convert_custom_config_dict': {'a': 1}})
+        q_model = quantizer()
+        q_model.save('./saved')
 
-            # Load configure and weights by lpot.utils
-            model_fx = load("./saved_dynamic_fx", model,
-                            **{'prepare_custom_config_dict': {'a': 1},
-                               'convert_custom_config_dict': {'a': 1}})
-            if PT_VERSION >= PT18_VERSION:
-                self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
-            else:
-                self.assertTrue(isinstance(model_fx, torch._fx.graph_module.GraphModule))
-
-
-@unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
-class TestPytorchIPEXAdaptor(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        build_ipex_yaml()
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove('ipex_yaml.yaml')
+        # Load configure and weights by lpot.utils
+        model_fx = load("./saved", model,
+                        **{'prepare_custom_config_dict': {'a': 1},
+                            'convert_custom_config_dict': {'a': 1}})
+        self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+        # recover int8 model with only tune_cfg
+        history_file = './saved/history.snapshot'
+        model_fx_recover = recover(model, history_file, 0,\
+                        **{'prepare_custom_config_dict': {'a': 1},
+                            'convert_custom_config_dict': {'a': 1}})
+        self.assertEqual(model_fx.code, model_fx_recover.code)
         shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
 
-    def test_tuning_ipex(self):
-        from lpot.experimental import Quantization
-        model = torchvision.models.resnet18()
-        quantizer = Quantization('ipex_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        quantizer.model = common.Model(model)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        lpot_model = quantizer()
-        lpot_model.save("./saved")
-        try:
-            script_model = torch.jit.script(model.to(ipex.DEVICE))
-        except:
-            script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from lpot.experimental import Benchmark
-        evaluator = Benchmark('ipex_yaml.yaml')
-        evaluator.model = common.Model(script_model)
-        evaluator.b_dataloader = common.DataLoader(dataset)
-        results = evaluator()
 
 
 if __name__ == "__main__":

@@ -34,18 +34,20 @@ class PyTorchCriterions(object):
         self.criterions.update(PYTORCH_CRITERIONS)
 
 framework_criterions = {"tensorflow": TensorflowCriterions,
-                        "pytorch":    PyTorchCriterions}
+                        "pytorch":    PyTorchCriterions,
+                        "pytorch_fx": PyTorchCriterions}
 
 # user/model specific criterions will be registered here
 TENSORFLOW_CRITERIONS = {}
 PYTORCH_CRITERIONS= {}
 
 registry_criterions = {"tensorflow": TENSORFLOW_CRITERIONS,
-                       "pytorch":    PYTORCH_CRITERIONS}
+                       "pytorch":    PYTORCH_CRITERIONS,
+                       "pytorch_fx": PYTORCH_CRITERIONS}
 
 class Criterions(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "pytorch"), \
+        assert framework in ("tensorflow", "pytorch", "pytorch_fx"), \
                              "framework support tensorflow pytorch"
         self.criterions = framework_criterions[framework]().criterions
 

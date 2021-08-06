@@ -27,6 +27,7 @@ import ast
 import os
 import time
 import sys
+import pickle
 import logging
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
@@ -238,14 +239,53 @@ def get_tensor_histogram(tensor_data, bins=2048):
     max_val = np.max(tensor_data)
     min_val = np.min(tensor_data)
     th = max(abs(min_val), abs(max_val))
-
     hist, hist_edges = np.histogram(tensor_data, bins=2048, range=(-th, th))
-
     return (hist, hist_edges, min_val, max_val, th)
 
 
 def get_all_fp32_data(data):
     return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip()]
+
+
+def get_tuning_history(tuning_history_path):
+    """
+    :params tuning_history_path: need user to assign
+    """
+    with open(tuning_history_path, 'rb') as f:
+        strategy_object = pickle.load(f)
+    tuning_history = strategy_object.tuning_history
+    return tuning_history
+
+
+def recover(fp32_model, tuning_history_path, num, **kwargs):
+    """offline recover tuned model.
+
+    :params fp32_model: input model path
+    :params tuning_history_path: need user to assign
+    :params num: tune index
+    """
+    tuning_history = get_tuning_history(tuning_history_path)
+    target_history = tuning_history[0]['history']
+    q_config = target_history[num]['q_config']
+    framework = tuning_history[0]['cfg']['model']['framework']
+
+    if 'pytorch' in framework:
+        from lpot.utils.pytorch import load
+        tune_index_qmodel = load(model=fp32_model, history_cfg=q_config, **kwargs)
+        return tune_index_qmodel
+
+    from lpot.adaptor import FRAMEWORKS
+    adaptor = FRAMEWORKS[framework](q_config['framework_specific_info'])
+    if 'onnxrt' in framework:
+        from lpot.experimental import common
+        ox_fp32_model = common.Model(fp32_model)
+        tune_index_qmodel = adaptor.recover(ox_fp32_model, q_config)
+        return tune_index_qmodel
+    elif 'tensorflow' in framework:
+        from lpot.experimental import common
+        tf_fp32_model = common.Model(fp32_model)
+        tune_index_qmodel = adaptor.recover_tuned_model(tf_fp32_model, q_config)
+        return tune_index_qmodel
 
 
 def str2array(s):
@@ -254,6 +294,7 @@ def str2array(s):
     s = re.sub(r'\]\[', '], [', s)
 
     return np.array(ast.literal_eval(s))
+
 
 def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
     weight_channel = weight_tensor.shape[-1]
@@ -272,6 +313,7 @@ def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
                 new_data[j] = \
                         float(new_data[j] *(max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
 
+
 def Dequantize(data, scale_info):
     original_shape = data.shape
     size = data.size
@@ -279,6 +321,8 @@ def Dequantize(data, scale_info):
     max_value = 255 if scale_info[0].find("Relu") != -1 else 127
     return np.array([float(i *(scale_info[2] - scale_info[1])/ max_value) for i in new_data]\
             ).reshape(original_shape)
+
+
 class CaptureOutputToFile(object):
     def __init__(self, tmp_file_path, stream=sys.stderr):
         self.orig_stream_fileno = stream.fileno()

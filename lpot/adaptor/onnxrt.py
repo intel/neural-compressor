@@ -58,7 +58,7 @@ class ONNXRTAdaptor(Adaptor):
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
-        self.q_config = {} # adaptor should know current configs at any time
+        self.quantize_config = {} # adaptor should know current configs at any time
         self.quantize_params = {} # adaptor should know current params at any time
 
     @dump_elapsed_time("Pass quantize model")
@@ -79,36 +79,118 @@ class ONNXRTAdaptor(Adaptor):
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         model = self.pre_optimized_model if self.pre_optimized_model else model
         ort_version = StrictVersion(ort.__version__)
-        if ort_version < ONNXRT152_VERSION:
+        if ort_version < ONNXRT152_VERSION: # pragma: no cover
             logger.warning('quantize input need onnxruntime version > 1.5.2')
             return model
-        if model.model.opset_import[0].version < 11:
+        if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning('quantize input need model opset >= 11')
         from lpot.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
-        model = copy.deepcopy(model)
-        q_config = self._cfg_to_qconfig(tune_cfg)
+        tmp_model = copy.deepcopy(model)
+        self.quantizable_ops = self._query_quantizable_ops(tmp_model.model)
+        quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
         if self.static:
-            quantize_params = self._get_quantize_params(model.model, data_loader, q_config, \
-                                                                                  iterations)
+            quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                                                            quantize_config, iterations)
         else:
             quantize_params = None
         self.quantize_params = quantize_params
-        quantizer = ONNXQuantizer(model.model,
-            q_config,
+        quantizer = ONNXQuantizer(tmp_model.model,
+            quantize_config,
             backend,
             self.static,
             quantize_params,
             self.quantizable_op_types)
         quantizer.quantize_model()
+        model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         model.model = quantizer.model.model
-        self.q_config = q_config # update so other methods can know current configs
-    
+        self.quantize_config = quantize_config # update so other methods can know current configs
+ 
         self._dump_model_op_stastics(model)
         return model
+
+    def _generate_qconfig(self, model, tune_cfg, quantize_params):
+        for node in model.graph.node:
+            if (node.name, node.op_type) not in tune_cfg['op']:
+                continue
+            scale_info = {}
+            if quantize_params:
+                for input_name in node.input:
+                    if input_name in quantize_params:
+                        scale_info[input_name] = quantize_params[input_name]
+                for output_name in node.output:
+                    if output_name in quantize_params:
+                        scale_info[output_name] = quantize_params[output_name]
+            tune_cfg['op'][(node.name, node.op_type)]['scale_info'] = scale_info
+        fwk_info = {}
+        fwk_info['approach'] = self.static
+        fwk_info['backend'] = self.backend
+        fwk_info['workspace_path'] = self.work_space
+        tune_cfg['framework_specific_info'] = fwk_info
+        return tune_cfg
+ 
+    @dump_elapsed_time("Pass recover model")
+    def recover(self, model, q_config):
+        """Execute the recover process on the specified model.
+
+        Args:
+            model (object):  model need to do quantization.
+            q_config (dict): recover configuration
+
+        Returns:
+            (dict): quantized model
+        """
+        self._pre_optimize(model)
+        model = self.pre_optimized_model
+        ort_version = StrictVersion(ort.__version__)
+        if ort_version < ONNXRT152_VERSION: # pragma: no cover
+            logger.warning('quantize input need onnxruntime version > 1.5.2')
+            return model
+        if model.model.opset_import[0].version < 11: # pragma: no cover
+            logger.warning('quantize input need model opset >= 11')
+
+        from lpot.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
+        from onnxruntime.quantization.quant_utils import QuantizationMode
+        backend = QuantizationMode.QLinearOps if self.backend == \
+            "qlinearops" else QuantizationMode.IntegerOps
+ 
+        self.quantizable_ops = self._query_quantizable_ops(model.model)
+        quantize_params, tune_cfg = self._parse_qconfig(q_config)
+        quantize_config = self._cfg_to_quantize_config(tune_cfg)
+        quantizer = ONNXQuantizer(model.model,
+            quantize_config,
+            backend,
+            self.static,
+            quantize_params,
+            self.quantizable_op_types)
+ 
+        quantizer.quantize_model()
+        model.model = quantizer.model.model
+        return model
+ 
+    def _parse_qconfig(self, q_config):
+        quantize_params = {}
+        tune_cfg = {}
+        for k, v in q_config.items():
+            if k == 'op':
+                tune_cfg['op'] = {}
+                for op_name_type, op_info in v.items():
+                    node_dict = {}
+                    for info_name, info_content in op_info.items():
+                        if info_name != 'scale_info':
+                            node_dict[info_name] = info_content
+                        else:
+                            for tensor_name, param in info_content.items():
+                                quantize_params[tensor_name] = param
+                    tune_cfg['op'][op_name_type] = node_dict
+            else:
+                tune_cfg[k] = v
+        if len(quantize_params) == 0:
+            quantize_params = None
+        return quantize_params, tune_cfg
 
     def _dump_model_op_stastics(self, model):
         fp32_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
@@ -167,18 +249,18 @@ class ONNXRTAdaptor(Adaptor):
             res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
         OpPrecisionStatistics(output_data).print_stat()
 
-    def _get_quantize_params(self, model, data_loader, q_config, iterations):
+    def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
         from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
         from lpot.model.onnx_model import ONNXModel
         if not isinstance(model, ONNXModel):
             model = ONNXModel(model)
-        black_nodes = [node for node in q_config if q_config[node]=='fp32']
-        white_nodes = [node for node in q_config if q_config[node]!='fp32']
+        black_nodes = [node for node in quantize_config if quantize_config[node]=='fp32']
+        white_nodes = [node for node in quantize_config if quantize_config[node]!='fp32']
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   os.path.join(self.work_space, 'augmented_model.onnx'), \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
-                  iterations=list(range(0, q_config['calib_iteration'])))
+                  iterations=list(range(0, quantize_config['calib_iteration'])))
         quantize_params = augment.dump_calibration()
         return quantize_params
 
@@ -228,11 +310,11 @@ class ONNXRTAdaptor(Adaptor):
                     'quantized filter weight should be input of only one node'
             node = input_name_to_nodes[tensor_name][0] #TBD only for conv bias
             node_name = node.name.replace('_quant', '')
-            assert node_name in self.q_config
-            q_type = self.q_config[node_name]['weight']['dtype']
+            assert node_name in self.quantize_config
+            q_type = self.quantize_config[node_name]['weight']['dtype']
             if not_filter:
                 new_tensor_value = self._requantize_bias(model, tensor_name, tensor_value)
-            elif self.q_config[node_name]['weight']['granularity'] == 'per_tensor':
+            elif self.quantize_config[node_name]['weight']['granularity'] == 'per_tensor':
                 new_tensor_value = quantize_data_with_scale_zo(tensor_value,
                                                                q_type,
                                                                scale_value,
@@ -381,9 +463,9 @@ class ONNXRTAdaptor(Adaptor):
 
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
-    def _cfg_to_qconfig(self, tune_cfg):
-        q_config = {}
-        q_config['calib_iteration'] = tune_cfg['calib_iteration']
+    def _cfg_to_quantize_config(self, tune_cfg):
+        quantize_config = {}
+        quantize_config['calib_iteration'] = tune_cfg['calib_iteration']
         granularity = 'per_tensor'
         algorithm = 'minmax'
         scheme = 'sym'
@@ -392,7 +474,7 @@ class ONNXRTAdaptor(Adaptor):
         for _, op in enumerate(self.quantizable_ops):
             if tune_cfg['op'][(op.name, op.op_type)
                               ]['activation']['dtype'] == 'fp32':
-                q_config[op.name] = 'fp32'
+                quantize_config[op.name] = 'fp32'
             else:
                 node_config = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
                 for tensor, config in tune_cfg['op'][(op.name, op.op_type)].items():
@@ -408,9 +490,9 @@ class ONNXRTAdaptor(Adaptor):
                     else:
                         node_config[tensor]['dtype'] = \
                                  onnx_proto.TensorProto.UINT8 # pylint: disable=no-member
-                q_config[op.name] = node_config
+                quantize_config[op.name] = node_config
 
-        return q_config
+        return quantize_config
 
     def _query_quantizable_ops(self, model):
         for node in model.graph.node:
