@@ -135,7 +135,7 @@ class TuneStrategy(object):
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
-        if framework == 'tensorflow':
+        if framework == 'tensorflow' or framework == 'tensorflow_itex':
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
                  "outputs": self.cfg.model.outputs,

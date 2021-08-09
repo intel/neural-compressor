@@ -89,6 +89,7 @@ class PytorchMxnetWrapFunction():
         return sample
 
 framework_datasets = {"tensorflow": TensorflowDatasets,
+                      "tensorflow_itex": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
                       "pytorch": PyTorchDatasets,
                       "pytorch_ipex": PyTorchDatasets,
@@ -109,7 +110,8 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
+        assert framework in ["tensorflow", "tensorflow_itex",
+                             "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
                              "pytorch", "pytorch_ipex", "pytorch_fx"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.datasets = framework_datasets[framework]().datasets
@@ -121,6 +123,7 @@ class DATASETS(object):
 
 # user/model specific datasets will be registered here
 TENSORFLOW_DATASETS = {}
+TENSORFLOWITEX_DATASETS = {}
 MXNET_DATASETS = {}
 PYTORCH_DATASETS = {}
 PYTORCHIPEX_DATASETS = {}
@@ -129,6 +132,7 @@ ONNXRTQL_DATASETS = {}
 ONNXRTIT_DATASETS = {}
 
 registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
+                    "tensorflow_itex": TENSORFLOWITEX_DATASETS,
                      "mxnet": MXNET_DATASETS,
                      "pytorch": PYTORCH_DATASETS,
                      "pytorch_ipex": PYTORCHIPEX_DATASETS,
@@ -154,6 +158,7 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow",
+                "tensorflow_itex",
                 "mxnet",
                 "pytorch",
                 "pytorch_ipex",

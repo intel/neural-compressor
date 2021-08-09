@@ -55,6 +55,7 @@ PYTORCH_FILTERS = {}
 MXNET_FILTERS = {}
 
 framework_filters = {"tensorflow": TensorflowFilters,
+                     "tensorflow_itex": TensorflowFilters,
                      "pytorch": PyTorchFilters,
                      "pytorch_ipex": PyTorchFilters,
                      "pytorch_fx": PyTorchFilters,
@@ -64,6 +65,7 @@ framework_filters = {"tensorflow": TensorflowFilters,
                      }
 
 registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
+                    "tensorflow_itex": TENSORFLOW_FILTERS,
                     "pytorch": PYTORCH_FILTERS,
                     "pytorch_ipex": PYTORCH_FILTERS,
                     "pytorch_fx": PYTORCH_FILTERS,
@@ -73,7 +75,8 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
 
 class FILTERS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "pytorch", "pytorch_ipex", "pytorch_fx", "mxnet",
+        assert framework in ["tensorflow", "tensorflow_itex",
+                            "pytorch", "pytorch_ipex", "pytorch_fx", "mxnet",
                              "onnxrt_integerops", "onnxrt_qlinearops"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.filters = framework_filters[framework]().filters
@@ -101,6 +104,7 @@ def filter_registry(filter_type, framework):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow", 
+                "tensorflow_itex",
                 "pytorch",
                 "pytorch_ipex",
                 "pytorch_fx",

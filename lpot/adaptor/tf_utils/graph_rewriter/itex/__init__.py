@@ -14,18 +14,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from .tensorflow_dataloader import TensorflowDataLoader
-from .mxnet_dataloader import MXNetDataLoader
-from .pytorch_dataloader import PyTorchDataLoader
-from .onnxrt_dataloader import ONNXRTDataLoader
-
-DATALOADERS = {"tensorflow": TensorflowDataLoader,
-               "tensorflow_itex": TensorflowDataLoader,
-               "mxnet": MXNetDataLoader,
-               "pytorch": PyTorchDataLoader,
-               "pytorch_ipex": PyTorchDataLoader,
-               "pytorch_fx": PyTorchDataLoader,
-               "onnxrt_qlinearops": ONNXRTDataLoader,
-               "onnxrt_integerops": ONNXRTDataLoader}
-

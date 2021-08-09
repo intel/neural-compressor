@@ -28,7 +28,6 @@ from ..utils import logger
 from ..conf.dotdict import deep_get
 tensorflow = LazyImport('tensorflow')
 
-
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -57,8 +56,10 @@ class TensorFlowAdaptor(Adaptor):
         self.bf16_ops = []
         self.fp32_ops = []
         self.dump_times = 0   # for tensorboard
+
+        cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "tensorflow.yaml"))
+            os.path.dirname(__file__), cfg_yaml_name))
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
@@ -820,7 +821,42 @@ class TensorFlowAdaptor(Adaptor):
                                             recover_config=q_config)
 
         return converter.convert_without_calib()
+@adaptor_registry
+class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
 
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization configuration
+            model (tf.compat.v1.GraphDef): fp32 model
+            data_loader (generator): generator the data and labels
+            q_func (optional): training function for quantization aware training mode,
+                                which not enabled for tensorflow yet.
+
+        Returns:
+            tf.compat.v1.GraphDef: the quantized model
+        """
+        assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        self.tuning_cfg_to_fw(tune_cfg)
+        logger.debug('Dump quantization configurations:')
+        logger.debug(self.quantize_config)
+        from .tf_utils.graph_converter import GraphConverter
+        converted_model = GraphConverter(model,
+                                   qt_config=self.quantize_config,
+                                   recipes=self.recipes,
+                                   int8_sequences=self.op_wise_sequences,
+                                   fp32_ops=self.fp32_ops,
+                                   bf16_ops=self.bf16_ops,
+                                   data_loader=data_loader,
+                                   itex_mode=True).convert()
+
+        self._dump_model_op_stastics(converted_model.graph_def)
+
+        return converted_model
 @singleton
 class TensorflowQuery(QueryBackendCapability):
 

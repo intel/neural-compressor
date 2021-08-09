@@ -1,0 +1,125 @@
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+-
+  version:
+    name: ['default']
+
+  precisions: &common_precisions
+    names: int8, uint8, bf16, fp32
+    valid_mixed_precisions: []
+
+  ops: &common_ops
+    int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    fp32: ['*'] # '*' means all op types
+
+  capabilities: &common_capabilities
+    int8: &ref_2_4_int8 {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+    uint8: &ref_2_4_uint8 {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+  patterns: &common_patterns
+    int8: [
+
+        ]
+    uint8: [
+
+  ]
+
+  grappler_optimization: &common_grappler_optimization
+    pruning: True                                    # optional. grappler pruning optimizer,default value is True.
+    shape: True                                      # optional. grappler shape optimizer,default value is True.
+    constfold: False                                 # optional. grappler constant folding optimizer, default value is True.
+    arithmetic: False                                # optional. grappler arithmetic optimizer,default value is False.
+    dependency: True                                 # optional. grappler dependency optimizer,default value is True.
+    debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
+    loop: True                                       # optional. grappler loop optimizer,default value is True.

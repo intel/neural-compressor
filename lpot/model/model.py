@@ -1133,6 +1133,7 @@ class MXNetModel(BaseModel):
             logger.info('Save quantized symbol model at %s' % root)
 
 MODELS = {'tensorflow': TensorflowModel,
+          'tensorflow_itex': TensorflowModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel,
           'pytorch_ipex': PyTorchIpexModel,

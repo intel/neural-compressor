@@ -58,7 +58,7 @@ class Component(object):
                                    'workspace_path': self.cfg.tuning.workspace.path,
                                    'q_dataloader': None}
 
-        if self.framework == 'tensorflow':
+        if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
@@ -330,7 +330,7 @@ class Component(object):
         else:
             self._model = user_model
 
-        if self.framework == 'tensorflow':
+        if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
             self._model.name = self.cfg.model.name
             self._model.output_tensor_names = self.cfg.model.outputs
             self._model.input_tensor_names = self.cfg.model.inputs

@@ -57,6 +57,7 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
+from .graph_rewriter.itex.itex_convert import GenerateITEXModel
 from lpot.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
@@ -73,7 +74,8 @@ class GraphConverter:
                  fp32_ops=[],
                  bf16_ops=[],
                  data_loader=None,
-                 fake_quant=False):
+                 fake_quant=False,
+                 itex_mode=False):
         """Convert graph.
 
         :param model: input tensorflow model.
@@ -100,6 +102,7 @@ class GraphConverter:
         self.bf16_ops = bf16_ops
         self.recipes = recipes
         self.fake_quant = fake_quant
+        self.itex_mode = itex_mode
         self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
@@ -129,6 +132,10 @@ class GraphConverter:
         self._sampling_model.output_tensor_names = self.output_tensor_names
         self._sampling_model.input_tensor_names = self.input_tensor_names
 
+        self._itex_model = Model(self.model._model, **self.model.kwargs)
+        self._itex_model.graph_def = self.model.graph_def
+        self._itex_model.output_tensor_names = self.output_tensor_names
+        self._itex_model.input_tensor_names = self.input_tensor_names
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
     def _inference(self, model):
@@ -233,6 +240,9 @@ class GraphConverter:
         model = self._tmp_model
         if len(self.op_wise_config) > 0:
             model = self.quantize()
+
+        if self.itex_mode:
+            return self._itex_model
 
         if len(self.bf16_ops) > 0:
             model = self.bf16_convert()
@@ -489,6 +499,23 @@ class GraphConverter:
 
         return res
 
+    def _search_y_pattern_for_itex(self):
+        """Search the Y pattern for itex and return the op name.
+        """
+        g = GraphAnalyzer()
+        g.graph = self._fp32_model.graph_def
+        g.parse_graph()
+        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add'], ('Relu',)]
+        target_nodes = g.query_fusion_pattern_nodes(y_pattern)
+
+        res = {}
+        for i in target_nodes:
+            if i[2] not in res:
+                res[i[2]] = 1
+            else:
+                res[i[2]] += 1
+        return [(i,) for i in res if res[i] == 2]
+
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:
             1) quantize graph,
@@ -514,6 +541,10 @@ class GraphConverter:
 
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+
+                if self.itex_mode:
+                    self.quantized_node_info.extend(self._search_y_pattern_for_itex())
+
                 for i in self.quantized_node_info:
                     frame_name = self._rnn_details[i] if i in self._rnn_details else None
                     sampling_graph_def, output_names = InsertPrintMinMaxNode(
@@ -527,6 +558,14 @@ class GraphConverter:
                     with CaptureOutputToFile(tmp_dump_file):
                         self._inference(self._sampling_model)
                     self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
+
+                if self.itex_mode:
+                    self._itex_model.graph_def = GenerateITEXModel(
+                        self._itex_model, self._calibration_data).do_transformation()
+                    self._itex_model.graph_def.library.CopyFrom(
+                        self.model.graph_def.library)
+
+                    return self._itex_model
 
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
