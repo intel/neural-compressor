@@ -115,8 +115,9 @@ class ModelConversion():
         if self._eval_func:
             baseline_score = self._eval_func(self._model)
             qmodel_score = self._eval_func(q_model)
-            logger.info('QAT model score is: ' + str(baseline_score))
-            logger.info('converted model score is: ' + str(qmodel_score))
+            logger.info("The score of Quantization-Aware Training model is {}.".
+                        format(str(baseline_score)))
+            logger.info("Converted model score is {}.".format(str(qmodel_score)))
 
         return q_model
 
@@ -207,8 +208,7 @@ class ModelConversion():
 
         """
         if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, ' +
-                'better initialize lpot.experimental.common.Model and set....')
+            logger.warning("Force convert framework model to lpot model.")
             self._model = LpotModel(user_model)
         else:
             self._model = user_model
@@ -226,7 +226,7 @@ class ModelConversion():
 
     @property
     def metric(self):
-        logger.warning('metric not support getter....')
+        assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
@@ -251,7 +251,8 @@ class ModelConversion():
 
         metric_cfg = {user_metric.name : {**user_metric.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning('already set metric in yaml file, will override it...')
+            logger.warning("Override the value of `metric` field defined in yaml file" \
+                           " as user defines the value of `metric` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         from .metric import METRICS
@@ -260,7 +261,7 @@ class ModelConversion():
 
     @property
     def postprocess(self, user_postprocess):
-        logger.warning('postprocess not support getter....')
+        assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
@@ -282,16 +283,16 @@ class ModelConversion():
             'please initialize a lpot.common.Postprocess and set....'
         postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
-            logger.warning('already set postprocess in yaml file, will override it...')
+            logger.warning("Override the value of `postprocess` field defined in yaml file" \
+                           " as user defines the value of `postprocess` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         from .data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-        logger.info("{} registered to postprocess".format(user_postprocess.name))
 
     @property
     def eval_func(self):
-        logger.warning('eval_func not support getter....')
+        assert False, 'Should not try to get the value of `eval_func` attribute.'
         return None
 
     @eval_func.setter

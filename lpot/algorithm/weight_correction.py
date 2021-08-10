@@ -18,7 +18,6 @@ from copy import deepcopy
 
 import numpy as np
 from .algorithm import Algorithm, algorithm_registry
-from ..utils import logger
 
 @algorithm_registry(algorithm_type='weight_correction')
 class WeightCorrection(Algorithm):

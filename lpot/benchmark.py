@@ -34,15 +34,15 @@ class Benchmark(object):
 
     def __call__(self, model, b_dataloader=None, b_func=None):
 
-        logger.warning('This API is going to be deprecated, please import '
-            'lpot.experimental.Benchmark, set the attributes about '
-            'dataloader/postprocess/metric, then use new __call__ method')
+        logger.warning("This API is going to be deprecated. Please import "
+            "lpot.experimental.Bencharmk, initialize an instance of `Benchmark`,"
+            "set its dataloader and metric attributes, then invoke its __call__ method.")
 
         self.exp_benchmarker.model = model
         if b_dataloader is not None:
             self.exp_benchmarker.b_dataloader = b_dataloader
         elif b_func is not None:
-            logger.warning('Benchmark will do nothing when you input b_func...')
+            logger.warning("Benchmark will do nothing when you input b_func.")
         self.exp_benchmarker()
         return self.exp_benchmarker.results
 

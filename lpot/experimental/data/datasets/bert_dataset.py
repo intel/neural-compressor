@@ -26,6 +26,7 @@ from .dataset import dataset_registry, Dataset
 torch = LazyImport('torch')
 transformers = LazyImport('transformers')
 
+logger = logging.getLogger()
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
 class PytorchBertDataset(Dataset):
@@ -135,7 +136,6 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
     model_type, tokenizer, evaluate):
     from torch.utils.data import TensorDataset
 
-    logger = logging.getLogger()
     processor = transformers.glue_processors[task]()
     output_mode = transformers.glue_output_modes[task]
     # Load data features from cache or dataset file
@@ -147,10 +147,10 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
         str(max_seq_length),
         str(task)))
     if os.path.exists(cached_features_file):
-        logger.info("Loading features from cached file %s", cached_features_file)
+        logger.info("Load features from cached file {}.".format(cached_features_file))
         features = torch.load(cached_features_file)
     else:
-        logger.info("Creating features from dataset file at %s", data_dir)
+        logger.info("Create features from dataset file at {}.".format(data_dir))
         label_list = processor.get_labels()
         if task in ['mnli', 'mnli-mm'] and model_type in ['roberta']:
             # HACK(label indices are swapped in RoBERTa pretrained model)
@@ -164,7 +164,7 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
                                                 max_length=max_seq_length,
                                                 output_mode=output_mode,
         )
-        logger.info("Saving features into cached file %s", cached_features_file)
+        logger.info("Save features into cached file {}.".format(cached_features_file))
         torch.save(features, cached_features_file)
     # Convert to Tensors and build dataset
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
@@ -190,11 +190,10 @@ def convert_examples_to_features(
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
 ):
-    logger = logging.getLogger()
     processor = transformers.glue_processors[task]()
     if label_list is None:
         label_list = processor.get_labels()
-        logger.info("Using label list %s for task %s" % (label_list, task))
+        logger.info("Use label list {} for task {}.".format(label_list, task))
     label_map = {label: i for i, label in enumerate(label_list)}
     features = []
     for (ex_index, example) in enumerate(examples):

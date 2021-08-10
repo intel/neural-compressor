@@ -190,7 +190,7 @@ class TensorFlowAdaptor(Adaptor):
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                             model.output_tensor[0]
-        logger.info("Start to evaluate Tensorflow model...")
+        logger.info("Start to evaluate the TensorFlow model.")
         for idx, (inputs, labels) in enumerate(dataloader):
             # dataloader should keep the order and len of inputs same with input_tensor
             if len(input_tensor) == 1:
@@ -325,7 +325,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         assert q_func is None, "quantization aware training mode is not support on tensorflow"
         self.tuning_cfg_to_fw(tune_cfg)
-        logger.debug('Dump quantization configurations:')
+        logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
         converted_model = GraphConverter(model,
@@ -504,7 +504,7 @@ class TensorFlowAdaptor(Adaptor):
             'optypewise': self.get_optype_wise_ability(),
         }
         capability['opwise'] = copy.deepcopy(self.quantizable_op_details)
-        logger.debug('Dump framework quantization capability:')
+        logger.debug("Dump framework quantization capability:")
         logger.debug(capability)
 
         return capability
@@ -624,7 +624,7 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             [dict]: the key is op_name while the value is the ndarray tensor.
         """
-        logger.info("Start to run inspect_tensor..")
+        logger.info("Start to inspect tensor.")
         from .tf_utils.graph_converter import GraphConverter
         converter = GraphConverter(model,
                                    qt_config=self.quantize_config,
@@ -664,7 +664,7 @@ class TensorFlowAdaptor(Adaptor):
         # quantize input only support tensorflow version > 2.1.0
         import tensorflow as tf
         if tf.version.VERSION < '2.1.0':
-            logger.warning('quantize input need tensorflow version > 2.1.0')
+            logger.warning("Quantize input needs tensorflow 2.1.0 and newer.")
             return model, scale
 
         graph_def = model.as_graph_def()
@@ -896,9 +896,10 @@ class TensorflowQuery(QueryBackendCapability):
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
             except Exception as e:
-                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))
                 self.cur_config = None
-                raise ValueError("Please check the {} format.".format(self.cfg))
+                raise ValueError("Please check if the format of {} follows LPOT yaml schema.".
+                                 format(self.cfg))
 
     def get_version(self):
         """Get the current backend version infomation.

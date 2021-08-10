@@ -94,7 +94,7 @@ class Benchmark(object):
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
 
-        logger.info('Benchmark starts to run...')
+        logger.info("Start to run Benchmark.")
         if os.environ.get('LPOT_ENV_CONF') == 'True':
             return self.run_instance(mode)
         else:
@@ -119,7 +119,7 @@ class Benchmark(object):
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
         
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
-        logger.info('Instance run command is\n{}'.format(multi_instance_cmd))
+        logger.info("Running command is\n{}".format(multi_instance_cmd))
         # each instance will execute single instance
         set_env_var('LPOT_ENV_CONF', True, overwrite_existing=True)
         if sys.platform in ['linux']:
@@ -211,7 +211,6 @@ class Benchmark(object):
                                                is_measure=True)
 
         val = self.objective.evaluate(b_func, self._model)
-        logger.info('{} mode benchmark done!'.format(mode))
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val
@@ -226,16 +225,16 @@ class Benchmark(object):
         latency = np.array(result_list).mean() / batch_size
         self._results[mode] = acc, batch_size, result_list
 
-        logger.info('\n{} mode benchmark result:'.format(mode))
+        logger.info("\n{} mode benchmark result:".format(mode))
         for i, res in enumerate(result_list):
-            logger.debug('Iteration {} result {}:'.format(i, res))
+            logger.debug("Iteration {} result {}:".format(i, res))
         if mode == 'accuracy':
-            logger.info('Batch size = {}'.format(batch_size))
-            logger.info('Accuracy is {:.4f}'.format(acc))
+            logger.info("Batch size = {}".format(batch_size))
+            logger.info("Accuracy is {:.4f}".format(acc))
         elif mode == 'performance':
-            logger.info('Batch size = {}'.format(batch_size))
-            logger.info('Latency: {:.3f} ms'.format(latency * 1000))
-            logger.info('Throughput: {:.3f} images/sec'.format(1. / latency))
+            logger.info("Batch size = {}".format(batch_size))
+            logger.info("Latency: {:.3f} ms".format(latency * 1000))
+            logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
 
     @property
     def results(self):
@@ -297,8 +296,7 @@ class Benchmark(object):
         
         """
         if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, ' + 
-                'better initialize lpot.experimental.common.Model and set....')
+            logger.warning("Force convert framework model to lpot model.")
             self._model = LpotModel(user_model)
         else:
             self._model = user_model
@@ -313,7 +311,7 @@ class Benchmark(object):
 
     @property
     def metric(self):
-        logger.warning('metric not support getter....')
+        assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
@@ -338,7 +336,8 @@ class Benchmark(object):
 
         metric_cfg = {user_metric.name : {**user_metric.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning('already set metric in yaml file, will override it...')
+            logger.warning("Override the value of `metric` field defined in yaml file" \
+                           " as user defines the value of `metric` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         metrics = METRICS(self.framework)
@@ -346,7 +345,7 @@ class Benchmark(object):
 
     @property
     def postprocess(self, user_postprocess):
-        logger.warning('postprocess not support getter....')
+        assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
@@ -368,11 +367,11 @@ class Benchmark(object):
             'please initialize a lpot.experimental.common.Postprocess and set....'
         postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
-            logger.warning('already set postprocess in yaml file, will override it...')
+            logger.warning("Override the value of `postprocess` field defined in yaml file" \
+                           " as user defines the value of `postprocess` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-        logger.info("{} registered to postprocess".format(user_postprocess.name))
 
     def __repr__(self):
         return 'Benchmark'

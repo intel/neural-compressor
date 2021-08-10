@@ -94,7 +94,7 @@ class BasicTuneStrategy(TuneStrategy):
         best_cfg = None
         best_acc = 0
 
-        logger.debug('Start basic strategy by model-wise tuning')
+        logger.debug("Start basic strategy by model-wise tuning.")
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)
 
@@ -124,7 +124,7 @@ class BasicTuneStrategy(TuneStrategy):
 
             for fallback_dtype in fallback_dtypes:
                 logger.debug(
-                    'Continue basic strategy by sorting opwise %s fallback priority' %
+                    "Continue basic strategy by sorting opwise {} fallback priority.".format
                     (fallback_dtype))
                 ops_acc = OrderedDict()
                 for op, configs in reversed(self.opwise_tune_cfgs.items()):
@@ -141,9 +141,6 @@ class BasicTuneStrategy(TuneStrategy):
                     acc, _ = self.last_tune_result
                     ops_acc[op] = acc
 
-                logger.debug(
-                    'Continue basic strategy by incremental opwise %s fallback with priority' %
-                    (fallback_dtype))
                 op_cfgs = copy.deepcopy(best_cfg)
                 if ops_acc is not None:
                     ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key],
@@ -176,7 +173,7 @@ class BasicTuneStrategy(TuneStrategy):
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
         else:
-            logger.info(self.opwise_tune_cfgs)
+            logger.debug(self.opwise_tune_cfgs)
             op_cfgs['op'] = OrderedDict()
             for op in self.opwise_tune_cfgs.keys():
                 op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])

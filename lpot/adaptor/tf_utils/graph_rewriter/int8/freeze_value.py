@@ -46,8 +46,8 @@ class FreezeValueTransformer(GraphRewriterBase):
         if 0.0 < th <= 1.0:
             self.threshold = th
         else:
-            self.logger.warning("The threshold value for clipping is invalid ," \
-                "reset it to 0.95 by default")
+            self.logger.warning("The threshold value for clipping is invalid, " \
+                                "Reset it to 0.95 by default.")
             self.threshold = 0.95
         self.postfix = postfix
         self.device = device
@@ -70,7 +70,7 @@ class FreezeValueTransformer(GraphRewriterBase):
             if semi_count == 2:
                 output.append(i)
             elif semi_count % 2 != 0:
-                self.logger.debug("Invalid line")
+                self.logger.warning("Invalid line.")
             else:
                 loop_times = int(semi_count / 2)
                 semi_index = [index for index, value in enumerate(i) if value == ";"]
@@ -158,7 +158,7 @@ class FreezeValueTransformer(GraphRewriterBase):
         if self.tensor_data:
             for k, v in self.tensor_data.items():
                 if k in res:
-                    self.logger.debug('Update node {} min to {}, max to {}'.format(k, v[2], v[3]))
+                    self.logger.debug("Update node {} min to {}, max to {}.".format(k, v[2], v[3]))
                     res[k] = [v[2], v[3]]
         return res
 

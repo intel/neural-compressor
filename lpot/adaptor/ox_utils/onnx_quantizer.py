@@ -37,7 +37,7 @@ from onnxruntime.quantization.quant_utils import find_by_name, get_elem_index, g
 from onnxruntime.quantization.quant_utils import onnx_domain, __producer__, __version__
 
 from lpot.adaptor.ox_utils.registry import CreateOpQuantizer, CreateDefaultOpQuantizer
-from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zo, quantize_data, \
+from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zero, quantize_data, \
                                        QuantizedValue, QuantizedInitializer
 from lpot.model.onnx_model import ONNXModel
 

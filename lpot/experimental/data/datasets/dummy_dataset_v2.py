@@ -19,7 +19,6 @@ import sys
 from .dataset import dataset_registry, IterableDataset
 import numpy as np
 from lpot.utils.utility import LazyImport
-from lpot.utils import logger
 
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')

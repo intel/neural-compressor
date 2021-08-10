@@ -24,7 +24,6 @@ import numpy as np
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
-from lpot.utils import logger
 from .graph_transform_base import GraphTransformBase
 
 
@@ -61,8 +60,6 @@ class BiasCorrection(GraphTransformBase):
         for node in self.fp32_graph.node:
             if node.name not in self.fp32_node_mapping:
                 self.fp32_node_mapping[node.name] = node
-            else:
-                self.logger.warning('Duplicate node name {}'.format(node.name))
 
         for node_name in self.node_mapping:
             node = self.node_mapping[node_name]
@@ -127,7 +124,6 @@ class BiasCorrection(GraphTransformBase):
                 'correct filter shape should equal with origin filter shape'
             bias = int8_value.astype(np.float32) - correct_int8_value.astype(np.float32)
             if np.sum(bias) != 0 :
-                logger.info('Correct int8 weight....')
                 int8_filter.attr['value'].CopyFrom(
                     attr_value_pb2.AttrValue(
                         tensor=tensor_util.make_tensor_proto(

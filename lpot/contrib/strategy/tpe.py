@@ -29,7 +29,7 @@ try:
     import pandas as pd
 except ImportError:
     pd = None
-    logger.info('Pandas package is required for best result and CSV files generation.')
+    logger.info("Pandas package is required for best result and CSV files generation.")
 
 
 @strategy_registry
@@ -155,12 +155,12 @@ class TpeTuneStrategy(TuneStrategy):
         """Tpe traverse logic.
 
         """
-        logger.info('Start tpe strategy')
+        logger.info("Start to run tpe strategy.")
         # prepare log file
         trials_file = os.path.join(os.path.dirname(self.history_path), 'tpe_trials.csv')
         best_result_file = os.path.join(os.path.dirname(self.history_path), 'tpe_best_result.csv')
-        logger.debug('trials_file: {} '.format(trials_file) + \
-                    'best_result_file:{}'.format(best_result_file))
+        logger.debug("trials_file: {} ".format(trials_file) + \
+                     "best_result_file: {}".format(best_result_file))
         if Path(trials_file).exists():
             os.remove(trials_file)
         status = True;
@@ -185,7 +185,6 @@ class TpeTuneStrategy(TuneStrategy):
             self._configure_hpopt_search_space_and_params(first_run_cfg)
             # Run first iteration with best result from history
             trials_count = len(self.hpopt_trials.trials) + 1
-            logger.info('First iteration start.')
             fmin(partial(self.object_evaluation, model=self.model),
                 space=self.hpopt_search_space,
                 algo=self._algo,
@@ -208,11 +207,16 @@ class TpeTuneStrategy(TuneStrategy):
             trials_count = len(self.hpopt_trials.trials) + 1
             # get fp32 model baseline
             if self.baseline is None:
-                logger.info('Getting FP32 model baseline...')
+                logger.info("Get FP32 model baseline.")
                 self.baseline = self._evaluate(self.model)
                 self._add_tuning_history()
-            logger.info('FP32 baseline is: ' + ('[{:.4f}, {:.4f}]'.format(*self.baseline)
-                                                if self.baseline else 'None'))
+
+            baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
+                                                                    str(self.objective.measurer),
+                                                                    self.baseline[1]) \
+                                                                    if self.baseline else 'n/a'
+            logger.info("FP32 baseline is: {}".format(baseline_msg))
+
             if not self.objective.relative:
                 self.loss_function_config['acc_th'] =\
                     (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
@@ -220,7 +224,7 @@ class TpeTuneStrategy(TuneStrategy):
             exit = False
             while not exit:
                 self.cfg_evaluated = False
-                logger.info('Trial iteration start: {} / {}'.format(
+                logger.debug("Trial iteration start: {} / {}.".format(
                     trials_count, self.max_trials))
                 fmin(partial(self.object_evaluation, model=self.model),
                     space=self.hpopt_search_space,
@@ -236,7 +240,7 @@ class TpeTuneStrategy(TuneStrategy):
                 if self.stop(self.cfg.tuning.exit_policy.timeout, trials_count):
                     exit = True
         else:
-            logger.info('Can\'t create search space for input model!')
+            logger.warn("Can't create search space for input model.")
 
     def _prepare_final_searchspace(self, first, second):
         for key, cfgs in second.items():
@@ -248,7 +252,7 @@ class TpeTuneStrategy(TuneStrategy):
         return first
 
     def add_loss_to_tuned_history_and_find_best(self, tuning_history_list):
-        logger.debug('Number of resumed configs: {}'.format(len(tuning_history_list)))
+        logger.debug("Number of resumed configs is {}.".format(len(tuning_history_list)))
         best_loss = None
         first_run_cfg = None
         for history in tuning_history_list:
@@ -262,9 +266,11 @@ class TpeTuneStrategy(TuneStrategy):
             result['source'] = 'finetune'
             history['result'] = result
             logger.debug(
-                'Resumed iteration loss: {} acc_loss: {} lat_diff: {} quantization_ratio: {}'
-                .format(result['loss'], result['acc_loss'],
-                result['lat_diff'], result['quantization_ratio']))
+                "Resumed iteration loss is {}, acc_loss is {}, lat_diff is {}, " \
+                "quantization_ratio is {}.".format(result['loss'],
+                                                   result['acc_loss'],
+                                                   result['lat_diff'],
+                                                   result['quantization_ratio']))
         for op, cfg in first_run_cfg.items():
             first_run_cfg[op] = [cfg,]
         return first_run_cfg
@@ -281,12 +287,11 @@ class TpeTuneStrategy(TuneStrategy):
             self.last_tune_result = history['tune_result']
             self.last_qmodel = None
             self.cfg_evaluated = True
-            logger.info('This tuning config was evaluated!')
             return history['result']
 
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
         self.last_tune_result = self._evaluate(self.last_qmodel)
-        logger.info('last_tune_result: {}'.format(self.last_tune_result))
+        logger.info("The last tune result is {}.".format(self.last_tune_result))
 
         saved_tune_cfg = copy.deepcopy(op_cfgs)
         saved_last_tune_result = copy.deepcopy(self.last_tune_result)
@@ -298,11 +303,11 @@ class TpeTuneStrategy(TuneStrategy):
             self.last_tune_result[1])
         result['source'] = 'tpe'
         self._add_tuning_history(saved_tune_cfg, saved_last_tune_result, result=result)
-        logger.info('Current iteration loss: {} acc_loss: {} lat_diff: {} quantization_ratio: {}'
-                    .format(result['loss'],
-                            result['acc_loss'],
-                            result['lat_diff'],
-                            result['quantization_ratio']))
+        logger.info("Current iteration loss is {}, acc_loss is {}, lat_diff is {}, " \
+                    "quantization_ratio is {}.".format(result['loss'],
+                                                       result['acc_loss'],
+                                                       result['lat_diff'],
+                                                       result['quantization_ratio']))
         return result
 
     def _compute_metrics(self, tune_cfg, acc, lat):
@@ -406,8 +411,10 @@ class TpeTuneStrategy(TuneStrategy):
             self.best_result['best_lat_diff'] = best_result['lat_diff']
             self.best_result['quantization_ratio'] = best_result['quantization_ratio']
 
-        logger.info('Trial iteration end: {} / {} best loss: {} acc_loss: {} lat_diff: {} '
-                    'quantization_ratio: {}'.format(len(self.hpopt_trials.trials), self.max_trials,
+        logger.info("Trial iteration end is {} / {}, best loss is {}, acc_loss is {}, " \
+                    "lat_diff is {}, quantization_ratio is {}.".format(
+                                                        len(self.hpopt_trials.trials),
+                                                        self.max_trials,
                                                         self.best_result['best_loss'],
                                                         self.best_result['best_acc_loss'],
                                                         self.best_result['best_lat_diff'],
@@ -439,7 +446,7 @@ class TpeTuneStrategy(TuneStrategy):
                                                                 str(self.objective.measurer),
                                                                 self.best_tune_result[1]) \
                                                                 if self.best_tune_result else 'n/a'
-        logger.info('Tune {} result is: {}, Best tune result is: {}'.format(trials_count,
+        logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))
 

@@ -123,7 +123,7 @@ class TuneStrategy(object):
         path = Path(os.path.dirname(self.deploy_path))
         path.mkdir(exist_ok=True, parents=True)
 
-        logger.debug('Dump user yaml configuration:')
+        logger.debug("Dump user yaml configuration:")
         logger.debug(self.cfg)
 
         self.eval_dataloader = eval_dataloader
@@ -206,7 +206,7 @@ class TuneStrategy(object):
         self.combined_model_wise_quant_cfgs = conf._combine_optype_quant_cfgs(
                                          self.model_wise_quant_cfgs)
         if len(self.combined_model_wise_quant_cfgs) == 0:
-            logger.warning("There is no quantizable op type!!!")
+            logger.warning("No valid model wise quantization config found.")
 
         self.opwise_quant_cfgs = OrderedDict()
         for key in self.opwise_tune_cfgs:
@@ -256,7 +256,7 @@ class TuneStrategy(object):
                 if self._same_yaml(history['cfg'], self.cfg):
                     self.__dict__.update({k: v for k, v in history.items() \
                                           if k not in ['version', 'history']})
-                    logger.info('Starting to resume tuning process...')
+                    logger.info("Start to resume tuning process.")
                     break
 
     def _same_yaml(self, src_yaml, dst_yaml):
@@ -289,11 +289,11 @@ class TuneStrategy(object):
         """
         if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
             self.cfg.evaluation.accuracy.metric) and self.eval_func is None:
-            logger.info('Neither evaluation function nor metric is defined')
-            logger.info('Generating a fully quantized model...')
+            logger.info("Neither evaluation function nor metric is defined." \
+                        " Generate quantized model with default quantization configuration.")
             for tune_cfg in self.next_tune_cfg():
                 tune_cfg['advance'] = self.cfg.quantization.advance
-                logger.debug('Dump current tuning configuration:')
+                logger.debug("Dump current tuning configuration:")
                 logger.debug(tune_cfg)
                 self.q_model = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
@@ -301,7 +301,7 @@ class TuneStrategy(object):
         else:
             # get fp32 model baseline
             if self.baseline is None:
-                logger.info('Getting FP32 model baseline...')
+                logger.info("Get FP32 model baseline.")
                 self.baseline = self._evaluate(self.model)
                 # record the FP32 baseline
                 self._add_tuning_history()
@@ -309,7 +309,7 @@ class TuneStrategy(object):
                                                                     str(self.objective.measurer),
                                                                     self.baseline[1]) \
                                                                     if self.baseline else 'n/a'
-            logger.info('FP32 baseline is: {}'.format(baseline_msg))
+            logger.info("FP32 baseline is: {}".format(baseline_msg))
 
             trials_count = 0
             for tune_cfg in self.next_tune_cfg():
@@ -320,10 +320,10 @@ class TuneStrategy(object):
                 if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
                     self.last_tune_result = tuning_history['last_tune_result']
                     self.best_tune_result = tuning_history['best_tune_result']
-                    logger.debug('This tuning config was evaluated, skip!')
+                    logger.warn("Find evaluated tuning config, skip.")
                     continue
 
-                logger.debug('Dump current tuning configuration:')
+                logger.debug("Dump current tuning configuration:")
                 logger.debug(tune_cfg)
                 self.q_model = self.adaptor.quantize(
                     tune_cfg, self.model, self.calib_dataloader, self.q_func)
@@ -382,7 +382,7 @@ class TuneStrategy(object):
         setup_yaml()
         with open(self.deploy_path, 'w+') as f:
             yaml.dump(self.deploy_cfg, f)
-            logger.info('Save deploy yaml to path {}'.format(self.deploy_path))
+            logger.info("Save deploy yaml to {}".format(self.deploy_path))
 
     def _get_common_cfg(self, model_wise_cfg, op_wise_cfgs):
         """Get the common parts from the model_wise_cfg.
@@ -488,7 +488,7 @@ class TuneStrategy(object):
                                                                 str(self.objective.measurer),
                                                                 self.best_tune_result[1]) \
                                                                 if self.best_tune_result else 'n/a'
-        logger.info('Tune {} result is: {}, Best tune result is: {}'.format(trials_count,
+        logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))
 
@@ -508,7 +508,7 @@ class TuneStrategy(object):
 
         """
 
-        logger.info('Save tuning history to ' + self.history_path)
+        logger.info("Save tuning history to {}.".format(self.history_path))
         with fault_tolerant_file(self.history_path) as f:
             pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 

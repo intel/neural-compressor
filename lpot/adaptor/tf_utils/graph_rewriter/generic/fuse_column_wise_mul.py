@@ -25,7 +25,6 @@ from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
-
 class FuseColumnWiseMulOptimizer(GraphRewriterBase):
     """Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul
     Mul + Conv2D/DepthwiseConv2dNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul
@@ -60,7 +59,7 @@ class FuseColumnWiseMulOptimizer(GraphRewriterBase):
             weights_node_tensor = weights_node.attr['value'].tensor
             if len(mul_value_node_tensor.tensor_shape.dim
                    ) != 1 or mul_value_node_tensor.tensor_shape.dim[0].size != weights_col:
-                self.logger.debug("Invalid Mul OP fusion.")
+                self.logger.warning("Invalid Mul OP fusion.")
                 return self.model
 
             mul_value_node_list = [i for i in tensor_util.MakeNdarray(mul_value_node_tensor).flat]

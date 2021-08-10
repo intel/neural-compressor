@@ -47,7 +47,6 @@ class PreOptimization():
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = model.graph_def
         self.analyzer.parse_graph()
-        self.logger = logging.getLogger()
         self._tmp_graph_def = None
         self._excluded_node_names = []
 
@@ -75,7 +74,6 @@ class PreOptimization():
         Returns:
             [graphdef]: the optimized graphdef object.
         """
-        self.logger.debug("Start to pre optimize input model...")
 
         from lpot.experimental.common import Model
 

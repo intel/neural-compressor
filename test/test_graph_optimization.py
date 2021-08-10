@@ -376,10 +376,8 @@ class TestGraphOptimization(unittest.TestCase):
                 if i.op == 'Cast':
                     found_cast_op = True
                     break
-            metric = graph_optimizer.metric
 
             self.assertEqual(found_cast_op, True)
-            self.assertIsNone(metric)
 
     @disable_random()
     def test_graph_optimization_without_custom_metric_with_postprocess(self):
@@ -468,9 +466,7 @@ class TestGraphOptimization(unittest.TestCase):
                 if i.op == 'Cast':
                     found_cast_op = True
                     break
-            eval_func = graph_optimizer.eval_func
             self.assertEqual(found_cast_op, True)
-            self.assertIsNone(eval_func, "eval_func is not None")
 
     @disable_random()
     def test_graph_optimization_with_force_bf16(self):

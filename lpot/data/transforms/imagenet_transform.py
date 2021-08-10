@@ -44,8 +44,8 @@ cv2 = LazyImport('cv2')
 class ParseDecodeImagenetTransform(BaseTransform):
 
     def __call__(self, sample):
-        logger.warning('This transform is going to be deprecated, '
-            'imagenet decoding will be performed automatically' )
+        logger.warning("This transform is going to be deprecated, " \
+            "imagenet decoding will be performed automatically from LPOT v1.4.")
         return sample
 
 @transform_registry(transform_type="ResizeCropImagenet", \

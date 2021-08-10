@@ -134,11 +134,11 @@ class Scheduler(object):
                            "before invoking this __call__() function"
         model = self.model
         assert len(self.components) > 0
-        logger.info('Start sequential pipeline execution...')
+        logger.info("Start sequential pipeline execution.")
         for i, component in enumerate(self.components):
             # print appropriate ordinal number representation (1st, 2nd, 3rd) for each step
             ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
-            logger.info('The {} step being executing is {}'.format(
+            logger.info("The {} step being executing is {}.".format(
                         ordinal(i),
                         repr(component).upper()
                         ))
@@ -182,7 +182,7 @@ class Scheduler(object):
                     component_class not in checked_components :
                 checked_components.append(component_class)
             else:
-                logger.error("combination of {} is not supported.".format(
+                logger.error("The combination of {} is not supported.".format(
                     checked_components + [component_class]))
 
     def _combine_components(self, *args, dist_component=None):
@@ -271,9 +271,9 @@ class Scheduler(object):
                 if isinstance(dist_config[key], dict) and isinstance(src_config[key], dict):
                     self._sync_config(dist_config[key], src_config[key])
                 elif dist_config[key] != src_config[key]:
-                    logger.warning("Different value {} and {} detected on key {}.".format(
+                    logger.warning("Find different value {} and {} on key {}.".format(
                                    dist_config[key], src_config[key], key) + \
-                                   " Using first key-value ({}: {}) pair as default".format(
+                                   " Use first key-value ({}: {}) pair as default".format(
                                    key, dist_config[key]))
         # update src config to dist if dist is empty.
         elif not dist_config and src_config:
@@ -302,8 +302,7 @@ class Scheduler(object):
 
         """
         if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, ' +
-                'better initialize lpot.experimental.common.Model and set....')
+            logger.warning("Force convert framework model to lpot model.")
             self._model = LpotModel(user_model)
         else:
             self._model = user_model

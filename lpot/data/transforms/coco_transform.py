@@ -39,6 +39,6 @@ from lpot.experimental.data.transforms import transform_registry, BaseTransform
 class ParseDecodeCocoTransform(BaseTransform):
 
     def __call__(self, sample):
-        logger.warning('This transform is going to be deprecated, '
-            'coco decoding will be performed automatically' )
+        logger.warning("This transform is going to be deprecated, " \
+            "coco decoding will be performed automatically from LPOT v1.4.")
         return sample

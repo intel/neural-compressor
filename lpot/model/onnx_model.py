@@ -219,10 +219,10 @@ class ONNXModel(BaseModel):
                     nodes.append(node)
         return nodes
 
-    def get_scale_zo(self, tensor):
+    def get_scale_zero(self, tensor):
         ''' help function to get scale and zero_point '''
         if not tensor.endswith('_quantized'):
-            logger.debug('tensor {} in the quantized graph is not quantized'.format(tensor))
+            logger.debug("Find {} in the quantized graph is not quantized.".format(tensor))
             return None, None
         input_name_to_nodes = self._input_name_to_nodes
         node = input_name_to_nodes[tensor][0]

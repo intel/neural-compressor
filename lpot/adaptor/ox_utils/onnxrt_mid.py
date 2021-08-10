@@ -80,7 +80,8 @@ class ONNXRTAugment:
         self.dequantized_output.clear()
         onnx_version = StrictVersion(onnx.__version__)
         if onnx_version < ONNX18_VERSION:
-            logger.warning('Static quantization for NLP model is supported by onnx >= 1.8.0')  
+            logger.warning("Static quantization for NLP model is supported " \
+                           "at onnx 1.8.0 and newer.")  
         model = copy.deepcopy(self.model)
         model_nodes_names = [node.name for node in model.graph.node]
 
@@ -90,16 +91,16 @@ class ONNXRTAugment:
 
         for augment_node_type in self.augment_nodes:
             if augment_node_type not in ['ReduceMin', 'ReduceMax', 'DequantizeLinear']:
-                raise ValueError("Unexpected augment_node {} only \
-                    ReduceMin/ReduceMax are supported".format(augment_node_type))
+                raise ValueError("Unexpected augment_node {} only ReduceMin/ReduceMax are " \
+                                 "supported".format(augment_node_type))
 
         if self.already_quantized:
             # mapping between fp32 node and int8 node
             new_white_nodes = []
             for white_node in self.white_nodes:
                 new_white_node = white_node + "_quant"
-                assert new_white_node in model_nodes_names, "no quantized {} \
-                    in the graph".format(white_node)
+                assert new_white_node in model_nodes_names, "no quantized {} in the " \
+                                                            "graph".format(white_node)
                 new_white_nodes.append(new_white_node)
             self.white_nodes = new_white_nodes
 
@@ -112,13 +113,13 @@ class ONNXRTAugment:
                 if not output_only and onnx_version < ONNX18_VERSION:
                     if node.op_type == "Attention":
                         if len(node.input) >= 3:
-                            logger.debug("indice input {} of attention node {} is integer"
+                            logger.debug("Indice input {} of attention node {} is integer."
                                      .format(node.input[3:], node.name))
                             tensors_to_dump.update(node.input[:2])
                         else:
                             tensors_to_dump.update(node.input)
                     elif node.op_type == "Gather":
-                        logger.debug("indice input {} of gather node {} is integer"
+                        logger.debug("Indice input {} of gather node {} is integer."
                                      .format(node.input[-1], node.name))
                         tensors_to_dump.update(node.input[:-1])
                     else:
@@ -166,7 +167,7 @@ class ONNXRTAugment:
                     else:
                         # insert DequantizeLinear node as output
                         augment_node_name = tensor + "_new_" + augment_node_type
-                        scale, zero_point = self.model_wrapper.get_scale_zo(tensor)
+                        scale, zero_point = self.model_wrapper.get_scale_zero(tensor)
                         if scale:
                             # the tensor is in INT8 dtype
                             nodes, output = self._dequantize(tensor, scale, zero_point)
@@ -256,7 +257,8 @@ class ONNXRTAugment:
         assert len(weight_tensor.dims) == 4, 'currently only support conv weight'
         assert len(scale_tensor.dims) in [1, 2]
         if weight_tensor.dims[0] == max(scale_tensor.dims):
-            logger.info('conv weight {} is quantized per channel'.format(weight_tensor_name))
+            logger.debug("conv weight {} is quantized with per channel granularity."
+                         .format(weight_tensor_name))
             added_nodes, added_output = self._add_dequantize_transpose_node(
                                                                      weight_tensor_name, \
                                                                      scale_tensor, zo_tensor)

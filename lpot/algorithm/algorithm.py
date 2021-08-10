@@ -17,7 +17,6 @@
 
 from abc import abstractmethod
 from lpot.utils.create_obj_from_config import get_algorithm
-from lpot.utils import logger
 
 registry_algorithms = {}
 
@@ -70,7 +69,6 @@ class AlgorithmScheduler(object):
         assert self._dataloader, 'set dataloader for algorithm'
         assert self._adaptor, 'set adaptor for algorithm'
         assert self._calib_iter, 'set calibration iteration for algorithm'
-        logger.info('Start to pass algorithm to model...')
         for algo in self.algorithms:
             self._q_model = algo(self._origin_model, 
                                  self._q_model, \

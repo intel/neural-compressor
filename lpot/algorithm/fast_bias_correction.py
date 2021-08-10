@@ -122,7 +122,7 @@ class FastBiasCorrection(Algorithm):
             if bias_shift_magnitude < self.threshold:
                 tensor_dict[q_bias_name] = fp32_bias + bias_shift 
             else:
-                logger.debug('{} skipped by threshold'.format(q_output[0]))
+                logger.debug("Skip bias correction for {}.".format(q_bias_name))
 
         if len(tensor_dict) > 0:
             adaptor.set_tensor(q_model, tensor_dict)

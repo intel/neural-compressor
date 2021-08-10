@@ -50,7 +50,7 @@ def collate_preds(results):
         collate_results = np.concatenate(results)
     return collate_results
 
-def quantize_data_with_scale_zo(data, qType, scale, zero_point):
+def quantize_data_with_scale_zero(data, qType, scale, zero_point):
     '''
         :parameter data: data to quantize
         :parameter qType: data type to quantize to. Supported types UINT8 and INT8
@@ -103,7 +103,7 @@ def quantize_data(data, quantize_range, qType):
         raise ValueError("Unexpected data type {} requested. Only INT8 and UINT8 \
                                                     are supported.".format(qType))
 
-    quantized_data = quantize_data_with_scale_zo(data, qType, scale, zero_point)
+    quantized_data = quantize_data_with_scale_zero(data, qType, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 
 def quantize_data_per_channel(tensor_value, qType, scale_value, zo_value):
@@ -112,12 +112,12 @@ def quantize_data_per_channel(tensor_value, qType, scale_value, zo_value):
     for i in range(channel_count):
         per_channel_tensor_value = tensor_value.take(i, 0)
         per_channel_scale_value = scale_value.take(i)
-        per_channel_zo_value = zo_value.take(i)
-        new_per_channel_tensor_values.append(quantize_data_with_scale_zo(\
+        per_channel_zero_value = zo_value.take(i)
+        new_per_channel_tensor_values.append(quantize_data_with_scale_zero(\
                                                        per_channel_tensor_value,
                                                        qType,
                                                        per_channel_scale_value,
-                                                       per_channel_zo_value))
+                                                       per_channel_zero_value))
     # combine per_channel_data into one
     reshape_dims = list(tensor_value.shape)  # deep copy
     reshape_dims[0] = 1  # only one per channel for reshape
@@ -129,23 +129,23 @@ def quantize_data_per_channel(tensor_value, qType, scale_value, zo_value):
                                            new_per_channel_tensor_value), 0)
     return new_tensor_value
 
-def dequantize_data_with_scale_zo(tensor_value, scale_value, zo_value):
+def dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value):
     return (tensor_value.astype(np.float32) - zo_value.astype(np.float32)) * scale_value
 
 def dequantize_data(tensor_value, scale_value, zo_value, axis=0):
     if scale_value.size == 1:
-        return dequantize_data_with_scale_zo(tensor_value, scale_value, zo_value)
+        return dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value)
     else:
         channel_count = tensor_value.shape[axis] # TBD, default from axis 0
         new_per_channel_tensor_values = []
         for i in range(channel_count):
             per_channel_tensor_value = tensor_value.take(i, 0)
             per_channel_scale_value = scale_value.take(i)
-            per_channel_zo_value = zo_value.take(i)
-            new_per_channel_tensor_values.append(dequantize_data_with_scale_zo(\
+            per_channel_zero_value = zo_value.take(i)
+            new_per_channel_tensor_values.append(dequantize_data_with_scale_zero(\
                                                            per_channel_tensor_value,
                                                            per_channel_scale_value,
-                                                           per_channel_zo_value))
+                                                           per_channel_zero_value))
         # combine per_channel_data into one
         reshape_dims = list(tensor_value.shape)  # deep copy
         reshape_dims[0] = 1  # only one per channel for reshape

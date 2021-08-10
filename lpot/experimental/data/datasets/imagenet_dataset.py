@@ -34,7 +34,6 @@ import re
 import numpy as np
 from PIL import Image
 from lpot.utils.utility import LazyImport
-from lpot.utils import logger
 from .dataset import dataset_registry, IterableDataset, Dataset
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')

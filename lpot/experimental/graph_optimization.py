@@ -67,7 +67,7 @@ class Graph_Optimization():
 
     def __init_env(self, conf_fname, model_obj):
         if self.conf:
-            logger.info('Graph optimization conf has been initialized.')
+            logger.debug("Graph optimization conf has been initialized.")
             return
 
         if conf_fname:
@@ -176,20 +176,20 @@ class Graph_Optimization():
         except KeyboardInterrupt:
             pass
         except Exception as e:
-            logger.info("Unexpected exception {} happened during turing!".format(repr(e)))
+            logger.info("Unexpected exception {} happened during turing.".format(repr(e)))
         finally: 
             if self.strategy.best_qmodel:
                 logger.info(
                     "Specified timeout or max trials is reached! "
-                    "Found a converted model which meet accuracy goal. Exit...")
+                    "Found a converted model which meet accuracy goal. Exit.")
                 self.strategy.deploy_config()
             else:
                 logger.info(
                     "Specified timeout or max trials is reached! "
-                    "Not found any converted model which meet accuracy goal. Exit...")
+                    "Not found any converted model which meet accuracy goal. Exit.")
 
             logger.info("Graph optimization is done. Please invoke model.save() to save " \
-                        "optimized model to disk")
+                        "optimized model to disk.")
 
             return self.strategy.best_qmodel
 
@@ -202,17 +202,17 @@ class Graph_Optimization():
                                            'device': 'cpu',
                                            'graph_optimization': {'precisions': ['bf16, fp32']}}
         if model_obj.framework() != 'tensorflow':
-            logger.info('Graph optimization only supports Tensorflow at current stage.')
+            logger.warning("Only TensorFlow graph optimization is supported at current stage.")
             sys.exit(0)
         default_yaml_template['model']['framework'] = model_obj.framework()
 
         if self._precisions == ['bf16'] and not CpuInfo().bf16:
             if os.getenv('FORCE_BF16') == '1':
-                logger.warning("Graph optimization will be enforced even " \
-                                "the hardware platform doesn't support bf16 instruction.")
+                logger.warning("Graph optimization will generate bf16 graph alought " \
+                               "the hardware doesn't support bf16 instruction.")
             else:
-                logger.info("Graph optimization exits due to the hardware " \
-                            "doesn't support bf16 instruction.")
+                logger.warning("Graph optimization exits due to the hardware " \
+                               "doesn't support bf16 instruction.")
                 sys.exit(0)
 
         default_yaml_template['graph_optimization']['precisions'] = self._precisions
@@ -305,15 +305,14 @@ class Graph_Optimization():
         """
 
         if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, '
-                           'better initialize lpot.common.Model and set....')
+            logger.warning("Force convert framework model to lpot model.")
             self._model = LpotModel(user_model)
         else:
             self._model = user_model
 
     @property
     def metric(self):
-        logger.warning('metric not support getter....')
+        assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
@@ -338,7 +337,8 @@ class Graph_Optimization():
 
         metric_cfg = {user_metric.name : {**user_metric.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning('already set metric in yaml file, will override it...')
+            logger.warning("Override the value of `metric` field defined in yaml file" \
+                           " as user defines the value of `metric` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         from .metric import METRICS
@@ -347,7 +347,7 @@ class Graph_Optimization():
 
     @property
     def postprocess(self, user_postprocess):
-        logger.warning('postprocess not support getter....')
+        assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
@@ -369,16 +369,16 @@ class Graph_Optimization():
             'please initialize a lpot.common.Postprocess and set....'
         postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
-            logger.warning('already set postprocess in yaml file, will override it...')
+            logger.warning("Override the value of `postprocess` field defined in yaml file" \
+                           " as user defines the value of `postprocess` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         from .data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-        logger.info("{} registered to postprocess".format(user_postprocess.name))
 
     @property
     def eval_func(self):
-        logger.warning('eval_func not support getter....')
+        assert False, 'Should not try to get the value of `eval_func` attribute.'
         return None
 
     @eval_func.setter

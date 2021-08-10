@@ -773,7 +773,7 @@ class Conf(object):
             return validated_cfg
 
         except Exception as e:
-            logger.error("{}".format(e))
+            logger.error("{}.".format(e))
             raise RuntimeError(
                 "The yaml file format is not correct. Please refer to document."
             )

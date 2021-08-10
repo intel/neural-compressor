@@ -83,7 +83,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         best_cfg = None
         best_acc = 0
 
-        logger.debug('Start AutoMixedPrecision strategy by model-wise tuning')
+        logger.debug("Start AutoMixedPrecision strategy by model-wise tuning")
         for iterations in self.calib_iter:
             op_cfgs['calib_iteration'] = int(iterations)
 
@@ -116,7 +116,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
             for fallback_dtype in fallback_dtypes:
                 logger.debug(
-                    'Continue basic strategy by sorting opwise %s fallback priority' %
+                    "Continue basic strategy by sorting opwise {} fallback priority".format
                     (fallback_dtype))
                 ops_acc = OrderedDict()
                 for op, configs in reversed(self.opwise_tune_cfgs.items()):
@@ -133,9 +133,6 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                     acc, _ = self.last_tune_result
                     ops_acc[op] = acc
 
-                logger.debug(
-                    'Continue graph optimization strategy by incremental opwise %s \
-                    fallback with priority' % (fallback_dtype))
                 op_cfgs = copy.deepcopy(best_cfg)
                 if ops_acc is not None:
                     ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key],
@@ -168,7 +165,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
         else:
-            logger.info(self.opwise_tune_cfgs)
+            logger.debug(self.opwise_tune_cfgs)
             op_cfgs['op'] = OrderedDict()
             for op in self.opwise_tune_cfgs.keys():
                 op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
@@ -179,7 +176,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     def traverse(self):
         # get fp32 model baseline
         if self.baseline is None and self.eval_dataloader:
-            logger.info('Getting FP32 model baseline...')
+            logger.info("Get FP32 model baseline.")
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
@@ -187,7 +184,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                                         str(self.objective.measurer),
                                                         self.baseline[1]) \
                                                         if self.baseline else 'n/a'
-            logger.info('FP32 baseline is: {}'.format(baseline_msg))
+            logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0
         for tune_cfg in self.next_tune_cfg():
@@ -198,10 +195,10 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
-                logger.debug('This tuning config was evaluated, skip!')
+                logger.warn("Find evaluated tuning config, skip.")
                 continue
 
-            logger.debug('Dump current graph optimization configuration:')
+            logger.debug("Dump current graph optimization configuration:")
             logger.debug(tune_cfg)
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)

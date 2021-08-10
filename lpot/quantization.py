@@ -140,9 +140,9 @@ class Quantization(object):
 
         """
 
-        logger.warning('This API is going to be deprecated, please import '
-            'lpot.experimental.Quantization, set the attributes about '
-            'dataloader and metric, then use new __call__ method')
+        logger.warning("This API is going to be deprecated. Please import "
+            "lpot.experimental.Quantization, initialize an instance of `Quantization`,"
+            "set its dataloader and metric attributes, then invoke its __call__ method.")
         
         self.exp_quantizer.model = model
         if q_dataloader is not None:

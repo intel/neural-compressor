@@ -184,7 +184,6 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             new_node.input.append(requested_output_max_name)
             deq_node = self.graph_info[Helper.node_name_from_input(quantized_node.input[-1])].node
             if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
-                self.logger.debug('Dropping fusion due to unsupported pattern..... {}'.format(i))
                 target_nodes.remove(i)
                 continue
             if deq_node.op == 'Dequantize':

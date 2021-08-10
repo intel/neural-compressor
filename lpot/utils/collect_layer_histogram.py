@@ -44,8 +44,7 @@ class LayerHistogramCollector(object):
             for arr in self.layer_tensor[name]:
                 if self.logger:
                     self.logger.debug(
-                        "Collecting layer %s histogram of shape %s" %
-                        (name, arr.shape))
+                        "Collect layer {} histogram of shape {}.".format(name, arr.shape))
                 min_range = np.min(arr)
                 max_range = np.max(arr)
                 th = max(abs(min_range), abs(max_range))

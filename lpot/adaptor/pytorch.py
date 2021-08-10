@@ -33,8 +33,7 @@ ipex = LazyImport('intel_pytorch_extension')
 json = LazyImport('json')
 
 REDUCE_RANGE = False if CpuInfo().vnni else True
-logger.debug("reduce range:")
-logger.debug(REDUCE_RANGE)
+logger.debug("Reduce range is {}".format(str(REDUCE_RANGE)))
 
 PT18_VERSION = LooseVersion("1.8")
 PT17_VERSION = LooseVersion("1.7")
@@ -816,7 +815,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         try:
             q_model = copy.deepcopy(model)
         except Exception as e:                              # pragma: no cover
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
+                           format(repr(e)))
             q_model = model
         if self.approach == 'quant_aware_training':
             q_model.model.train()
@@ -829,7 +829,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
                 logger.warn("None of the submodule got qconfig applied. Make sure you "
                             "passed correct configuration through `qconfig_dict` or "
-                            "by assigning the `.qconfig` attribute directly on submodules")
+                            "by assigning the `.qconfig` attribute directly on submodules.")
 
         if self.approach == 'post_training_static_quant':
             torch.quantization.add_observer_(q_model.model)
@@ -1055,9 +1055,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                     res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                 res[op_type]['INT8'] += 1
             if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or op_type == 'Embedding':
-                logger.info("there is accuracy issue in quantized LayerNorm, \
-                            InstanceNorm3d and Embedding op, \
-                            so we removed them when fetching quantizable ops")
+                logger.info("Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops" \
+                            " due to accuracy bug in PyTorch.")
                 if op_type not in res.keys():
                     res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                 res[op_type]['FP32'] += 1
@@ -1724,7 +1723,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         try:
             os.remove(self.ipex_config_path)
         except:
-            logger.warning('removing {} fails'.format(self.ipex_config_path))
+            logger.warning('Fail to remove {}.'.format(self.ipex_config_path))
 
     def model_calibration(self, q_model, dataloader, iterations=1, conf=None):
         assert iterations > 0
@@ -1766,7 +1765,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         try:
             model_ = copy.deepcopy(model)
         except Exception as e:                              # pragma: no cover
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
+                           format(repr(e)))
             model_ = model
         try:
             q_model = torch.jit.script(model_.model.eval().to(ipex.DEVICE))
@@ -1777,7 +1777,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                                               input.to(ipex.DEVICE)).to(ipex.DEVICE)
                     break
             except:
-                logger.info("This model can't convert to Script model")
+                logger.info("Fail to convert this model to PyTorch Script model.")
                 q_model = model_.model.eval().to(ipex.DEVICE)
         self._cfg_to_qconfig(tune_cfg)
 
@@ -1942,7 +1942,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                         init_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
                         break
                 except:
-                    logger.info("This model can't convert to Script model")
+                    logger.info("Fail to convert this model to PyTorch Script model")
                     init_model = model_
 
             # create a quantization config file for intel pytorch extension model
@@ -2076,7 +2076,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         try:
             q_model = copy.deepcopy(model)
         except Exception as e:                              # pragma: no cover
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
+                           format(repr(e)))
             q_model = model
         q_model.model.eval()
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
@@ -2393,9 +2394,10 @@ class PyTorchQuery(QueryBackendCapability):
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
             except Exception as e:
-                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                logger.info("Fail to parse {} due to {}".format(self.cfg, str(e)))
                 self.cur_config = None
-                raise ValueError("Please check the {} format.".format(self.cfg))
+                raise ValueError("Please check if the format of {} follows LPOT yaml schema.".
+                                 format(self.cfg))
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.

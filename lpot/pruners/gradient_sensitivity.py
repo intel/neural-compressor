@@ -34,10 +34,10 @@ class GradientSensitivityPruner(Pruner):
             # register hook for FWK model to get actual input tensor
             self.model.register_forward_pre_hook()
         if self.elementwise_prune:
-            logger.debug("start pruning in epoch {}".format(str(epoch)))
             self.sparsity = self.update_sparsity(epoch)
+            logger.debug("Start pruning in epoch {} with sparsity {}.".
+                         format(str(epoch), str(self.sparsity)))
             self.is_last_epoch = epoch == self.end_epoch
-            logger.debug("epoch {} sparsity = {}".format(str(epoch), str(self.sparsity)))
             if epoch >= self.start_epoch and epoch <= self.end_epoch:
                 self.compute_mask()
 
@@ -55,7 +55,7 @@ class GradientSensitivityPruner(Pruner):
                 for weight_name in self.weights:
                     if weight_name in self.masks:
                         logger.info(
-                            "{} with mask sparsity {} {} {}".format(
+                            "Set {} sparsity with mask {} {} {}.".format(
                                 weight_name, str(
                                 self.masks[weight_name].size), str(
                                 self.masks[weight_name].sum()), str(

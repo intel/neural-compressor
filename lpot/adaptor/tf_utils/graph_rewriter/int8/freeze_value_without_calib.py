@@ -41,8 +41,8 @@ class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
         if 0.0 < th <= 1.0:
             self.threshold = th
         else:
-            self.logger.warning("The threshold value for clipping is invalid ," \
-                "reset it to 0.95 by default")
+            self.logger.warning("The threshold value for clipping is invalid, " \
+                                "Reset it to 0.95 by default.")
             self.threshold = 0.95
         self.postfix = postfix
         self.device = device

@@ -89,8 +89,8 @@ class Quantization(Component):
                        'dataloader field of calibration field of quantization section ' \
                        'in yaml file should be configured as calib_dataloader property is NOT set!'
                 if deep_get(calib_dataloader_cfg, 'shuffle'):
-                    logger.warning("post_training_static_quant doesn't support shuffle in "
-                                   "dataloader, reset it to False")
+                    logger.warning("Reset `shuffle` field to False when post_training_static_quant"
+                                   " is selected.")
                     deep_set(calib_dataloader_cfg, 'shuffle', False)
             elif approach_cfg == 'quant_aware_training':
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.train.dataloader')
@@ -141,17 +141,19 @@ class Quantization(Component):
         except KeyboardInterrupt:
             pass
         except Exception as e:
-            logger.error("Unexpected exception {} happened during tuning!".format(repr(e)))
+            logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
+            import traceback
+            traceback.print_exc() 
         finally:
             if self.strategy.best_qmodel:
                 logger.info(
                     "Specified timeout or max trials is reached! "
-                    "Found a quantized model which meet accuracy goal. Exit...")
+                    "Found a quantized model which meet accuracy goal. Exit.")
                 self.strategy.deploy_config()
             else:
                 logger.error(
                     "Specified timeout or max trials is reached! "
-                    "Not found any quantized model which meet accuracy goal. Exit...")
+                    "Not found any quantized model which meet accuracy goal. Exit.")
 
             return self.strategy.best_qmodel
 
@@ -239,7 +241,7 @@ class Quantization(Component):
 
     @property
     def metric(self):
-        logger.warning('metric not support getter....')
+        assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
@@ -265,7 +267,8 @@ class Quantization(Component):
 
         metric_cfg = {user_metric.name : {**user_metric.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning('already set metric in yaml file, will override it...')
+            logger.warning("Override the value of `metric` field defined in yaml file" \
+                           " as user defines the value of `metric` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         from ..metric import METRICS
@@ -274,7 +277,7 @@ class Quantization(Component):
 
     @property
     def postprocess(self, user_postprocess):
-        logger.warning('postprocess not support getter....')
+        assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
@@ -297,13 +300,13 @@ class Quantization(Component):
             'please initialize a lpot.experimental.common.Postprocess and set....'
         postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.postprocess"):
-            logger.warning('already set postprocess in yaml file, will override it...')
+            logger.warning("Override the value of `postprocess` field defined in yaml file" \
+                           " as user defines the value of `postprocess` attribute by code.")
         deep_set(
             self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
         from ..data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-        logger.info("{} registered to postprocess".format(user_postprocess.name))
 
     # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
     # fake eval func is created to do quantization once without tuning
@@ -313,7 +316,7 @@ class Quantization(Component):
     # BELOW API TO BE DEPRECATED!
     @property
     def q_func(self):
-        logger.warning('q_func not support getter....')
+        assert False, 'Should not try to get the value of `q_func` attribute.'
         return None
 
     @q_func.setter
@@ -330,7 +333,6 @@ class Quantization(Component):
                          set eval_dataloader with metric configured or directly eval_func
                          to make evaluation of the model executed.
         """
-        logger.warning('q_func is to be deprecated, please construct q_dataloader....')
         self._calib_func = user_q_func
 
     def __repr__(self):

@@ -131,12 +131,13 @@ class BayesianTuneStrategy(TuneStrategy):
                 pbounds=pbounds, random_seed=self.cfg.tuning.random_seed)
         while True:
             params = self.bayes_opt.gen_next_params()
-            logger.debug("Current params are: %s" % params)
+            logger.debug("Dump current bayesian params:")
+            logger.debug(params)
             yield self.params_to_tune_configs(params)
             try:
                 self.bayes_opt._space.register(params, self.last_tune_result[0])
             except KeyError:
-                logger.debug("This params has been registered before, will skip it!")
+                logger.debug("Find registered params, skip it.")
                 pass
 
 # Util part

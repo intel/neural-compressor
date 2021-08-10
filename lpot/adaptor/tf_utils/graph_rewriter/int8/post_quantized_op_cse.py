@@ -24,8 +24,6 @@ from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
-
-
 class PostCseOptimizer(GraphRewriterBase):
     """[summary]
     Remove duplicated nodes like shared quantizev2 and const to decrease the output model size.
@@ -125,7 +123,7 @@ class PostCseOptimizer(GraphRewriterBase):
                     graph_info.pop(j)
 
                 else:
-                    self.logger.debug('Unknown Op type {}'.format(node_type))
+                    self.logger.warning('Unknown Op type {}.'.format(node_type))
 
         output_graph_def = graph_pb2.GraphDef()
 

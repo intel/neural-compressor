@@ -65,7 +65,8 @@ def get_model_type(model):
                 # can load saved model from TF backend, but TF 2.4 cannot.
                 try:
                     if tf.version.VERSION < '2.3.0':
-                        logger.warn('keras model below tensorflow 2.3.0 may have problem...')
+                        logger.warn("keras model running on tensorflow 2.2.0 and"
+                                    " lower may have problem.")
                     model = tf.keras.models.load_model(model)
                     if isinstance(model, tf.keras.Model):
                         return 'keras'
@@ -86,7 +87,8 @@ def get_model_type(model):
                 #batch_size_(batch_size), load saved model from tf backend, but tf2.4 it will crash
                 try:
                     if tf.version.VERSION < '2.3.0':
-                        logger.warn('keras model below tensorflow 2.3.0 may have problem...')
+                        logger.warn("keras model running on tensorflow 2.2.0 and"
+                                    " lower may have problem.")
                     model = tf.keras.models.load_model(model)
                     if isinstance(model, tf.keras.Model):
                         return 'keras'
@@ -169,8 +171,9 @@ def validate_graph_node(graph_def, node_names):
     all_node_name = [node.name for node in graph_def.node]
     for user_name in node_names:
         if user_name not in all_node_name:
-            logger.info(str("Node name {} doesn't exist in the model, " +
-                "please check the yaml.").format(user_name))
+            logger.warn(
+                str("Node name {} specified in yaml doesn't exist in the model.").
+                format(user_name))
             return False
     return True
 
@@ -461,7 +464,7 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
       else:
           outputs = output_tensor_names
 
-      logger.info('estimator output tensor names is {}'.format(outputs))
+      logger.info("Estimator output tensor names are {}.".format(outputs))
       with tf.compat.v1.Session(graph=g) as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
         # Freezing a graph requires output_node_names, which can be found in
@@ -623,7 +626,6 @@ class TensorflowBaseModel(BaseModel):
         self.model_type = 'graph_def'
 
     def _load_sess(self, model, **kwargs):
-        logger.info('loading session....')
         if self.name:
             kwargs.update({'name': self.name})
         # assert self.model_type, 'model type not set....'
@@ -657,7 +659,7 @@ class TensorflowBaseModel(BaseModel):
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         if len(tensor_names) == 0:
-            logger.warn('input tensor names should not be empty...')
+            logger.warn("Input tensor names should not be empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(\
@@ -674,7 +676,7 @@ class TensorflowBaseModel(BaseModel):
     @output_tensor_names.setter
     def output_tensor_names(self, tensor_names):
         if len(tensor_names) == 0:
-            logger.warn('output tensor names should not be empty...')
+            logger.warn("Output tensor names should not be empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(\
@@ -716,7 +718,7 @@ class TensorflowBaseModel(BaseModel):
         pb_file = root if os.path.split(root)[-1].endswith('.pb') else root + '.pb'
         f = tf.io.gfile.GFile(pb_file, 'wb')
         f.write(self.graph_def.SerializeToString())
-        logger.info("Save quantized model at %s" % pb_file)
+        logger.info("Save quantized model to {}.".format(pb_file))
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
 
@@ -749,7 +751,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
                                                  [tag_constants.SERVING],
                                                  signature_def_map=sigs)
         builder.save()
-        logger.info("Save quantized model at %s" % root)
+        logger.info("Save quantized model to {}.".format(root))
 
 class TensorflowCheckpointModel(TensorflowBaseModel):
 
@@ -924,14 +926,14 @@ class PyTorchBaseModel(BaseModel):
         if isinstance(input_tensor, str):
             for name, tensor in self._model.named_parameters():
                 if name == input_tensor:
-                    assert tensor.grad is not None, 'please call backward() before get_gradient'
+                    assert tensor.grad is not None, 'Please call backward() before get_gradient'
                     return tensor.grad
         elif isinstance(input_tensor, torch.Tensor):
-            assert input_tensor.grad is not None, 'please call backward() before get_gradient'
+            assert input_tensor.grad is not None, 'Please call backward() before get_gradient'
             return input_tensor.grad
         else:
-            logger.error("Expect str or torch.Tensor in get_gradient, "
-                         "but got %s." % type(input_tensor))
+            logger.error("Expect str or torch.Tensor in get_gradient, " \
+                         "but get {}.".format(type(input_tensor)))
 
     def report_sparsity(self):
         """ Get sparsity of the model
@@ -1033,9 +1035,9 @@ class PyTorchModel(PyTorchBaseModel):
             with open(os.path.join(root, "best_configure.yaml"), 'w') as f:
                 yaml.dump(self.tune_cfg, f, default_flow_style=False)
             torch.save(self._model.state_dict(), os.path.join(root, "best_model_weights.pt"))
-            logger.info("Save config file and weights of quantized model at %s" % root)
+            logger.info("Save config file and weights of quantized model to {}.".format(root))
         except IOError as e:
-            logger.error("Unable to save configure file and weights. %s" % e)
+            logger.error("Fail to save configure file and weights due to {}.".format(e))
 
     @property
     def graph_info(self):
@@ -1089,9 +1091,9 @@ class PyTorchIpexModel(PyTorchBaseModel):
         try:
             with open(os.path.join(root, "best_configure.json"), 'w') as f:
                 json.dump(self.tune_cfg, f)
-            logger.info("Save config file of quantized model at %s" % root)
+            logger.info("Save config file of quantized model to {}.".format(root))
         except IOError as e:
-            logger.error("Unable to save configure file and weights. %s" % e)
+            logger.error("Fail to save configure file and weights due to {}.".format(e))
 
 class MXNetModel(BaseModel):
     """Build MXNetModel object
@@ -1122,7 +1124,7 @@ class MXNetModel(BaseModel):
 
         if isinstance(self._model, mx.gluon.HybridBlock):
             self._model.export(root)
-            logger.info('Save quantized hybrid block model at %s' % root)
+            logger.info("Save quantized hybrid block model to {}.".format(root))
         else:
             symbol, arg_params, aux_params = self._model
             symbol.save(root + '-symbol.json')
@@ -1130,7 +1132,7 @@ class MXNetModel(BaseModel):
             save_dict.update(\
                 {('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
             mx.nd.save(root + '-0000.params', save_dict)
-            logger.info('Save quantized symbol model at %s' % root)
+            logger.info("Save quantized symbol model to {}.".format(root))
 
 MODELS = {'tensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,

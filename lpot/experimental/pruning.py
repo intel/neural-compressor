@@ -139,11 +139,11 @@ class Pruning(Component):
     def execute(self):
         self._pruning_func(self._model \
                 if getattr(self._pruning_func, 'builtin', None) else self._model.model)
-        logger.info('Model pruning is done. Start to evaluate the pruned model...')
+        logger.info("Model pruning is done. Start to evaluate the pruned model.")
         score = self._eval_func(self._model \
                 if getattr(self._eval_func, 'builtin', None) else self._model.model)
 
-        logger.info('Pruned model score is: ' + str(score))
+        logger.info("Pruned model score is {}.".format(str(score)))
         return self._model
 
     def generate_hooks(self):
@@ -218,7 +218,8 @@ class Pruning(Component):
     @property
     def pruning_func(self):
         """ not support get pruning_func """
-        logger.warning('pruning_func not support getter....')
+        assert False, 'Should not try to get the value of `pruning_func` attribute.'
+        return None
 
     @pruning_func.setter
     def pruning_func(self, user_pruning_func):

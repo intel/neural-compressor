@@ -548,7 +548,7 @@ class TensorflowTopK(BaseMetric):
     def result(self):
         """calculate metric"""
         if self.num_sample == 0:
-            logger.warning("sample num is 0 can't calculate topk")
+            logger.warning("Sample num during evaluation is 0.")
             return 0
         else:
             return self.num_correct / self.num_sample
@@ -591,7 +591,7 @@ class GeneralTopK(BaseMetric):
     def result(self):
         """calculate metric"""
         if self.num_sample == 0:
-            logger.warning("sample num is 0 can't calculate topk")
+            logger.warning("Sample num during evaluation is 0.")
             return 0
         else:
             return self.num_correct / self.num_sample
@@ -709,7 +709,7 @@ class TensorflowMAP(BaseMetric):
         """calculate metric"""
         from .coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
-            logger.warning("sample num is 0 can't calculate mAP")
+            logger.warning("Sample num during evaluation is 0.")
             return 0
         else:
             groundtruth_dict = {

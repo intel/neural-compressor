@@ -118,8 +118,7 @@ class COCOWrapper(coco.COCO):
         results = coco.COCO()
         results.dataset['images'] = [img for img in self.dataset['images']]
 
-        logger.info(
-            'Loading and preparing annotation results...')
+        logger.info("Load and prepare annotation results.")
         tic = time.time()
 
         if not isinstance(annotations, list):

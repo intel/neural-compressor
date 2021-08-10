@@ -85,8 +85,8 @@ class SigOptTuneStrategy(TuneStrategy):
         try:
             assert client_token != None
         except(AssertionError):
-            logger.error('The configuration is missing "sigopt_api_token", ' \
-                         'you can see details in /docs/sigopt_strategy.md.')
+            logger.error("`sigopt_api_token` field in yaml file is required. " \
+                         "Please refer to details in /docs/sigopt_strategy.md.")
             exit(0)
         try:
             assert self.project_id != None
@@ -94,15 +94,15 @@ class SigOptTuneStrategy(TuneStrategy):
                            'Please check whether it is created in the sigopt account.'\
                            .format(self.project_id))
         except(AssertionError):
-            logger.error('The configuration is missing "sigopt_project_id", ' \
-                         'you can see details in /docs/sigopt_strategy.md.')
+            logger.error("`sigopt_project_id` field in yaml file is required. " \
+                         "Please refer to details in /docs/sigopt_strategy.md.")
             exit(0)
         if self.experiment_name == 'lpot-tune':
-           logger.info('Use default experiment name "lpot-tune", ' \
-                       'you can see details in /docs/sigopt_strategy.md ' \
-                       'if you want to modify it.')
+           logger.info("Default experiment name `lpot-tune` is used, " \
+                       "Please refer to details in /docs/sigopt_strategy.md " \
+                       "if user wants to modify it.")
         else:
-           logger.info('Experiment name is {}'.format(self.experiment_name))
+           logger.info("Experiment name is {}.".format(self.experiment_name))
 
         self.conn = Connection(client_token)
         self.experiment = None
@@ -143,7 +143,8 @@ class SigOptTuneStrategy(TuneStrategy):
             ]
             obs = self.conn.experiments(self.experiment.id).observations().create(
                 suggestion=suggestion.id, values=values)
-            logger.info('[suggestion_id, observation_id]: [%s, %s]' % (suggestion.id, obs.id))
+            logger.debug("`suggestion_id` is {}, `observation_id` is {}.".
+                format(suggestion.id, obs.id))
             self.experiment = self.conn.experiments(self.experiment.id).fetch()
 
     def get_acc_target(self, base_acc):
@@ -159,7 +160,7 @@ class SigOptTuneStrategy(TuneStrategy):
         """
         #get fp32 model baseline
         if self.baseline is None:
-            logger.info('Getting FP32 model baseline...')
+            logger.info("Get FP32 model baseline.")
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
@@ -168,24 +169,21 @@ class SigOptTuneStrategy(TuneStrategy):
                                                                 str(self.objective.measurer),
                                                                 self.baseline[1]) \
                                                                 if self.baseline else 'n/a'
-        logger.info('FP32 baseline is: {}'.format(baseline_msg))
-        # now initiate the HPO here
-        logger.info("now initiate the HPO here")
+        logger.info("FP32 baseline is: {}".format(baseline_msg))
         self.experiment = self.create_exp(acc_target=self.get_acc_target(self.baseline[0]))
         trials_count = 0
         for tune_cfg in self.next_tune_cfg():
             # add tune_cfg here as quantize use tune_cfg
-            print("add tune_cfg here as quantize use tune_cfg")
             tune_cfg['advance'] = self.cfg.quantization.advance
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
             if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
-                logger.debug('This tuning config was evaluated, skip!')
+                logger.warn("Find evaluated tuning config, skip.")
                 continue
 
-            logger.debug('Dump current tuning configuration:')
+            logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
@@ -225,6 +223,7 @@ class SigOptTuneStrategy(TuneStrategy):
             project=self.project_id,
         )
 
-        logger.info("created experiment: https://app.sigopt.com/experiment/" + experiment.id)
+        logger.debug("Create experiment at https://app.sigopt.com/experiment/{}".
+                     format(experiment.id))
 
         return experiment

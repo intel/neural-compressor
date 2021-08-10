@@ -35,7 +35,6 @@ ONNXRT152_VERSION = StrictVersion("1.5.2")
 
 logger = logging.getLogger()
 
-
 class ONNXRTAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
@@ -47,7 +46,6 @@ class ONNXRTAdaptor(Adaptor):
         super().__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []
-        self.logger = logger
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
@@ -80,10 +78,10 @@ class ONNXRTAdaptor(Adaptor):
         model = self.pre_optimized_model if self.pre_optimized_model else model
         ort_version = StrictVersion(ort.__version__)
         if ort_version < ONNXRT152_VERSION: # pragma: no cover
-            logger.warning('quantize input need onnxruntime version > 1.5.2')
+            logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
-            logger.warning('quantize input need model opset >= 11')
+            logger.warning("Quantize input needs model opset 11 or newer.")
         from lpot.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
@@ -147,10 +145,10 @@ class ONNXRTAdaptor(Adaptor):
         model = self.pre_optimized_model
         ort_version = StrictVersion(ort.__version__)
         if ort_version < ONNXRT152_VERSION: # pragma: no cover
-            logger.warning('quantize input need onnxruntime version > 1.5.2')
+            logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
-            logger.warning('quantize input need model opset >= 11')
+            logger.warning("Quantize input needs model opset 11 or newer.")
 
         from lpot.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
@@ -289,7 +287,7 @@ class ONNXRTAdaptor(Adaptor):
     def set_tensor(self, model, tensor_dict):
         from onnx import numpy_helper
         from lpot.model.onnx_model import ONNXModel
-        from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zo
+        from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zero
         from lpot.adaptor.ox_utils.util import quantize_data_per_channel
         if not isinstance(model, ONNXModel):
             model = ONNXModel(model)
@@ -300,7 +298,7 @@ class ONNXRTAdaptor(Adaptor):
             if not tensor_name.endswith('_quantized'):
                 tensor_name += '_quantized'
             not_filter = False
-            scale_tensor, zo_tensor = model.get_scale_zo(tensor_name)
+            scale_tensor, zo_tensor = model.get_scale_zero(tensor_name)
             if scale_tensor is None or zo_tensor is None:
                 not_filter = True
             else:
@@ -315,7 +313,7 @@ class ONNXRTAdaptor(Adaptor):
             if not_filter:
                 new_tensor_value = self._requantize_bias(model, tensor_name, tensor_value)
             elif self.quantize_config[node_name]['weight']['granularity'] == 'per_tensor':
-                new_tensor_value = quantize_data_with_scale_zo(tensor_value,
+                new_tensor_value = quantize_data_with_scale_zero(tensor_value,
                                                                q_type,
                                                                scale_value,
                                                                zo_value)
@@ -642,9 +640,10 @@ class ONNXRTQuery(QueryBackendCapability):
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
             except Exception as e: # pragma: no cover
-                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))
                 self.cur_config = None
-                raise ValueError("Please check the {} format.".format(self.cfg))
+                raise ValueError("Please check if the format of {} follows LPOT yaml schema.".
+                                 format(self.cfg))
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.

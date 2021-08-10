@@ -27,7 +27,6 @@ from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
-
 class FoldBatchNormNodesOptimizer(GraphRewriterBase):
     INPUT_ORDER = {
         # Order of inputs for BatchNormWithGlobalNormalization.
@@ -98,9 +97,9 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
             bn_node = graph_info[Helper.node_name_from_input(matched_node[-1])].node
 
             if weights_node.op != "Const":
-                self.logger.warning("Didn't find expected conv Constant input to '%s',"
-                                    " found %s instead. Maybe because freeze_graph wasn't"
-                                    " run first?" % (bn_node.name, weights_node_name))
+                self.logger.warning("Didn't find expected conv Constant input to '%s', "
+                                    "found %s instead. Maybe freeze_graph wasn't "
+                                    "run first?" % (bn_node.name, weights_node_name))
                 continue
             weights = Helper.values_from_const(weights_node)
 
@@ -133,9 +132,9 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
                 cur_graph.remove_node(matched_node[1])
 
             if mean_value.shape != (channel_count, ):
-                self.logger.warning("Incorrect shape for mean, found %s, expected %s,"
-                                    " for node %s" % (str(mean_value.shape), str(
-                                        (channel_count, )), conv_node.name))
+                self.logger.warning("Incorrect shape for mean, found {}, expected {}, "
+                                    "for node {}.".format(str(mean_value.shape), str(
+                                    (channel_count, )), conv_node.name))
                 continue
             var_node_name = Helper.node_name_from_input(
                 bn_node.input[self.INPUT_ORDER[bn_node.op].index("var_op")])

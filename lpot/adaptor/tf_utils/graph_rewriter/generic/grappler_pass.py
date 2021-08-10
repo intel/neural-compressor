@@ -25,7 +25,6 @@ from tensorflow.python.grappler import tf_optimizer
 from tensorflow.core.protobuf import meta_graph_pb2
 import tensorflow as tf
 
-
 class GrapplerOptimizer(GraphRewriterBase):
     """A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph.
     """
@@ -65,5 +64,5 @@ class GrapplerOptimizer(GraphRewriterBase):
 
             return optimized_graph
         except Exception as e:
-            self.logger.warning("Failed to run grappler pass due to {}".format(str(e)))
+            self.logger.warning("Fail to run grappler pass due to {}.".format(str(e)))
             return self.model

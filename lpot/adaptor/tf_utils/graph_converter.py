@@ -65,6 +65,9 @@ from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper 
 TF_SUPPORTED_MAX_VERSION = '2.6.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
+logger = logging.getLogger()
+debug = bool(logger.level == logging.DEBUG)
+
 class GraphConverter:
     def __init__(self,
                  model,
@@ -85,9 +88,6 @@ class GraphConverter:
         :param data_loader: for calibration phase used dataloader
         :param fake_quant: for quantization-aware training model conversion to default model
         """
-        # Logger initial
-        self.logger = logging.getLogger()
-        self.debug = bool(self.logger.level == logging.DEBUG)
         self.model = model
         #(TODO) does it right to make the internal model format as graph_def
         self.output_tensor_names = self.model.output_tensor_names
@@ -147,7 +147,7 @@ class GraphConverter:
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
 
-        self.logger.info("Sampling data...")
+        logger.info("Start sampling on calibration dataset.")
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
                 feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
@@ -183,27 +183,27 @@ class GraphConverter:
             raise ValueError(e)
         finally:
             if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
-                self.logger.warning(
-                    str('Please note the {} version of Intel® Optimizations for'
-                        ' TensorFlow is not fully verified!'
-                        ' Suggest to use the versions'
-                        ' between {} and {} if meet problem').format(tf.version.VERSION,
+                logger.warning(
+                    str('Please note the {} version of Intel® Optimizations for '
+                        'TensorFlow is not fully verified! '
+                        'Suggest to use the versions '
+                        'between {} and {} if meet problem.').format(tf.version.VERSION,
                                                                      TF_SUPPORTED_MIN_VERSION,
                                                                      TF_SUPPORTED_MAX_VERSION))
             if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
-                self.logger.warning("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0"
-                                    " when Tensorflow 2.5.0 installed.")
+                logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
+                             "when Tensorflow 2.5.0 installed.")
 
             if tf.version.VERSION == '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
-                self.logger.warning("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1"
-                                    " when Tensorflow 2.6.0 installed.")
+                logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
+                             "when Tensorflow 2.6.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(
-                    str('Please install Intel® Optimizations for TensorFlow'
-                        ' or MKL enabled source build TensorFlow'
-                        ' with version >={} and <={}').format(TF_SUPPORTED_MIN_VERSION,
-                                                              TF_SUPPORTED_MAX_VERSION))
+                    str('Please install Intel® Optimizations for TensorFlow '
+                        'or MKL enabled TensorFlow from source code '
+                        'within version >={} and <={}.').format(TF_SUPPORTED_MIN_VERSION,
+                                                                TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
@@ -250,9 +250,9 @@ class GraphConverter:
         post_cse_graph_def.library.CopyFrom(self.model.graph_def.library)
         model.graph_def = post_cse_graph_def
 
-        if self.debug:
+        if debug:
             model.save(self.output_graph)
-            self.logger.info('Converted graph file is saved to: %s', self.output_graph)
+            logger.info("Save converted graph file to {}.".format(self.output_graph))
         model.q_config = self.scale_info
         return model
 
@@ -574,9 +574,9 @@ class GraphConverter:
             import traceback
             traceback.print_exc()
             self._tmp_model = None
-            self.logger.error('Failed to quantize graph due to: %s', str(e))
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
         finally:
-            if not self.debug:
+            if not debug:
                 self._post_clean()
             return self._tmp_model
 
@@ -592,9 +592,9 @@ class GraphConverter:
 
         except Exception as e:
             self._tmp_model = None
-            self.logger.error('Failed to convert graph due to: %s', str(e))
+            logger.error("Fail to convert graph due to {}.".format(str(e)))
         finally:
-            if self.debug:
+            if debug:
                 self._tmp_model.save(self._bf16_mixed_precision_model_path)
 
             return self._tmp_model
@@ -624,7 +624,7 @@ class GraphConverter:
             self.fake_quant).do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        if self.debug:
+        if debug:
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_dynamic_range_model_path)
 
@@ -632,7 +632,7 @@ class GraphConverter:
 
         tmp_dump_file = os.path.join(os.path.dirname(self.output_graph), 'requant_min_max.log')
 
-        self.logger.debug("Generating calibration data and saving to {}".format(tmp_dump_file))
+        logger.debug("Generate calibration data and save to {}.".format(tmp_dump_file))
 
         model = Model(tmp_path, **self._tmp_model.kwargs)
         model.output_tensor_names = self.output_tensor_names
@@ -683,7 +683,7 @@ class GraphConverter:
             self._tmp_graph_def = ScaleProPagationTransformer(
                 self._tmp_graph_def).do_transformation()
 
-        if self.debug:
+        if debug:
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_frozen_range_model_path)

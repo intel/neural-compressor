@@ -25,6 +25,8 @@ import re
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
+logger = logging.getLogger()
+
 class GraphTransformBase(object):
     def __init__(self, input_pb):
         """
@@ -32,7 +34,6 @@ class GraphTransformBase(object):
         Parameters:
              input_pb: the input graphdef or pb file.
         """
-        self.logger = logging.getLogger()
 
         if isinstance(input_pb, graph_pb2.GraphDef):
             self.input_graph = input_pb
@@ -41,7 +42,7 @@ class GraphTransformBase(object):
                 with gfile.Open(input_pb, 'rb') as f:
                     self.input_graph.ParseFromString(f.read())
             except Exception as e:
-                self.logger.error("Failed to read input pb: {} due to {}".format(
+                logger.error("Fail to read input pb from {} due to {}.".format(
                     input_pb, str(e)))
 
         self.node_mapping = {}
@@ -61,7 +62,7 @@ class GraphTransformBase(object):
             if node.name not in self.node_mapping:
                 self.node_mapping[node.name] = node
             else:
-                self.logger.warning('Duplicate node name {}'.format(node.name))
+                logger.warning("Duplicated node name {}.".format(node.name))
 
     def generate_input_map(self):
         self.input_node_map = {}

@@ -76,7 +76,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
-                self.logger.debug("skip node {}".format(node.name))
+                self.logger.debug("Skip node {}.".format(node.name))
             elif node.name == match_node_name[0]:
                 postfix = "_eightbit_quantized_depthwise_conv"
                 if node.op == "Conv2D":
@@ -144,10 +144,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
-                self.logger.debug("skip node {}".format(node.name))
+                self.logger.debug("Skip node {}.".format(node.name))
             elif node.name == match_node_name[0]:
 
-                self.logger.debug("apply_conv_biasadd_relu_fusion")
                 postfix = "_eightbit_quantized_depthwise_conv"
                 if node.op == "Conv2D":
                     postfix = "_eightbit_quantized_conv"
@@ -214,10 +213,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             if node.name in skip_node_name:
                 pass
             elif node.name == match_node_name[0]:
-                self.logger.debug("matched node {} with input {}".format(
-                    node.name, node.input))
-
-                self.logger.debug("apply_conv_biasadd_fusion")
+                self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
                 bias_node_name = self.node_name_mapping[
@@ -284,10 +280,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             if node.name in skip_node_name:
                 self.logger.debug("skip node {}".format(node.name))
             elif node.name == match_node_name[0]:
-                self.logger.debug("matched node {} with input {}".format(
-                    node.name, node.input))
-
-                self.logger.debug("apply_conv_biasadd_addn_relu_fusion")
+                self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
 
@@ -370,7 +363,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                 matched_node_name = matched_node_name[:1]
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
-                self.logger.info("Unknown match {}".format(fusion_name))
+                self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
                 return self.input_graph, []
@@ -382,5 +375,4 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
             return self.output_graph, matched_node_name
 
-        self.logger.debug("No more match, exit...")
         return self.input_graph, []

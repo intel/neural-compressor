@@ -27,7 +27,7 @@ from lpot.adaptor.mxnet_utils.util import *
 from copy import deepcopy
 
 mx = LazyImport("mxnet")
-
+logger = logging.getLogger()
 
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
@@ -46,7 +46,6 @@ class MxNetAdaptor(Adaptor):
         self.quantizable_nodes = []
         self._qtensor_to_tensor = {}
         self._tensor_to_node = {}
-        self.logger = logging.getLogger()
         self.qdataloader = framework_specific_info["q_dataloader"]
         self.query_handler = MXNetQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "mxnet.yaml"))
@@ -77,12 +76,13 @@ class MxNetAdaptor(Adaptor):
         assert q_func is None, "quantization aware training mode is not supported on mxnet"
 
         quant_cfg, calib_cfg = parse_tune_config(tune_cfg, self.quantizable_nodes)
-        self.logger.debug('tuning configs of python API:\n %s, ' % quant_cfg)
+        logger.debug("Dump quantization configurations:")
+        logger.debug(quant_cfg)
 
         sym_model, calib_data = prepare_model_data(lpot_model, self.ctx, dataloader)
         qsym_model, calib_tensors = quantize_sym_model(sym_model, self.ctx, quant_cfg)
         collector = self._collect_thresholds(sym_model, calib_data, calib_tensors, calib_cfg)
-        qsym_model = calib_model(qsym_model, collector, calib_cfg, self.logger)
+        qsym_model = calib_model(qsym_model, collector, calib_cfg, logger)
         qsym_model = fuse(qsym_model, self.ctx)  # post-quantization fusion
 
         return make_lpot_model(lpot_model, qsym_model, self.ctx, calib_data.provide_data)
@@ -121,13 +121,13 @@ class MxNetAdaptor(Adaptor):
                 for _ in range(calib_cfg['batches']):
                     yield True
 
-            self.logger.info('Collecting tensors of the FP32 model')
+            logger.info("Start to collect tensors of the FP32 model.")
             batches = run_forward(sym_model, self.ctx, calib_data, b_filter(), collector)
-            self.logger.info('Collected tensors of the FP32 model from %d batches' % batches)
+            logger.info("Get collected tensors of the FP32 model from {} batches.".format(batches))
 
             if len(collector.include_tensors_kl) > 0:
                 cache_kl.update(collector.calc_kl_th_dict(calib_cfg['quantized_dtype'],
-                                                          self.logger))
+                                                          logger))
             cache_minmax.update(collector.min_max_dict)
 
         th_dict = {}
@@ -234,7 +234,7 @@ class MxNetAdaptor(Adaptor):
         collector = TensorCollector(node_list, self._qtensor_to_tensor, self._tensor_to_node)
         num_batches = run_forward(sym_model, self.ctx, dataloader, b_filter(),
                                   collector, pre_batch=collector.pre_batch)
-        self.logger.info("Inspected batches: %d" % num_batches)
+        logger.debug("Inspect batches at {}.".format(num_batches))
         self._qtensor_to_tensor = collector.qtensor_to_tensor
         return collector.tensors_dicts
 
@@ -313,9 +313,10 @@ class MXNetQuery(QueryBackendCapability):
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
             except Exception as e:
-                self.logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+                logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))
                 self.cur_config = None
-                raise ValueError("Please check the {} format.".format(self.cfg))
+                raise ValueError("Please check if the format of {} follows LPOT yaml schema.".
+                                 format(self.cfg))
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.

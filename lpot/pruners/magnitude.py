@@ -25,10 +25,10 @@ class BasicMagnitudePruner(Pruner):
         super(BasicMagnitudePruner, self).__init__(model, local_config, global_config)
 
     def on_epoch_begin(self, epoch):
-        logger.debug("start pruning in epoch {}".format(str(epoch)))
         self.sparsity = self.update_sparsity(epoch)
+        logger.debug("Start pruning in epoch {} with sparsity {}.".
+                     format(str(epoch), str(self.sparsity)))
         self.is_last_epoch = epoch == self.end_epoch
-        logger.debug("epoch {} sparsity = {}".format(str(epoch), str(self.sparsity)))
         if epoch >= self.start_epoch and epoch <= self.end_epoch:
             self.compute_mask()
 
@@ -64,7 +64,7 @@ class BasicMagnitudePruner(Pruner):
             for weight in self.weights:
                 if weight in self.masks:
                     logger.info(
-                        "{} with mask sparsity {} {} {}".format(
+                        "Set {} sparsity with mask {} {} {}.".format(
                             weight, str(
                             self.masks[weight].size), str(
                             self.masks[weight].sum()), str(

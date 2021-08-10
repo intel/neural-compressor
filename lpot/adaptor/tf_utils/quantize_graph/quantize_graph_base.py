@@ -24,6 +24,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 from .quantize_graph_common import QuantizeGraphHelper as helper
 
+
 class QuantizeGraphBase():
     """
     This is the base class for quantize graph.
@@ -61,8 +62,8 @@ class QuantizeNodeBase():
     node_details = namedtuple('node_details', ['node', 'output'])
 
     def __init__(self, **kwargs):
-        self.logger = logging.getLogger()
 
+        self.logger = logging.getLogger()
         input_graph = kwargs['input_graph']
 
         assert isinstance(input_graph, graph_pb2.GraphDef)
@@ -131,8 +132,7 @@ class QuantizeNodeBase():
 
                     while sub_rule_len > 1:
                         if not self.node_name_mapping[cur_node_name].output:
-                            self.logger.debug(
-                                "Failed to match {}".format(sub_rule))
+                            self.logger.debug("Fail to match {}".format(sub_rule))
                             break
 
                         next_node_name = self.node_name_mapping[
@@ -170,13 +170,12 @@ class QuantizeNodeBase():
                             cur_node_name = next_node_name
                         else:
                             matched_node_name.clear()
-                            self.logger.debug(
-                                "Failed to match {}".format(sub_rule))
+                            self.logger.debug("Fail to match {}.".format(sub_rule))
                             break
 
                     if sub_rule_len == 1:
-                        self.logger.debug("match {} on nodes {} ".format(
-                            sub_rule, matched_node_name))
+                        self.logger.debug("Match {} on nodes {}.".
+                                          format(sub_rule, matched_node_name))
                         return sub_rule, matched_node_name
 
         return None, None
@@ -340,7 +339,7 @@ class QuantizeNodeBase():
         """
         Parse the graph and get the input node and output node name details.
         """
-        self.logger.debug("start parsing graph")
+        self.logger.debug("Start to parse graph.")
 
         graph = self.input_graph if input_graph is None else input_graph
         self.node_name_mapping = {}
@@ -391,8 +390,8 @@ class QuantizeNodeBase():
             is_min_right_type = (min_node.op in ["Min", "Dequantize"])
             is_max_right_type = (max_node.op in ["Max", "Dequantize"])
             if not is_min_right_type or not is_max_right_type:
-                self.logger.info("Didn't find expected types on inputs : %s, %s." %
-                                 (min_node.op, max_node.op))
+                self.logger.info("Not find expected types on inputs {}, {}.".
+                                 format(min_node.op, max_node.op))
                 continue
             min_node_input_name = helper.node_name_from_input(
                 min_node.input[0])
@@ -417,7 +416,7 @@ class QuantizeNodeBase():
                         is_same_input = (
                             second_min_node_input_name == max_node_input_name)
             if not is_same_input:
-                self.logger.info("Different min/max inputs: " + min_node_input_name)
+                self.logger.info("Different min/max inputs {}.".format(min_node_input_name))
                 continue
             # We recognize this pattern, so mark the graph edges to be rewired to
             # route around it entirely, since we know it's a no-op.

@@ -23,7 +23,7 @@ class QueryBackendCapability():
        Each adaption layer should implement the inherited class for specific backend on their own.
     """
     def __init__(self):
-        self.logger = logging.getLogger()
+        pass
 
     @abstractmethod
     def get_version(self):

@@ -23,6 +23,8 @@ import logging
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
+logger = logging.getLogger()
+
 @dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
                                                     onnxrt_qlinearops, onnxrt_integerops, \
                                                     pytorch, pytorch_ipex, pytorch_fx, mxnet",
@@ -63,7 +65,6 @@ class DummyDataset(Dataset):
         np.random.seed(9527)
         self.transform = transform
         self.label = label
-        self.logger = logging.getLogger()
         if isinstance(shape, list):
             # list tensor should same first demension n
             n = shape[0][0]
@@ -130,7 +131,7 @@ class DummyDataset(Dataset):
 
         sample = self.dataset[index]
         if self.transform is not None:
-            self.logger.info('Dummy dataset does not need transform!')
+            logger.warning("Dummy dataset does not need transform.")
 
         if self.label:
             return sample, 0

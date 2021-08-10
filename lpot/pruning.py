@@ -141,9 +141,9 @@ class Pruning:
             pruned model: best pruned model found, otherwise return None
 
         """
-        logger.warning('This API is going to be deprecated, please import '
-            'lpot.experimental.Pruning, set the attributes about '
-            'dataloader and metric, then use new __call__ method')
+        logger.warning("This API is going to be deprecated. Please import "
+            "lpot.experimental.Pruning, initialize an instance of `Pruning`,"
+            "set its dataloader and metric attributes, then invoke its __call__ method.")
         self.exp_pruner.model = model
         self.exp_pruner.train_dataloader = train_dataloader
         self.exp_pruner.pruning_func = pruning_func

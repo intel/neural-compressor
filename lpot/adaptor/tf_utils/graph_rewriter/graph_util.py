@@ -28,6 +28,8 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from lpot.utils.utility import singleton
 
+logger = logging.getLogger()
+
 @singleton
 class GraphAnalyzer():
     """Tensorflow Graph Analyzer class which implemented under singleton mode.
@@ -39,7 +41,6 @@ class GraphAnalyzer():
     node_details = namedtuple('node_details', ['node', 'outputs'])
 
     def __init__(self, extend_engine=None):
-        self.logger = logging.getLogger()
         self._graph = None
         self.extend_engine = extend_engine
 
@@ -122,7 +123,7 @@ class GraphAnalyzer():
             if i.node.op == 'Const':
                 continue
             if not i.node.input and not i.outputs:
-                self.logger.debug("skip isolated node .. {}".format(i.node.name))
+                logger.debug("Skip isolated node {}.".format(i.node.name))
             elif i.node.op == 'Placeholder':
                 input_node_names.append(i.node.name)
             elif not i.node.input:
@@ -140,7 +141,7 @@ class GraphAnalyzer():
             for extra_input_name in extra_input_names:
                 input_node_names.append(extra_input_name)
 
-        self.logger.warning("Found possible input node names: {}, output node names: {}".format(
+        logger.warning("Found possible input node names: {}, output node names: {}.".format(
             input_node_names, output_node_names))
 
         return (input_node_names, output_node_names)
@@ -329,7 +330,7 @@ class GraphAnalyzer():
                     False if failed to remove it.
         """
         if node_name not in self.node_name_details:
-            self.logger.debug("The {} is not a valid node name".format(node_name))
+            logger.debug("The {} is not a valid node name.".format(node_name))
             return False
 
         non_const_node_count = len([
@@ -339,7 +340,7 @@ class GraphAnalyzer():
         ])
 
         if non_const_node_count > 1:
-            self.logger.debug("The target node {} has more than one input.".format(node_name))
+            logger.debug("The target node {} has more than one input.".format(node_name))
             return False
 
         try:
@@ -364,7 +365,7 @@ class GraphAnalyzer():
                     self.node_name_details[bottom_node_name].node.input.extend(update_input_name)
 
         except Exception as e:
-            self.logger.debug("Failed to remove node {} due to {}".format(node_name, str(e)))
+            logger.debug("Fail to remove node {} due to {}.".format(node_name, str(e)))
             return False
         else:
             return self.remove_node(node_name)
@@ -381,15 +382,15 @@ class GraphAnalyzer():
         """
 
         if node_name not in self.node_name_details:
-            self.logger.debug("The {} is not a valid node name".format(node_name))
+            logger.debug("The {} is not a valid node name.".format(node_name))
             return False
         try:
             self.node_name_details.pop(node_name)
         except Exception as e:
-            self.logger.info("Failed to remove {} due to {}".format(node_name, str(e)))
+            logger.info("Fail to remove {} due to {}.".format(node_name, str(e)))
             return False
         else:
-            self.logger.debug("{} has been removed.".format(node_name))
+            logger.debug("{} has been removed.".format(node_name))
             return True
 
     def replace_const_node(self,
@@ -442,14 +443,14 @@ class GraphAnalyzer():
         new_node_name = new_node.name
 
         if new_node.op != "Const":
-            self.logger.debug("input of replace_with_constant_node must be a constant node")
+            logger.warning("The input of replace_with_constant_node must be a constant node.")
             return False
         try:
             inputs = self.node_name_details[old_end_node_name].node.input
             inputs = [GraphRewriterHelper.node_name_from_input(i) for i in inputs]
             for input_name in inputs:
                 if self.node_name_details[input_name].node.op != "Const":
-                    self.logger.debug("the subgraph replaces must be constant")
+                    logger.warning("The subgraph replaces must be constant.")
                     return False
                 elif len(self.node_name_details[input_name].outputs) == 1:
                     self.node_name_details.pop(input_name)
@@ -457,10 +458,9 @@ class GraphAnalyzer():
             self.replace_node(new_node, old_end_node_name, output_node_name)
             self.node_name_details[new_node_name].node.ClearField('input')
         except Exception as e:
-            self.logger.info("Failed to replace {} due to {}".format(old_end_node_name, str(e)))
+            logger.info("Fail to replace {} due to {}.".format(old_end_node_name, str(e)))
             return False
         else:
-            self.logger.debug("{} has been replaced.".format(old_end_node_name))
             return True
 
     def replace_single_node(self, new_node, old_output_node_names, old_output_name,
@@ -537,7 +537,7 @@ class GraphAnalyzer():
         new_node_name = new_node.name
 
         if new_node_name in self.node_name_details:
-            self.logger.debug("Remove the existed node {} from internal data structure".format(
+            logger.debug("Remove the existed node {} from internal data structure.".format(
                 (new_node_name)))
             self.node_name_details.pop(new_node_name)
 

@@ -115,7 +115,7 @@ class Component(object):
         if self._eval_func is not None:
             score = self._eval_func(self._model \
                     if getattr(self._eval_func, 'builtin', None) else self._model.model)
-            logger.info('model score is: ' + str(score))
+            logger.info("Evaluated model score is {}.".format(str(score)))
         return self._model
 
     def post_process(self):
@@ -195,7 +195,8 @@ class Component(object):
     @property
     def train_func(self):
         """ not support get train_func """
-        logger.warning('train_func not support getter....')
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+        return None
 
     @train_func.setter
     def train_func(self, user_train_func):
@@ -214,7 +215,8 @@ class Component(object):
     @property
     def eval_func(self):
         """ not support get eval_func """
-        logger.warning('eval_func not support getter....')
+        assert False, 'Should not try to get the value of `eval_func` attribute.'
+        return None
 
     @eval_func.setter
     def eval_func(self, user_eval_func):
@@ -324,8 +326,7 @@ class Component(object):
 
         """
         if not isinstance(user_model, BaseModel):
-            logger.warning('force convert user raw model to lpot model, ' +
-                'better initialize lpot.experimental.common.Model and set....')
+            logger.warning("Force convert framework model to lpot model.")
             self._model = Model(user_model)
         else:
             self._model = user_model

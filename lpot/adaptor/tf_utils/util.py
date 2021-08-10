@@ -155,7 +155,7 @@ def get_estimator_graph(estimator, input_fn):
         outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
             isinstance(estimator_spec.predictions, dict) else \
                 [estimator_spec.predictions.name]
-        logger.info('estimator output tensor names is {}'.format(outputs))
+        logger.info("Estimator output tensor names is {}.".format(outputs))
         with tf.compat.v1.Session(graph=g) as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             # Freezing a graph requires output_node_names, which can be found in

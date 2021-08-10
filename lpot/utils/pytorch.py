@@ -143,7 +143,8 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     try:
         q_model = copy.deepcopy(model)
     except Exception as e:
-        logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+        logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
+                       format(repr(e)))
         q_model = model
 
     if tune_cfg['framework'] == "pytorch_fx":             # pragma: no cover

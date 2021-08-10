@@ -45,8 +45,8 @@ class TensorflowImagenetDataset(IterableDataset):
 
         assert subset in ('validation', 'train'), \
             'only support subset (validation, train)'
-        logger.warning('This api is going to be deprecated, '
-                       'please use ImageRecord instead')
+        logger.warning("This api is going to be deprecated, "
+                       "please use ImageRecord instead.")
 
         from tensorflow.python.platform import gfile
         glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
@@ -80,8 +80,8 @@ class ONNXRTImagenetDataset(Dataset):
         assert os.path.exists(self.val_dir), "find no val dir in {}".format(root) + \
             "please make sure there are train/val subfolders"
         import glob
-        logger.warning('This api is going to be deprecated, ' + \
-                       'please use ImageRecord instead')
+        logger.warning("This api is going to be deprecated, "
+                       "please use ImageRecord instead.")
 
         self.transform = transform
         self.image_list = []
