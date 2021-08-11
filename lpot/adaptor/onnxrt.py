@@ -86,8 +86,10 @@ class ONNXRTAdaptor(Adaptor):
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
+
+        self.quantizable_ops = self._query_quantizable_ops(model.model)
         tmp_model = copy.deepcopy(model)
-        self.quantizable_ops = self._query_quantizable_ops(tmp_model.model)
+ 
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
         if self.static:
@@ -103,14 +105,15 @@ class ONNXRTAdaptor(Adaptor):
             quantize_params,
             self.quantizable_op_types)
         quantizer.quantize_model()
-        model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
-        model.model = quantizer.model.model
+        tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
+        tmp_model.model = quantizer.model.model
         self.quantize_config = quantize_config # update so other methods can know current configs
  
-        self._dump_model_op_stastics(model)
-        return model
+        self._dump_model_op_stastics(tmp_model)
+        return tmp_model
 
     def _generate_qconfig(self, model, tune_cfg, quantize_params):
+        tune_cfg = copy.deepcopy(tune_cfg)
         for node in model.graph.node:
             if (node.name, node.op_type) not in tune_cfg['op']:
                 continue
@@ -164,7 +167,7 @@ class ONNXRTAdaptor(Adaptor):
             self.static,
             quantize_params,
             self.quantizable_op_types)
- 
+
         quantizer.quantize_model()
         model.model = quantizer.model.model
         return model
@@ -494,7 +497,7 @@ class ONNXRTAdaptor(Adaptor):
 
     def _query_quantizable_ops(self, model):
         for node in model.graph.node:
-            if node.op_type in self.quantizable_op_types:
+            if node.op_type in self.quantizable_op_types and node not in self.quantizable_ops:
                 self.quantizable_ops.append(node)
 
         return self.quantizable_ops
