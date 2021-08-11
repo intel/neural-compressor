@@ -1103,6 +1103,8 @@ class MXNetModel(BaseModel):
     """
 
     def __init__(self, model, **kwargs):
+        #(TODO) MXNet does not support recover model from tuning history currently
+        self.q_config = None
         self._model = model
 
     def framework(self):
