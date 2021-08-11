@@ -377,7 +377,10 @@ class TensorFlowAdaptor(Adaptor):
                 elif i.attr['T'].type in (dtypes.quint8,dtypes.qint8):
                     res[i.op]['INT8'] += 1
                 elif i.op == 'Cast':
-                    res[i.op]['BF16'] += 1
+                    if i.attr['DstT'].type == dtypes.bfloat16:
+                        res[i.op]['BF16'] += 1
+                    elif i.attr['DstT'].type == dtypes.float32:
+                        res[i.op]['FP32'] += 1
                 else:
                     res[i.op]['FP32'] += 1
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
