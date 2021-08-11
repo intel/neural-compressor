@@ -51,15 +51,14 @@ class PostCseOptimizer(GraphRewriterBase):
     @dump_elapsed_time("Pass PostCseOptimizer")
     def do_transformation(self):
         GraphAnalyzer().graph = self.model
-
         graph_info = GraphAnalyzer().parse_graph()
         node_hash_info = {}
         loc_attr_node = []
         need_to_keep_const_node_name = []
+
         for _, v in graph_info.items():
             if '_class' in v.node.attr:
                 loc_attr_node.append(v.node.attr['_class'].list.s[0].decode().split(':@')[-1])
-
         for node_name, i in graph_info.items():
             if node_name in loc_attr_node or i.node.op not in ('QuantizeV2', "Const"):
                 continue
@@ -75,7 +74,9 @@ class PostCseOptimizer(GraphRewriterBase):
         for _, v in node_hash_info.items():
             if len(v) == 1 or v[0] not in graph_info:
                 continue
+
             node_type = graph_info[v[0]].node.op
+
             for j in v[1:]:
                 if node_type == 'Const' and j in graph_info:
                     output_op_types = [
@@ -84,22 +85,22 @@ class PostCseOptimizer(GraphRewriterBase):
                     if any(output_op_types):
                         continue
 
-                    next_node = graph_info[j].outputs[0]
-                    matched_index = 0
-                    for index, origin_input in enumerate(graph_info[next_node].node.input):
-                        if origin_input == j:
-                            matched_index = index
-                            break
+                    for next_node in list(graph_info[j].outputs):
+                        matched_index = 0
+                        for index, origin_input in enumerate(graph_info[next_node].node.input):
+                            if origin_input == j:
+                                matched_index = index
+                                break
 
-                    graph_info[next_node].node.input[matched_index] = v[0]
-                    if v[0] not in need_to_keep_const_node_name:
-                        need_to_keep_const_node_name.append(v[0])
+                        graph_info[next_node].node.input[matched_index] = v[0]
+                        if v[0] not in need_to_keep_const_node_name:
+                            need_to_keep_const_node_name.append(v[0])
+                        graph_info[v[0]].outputs.append(next_node)
 
-                    graph_info[v[0]].outputs.append(next_node)
-                    graph_info.pop(j)
+                        if j in graph_info:
+                            graph_info.pop(j)
 
                 elif node_type == 'QuantizeV2':
-                    # import pdb; pdb.set_trace()
                     next_node = graph_info[j].outputs[0]
                     quantize_v2_output_names = (j, j + ':1', j + ':2')
 
@@ -129,5 +130,4 @@ class PostCseOptimizer(GraphRewriterBase):
 
         for _, node_info in graph_info.items():
             output_graph_def.node.extend([node_info.node])
-
         return output_graph_def
