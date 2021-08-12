@@ -48,8 +48,8 @@ def build_fake_yaml():
         yaml.dump(y, f)
     f.close()
 
-
-class TestConvBiasAddAddReluFusion(unittest.TestCase):
+@unittest.skipIf(tf.version.VERSION.find('up') == -1 and tf.version.VERSION < '2.0', "Only supports tf 1.15.up2/up3 and 2.x")
+class TestItexEnabling(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
@@ -60,7 +60,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
 
     @disable_random()
-    def test_conv_biasadd_addv2_relu_fusion(self):
+    def test_itex_convert_basic(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
@@ -101,7 +101,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 if i.op == 'Dequantize':
                     dequant_count += 1
 
-            self.assertEqual(dequant_count, 3)
+            self.assertEqual(dequant_count, 5)
 
 
 if __name__ == '__main__':

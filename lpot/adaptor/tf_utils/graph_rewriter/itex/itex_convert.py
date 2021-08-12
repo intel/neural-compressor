@@ -18,6 +18,7 @@
 import copy
 import numpy as np
 from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import tensor_util
 from lpot.utils.utility import dump_elapsed_time
 from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 from ..graph_base import GraphRewriterBase
@@ -90,4 +91,40 @@ class GenerateITEXModel(GraphRewriterBase):
             g.add_node(max_node, None, [quant_v2_node.name])
             graph_info[op_name].node.input[0] = dequantize_node.name
 
-        return g.dump_graph()
+        g_weight = GraphAnalyzer()
+        g_weight.graph = g.dump_graph()
+        graph_info = g_weight.parse_graph()
+        target_nodes = g_weight.query_fusion_pattern_nodes(
+            [["Conv2D", "MatMul"], ["BiasAdd"], ('Relu',)])
+        for i in target_nodes:
+            computational_node_name = i[0]
+            computational_node = graph_info[computational_node_name].node
+            weight_name = computational_node.input[1]
+            weight_node = graph_info[weight_name].node
+            weight_tensor = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+            min_value = np.min(weight_tensor)
+            max_value = np.max(weight_tensor)
+            min_const_node = Helper.create_constant_node(
+                weight_name + '_min', min_value, dtypes.float32)
+            max_const_node = Helper.create_constant_node(
+                weight_name + '_max', max_value, dtypes.float32)
+            quant_node = Helper.create_node(
+                "QuantizeV2", weight_name + '_quant',
+                [weight_name, weight_name + '_min', weight_name + '_max'])
+            dequant_node=Helper.create_node(
+                "Dequantize", weight_name + '_dequant',
+                [quant_node.name, quant_node.name + ':1', quant_node.name + ':2'])
+            Helper.set_attr_dtype(quant_node, "T", dtypes.qint8)
+            Helper.set_attr_string(quant_node, "mode", b"SCALED")
+            Helper.set_attr_string(quant_node, "round_mode", b"HALF_TO_EVEN")
+
+            Helper.set_attr_dtype(dequant_node, "T", dtypes.qint8)
+            Helper.set_attr_string(dequant_node, "mode", b"SCALED")
+
+            g_weight.add_node(quant_node, weight_name, [])
+            g_weight.add_node(min_const_node, None, [quant_node.name])
+            g_weight.add_node(max_const_node, None, [quant_node.name])
+            g_weight.add_node(dequant_node, quant_node.name, [computational_node_name])
+            computational_node.input[1] = dequant_node.name
+
+        return g_weight.dump_graph()
