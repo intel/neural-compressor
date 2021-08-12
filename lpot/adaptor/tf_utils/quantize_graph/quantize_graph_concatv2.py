@@ -58,10 +58,17 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         self._intel_cpu_add_dequantize_result_node(quantized_concat_name, original_node.name)
 
     def _quantizable_concat(self, node):
+        deq_type = []
         for input_node_name in node.input[:node.attr['N'].i]:
             node_name = helper.node_name_from_input(input_node_name)
             if self.node_name_mapping[node_name].node.op != "Dequantize":
                 return False
+
+            deq_type.append(self.node_name_mapping[node_name].node.attr['T'].type)
+
+        if len(set(deq_type)) != 1:
+            return False
+
         return True
 
     def _apply_concatv2_quantization(self):
