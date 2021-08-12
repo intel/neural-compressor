@@ -59,7 +59,7 @@ def get_ops_recursively(model, prefix, ops={}):
             None
         """
         version = get_torch_version()
-        if version < PT17_VERSION:
+        if version < PT17_VERSION:                                # pragma: no cover
             white_list = \
                (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
                 set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
@@ -68,7 +68,7 @@ def get_ops_recursively(model, prefix, ops={}):
                 set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.keys()) |
                 set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.keys()) |
                 torch.quantization.default_mappings._INCLUDE_QCONFIG_PROPAGATE_LIST)
-        elif version < PT18_VERSION:
+        elif version < PT18_VERSION:                             # pragma: no cover
             white_list = torch.quantization.get_compare_output_module_list()
         else:
             white_list = torch.quantization.get_default_compare_output_module_list()
@@ -173,7 +173,7 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                         activation=activation_observer, weight=weights_observer)
             else:
                 version = get_torch_version()
-                if version < PT16_VERSION:
+                if version < PT16_VERSION:                            # pragma: no cover
                     qconfig = torch.quantization.QConfigDynamic(weight=weights_observer)
                 else:
                     qconfig = torch.quantization.QConfigDynamic(
@@ -364,13 +364,13 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
     version = get_torch_version()
     # there is accuracy issue in quantized LayerNorm op and embedding op in pytorch <1.8.1,
     # so remove it here
-    if version < PT17_VERSION and white_list is None:
+    if version < PT17_VERSION and white_list is None:                    # pragma: no cover
         white_list = \
             torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if approach == 'post_training_dynamic_quant' else \
             torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
             {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif version < PT18_VERSION and white_list is None:
+    elif version < PT18_VERSION and white_list is None:                  # pragma: no cover
         white_list = \
             torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
             if approach == 'post_training_dynamic_quant' else \
@@ -647,16 +647,30 @@ class TemplateAdaptor(Adaptor):
         Returns:
             q_capability (dictionary): tuning capability for each op from model.
         """
-        if isinstance(self, PyTorch_FXAdaptor):
-            from torch.quantization.quantize_fx import fuse_fx
-            model.model.eval()
-            model.model = fuse_fx(model.model, 
-              fuse_custom_config_dict=model.kwargs['prepare_custom_config_dict']
-              if model.kwargs is not None and
-              model.kwargs.__contains__('prepare_custom_config_dict') else None)
         self.pre_optimized_model = model
+        tmp_model = model.model
+        if isinstance(self, PyTorch_FXAdaptor):
+            try:
+                tmp_model = copy.deepcopy(model.model)
+            except Exception as e:                              # pragma: no cover
+                logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+            from torch.fx import GraphModule
+            from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
+            if model.kwargs is not None and \
+                    model.kwargs.__contains__('prepare_custom_config_dict'):
+                prepare_custom_config_dict = model.kwargs['prepare_custom_config_dict']
+            else:
+                prepare_custom_config_dict = {}
+            skipped_module_names = prepare_custom_config_dict.get(\
+                                                "non_traceable_module_name", [])
+            skipped_module_classes = prepare_custom_config_dict.get(\
+                                                "non_traceable_module_class", [])
+            tracer = QuantizationTracer(
+                skipped_module_names, skipped_module_classes)
+            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
+            tmp_model = _fuse_fx(graph_module, prepare_custom_config_dict)
         quantizable_ops = []
-        self._get_quantizable_ops_recursively(model.model, '', quantizable_ops)
+        self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
             if self.approach == "post_training_dynamic_quant" else \
             self.query_handler.get_quantization_capability()['int8']
@@ -783,7 +797,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                                  for inp in input]
                     output = q_model(*input)
                 else:
-                    if self.device == "gpu" and isinstance(input, torch.Tensor):
+                    if self.device == "gpu" and isinstance(input, torch.Tensor):# pragma: no cover
                         input = input.to("dpcpp")
                     output = q_model(input)
                 if idx >= iterations - 1:
@@ -847,10 +861,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             else:                                                   # pragma: no cover
                 torch.quantization.add_observer_(q_model.model)
                 torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
-            if q_func is None:
-                assert False, "quantization aware training mode requires q_function to train"
-            else:
-                q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
+            q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             q_model.model.eval()
 
         if self.approach == 'quant_aware_training':
@@ -912,21 +923,21 @@ class PyTorchAdaptor(TemplateAdaptor):
                     measurer.start()
 
                 if isinstance(input, dict):
-                    if self.device == "gpu":
+                    if self.device == "gpu":                    # pragma: no cover
                         for inp in input.keys():
                             input[inp] = input[inp].to("dpcpp") \
                                 if isinstance(input[inp], torch.Tensor) else input[inp]
                     output = model_(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
-                    if self.device == "gpu":
+                    if self.device == "gpu":                    # pragma: no cover
                         input = [inp.to("dpcpp")
                                  if isinstance(inp, torch.Tensor) else inp for inp in input]
                     output = model_(*input)
                 else:
-                    if self.device == "gpu" and isinstance(input, torch.Tensor):
+                    if self.device == "gpu" and isinstance(input, torch.Tensor):# pragma: no cover
                         input = input.to("dpcpp")
                     output = model_(input)
-                if self.device == "gpu":
+                if self.device == "gpu":                         # pragma: no cover
                     output = output.to("cpu")
                 if measurer is not None:
                     measurer.end()
@@ -1335,12 +1346,12 @@ class PyTorchAdaptor(TemplateAdaptor):
             return model
 
         # create properties
-        if self.version < PT17_VERSION:
+        if self.version < PT17_VERSION:                    # pragma: no cover
             white_list = self.white_list | \
                 (set(torch.quantization.default_mappings.DEFAULT_MODULE_MAPPING.values()) |
                  set(torch.quantization.default_mappings.DEFAULT_QAT_MODULE_MAPPING.values()) |
                  set(torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.values()))
-        elif self.version < PT18_VERSION:
+        elif self.version < PT18_VERSION:                  # pragma: no cover
             white_list = torch.quantization.get_compare_output_module_list()
         else:
             white_list = torch.quantization.get_default_compare_output_module_list()
@@ -2087,11 +2098,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
               prepare_custom_config_dict=q_model.kwargs['prepare_custom_config_dict']
               if q_model.kwargs is not None and
               q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
-            if q_func is None:
-                assert False, \
-                    "quantization aware training mode requires q_function to train"
-            else:
-                q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
+            q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             q_model.model.eval()
         else:
             q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
@@ -2350,12 +2357,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # get scale and zero_point of getattr ops.
         tune_cfg['get_attr'] = {}
         for node in model.graph.nodes:
-            if node.op == 'get_attr':
-                result = getattr(model, node.target)
-                if 'scale' in node.target:
-                    tune_cfg['get_attr'][node.target] = float(result)
-                else:
-                    tune_cfg['get_attr'][node.target] = int(result)
+            if node.op == 'get_attr' and \
+                  ('scale' in node.target or 'zero_point' in node.target):
+                tune_cfg['get_attr'][node.target] = getattr(model, node.target)
 
 
 class PyTorchQuery(QueryBackendCapability):
@@ -2393,7 +2397,7 @@ class PyTorchQuery(QueryBackendCapability):
             content = yaml.safe_load(f)
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
-            except Exception as e:
+            except Exception as e:                          # pragma: no cover
                 logger.info("Fail to parse {} due to {}".format(self.cfg, str(e)))
                 self.cur_config = None
                 raise ValueError("Please check if the format of {} follows LPOT yaml schema.".

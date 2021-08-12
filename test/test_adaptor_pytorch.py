@@ -111,8 +111,8 @@ fake_qat_yaml = '''
     quantization:
       approach: quant_aware_training
       train:
-        end_epoch: 2
-        iteration: 4
+        end_epoch: 1
+        iteration: 1
         optimizer:
           SGD:
             learning_rate: 0.0001
@@ -543,16 +543,19 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_fx_quant(self):
-        for fake_yaml in ['fx_dynamic_yaml.yaml', 'fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
             model_origin = torchvision.models.resnet18()
             # run fx_quant in lpot and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
+            quantizer.eval_func = eval_func
+            if fake_yaml == 'fx_qat_yaml.yaml':
+                quantizer.q_func = q_func
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = common.Model(model_origin,
                                             **{'prepare_custom_config_dict': {'a': 1},
                                               'convert_custom_config_dict': {'a': 1}})
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights with lpot.utils
@@ -560,7 +563,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': {'a': 1},
                                 'convert_custom_config_dict': {'a': 1}})
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
-            eval_func(model_fx)
+
             # recover int8 model with only tune_cfg
             history_file = './saved/history.snapshot'
             model_fx_recover = recover(model_origin, history_file, 0,\
@@ -571,14 +574,14 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
             model_origin = torchvision.models.resnet18()
+            # run fx_quant in lpot and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-            quantizer.model = common.Model(model_origin)
-            if fake_yaml == 'fx_qat_yaml.yaml':
-                quantizer.q_func = q_func
-            else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_func = eval_func
+            dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(model_origin,
+                                           **{'prepare_custom_config_dict': {'a': 1},
+                                              'convert_custom_config_dict': {'a': 1}})
             q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights with lpot.utils
@@ -586,14 +589,6 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': {'a': 1},
                                 'convert_custom_config_dict': {'a': 1}})
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
-            eval_func(model_fx)
-            # recover int8 model with only tune_cfg
-            history_file = './saved/history.snapshot'
-            model_fx_recover = recover(model_origin, history_file, 0,\
-                            **{'prepare_custom_config_dict': {'a': 1},
-                                'convert_custom_config_dict': {'a': 1}})
-            self.assertEqual(model_fx.code, model_fx_recover.code)
-            shutil.rmtree('./saved', ignore_errors=True)
 
     def test_fx_dynamic_quant(self):
         # Model Definition

@@ -197,7 +197,9 @@ class TestPruning(unittest.TestCase):
         scheduler.append(combination)
         opt_model = scheduler()
 
-        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
+        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize() \
+            if opt_model.model.layer1[0].conv1.weight.is_quantized else \
+            opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.97,
                                delta=0.01)

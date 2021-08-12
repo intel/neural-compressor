@@ -61,9 +61,8 @@ def set_activation_scale_zeropoint(q_model, tune_cfg):
 
     if tune_cfg['framework'] == "pytorch_fx":
         # get scale and zero_point of getattr ops.
-        for node in q_model.graph.nodes:
-            if node.op == 'get_attr':
-                setattr(q_model, node.target, torch.tensor(tune_cfg['get_attr'][node.target]))
+        for node_target in tune_cfg['get_attr'].keys():
+            setattr(q_model, node_target, tune_cfg['get_attr'][node_target])
 
 
 def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
@@ -96,32 +95,32 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     version = get_torch_version()
     if tune_cfg['approach'] != "post_training_dynamic_quant":
-        if version < PT17_VERSION:
+        if version < PT17_VERSION:                                      # pragma: no cover
             q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
-        elif version < PT18_VERSION:
+        elif version < PT18_VERSION:                                    # pragma: no cover
             q_mapping = \
                 tq.quantization_mappings.get_static_quant_module_mappings()
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_static_quant_module_mappings()
     else:
-        if version < PT17_VERSION:
+        if version < PT17_VERSION:                                      # pragma: no cover
             q_mapping = \
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
-        elif version < PT18_VERSION:
+        elif version < PT18_VERSION:                                    # pragma: no cover
             q_mapping = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
 
-    if version < PT17_VERSION:
+    if version < PT17_VERSION:                                          # pragma: no cover
         white_list = \
             tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
             tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
             {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif version < PT18_VERSION:
+    elif version < PT18_VERSION:                                       # pragma: no cover
         white_list = \
             tq.quantization_mappings.get_dynamic_quant_module_mappings() \
             if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
@@ -142,7 +141,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     model.eval()
     try:
         q_model = copy.deepcopy(model)
-    except Exception as e:
+    except Exception as e:                                           # pragma: no cover
         logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
                        format(repr(e)))
         q_model = model
