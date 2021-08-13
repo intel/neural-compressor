@@ -172,6 +172,8 @@ class TestPruning(unittest.TestCase):
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             qconfig = {"":torch.quantization.get_default_qat_qconfig('fbgemm')}
             model = prepare_qat_fx(model, qconfig)
+            # TODO: For test here, needs to bypass this in fx q_function
+            combination.model.model = model
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -190,6 +192,7 @@ class TestPruning(unittest.TestCase):
                         break
                 combination.on_epoch_end()
             model = convert_fx(model)
+            return model
 
         combination.train_func = train_func_for_lpot
         combination.eval_dataloader = dummy_dataloader
@@ -197,9 +200,7 @@ class TestPruning(unittest.TestCase):
         scheduler.append(combination)
         opt_model = scheduler()
 
-        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize() \
-            if opt_model.model.layer1[0].conv1.weight.is_quantized else \
-            opt_model.model.layer1[0].conv1.weight
+        conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.97,
                                delta=0.01)

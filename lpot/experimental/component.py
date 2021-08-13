@@ -110,8 +110,12 @@ class Component(object):
         """
         # TODO: consider strategy sync during combination
         if self._train_func is not None:
-            self._train_func(self._model \
+            modified_model = self._train_func(self._model \
                     if getattr(self._train_func, 'builtin', None) else self._model.model)
+            # for the cases that model is changed not inplaced during training, for example,
+            # oneshot with torch_fx QAT interfaces. Needs to reset model afterwards.
+            if modified_model is not None:
+                self._model.model = modified_model
         if self._eval_func is not None:
             score = self._eval_func(self._model \
                     if getattr(self._eval_func, 'builtin', None) else self._model.model)

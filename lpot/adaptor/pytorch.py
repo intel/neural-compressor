@@ -861,6 +861,9 @@ class PyTorchAdaptor(TemplateAdaptor):
             else:                                                   # pragma: no cover
                 torch.quantization.add_observer_(q_model.model)
                 torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
+            # q_func can be created by lpot internal or passed by user. It's critical to
+            # distinguish how q_func is passed since lpot built-in functions accept lpot
+            # model and user defined func should accept framework model.
             q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             q_model.model.eval()
 
@@ -1134,7 +1137,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         """get activation scale and zero_point for converted model.
 
         Args:
-            model (dir): Int8 model converted from fp32 model. 
+            model (dir): Int8 model converted from fp32 model.
                         scale and zero_point is set with calibration for each module
             tune_cfg (object): This file saves scale and zero_point of \
                             output activation of each quantized module.
@@ -2098,6 +2101,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
               prepare_custom_config_dict=q_model.kwargs['prepare_custom_config_dict']
               if q_model.kwargs is not None and
               q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
+            # q_func can be created by lpot internal or passed by user. It's critical to
+            # distinguish how q_func is passed since lpot built-in functions accept lpot
+            # model and user defined func should accept framework model.
             q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             q_model.model.eval()
         else:
@@ -2201,11 +2207,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE),
                             weight=torch.quantization.default_weight_fake_quant)
-        prepare_qat_fx(self.model.model, qconfig)
+        # prepare_qat_fx can not change inplaced
+        self.model.model = prepare_qat_fx(self.model.model, {"": qconfig})
 
     def _post_hook_for_qat(self):                              # pragma: no cover
         from torch.quantization.quantize_fx import convert_fx
-        convert_fx(self.model.model)
+        self.model.model = convert_fx(self.model.model)
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
@@ -2220,13 +2227,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        model_ = model.model
         self.model = model
-        optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
+        optimizer = optimizer_tuple[0](model.model.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
-        start_epochs = kwargs['kwargs']['start_epoch']
-        end_epochs = kwargs['kwargs']['end_epoch']
-        iters = kwargs['kwargs']['iteration']
+        # prepare hooks first to ensure model will be converted correctly
         if hooks is not None:                              # pragma: no cover
             pre_epoch_begin = hooks['pre_epoch_begin']
             post_epoch_end = hooks['post_epoch_end']
@@ -2235,10 +2239,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             on_batch_begin = hooks['on_batch_begin']
             on_batch_end = hooks['on_batch_end']
             on_post_grad = hooks['on_post_grad']
+        model.model.train()
         if hooks is not None:
             pre_epoch_begin()
+        start_epochs = kwargs['kwargs']['start_epoch']
+        end_epochs = kwargs['kwargs']['end_epoch']
+        iters = kwargs['kwargs']['iteration']
         for nepoch in range(start_epochs, end_epochs):
-            model_.train()
             cnt = 0
             if hooks is not None:
                 on_epoch_begin(nepoch)
@@ -2247,7 +2254,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = model_(image)
+                output = model.model(image)
                 loss = criterion(output, target)
                 if hooks is not None:
                     on_post_grad()
@@ -2337,7 +2344,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """get activation scale and zero_point for converted model.
 
         Args:
-            model (dir): Int8 model converted from fp32 model. 
+            model (dir): Int8 model converted from fp32 model.
                         scale and zero_point is set with calibration for each module
             tune_cfg (object): This file saves scale and zero_point of \
                             output activation of each quantized module.
