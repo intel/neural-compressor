@@ -351,6 +351,44 @@ class TestConf(unittest.TestCase):
         tune_space = config.modelwise_tune_space(framework_modelwise_capability)
         self.assertEqual(tune_space['CONV2D']['activation']['algorithm'], ['minmax'])
 
+    def test_modelwise_conf_merge2(self):
+        test = '''
+        model:
+          name: inout_yaml 
+          framework: mxnet
+        quantization:
+          model_wise:
+            weight:
+              algorithm:  minmax
+            activation:
+              algorithm:  minmax
+              dtype: ['uint8', 'fp32']
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+
+        framework_modelwise_capability = {
+            'CONV2D': {
+                'activation': {
+                    'dtype': ['iint8', 'fp32'],
+                    'scheme': ['asym', 'sym'],
+                    'granularity': ['per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+                'weight': {
+                    'dtype': ['int8', 'fp32'],
+                    'scheme': [
+                        'sym',
+                    ],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax']
+                },
+            },
+        }
+
+        tune_space = config.modelwise_tune_space(framework_modelwise_capability)
+        self.assertEqual(tune_space['CONV2D']['activation']['dtype'], ['fp32'])
+  
     def test_ops_override(self):
         test = '''
         model:
@@ -433,7 +471,7 @@ class TestConf(unittest.TestCase):
         tune_space = config.opwise_tune_space(framework_opwise_capability)
         self.assertEqual(tune_space[('conv1', 'CONV2D')]['weight']['algorithm'], ['minmax'])
         self.assertEqual(tune_space[('conv2', 'CONV2D')]['activation']['dtype'], ['fp32'])
-
+  
     def test_prune(self):
         test = '''
         model:

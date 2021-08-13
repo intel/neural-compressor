@@ -812,6 +812,7 @@ class Conf(object):
 
     def modelwise_tune_space(self, model_wise_quant):
         cfg = self.usr_cfg
+
         self._model_wise_tune_space = OrderedDict()
         for optype in model_wise_quant.keys():
             self._model_wise_tune_space[optype] = self._merge_dicts(cfg.quantization.model_wise,
@@ -847,10 +848,16 @@ class Conf(object):
         if len(model_wise_quant_cfgs) == 0:
             return []
         temp_cfgs = OrderedDict()
+
         for optype, cfgs in model_wise_quant_cfgs.items():
             if len(cfgs) > 0:
                 temp_cfgs[optype] = copy.deepcopy(cfgs)
+
+        if not bool(temp_cfgs):
+            return []
+
         keys, values = zip(*temp_cfgs.items())
+
         return self._sort_cfgs([dict(zip(keys, v)) for v in itertools.product(*values)])
 
     def opwise_tune_space(self, opwise_quant):
