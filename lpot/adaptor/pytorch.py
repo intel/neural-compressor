@@ -2357,9 +2357,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # get scale and zero_point of getattr ops.
         tune_cfg['get_attr'] = {}
         for node in model.graph.nodes:
-            if node.op == 'get_attr' and \
-                  ('scale' in node.target or 'zero_point' in node.target):
-                tune_cfg['get_attr'][node.target] = getattr(model, node.target)
+            if node.op == 'get_attr':
+                if 'scale' in node.target:
+                    tune_cfg['get_attr'][node.target] = float(getattr(model, node.target))
+                elif 'zero_point' in node.target:
+                    tune_cfg['get_attr'][node.target] = int(getattr(model, node.target))
+                else:
+                    pass
 
 
 class PyTorchQuery(QueryBackendCapability):

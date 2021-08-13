@@ -62,7 +62,7 @@ def set_activation_scale_zeropoint(q_model, tune_cfg):
     if tune_cfg['framework'] == "pytorch_fx":
         # get scale and zero_point of getattr ops.
         for node_target in tune_cfg['get_attr'].keys():
-            setattr(q_model, node_target, tune_cfg['get_attr'][node_target])
+            setattr(q_model, node_target, torch.tensor(tune_cfg['get_attr'][node_target]))
 
 
 def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
