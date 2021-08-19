@@ -68,7 +68,7 @@ class BF16Convert(GraphRewriterBase):
                  "BiasAddV1",
                  "FusedBatchNormV2",
                  "FusedBatchNormGradV2",
-                 "FusedBatchNormV3",
+                #  "FusedBatchNormV3",
                  "FusedBatchNormGradV3",
                  "LeakyRelu",
                  "LeakyReluGrad",
@@ -145,7 +145,7 @@ class BF16Convert(GraphRewriterBase):
         self.converted_ops.append(bf16_node_name)
         bf16_node_detail = self.cur_graph.node_name_details[bf16_node_name]
         bf16_node = bf16_node_detail.node
-        bf16_node_inputs = list(bf16_node.input)
+        bf16_node_inputs = [i for i in list(bf16_node.input) if not i.startswith('^')]
 
         if 'T' in bf16_node.attr and bf16_node.attr['T'] != \
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum) and \
@@ -157,6 +157,7 @@ class BF16Convert(GraphRewriterBase):
 
             each_input_node = each_input_detail.node
             # Const + Cast => Const optimization
+
             if each_input_node.op == "Const":
                 if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(
                         type=dtypes.float32.as_datatype_enum):
@@ -229,7 +230,7 @@ class BF16Convert(GraphRewriterBase):
                 self.cur_graph.remove_node(each_output)
             elif (each_output not in self.fp32_ops + self.converted_ops and
                     each_output_node.op in BF16Convert.WHITE_LIST + \
-                    BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST):
+                    BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST) :
                 # TODO: Consider multi node inputs case, check others inputs whether
                 # converted to BF16
                 self._bf16_convert(each_output)
@@ -262,13 +263,45 @@ class BF16Convert(GraphRewriterBase):
             if bf16_node_name not in self.converted_ops:
                 self._bf16_convert(bf16_node_name)
 
+    def _convert_bf16_bnv3(self, input_graph):
+        g = GraphAnalyzer()
+        g.graph = input_graph
+        graph_info = g.parse_graph()
+
+        bn_pattern= [['FusedBatchNormV3']]
+
+        target_nodes = g.query_fusion_pattern_nodes(bn_pattern)
+        for i in target_nodes:
+            node_name = i[0]
+            bn_node = graph_info[node_name].node
+            bn_node_outputs = graph_info[node_name].outputs
+
+            x_input_name = bn_node.input[0]
+            x_input_node =graph_info[x_input_name].node
+            if x_input_node.op == 'Cast' and x_input_node.attr['SrcT'].type == dtypes.bfloat16 \
+                and x_input_node.attr['DstT'].type == dtypes.float32:
+                g.remove_node_with_single_input_output(x_input_name)
+                Helper.set_attr_dtype(bn_node, "T", dtypes.bfloat16)
+                output_y_node = graph_info[bn_node_outputs[0]].node
+                if output_y_node.attr["T"].type == dtypes.float32:
+                    input_cast_node = Helper.create_node(
+                        "Cast", node_name.replace(':', '__') + "_BF16toFP32", [node_name])
+                    Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.bfloat16)
+                    Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.float32)
+                    Helper.set_attr_bool(input_cast_node, "Truncate", False)
+                    g.add_node(input_cast_node, node_name, bn_node_outputs)
+                else:
+                    g.remove_node_with_single_input_output(bn_node_outputs[0])
+
+        return g.dump_graph()
+
     def do_transformation(self):
         """
         Execute BF16 convert.
         :return: Transformed graph
         """
         self._model_bf16_convert()
+        converted_graph_def = self._convert_bf16_bnv3(self.cur_graph.dump_graph())
 
-        converted_graph_def = self.cur_graph.dump_graph()
         converted_graph_def.library.CopyFrom(self.model.library)
         return converted_graph_def

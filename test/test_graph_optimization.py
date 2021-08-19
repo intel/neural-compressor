@@ -3,14 +3,15 @@
 #
 import unittest
 import os
-from lpot.experimental.common import postprocess
 import yaml
 import tensorflow as tf
 import numpy as np
-
+from tensorflow.core.framework import graph_pb2
+from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import graph_util
 from lpot.adaptor.tf_utils.util import disable_random
 from lpot.utils.utility import CpuInfo
+from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -88,7 +89,7 @@ class MyMetric(object):
         correct_num = np.sum(
                 np.array(self.pred_list) == np.array(self.label_list))
         return correct_num / self.samples
-        
+
 class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -419,9 +420,9 @@ class TestGraphOptimization(unittest.TestCase):
                 if i.op == 'Cast':
                     found_cast_op = True
                     break
-            
+
             self.assertEqual(found_cast_op, True)
-    
+
     @disable_random()
     def test_graph_optimization_with_eval_func(self):
 
@@ -453,7 +454,7 @@ class TestGraphOptimization(unittest.TestCase):
                 output_node_names=[out_name])
             from lpot.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml.yaml')
-            
+
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def
@@ -515,6 +516,109 @@ class TestGraphOptimization(unittest.TestCase):
 
         self.assertEqual(found_cast_op, True)
 
+    @disable_random()
+    def test_graph_optimization_with_bn(self):
+        input_constant_name = "input_constant"
+        relu_name = "relu"
+        float_graph_def = graph_pb2.GraphDef()
+        input_constant = Helper.create_constant_node(
+            input_constant_name,
+            value=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            dtype=dtypes.float32,
+            shape=[1, 2, 6, 6])
+        float_graph_def.node.extend([input_constant])
+        relu_node = Helper.create_node("Relu", relu_name,
+                                                    [input_constant_name])
+        Helper.set_attr_dtype(relu_node, "T", dtypes.float32)
+        float_graph_def.node.extend([relu_node])
+
+        b_constant_name = "b_constant"
+        conv2d_name = "conv2d_1"
+        b_constant = Helper.create_constant_node(
+            b_constant_name,
+            value=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            dtype=dtypes.float32,
+            shape=[1, 2, 6, 6])
+        float_graph_def.node.extend([b_constant])
+
+        conv2d_node = Helper.create_node(
+            "Conv2D", conv2d_name, [relu_name, b_constant_name])
+        Helper.set_attr_dtype(conv2d_node, "T", dtypes.float32)
+        Helper.set_attr_string(conv2d_node, "padding", b"SAME")
+        Helper.set_attr_int_list(conv2d_node, "strides", [1,1,1,1])
+
+        float_graph_def.node.extend([conv2d_node])
+
+        bias_add_name = "bias_add"
+        offset_constant_name = "offset_constant"
+
+        offset_constant = Helper.create_constant_node(
+            offset_constant_name,
+            value=[1, 2, 3, 4, 5, 6],
+            dtype=dtypes.float32,
+            shape=[6])
+        float_graph_def.node.extend([offset_constant])
+
+        bias_add_node = Helper.create_node(
+            "BiasAdd", bias_add_name, [conv2d_name, offset_constant_name])
+        Helper.set_attr_dtype(bias_add_node, "T", dtypes.float32)
+        float_graph_def.node.extend([bias_add_node])
+
+        bn_scale_name = 'bn_scale'
+        bn_scale_node = Helper.create_constant_node(
+            bn_scale_name,
+            value=[1, 2, 3, 4, 5, 6],
+            dtype=dtypes.float32,
+            shape=[6])
+        bn_offset_name = 'bn_offset'
+        bn_offset_node = Helper.create_constant_node(
+            bn_offset_name,
+            value=[1, 2, 3, 4, 5, 6],
+            dtype=dtypes.float32,
+            shape=[6])
+        bn_mean_name = 'bn_mean'
+        bn_mean_node = Helper.create_constant_node(
+            bn_mean_name, value=[
+                1,
+                2,
+            ], dtype=dtypes.float32, shape=[
+                2,
+            ])
+        bn_var_name = 'bn_var'
+        bn_var_node = Helper.create_constant_node(
+            bn_var_name, value=[], dtype=dtypes.float32, shape=[0])
+        fused_bn_node_name = 'bn'
+        fused_bn_node = Helper.create_node(
+            "FusedBatchNormV3", fused_bn_node_name, [
+                bias_add_name, bn_scale_name, bn_offset_name, bn_mean_name,
+                bn_var_name
+            ])
+        Helper.set_attr_dtype(fused_bn_node, "T", dtypes.float32)
+        Helper.set_attr_dtype(fused_bn_node, "U", dtypes.float32)
+        float_graph_def.node.extend([
+            fused_bn_node, bn_scale_node, bn_offset_node, bn_mean_node,
+            bn_var_node
+        ])
+
+        post_relu_name = "post_relu"
+        post_relu_node = Helper.create_node(
+            "Relu", post_relu_name, [fused_bn_node_name])
+        Helper.set_attr_dtype(post_relu_node, "T", dtypes.float32)
+
+        float_graph_def.node.extend([post_relu_node])
+
+        from lpot.experimental import Graph_Optimization
+
+        graph_optimizer = Graph_Optimization()
+
+        graph_optimizer.precisions = 'bf16'
+        graph_optimizer.model = float_graph_def
+        output_graph = graph_optimizer()
+        bn_bf16 = False
+        for i in output_graph.graph_def.node:
+            if i.op == 'FusedBatchNormV3' and i.attr['T'].type == dtypes.bfloat16:
+                bn_bf16 = True
+        self.assertEqual(bn_bf16, True)
 class TestGraphOptmizationFP32(unittest.TestCase):
 
     @disable_random()
@@ -561,7 +665,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
             precision = graph_optimizer.precisions
             self.assertEqual(found_cast_op, False)
             self.assertEqual(precision, 'fp32')
-            
+
     @disable_random()
     def test_graph_optimization_without_yaml_with_precisions(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
