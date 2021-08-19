@@ -94,10 +94,10 @@ Tune 2 result is: [19.4817, 861.9649]
 | fp32  | 1 | 878.225 ms | 1.139 samples/sec |
 | int8  | 1 |  97.111 ms | 10.298 samples/sec |
 
-sampling_size: 500(conf.yaml)
-FP32 baseline is: [19.6298, 3103.3418]
-Pass quantize model elapsed time: 480769.63 ms
-Tune 1 result is: [19.0617, 649.5251]
-Pass quantize model elapsed time: 215259.43 ms
-Tune 2 result is: [19.5257, 636.5329]
-···
+sampling_size: 500(conf.yaml)  
+FP32 baseline is: [19.6298, 3103.3418]  
+Pass quantize model elapsed time: 480769.63 ms  
+Tune 1 result is: [19.0617, 649.5251]  
+Pass quantize model elapsed time: 215259.43 ms  
+Tune 2 result is: [19.5257, 636.5329]  
+···  

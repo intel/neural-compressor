@@ -7,7 +7,7 @@ import unittest
 import os
 from lpot.adaptor import FRAMEWORKS
 from lpot.model import MODELS
-from lpot.adaptor.pytorch import PT18_VERSION, PT17_VERSION
+from lpot.adaptor.pytorch import PT18_VERSION
 import lpot.adaptor.pytorch as lpot_torch
 from lpot.experimental import Quantization, common
 from lpot.utils.pytorch import load
@@ -37,6 +37,12 @@ fake_dyn_yaml = '''
 
     quantization:
       approach: post_training_dynamic_quant
+      op_wise: {
+              'decoder': {
+                'activation':  {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              }
+      }
     evaluation:
       accuracy:
         metric:
@@ -64,22 +70,30 @@ fake_ptq_yaml = '''
     quantization:
       op_wise: {
               'quant': {
-                'activation':  {'dtype': ['fp32']},
+                'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
               },
               'layer1.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
-                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer1.0.conv2': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
               },
               'layer2.0.conv1': {
                 'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
               },
               'layer3.0.conv1': {
-                'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'activation': {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
                 'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
               },
               'layer1.0.add_relu': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'default_qconfig': {
                 'activation':  {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
               }
@@ -121,23 +135,27 @@ fake_qat_yaml = '''
             reduction: mean
       op_wise: {
               'quant': {
-                'activation':  {'dtype': ['fp32']},
+                'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
               },
               'layer1.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['asym']},
-                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['asym']}
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer1.0.conv2': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
               },
               'layer2.0.conv1': {
                 'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight':  {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
               },
               'layer3.0.conv1': {
-                'activation':  {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'activation': {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
                 'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
               },
               'layer1.0.add_relu': {
-                'activation':  {'dtype': ['fp32']},
+                'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
               }
       }

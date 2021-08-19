@@ -54,9 +54,9 @@ def set_activation_scale_zeropoint(q_model, tune_cfg):
             key = (name, tune_ops[name])
             value = tune_cfg['op'][key]
             assert isinstance(value, dict)
-            if hasattr(value['activation'], 'scale'):
+            if 'scale' in value['activation'].keys():
                 module.scale = torch.tensor(value['activation']['scale'])
-            if hasattr(value['activation'], 'zero_point'):
+            if 'zero_point' in value['activation'].keys():
                 module.zero_point = torch.tensor(value['activation']['zero_point'])
 
     if tune_cfg['framework'] == "pytorch_fx":

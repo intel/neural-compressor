@@ -35,6 +35,7 @@ json = LazyImport('json')
 REDUCE_RANGE = False if CpuInfo().vnni else True
 logger.debug("Reduce range is {}".format(str(REDUCE_RANGE)))
 
+PT19_VERSION = LooseVersion("1.9")
 PT18_VERSION = LooseVersion("1.8")
 PT17_VERSION = LooseVersion("1.7")
 PT16_VERSION = LooseVersion("1.6")
@@ -219,6 +220,10 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     op_tuple_cfg_list = []
     for key, value in op_cfgs.items():
         if key == "default_qconfig":
+            if value is None:
+                assert get_torch_version() >= PT19_VERSION, \
+                            "Please use PyTroch 1.9 or higher version for " + \
+                            "default_qconfig to fallback to fp32！"
             fx_op_cfgs[""] = value
             continue
         op_tuple = (key, value)
@@ -567,9 +572,7 @@ class TemplateAdaptor(Adaptor):
     def __init__(self, framework_specific_info):
         super(TemplateAdaptor, self).__init__(framework_specific_info)
         import torch.quantization as tq
-
         self.version = get_torch_version()
-
         # set torch random seed
         random_seed = framework_specific_info['random_seed']
         torch.manual_seed(random_seed)
@@ -1052,6 +1055,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         for key in tune_cfg['op']:
             op_name = key[0]
             op_type = str(type(modules[op_name])).rstrip('\'>').split('.')[-1]
+            if op_type == 'DequantQuantWrapper':
+                op_type = str(type(modules[op_name].module)).rstrip('\'>').split('.')[-1]
             if 'Functional' in op_type:
                 op_type = op_name.split('.')[-1]
             if op_type not in res.keys():
@@ -1801,8 +1806,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
             self.model_calibration(q_model, dataloader, iterations, conf=ipex_conf)
             ipex_conf.save(self.ipex_config_path)
 
-        assert self.approach != 'quant_aware_training', "Intel PyTorch Extension didn't support \
-                               quantization aware training mode"
+        assert self.approach != 'quant_aware_training', \
+                "Intel PyTorch Extension didn't support quantization aware training mode"
         model_.model = q_model
         model_.tune_cfg = copy.deepcopy(self.cfgs)
 
@@ -2003,7 +2008,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
     def __init__(self, framework_specific_info):
         super(PyTorch_FXAdaptor, self).__init__(framework_specific_info)
         assert self.version >= PT18_VERSION, \
-                      "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
+                      "Please use PyTroch 1.8 or higher version with pytorch_fx backend！"
+        if self.approach == 'post_training_dynamic_quant':
+            assert self.version >= PT19_VERSION, \
+                        "Please use PyTroch 1.9 or higher version for dynamic " \
+                        "quantization with pytorch_fx backend！"
         import torch.quantization as tq
         """
         # Map for swapping float module to quantized ones,
@@ -2123,7 +2132,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             self._get_scale_zeropoint(q_model.model, self.tune_cfg)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
 
-        self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
+        self._dump_model_op_stastics(q_model.model, q_model.tune_cfg, self.approach)
         if self.is_baseline:
             self.is_baseline = False
         return q_model
@@ -2270,46 +2279,63 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if hooks is not None:
             post_epoch_end()
 
-    def _dump_model_op_stastics(self, model, tune_cfg):
+    def _dump_model_op_stastics(self, model, tune_cfg, approach):
         """This is a function to dump quantizable ops of model to user.
         Args:
             model (object): input model
             tune_cfg (dict): quantization config
+            approach (str): quantization approach
         Returns:
             None
         """
         modules = dict(model.named_modules())
-        quantized_mode = False
         res = {}
-        for node in model.graph.nodes:
-            if node.op == 'call_module':
-                op_type = str(type(modules[node.target]).__name__)
-            elif node.op == 'call_function':
-                op_type = str(node.target.__name__)
-            else:
-                op_type = node.target
-            # skip input and output
-            if not "quantize_per" in op_type and not quantized_mode:
-                continue
-            # skip zero_pioint and scale
-            if "zero_point" in op_type or "scale" in op_type:
-                continue
-            #build initial dict
-            if op_type not in res.keys():
-                res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+        if approach == 'post_training_dynamic_quant':
+            # fetch int8 and fp32 ops set by LPOT from tune_cfg
+            for key in tune_cfg['op']:
+                op_type = str(type(modules[key[0]])).rstrip('\'>').split('.')[-1]
+                #build initial dict
+                if op_type not in res.keys():
+                    res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                value = tune_cfg['op'][key]
+                if 'int8' in value['activation']['dtype']:
+                    res[op_type]['INT8'] += 1
+                if value['activation']['dtype'] == 'fp32':
+                    res[op_type]['FP32'] += 1
+        else:
+            quantized_mode = False
+            for node in model.graph.nodes:
+                if node.op == 'call_module':
+                    op_class = type(modules[node.target])
+                    op_type = str(op_class.__name__)
+                    if 'quantized' in str(op_class):
+                        if op_type not in res.keys():
+                            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                        res[op_type]['INT8'] += 1
+                    elif op_class in self.white_list:
+                        if op_type not in res.keys():
+                            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                        res[op_type]['FP32'] += 1
+                    continue
+                elif node.op == 'call_function':
+                    op_type = str(node.target.__name__)
+                else:
+                    op_type = node.target
+                # skip input and output
+                if not "quantize_per" in op_type and not quantized_mode:
+                    continue
+                # skip zero_pioint and scale
+                if "zero_point" in op_type or "scale" in op_type:
+                    continue
+                #build initial dict
+                if op_type not in res.keys():
+                    res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
 
-            if "quantize_per" in op_type and not quantized_mode:
-                quantized_mode = True
-            elif "dequantize" in op_type and quantized_mode:
-                quantized_mode = False
-            res[op_type]['INT8'] += 1
-        # fetch fp32 ops set by LPOT from tune_cfg
-        for key in tune_cfg['op']:
-            op_type = str(type(modules[key[0]])).rstrip('\'>').split('.')[-1]
-            value = tune_cfg['op'][key]
-            if value['activation']['dtype'] == 'fp32':
-                res[op_type]['INT8'] -= 1
-                res[op_type]['FP32'] += 1
+                if "quantize_per" in op_type and not quantized_mode:
+                    quantized_mode = True
+                elif "dequantize" in op_type and quantized_mode:
+                    quantized_mode = False
+                res[op_type]['INT8'] += 1
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
@@ -2355,6 +2381,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # get scale and zero_point of modules.
         modules = dict(model.named_modules())
         for key in tune_cfg['op']:
+            if key[0] not in modules:
+                continue
             value = tune_cfg['op'][key]
             assert isinstance(value, dict)
             if hasattr(modules[key[0]], 'scale'):
