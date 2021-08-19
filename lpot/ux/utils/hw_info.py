@@ -72,6 +72,8 @@ class HWInfo:
 def get_number_of_sockets() -> int:
     """Get number of sockets in platform."""
     cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
+    if psutil.WINDOWS:
+        cmd = 'wmic cpu get DeviceID | find /c "CPU"'
 
     proc = subprocess.Popen(
         args=cmd,

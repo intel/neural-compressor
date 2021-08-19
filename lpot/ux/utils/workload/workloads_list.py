@@ -34,7 +34,8 @@ class WorkloadInfo(JsonSerializer):
 
     def __init__(
         self,
-        request_id: Optional[str],
+        request_id: str,
+        project_name: Optional[str],
         workload_path: Optional[str],
         model_path: Optional[str],
         input_precision: Optional[str],
@@ -44,11 +45,13 @@ class WorkloadInfo(JsonSerializer):
         metric: Optional[Union[Metric, dict]],
         status: Optional[str],
         code_template_path: Optional[str],
+        created_at: Optional[str],
         execution_details: Optional[Dict[str, dict]] = None,
     ) -> None:
         """Initialize configuration WorkloadInfo class."""
         super().__init__()
         self._id = request_id
+        self._project_name = project_name
         self._model_path = model_path
         self._input_precision = input_precision
         self._model_output_path = model_output_path
@@ -61,6 +64,7 @@ class WorkloadInfo(JsonSerializer):
         self._config_path: Optional[str] = None
         self._log_path: Optional[str] = None
         self._execution_details = execution_details
+        self._created_at = created_at
         if self._workload_path:
             self._config_path = os.path.join(
                 self._workload_path,
@@ -130,6 +134,7 @@ class WorkloadsListMigrator:
         self.workloads_data: dict = {}
         self.version_migrators: Dict[int, Any] = {
             2: self._migrate_to_v2,
+            3: self._migrate_to_v3,
         }
 
     @property
@@ -308,3 +313,18 @@ class WorkloadsListMigrator:
             if old_key in key:
                 key = key.replace(old_key, new_key)
         return key, value
+
+    def _migrate_to_v3(self) -> None:
+        """Migrate workloads list from v2 to v3."""
+        for workload_id, workload_data in self.workloads_data["workloads"].items():
+            workload_data.update(
+                {
+                    "project_name": os.path.basename(workload_data.get("model_path", "")),
+                    "created_at": "2021-07-15T14:19:18.860579",
+                },
+            )
+        self.workloads_data.update(
+            {
+                "version": 3,
+            },
+        )

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { FileBrowserFilter, ModelService } from '../services/model.service';
@@ -27,15 +29,32 @@ var shajs = require('sha.js')
 })
 export class PredefinedModelsComponent implements OnInit {
 
-  modelList = [];
-  showSpinnerModel = [];
-  showSpinnerConfig = [];
   showSpinner = true;
+  showProgressBar = false;
+  progressBarValue = 0;
+
+  modelList = [];
+  frameworks = [];
+  domains = [];
+  models = [];
+
+  model: PredefinedModel = {
+    id: '',
+    framework: 'tensorflow',
+    model: '',
+    domain: '',
+    model_path: '',
+    yaml: '',
+    project_name: '',
+    dataset_path: '',
+  };
 
   constructor(
     private modelService: ModelService,
     private socketService: SocketService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private _formBuilder: FormBuilder,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -45,32 +64,26 @@ export class PredefinedModelsComponent implements OnInit {
       response => {
         this.listModelZoo();
       }
-    )
+    );
 
     this.socketService.modelDownloadFinish$
       .subscribe(response => {
         if (response['status']) {
           if (response['status'] === 'success') {
-            if (response['data'] && response['data']['path']) {
-              if (response['data']['path'].includes('.yaml')) {
-                this.showSpinnerConfig[response['data']['id']] = false;
-                this.modelList[response['data']['id']]['yaml'] = response['data']['path'];
-              } else {
-                this.showSpinnerModel[response['data']['id']] = false;
-                this.modelList[response['data']['id']]['model_path'] = response['data']['path'];
-              }
-            }
+            this.router.navigate(['/details', this.model['id']], { queryParamsHandling: "merge" });
+            this.modelService.configurationSaved.next(true);
           } else {
-            if (response['data']['message'].includes('.yaml')) {
-              this.showSpinnerConfig[response['data']['id']] = false;
-            } else {
-              this.showSpinnerModel[response['data']['id']] = false;
-            }
             this.openErrorDialog({
-              error: 'download finish',
-              message: response['data']['message'],
+              error: response['data']['message'],
             });
           }
+        }
+      });
+
+    this.socketService.modelDownloadProgress$
+      .subscribe(response => {
+        if (response['status']) {
+          this.progressBarValue = response['data']['progress'];
         }
       });
   }
@@ -85,6 +98,7 @@ export class PredefinedModelsComponent implements OnInit {
         (resp: []) => {
           this.showSpinner = false;
           this.modelList = resp;
+          this.getValuesForForm();
         },
         error => {
           this.showSpinner = false;
@@ -92,37 +106,33 @@ export class PredefinedModelsComponent implements OnInit {
         });
   }
 
+  getValuesForForm() {
+    this.modelList.forEach(row => {
+      ['framework', 'domain', 'model'].forEach(value => {
+        if (!this[value + 's'].includes(row[value])) {
+          this[value + 's'].push(row[value]);
+          if (value === 'domain') {
+            this.model.domain = this.domains[0];
+          } else if (value === 'model') {
+            this.model.model = this.models[0];
+          }
+        }
+      });
+    });
+  }
+
+  configExists(framework: string, domain: string, model?: string) {
+    let found;
+    if (model) {
+      found = this.modelList.filter(x => x['domain'] === domain && x['framework'] === framework && x['model'] === model);
+    } else {
+      found = this.modelList.filter(x => x['domain'] === domain && x['framework'] === framework);
+    }
+    return found.length;
+  }
+
   objectKeys(obj): string[] {
     return Object.keys(obj);
-  }
-
-  downloadModel(model, index: number) {
-    this.showSpinnerModel[index] = true;
-    this.modelService.downloadModel(model, index)
-      .subscribe(
-        response => { },
-        error => {
-          this.openErrorDialog(error);
-        }
-      );
-  }
-
-  downloadConfig(model, index: number) {
-    this.showSpinnerConfig[index] = true;
-    this.modelService.downloadConfig(model, index)
-      .subscribe(
-        response => { },
-        error => {
-          this.openErrorDialog(error);
-        }
-      );
-  }
-
-  isModelFilled(model) {
-    if (model['yaml'] && model['model_path'] && model['dataset_path']) {
-      return true;
-    }
-    return false;
   }
 
   openDialog(filter: FileBrowserFilter, index: number) {
@@ -137,35 +147,39 @@ export class PredefinedModelsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(chosenFile => {
       if (chosenFile) {
-        this.modelList[index]['dataset_path'] = chosenFile;
+        this.model.dataset_path = chosenFile;
       }
     });;
   }
 
   openErrorDialog(error) {
     const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error
+      data: error,
     });
   }
 
-  saveWorkload(model) {
-    let workload = {};
+  saveWorkload() {
     const dateTime = Date.now();
-    workload['id'] = shajs('sha384').update(String(dateTime)).digest('hex');
-    workload['config_path'] = model['yaml'];
-    workload['dataset_path'] = model['dataset_path'];
-    workload['model_path'] = model['model_path'];
-    workload['framework'] = model['framework'];
-    workload['domain'] = model['domain'];
-    this.modelService.saveWorkload(workload)
+    const index = this.getModelIndex();
+    this.model.id = shajs('sha384').update(String(dateTime)).digest('hex');
+    this.model.project_name = this.model['model'];
+    this.model['progress_steps'] = 20;
+    this.saveReadyWorkload();
+  }
+
+  saveReadyWorkload() {
+    this.showProgressBar = true;
+    this.modelService.saveExampleWorkload(this.model)
       .subscribe(
-        response => {
-          model['added'] = true;
-        },
+        response => { },
         error => {
           this.openErrorDialog(error);
         }
       );
+  }
+
+  getModelIndex(): number {
+    return this.modelList.indexOf(x => x.model === this.model.model);
   }
 
   getFileNameFromPath(path: string): string {
@@ -173,3 +187,14 @@ export class PredefinedModelsComponent implements OnInit {
   }
 
 }
+
+type PredefinedModel = {
+  id: string;
+  framework: string;
+  model: string;
+  domain: string;
+  model_path?: string;
+  yaml?: string;
+  project_name: string;
+  dataset_path: string;
+};

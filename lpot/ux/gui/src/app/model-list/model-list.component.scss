@@ -13,8 +13,18 @@
 // limitations under the License.
 @import './../../variables.scss';
 
-img {
-  max-width: 25px;
+.header {
+  font-size: 120%;
+}
+
+.small-column {
+  width: 40px !important;
+  max-width: 40px !important;
+}
+
+.mid-column {
+  width: 60px !important;
+  max-width: 60px !important;
 }
 
 .info-container {
@@ -28,6 +38,20 @@ img {
 .info-icon {
   position: relative;
   top: 8px;
+}
+
+.create-new-btn {
+  position: relative;
+  bottom: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  float: right;
+  margin: 20px;
+  font-size: 150%;
+  background-color: $accent-yellow;
+  color: black;
 }
 
 .file-button {
@@ -45,20 +69,12 @@ img {
   text-shadow: 1px 1px 1px #555;
 }
 
-.cell {
-  width: 25px;
-}
-
-.clipboard {
-  border-left: 3px solid $lighter-gray1 !important;
-}
-
-.precision {
-  border-right: 3px solid $lighter-gray1 !important;
-}
-
 .center {
   text-align: center;
+}
+
+.margin-top {
+  margin-top: 50px;
 }
 
 ::ng-deep .mat-tooltip {
@@ -66,7 +82,7 @@ img {
 }
 
 .icon-button {
-  width: 25px;
+  width: 25px !important;
 }
 
 .tag {
@@ -76,4 +92,17 @@ img {
   border-radius: 5px;
   padding: 2px;
   text-align: center;
+  max-width: 60px !important;
+}
+
+.toggle {
+  float: right;
+  margin-right: 20px;
+  position: relative;
+  top: 17px;
+}
+
+.big-number {
+  font-size: 150%;
+  color: $blue;
 }

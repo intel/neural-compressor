@@ -17,6 +17,7 @@
 import json
 import os
 from copy import deepcopy
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -32,6 +33,7 @@ from lpot.ux.utils.utils import (
     get_predefined_config_path,
 )
 from lpot.ux.utils.workload.config import Config
+from lpot.ux.web.configuration import Configuration
 
 
 class Workload(JsonSerializer):
@@ -45,6 +47,13 @@ class Workload(JsonSerializer):
         self.id: str = str(data.get("id", ""))
         if not self.id:
             raise ClientErrorException("Workload ID not specified.")
+
+        self.project_name: str = str(data.get("project_name", ""))
+        if not self.project_name:
+            raise ClientErrorException("project_name not specified.")
+
+        now = datetime.now(timezone.utc)
+        self.created_at: str = str(data.get("created_at", now.isoformat()))
 
         self.model_path: str = data.get("model_path", "")
         if not self.model_path:
@@ -62,10 +71,8 @@ class Workload(JsonSerializer):
             get_framework_from_path(self.model_path),
         )
 
-        self.workspace_path = data.get(
-            "workspace_path",
-            os.path.dirname(self.model_path),
-        )
+        configuration = Configuration()
+        self.workspace_path = configuration.workdir
         self.workload_path = data.get(
             "workload_path",
             os.path.join(
@@ -121,7 +128,7 @@ class Workload(JsonSerializer):
             self.workload_path,
             self.model_output_name,
         )
-        self.version = "2.0"
+        self.version = "3.0"
 
     def initialize_config(self, data: dict) -> None:
         """Initialize config."""
@@ -237,6 +244,7 @@ class WorkloadMigrator:
         self.workload_data: dict = {}
         self.version_migrators = {
             2: self._migrate_to_v2,
+            3: self._migrate_to_v3,
         }
 
     @property
@@ -320,3 +328,14 @@ class WorkloadMigrator:
         parsed_workload.update({"output_nodes": output_nodes})
 
         self.workload_data = parsed_workload
+
+    def _migrate_to_v3(self) -> None:
+        """Parse workload from v2 to v3."""
+        print("Migrating workload.json to v3...")
+        self.workload_data.update(
+            {
+                "project_name": os.path.basename(self.workload_data.get("model_path", "")),
+                "created_at": "2021-07-15T14:19:18.860579",
+                "version": 3,
+            },
+        )

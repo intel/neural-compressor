@@ -1,0 +1,26 @@
+{
+    "active_workspace_path": "/path/to/workspace",
+    "workloads": {
+        "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1": {
+            "id": "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+            "model_path": "/path/to/model.pb",
+            "input_precision": "fp32",
+            "model_output_path": null,
+            "output_precision": "int8",
+            "mode": "tuning",
+            "workload_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+            "status": null,
+            "metric": {
+                "size_input_model": 98.0
+            },
+            "code_template_path": null,
+            "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+            "log_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/output.txt",
+            "execution_details": null,
+            "size_input_model": 98.0,
+            "project_name": "model.pb",
+            "created_at": "2021-07-15T14:19:18.860579"
+        }
+    },
+    "version": 3
+}

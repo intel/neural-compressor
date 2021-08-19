@@ -48,7 +48,7 @@ class TestTuningParser(unittest.TestCase):
             "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
             "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
-            "2021-05-27 07:52:27 [INFO] Save quantized model at /foo/bar/baz.pb",
+            "2021-05-27 07:52:27 [INFO] Save quantized model to /foo/bar/baz.pb.",
             "a b c d",
         ]
 
@@ -72,12 +72,12 @@ class TestTuningParser(unittest.TestCase):
             "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
             "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.2345, duration (seconds): 0.6789], Best tune result is: [accuracy: 0.2345, duration (seconds): 0.6789]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
-            "2021-05-27 07:52:27 [INFO] Save quantized model at /a/b/c.pb",
+            "2021-05-27 07:52:27 [INFO] Save quantized model to /a/b/c.pb.",
             "a b c d",
             "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
             "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
-            "2021-05-27 07:52:27 [INFO] Save quantized model at /foo/bar/baz.pb",
+            "2021-05-27 07:52:27 [INFO] Save quantized model to /foo/bar/baz.pb.",
         ]
 
         tuning_parser = OptimizationParser(["file.log"])

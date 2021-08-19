@@ -30,6 +30,7 @@ export class SocketService {
   public boundaryNodesStart$ = new BehaviorSubject({});
   public boundaryNodesFinish$ = new BehaviorSubject({});
   public modelDownloadFinish$ = new BehaviorSubject({});
+  public modelDownloadProgress$ = new BehaviorSubject({});
   public benchmarkStart$ = new BehaviorSubject({});
   public benchmarkFinish$ = new BehaviorSubject({});
 
@@ -64,6 +65,9 @@ export class SocketService {
   setupModelDownload() {
     this.socket.on('download_finish', (data) => {
       this.modelDownloadFinish$.next(data);
+    });
+    this.socket.on('download_progress', (data) => {
+      this.modelDownloadProgress$.next(data);
     });
   }
 

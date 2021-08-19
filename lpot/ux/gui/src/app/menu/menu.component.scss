@@ -13,58 +13,82 @@
 // limitations under the License.
 @import './../../variables.scss';
 
-.example-spacer {
-  flex: 1 1 auto;
-}
-
-.intel-logo {
-  width: 70px;
-  margin-right: 20px;
-}
-
-.logo {
-  width: 30px;
-  margin-right: 5px;
-}
-
-.title {
-  color: $dark-blue;
+.pointer {
   cursor: pointer;
 }
 
-.workspace-editable {
-  width: 50%;
-  font-size: 11px;
+.config-btn {
+  background-color: $dark-gray;
+  text-align: left;
 }
 
-.workspace-title {
-  color: $blue;
-  font-weight: 500;
+.name {
+  color: white;
 }
 
-.workspace {
-  color: black;
-  font-size: 12px;
-  font-weight: 400;
+.name:hover {
+  color: $accent-yellow;
 }
 
-.browse {
-  margin-left: 10px;
+.time {
+  color: $light-gray;
+  font-size: 80%;
+  position: relative;
+  top: -20px;
+  text-align: left;
+  margin-left: 30px;
 }
 
-.active {
-  background-color: $pale-blue;
+.wip {
+  margin-left: 0px !important;
 }
 
-.icon {
-  width: 20px;
+.model-list {
+  font-family: IntelClearLt;
+  padding: 10px;
+}
+
+img {
+  width: 25px;
+  padding-right: 5px;
+  position: relative;
+  top: 15px;
+}
+
+.spinner {
+  position: relative;
+  top: 10px;
   margin-right: 5px;
 }
 
-.footer {
-  position: fixed;
-  bottom: 5px;
-  width: 98%;
-  text-align: center;
-  color: $dark-gray;
+.spinner-wrapper {
+  display: flex;
+  text-align: left;
+}
+
+.active {
+  background-color: $darker-gray;
+  width: 100%;
+}
+
+.model-list-btn {
+  color: $light-gray;
+  cursor: pointer;
+  background-color: $dark-gray;
+}
+
+.model-list-btn:hover {
+  color: $accent-yellow;
+}
+
+@media all and (max-width:1500px) {
+  .time {
+    font-size: 60%;
+    position: relative;
+    top: -5px;
+  }
+
+  .config-btn {
+    line-height: 20px;
+  }
 }

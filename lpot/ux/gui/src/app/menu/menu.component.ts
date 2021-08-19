@@ -14,75 +14,86 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorComponent } from '../error/error.component';
-import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { ModelService } from '../services/model.service';
-
+import { SocketService } from '../services/socket.service';
 
 @Component({
   selector: 'app-menu',
   templateUrl: './menu.component.html',
-  styleUrls: ['./menu.component.scss', './../error/error.component.scss']
+  styleUrls: ['./menu.component.scss', './../error/error.component.scss'],
 })
 export class MenuComponent implements OnInit {
 
-  workspacePath: string;
+  showSpinner = true;
+  modelList = [];
 
   constructor(
     private modelService: ModelService,
+    private socketService: SocketService,
     public dialog: MatDialog
   ) { }
 
   ngOnInit() {
-    this.getWorkspace();
     this.modelService.getSystemInfo();
-  }
 
-  getWorkspace() {
-    this.modelService.getDefaultPath('workspace')
-      .subscribe(repoPath => {
-        this.workspacePath = repoPath['path'];
-        this.modelService.workspacePath = repoPath['path'];
-      },
-        error => {
-          this.openErrorDialog(error);
+    this.modelService.configurationSaved
+      .subscribe(result => {
+        this.getAllModels();
+      });
+    this.socketService.optimizationStart$
+      .subscribe(result => {
+        this.getAllModels();
+      });
+    this.socketService.optimizationFinish$
+      .subscribe(result => {
+        this.getAllModels();
+      });
+    this.socketService.benchmarkStart$
+      .subscribe(result => {
+        this.getAllModels();
+      });
+    this.socketService.benchmarkFinish$
+      .subscribe(result => {
+        if (result['data'] && result['data']['current_step'] === result['data']['number_of_steps']) {
+          this.getAllModels();
         }
-      );
+      });
+    this.getAllModels();
   }
 
-  openUrl(url: string) {
-    window.open(url);
-  }
-
-  openDialog() {
-    const dialogRef = this.dialog.open(FileBrowserComponent, {
-      width: '60%',
-      height: '60%',
-      data: {
-        path: this.modelService.workspacePath,
-        filter: 'directories'
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(chosenFile => {
-      if (chosenFile) {
-        this.workspacePath = chosenFile;
-        this.modelService.setWorkspacePath(chosenFile)
-          .subscribe(
-            response => {
-              this.modelService.workspacePathChange.next(true);
-            },
-            error => {
-              this.openErrorDialog(error);
-            }
-          );
-      }
-    });;
+  getAllModels() {
+    this.modelService.getDefaultPath('workspace')
+      .subscribe(
+        response => {
+          this.modelService.getAllModels()
+            .subscribe(
+              list => {
+                this.showSpinner = false;
+                this.modelList = list['workloads_list'];
+              },
+              error => {
+                this.showSpinner = false;
+                this.openErrorDialog(error);
+              });
+        },
+        error => {
+          this.showSpinner = false;
+          this.openErrorDialog(error);
+        });
   }
 
   openErrorDialog(error) {
     const dialogRef = this.dialog.open(ErrorComponent, {
       data: error
     });
+  }
+
+  getFileName(path: string): string {
+    return path.replace(/^.*[\\\/]/, '');
+  }
+
+  getDate(date: string) {
+    return new Date(date);
   }
 
 }

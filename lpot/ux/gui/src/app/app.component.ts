@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { ErrorComponent } from './error/error.component';
 import { ModelService } from './services/model.service';
+import { SystemInfoComponent } from './system-info/system-info.component';
 
 @Component({
   selector: 'app-root',
@@ -21,14 +24,41 @@ import { ModelService } from './services/model.service';
 })
 export class AppComponent implements OnInit {
   tokenIsSet = false;
+  workspacePath: string;
 
   constructor(
-    private modelService: ModelService
+    private modelService: ModelService,
+    public dialog: MatDialog
   ) { }
 
   ngOnInit() {
     this.modelService.setToken(window.location.search.replace('?token=', ''));
     this.tokenIsSet = true;
+    this.getWorkspace();
+    this.modelService.getSystemInfo();
   }
 
+  getWorkspace() {
+    this.modelService.getDefaultPath('workspace')
+      .subscribe(repoPath => {
+        this.workspacePath = repoPath['path'];
+        this.modelService.workspacePath = repoPath['path'];
+      },
+        error => {
+          this.openErrorDialog(error);
+        }
+      );
+  }
+
+  openErrorDialog(error) {
+    const dialogRef = this.dialog.open(ErrorComponent, {
+      data: error
+    });
+  }
+
+  showSystemInfo() {
+    const dialogRef = this.dialog.open(SystemInfoComponent, {
+      data: this.modelService.systemInfo
+    });
+  }
 }

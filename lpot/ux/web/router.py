@@ -28,15 +28,9 @@ from lpot.ux.components.configuration_wizard.save_workload import save_workload
 from lpot.ux.components.file_browser.file_browser import get_directory_entries
 from lpot.ux.components.graph.graph import Graph
 from lpot.ux.components.graph.graph_reader import GraphReader
-from lpot.ux.components.manage_workspace import (
-    delete_workload,
-    get_default_path,
-    get_workloads_list,
-    set_workspace,
-)
-from lpot.ux.components.model_zoo.download_config import download_config
-from lpot.ux.components.model_zoo.download_model import download_model
+from lpot.ux.components.manage_workspace import get_default_path, get_workloads_list, set_workspace
 from lpot.ux.components.model_zoo.list_models import list_models
+from lpot.ux.components.model_zoo.save_workload import save_workload as save_example_workload
 from lpot.ux.components.optimization.execute_optimization import execute_optimization
 from lpot.ux.utils.hw_info import HWInfo
 from lpot.ux.utils.json_serializer import JsonSerializer
@@ -74,7 +68,6 @@ class Router:
         self.routes: Dict[str, RoutingDefinition] = {
             "filesystem": RealtimeRoutingDefinition(get_directory_entries),
             "save_workload": RealtimeRoutingDefinition(save_workload),
-            "delete_workload": RealtimeRoutingDefinition(delete_workload),
             "configuration": RealtimeRoutingDefinition(get_predefined_configuration),
             "optimize": DeferredRoutingDefinition(_execute_optimization_benchmark),
             "benchmark": DeferredRoutingDefinition(execute_benchmark),
@@ -83,9 +76,7 @@ class Router:
             "get_workloads_list": RealtimeRoutingDefinition(get_workloads_list),
             "get_boundary_nodes": DeferredRoutingDefinition(get_boundary_nodes),
             "get_possible_values": RealtimeRoutingDefinition(get_possible_values),
-            "download_model": DeferredRoutingDefinition(download_model),
             "list_model_zoo": RealtimeRoutingDefinition(list_models),
-            "download_config": DeferredRoutingDefinition(download_config),
             "model_graph": RealtimeRoutingDefinition(get_model_graph),
             "system_info": RealtimeRoutingDefinition(get_system_info),
             "workload/config.yaml": RealtimeRoutingDefinition(WorkloadService.get_config),
@@ -93,6 +84,7 @@ class Router:
             "workload/code_template.py": RealtimeRoutingDefinition(
                 WorkloadService.get_code_template,
             ),
+            "save_example_workload": DeferredRoutingDefinition(save_example_workload),
         }
 
     def handle(self, request: Request) -> Response:
@@ -141,7 +133,6 @@ def _execute_optimization_benchmark(data: dict) -> None:
             "precision": models_info.get("output_precision"),
             "path": models_info.get("output_graph"),
         },
-        "workspace_path": data.get("workspace_path"),
     }
     if not optimization_data.get("is_custom_dataloader", None):
         execute_benchmark(benchmark_data)

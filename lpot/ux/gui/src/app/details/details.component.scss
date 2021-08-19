@@ -1,0 +1,160 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+@import './../../variables.scss';
+
+.exec {
+  white-space: pre;
+}
+
+table {
+  width: 700px;
+}
+
+.big-number {
+  font-size: 200% !important;
+  color: $blue;
+}
+
+.label {
+  position: relative;
+  color: $dark-gray;
+}
+
+mat-card {
+  margin: 10px;
+}
+
+img {
+  height: 30px;
+}
+
+.cards {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.grid>div {
+  display: flex;
+  flex-basis: calc(33.33% - 14px);
+  justify-content: center;
+  flex-direction: column;
+}
+
+.grid>div>div {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+button {
+  margin-right: 20px;
+}
+
+.file-button {
+  margin-left: 20px;
+  width: 100px !important;
+  background-color: white !important;
+  text-align: center;
+}
+
+.margin-left {
+  margin-left: 40px;
+}
+
+.energy {
+  color: $energy-blue !important;
+}
+
+.execution-details {
+  height: 374px;
+  width: 167px;
+}
+
+.comparison {
+  width: 700px;
+}
+
+.first-row {
+  width: 920px;
+}
+
+p {
+  margin: auto;
+  padding: 0px !important;
+  text-align: center !important;
+}
+
+@media all and (max-width:1500px) {
+  .comparison {
+    width: 600px;
+  }
+
+  .first-row {
+    width: 820px !important;
+  }
+
+  p {
+    text-align: left !important;
+  }
+}
+
+.inline {
+  display: inline-block;
+}
+
+.cell {
+  width: 33%;
+}
+
+.icon-button {
+  top: 10px;
+  position: relative;
+  min-width: 100px;
+}
+
+.spinner-wrapper {
+  display: flex;
+}
+
+.action-btn {
+  max-width: 200px;
+  min-width: 100px;
+}
+
+.project-name {
+  white-space: nowrap;
+}
+
+.precision {
+  white-space: nowrap;
+  padding-left: 20px;
+}
+
+.down-10px {
+  position: relative;
+  top: 10px;
+}
+
+.down-5px {
+  position: relative;
+  top: 5px;
+  padding-right: 10px;
+}
+
+.chart-legend {
+  float: right;
+  width: 160px !important;
+}

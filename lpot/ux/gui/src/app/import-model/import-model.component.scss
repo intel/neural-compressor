@@ -13,24 +13,16 @@
 // limitations under the License.
 @import './../../variables.scss';
 
-button {
-  margin-right: 10px;
-}
-
-::ng-deep .mat-horizontal-stepper-header-container {
-  width: 50%;
-  margin-bottom: 10px;
-}
-
 .browse {
   position: relative;
-  top: -5px;
+  top: -4px;
+  min-height: 40px !important;
 }
 
 .fixed-height {
   position: relative;
   top: 5px;
-  max-height: 36px !important;
+  max-height: 40px !important;
 }
 
 .spinner {
@@ -110,11 +102,47 @@ button {
 }
 
 .custom-option {
-  font-family: IntelOneBd;
+  font-style: italic;
+  color: $gray;
+}
+
+.custom-btn {
+  width: 100%;
 }
 
 .tuning-checkbox {
   position: relative;
   top: -2px;
   padding-right: 5px;
+}
+
+.choose-method {
+  margin: auto;
+  margin-top: 20%;
+  width: 530px;
+}
+
+.choose-btn {
+  margin: 20px;
+}
+
+.white-fill {
+  height: 100px;
+}
+
+mat-button-toggle-group {
+  border: 3px solid $energy-blue;
+}
+
+.mat-button-toggle-checked {
+  background-color: $pale-blue;
+}
+
+.title {
+  margin-left: 50px;
+}
+
+#choose-file-btn,
+#choose-dataset-btn {
+  margin-right: 10px;
 }

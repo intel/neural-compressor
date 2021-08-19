@@ -1,157 +1,185 @@
 <mat-drawer-container class="sidenav-container">
   <mat-drawer #drawer class="sidenav" mode="side" position="end">
-    <table>
-      <tr *ngFor="let info of systemInfo() | keyvalue">
-        <td class="header">{{ info.key | modelList }}</td>
-        <td class="cell">{{ info.value }}</td>
-      </tr>
-    </table>
+    <app-details [model]="chosenRow"></app-details>
   </mat-drawer>
 
-  <button id="system-info-btn" type="button" mat-raised-button class="hw-info-button" color="primary"
-    (click)="drawer.toggle()">
-    <img class="hw-info-img" src="./../../assets/004a-information-solid.svg">
-    System info
-  </button>
+  <mat-slide-toggle [(ngModel)]="detailedView" class="toggle">
+    Detailed view
+  </mat-slide-toggle>
 
   <br>
   <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
     [style.display]="showSpinner ? 'block' : 'none'">
   </mat-spinner>
-  <button id="new-config-btn" mat-raised-button color="accent" [routerLink]="['/config-wizard']"
+
+  <br>
+  <br>
+  <br>
+  <table *ngIf="modelList && modelList[0]" class="model-list rounded">
+    <tbody>
+      <tr *ngIf="detailedView">
+        <td class="header small-column" rowspan="2">RERUN</td>
+        <td class="header small-column" rowspan="2">Status</td>
+        <td class="header small-column" rowspan="2">Details</td>
+        <td class="header" colspan="6">Model</td>
+        <td class="header" colspan="3">Accuracy</td>
+        <td class="header" colspan="3">Throughput [sample/sec]</td>
+        <td class="header" colspan="3">Model size [MB]</td>
+        <td class="header" rowspan="2">Optimization time [sec]</td>
+        <td class="header small-column" rowspan="2">Config</td>
+        <td class="header mid-column" rowspan="2">Console output</td>
+        <td class="header mid-column" colspan="2" rowspan="2">Code template</td>
+      </tr>
+      <tr *ngIf="!detailedView">
+        <td class="header small-column" rowspan="2">RERUN</td>
+        <td class="header small-column" rowspan="2">Status</td>
+        <td class="header small-column" rowspan="2">Details</td>
+        <td class="header" colspan="4">Model</td>
+        <td class="header" rowspan="2" colspan="1">Accuracy diff</td>
+        <td class="header" rowspan="2" colspan="1">Perf speedup</td>
+        <td class="header" rowspan="2" colspan="1">Model size ratio</td>
+      </tr>
+      <tr *ngIf="detailedView">
+        <td class="header" colspan="3">Input</td>
+        <td class="header" colspan="3">Optimized</td>
+        <td class="header" colspan="1">Input</td>
+        <td class="header" colspan="1">Optimized</td>
+        <td class="header" colspan="1">Accuracy diff</td>
+        <td class="header" colspan="1">Input</td>
+        <td class="header" colspan="1">Optimized</td>
+        <td class="header" colspan="1">Perf speedup</td>
+        <td class="header" colspan="1">Input</td>
+        <td class="header" colspan="1">Optimized</td>
+        <td class="header" colspan="1">Ratio</td>
+      </tr>
+      <tr *ngIf="!detailedView">
+        <td class="header" colspan="2">Input</td>
+        <td class="header" colspan="2">Optimized</td>
+      </tr>
+      <tr *ngFor="let model of modelList; let index = index" class="hover">
+        <td class="cell center icon-button" [matTooltip]="'Rerun this configuration'">
+          <img *ngIf="model['status'] === 'wip'" class="icon-button" src="./../../assets/088a-start-solid-gray.svg">
+          <img *ngIf="model['status'] !== 'wip'" class="icon-button" (click)="optimize(model)"
+            src="./../../assets/088a-start-solid.svg">
+        </td>
+        <td class="cell center" [matTooltip]="model['status']">
+          <img *ngIf="model['status'] === 'success'" class="icon-button"
+            src="./../../assets/010a-passed-completed-solid.svg">
+          <img *ngIf="model['status'] === 'error' || model['status'] === 'failure'" class="icon-button"
+            src="./../../assets/009a-close-solid.svg">
+          <img *ngIf="model['status'] === null" class="icon-button" src="./../../assets/005a-help-solid-gray.svg">
+          <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Configuration is running"
+            *ngIf="model['status'] === 'wip'" [diameter]="25">
+          </mat-spinner>
+        </td>
+        <td class="cell center icon-button" [matTooltip]="'Show details'">
+          <img *ngIf="model['id'] !== chosenRow['id']" (click)="showDrawer(model);" class="icon-button"
+            src="./../../assets/008a-plus-solid-blue.svg">
+          <img *ngIf="model['id'] === chosenRow['id']" (click)="showDrawer(model); chosenRow = {};" class="icon-button"
+            src="./../../assets/007a-minus-solid.svg">
+        </td>
+        <td class="cell">
+          <div [ngClass]="model['input_precision'] ? 'tag' : null">{{ model['input_precision'] | uppercase }}</div>
+        </td>
+        <td class="cell no-wrap">
+          {{ model['model_path'] ? getFileName(model['model_path']) : null }}
+        </td>
+        <td class="cell" *ngIf="detailedView">
+          <img *ngIf="model['model_path']" class="icon-button right" src="./../../assets/146a-copy-solid.svg"
+            matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+            (click)="copyToClipboard(model['model_path'])">
+        </td>
+        <td class="cell">
+          <div [ngClass]="model['output_precision'] ? 'tag' : null"> {{ model['output_precision'] | uppercase }}</div>
+        </td>
+        <td class="cell no-wrap">
+          {{ model['model_output_path'] ? getFileName(model['model_output_path']) : null }}
+        </td>
+        <td class="cell" *ngIf="detailedView">
+          <img *ngIf="model['model_output_path']" class="icon-button right" src="./../../assets/146a-copy-solid.svg"
+            matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+            (click)="copyToClipboard(model['model_output_path'])">
+        </td>
+
+        <ng-container *ngIf="detailedView">
+          <td class="cell align-right">
+            {{ model['acc_input_model'] ? (model['acc_input_model'] * 100 | number: '1.2-2') + '%' : null }}
+          </td>
+          <td class="cell align-right">
+            {{ model['acc_optimized_model'] ? (model['acc_optimized_model'] * 100 | number: '1.2-2') + '%' : null }}
+          </td>
+        </ng-container>
+        <td class="cell align-right big-number">
+          {{ model['acc_input_model'] && model['acc_optimized_model'] ?
+          (((model['acc_optimized_model'] - model['acc_input_model']) * 100 / model['acc_input_model']) | number:
+          '1.2-2')
+          + '%' : null }}
+        </td>
+
+        <ng-container *ngIf="detailedView">
+          <td class="cell align-right">
+            {{ model['perf_throughput_input_model'] ? (model['perf_throughput_input_model'] | number: '1.0-0') : null }}
+          </td>
+          <td class="cell align-right">
+            {{ model['perf_throughput_optimized_model'] ? (model['perf_throughput_optimized_model'] | number: '1.0-0') :
+            null }}
+          </td>
+        </ng-container>
+        <td class="cell align-right big-number">
+          {{ model['perf_throughput_input_model'] && model['perf_throughput_optimized_model'] ?
+          ((model['perf_throughput_optimized_model'] / model['perf_throughput_input_model']) | number: '1.1-1') + 'x' :
+          null }}
+        </td>
+
+        <ng-container *ngIf="detailedView">
+          <td class="cell align-right">
+            {{ model['size_input_model'] }}
+          </td>
+          <td class="cell align-right">
+            {{ model['size_optimized_model'] }}
+          </td>
+        </ng-container>
+        <td class="cell align-right big-number">
+          {{ model['size_input_model'] && model['size_optimized_model'] ?
+          ((model['size_input_model'] / model['size_optimized_model']) | number: '1.1-1') + 'x' : null }}
+        </td>
+        <ng-container *ngIf="detailedView">
+          <td class="cell align-right">
+            {{ model['optimization_time'] }}
+          </td>
+          <td class="cell">
+            <a class="file-button"
+              href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}"
+              target="_blank">
+              Show<br>config
+            </a>
+          </td>
+          <td class="cell">
+            <a class="file-button"
+              href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}"
+              target="_blank">
+              Show<br>output
+            </a>
+          </td>
+          <td class="cell">
+            <a *ngIf="model['code_template_path']" class="file-button"
+              href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}"
+              target="_blank">
+              Show<br>code<br>template
+            </a>
+          </td>
+          <td class="cell">
+            <img *ngIf="model['code_template_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
+              matTooltip="Copy code template path to clipboard" matTooltipPosition="after"
+              (click)="copyToClipboard(model['code_template_path'])">
+          </td>
+        </ng-container>
+    </tbody>
+  </table>
+
+  <button id="new-config-btn" mat-raised-button class="create-new-btn" color="accent" [routerLink]="['/config-wizard']"
     queryParamsHandling="preserve">
     &#65291; Create new configuration
   </button>
-  <br>
-  <br>
-  <table *ngIf="modelList && modelList[0]">
-    <tr>
-      <td class="header" rowspan="2">RUN</td>
-      <td class="header" rowspan="2">Status</td>
-      <td class="header" colspan="6">Model</td>
-      <td class="header" colspan="3">Accuracy</td>
-      <td class="header" colspan="3">Throughput [sample/sec]</td>
-      <td class="header" colspan="3">Model size [MB]</td>
-      <td class="header" rowspan="2">Optimization time [sec]</td>
-      <td class="header" rowspan="2">Config</td>
-      <td class="header" rowspan="2">Console output</td>
-      <td class="header" colspan="2" rowspan="2">Code template</td>
-    </tr>
-    <tr>
-      <td class="header" colspan="3">Input</td>
-      <td class="header" colspan="3">Optimized</td>
-      <td class="header" colspan="1">Input</td>
-      <td class="header" colspan="1">Optimized</td>
-      <td class="header" colspan="1">Accuracy diff</td>
-      <td class="header" colspan="1">Input</td>
-      <td class="header" colspan="1">Optimized</td>
-      <td class="header" colspan="1">Perf speedup</td>
-      <td class="header" colspan="1">Input</td>
-      <td class="header" colspan="1">Optimized</td>
-      <td class="header" colspan="1">Ratio</td>
-    </tr>
-    <tr *ngFor="let model of modelList; let index = index" [matTooltip]="getTooltip(model.execution_details)"
-      [matTooltipPosition]="'right'">
-      <td class="cell">
-        <img *ngIf="model['status'] === 'wip'" [matTooltip]="'Rerun this configuration'"
-          src="./../../assets/088a-start-solid-gray.svg">
-        <img *ngIf="model['status'] !== 'wip'" class="icon-button" [matTooltip]="'Rerun this configuration'"
-          (click)="optimize(model)" src="./../../assets/088a-start-solid.svg">
-      </td>
-      <td class="cell center">
-        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
-          src="./../../assets/010a-passed-completed-solid.svg">
-        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
-          src="./../../assets/009a-close-solid.svg">
-        <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Configuration is running"
-          *ngIf="model['status'] === 'wip'" [diameter]="25">
-        </mat-spinner>
-      </td>
-      <td class="cell precision">
-        <div [ngClass]="model['input_precision'] ? 'tag' : null">{{ model['input_precision'] | uppercase }}</div>
-
-      </td>
-      <td class="cell">
-        {{ model['model_path'] ? getFileName(model['model_path']) : null }}
-      </td>
-      <td class="cell clipboard">
-        <img *ngIf="model['model_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
-          matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
-          (click)="copyToClipboard(model['model_path'])">
-      </td>
-      <td class="cell precision">
-        <div [ngClass]="model['output_precision'] ? 'tag' : null"> {{ model['output_precision'] | uppercase }}</div>
-      </td>
-      <td class="cell">
-        {{ model['model_output_path'] ? getFileName(model['model_output_path']) : null }}
-      </td>
-      <td class="cell clipboard">
-        <img *ngIf="model['model_output_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
-          matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
-          (click)="copyToClipboard(model['model_output_path'])">
-      </td>
-      <td class="cell pale-blue align-right">
-        {{ model['acc_input_model'] ? (model['acc_input_model'] * 100 | number: '1.2-2') + '%' : null }}
-      </td>
-      <td class="cell pale-blue align-right">
-        {{ model['acc_optimized_model'] ? (model['acc_optimized_model'] * 100 | number: '1.2-2') + '%' : null }}
-      </td>
-      <td class="cell pale-blue align-right">
-        {{ model['acc_input_model'] && model['acc_optimized_model'] ?
-        (((model['acc_optimized_model'] - model['acc_input_model']) * 100 / model['acc_input_model']) | number: '1.2-2')
-        + '%' : null }}
-      </td>
-      <td class="cell align-right">
-        {{ model['perf_throughput_input_model'] ? (model['perf_throughput_input_model'] | number: '1.0-0') : null }}
-      </td>
-      <td class="cell align-right">
-        {{ model['perf_throughput_optimized_model'] ? (model['perf_throughput_optimized_model'] | number: '1.0-0') :
-        null }}
-      </td>
-      <td class="cell align-right">
-        {{ model['perf_throughput_input_model'] && model['perf_throughput_optimized_model'] ?
-        ((model['perf_throughput_optimized_model'] / model['perf_throughput_input_model']) | number: '1.1-1') + 'x' :
-        null }}
-      </td>
-      <td class="cell align-right">
-        {{ model['size_input_model'] }}
-      </td>
-      <td class="cell align-right">
-        {{ model['size_optimized_model'] }}
-      </td>
-      <td class="cell align-right">
-        {{ model['size_input_model'] && model['size_optimized_model'] ?
-        ((model['size_input_model'] / model['size_optimized_model']) | number: '1.1-1') + 'x' : null }}
-      </td>
-      <td class="cell align-right">
-        {{ model['optimization_time'] }}
-      </td>
-      <td class="cell">
-        <a class="file-button"
-          href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}"
-          target="_blank">
-          Show config
-        </a>
-      </td>
-      <td class="cell">
-        <a class="file-button"
-          href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}"
-          target="_blank">
-          Show output
-        </a>
-      </td>
-      <td class="cell">
-        <a *ngIf="model['code_template_path']" class="file-button"
-          href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}"
-          target="_blank">
-          Show code template
-        </a>
-      </td>
-      <td class="cell clipboard">
-        <img *ngIf="model['code_template_path']" class="icon-button" src="./../../assets/146a-copy-solid.svg"
-          matTooltip="Copy code template path to clipboard" matTooltipPosition="after"
-          (click)="copyToClipboard(model['code_template_path'])">
-      </td>
-  </table>
 
 </mat-drawer-container>

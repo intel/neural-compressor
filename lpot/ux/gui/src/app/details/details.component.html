@@ -1,0 +1,225 @@
+<br>
+<h1 class="first-row wizard-container">Result details</h1>
+
+<mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+  [style.display]="showSpinner ? 'block' : 'none'">
+</mat-spinner>
+
+<ng-container *ngIf="model">
+  <div class="cards grid">
+    <mat-card class="first-row">
+      <span class="spinner-wrapper">
+        <button mat-raised-button [matTooltip]="'Rerun this configuration'" color="accent" class="action-btn"
+          [disabled]="model['status'] === 'wip'" (click)="optimize()">
+          <img src="./../../assets/088a-start-solid-white.svg">
+          {{ model['acc_input_model'] ? 'Rerun' : 'Run' }}
+        </button>
+
+        <button id="show-graph-btn" *ngIf="showGraphButton" mat-raised-button color="accent"
+          class="fixed-height action-btn" (click)="showGraph(model)">
+          <img src="./../../assets/298a-workflow-process-solid.svg">
+          Show graph
+        </button>
+
+        <img class="down-5px" [matTooltip]="model['status']" *ngIf="model['status'] === 'success'"
+          src="./../../assets/010a-passed-completed-solid.svg">
+        <img class="down-5px" [matTooltip]="model['status']"
+          *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
+          src="./../../assets/009a-close-solid.svg">
+        <mat-spinner *ngIf="model['status'] === 'wip'" matTooltip="Configuration is running" [diameter]="25"
+          class="down-5px">
+        </mat-spinner>
+
+        <div class="down-10px">
+          <a class="project-name">
+            {{ model.project_name ? model.project_name : 'project_name' }}
+          </a>
+
+          <a class="file-button"
+            href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}"
+            target="_blank">
+            Show config
+          </a>
+          <a class="file-button"
+            href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}"
+            target="_blank">
+            Show output
+          </a>
+          <a *ngIf="model['code_template_path']" class="file-button"
+            href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}"
+            target="_blank">
+            Show code template
+          </a>
+          <a class="precision">
+            precision: {{ model.input_precision }} &#8594; {{ model.output_precision }}
+          </a>
+        </div>
+      </span>
+      <br>
+      <table>
+        <tr>
+          <td class="icon-button">Model path:</td>
+          <td>
+            {{ model['model_path'] ? getFileName(model['model_path']) : null }}
+            <img *ngIf="model['model_path']" class="icon-button right"
+              src="./../../assets/146a-copy-solid.svg" matTooltip="Copy full model path to clipboard"
+              matTooltipPosition="after" (click)="copyToClipboard(model['model_path'])">
+          </td>
+        </tr>
+        <tr>
+          <td class="icon-button">Output path:</td>
+          <td>
+            {{ model['model_output_path'] ? getFileName(model['model_output_path']) :
+            null }}
+            <img *ngIf="model['model_output_path']" class="icon-button right"
+              src="./../../assets/146a-copy-solid.svg" matTooltip="Copy full model path to clipboard"
+              matTooltipPosition="after" (click)="copyToClipboard(model['model_output_path'])">
+          </td>
+        </tr>
+      </table>
+
+    </mat-card>
+  </div>
+
+  <div class="cards grid">
+    <mat-card class="execution-details">
+      <h2>Execution details</h2>
+      <br>
+      <span class="exec">
+        {{ model['execution_details'] ? getTooltip(model['execution_details']) : getTooltip(executionDetails) }}
+      </span>
+    </mat-card>
+
+    <div>
+      <mat-card class="comparison">
+        <h2>Comparison</h2>
+        <table>
+          <tr>
+            <td class="cell">
+              <p class="big-number energy">
+                {{ model['acc_input_model'] && model['acc_optimized_model'] ?
+                (((model['acc_optimized_model'] -
+                model['acc_input_model']) * 100 / model['acc_input_model']) | number: '1.2-2') + '%' :
+                '-'
+                }}
+              </p>
+              <p class="label">
+                Accuracy change
+              </p>
+            </td>
+            <td class="cell">
+              <p class="big-number energy">
+                {{ model['perf_throughput_input_model'] && model['perf_throughput_optimized_model'] ?
+                ((model['perf_throughput_optimized_model'] / model['perf_throughput_input_model']) |
+                number: '1.1-1') + 'x' : '-' }}
+              </p>
+              <p class="label">
+                Performance speedup
+              </p>
+            </td>
+            <td class="cell">
+              <p class="big-number energy">
+                {{ model['size_input_model'] && model['size_optimized_model'] ?
+                ((model['size_input_model']
+                / model['size_optimized_model']) | number: '1.1-1') + 'x' : '-' }}
+              </p>
+              <p class="label">
+                Size ratio
+              </p>
+            </td>
+          </tr>
+        </table>
+      </mat-card>
+
+      <mat-card class="comparison">
+        <h2>{{ labels[0] }} model</h2>
+        <table>
+          <tr>
+            <td class="cell">
+              <p class="big-number">
+                {{ model['acc_input_model'] ? (model['acc_input_model'] * 100 | number: '1.2-2') : '-'}}
+              </p>
+              <p class="label">
+                Accuracy [%]
+              </p>
+            </td>
+            <td class="cell">
+              <p class="big-number">
+                {{ model['perf_throughput_input_model'] ? (model['perf_throughput_input_model'] |
+                number: '1.2-2') : '-' }}
+              </p>
+              <p class="label">
+                Performance [sample/sec]
+              </p>
+            </td>
+            <td class="cell">
+              <p class="big-number">
+                {{ model['size_input_model'] ? model['size_input_model'] : '-' }}
+              </p>
+              <p class="label">
+                Size [MB]
+              </p>
+            </td>
+          </tr>
+        </table>
+      </mat-card>
+
+      <mat-card class="comparison">
+        <h2>{{ labels[1] }} model</h2>
+        <table>
+          <tr>
+            <td class="cell">
+              <p class="big-number">
+                {{ model['acc_optimized_model'] ? (model['acc_optimized_model'] * 100 | number: '1.2-2')
+                : '-' }}
+              </p>
+              <p class="label">
+                Accuracy [%]
+              </p>
+            </td>
+            <td class="cell">
+              <p class="big-number">
+                {{ model['perf_throughput_optimized_model'] ? (model['perf_throughput_optimized_model']
+                | number: '1.2-2') :
+                '-' }}
+              </p>
+              <p class="label">
+                Performance [sample/sec]
+              </p>
+            </td>
+            <td class="cell">
+              <p class="big-number">
+                {{ model['size_optimized_model'] ? model['size_optimized_model'] : '-' }}
+              </p>
+              <p class="label">
+                Size [MB]
+              </p>
+            </td>
+          </tr>
+        </table>
+      </mat-card>
+
+    </div>
+  </div>
+
+  <div class="cards grid">
+    <mat-card *ngIf="model['acc_input_model'] && model['status'] !== 'wip'">
+      <h2>Parameters comparison</h2>
+      <ngx-charts-bar-vertical-2d *ngIf="accuracyData" class="inline" (window:resize)="onResize($event)"
+        [view]="view" [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel"
+        [xAxis]="xAxis" [yAxis]="yAxis" [results]="accuracyData">
+      </ngx-charts-bar-vertical-2d>
+      <ngx-charts-bar-vertical-2d *ngIf="performanceData" class="inline" (window:resize)="onResize($event)"
+        [view]="view" [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel"
+        [xAxis]="xAxis" [yAxis]="yAxis" [results]="performanceData">
+      </ngx-charts-bar-vertical-2d>
+      <ngx-charts-bar-vertical-2d *ngIf="sizeData" class="inline" (window:resize)="onResize($event)" [view]="view"
+        [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel"
+        [xAxis]="xAxis" [yAxis]="yAxis" [results]="sizeData">
+      </ngx-charts-bar-vertical-2d>
+      <br />
+      <ngx-charts-legend class="chart-legend" [data]="labels" [title]="'Legend'" [colors]="colors">
+      </ngx-charts-legend>
+    </mat-card>
+  </div>
+</ng-container>

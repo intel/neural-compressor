@@ -75,6 +75,7 @@ class TestHWInfo(unittest.TestCase):
         hw_info = HWInfo()
         self.assertEqual(hw_info.sockets, 4)
 
+    @patch("lpot.ux.utils.hw_info.get_number_of_sockets")
     @patch("platform.release")
     @patch("platform.system")
     @patch("psutil.LINUX", False)
@@ -83,10 +84,12 @@ class TestHWInfo(unittest.TestCase):
         self,
         mock_platform_system: MagicMock,
         mock_platform_release: MagicMock,
+        mock_get_number_of_sockets: MagicMock,
     ) -> None:
         """Test getting windows system distribution."""
         mock_platform_system.return_value = "Windows"
         mock_platform_release.return_value = "10"
+        mock_get_number_of_sockets.return_value = 2
 
         hw_info = HWInfo()
         self.assertEqual(hw_info.system, "Windows 10")
@@ -127,15 +130,18 @@ class TestHWInfo(unittest.TestCase):
         hw_info = HWInfo()
         self.assertEqual(hw_info.system, "Linux kernel_ver-88-generic")
 
+    @patch("lpot.ux.utils.hw_info.get_number_of_sockets")
     @patch("platform.platform")
     @patch("psutil.LINUX", False)
     @patch("psutil.WINDOWS", False)
     def test_get_unknown_os_distribution(
         self,
         mock_platform_platform: MagicMock,
+        mock_get_number_of_sockets: MagicMock,
     ) -> None:
         """Test getting unknown system distribution."""
         mock_platform_platform.return_value = "SystemName-Version-Arch"
+        mock_get_number_of_sockets.return_value = 2
 
         hw_info = HWInfo()
         self.assertEqual(hw_info.system, "SystemName-Version-Arch")

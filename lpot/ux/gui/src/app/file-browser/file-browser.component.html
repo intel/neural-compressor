@@ -1,7 +1,7 @@
 <button mat-button id="file-browser-close-btn" class="close-button" mat-dialog-close
   matTooltip="Close">&#x2573;</button>
-<mat-form-field class="form-field long" appearance="fill">
-  <input matInput appearance="fill" [ngModel]="currentPath" (change)="currentPathChange($event)">
+<mat-form-field class="form-field long" appearance="outline">
+  <input matInput appearance="outline" [ngModel]="currentPath" (change)="currentPathChange($event)">
 </mat-form-field>
 <button mat-icon-button id="file-browser-go-to-parent-btn" class="parent-dir" (click)="goToParentDirectory()"
   matTooltip="Go to parent directory">

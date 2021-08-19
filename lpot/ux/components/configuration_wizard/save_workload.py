@@ -39,12 +39,13 @@ def save_workload(
     workload.dump()
 
     workdir = Workdir(
-        workspace_path=data["workspace_path"],
-        request_id=data["id"],
-        model_path=data["model_path"],
+        request_id=workload.id,
+        project_name=workload.project_name,
+        model_path=workload.model_path,
         input_precision=workload.input_precision,
         output_precision=workload.output_precision,
         mode=workload.mode,
+        created_at=workload.created_at,
     )
 
     update_config(workload, parsed_data, workdir)

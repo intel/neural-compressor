@@ -32,6 +32,8 @@ def main() -> None:
         print(str(e))
         sys.exit(1)
 
+    prepare_environment()
+
     change_log_level(configuration.log_level)
     print(
         "LPOT UX Server started.\n"
@@ -41,13 +43,13 @@ def main() -> None:
         f"Then open address {configuration.get_url()}",
     )
 
-    prepare_environment()
     run_server(configuration)
 
 
 def prepare_environment() -> None:
     """Prepare environment for LPOT UX."""
     environment = Environment()
+    environment.ensure_workdir_exists_and_writeable()
     environment.migrate_workloads_list()
     environment.migrate_workloads()
     environment.clean_workloads_wip_status()

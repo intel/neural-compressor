@@ -36,126 +36,94 @@ class TestWorkloadsListMigrator(unittest.TestCase):
             "files",
             "non_existing_workloads_list.json",
         )
-        self.assertEqual(migrator.require_migration, False)
+        self.assertFalse(migrator.require_migration)
 
-    def test_migration_v1_to_v2(self) -> None:
-        """Test Workloads List Migration from v1 to v2."""
-        migrator = WorkloadsListMigrator()
-        migrator.workloads_json = os.path.join(
-            os.path.dirname(__file__),
-            "files",
+    def test_migration_from_v1(self) -> None:
+        """Test Workloads List Migration from v1."""
+        self._assert_migrates(
             "workloads_list_v1.json",
+            "workloads_list_v3.json",
         )
-        self.assertEqual(migrator.require_migration, True)
-        migrator.migrate()
-        self.assertEqual(migrator.require_migration, False)
-        expected_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workloads_list_v2.json",
-        )
-        expected = _load_json_as_dict(expected_json_path)
-        self.assertEqual(type(migrator.workloads_data), dict)
-        self.assertDictEqual(migrator.workloads_data, expected)  # type: ignore
 
-    def test_not_tuned_migration_v1_to_v2(self) -> None:
-        """Test Workloads List Migration from v1 to v2."""
-        migrator = WorkloadsListMigrator()
-        migrator.workloads_json = os.path.join(
-            os.path.dirname(__file__),
-            "files",
+    def test_not_tuned_migration_from_v1(self) -> None:
+        """Test Workloads List Migration from v1."""
+        self._assert_migrates(
             "workloads_list_v1_not_tuned.json",
+            "workloads_list_v3_not_tuned.json",
         )
-        self.assertEqual(migrator.require_migration, True)
-        migrator.migrate()
-        self.assertEqual(migrator.require_migration, False)
 
-        expected_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workloads_list_v2_not_tuned.json",
-        )
-        expected = _load_json_as_dict(expected_json_path)
-        self.assertEqual(type(migrator.workloads_data), dict)
-        self.assertDictEqual(migrator.workloads_data, expected)  # type: ignore
-
-    def test_empty_migration_v1_to_v2(self) -> None:
-        """Test Workloads List Migration from v1 to v2."""
-        migrator = WorkloadsListMigrator()
-        migrator.workloads_json = os.path.join(
-            os.path.dirname(__file__),
-            "files",
+    def test_empty_migration_from_v1(self) -> None:
+        """Test Workloads List Migration from v1."""
+        self._assert_migrates(
             "workloads_list_v1_empty.json",
+            "workloads_list_v3_empty.json",
         )
-        self.assertEqual(migrator.require_migration, True)
-        migrator.migrate()
-        self.assertEqual(migrator.require_migration, False)
 
-        expected_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workloads_list_v2_empty.json",
-        )
-        expected = _load_json_as_dict(expected_json_path)
-        self.assertEqual(type(migrator.workloads_data), dict)
-        self.assertDictEqual(migrator.workloads_data, expected)  # type: ignore
-
-    def test_migration_v2_to_v2(self) -> None:
-        """Test Workloads List Migration from v2 to v2."""
-        migrator = WorkloadsListMigrator()
-        migrator.workloads_json = os.path.join(
-            os.path.dirname(__file__),
-            "files",
+    def test_migration_from_v2(self) -> None:
+        """Test Workloads List Migration from v2."""
+        self._assert_migrates(
             "workloads_list_v2.json",
+            "workloads_list_v3.json",
         )
-        self.assertEqual(migrator.require_migration, False)
-        migrator.migrate()
-        self.assertEqual(migrator.require_migration, False)
-        expected_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workloads_list_v2.json",
-        )
-        expected = _load_json_as_dict(expected_json_path)
-        self.assertEqual(type(migrator.workloads_data), dict)
-        self.assertDictEqual(migrator.workloads_data, expected)  # type: ignore
 
-    def test_not_tuned_migration_v2_to_v2(self) -> None:
-        """Test Workloads List Migration from v2 to v2."""
+    def test_not_tuned_migration_from_v2(self) -> None:
+        """Test Workloads List Migration from v2."""
+        self._assert_migrates(
+            "workloads_list_v2_not_tuned.json",
+            "workloads_list_v3_not_tuned.json",
+        )
+
+    def test_empty_migration_from_v2(self) -> None:
+        """Test Workloads List Migration from v2."""
+        self._assert_migrates(
+            "workloads_list_v2_empty.json",
+            "workloads_list_v3_empty.json",
+        )
+
+    def test_migration_from_v3(self) -> None:
+        """Test Workloads List Migration from v3."""
+        self._assert_doesnt_migrate("workloads_list_v3.json")
+
+    def test_not_tuned_migration_from_v3(self) -> None:
+        """Test Workloads List Migration from v3."""
+        self._assert_doesnt_migrate("workloads_list_v3_not_tuned.json")
+
+    def test_empty_migration_from_v3(self) -> None:
+        """Test Workloads List Migration from v3."""
+        self._assert_doesnt_migrate("workloads_list_v3_empty.json")
+
+    def _assert_migrates(self, initial_file: str, final_file: str) -> None:
+        """Test Workloads List Migration from initial to final version."""
+        self._assert_migration_works(initial_file, final_file, True)
+
+    def _assert_doesnt_migrate(self, initial_file: str) -> None:
+        """Test Workloads List Migration doesn't migrate final version."""
+        self._assert_migration_works(initial_file, initial_file, False)
+
+    def _assert_migration_works(
+        self,
+        initial_file: str,
+        final_file: str,
+        migration_needed: bool,
+    ) -> None:
+        """Test Workloads List Migration from initial to final version."""
         migrator = WorkloadsListMigrator()
         migrator.workloads_json = os.path.join(
             os.path.dirname(__file__),
             "files",
-            "workloads_list_v2_not_tuned.json",
+            initial_file,
         )
-        self.assertEqual(migrator.require_migration, False)
-        migrator.migrate()
-        self.assertEqual(migrator.require_migration, False)
-        expected_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workloads_list_v2_not_tuned.json",
-        )
-        expected = _load_json_as_dict(expected_json_path)
-        self.assertEqual(type(migrator.workloads_data), dict)
-        self.assertDictEqual(migrator.workloads_data, expected)  # type: ignore
 
-    def test_empty_migration_v2_to_v2(self) -> None:
-        """Test Workloads List Migration from v2 to v2."""
-        migrator = WorkloadsListMigrator()
-        migrator.workloads_json = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workloads_list_v2_empty.json",
-        )
-        self.assertEqual(migrator.require_migration, False)
+        self.assertEqual(migrator.require_migration, migration_needed)
+
         migrator.migrate()
-        self.assertEqual(migrator.require_migration, False)
+
+        self.assertFalse(migrator.require_migration)
 
         expected_json_path = os.path.join(
             os.path.dirname(__file__),
             "files",
-            "workloads_list_v2_empty.json",
+            final_file,
         )
         expected = _load_json_as_dict(expected_json_path)
         self.assertEqual(type(migrator.workloads_data), dict)

@@ -1,0 +1,136 @@
+{
+    "config": {
+        "model": {
+            "name": "model_name",
+            "framework": "framework_name",
+            "inputs": "input_tensor",
+            "outputs": "softmax_tensor"
+        },
+        "quantization": {
+            "calibration": {
+                "sampling_size": 100,
+                "dataloader": {
+                    "batch_size": 1,
+                    "dataset": {
+                        "ImageRecord": {
+                            "root": "/path/to/calib/dataset"
+                        }
+                    },
+                    "transform": {
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [
+                                123.68,
+                                116.78,
+                                103.94
+                            ]
+                        }
+                    }
+                }
+            },
+            "model_wise": {
+                "activation": {
+                    "algorithm": "minmax"
+                }
+            },
+            "approach": "post_training_static_quant"
+        },
+        "tuning": {
+            "strategy": {
+                "name": "basic"
+            },
+            "accuracy_criterion": {
+                "relative": 0.01
+            },
+            "objective": "performance",
+            "exit_policy": {
+                "timeout": 0
+            },
+            "random_seed": 9527,
+            "workspace": {
+                "path": "/path/to/workspace/workloads/model_33a86499061d6f355f1f158e70f60c7829d138e24b4eff41ffeef300524dd029"
+            }
+        },
+        "evaluation": {
+            "accuracy": {
+                "metric": {
+                    "topk": 1
+                },
+                "dataloader": {
+                    "batch_size": 32,
+                    "dataset": {
+                        "ImageRecord": {
+                            "root": "/path/to/eval/dataset"
+                        }
+                    },
+                    "transform": {
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [
+                                123.68,
+                                116.78,
+                                103.94
+                            ]
+                        }
+                    }
+                }
+            },
+            "performance": {
+                "warmup": 10,
+                "iteration": -1,
+                "configs": {
+                    "cores_per_instance": 4,
+                    "num_of_instance": 7
+                },
+                "dataloader": {
+                    "batch_size": 1,
+                    "dataset": {
+                        "ImageRecord": {
+                            "root": "/path/to/eval/dataset"
+                        }
+                    },
+                    "transform": {
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [
+                                123.68,
+                                116.78,
+                                103.94
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "id": "33a86499061d6f355f1f158e70f60c7829d138e24b4eff41ffeef300524dd029",
+    "model_path": "/path/to/input/model.pb",
+    "model_name": "model_name",
+    "domain": "model_domain",
+    "framework": "model_framework",
+    "predefined_config_path": "/path/to/lpot/ux/utils/configs/predefined_configs/tensorflow/image_recognition.yaml",
+    "workspace_path": "/path/to/workspace",
+    "workload_path": "/path/to/workspace/workloads/model_33a86499061d6f355f1f158e70f60c7829d138e24b4eff41ffeef300524dd029",
+    "config_name": "config.yaml",
+    "config_path": "/path/to/workspace/workloads/model_33a86499061d6f355f1f158e70f60c7829d138e24b4eff41ffeef300524dd029/config.yaml",
+    "model_output_path": "/path/to/output_model.pb",
+    "eval_dataset_path": "/path/to/eval/dataset",
+    "calib_dataset_path": "/path/to/calib/dataset",
+    "accuracy_goal": 0.01,
+    "input_precision": "fp32",
+    "output_precision": "int8",
+    "mode": "tuning",
+    "tune": true,
+    "input_nodes": [
+        "input_tensor"
+    ],
+    "output_nodes": [
+        "softmax_tensor"
+    ],
+    "version": 3,
+    "project_name": "model.pb",
+    "created_at": "2021-07-15T14:19:18.860579"
+}

@@ -48,6 +48,15 @@ import { GraphComponent } from './graph/graph.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { CommonModule } from '@angular/common';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { DetailsComponent } from './details/details.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { HomeComponent } from './home/home.component';
+import { NgDatePipesModule } from 'ngx-pipes';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { SystemInfoComponent } from './system-info/system-info.component';
+import { LongNamePipe } from './pipes/long-name.pipe';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @NgModule({
   declarations: [
@@ -58,8 +67,12 @@ import { CommonModule } from '@angular/common';
     ImportModelComponent,
     ModelListComponent,
     ModelListPipe,
+    LongNamePipe,
     FileBrowserComponent,
-    GraphComponent
+    GraphComponent,
+    DetailsComponent,
+    HomeComponent,
+    SystemInfoComponent
   ],
   imports: [
     BrowserModule,
@@ -71,6 +84,7 @@ import { CommonModule } from '@angular/common';
     HttpClientModule,
     MatExpansionModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCardModule,
     MatCheckboxModule,
     MatDialogModule,
@@ -79,11 +93,15 @@ import { CommonModule } from '@angular/common';
     MatMenuModule,
     MatSelectModule,
     MatSidenavModule,
+    MatProgressBarModule,
     MatProgressSpinnerModule,
     MatStepperModule,
     MatTabsModule,
+    MatSlideToggleModule,
     MatToolbarModule,
     MatTooltipModule,
+    NgDatePipesModule,
+    NgxChartsModule,
     NgxGraphModule,
     ReactiveFormsModule,
   ],

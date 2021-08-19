@@ -15,6 +15,7 @@
 """Environment manager class."""
 
 import os
+import sys
 
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.workload.workload import WorkloadMigrator
@@ -23,6 +24,25 @@ from lpot.ux.utils.workload.workloads_list import WorkloadsListMigrator
 
 class Environment:
     """Environment manager class."""
+
+    @staticmethod
+    def ensure_workdir_exists_and_writeable() -> None:
+        """Ensure that configured directory exists and can be used."""
+        from lpot.ux.utils.logger import log
+        from lpot.ux.web.configuration import Configuration
+
+        configuration = Configuration()
+        workdir = configuration.workdir
+        error_message_tail = "Please ensure it is a directory that can be written to.\nExiting.\n"
+        try:
+            os.makedirs(workdir, exist_ok=True)
+        except Exception as e:
+            print(f"Unable to create workdir at {workdir}: {e}.\n{error_message_tail}")
+            log.error(e)
+            sys.exit(1)
+        if not os.access(workdir, os.W_OK):
+            print(f"Unable to create files at {workdir}.\n{error_message_tail}")
+            sys.exit(2)
 
     @staticmethod
     def migrate_workloads_list() -> None:
@@ -56,5 +76,5 @@ class Environment:
     @staticmethod
     def clean_workloads_wip_status() -> None:
         """Clean WIP status for workloads in workloads_list.json."""
-        workdir = Workdir(workspace_path=os.environ["HOME"])
+        workdir = Workdir()
         workdir.clean_status(status_to_clean="wip")

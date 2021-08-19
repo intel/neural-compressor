@@ -27,45 +27,60 @@ LPOT UX is only available on Linux based hosts.
 
    Make certain that requested port forwarding is set up (depending on your OS) and then open the address in your web browser.
 
+## Home
+
+This view shows introduction to LPOT and 2 buttons for creating new configurations in 2 different ways. First one links to **Examples**, the second one to **Config wizard**.
+
+![Home](imgs/ux/home.png "Home")
+
+On the left hand side there is a panel with list of configurations.
+
+![Menu](imgs/ux/menu.png "Menu")
+
+One can see system information by clicking ![System info](imgs/ux/system_info.png "System info") button. The result is details dialog:
+
+![System info table](imgs/ux/system_info_table.png "System info table") 
+
+By clicking ![See models](imgs/ux/see_models.png "See models")  button you can navigate to **My models list**.
+
+
+## Configuration details
+
+When clicking on configuration from the left hand side list, you can see its details view. You can see the results, rerun the tuning, check the configuration and console output. You can also see the model graph.
+
+![Details](imgs/ux/details.png "Details")
+
+
 ## My Models list
 
 This view lists all Model Configurations defined on a given server. 
 
 You can create a new model using pre-defined models by using a New Model Wizard or **Examples**:
 
-![My models list](imgs/ux/my_models.png "My models list")
+![My models](imgs/ux/my_models.png "My models")
 
 ## New Model Configuration from New Model Wizard
 ### Basic parameters
 
-1. If all related files are located in one directory, point your Workspace there.
-   
-   Click the ![Change Current Workspace Button](imgs/ux/workspace_change.png "Change")
-   button (on the top-left part of UX) and navigate to the desired directory. Click **Choose** to confirm your selection.
+1. Enter information in all required fields (marked by a *) in the Wizard: 
 
-2. Open the Wizard by clicking the ![Create low precision model button image](imgs/ux/model_create_new.png "Create low precision model") button.
+![Wizard1](imgs/ux/wizard1.png "Wizard1")
+![Wizard2](imgs/ux/wizard2.png "Wizard2")
 
-3. Enter information in all required fields (marked by a *) in the Wizard: 
-   ![Basic parameters wizard](imgs/ux/wizard_basic.png "Basic parameters")
-
-4. Either save this configuration (by clicking **Save**), or change some advanced parameters (by clicking **Next**).
+2. Either save this configuration (by clicking **Finish**), or change some advanced parameters (by checking the checkbox ![Show advanced](imgs/ux/show_advanced.png "Show advanced")
+).
 
 ### Advanced parameters
 
 From the advanced parameters page, you can configure more features such as tuning, quantization, and benchmarking. 
 
-![Advanced parameters wizard](imgs/ux/wizard_advanced.png "Advanced parameters")
+![Wizard advanced](imgs/ux/wizard_advanced.png "Wizard advanced")
 
 ## New Model Configuration from Examples
 
 ![Examples](imgs/ux/examples.png "Examples")
 
-Included are models you can use to test tuning. Visit **Examples** to:
-
-* Download a model to a selected Workspace.
-* Download a predefined configuration file for models.
-
-When both models and configurations are downloaded, you can point to the Dataset to be used and then click **Add to my models**. A new model will be added to the **My models** list, ready for tuning.
+Included are models you can use to test tuning. You have to point to the Dataset that you want to use click **Finish** too add it to your models. A new model will be downloaded and added to the **My models** list, ready for tuning.
 
 ## Custom dataset or metric
 
@@ -73,21 +88,26 @@ If you choose **custom** in the Dataset or Metric section, the appropriate code 
 
 Follow the comments in the generated code template to fill in required methods with your own code.
 
-## Bert model configuration
-![Bert model Wizard](imgs/ux/model_create_bert.png "Bert model Wizard")   
+## BERT model configuration
 * Follow [instructions](../examples/tensorflow/nlp/bert_large_squad/README.md) to:
    * install Intel Tensorflow 1.15 up2
    * prepare dataset and a frozen pb model 
-* In the **Create low precision model**:
+* In the **Create low precision model** in first step:
    * select created frozen model
-   * choose NLP as model domain
    * select input_file, batch_size in inputs (in that order)
    * choose **custom** in output and enter `IteratorGetNext:3, unstack:0, unstack:1` in input field
+![Bert1](imgs/ux/bert1.png "Bert1")
+* in second step don't change anything
+![Bert2](imgs/ux/bert2.png "Bert2")
+* in third step :
+   * choose NLP as model domain
    * in **Calibration/label_file**, select **dev-v1.1.json** file from created dataset
    * in **Calibration/dataset location**, select **evel.tf_record** file from created dataset
    * in **Evaluation/Transforms/label_file**, select **dev-v1.1.json** file from created dataset  
    * in **Evaluation/Transforms/vocab_file**, select **vocab.txt** file from created dataset
    * click **Finish** or change Advanced parameters
+![Bert3](imgs/ux/bert3.png "Bert3")
+ 
 
 ## Model Graph Display
 For Tensorflow frozen pb models there will be a new button available ![Show graph](imgs/ux/show_graph_button.png "Show graph").

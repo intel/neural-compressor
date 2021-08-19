@@ -39,26 +39,64 @@ h3 {
   padding: 16px;
 }
 
-table {
-  table-layout: fixed;
+table.rounded {
+  width: 95%;
+  margin: auto;
   border-collapse: collapse;
-}
 
-.header {
-  background-color: $dark-blue;
-  text-align: center;
-  color: white;
-  padding: 5px;
-  border: 1px solid white;
-}
+  tr.header {
+    text-align: center;
+    font-weight: bold;
+  }
 
-.cell {
-  background-color: $lighter-gray1;
-  padding: 5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-  border: 1px solid white;
+  td.header {
+    background: $dark-blue;
+    padding: 10px;
+    color: white;
+    text-align: center;
+    border: 1px solid white;
+    border-radius: 0px;
+  }
+
+
+  tr:nth-child(even) {
+    background: $lighter-gray1
+  }
+
+  tr:nth-child(odd) {
+    background: #FFF
+  }
+
+  tr.cell,
+  td.cell {
+    padding: 5px;
+  }
+
+  tr:first-child {
+
+    td:first-child {
+      border-radius: 0.5rem 0 0 0;
+    }
+
+    td:last-child {
+      border-radius: 0 0.5rem 0 0;
+    }
+  }
+
+  tr:last-child {
+
+    td:last-child {
+      border-radius: 0 0 0.5rem 0;
+    }
+
+    td:first-child {
+      border-radius: 0 0 0 0.5rem;
+    }
+  }
+
+  tr.hover:hover {
+    background-color: #dde6ee;
+  }
 }
 
 .none {
@@ -109,8 +147,8 @@ table {
 }
 
 .sidenav-container {
-  min-height: 500px;
-  background-color: white !important;
+  background-color: #fafafa !important;
+  min-height: calc(100vh - 20px);
 }
 
 .sidenav {
@@ -118,17 +156,18 @@ table {
   background-color: $lighter-gray1;
 }
 
-.hw-info-button {
-  float: right;
-  position: fixed;
-  top: 75px;
-  right: 20px;
-  z-index: 10;
+.pointer {
+  cursor: pointer;
 }
 
-.hw-info-img {
-  width: 20px;
-  height: 20px;
-  position: relative;
-  top: -2px;
+.wizard-container {
+  margin: auto;
+  max-width: 1200px;
+}
+
+@media all and (max-width:1500px) {
+  .wizard-container {
+    margin: auto;
+    max-width: 1000px;
+  }
 }

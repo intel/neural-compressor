@@ -163,6 +163,7 @@ def web_socket_publisher(web_socket: SocketIO) -> None:
             {"status": message.status, "data": message.data},
             broadcast=True,
         )
+        socketio.sleep(0)
 
 
 publisher = Thread(

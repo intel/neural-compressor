@@ -15,10 +15,12 @@
 
 """Constant values."""
 
+from lpot.version import __version__ as lpot_version
+
 github_info = {
     "user": "intel",
     "repository": "lpot",
-    "tag": "v1.5",
+    "tag": f"v{lpot_version}",
 }
 
 

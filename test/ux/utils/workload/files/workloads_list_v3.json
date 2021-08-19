@@ -1,0 +1,85 @@
+{
+    "active_workspace_path": "/path/to/workspace",
+    "workloads": {
+        "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1": {
+            "id": "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+            "model_path": "/path/to/model.pb",
+            "input_precision": "fp32",
+            "model_output_path": "/path/to/output_model.pb",
+            "output_precision": "int8",
+            "workload_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+            "mode": "tuning",
+            "status": "success",
+            "metric": {
+                "acc_input_model": 0.758,
+                "acc_optimized_model": 0.764,
+                "id": "2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1",
+                "optimization_time": 65.7,
+                "size_optimized_model": 25,
+                "model_output_path": "/path/to/output_model.pb",
+                "size_input_model": 98,
+                "is_custom_dataloader": false,
+                "perf_throughput_input_model": 22.207,
+                "perf_throughput_optimized_model": 62.366
+            },
+            "code_template_path": null,
+            "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+            "log_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/output.txt",
+            "execution_details": {
+                "optimization": {
+                    "input_graph": "/path/to/model.pb",
+                    "input_precision": "fp32",
+                    "output_graph": "/path/to/output_model.pb",
+                    "output_precision": "int8",
+                    "framework": "tensorflow",
+                    "input_nodes": "N/A",
+                    "output_nodes": "N/A",
+                    "tune": true,
+                    "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+                    "instances": 1,
+                    "cores_per_instance": 6,
+                    "command": "python /path/to/lpot/ux/components/tune/tune_model.py --input-graph /path/to/model.pb --output-graph /path/to/output_model.pb --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --framework tensorflow"
+                },
+                "input_model_benchmark": {
+                    "performance": {
+                        "instances": 1,
+                        "cores_per_instance": 4,
+                        "model_path": "/path/to/model.pb",
+                        "precision": "fp32",
+                        "mode": "performance",
+                        "batch_size": 1,
+                        "framework": "tensorflow",
+                        "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+                        "benchmark_script": "/path/to/lpot/ux/components/benchmark/benchmark_model.py",
+                        "command": "python /path/to/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/model.pb --mode performance --framework tensorflow"
+                    }
+                },
+                "optimized_model_benchmark": {
+                    "performance": {
+                        "instances": 1,
+                        "cores_per_instance": 4,
+                        "model_path": "/path/to/output_model.pb",
+                        "precision": "int8",
+                        "mode": "performance",
+                        "batch_size": 1,
+                        "framework": "tensorflow",
+                        "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
+                        "benchmark_script": "/path/to/lpot/ux/components/benchmark/benchmark_model.py",
+                        "command": "python /path/to/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/output_model.pb --mode performance --framework tensorflow"
+                    }
+                }
+            },
+            "acc_input_model": 0.758,
+            "acc_optimized_model": 0.764,
+            "optimization_time": 65.7,
+            "size_optimized_model": 25,
+            "size_input_model": 98,
+            "is_custom_dataloader": false,
+            "perf_throughput_input_model": 22.207,
+            "perf_throughput_optimized_model": 62.366,
+            "project_name": "model.pb",
+            "created_at": "2021-07-15T14:19:18.860579"
+        }
+    },
+    "version": 3
+}

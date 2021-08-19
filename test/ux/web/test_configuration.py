@@ -15,9 +15,10 @@
 """UX Configuration test."""
 
 import logging
+import os
 import socket
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 from lpot.ux.web.configuration import Configuration
 from lpot.ux.web.exceptions import NotFoundException
@@ -41,7 +42,7 @@ class TestConfiguration(unittest.TestCase):
         mock_secrets_token_hex.return_value = "this is a mocked token value"
 
         configuration = Configuration()
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
         self.assertEqual(5000, configuration.server_port)
         self.assertEqual(5000, configuration.gui_port)
@@ -64,10 +65,10 @@ class TestConfiguration(unittest.TestCase):
         mock_secrets_token_hex.return_value = "this is a mocked token value"
 
         configuration = Configuration()
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
-        self.assertEqual(5000, configuration.server_port)
         self.assertEqual(1234, configuration.gui_port)
+        self.assertNotEqual(configuration.server_port, configuration.gui_port)
         self.assertEqual(
             "http://localhost:1234/?token=this is a mocked token value",
             configuration.get_url(),
@@ -83,7 +84,7 @@ class TestConfiguration(unittest.TestCase):
         mock_secrets_token_hex.return_value = "this is a mocked token value"
 
         configuration = Configuration()
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
         self.assertEqual(1234, configuration.server_port)
         self.assertEqual(1234, configuration.gui_port)
@@ -91,6 +92,46 @@ class TestConfiguration(unittest.TestCase):
             "http://localhost:1234/?token=this is a mocked token value",
             configuration.get_url(),
         )
+
+    @patch("sys.argv", ["lpot_ux.py", "-p 0"])
+    def test_changing_server_port_too_low(self) -> None:
+        """Test changing API port to invalid value."""
+        configuration = Configuration()
+        with self.assertRaisesRegex(
+            ValueError,
+            "Lowest allowed port number is 1, attempted to use: 0",
+        ):
+            configuration.set_up()
+
+    @patch("sys.argv", ["lpot_ux.py", "-p 65536"])
+    def test_changing_server_port_too_high(self) -> None:
+        """Test changing API port to invalid value."""
+        configuration = Configuration()
+        with self.assertRaisesRegex(
+            ValueError,
+            "Highest allowed port number is 65535, attempted to use: 65536",
+        ):
+            configuration.set_up()
+
+    @patch("sys.argv", ["lpot_ux.py", "-P 0"])
+    def test_changing_gui_port_too_low(self) -> None:
+        """Test changing GUI port to invalid value."""
+        configuration = Configuration()
+        with self.assertRaisesRegex(
+            ValueError,
+            "Lowest allowed port number is 1, attempted to use: 0",
+        ):
+            configuration.set_up()
+
+    @patch("sys.argv", ["lpot_ux.py", "-P 65536"])
+    def test_changing_gui_port_too_high(self) -> None:
+        """Test changing GUI port to invalid value."""
+        configuration = Configuration()
+        with self.assertRaisesRegex(
+            ValueError,
+            "Highest allowed port number is 65535, attempted to use: 65536",
+        ):
+            configuration.set_up()
 
     @patch("sys.argv", ["lpot_ux.py", "-p1234", "-P5678"])
     @patch("secrets.token_hex")
@@ -102,7 +143,7 @@ class TestConfiguration(unittest.TestCase):
         mock_secrets_token_hex.return_value = "this is a mocked token value"
 
         configuration = Configuration()
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
         self.assertEqual(1234, configuration.server_port)
         self.assertEqual(5678, configuration.gui_port)
@@ -115,7 +156,7 @@ class TestConfiguration(unittest.TestCase):
     def test_changing_log_level_to_defined_one(self) -> None:
         """Test changing log level."""
         configuration = Configuration()
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
         self.assertEqual(logging.INFO, configuration.log_level)
 
@@ -123,7 +164,7 @@ class TestConfiguration(unittest.TestCase):
     def test_changing_log_level_to_not_defined_one(self) -> None:
         """Test changing log level to unknown one."""
         configuration = Configuration()
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
         self.assertEqual(logging.DEBUG, configuration.log_level)
 
@@ -138,7 +179,7 @@ class TestConfiguration(unittest.TestCase):
 
         with self.assertRaises(NotFoundException):
             configuration = Configuration()
-            configuration.determine_values_from_environment()
+            configuration.set_up()
 
     @patch("socket.socket.bind")
     @patch("sys.argv", ["lpot_ux.py"])
@@ -151,7 +192,7 @@ class TestConfiguration(unittest.TestCase):
 
         with self.assertRaises(NotFoundException):
             configuration = Configuration()
-            configuration.determine_values_from_environment()
+            configuration.set_up()
 
     @patch("sys.argv", ["lpot_ux.py"])
     def test_many_instances_are_the_same(self) -> None:
@@ -167,9 +208,42 @@ class TestConfiguration(unittest.TestCase):
         configuration = Configuration()
         original_token = configuration.token
 
-        configuration.determine_values_from_environment()
+        configuration.set_up()
 
         self.assertNotEqual(original_token, configuration.token)
+
+    @patch("sys.argv", ["lpot_ux.py"])
+    @patch.dict(os.environ, {"HOME": "/foo/bar"})
+    @patch("lpot.ux.web.configuration.os.path.isfile")
+    def test_default_workdir_when_no_existing_config(self, mocked_isfile: MagicMock) -> None:
+        """Test that when no existing config given, default will be used."""
+        workloads_list_filepath = os.path.join("/foo/bar", ".lpot", "workloads_list.json")
+
+        configuration = Configuration()
+        mocked_isfile.return_value = False
+        configuration.set_up()
+
+        self.assertEqual(os.path.join("/foo/bar", "workdir"), configuration.workdir)
+        mocked_isfile.assert_called_once_with(workloads_list_filepath)
+
+    @patch("sys.argv", ["lpot_ux.py"])
+    @patch.dict(os.environ, {"HOME": "/foo/bar"})
+    @patch("lpot.ux.web.configuration.os.path.isfile")
+    def test_default_workdir_uses_existing_config(self, mocked_isfile: MagicMock) -> None:
+        """Test that when existing config given, its value is used."""
+        workloads_list_filepath = os.path.join("/foo/bar", ".lpot", "workloads_list.json")
+
+        configuration = Configuration()
+        mocked_isfile.return_value = True
+        with patch(
+            "lpot.ux.web.configuration.open",
+            mock_open(read_data='{"active_workspace_path": "/existing/path"}'),
+        ) as mocked_open:
+            configuration.set_up()
+            mocked_open.assert_called_once_with(workloads_list_filepath, encoding="utf-8")
+
+        self.assertEqual("/existing/path", configuration.workdir)
+        mocked_isfile.assert_called_once_with(workloads_list_filepath)
 
 
 if __name__ == "__main__":

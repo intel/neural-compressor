@@ -18,13 +18,12 @@ import glob
 import json
 import logging
 import os
-import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from lpot.ux.utils.exceptions import InternalException, NotFoundException
 from lpot.ux.utils.templates.metric import Metric
 from lpot.ux.utils.workload.workloads_list import WorkloadInfo
+from lpot.ux.web.configuration import Configuration
 
 
 class Workdir:
@@ -32,8 +31,8 @@ class Workdir:
 
     def __init__(
         self,
-        workspace_path: Optional[str] = None,
         request_id: Optional[str] = None,
+        project_name: Optional[str] = None,
         model_path: Optional[str] = None,
         input_precision: Optional[str] = None,
         model_output_path: Optional[str] = None,
@@ -41,8 +40,11 @@ class Workdir:
         mode: Optional[str] = None,
         metric: Optional[Union[dict, Metric]] = None,
         overwrite: bool = True,
+        created_at: Optional[str] = None,
     ) -> None:
         """Initialize workdir class."""
+        configuration = Configuration()
+        workspace_path = configuration.workdir
         self.workdir_path = os.path.join(os.environ.get("HOME", ""), ".lpot")
         self.ensure_working_path_exists()
         self.workloads_json = os.path.join(self.workdir_path, "workloads_list.json")
@@ -57,7 +59,7 @@ class Workdir:
             self.workloads_data = {
                 "active_workspace_path": workspace_path,
                 "workloads": {},
-                "version": "2",
+                "version": "3",
             }
 
         workload_data = self.get_workload_data(request_id)
@@ -81,12 +83,14 @@ class Workdir:
         if request_id and overwrite:
             self.update_data(
                 request_id=request_id,
+                project_name=project_name,
                 model_path=model_path,
                 input_precision=input_precision,
                 model_output_path=model_output_path,
                 output_precision=output_precision,
                 mode=mode,
                 metric=metric,
+                created_at=created_at,
             )
 
     def load(self) -> dict:
@@ -119,7 +123,8 @@ class Workdir:
 
     def update_data(
         self,
-        request_id: Optional[str],
+        request_id: str,
+        project_name: Optional[str] = None,
         model_path: Optional[str] = None,
         input_precision: Optional[str] = None,
         model_output_path: Optional[str] = None,
@@ -128,12 +133,19 @@ class Workdir:
         metric: Optional[Union[Dict[str, Any], Metric]] = Metric(),
         status: Optional[str] = None,
         execution_details: Optional[Dict[str, Any]] = None,
+        created_at: Optional[str] = None,
     ) -> None:
         """Update data in workloads.list_json."""
         self.load()
+        existing_data = self.get_workload_data(request_id)
+        if project_name is None:
+            project_name = existing_data.get("project_name", None)
+        if created_at is None:
+            created_at = existing_data.get("created_at", None)
         workload_info = WorkloadInfo(
             workload_path=self.workload_path,
             request_id=request_id,
+            project_name=project_name,
             model_path=model_path,
             input_precision=input_precision,
             model_output_path=model_output_path,
@@ -143,8 +155,18 @@ class Workdir:
             status=status,
             code_template_path=self.template_path,
             execution_details=execution_details,
+            created_at=created_at,
         ).serialize()
         self.workloads_data["workloads"][request_id] = workload_info
+        self.dump()
+
+    def set_workload_status(self, request_id: str, status: str) -> None:
+        """Set status of a given Workload."""
+        self.load()
+        existing_data = self.get_workload_data(request_id)
+        if not existing_data:
+            return
+        self.workloads_data["workloads"][request_id]["status"] = status
         self.dump()
 
     def update_metrics(
@@ -175,7 +197,8 @@ class Workdir:
 
     def get_active_workspace(self) -> str:
         """Get active workspace."""
-        path = self.workloads_data.get("active_workspace_path", os.environ["HOME"])
+        configuration = Configuration()
+        path = self.workloads_data.get("active_workspace_path", configuration.workdir)
         return path
 
     def set_active_workspace(self, workspace_path: str) -> None:
@@ -234,24 +257,6 @@ class Workdir:
     def template_path(self) -> Optional[str]:
         """Get template_path."""
         return self.get_workload_data(self.request_id).get("code_template_path", None)
-
-    def delete_workload(self, workload_id: str) -> None:
-        """Delete workload by ID."""
-        if workload_id in self.workloads_data.get("workloads", {}):
-            try:
-                workload = self.workloads_data.get("workloads", {}).get(workload_id, {})
-                workload_path = workload.get("workload_path", None)
-                del self.workloads_data.get("workloads", {})[workload_id]
-                self.dump()
-                if workload_path:
-                    shutil.rmtree(workload_path)
-            except Exception as e:
-                raise InternalException(
-                    f"Error while removing workload {workload_id}:\n{str(e)}",
-                )
-
-        else:
-            raise NotFoundException(f"Can't find workload ID {workload_id}.")
 
     def get_workload_data(self, request_id: Optional[str]) -> dict:
         """Return data of given Workload."""

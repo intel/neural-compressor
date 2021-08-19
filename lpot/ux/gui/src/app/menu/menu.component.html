@@ -1,33 +1,35 @@
-<mat-toolbar>
-  <span class="example-spacer">
-    <p class="workspace">
-      <a class="workspace-title"> Workspace: </a>
-      {{ this.workspacePath }}
-      <button id="workspace-btn" mat-raised-button color="primary" class="browse" (click)="openDialog()">
-        Change</button>
-    </p>
-  </span>
-  <img class="intel-logo" src="./../../assets/logo-energyblue-72px.svg">
-  <img class="logo" src="./../../assets/298b-workflow-process-outlined.svg">
-  <span class="title">
-    <p (click)="openUrl('https://github.com/intel/lpot')">
-      Low Precision Optimization Tool
-    </p>
-  </span>
-  <span class="example-spacer"></span>
-</mat-toolbar>
+<div class="model-list">
+  <ng-container *ngFor="let model of modelList">
+    <br>
+    <button mat-flat-button [routerLink]="['/details', model['id']]" class="config-btn" queryParamsHandling="preserve"
+      routerLinkActive="active">
+      <span *ngIf="model['status'] !== 'wip'">
+        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
+          src="./../../assets/010a-passed-completed-solid.svg">
+        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
+          src="./../../assets/009a-close-solid.svg">
+        <img *ngIf="model['status'] === null" src="./../../assets/005a-help-solid-gray.svg">
+        <span class="name" [matTooltip]="getFileName(model['model_path'])">{{ getFileName(model['model_path']) |
+          longName }}</span>
+        <br>
+        <span class="time"> {{ getDate(model['created_at']) | timeAgo }}</span>
+      </span>
 
-<nav mat-tab-nav-bar>
-  <a mat-tab-link [routerLink]="'/my-models'" routerLinkActive="active" queryParamsHandling="preserve">
-    <img class="icon" src="./../../assets/001b-home-outlined.svg">
-    My models
-  </a>
-  <a mat-tab-link [routerLink]="'/model-zoo'" routerLinkActive="active" queryParamsHandling="preserve">
-    <img class="icon" src="./../../assets/008b-plus-outlined.svg">
-    Examples
-  </a>
-</nav>
-
-<footer class="footer">
-  © Intel Corporation
-</footer>
+      <span *ngIf="model['status'] === 'wip'" class="spinner-wrapper">
+        <mat-spinner mode="indeterminate" class="spinner" matTooltip="Configuration is running" [diameter]="25"
+          color="accent">
+        </mat-spinner>
+        <span>
+          <span class="name">{{ getFileName(model['model_path']) }}</span>
+          <br>
+          <span class="time wip"> {{ getDate(model['created_at']) | timeAgo }}</span>
+        </span>
+      </span>
+    </button>
+  </ng-container>
+  <br>
+  <button mat-flat-button *ngIf="modelList.length" [routerLink]="['/my-models']" queryParamsHandling="preserve"
+    class="model-list-btn">
+    See models comparison table
+  </button>
+</div>

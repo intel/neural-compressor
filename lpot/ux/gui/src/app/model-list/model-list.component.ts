@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { environment } from 'src/environments/environment';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorComponent } from '../error/error.component';
 import { ModelService, NewModel } from '../services/model.service';
@@ -29,7 +29,11 @@ export class ModelListComponent implements OnInit {
   visibleColumns = ['model_name', 'framework', 'config', 'console_output', 'acc_input_model', 'acc_optimized_model'];
   showSpinner = true;
   token = "";
-  apiBaseUrl = environment.baseUrl
+  apiBaseUrl = environment.baseUrl;
+  detailedView = true;
+  chosenRow = {};
+
+  @ViewChild('drawer') drawer;
 
   constructor(
     private modelService: ModelService,
@@ -205,6 +209,11 @@ export class ModelListComponent implements OnInit {
       return tooltip;
     }
     return null;
+  }
+
+  showDrawer(model?) {
+    this.chosenRow = model;
+    this.drawer.toggle();
   }
 
   copyToClipboard(text: string) {

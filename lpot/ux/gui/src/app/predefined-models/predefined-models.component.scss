@@ -25,3 +25,49 @@ button {
 .input {
   width: 200px;
 }
+
+.title {
+  margin-left: 50px;
+}
+
+.float-right {
+  margin-bottom: 5px;
+}
+
+::ng-deep .mat-vertical-stepper-content {
+  visibility: visible !important;
+  height: 100% !important;
+}
+
+.chip {
+  height: 50px;
+  border: 1px solid $gray;
+  margin: 3px;
+}
+
+.domain-btn {
+  width: 48%;
+}
+
+.model-btn {
+  width: 19%;
+}
+
+.active {
+  background-color: $energy-blue;
+  border: none;
+}
+
+.center {
+  color: $energy-blue;
+  margin: auto;
+  text-align: center;
+}
+
+.form-field {
+  width: 40%;
+}
+
+.input {
+  width: 100%;
+}

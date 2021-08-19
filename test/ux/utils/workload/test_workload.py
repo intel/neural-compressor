@@ -21,7 +21,7 @@ from lpot.ux.utils.utils import _load_json_as_dict
 from lpot.ux.utils.workload.workload import WorkloadMigrator
 
 
-class TestWorkloadsListMigrator(unittest.TestCase):
+class TestWorkloadsMigrator(unittest.TestCase):
     """Workloads list migrator tests."""
 
     def __init__(self, *args: str, **kwargs: str) -> None:
@@ -29,33 +29,36 @@ class TestWorkloadsListMigrator(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
     def test_workload_migration_from_v1(self) -> None:
-        """Test Workload v1 config migrator."""
-        workload_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
+        """Test Workload config migrator from v1."""
+        self._assert_migrates(
             "workload_v1_tuned.json",
+            "workload_v3_tuned.json",
         )
-        workload_migrator = WorkloadMigrator(
-            workload_json_path=workload_json_path,
-        )
-        workload_migrator.migrate()
-
-        print(workload_migrator.workload_data)
-
-        expected_json_path = os.path.join(
-            os.path.dirname(__file__),
-            "files",
-            "workload_v2_tuned.json",
-        )
-        expected = _load_json_as_dict(expected_json_path)
-        self.assertDictEqual(workload_migrator.workload_data, expected)  # type: ignore
 
     def test_workload_migration_from_v2(self) -> None:
-        """Test Workload v2 config migrator."""
+        """Test Workload config migrator from v2."""
+        self._assert_migrates(
+            "workload_v2_tuned.json",
+            "workload_v3_tuned.json",
+        )
+
+    def test_workload_migration_from_v3(self) -> None:
+        """Test Workload config migrator from v2."""
+        self._assert_migrates(
+            "workload_v3_tuned.json",
+            "workload_v3_tuned.json",
+        )
+
+    def _assert_migrates(
+        self,
+        initial_file: str,
+        final_file: str,
+    ) -> None:
+        """Test Workload migrator from initial to final version."""
         workload_json_path = os.path.join(
             os.path.dirname(__file__),
             "files",
-            "workload_v2_tuned.json",
+            initial_file,
         )
         workload_migrator = WorkloadMigrator(
             workload_json_path=workload_json_path,
@@ -65,7 +68,7 @@ class TestWorkloadsListMigrator(unittest.TestCase):
         expected_json_path = os.path.join(
             os.path.dirname(__file__),
             "files",
-            "workload_v2_tuned.json",
+            final_file,
         )
         expected = _load_json_as_dict(expected_json_path)
         self.assertDictEqual(workload_migrator.workload_data, expected)  # type: ignore

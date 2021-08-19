@@ -1,8 +1,29 @@
 <ng-container *ngIf="tokenIsSet">
-  <div class="container">
-    <app-menu></app-menu>
-  </div>
-  <div class="container">
-    <router-outlet></router-outlet>
-  </div>
+  <mat-sidenav-container class="container">
+    <mat-sidenav #sidenav mode="side" opened class="sidenav">
+      <div class="pointer title">
+        <img (click)="sidenav.toggle()" matTooltip="Close menu" class="logo"
+          src="./../../assets/074-rewind-reverse.svg">
+        <span [routerLink]="['/home']" queryParamsHandling="preserve" matTooltip="Go to home page">Low Precision
+          Optimization Tool</span>
+      </div>
+      <button type="button" id="system-info-btn" mat-flat-button class="hw-info-button" (click)="showSystemInfo()"
+        matTooltip="Show system information">
+        <img class="hw-info-img" src="./../../assets/004a-information-solid.svg">
+        System info
+      </button>
+      <app-menu></app-menu>
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <div *ngIf="!sidenav.opened" class="pointer title-hidden">
+        <img (click)="sidenav.toggle()" matTooltip="Open menu" class="logo" src="./../../assets/073-menu.svg">
+        <span [routerLink]="['/home']" queryParamsHandling="preserve" matTooltip="Go to home page">Low Precision
+          Optimization Tool</span>
+      </div>
+      <router-outlet></router-outlet>
+      <footer class="footer">
+        © Intel Corporation
+      </footer>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
 </ng-container>

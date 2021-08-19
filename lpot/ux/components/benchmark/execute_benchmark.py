@@ -35,12 +35,64 @@ mq = MessageQueue()
 
 def execute_benchmark(data: Dict[str, Any]) -> None:
     """
+    Execute benchmark setting correct workload status.
+
+    Expected data:
+    {
+        "id": "configuration_id",
+        "input_model": {
+            "precision": "fp32",
+            "path": "/localdisk/fp32.pb"
+        },
+        "optimized_model": {
+            "precision": "int8",
+            "path": "/localdisk/int8.pb"
+        }
+    }
+    """
+    request_id = str(data.get("id", ""))
+
+    if not request_id:
+        message = "Missing request_id."
+        mq.post_error(
+            "benchmark_finish",
+            {"message": "Failure", "code": 404},
+        )
+        log.error(f"Problem during benchmark: {message}")
+        return
+
+    workdir = Workdir(request_id=request_id, overwrite=False)
+    workdir.set_workload_status(request_id, "wip")
+
+    try:
+        execute_real_benchmark(
+            request_id=request_id,
+            workdir=workdir,
+            data=data,
+        )
+    except Exception:
+        workdir.set_workload_status(request_id, "error")
+        mq.post_error(
+            "benchmark_finish",
+            {"message": "Failure", "code": 404, "id": request_id},
+        )
+        log.exception("Exception during benchmark")
+        return
+
+    workdir.set_workload_status(request_id, "success")
+
+
+def execute_real_benchmark(
+    request_id: str,
+    workdir: Workdir,
+    data: Dict[str, Any],
+) -> None:
+    """
     Execute benchmark.
 
     Expected data:
     {
         "id": "configuration_id",
-        "workspace_path": "/path/to/workspace",
         "input_model": {
             "precision": "fp32",
             "path": "/localdisk/fp32.pb"
@@ -53,33 +105,20 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
     """
     from lpot.ux.utils.workload.workload import Workload
 
-    request_id = str(data.get("id", ""))
     input_model = data.get("input_model", None)
     input_model.update({"model_type": "input_model"})
 
     optimized_model = data.get("optimized_model", None)
     optimized_model.update({"model_type": "optimized_model"})
 
-    if not (request_id and input_model and optimized_model):
-        message = "Missing request id, input or optimized model data."
-        mq.post_error(
-            "benchmark_finish",
-            {"message": message, "code": 404, "id": request_id},
-        )
+    if not (input_model and optimized_model):
+        message = "Missing input or optimized model data."
         raise ClientErrorException(message)
 
-    workdir = Workdir(request_id=request_id, overwrite=False)
-    try:
-        workload_path = workdir.workload_path
-        workload_data = _load_json_as_dict(
-            os.path.join(workload_path, "workload.json"),
-        )
-    except Exception as err:
-        mq.post_error(
-            "benchmark_finish",
-            {"message": repr(err), "code": 404, "id": request_id},
-        )
-        raise ClientErrorException(repr(err))
+    workload_path = workdir.workload_path
+    workload_data = _load_json_as_dict(
+        os.path.join(workload_path, "workload.json"),
+    )
 
     workload = Workload(workload_data)
 
@@ -115,10 +154,6 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
 
         if not (model_precision and model_path and model_type and benchmark_modes):
             message = "Missing model precision, model path or model type."
-            mq.post_error(
-                "benchmark_finish",
-                {"message": message, "code": 404, "id": request_id},
-            )
             raise ClientErrorException(message)
 
         for benchmark_mode in benchmark_modes:
@@ -134,6 +169,7 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
                 benchmark_count=benchmark_count,
                 benchmark_total=benchmark_total,
             )
+        workdir.set_workload_status(request_id, "success")
 
 
 def benchmark_model_and_respond_to_ui(
@@ -148,24 +184,19 @@ def benchmark_model_and_respond_to_ui(
     benchmark_total: int,
 ) -> dict:
     """Benchmark model and update UI."""
-    try:
-        response_data = benchmark_model(
-            response_data=response_data,
-            workload=workload,
-            workdir=workdir,
-            model=model,
-            model_path=model_path,
-            model_precision=model_precision,
-            benchmark_mode=benchmark_mode,
-            benchmark_count=benchmark_count,
-            benchmark_total=benchmark_total,
-        )
-        mq.post_success("benchmark_finish", response_data)
-        return response_data
-    except ClientErrorException as err:
-        log.error(f"Benchmark failed: {str(err)}.")
-        mq.post_failure("benchmark_finish", {"message": "failed", "id": workload.id})
-        raise
+    response_data = benchmark_model(
+        response_data=response_data,
+        workload=workload,
+        workdir=workdir,
+        model=model,
+        model_path=model_path,
+        model_precision=model_precision,
+        benchmark_mode=benchmark_mode,
+        benchmark_count=benchmark_count,
+        benchmark_total=benchmark_total,
+    )
+    mq.post_success("benchmark_finish", response_data)
+    return response_data
 
 
 def benchmark_model(
@@ -231,7 +262,13 @@ def benchmark_model(
             },
         )
 
-        response_data.update({"progress": f"{benchmark_count}/{benchmark_total}"})
+        response_data.update(
+            {
+                "progress": f"{benchmark_count}/{benchmark_total}",
+                "current_step": benchmark_count,
+                "number_of_steps": benchmark_total,
+            },
+        )
         response_data.update(metric)
         response_data["execution_details"].update(
             {f"{model}_benchmark": model_benchmark_details},

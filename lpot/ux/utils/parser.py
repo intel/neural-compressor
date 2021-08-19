@@ -75,7 +75,7 @@ class OptimizationParser(Parser):
             r"(duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
             r"(memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
             r")*\]",
-            "path_optimized_model": r".*Save quantized model at (?P<path_optimized_model>.*)",
+            "path_optimized_model": r".*Save quantized model to (?P<path_optimized_model>.*)\.",
         }
 
 

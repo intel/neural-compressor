@@ -1,0 +1,9 @@
+<button mat-button id="error-close-btn" class="close-button" mat-dialog-close matTooltip="Close">&#x2573;</button>
+
+<h2>System information</h2>
+<table class="rounded">
+  <tr *ngFor="let info of data | keyvalue">
+    <td class="header">{{ info.key | modelList }}</td>
+    <td class="cell">{{ info.value }}</td>
+  </tr>
+</table>

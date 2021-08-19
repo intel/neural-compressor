@@ -17,7 +17,7 @@
 from lpot.ux.components.model_zoo.downloader import Downloader
 
 
-def download_config(data: dict) -> None:
+def download_config(data: dict) -> str:
     """Process config download request."""
     downloader = Downloader(data)
-    downloader.download_config()
+    return downloader.download_config()

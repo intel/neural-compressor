@@ -26,6 +26,7 @@ from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import is_development_env, load_model_config
 from lpot.ux.web.communication import MessageQueue
+from lpot.ux.web.configuration import Configuration
 
 
 class Downloader:
@@ -33,16 +34,17 @@ class Downloader:
 
     def __init__(self, data: Dict[str, Any]) -> None:
         """Initialize Downloader class."""
+        configuration = Configuration()
         self.request_id: str = str(data.get("id", ""))
         self.framework: str = data.get("framework", "")
         self.domain: str = data.get("domain", "")
         self.model: str = data.get("model", "")
-        self.workspace_path: str = data.get("workspace_path", "")
+        self.workspace_path: str = configuration.workdir
         self.progress_steps: Optional[int] = data.get("progress_steps", None)
         self.download_dir: str = ""
         self.mq = MessageQueue()
 
-    def download_config(self) -> None:
+    def download_config(self) -> str:
         """Find yaml config resource and initialize downloading."""
         if not (
             self.request_id
@@ -52,10 +54,6 @@ class Downloader:
             and self.workspace_path
         ):
             message = "Missing request id, workspace path, framework, domain or model."
-            self.mq.post_error(
-                "download_finish",
-                {"message": message, "code": 404, "id": self.request_id},
-            )
             raise ClientErrorException(message)
 
         model_config = load_model_config()
@@ -64,9 +62,8 @@ class Downloader:
         )
 
         if model_info is None:
-            raise Exception(
-                f"{self.framework} {self.domain} {self.model} is not supported.",
-            )
+            message = f"{self.framework} {self.domain} {self.model} is not supported."
+            raise Exception(message)
 
         self.download_dir = os.path.join(
             self.workspace_path,
@@ -76,18 +73,14 @@ class Downloader:
             self.model,
         )
 
-        self.download_yaml_config(model_info)
+        download_path = self.download_yaml_config(model_info)
+        return download_path
 
-    def download_yaml_config(self, model_info: Dict[str, Any]) -> None:
+    def download_yaml_config(self, model_info: Dict[str, Any]) -> str:
         """Download config from GitHub for specified model."""
         yaml_relative_location = model_info.get("yaml", "")
         if not yaml_relative_location:
-            message = "Missing yaml location."
-            self.mq.post_error(
-                "download_finish",
-                {"message": message, "code": 404, "id": self.request_id},
-            )
-            raise ClientErrorException(message)
+            raise ClientErrorException("Missing yaml location.")
 
         url, headers = self.get_yaml_url(
             yaml_relative_location,
@@ -101,17 +94,12 @@ class Downloader:
             url=url,
             headers=headers,
             download_path=download_path,
+            report_progress=False,
         )
 
-        self.mq.post_success(
-            "download_finish",
-            {
-                "id": self.request_id,
-                "path": download_path,
-            },
-        )
+        return download_path
 
-    def download_model(self) -> None:
+    def download_model(self) -> str:
         """Find model resource and initialize downloading."""
         model_config = load_model_config()
         model_info = (
@@ -131,28 +119,20 @@ class Downloader:
             self.model,
         )
 
-        self.download(model_info)
+        download_path = self.download(model_info)
+        return download_path
 
-    def download(self, model_info: Dict[str, Any]) -> None:
+    def download(self, model_info: Dict[str, Any]) -> str:
         """Download specified model."""
         download_info = model_info.get("download", None)
         if download_info is None:
-            message = "Model download is not supported."
-            self.mq.post_error(
-                "download_finish",
-                {"message": message, "code": 404, "id": self.request_id},
-            )
-            raise ClientErrorException(message)
+            raise ClientErrorException("Model download is not supported.")
 
         url = download_info.get("url")
         filename = download_info.get("filename")
         is_archived = download_info.get("is_archived")
         if not (url and filename):
             message = "Could not found download link for model or output file name."
-            self.mq.post_error(
-                "download_finish",
-                {"message": message, "code": 404, "id": self.request_id},
-            )
             raise ClientErrorException(message)
 
         download_path = os.path.join(self.download_dir, filename)
@@ -176,11 +156,14 @@ class Downloader:
             },
         )
 
+        return model_path
+
     def download_file(
         self,
         url: str,
         download_path: str,
         headers: Optional[dict] = {},
+        report_progress: Optional[bool] = True,
     ) -> None:
         """Download specified file."""
         try:
@@ -195,14 +178,15 @@ class Downloader:
                 with open(download_path, "wb") as f:
                     log.debug(f"Download file from {url} to {download_path}")
                     total_length = r.headers.get("content-length")
-                    self.mq.post_success(
-                        "download_start",
-                        {
-                            "message": "started",
-                            "id": self.request_id,
-                            "url": url,
-                        },
-                    )
+                    if report_progress:
+                        self.mq.post_success(
+                            "download_start",
+                            {
+                                "message": "started",
+                                "id": self.request_id,
+                                "url": url,
+                            },
+                        )
                     if total_length is None:
                         f.write(r.content)
                         return
@@ -218,26 +202,19 @@ class Downloader:
                                 last_progress != progress
                                 and progress % int(100 / self.progress_steps) == 0
                             ):
-                                self.mq.post_success(
-                                    "download_progress",
-                                    {
-                                        "id": self.request_id,
-                                        "progress": f"{downloaded}/{total_size}",
-                                    },
-                                )
+                                if report_progress:
+                                    self.mq.post_success(
+                                        "download_progress",
+                                        {
+                                            "id": self.request_id,
+                                            "progress": progress,
+                                        },
+                                    )
                                 log.debug(f"Download progress: {progress}%")
                                 last_progress = progress
         except requests.exceptions.HTTPError:
             message = f"Error downloading file from {url} to {download_path}"
-            self.mq.post_error(
-                "download_finish",
-                {
-                    "message": message,
-                    "code": 404,
-                    "id": self.request_id,
-                },
-            )
-            return
+            raise Exception(message)
 
     def unpack_archive(self, archive_path: str, filename: str) -> str:
         """Unpack archive and return path to unpacked model."""
@@ -259,10 +236,6 @@ class Downloader:
 
         else:
             message = "Could unpack an archive. Supported archive types are zip and tar.gz."
-            self.mq.post_error(
-                "unpack_finish",
-                {"message": message, "code": 404, "id": self.request_id},
-            )
             raise ClientErrorException(message)
 
         os.remove(archive_path)
@@ -302,12 +275,7 @@ class Downloader:
         tag = github_info.get("tag")
 
         if not (user, repository, tag):
-            message = "Missing github repository information."
-            self.mq.post_error(
-                "download_finish",
-                {"message": message, "code": 500, "id": self.request_id},
-            )
-            raise ClientErrorException(message)
+            raise ClientErrorException("Missing github repository information.")
         url_prefix = f"https://raw.githubusercontent.com/{user}/{repository}/{tag}/"
         url = os.path.join(
             url_prefix,

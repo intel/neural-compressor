@@ -27,6 +27,8 @@ export class ModelService {
   workspacePath: string;
   workspacePathChange: Subject<boolean> = new Subject<boolean>();
   systemInfoChange: Subject<boolean> = new Subject<boolean>();
+  configurationSaved: Subject<boolean> = new Subject<boolean>();
+
   token;
   systemInfo = {};
 
@@ -124,6 +126,14 @@ export class ModelService {
     );
   }
 
+  saveExampleWorkload(fullModel: FullModel | {}) {
+    fullModel['workspace_path'] = this.workspacePath;
+    return this.http.post(
+      this.baseUrl + 'api/save_example_workload',
+      fullModel
+    );
+  }
+
   getFileSystem(path: string, filter: FileBrowserFilter) {
     if (filter === 'all') {
       return this.http.get(this.baseUrl + 'api/filesystem', {
@@ -142,34 +152,6 @@ export class ModelService {
 
   listModelZoo() {
     return this.http.get(this.baseUrl + 'api/list_model_zoo');
-  }
-
-  downloadModel(model, index: number) {
-    return this.http.post(
-      this.baseUrl + 'api/download_model',
-      {
-        id: index,
-        workspace_path: this.workspacePath,
-        framework: model.framework,
-        domain: model.domain,
-        model: model.model,
-        progress_steps: 20,
-      }
-    );
-  }
-
-  downloadConfig(model, index: number) {
-    return this.http.post(
-      this.baseUrl + 'api/download_config',
-      {
-        id: index,
-        workspace_path: this.workspacePath,
-        framework: model.framework,
-        domain: model.domain,
-        model: model.model,
-        progress_steps: 20,
-      }
-    );
   }
 
 }

@@ -11,6 +11,108 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-.container {
+@import './../variables.scss';
+
+.logo {
+  width: 30px;
   margin: 5px;
+  top: 12px;
+  position: relative;
+  z-index: 10;
+}
+
+.title {
+  font-size: 120%;
+  margin-right: 10px;
+}
+
+.title-hidden {
+  font-size: 200%;
+  color: $dark-blue;
+  font-family: IntelOneRg;
+}
+
+.icon {
+  width: 30px;
+  margin: 5px;
+  position: relative;
+  top: 12px;
+}
+
+.active {
+  color: $accent-yellow !important;
+}
+
+.sidenav {
+  font-family: IntelOneRg;
+  font-size: 150%;
+  background-color: $dark-gray;
+  color: white;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.container {
+  min-height: 100%;
+}
+
+.footer {
+  position: fixed;
+  bottom: 5px;
+  left: 50%;
+  width: 98%;
+  color: $dark-gray;
+  padding-top: 5px;
+}
+
+.menu-btn {
+
+  :hover {
+    background-color: $darker-gray !important;
+  }
+}
+
+.menu-p {
+  padding-bottom: 15px;
+  font-size: 120%;
+}
+
+.hw-info-button {
+  float: right;
+  color: $light-gray;
+  background-color: $dark-gray;
+  margin-right: 10px;
+}
+
+.hw-info-img {
+  width: 15px;
+  height: 15px;
+  top: -1px;
+  position: relative;
+}
+
+@media all and (max-width:1500px) {
+
+  .logo {
+    width: 20px;
+    margin: 5px;
+    top: 8px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .title {
+    font-size: 100%;
+    margin-right: 5px;
+  }
+
+  .sidenav {
+    width: 300px;
+  }
+
+  .hw-info-button {
+    margin-right: 0px;
+  }
 }

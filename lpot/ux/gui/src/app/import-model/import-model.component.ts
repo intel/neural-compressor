@@ -20,16 +20,18 @@ import { SocketService } from '../services/socket.service';
 import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { ErrorComponent } from '../error/error.component';
 import { GraphComponent } from '../graph/graph.component';
+import { Router } from '@angular/router';
 declare var require: any;
 var shajs = require('sha.js')
 
 @Component({
   selector: 'app-import-model',
   templateUrl: './import-model.component.html',
-  styleUrls: ['./import-model.component.scss', './../error/error.component.scss']
+  styleUrls: ['./import-model.component.scss', './../error/error.component.scss', './../home/home.component.scss']
 })
 export class ImportModelComponent implements OnInit {
 
+  showAdvancedParams = false;
   frameworks = [];
   domains = [];
   metrics = [];
@@ -57,11 +59,12 @@ export class ImportModelComponent implements OnInit {
     input: [],
     output: []
   };
-  textBox = {
-    inputs: false,
-    outputs: false
-  };
   graph = {};
+
+  boundaryNodes: {
+    inputs: 'none' | 'custom' | 'select',
+    outputs: 'none' | 'custom' | 'select',
+  };
 
   frameworkVersion: string;
   frameworkWarning: string;
@@ -70,8 +73,10 @@ export class ImportModelComponent implements OnInit {
   secondFormGroup: FormGroup;
 
   saved = false;
+  finishDisabled = false;
   id: string;
   showSpinner = false;
+  showBigSpinner = false;
   showGraphSpinner = false;
   showGraphButton = false;
   showDomainSpinner = false;
@@ -82,12 +87,18 @@ export class ImportModelComponent implements OnInit {
     private _formBuilder: FormBuilder,
     public modelService: ModelService,
     private socketService: SocketService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private router: Router
   ) { }
 
   ngOnInit() {
     const dateTime = Date.now();
     this.id = shajs('sha384').update(String(dateTime)).digest('hex');
+
+    this.boundaryNodes = {
+      inputs: 'none',
+      outputs: 'none'
+    };
 
     this.setDefaultValues();
 
@@ -116,16 +127,14 @@ export class ImportModelComponent implements OnInit {
       );
 
     this.firstFormGroup.get('modelLocation').valueChanges
+      .pipe(
+        debounceTime(1000))
       .subscribe(response => {
         if (this.firstFormGroup.get('modelLocation').value) {
           this.showSpinner = true;
           this.showGraphButton = false;
           this.frameworkVersion = null;
           this.frameworkWarning = null;
-          ['input', 'output'].forEach(type => {
-            this.firstFormGroup.get(type).setValue([]);
-            this.order[type] = [];
-          });
           this.socketService.getBoundaryNodes(this.getNewModel()).subscribe();
           this.modelService.getModelGraph(this.firstFormGroup.get('modelLocation').value)
             .subscribe(
@@ -156,12 +165,12 @@ export class ImportModelComponent implements OnInit {
                 this.isFieldRequired('firstFormGroup', 'input', true);
                 this.isFieldRequired('firstFormGroup', 'output', true);
                 if (result['data'][param].length === 0) {
-                  this.textBox[param] = true;
+                  this.boundaryNodes[param] = 'custom';
                 } else if (result['data'][param].length === 1) {
-                  this.textBox[param] = true;
+                  this.boundaryNodes[param] = 'custom';
                   this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
                 } else {
-                  this.textBox[param] = false;
+                  this.boundaryNodes[param] = 'select';
                   const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
                   if (nonCustomParams.length === 1) {
                     this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
@@ -170,6 +179,7 @@ export class ImportModelComponent implements OnInit {
                   }
                 }
               } else {
+                this.boundaryNodes[param] = 'none';
                 this.isFieldRequired('firstFormGroup', 'input', false);
                 this.isFieldRequired('firstFormGroup', 'output', false);
               }
@@ -199,6 +209,7 @@ export class ImportModelComponent implements OnInit {
 
   setDefaultValues() {
     this.firstFormGroup = this._formBuilder.group({
+      name: [''],
       framework: ['', Validators.required],
       modelLocation: ['', Validators.required],
       modelDomain: ['', Validators.required],
@@ -447,11 +458,18 @@ export class ImportModelComponent implements OnInit {
   }
 
   addModel() {
+    this.finishDisabled = true;
+    this.showBigSpinner = true;
     this.modelService.saveWorkload(this.getFullModel())
       .subscribe(
-        response => { },
+        response => {
+          this.router.navigate(['/details', this.id], { queryParamsHandling: "merge" });
+          this.modelService.configurationSaved.next(true);
+        },
         error => {
           this.openErrorDialog(error);
+          this.finishDisabled = false;
+          this.showBigSpinner = false;
         }
       );
   }
@@ -475,6 +493,7 @@ export class ImportModelComponent implements OnInit {
       }
     });
     model = {
+      project_name: this.getFileName(this.firstFormGroup.get('modelLocation').value),
       domain: this.firstFormGroup.get('modelDomain').value,
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
@@ -584,11 +603,16 @@ export class ImportModelComponent implements OnInit {
     });
   }
 
+  boundaryNodesVisible(): boolean {
+    return (this.boundaryNodes.inputs !== 'none' || this.boundaryNodes.outputs !== 'none') && this.firstFormGroup.get('modelLocation').value && !this.showSpinner;
+  }
+
   openDialog(fieldName: string, filter: FileBrowserFilter, paramFile?) {
     let form = 'firstFormGroup';
     if (filter === 'datasets') {
       form = 'secondFormGroup';
     }
+
     const dialogRef = this.dialog.open(FileBrowserComponent, {
       width: '60%',
       height: '60%',
@@ -622,6 +646,10 @@ export class ImportModelComponent implements OnInit {
     });
   }
 
+  getFileName(path: string): string {
+    return path.replace(/^.*[\\\/]/, '');
+  }
+
   objectKeys(obj: {}): string[] {
     return Object.keys(obj);
   }
@@ -639,6 +667,7 @@ export class ImportModelComponent implements OnInit {
 }
 
 export interface FullModel {
+  project_name: string;
   domain: string;
   framework: string;
   id: string;
