@@ -9,7 +9,7 @@ Currently, we've enabled below models.
  * fastrcnn_inception_resnet_v2
  * fastrcnn_resnet101
  * maskrcnn_inception_v2
-
+ * [yolo_v3](yolo_v3/README.md).
 ## Prerequisite
 
 
