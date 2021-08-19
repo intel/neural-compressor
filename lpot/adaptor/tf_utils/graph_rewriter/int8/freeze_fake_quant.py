@@ -110,14 +110,29 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
 
     def _remove_all_fake_quants(self):
         _const_node = []
+
         for node_name in list(self.graph_info.keys()):
             node = self.graph_info[node_name].node
             if node.op == 'FakeQuantWithMinMaxVars':
+                origin_outputs = list(self.graph_info[node_name].outputs)
                 min_node_name = self.graph_info[node.input[1]].node.name
                 max_node_name = self.graph_info[node.input[2]].node.name
                 _const_node.append(min_node_name)
                 _const_node.append(max_node_name)
+
                 self.graph_analyzer.remove_node_with_single_input_output(node_name)
+
+                for j in origin_outputs[1:]:
+                    output_node = self.graph_info[j].node
+                    if len(output_node.input) == 1 and \
+                        output_node.op == 'Const' and output_node.input[0] == '^' + node.name:
+                        self.graph_info[j].node.ClearField('input')
+                    elif output_node.op == 'NoOp' :
+                        new_noop_input = [
+                            noop_input for noop_input in output_node.input \
+                                if noop_input != '^' + node.name]
+                        output_node.ClearField('input')
+                        output_node.input.extend(new_noop_input)
 
         # remove those left const nodes used by FakeQuantWithMinMaxVars
         for node_name in list(self.graph_info.keys()):

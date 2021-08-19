@@ -45,6 +45,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
+        self.approach = deep_get(self.framework_specific_info, 'approach', False)
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
@@ -93,6 +94,9 @@ class TensorFlowAdaptor(Adaptor):
         summary = tf.compat.v1.Summary(value=[tf.compat.v1.Summary.Value(tag=tag, histo=hist)])
         writer.add_summary(summary, step)
         writer.flush()
+
+    def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
+        pass
 
     def evaluate(self, model, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1,
@@ -323,18 +327,27 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        if self.approach == "quant_aware_training":
+            assert q_func is not None, "quantization aware training mode \
+                is not configured correctly"
+
+            from lpot.experimental import common
+            qat_model = q_func(model)
+
+            return self.convert(common.Model(qat_model), 'QAT', 'default')
+
         assert q_func is None, "quantization aware training mode is not support on tensorflow"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
         converted_model = GraphConverter(model,
-                                   qt_config=self.quantize_config,
-                                   recipes=self.recipes,
-                                   int8_sequences=self.op_wise_sequences,
-                                   fp32_ops=self.fp32_ops,
-                                   bf16_ops=self.bf16_ops,
-                                   data_loader=data_loader).convert()
+                                qt_config=self.quantize_config,
+                                recipes=self.recipes,
+                                int8_sequences=self.op_wise_sequences,
+                                fp32_ops=self.fp32_ops,
+                                bf16_ops=self.bf16_ops,
+                                data_loader=data_loader).convert()
         #just save framework_specific_info feature for recover
         converted_model.q_config.update({'framework_specific_info': \
                                             self.framework_specific_info})
