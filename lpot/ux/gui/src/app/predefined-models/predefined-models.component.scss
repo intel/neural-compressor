@@ -45,6 +45,12 @@ button {
   margin: 3px;
 }
 
+@media all and (max-width:1500px) {
+  .model-btn {
+    font-size: 80%;
+  }
+}
+
 .domain-btn {
   width: 48%;
 }

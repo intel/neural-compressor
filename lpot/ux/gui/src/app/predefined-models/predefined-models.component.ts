@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ErrorComponent } from '../error/error.component';
@@ -53,7 +52,6 @@ export class PredefinedModelsComponent implements OnInit {
     private modelService: ModelService,
     private socketService: SocketService,
     public dialog: MatDialog,
-    private _formBuilder: FormBuilder,
     private router: Router
   ) { }
 
@@ -70,8 +68,10 @@ export class PredefinedModelsComponent implements OnInit {
       .subscribe(response => {
         if (response['status']) {
           if (response['status'] === 'success') {
-            this.router.navigate(['/details', this.model['id']], { queryParamsHandling: "merge" });
-            this.modelService.configurationSaved.next(true);
+            if (this.model.id) {
+              this.router.navigate(['/details', this.model['id']], { queryParamsHandling: "merge" });
+              this.modelService.configurationSaved.next(true);
+            }
           } else {
             this.openErrorDialog({
               error: response['data']['message'],

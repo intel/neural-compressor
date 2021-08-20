@@ -52,6 +52,7 @@ export class ImportModelComponent implements OnInit {
   transformations = [];
   transformationParams = [];
   tuningEnabled = true;
+  tuningDisabled = false;
   tunings = [];
   inputs = [];
   outputs = [];

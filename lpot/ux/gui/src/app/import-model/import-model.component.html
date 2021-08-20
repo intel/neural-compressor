@@ -112,9 +112,9 @@
             [value]="precision.name">{{ precision.name }}</mat-button-toggle>
         </mat-button-toggle-group>
         <h2>
-          <mat-checkbox [(ngModel)]="tuningEnabled" [ngModelOptions]="{standalone: true}"
-            [disabled]="firstFormGroup.get('precision').value === 'fp32'" (change)="onTuningEnabledChange()"
-            matTooltip="Enable/disable tuning" class="tuning-checkbox">
+          <mat-checkbox [(ngModel)]="firstFormGroup.get('precision').value !== 'fp32' ? tuningEnabled : tuningDisabled"
+            [ngModelOptions]="{standalone: true}" [disabled]="firstFormGroup.get('precision').value === 'fp32'"
+            (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning" class="tuning-checkbox">
             Run tuning
           </mat-checkbox>
         </h2>

@@ -8,7 +8,7 @@
           src="./../../assets/010a-passed-completed-solid.svg">
         <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
           src="./../../assets/009a-close-solid.svg">
-        <img *ngIf="model['status'] === null" src="./../../assets/005a-help-solid-gray.svg">
+        <img *ngIf="model['status'] === null || model['status'] === ''" src="./../../assets/005a-help-solid-gray.svg">
         <span class="name" [matTooltip]="getFileName(model['model_path'])">{{ getFileName(model['model_path']) |
           longName }}</span>
         <br>

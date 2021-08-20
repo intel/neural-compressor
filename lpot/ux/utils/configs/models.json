@@ -235,7 +235,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__inception_v3_slim": null,
@@ -271,7 +272,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__inception_v4_slim": null,
@@ -307,7 +309,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__resnet_v1_50_slim": null,
@@ -377,7 +380,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "resnet50v1.0": {
@@ -412,7 +416,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__resnetv2_50_slim": null,
@@ -536,7 +541,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__faster_rcnn_resnet101": null,
@@ -558,7 +564,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__mask_rcnn_inception_v2": null,
@@ -580,7 +587,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__ssd_mobilenet_v1": null,
@@ -602,7 +610,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             },
             "__help__ssd_resnet50_v1": null,
@@ -624,7 +633,8 @@
                 "framework_version": [
                     "2.0",
                     "2.3",
-                    "2.4"
+                    "2.4",
+                    "2.5"
                 ]
             }
         },

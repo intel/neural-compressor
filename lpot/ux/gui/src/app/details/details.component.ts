@@ -276,7 +276,6 @@ export class DetailsComponent implements OnInit, OnChanges {
       this.model['acc_input_model'] = result['data']['acc_input_model'];
       this.model['acc_optimized_model'] = result['data']['acc_optimized_model'];
       this.model['optimization_time'] = result['data']['optimization_time'];
-      this.model['size_input_model'] = result['data']['size_input_model'];
       this.model['size_optimized_model'] = result['data']['size_optimized_model'];
       this.model['model_output_path'] = result['data']['model_output_path'];
       this.model['input_precision'] = result['data']['execution_details']['optimization']['input_precision'];
@@ -302,7 +301,7 @@ export class DetailsComponent implements OnInit, OnChanges {
   }
 
   clearModel() {
-    ["acc_input_model", "acc_optimized_model", "optimization_time", "perf_throughput_input_model", "perf_throughput_optimized_model", "status", "execution_details", "size_input_model", "size_optimized_model"].forEach(property => {
+    ["acc_input_model", "acc_optimized_model", "optimization_time", "perf_throughput_input_model", "perf_throughput_optimized_model", "status", "execution_details", "size_optimized_model"].forEach(property => {
       this.model[property] = null;
     });
   }
