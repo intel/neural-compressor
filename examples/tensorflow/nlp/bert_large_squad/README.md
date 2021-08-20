@@ -72,6 +72,8 @@ bash prepare_model.sh --output_dir=./model
   python freeze_estimator_to_pb.py --input_model=./model --output_model=./bert_fp32.pb
   ```
 ## Run Command
+  <b><font color='red'>Please make sure below command should be executed with the same Tensorflow runtime version as above step.</font></b>
+
   ```shell
   python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --tune
   ```
