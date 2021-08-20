@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0
+
 model:                                               # mandatory. used to specify model specific information.
   name: mobilebert 
   framework: onnxrt_integerops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
@@ -24,16 +26,6 @@ evaluation:                                          # optional. required if use
     configs:
       cores_per_instance: 4
       num_of_instance: 7
-    dataloader:
-      batch_size: 1
-      dataset:
-        ImageFolder:
-          root: /path/to/evaluation/datsset          # NOTE: modify to evaluation dataset location if needed
-      transform:
-        ResizeCropImagenet:
-          height: 224
-          width: 224
-          mean_value: [0.485, 0.456, 0.406]
 
 quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant.                                  
