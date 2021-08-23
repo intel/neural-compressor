@@ -5,4 +5,5 @@ torchvision==0.10.0+cpu
 torchaudio==0.9.0 
 matplotlib
 pycocotools
+absl-py
 lpot
