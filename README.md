@@ -37,7 +37,7 @@ Supported Intel-optimized DL frameworks are:
 
 >  **Note**: Intel Optimized TensorFlow 2.5.0 requires to set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 before running LPOT quantization or deploying the quantized model.
 
->  **Note**: From Official TensorFlow 2.6.0, oneDNN support has been upstreamed. User just need download official TensorFlow binary for CPU device and set environment variable TF_ENABLE_ONEDNN_OPTS=1 before running LPOT quantization or deploying the quantized model.
+>  **Note**: From the official TensorFlow 2.6.0, oneDNN support has been upstreamed. Download the official TensorFlow 2.6.0 binary for the CPU device and set the environment variable TF_ENABLE_ONEDNN_OPTS=1 before running the LPOT quantization or deploying the quantized model.
 
 * [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.6.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
