@@ -26,6 +26,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from lpot.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.proc import Proc
+from lpot.version import __version__ as lpot_version
 
 dataset_locations = {
     "tensorflow": {
@@ -421,3 +422,16 @@ def parse_bool_value(value: Any) -> bool:
                 f"True ({true_options}), False ({false_options})",
             )
     return bool(value)
+
+
+def release_tag() -> str:
+    """Build tag based on release version."""
+    version_pattern = r"^(?P<release>[0-9]+(\.[0-9]+)*).*?$"
+    version_regex = re.compile(version_pattern)
+    matches = version_regex.search(lpot_version)
+
+    if matches is None:
+        raise ValueError(f"Unable to parse version {lpot_version}")
+
+    release_version = matches.groupdict().get("release")
+    return f"v{release_version}"

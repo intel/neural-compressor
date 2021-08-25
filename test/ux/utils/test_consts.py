@@ -27,7 +27,7 @@ class TestConsts(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
     def test_github_info(self) -> None:
-        """Test if path is correctly recognized as hidden."""
+        """Test if github_info is built as expected."""
         self.assertIs(type(github_info), dict)
         self.assertEqual(github_info.get("user"), "intel")
         self.assertEqual(github_info.get("repository"), "lpot")

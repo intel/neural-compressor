@@ -33,6 +33,7 @@ from lpot.ux.utils.utils import (
     load_help_lpot_params,
     load_model_config,
     load_transforms_config,
+    release_tag,
     verify_file_path,
 )
 
@@ -300,6 +301,28 @@ class TestUtils(unittest.TestCase):
             del os.environ["LPOT_MODE"]
         is_develop = is_development_env()
         self.assertFalse(is_develop)
+
+    @patch("lpot.ux.utils.utils.lpot_version", "3.14.15")
+    def test_release_tag(self) -> None:
+        """Test release tag building."""
+        self.assertEqual("v3.14.15", release_tag())
+
+    @patch("lpot.ux.utils.utils.lpot_version", "42.12dev20200102.foo")
+    def test_release_tag_for_dev_version(self) -> None:
+        """Test release tag building."""
+        self.assertEqual("v42.12", release_tag())
+
+    @patch("lpot.ux.utils.utils.lpot_version", "")
+    def test_release_tag_for_empty(self) -> None:
+        """Test release tag building."""
+        with self.assertRaisesRegexp(ValueError, "Unable to parse version "):
+            release_tag()
+
+    @patch("lpot.ux.utils.utils.lpot_version", "foo.bar.baz")
+    def test_release_tag_for_invalid_version(self) -> None:
+        """Test release tag building."""
+        with self.assertRaisesRegexp(ValueError, "Unable to parse version foo.bar.ba"):
+            release_tag()
 
 
 if __name__ == "__main__":
