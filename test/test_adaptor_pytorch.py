@@ -7,7 +7,7 @@ import unittest
 import os
 from lpot.adaptor import FRAMEWORKS
 from lpot.model import MODELS
-from lpot.adaptor.pytorch import PT18_VERSION
+from lpot.adaptor.pytorch import PT18_VERSION, PT19_VERSION
 import lpot.adaptor.pytorch as lpot_torch
 from lpot.experimental import Quantization, common
 from lpot.utils.pytorch import load
@@ -66,6 +66,56 @@ fake_ptq_yaml = '''
     model:
       name: imagenet
       framework: pytorch
+
+    quantization:
+      op_wise: {
+              'quant': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer1.0.conv1': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer1.0.conv2': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+              'layer2.0.conv1': {
+                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              },
+              'layer3.0.conv1': {
+                'activation': {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
+                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              },
+              'layer1.0.add_relu': {
+                'activation': {'dtype': ['fp32']},
+                'weight': {'dtype': ['fp32']}
+              },
+      }
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+      performance:
+        warmup: 5
+        iteration: 10
+
+    tuning:
+      accuracy_criterion:
+        relative:  0.01
+      exit_policy:
+        timeout: 0
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+fake_ptq_yaml_for_fx = '''
+    model:
+      name: imagenet
+      framework: pytorch_fx
 
     quantization:
       op_wise: {
@@ -187,7 +237,10 @@ def build_pytorch_yaml():
 
 
 def build_pytorch_fx_yaml():
-    fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
+    if PT_VERSION >= PT19_VERSION:
+      fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
+    else:
+      fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_ptq_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_fx_ptq_yaml)
 
@@ -608,6 +661,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                 'convert_custom_config_dict': {'a': 1}})
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
+    @unittest.skipIf(PT_VERSION < PT19_VERSION,
+      "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
     def test_fx_dynamic_quant(self):
         # Model Definition
         class LSTMModel(nn.Module):

@@ -17,7 +17,7 @@
 
 import copy
 import os
-from collections import OrderedDict
+from collections import OrderedDict, UserDict
 from distutils.version import LooseVersion
 import yaml
 from functools import partial
@@ -220,10 +220,6 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     op_tuple_cfg_list = []
     for key, value in op_cfgs.items():
         if key == "default_qconfig":
-            if value is None:
-                assert get_torch_version() >= PT19_VERSION, \
-                            "Please use PyTroch 1.9 or higher version for " + \
-                            "default_qconfig to fallback to fp32！"
             fx_op_cfgs[""] = value
             continue
         op_tuple = (key, value)
@@ -787,7 +783,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         assert iterations > 0
         with torch.no_grad():
             for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     if self.device == "gpu":
                         for inp in input.keys():
                             input[inp] = input[inp].to("dpcpp") \
@@ -928,7 +924,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if measurer is not None:
                     measurer.start()
 
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     if self.device == "gpu":                    # pragma: no cover
                         for inp in input.keys():
                             input[inp] = input[inp].to("dpcpp") \
@@ -1450,7 +1446,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         if self.dump_times == 0:
             for (input, _) in self.q_dataloader:
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     if self.device == "gpu":
                         for inp in input.keys():
                             input[inp] = input[inp].to("dpcpp")
@@ -1748,7 +1744,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
         assert iterations > 0
         with torch.no_grad():
             for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     for inp in input.keys():
                         input[inp] = input[inp].to(ipex.DEVICE) \
                             if isinstance(input[inp], torch.Tensor) else input[inp]
@@ -1904,7 +1900,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                 if measurer is not None:
                     measurer.start()
 
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     for inp in input.keys():
                         input[inp] = input[inp].to(ipex.DEVICE) \
                             if isinstance(input[inp], torch.Tensor) else input[inp]
@@ -2058,7 +2054,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         assert iterations > 0
         with torch.no_grad():
             for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     output = q_model(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
                     output = q_model(*input)
@@ -2088,7 +2084,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch_fx"
         if self.default_qconfig is not None:
-            default_qconfig = self.default_qconfig
+            default_qconfig = copy.deepcopy(self.default_qconfig)
             default_qconfig['activation']['dtype'] = \
                 self.default_qconfig['activation']['dtype'][0]
             default_qconfig['weight']['dtype'] = self.default_qconfig['weight']['dtype'][0]
@@ -2176,7 +2172,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 if measurer is not None:
                     measurer.start()
 
-                if isinstance(input, dict):
+                if isinstance(input, dict) or isinstance(input, UserDict):
                     output = model_(**input)
                 elif isinstance(input, list) or isinstance(input, tuple):
                     output = model_(*input)
