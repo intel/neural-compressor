@@ -156,10 +156,10 @@ class TestTensorflowQAT(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-        shutil.rmtree('baseline_model')
-        shutil.rmtree('trained_qat_model')
+        shutil.rmtree('baseline_model',ignore_errors=True)
+        shutil.rmtree('trained_qat_model',ignore_errors=True)
         os.remove('fake_yaml_train.yaml')
-
+    @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_qat_with_external_q_func(self):
         from lpot.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')

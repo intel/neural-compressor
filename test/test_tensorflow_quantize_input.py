@@ -40,6 +40,7 @@ class TestQuantizeInput(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     @disable_random()
+    @unittest.skipIf(tf.version.VERSION < '2.1.0', "Quantize input needs tensorflow 2.1.0 and newer, so test_quantize_input is skipped")
     def test_quantize_input(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])

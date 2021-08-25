@@ -104,8 +104,16 @@ class TestSetTensor(unittest.TestCase):
         conv_bias1 = tf.compat.v1.get_variable("bias1", [16], dtype=tf.float32)
 
         conv_bias1 = tf.math.add(conv1, conv_bias1)
-        relu6 = tf.nn.relu6(conv_bias1, name='op_to_store')
+        relu6 = tf.nn.relu6(conv_bias1, name='relu_1')
 
+        conv_weights2 = tf.compat.v1.get_variable("weight2", [3, 3, 16, 16],
+                                            initializer=tf.compat.v1.random_normal_initializer())
+        conv2 = tf.nn.conv2d(relu6, conv_weights2, strides=[1, 2, 2, 1], padding="VALID")
+
+        conv_bias2 = tf.compat.v1.get_variable("bias2", [16], dtype=tf.float32)
+
+        conv_bias2 = tf.math.add(conv2, conv_bias2)
+        relu6 = tf.nn.relu6(conv_bias2, name='op_to_store')
         out_name = relu6.name.split(':')[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
@@ -126,11 +134,10 @@ class TestSetTensor(unittest.TestCase):
                     'approach': 'post_training_static_quant'}
             adaptor = TensorFlowAdaptor(framework_specific_info)
             adaptor.set_tensor(q_model, {'bias1': np.random.randint(6,size=2, dtype='int32')})
-
             from tensorflow.core.framework import attr_value_pb2
             from tensorflow.python.framework import dtypes
             for node in q_model.graph_def.node:
-                if node.name == 'bias1':
+                if node.name == 'bias2':
                     self.assertEqual(node.attr['dtype'], attr_value_pb2.AttrValue(
                     type=dtypes.qint32.as_datatype_enum))
 

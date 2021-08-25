@@ -36,9 +36,6 @@ def build_fake_graphdef():
     refswitch_name = 'refswitch'
     refswitch_node = Helper.create_node("RefSwitch", refswitch_name,
                                                     [constant_1_name ,equal_name])
-
-    Helper.set_attr_float(refswitch_node, 'output_true', 22)
-    Helper.set_attr_float(refswitch_node, 'output_false', 11)
     Helper.set_attr_dtype(refswitch_node, 'T', dtypes.float32)
 
     variable_name = 'variable'
