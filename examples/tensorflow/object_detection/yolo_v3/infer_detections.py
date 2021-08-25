@@ -129,8 +129,10 @@ def run_benchmark():
             with open("timeline_%s.json" % (time.time()), 'w') as f:
                 f.write(chrome_trace)
 
-    print("Average Thoughput: %f samples/sec" %
-          (total_iter * FLAGS.batch_size / total_time))
+    throughput = total_iter * FLAGS.batch_size / total_time
+    print("Batch size = {}".format(FLAGS.batch_size))
+    print("Latency: {} ms".format(1 / throughput * 1000))
+    print("Throughput: {} samples/sec".format(throughput))
 
 
 def main(_):
