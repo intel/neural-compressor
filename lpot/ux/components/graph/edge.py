@@ -14,9 +14,8 @@
 # limitations under the License.
 """Edge class."""
 
+from lpot.ux.components.graph.node import Node
 from lpot.ux.utils.json_serializer import JsonSerializer
-
-from .node import Node
 
 
 class Edge(JsonSerializer):

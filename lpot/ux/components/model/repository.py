@@ -16,14 +16,13 @@
 
 from typing import List, Optional, Type
 
+from lpot.ux.components.model.model import Model
+from lpot.ux.components.model.onnxrt.model import OnnxrtModel
+from lpot.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
+from lpot.ux.components.model.tensorflow.keras import KerasModel
+from lpot.ux.components.model.tensorflow.meta_graph import MetaGraphModel
+from lpot.ux.components.model.tensorflow.saved_model import SavedModelModel
 from lpot.ux.utils.exceptions import NotFoundException
-
-from .model import Model
-from .onnxrt.model import OnnxrtModel
-from .tensorflow.frozen_pb import FrozenPbModel
-from .tensorflow.keras import KerasModel
-from .tensorflow.meta_graph import MetaGraphModel
-from .tensorflow.saved_model import SavedModelModel
 
 
 class ModelRepository:

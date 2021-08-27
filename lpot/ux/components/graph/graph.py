@@ -16,12 +16,11 @@
 
 from typing import Any, Dict, List
 
+from lpot.ux.components.graph.edge import Edge
+from lpot.ux.components.graph.node import Node
 from lpot.ux.utils.exceptions import NotFoundException
 from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.logger import log
-
-from .edge import Edge
-from .node import Node
 
 
 class Graph(JsonSerializer):

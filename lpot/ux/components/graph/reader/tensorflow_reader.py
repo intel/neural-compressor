@@ -20,12 +20,11 @@ from tensorflow.core.framework.attr_value_pb2 import AttrValue
 from tensorflow.core.framework.node_def_pb2 import NodeDef
 from tensorflow.python.framework.dtypes import _TYPE_TO_STRING
 
+from lpot.ux.components.graph.attribute import Attribute
+from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.graph.node import Node
+from lpot.ux.components.model.model import Model
 from lpot.ux.utils.exceptions import NotFoundException
-
-from ...model.model import Model
-from ..attribute import Attribute
-from ..graph import Graph
-from ..node import Node
 
 
 class TensorflowReader:
@@ -40,7 +39,7 @@ class TensorflowReader:
         """Read a graph."""
         self._hidden_node_ids = {}
 
-        from ...model.tensorflow.model import TensorflowModel
+        from lpot.ux.components.model.tensorflow.model import TensorflowModel
 
         if not isinstance(self.model, TensorflowModel):
             raise NotFoundException(f"{self.model.path} is not Tensorflow model.")

@@ -16,9 +16,8 @@
 
 from typing import Any, Dict, List
 
+from lpot.ux.components.graph.attribute import Attribute
 from lpot.ux.utils.json_serializer import JsonSerializer
-
-from .attribute import Attribute
 
 
 class Node(JsonSerializer):

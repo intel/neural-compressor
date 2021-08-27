@@ -19,12 +19,11 @@ from typing import Any, List, Optional
 from lpot.experimental.common.model import Model as LpotModel
 from lpot.model.model import TensorflowBaseModel
 from lpot.utils.logger import Logger
+from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.graph.reader.tensorflow_reader import TensorflowReader
+from lpot.ux.components.model.model import Model
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import check_module
-
-from ...graph.graph import Graph
-from ...graph.reader.tensorflow import TensorflowReader
-from ..model import Model
 
 
 class TensorflowModel(Model):

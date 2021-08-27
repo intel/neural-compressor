@@ -96,15 +96,7 @@ def get_distribution() -> str:
     :return: distribution name
     :rtype: str
     """
-    if psutil.WINDOWS:
-        return f"{platform.system()} {platform.release()}"
-    elif psutil.LINUX:
-        try:
-            return " ".join(platform.dist())
-        except AttributeError:
-            return f"{platform.system()} {platform.release()}"
-    else:
-        return platform.platform()
+    return f"{platform.system()} {platform.release()}"
 
 
 def get_bios_version() -> str:

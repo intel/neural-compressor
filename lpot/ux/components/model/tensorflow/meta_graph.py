@@ -16,9 +16,9 @@
 
 from typing import Any, List, Optional
 
-from ...graph.graph import Graph
-from ..model_type_getter import get_model_type
-from .model import TensorflowModel as TFModel
+from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.model.model_type_getter import get_model_type
+from lpot.ux.components.model.tensorflow.model import TensorflowModel as TFModel
 
 
 class MetaGraphModel(TFModel):

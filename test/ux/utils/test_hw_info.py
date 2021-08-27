@@ -94,36 +94,32 @@ class TestHWInfo(unittest.TestCase):
         hw_info = HWInfo()
         self.assertEqual(hw_info.system, "Windows 10")
 
-    @patch("platform.dist", create=True)
+    @patch("platform.release")
+    @patch("platform.system")
     @patch("psutil.LINUX", True)
     @patch("psutil.WINDOWS", False)
     def test_get_linux_distribution(
         self,
-        mock_platform_dist: MagicMock,
-    ) -> None:
-        """Test getting linux system distribution."""
-        mock_platform_dist.return_value = (
-            "DistroName",
-            "DistroVerID",
-            "DistroVerCodename",
-        )
-
-        hw_info = HWInfo()
-        self.assertEqual(hw_info.system, "DistroName DistroVerID DistroVerCodename")
-
-    @patch("platform.release")
-    @patch("platform.system")
-    @patch("platform.dist", create=True)
-    @patch("psutil.LINUX", True)
-    @patch("psutil.WINDOWS", False)
-    def test_get_linux_distribution_without_dist(
-        self,
-        mock_platform_dist: MagicMock,
         mock_platform_system: MagicMock,
         mock_platform_release: MagicMock,
     ) -> None:
         """Test getting linux system distribution."""
-        mock_platform_dist.configure_mock(side_effect=AttributeError)
+        mock_platform_system.return_value = "DistroName"
+        mock_platform_release.return_value = "DistroVerID"
+
+        hw_info = HWInfo()
+        self.assertEqual(hw_info.system, "DistroName DistroVerID")
+
+    @patch("platform.release")
+    @patch("platform.system")
+    @patch("psutil.LINUX", True)
+    @patch("psutil.WINDOWS", False)
+    def test_get_linux_distribution_without_dist(
+        self,
+        mock_platform_system: MagicMock,
+        mock_platform_release: MagicMock,
+    ) -> None:
+        """Test getting linux system distribution."""
         mock_platform_system.return_value = "Linux"
         mock_platform_release.return_value = "kernel_ver-88-generic"
 
@@ -131,20 +127,23 @@ class TestHWInfo(unittest.TestCase):
         self.assertEqual(hw_info.system, "Linux kernel_ver-88-generic")
 
     @patch("lpot.ux.utils.hw_info.get_number_of_sockets")
-    @patch("platform.platform")
+    @patch("platform.release")
+    @patch("platform.system")
     @patch("psutil.LINUX", False)
     @patch("psutil.WINDOWS", False)
     def test_get_unknown_os_distribution(
         self,
-        mock_platform_platform: MagicMock,
+        mock_platform_system: MagicMock,
+        mock_platform_release: MagicMock,
         mock_get_number_of_sockets: MagicMock,
     ) -> None:
         """Test getting unknown system distribution."""
-        mock_platform_platform.return_value = "SystemName-Version-Arch"
+        mock_platform_system.return_value = "Unknown system"
+        mock_platform_release.return_value = "1234"
         mock_get_number_of_sockets.return_value = 2
 
         hw_info = HWInfo()
-        self.assertEqual(hw_info.system, "SystemName-Version-Arch")
+        self.assertEqual(hw_info.system, "Unknown system 1234")
 
 
 if __name__ == "__main__":

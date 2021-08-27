@@ -16,8 +16,8 @@
 
 from typing import Dict, List, Set
 
-from .graph import Graph
-from .node import GroupNode, Node
+from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.graph.node import GroupNode, Node
 
 
 class Collapser:

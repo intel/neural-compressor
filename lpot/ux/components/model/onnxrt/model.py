@@ -14,9 +14,8 @@
 # limitations under the License.
 """Onnxrt model class."""
 
+from lpot.ux.components.model.model import Model
 from lpot.ux.utils.utils import check_module, get_file_extension
-
-from ..model import Model
 
 
 class OnnxrtModel(Model):

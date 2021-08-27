@@ -14,8 +14,8 @@
 # limitations under the License.
 """Tensorflow saved_model model."""
 
-from ..model_type_getter import get_model_type
-from .model import TensorflowModel as TFModel
+from lpot.ux.components.model.model_type_getter import get_model_type
+from lpot.ux.components.model.tensorflow.model import TensorflowModel as TFModel
 
 
 class SavedModelModel(TFModel):

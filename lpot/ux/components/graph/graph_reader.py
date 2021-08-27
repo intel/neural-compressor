@@ -17,9 +17,9 @@
 
 from typing import List
 
-from ..model.repository import ModelRepository
-from .collapser import Collapser
-from .graph import Graph
+from lpot.ux.components.graph.collapser import Collapser
+from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.model.repository import ModelRepository
 
 
 class GraphReader:

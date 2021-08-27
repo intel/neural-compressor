@@ -24,15 +24,13 @@ from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import load_precisions_config
 from lpot.ux.utils.workload.dataloader import Transform
-from lpot.ux.utils.workload.evaluation import Evaluation
+from lpot.ux.utils.workload.evaluation import Configs, Evaluation
 from lpot.ux.utils.workload.graph_optimization import GraphOptimization
 from lpot.ux.utils.workload.model import Model
 from lpot.ux.utils.workload.pruning import Pruning
 from lpot.ux.utils.workload.quantization import Quantization
 from lpot.ux.utils.workload.tuning import Tuning
 from lpot.ux.utils.yaml_utils import float_representer
-
-from .evaluation import Configs
 
 
 class Config(JsonSerializer):
