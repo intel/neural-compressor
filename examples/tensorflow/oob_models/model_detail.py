@@ -1,7 +1,34 @@
 from utils import *
+import numpy as np
 
 BATCH_SIZE = 1
-PATH_TO_MODEL = "./"
+
+input_1 = np.array([[[ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1],
+        [10, 10],
+        [ 0,  1],
+        [ 1,  1]]])
 
 models = [
 
@@ -40,13 +67,6 @@ models = [
         'output': ['CPM/PoseNet/Mconv7_stage6/Conv2D']
     },
 
-    # deepspeech
-    {
-        'model_name': 'deepspeech',
-        'input': {'input_node': generate_data([16, 19, 26]), 'previous_state_h/read': generate_data([2048]), 'previous_state_c/read': generate_data([2048])},
-        'output': ['raw_logits','lstm_fused_cell/GatherNd','lstm_fused_cell/GatherNd_1']
-    },
-
     # deepvariant_wgs
     {
         'model_name': 'deepvariant_wgs',
@@ -71,7 +91,7 @@ models = [
     # facenet-20180408-102900
     {
         'model_name': 'facenet-20180408-102900',
-        'input': {'batch_size': generate_data([300, 300, 3]), 'phase_train': False},
+        'input': {'image_batch': generate_data([160, 160, 3]), 'phase_train': False},
         'output': ['embeddings']
     },
 
@@ -81,6 +101,13 @@ models = [
         'input': {'image': generate_data([800, 1280, 3])},
         'output': ['openvino_outputs/cls_score','openvino_outputs/bbox_pred']
     },
+
+    # GNMT
+    # {
+    #     'model_name': 'GNMT',
+    #     'input': {'IteratorGetNext:1{i32}[1],IteratorGetNext:0{i32}[1 50],dynamic_seq2seq/hash_table_Lookup_1:0[1]->[2],dynamic_seq2seq/hash_table_Lookup:0[1]->[1]': generate_data([688, 688, 3])},
+    #     'output': ['dynamic_seq2seq/decoder/decoder/GatherTree']
+    # },
 
     # handwritten-score-recognition-0003
     {
@@ -96,9 +123,16 @@ models = [
         'output': ['d_predictions']
     },
 
+    # lm_1b
+    # {
+    #     'model_name': 'lm_1b',
+    #     'input': {'char_embedding/EmbeddingLookupUnique/Unique:0,char_embedding/EmbeddingLookupUnique/Unique:1,Variable/read,Variable_1/read': generate_data([1],[50],[1,9216],[1,9216])},
+    #     'output': ['softmax_out','lstm/lstm_0/concat_2','lstm/lstm_1/concat_2']
+    # },
+
     # ncf
     {
-        'model_name': 'ncf',
+        'model_name': 'NCF',
         'input': {'0': False, '1': False},
         'output': ['add_2']
     },
@@ -160,13 +194,13 @@ models = [
 
     {
         'model_name': 'efficientnet-b5',
-        'input': {'sub': generate_data([456, 456, 3])},
+        'input': {'sub': generate_data([224, 224, 3])},
         'output': ['logits']
     },
 
     {
         'model_name': 'efficientnet-b7_auto_aug',
-        'input': {'sub': generate_data([600, 600, 3])},
+        'input': {'sub': generate_data([224, 224, 3])},
         'output': ['logits']
     },
 
@@ -184,16 +218,11 @@ models = [
         'output': ['map_1/while/output_module_vars/prediction']
     },
 
-    # Resnetv2_200
+    # resnet_v2_200
     {
-        'model_name': 'Resnetv2_200',
+        'model_name': 'resnet_v2_200',
         'input': {'fifo_queue_Dequeue': generate_data([224, 224, 3])},
         'output': ['resnet_v2_200/SpatialSqueeze']
-    },
-    {
-        'model_name': 'resnet50',
-        'input': {'map/TensorArrayStack/TensorArrayGatherV3': generate_data([224, 224, 3])},
-        'output': ['softmax_tensor']
     },
     # TextCNN
     {
@@ -213,52 +242,103 @@ models = [
         'input': {'input_x': generate_data([100,], input_dtype="int32"), 'input_y': generate_data([1,], input_dtype="int32"), 'dropout_keep_prob': generate_data([300])},
         'output': ['Accuracy']
     },
-    # efficientnet-b0
+    # CapsuleNet
     {
-        'model_name': 'efficientnet-b0',
-        'input': {'sub': generate_data([224, 224, 3])},
-        'output': ['logits']
+        'model_name': 'CapsuleNet',
+        'input': {'shuffle_batch': generate_data([28, 28, 1]),'one_hot': generate_data([10])},
+        'output': ['Decoder/fully_connected_2/Sigmoid']
     },
-    # efficientnet-b0
+    # CharCNN
     {
-        'model_name': 'efficientdet-b0',
-        'input': {'input': generate_data([512, 512, 3])},
-        'output': ['class_net/class-predict/BiasAdd', 'class_net/class-predict_1/BiasAdd', 'class_net/class-predict_2/BiasAdd', 'class_net/class-predict_3/BiasAdd', 'class_net/class-predict_4/BiasAdd', 'box_net/box-predict/BiasAdd', 'box_net/box-predict_1/BiasAdd', 'box_net/box-predict_2/BiasAdd', 'box_net/box-predict_3/BiasAdd', 'box_net/box-predict_4/BiasAdd']
+        'model_name': 'CharCNN',
+        'input': {'Model/input': generate_data([35, 21],input_dtype="int32")},
+        'output': ['Model/LSTM/WordEmbedding/add']
     },
-    # vggvox
+    # CenterNet
     {
-        'model_name': 'vggvox',
-        'input': {'sub': generate_data([512, 1000, 1])},
-        'output': ['fc8/BiasAdd']
+        'model_name': 'CenterNet',
+        'input': {'IteratorGetNext': generate_data([224, 224,3]), "is_training":False},
+        'output': ['detector/hm/Sigmoid']
     },
-    # icnet-camvid-ava-0001
+    # VNet
     {
-        'model_name': 'icnet-camvid-ava-0001',
-        'input': {'data': generate_data([720, 960, 3],batch_size=16)},
-        'output': ['segmentation_output']
+        'model_name': 'VNet',
+        'input': {'input': generate_data([190,190,20,6])},
+        'output': ['vnet/output_layer/add']
     },
-    # icnet-camvid-ava-sparse-30-0001
+    # DIEN
     {
-        'model_name': 'icnet-camvid-ava-sparse-30-0001',
-        'input': {'data': generate_data([720, 960, 3],batch_size=16)},
-        'output': ['segmentation_output']
+        'model_name': 'DIEN_Deep-Interest-Evolution-Network',
+        'input': {'Inputs/mid_his_batch_ph': generate_data([300],input_dtype="int32"),'Inputs/cat_his_batch_ph': generate_data([300],input_dtype="int32"),
+        "Inputs/uid_batch_ph":np.array([1],dtype=np.int32),"Inputs/cat_batch_ph":np.array([1],dtype=np.int32),'Inputs/mask': generate_data([300]),
+        "Inputs/seq_len_ph":np.array([1],dtype=np.int32),"Inputs/mid_batch_ph":np.array([1],dtype=np.int32)},
+        'output': ['add_9']
     },
-    # icnet-camvid-ava-sparse-60-0001
+    # CRNN
     {
-        'model_name': 'icnet-camvid-ava-sparse-60-0001',
-        'input': {'data': generate_data([720, 960, 3],batch_size=16)},
-        'output': ['segmentation_output']
+        'model_name': 'CRNN',
+        'input': {'train_IteratorGetNext': generate_data([32, 100, 3])},
+        'output': ['shadow_net/sequence_rnn_module/transpose_time_major']
     },
-    # deeplabv3
+    # yolo-v3-tiny
     {
-        'model_name': 'deeplabv3',
-        'input': {'ImageTensor': generate_data([300, 300, 3],input_dtype='uint8')},
-        'output': ['SemanticPredictions']
+        'model_name': 'yolo-v3-tiny',
+        'input': {'image_input': generate_data([416, 416, 3])},
+        'output':['conv2d_9/BiasAdd', 'conv2d_12/BiasAdd']
     },
-    # ssd_resnet34_300x300
+    # wide_deep
     {
-        'model_name': 'ssd-resnet34_300x300',
-        'input': {'input': generate_data([300, 300, 3])},
-        'output': ['v/stack',"v/Softmax"]
+        'model_name': 'wide_deep',
+        'input': {'new_categorical_placeholder': input_1, 'new_numeric_placeholder':generate_data([13])},
+        'output':['import/head/predictions/probabilities']
     },
+    # show and talk
+    {
+        'model_name': 'show_and_tell',
+        'input': {'batch_and_pad' :generate_data([299,299,3])},
+        'output':['lstm/basic_lstm_cell/Sigmoid_2']
+    },
+    # deepspeech
+    {
+        'model_name': 'deepspeech',
+        'input': {'input_node': generate_data([16, 19, 26]), 'previous_state_h/read': generate_data([2048]), 'previous_state_c/read': generate_data([2048]),"input_lengths":np.array([16],dtype=np.int32)},
+        'output': ['raw_logits','lstm_fused_cell/GatherNd','lstm_fused_cell/GatherNd_1']
+    },
+    # AttRec
+    {
+        'model_name': 'AttRec',
+        'input': {'keep_prob': np.array([.5]), 'Placeholder': generate_data([5], input_dtype="int32"), 'Placeholder_1': np.array([3], dtype=np.int32),"Placeholder_3": np.array([1],dtype=np.int32)},
+        'output': ['TopKV2']
+    },
+    # MiniGo
+    {
+        'model_name': 'MiniGo',
+        'input': {'pos_tensor': np.random.choice(a=[False, True], size=(1, 13, 19, 19), p=[0.5, 1-0.5]) },
+        'output': ['policy_output', 'value_output']
+    },
+    # MANN
+    {
+        'model_name': 'MANN',
+        'input': {'nn_Y': generate_data([363,]),
+                  'nn_X': generate_data([480,] ),
+                  'nn_keep_prob': np.array([.7], dtype='float32')},
+        'output': ['Mean']
+    },
+    # context_rcnn_resnet101_snapshot_serenget
+    {
+        'model_name': 'context_rcnn_resnet101_snapshot_serenget',
+        'input': {'image_tensor': generate_data([300, 300, 3], input_dtype="uint8"),
+                  'context_features': generate_data([ 2000, 2057] ),
+                  'valid_context_size': np.array([1], dtype='int32')},
+        'output': ['detection_boxes', 'detection_scores', 'detection_multiclass_scores', 'num_detections',]
+    },
+    # NeuMF
+    {
+        'model_name': 'NeuMF',
+        'input': {'input/user_onehot':np.array([[0] * 6040] * 10, dtype='float32'),
+                  'input/item_onehot':np.array([[0] * 3706] * 10, dtype='float32')
+                  },
+        'output': ['evaluation/TopKV2',]
+    }
 ]
+

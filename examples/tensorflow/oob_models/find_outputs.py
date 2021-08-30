@@ -132,7 +132,8 @@ def _load_meta(model_network_path):
         return graph
 
 def get_input_output(graph_path, input_meta=False):
-    fix_dynamic_shape = 600
+    # give a fix shape if not get input shape 
+    fix_dynamic_shape = 300
 
     if input_meta:
         # meta file

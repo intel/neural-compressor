@@ -9,6 +9,8 @@ import numpy as np
 
 from tensorflow.python.client import timeline
 from tensorflow.python.tools import optimize_for_inference_lib
+from tensorflow.core.protobuf import rewriter_config_pb2
+
 from find_outputs import get_input_output
 from utils import *
 
@@ -17,21 +19,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("OOB-Benchmark")
 
-
-if "RUN_PROFILING" in os.environ and int(os.environ["RUN_PROFILING"]) == 1:
-    RUN_PROFILING = True
-else:
-    RUN_PROFILING = False
-
-if "BS" in os.environ:
-    BATCH_SIZE = int(os.environ["BS"])
-else:
-    BATCH_SIZE = 1
-
-if "OMP_NUM_THREADS" in os.environ:
-    NUM_THREADS = int(os.environ["OMP_NUM_THREADS"])
-else:
-    NUM_THREADS = 28
 
 def metrics_generator(array, tolerance):
     max_diff = np.max(array)
@@ -43,22 +30,21 @@ def metrics_generator(array, tolerance):
 def initialize_graph(model_details, disable_optimize_for_inference):
     graph = tf_v1.Graph()
     with graph.as_default():
+        input_variables = {
+            in_name + ":0": tf_v1.Variable(val)
+            for in_name, val in model_details['input'].items()}
 
         od_graph_def = tf_v1.GraphDef()
-        with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_path']), 'rb') as fid:
+        with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_dir']), 'rb') as fid:
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             od_graph_def = delete_assign(od_graph_def)
-
         # optimize for inference
         if not disable_optimize_for_inference:
             # optimize graph for inference
-            input_list = [in_name for in_name,
-                          val in model_details['input'].items()]
-            output_list = [
-                out_name for out_name in model_details['output']]
-            input_data_type = [tf_v1.convert_to_tensor(item).dtype.as_datatype_enum
-                               for item in model_details['input'].values()]
+            input_list = [ in_name for in_name,val in model_details['input'].items() ]
+            output_list = [ out_name for out_name in model_details['output'] ]
+            input_data_type = [ tf_v1.convert_to_tensor(item).dtype.as_datatype_enum for item in model_details['input'].values() ]
 
             od_graph_def = optimize_for_inference_lib.optimize_for_inference(
                 od_graph_def,  # inputGraph,
@@ -66,69 +52,82 @@ def initialize_graph(model_details, disable_optimize_for_inference):
                 output_list,  # an array of output nodes
                 input_data_type)
 
-        tf_v1.import_graph_def(od_graph_def, name='')
+        tf_v1.import_graph_def(od_graph_def, name='g',
+                            input_map=input_variables)
 
     return graph
 
+def create_tf_config(args):
+    if "OMP_NUM_THREADS" in os.environ:
+        OMP_NUM_THREADS = int(os.environ["OMP_NUM_THREADS"])
+    else:
+        OMP_NUM_THREADS = len(os.sched_getaffinity(0))
 
-def create_tf_config():
     config = tf_v1.ConfigProto()
     config.allow_soft_placement = True
-    config.intra_op_parallelism_threads = NUM_THREADS
+    config.intra_op_parallelism_threads = OMP_NUM_THREADS
     config.inter_op_parallelism_threads = 1
+    if args.precision == 'bfloat16':
+        config.graph_options.rewrite_options.auto_mixed_precision_mkl = rewriter_config_pb2.RewriterConfig.ON
     return config
 
-
-def run_benchmark(model_details, max_reps, num_warmup,
-                  disable_optimize_for_inference, batch_size,timeline_dir):
-    tf_config = create_tf_config()
-    graph = initialize_graph(model_details, disable_optimize_for_inference)
+def run_benchmark(model_details, args):
+    tf_config = create_tf_config(args)
+    graph = initialize_graph(model_details, args.disable_optimize)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
     run_metadata = tf_v1.RunMetadata()
 
+    if args.save_graph:
+        # write the real benchmark graph to local
+        model_dir = os.path.dirname(os.path.abspath(model_detail['model_dir']))
+        out_graph_file = os.path.join(model_dir, 'runtime_graph.pb')
+        write_graph(graph.as_graph_def(), out_graph_file)
+        print("********** save runtime graph at {}".format(out_graph_file))
+ 
     with tf_v1.Session(config=tf_config, graph=graph) as sess:
-        output_dict = {out_name: graph.get_tensor_by_name(out_name + ':0')
+        output_dict = {out_name: graph.get_tensor_by_name("g/" + out_name + ":0")
                        for out_name in model_details['output']}
 
-        input_dict = {
-            graph.get_tensor_by_name(in_name + ':0'): val
-            for in_name, val in model_details['input'].items()}
+        sess.run(tf_v1.global_variables_initializer())
 
         total_time = 0.0
         reps_done = 0
-        for rep in range(max_reps):
-            if rep < num_warmup:
-                _ = sess.run(output_dict, feed_dict=input_dict)
+        for rep in range(args.num_iter):
+            if rep < args.num_warmup:
+                _ = sess.run(output_dict)
                 continue
             start = time.time()
-            if RUN_PROFILING:
-                _ = sess.run(output_dict, feed_dict=input_dict, options=run_options,
-                             run_metadata=run_metadata)
+
+            if args.profile:
+                _ = sess.run(output_dict, options=run_options, run_metadata=run_metadata)
             else:
-                _ = sess.run(output_dict, feed_dict=input_dict)
+                _ = sess.run(output_dict)
 
             end = time.time()
             delta = end - start
             total_time += delta
             reps_done += 1
-            if RUN_PROFILING:
-                if rep==max_reps/2:
-                    trace = timeline.Timeline(step_stats=run_metadata.step_stats)
-                    timeline_name=model_detail['model_path'].split('/')[-1].split('.')[0]
-                    timeline_path=timeline_dir+'/'+timeline_name
-                    if not os.path.exists(timeline_path):
-                        os.makedirs(timeline_path)
-                    with open(timeline_path+ '/' + timeline_name + '_' + str(rep)
-                              + '_' + str(os.getpid())+ '.json', 'w') as trace_file:
-                        trace_file.write(
-                            trace.generate_chrome_trace_format(show_memory=False))
+            if rep % 10 == 0:
+                print("Iteration: {}, inference time: {:.6f} sec.".format(rep, delta))
+
+            # save profiling file
+            if args.profile and rep == args.num_iter - 1:
+                trace = timeline.Timeline(step_stats=run_metadata.step_stats)
+                # model_dir = os.path.dirname(os.path.abspath(model_detail['model_dir']))
+                model_dir = str(os.path.dirname(os.path.realpath(__file__))) + '/timeline'
+                if not os.path.exists(model_dir):
+                    os.makedirs(model_dir)
+                profiling_file = model_dir + '/timeline-' + str(rep + 1) + '-' + str(os.getpid()) + '.json'
+                with open(profiling_file, 'w') as trace_file:
+                    trace_file.write(
+                        trace.generate_chrome_trace_format(show_memory=False))
+
         avg_time = total_time / reps_done
         latency = avg_time * 1000
-        throughput = 1.0 / avg_time * batch_size
-
-        print('Batch size = %d' % batch_size)
-        print('Latency: %.3f ms' % (latency))
-        print('Throughput: %.3f images/sec' % throughput)
+        throughput = 1.0 / avg_time * args.batch_size
+        print('Batch size = %d' % args.batch_size)
+        print("Latency: {:.3f} ms".format(latency))
+        print("Throughput: {:.2f} fps".format(throughput))
 
 def _write_inputs_outputs_to_yaml(yaml_path, output_yaml_path, inputs, outputs):
     # deal with the inputs/outputs at yaml
@@ -165,6 +164,7 @@ def oob_collate_data_func(batch):
         return elem
     else:
         return batch
+
 class DataLoader(object):
     def __init__(self, inputs_tensor, total_samples, batch_size):
         """dataloader generator
@@ -189,67 +189,58 @@ class DataLoader(object):
                 data = list(self.inputs_tensor.values())
             yield data
 
-def eval_func(graph):
-    return 1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # group = parser.add_mutually_exclusive_group(required=True)
-    parser.add_argument("--model_path", help="path of model")
-    parser.add_argument("--model_name", help="name of model")
-    parser.add_argument("-n", "--num_iter", type=int, default=500,
-                        help="numbers of inference iteration, default is 500")
-    parser.add_argument("--num_warmup", type=int, default=10,
-                        help="numbers of warmup iteration, default is 10")
-    parser.add_argument("--disable_optimize", action='store_true',
-                        help="use this to disable optimize_for_inference")
-    parser.add_argument("--is_meta", action='store_true',
-                        help="input a meta file")
+    parser.add_argument("-m", "--model_name", help="name of model")
+    parser.add_argument("-pb", "--model_path", help="path of model")
+    parser.add_argument("-b", "--batch_size", type=int, default=1, help="batch size")
+    parser.add_argument("--precision", type=str, default='float32', help="float32, int8 or bfloat16")
+    parser.add_argument("-i", "-n", "--num_iter", type=int, default=500, help="numbers of inference iteration, default is 500")
+    parser.add_argument("-w", "--num_warmup", type=int, default=50, help="numbers of warmup iteration, default is 10")
+    parser.add_argument("--disable_optimize", action='store_true', help="use this to disable optimize_for_inference")
+    parser.add_argument("--profile", action='store_true', help="profile")
+    parser.add_argument("--is_meta", action='store_true', help="input a meta file")
+    parser.add_argument("--save_graph", action='store_true', help="save_graph")
+    parser.add_argument("--benchmark", action='store_true', help="Benchmark.")
+    # tuning
+    parser.add_argument("--yaml", type=str, help="config yaml file of lpot.", default='./config.yaml')
     parser.add_argument("--tune", action='store_true', help="Do lpot optimize.")
-    parser.add_argument("--benchmark", action='store_true', help="Do lpot optimize.")
-    parser.add_argument("--yaml", type=str, help="config yaml file of lpot.",
-                        default='./config.yaml')
-    parser.add_argument("--timeline", type=str, help="timeline of lpot convert model",
-                        default='./timeline_json')
-    parser.add_argument("--topology", type=str, help="topology")
-    parser.add_argument("--output_path", help="path of lpot convert model")
-
+    parser.add_argument("--output_path", help="path of lpot convert model", default='./lpot-tune.pb')
+    # args
     args = parser.parse_args()
 
-    num_iter = args.num_iter
-    num_warmup = args.num_warmup
-    disable_optimize = args.disable_optimize
-    is_meta = args.is_meta
 
     # benchmark PB model directly
     if args.model_path and not args.model_name:
         # generate model detail
-        model_path = args.model_path
+        model_dir = args.model_path
         model_detail = {}
-        model_input_output = get_input_output(model_path, is_meta)
+        model_input_output = get_input_output(model_dir, args.is_meta)
         # ckpt/meta model will save freezed pb in the same dir
-        model_path = model_path if not is_meta else args.model_path[:-5] + "_freeze.pb"
+        model_dir = model_dir if not args.is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']
         input_dic = {}
         for _input in model_input_output['inputs']:
             # deal with bool dtype input
             if model_input_output['inputs'][_input]['type'] == 'bool':
                 input_dic[_input] = model_input_output['inputs'][_input]['value']
-                logger.info("Find benchmark input name: {}, dtype: {}".format(
-                            _input, model_input_output['inputs'][_input]['type']))
+                logger.info("Find benchmark input name: {}, dtype: {}".format(_input, model_input_output['inputs'][_input]['type']))
             elif _input == 'dropout_keep_prob':
                 input_dic[_input] = np.array([0.5,], dtype='float32')
             else:
                 dtype = model_input_output['inputs'][_input]['type']
                 dshape = model_input_output['inputs'][_input]['shape']
-                dummy_input = generate_data(dshape, dtype, BATCH_SIZE)
+                dummy_input = generate_data(dshape, dtype, args.batch_size)
                 input_dic[_input] = dummy_input
                 logger.info("Find benchmark input name: {}, dtype: {}, shape: {}"
                             .format(_input, dtype, dummy_input.shape))
-        model_detail['model_path'] = model_path
+        model_detail['model_dir'] = model_dir
         model_detail['input'] = input_dic
         model_detail['output'] = output
-        model_detail['ckpt'] = is_meta
+        model_detail['ckpt'] = args.is_meta
+
 
     # benchmark with input/output
     elif args.model_name:
@@ -259,10 +250,9 @@ if __name__ == "__main__":
         for model in models:
             if model['model_name'] == args.model_name:
                 model_detail = model
-                model_detail['model_path'] = args.model_path
-                model_detail['ckpt'] = is_meta
+                model_detail['model_dir'] = args.model_path
+                model_detail['ckpt'] = args.is_meta
                 break
-
         if not model_detail:
             logger.error("Model undefined.")
             sys.exit(1)
@@ -280,8 +270,8 @@ if __name__ == "__main__":
     logger.info("***** Final benchmark input name: {}, shape: {}".format( \
                 model_detail['input'].keys(), inputs_shape))
     logger.info("***** Final benchmark output name: {}".format(model_detail['output']))
-    batch_size = inputs_shape[0][0]
 
+    # tune
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         from lpot.experimental import Quantization, common
@@ -294,12 +284,13 @@ if __name__ == "__main__":
         dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
                                     low=1.0, high=20.0, dtype=inputs_dtype, label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset=dataset,
-                                                       batch_size=batch_size,
+                                                       batch_size=args.batch_size,
                                                        collate_fn=oob_collate_data_func)
         quantizer.model = args.model_path
         q_model = quantizer()
         q_model.save(args.output_path)
 
-    else:
-        run_benchmark(model_detail, num_iter, num_warmup,
-                      disable_optimize, batch_size, args.timeline)
+    # benchmark
+    if args.benchmark:
+        run_benchmark(model_detail, args)
+

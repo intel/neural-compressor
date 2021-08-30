@@ -36,51 +36,81 @@ function init_params {
 }
 
 models_need_name=(
+--------
+CRNN
+CapsuleNet
+CenterNet
+CharCNN
+Hierarchical_LSTM
+MANN
+MiniGo
+TextCNN
+TextRNN
+aipg-vdcnn
+arttrack-coco-multi
+arttrack-mpii-single
+context_rcnn_resnet101_snapshot_serenget
+deepspeech
+deepvariant_wgs
+dense_vnet_abdominal_ct
+east_resnet_v1_50
+efficientnet-b0
+efficientnet-b0_auto_aug
+efficientnet-b5
+efficientnet-b7_auto_aug
+facenet-20180408-102900
+handwritten-score-recognition-0003
+license-plate-recognition-barrier-0007
+optical_character_recognition-text_recognition-tf
+pose-ae-multiperson
+pose-ae-refinement
+resnet_v2_200
+show_and_tell
+text-recognition-0012
+vggvox
+wide_deep
+yolo-v3-tiny
+NeuMF
+PRNet
+DIEN_Deep-Interest-Evolution-Network
+--------
+)
+
+models_need_disable_optimize=(
+--------
+CRNN
 efficientnet-b0
 efficientnet-b0_auto_aug
 efficientnet-b5
 efficientnet-b7_auto_aug
 vggvox
-aipg-vdcnn
-arttrack-coco-multi
-arttrack-mpii-single
-deepvariant_wgs
-east_resnet_v1_50
-facenet-20180408-102900
-handwritten-score-recognition-0003
-license-plate-recognition-barrier-0007
-optical_character_recognition-text_recognition-tf
-PRNet
-Resnetv2_200
-text-recognition-0012
-Hierarchical_LSTM
-icnet-camvid-ava-0001
-icnet-camvid-ava-sparse-30-0001
-icnet-camvid-ava-sparse-60-0001
-deeplabv3
-ssd-resnet34_300x300
+--------
 )
 
 # run_tuning
 function run_tuning {
-    extra_cmd=''
     input="input"
     output="predict"
     yaml='./config.yaml'
-    extra_cmd='--num_warmup 10 -n 500'
+    extra_cmd=' --num_warmup 10 -n 500 '
 
-    if [[ "${models_need_name[@]}"  =~ "${topology}" ]]; then
+    if [[ "${models_need_name[@]}"  =~ " ${topology} " ]]; then
       echo "$topology need model name!"
-      extra_cmd='--num_warmup 10 -n 500 --model_name '${topology}
+      extra_cmd+=" --model_name ${topology} "
+    fi
+    if [[ "${models_need_disable_optimize[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need to disable optimize_for_inference!"
+      extra_cmd+=" --disable_optimize "
     fi
 
     python tf_benchmark.py \
             --model_path ${input_model} \
             --output_path ${output_model} \
             --yaml ${yaml} \
-            ${extra_cmd} \
-            --tune
+            --tune \
+            ${extra_cmd}
 
 }
 
 main "$@"
+
