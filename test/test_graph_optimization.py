@@ -86,8 +86,12 @@ class MyMetric(object):
         self.label_list = []
         self.samples = 0
     def result(self):
-        correct_num = np.sum(
-                np.array(self.pred_list) == np.array(self.label_list))
+        pred = np.array(self.pred_list)
+        label = np.array(self.label_list)
+        ones = np.ones(pred.ndim, dtype=np.int)
+        ones[0] = label.shape[0]
+        label = np.array(self.label_list).reshape(ones)
+        correct_num = np.sum(pred == label) 
         return correct_num / self.samples
 
 class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
@@ -373,6 +377,8 @@ class TestGraphOptimization(unittest.TestCase):
             output_graph = graph_optimizer()
             found_cast_op = False
 
+            self.assertIsNotNone(output_graph.graph_def)
+            
             for i in output_graph.graph_def.node:
                 if i.op == 'Cast':
                     found_cast_op = True
