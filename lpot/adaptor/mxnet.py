@@ -29,6 +29,7 @@ from copy import deepcopy
 mx = LazyImport("mxnet")
 logger = logging.getLogger()
 
+
 @adaptor_registry
 class MxNetAdaptor(Adaptor):
     """The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.
@@ -46,14 +47,9 @@ class MxNetAdaptor(Adaptor):
         self.quantizable_nodes = []
         self._qtensor_to_tensor = {}
         self._tensor_to_node = {}
-        self.qdataloader = framework_specific_info["q_dataloader"]
+        self.qdataloader = framework_specific_info.get("q_dataloader")
         self.query_handler = MXNetQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "mxnet.yaml"))
-
-        self._th_cache = {'batches': -1,
-                          'kl': {},
-                          'minmax': {},
-                          'last': {}}
 
         self.ctx = mx.cpu() if framework_specific_info['device'] == 'cpu' else None
         assert self.ctx is not None, 'Unsupported device'
@@ -79,15 +75,28 @@ class MxNetAdaptor(Adaptor):
         logger.debug("Dump quantization configurations:")
         logger.debug(quant_cfg)
 
+        calib_cache = lpot_model.calib_cache
+
         sym_model, calib_data = prepare_model_data(lpot_model, self.ctx, dataloader)
         qsym_model, calib_tensors = quantize_sym_model(sym_model, self.ctx, quant_cfg)
-        collector = self._collect_thresholds(sym_model, calib_data, calib_tensors, calib_cfg)
+        collector = self._collect_thresholds(sym_model, calib_data, calib_tensors, calib_cfg,
+                                             calib_cache)
         qsym_model = calib_model(qsym_model, collector, calib_cfg, logger)
         qsym_model = fuse(qsym_model, self.ctx)  # post-quantization fusion
 
-        return make_lpot_model(lpot_model, qsym_model, self.ctx, calib_data.provide_data)
+        q_lpot_model = make_lpot_model(lpot_model, qsym_model, self.ctx, calib_data.input_desc)
+        q_lpot_model.calib_cache['last'] = collector.th_dict
+        q_lpot_model.q_config = {
+            'mxnet_version': mx.__version__,
+            'quant_cfg': quant_cfg,
+            'calib_cfg': calib_cfg,
+            'th_dict': collector.th_dict,
+            'input_desc': calib_data.input_desc,
+            'framework_specific_info': {'device': self.ctx.device_type}}
 
-    def _collect_thresholds(self, sym_model, calib_data, calib_tensors, calib_cfg):
+        return q_lpot_model
+
+    def _collect_thresholds(self, sym_model, calib_data, calib_tensors, calib_cfg, calib_cache):
         """Calculate thresholds for each tensor. The calibration method can be min/max
            or KL on different tensors.
 
@@ -96,6 +105,7 @@ class MxNetAdaptor(Adaptor):
             calib_data (DataLoaderWrap): dataset to do calibration on.
             calib_tensors (list): tensors to calibrate
             calib_cfg (dict): calibration config.
+            calib_cache (dict): cached calibration results
 
         Returns:
             collector (CalibCollector): collector with thresholds for each tensor.
@@ -103,13 +113,13 @@ class MxNetAdaptor(Adaptor):
         assert calib_cfg['calib_mode'] == 'naive', \
             '`calib_mode` must be set to `naive`, for `collector.min_max_dict` to be used'
 
-        if self._th_cache['batches'] != calib_cfg['batches']:
-            self._th_cache['batches'] = calib_cfg['batches']
-            self._th_cache['kl'].clear()
-            self._th_cache['minmax'].clear()
+        if calib_cache.get('batches', -1) != calib_cfg['batches']:
+            calib_cache['batches'] = calib_cfg['batches']
+            calib_cache['kl'] = {}
+            calib_cache['minmax'] = {}
 
-        cache_kl = self._th_cache['kl']
-        cache_minmax = self._th_cache['minmax']
+        cache_kl = calib_cache['kl']
+        cache_minmax = calib_cache['minmax']
         tensors_kl, tensors_minmax = distribute_calib_tensors(calib_tensors, calib_cfg,
                                                               self._tensor_to_node)
         to_collect_kl = tensors_kl - set(cache_kl.keys())
@@ -133,10 +143,7 @@ class MxNetAdaptor(Adaptor):
         th_dict = {}
         th_dict.update({tensor: cache_kl[tensor] for tensor in tensors_kl})
         th_dict.update({tensor: cache_minmax[tensor] for tensor in tensors_minmax})
-        self._th_cache['last'] = th_dict
-        # min_max_dict is used by calib_graph with 'naive' or 'custom(ize)' mode
-        # and by CalibCollector.post_collect
-        collector.min_max_dict = th_dict
+        collector.th_dict = th_dict
         return collector
 
     def evaluate(self, lpot_model, data_x, postprocess=None,
@@ -200,7 +207,7 @@ class MxNetAdaptor(Adaptor):
         """
         # op_type_wise and op_wise capability
         sym_model, self.qdataloader = prepare_model_data(lpot_model, self.ctx,
-                                                            self.qdataloader)
+                                                         self.qdataloader)
         self.quantizable_nodes, self._tensor_to_node = query_quantizable_nodes(
             sym_model, self.ctx, self.qdataloader)
 
@@ -261,10 +268,11 @@ class MxNetAdaptor(Adaptor):
                     tensor_dict[key][tensor_name] = tensor  # discard is_quantized
                     if is_quantized:
                         assert tensor.dtype in QUANTIZATION_DTYPES
-                        min_th, max_th = self._th_cache['last'][tensor_name]
+                        assert 'last' in lpot_model.calib_cache
+                        min_th, max_th = lpot_model.calib_cache['last'][tensor_name]
                         tensor_dict[key][tensor_name] = mx.nd.contrib.dequantize(
                             tensor,
-                            min_range=mx.nd.array([min_th]).squeeze(), 
+                            min_range=mx.nd.array([min_th]).squeeze(),
                             max_range=mx.nd.array([max_th]).squeeze(),
                             out_type='float32')
                     tensor_dict[key][tensor_name] = tensor_dict[key][tensor_name].asnumpy()
@@ -276,6 +284,36 @@ class MxNetAdaptor(Adaptor):
                 tensor_dict[key] = {node: tensor}
 
         return {'activation': tensor_dict_list}
+
+    def recover_tuned_model(self, lpot_model, q_config):
+        """Execute the recover process on the specified model.
+
+            Args:
+                tune_cfg (dict): quantization configuration
+                lpot_model (object): fp32 model
+                q_config (dict): recover configuration
+
+            Returns:
+                MXNetModel: the quantized model
+        """
+        if q_config['mxnet_version'] != mx.__version__:
+            logger.warning('Attempting to recover a model generated with a different '
+                           'version of MXNet ({})'.format(q_config['mxnet_version']))
+
+        sym_model = prepare_model(lpot_model, self.ctx, q_config['input_desc'])
+        qsym_model, calib_tensors = quantize_sym_model(sym_model, self.ctx, q_config['quant_cfg'])
+
+        collector = CalibCollector([], [])
+        collector.th_dict = q_config['th_dict']
+        assert set(calib_tensors).issubset(collector.th_dict.keys())
+
+        qsym_model = calib_model(qsym_model, collector, q_config['calib_cfg'], logger)
+        qsym_model = fuse(qsym_model, self.ctx)  # post-quantization fusion
+
+        q_lpot_model = make_lpot_model(lpot_model, qsym_model, self.ctx, q_config['input_desc'])
+        q_lpot_model.calib_cache['last'] = collector.th_dict
+        q_lpot_model.q_config = q_config
+        return q_lpot_model
 
     def set_tensor(self, model, tensor_dict):
         '''The function is used by tune strategy class for setting tensor back to model.

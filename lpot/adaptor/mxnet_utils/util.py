@@ -71,13 +71,13 @@ def ensure_list(x):
     return x if isinstance(x, (tuple, list)) else [x]
 
 
-def make_lpot_model(target, sym_model, ctx, provide_data):
+def make_lpot_model(target, sym_model, ctx, input_desc):
     """Converts a symbolic model to an LPOT model.
 
         Args:
             target (object): target model type to return.
             sym_model (tuple): symbol model (symnet, args, auxs).
-            provide_data (list): model input data description.
+            input_desc (list): model input data description.
 
         Returns:
             LPOTModel: converted lpot model
@@ -85,7 +85,7 @@ def make_lpot_model(target, sym_model, ctx, provide_data):
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     if isinstance(target.model, mx.gluon.HybridBlock):
-        return LPOTModel(make_symbol_block(sym_model, ctx, provide_data))
+        return LPOTModel(make_symbol_block(sym_model, ctx, input_desc))
     return LPOTModel(sym_model)
 
 
@@ -116,26 +116,36 @@ def prepare_model_data(lpot_model, ctx, data_x):
     Returns:
         tuple: symbol model (symnet, args, auxs) and DataLoaderWrap.
     """
+    dataloader = prepare_dataloader(lpot_model, ctx, data_x)
+    sym_model = prepare_model(lpot_model, ctx, dataloader.input_desc)
+    return sym_model, dataloader
+
+
+def prepare_model(lpot_model, ctx, input_desc):
     assert isinstance(lpot_model, LPOTModel)
 
     model_x = lpot_model.model
-    dataloader = _prepare_dataloader(model_x, ctx, data_x)
     if isinstance(model_x, mx.gluon.HybridBlock):
-        assert len(model_x._cached_graph) > 0
+        if len(model_x._cached_graph) == 0:
+            model_x.hybridize()
+        data_example = [mx.nd.zeros(d.shape, ctx, d.dtype) for d in input_desc]
+        model_x(*data_example)
         with TemporaryDirectory() as tmpdirname:
             prefix = os.path.join(tmpdirname, 'tmp')
             model_x.export(prefix, epoch=0)
             sym_model = mx.model.load_checkpoint(prefix, 0)
-    elif isinstance(model_x[0], mx.symbol.Symbol):
+    elif isinstance(model_x, tuple) and isinstance(model_x[0], mx.symbol.Symbol):
         sym_model = model_x
     else:
         raise TypeError('Wrong model type')
     if not is_model_quantized(sym_model):
         sym_model = fuse(sym_model, ctx)
-    return sym_model, dataloader
+    return sym_model
 
 
-def _prepare_dataloader(model_x, ctx, data_x):
+def prepare_dataloader(lpot_model, ctx, data_x):
+    assert isinstance(lpot_model, LPOTModel)
+
     if isinstance(data_x, DataLoaderWrap):
         return data_x
 
@@ -144,6 +154,7 @@ def _prepare_dataloader(model_x, ctx, data_x):
         dataloader = DataIterLoader(dataloader)
     assert isiterable(dataloader), 'Dataloader must be iterable (mx.gluon.data.DataLoader-like)'
 
+    model_x = lpot_model.model
     if isinstance(model_x, mx.gluon.HybridBlock):
         data = ensure_list(next(iter(dataloader)))  # data example
         data = [d.as_in_context(ctx) for d in data]
@@ -157,15 +168,15 @@ def _prepare_dataloader(model_x, ctx, data_x):
             else:
                 break
         inputs, _ = model_x._cached_graph
-        provide_data = [mx.io.DataDesc(name=i.name, shape=d.shape, dtype=d.dtype)
-                        for i, d in zip(inputs, data)]
+        input_desc = [mx.io.DataDesc(name=i.name, shape=d.shape, dtype=d.dtype)
+                      for i, d in zip(inputs, data)]
     elif isinstance(model_x, tuple) and isinstance(model_x[0], mx.symbol.Symbol):
         assert hasattr(data_x, 'provide_data'), \
             'Dataloader must provide data information (mx.data.DataDesc for each input)'
-        provide_data = data_x.provide_data
+        input_desc = data_x.provide_data
     else:
         raise TypeError('Wrong model type')
-    return DataLoaderWrap(dataloader, provide_data)
+    return DataLoaderWrap(dataloader, input_desc)
 
 
 def is_model_quantized(sym_model):
@@ -282,10 +293,10 @@ def quantize_sym_model(sym_model, ctx, qconfig):
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
-    qconfig['sym'] = symnet
-    qconfig['ctx'] = ctx
-    qconfig['offline_params'] = list(args.keys())
-    qsymnet, calib_tensors = mx.contrib.quantization._quantize_symbol(**qconfig)
+    if not check_mx_version('1.7.0'):
+        qconfig.pop('quantize_granularity', None)
+    qsymnet, calib_tensors = mx.contrib.quantization._quantize_symbol(
+        sym=symnet, ctx=ctx, offline_params=list(args.keys()), **qconfig)
     # args = mx.contrib.quantization._quantize_params(qsymnet, args, {})
     return ((qsymnet, args, auxs), calib_tensors)
 
@@ -353,19 +364,19 @@ def run_forward(sym_model, ctx, dataloader, b_filter,
     assert collector is None or (hasattr(collector, 'collect_gluon') and
                                  hasattr(collector, 'collect_module'))
 
-    mod = make_module(sym_model, ctx, dataloader.provide_data)
+    mod = make_module(sym_model, ctx, dataloader.input_desc)
     if collector is not None:
         mod._exec_group.execs[0].set_monitor_callback(
             collector.collect_module, monitor_all=True)
     return _module_forward(mod, dataloader, b_filter, pre_batch, post_batch)
 
 
-def make_symbol_block(sym_model, ctx, provide_data):
+def make_symbol_block(sym_model, ctx, input_desc):
     """Convert a symbol model to gluon SymbolBlock.
 
     Args:
         sym_model (tuple): symbol model (symnet, args, auxs).
-        provide_data (list): model input data description.
+        input_desc (list): model input data description.
 
     Returns:
         mx.gluon.SymbolBlock: SymbolBlock model.
@@ -374,7 +385,7 @@ def make_symbol_block(sym_model, ctx, provide_data):
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
-    inputs = [mx.sym.var(d.name) for d in provide_data]
+    inputs = [mx.sym.var(d.name) for d in input_desc]
     sym_block = mx.gluon.SymbolBlock(symnet, inputs)
     param_dict = args
     param_dict.update(auxs)
@@ -382,15 +393,16 @@ def make_symbol_block(sym_model, ctx, provide_data):
     # params.update({'aux:' + name: param for name, param in auxs.items()})
     sym_block.collect_params().load_dict(param_dict, ctx=ctx, cast_dtype=True,
                                          dtype_source='saved')
+    sym_block.hybridize()
     return sym_block
 
 
-def make_module(sym_model, ctx, provide_data):
+def make_module(sym_model, ctx, input_desc):
     """Convert a symbol model to Module.
 
     Args:
         sym_model (tuple): symbol model (symnet, args, auxs).
-        provide_data (list): model input data description.
+        input_desc (list): model input data description.
 
     Returns:
         mx.module.Module: Module model.
@@ -400,10 +412,10 @@ def make_module(sym_model, ctx, provide_data):
 
     symnet, args, auxs = sym_model
     mod = mx.module.module.Module(symbol=symnet,
-                                  data_names=[d.name for d in provide_data],
+                                  data_names=[d.name for d in input_desc],
                                   label_names=None,
                                   context=ctx)
-    mod.bind(provide_data, for_training=False)
+    mod.bind(input_desc, for_training=False)
     mod.set_params(args, auxs, allow_missing=True)
     return mod
 
@@ -414,8 +426,8 @@ def _module_forward(module, dataloader, b_filter, pre_batch=None, post_batch=Non
         if not run:
             continue
         batch_num += 1
-        data = batch[:len(dataloader.provide_data)]
-        label = batch[len(dataloader.provide_data):]
+        data = batch[:len(dataloader.input_desc)]
+        label = batch[len(dataloader.input_desc):]
 
         if pre_batch is not None:
             pre_batch(module, (data, label))
@@ -536,9 +548,9 @@ def calib_model(qsym_model, collector, calib_cfg, logger=None):
 
 
 class DataLoaderWrap:
-    def __init__(self, dataloader, provide_data):
+    def __init__(self, dataloader, input_desc):
         self.dataloader = dataloader
-        self.provide_data = provide_data
+        self.input_desc = input_desc
         self._iter = None
 
     def __iter__(self):
@@ -588,6 +600,14 @@ class CalibCollector(CollectorBase):
         self.num_bins = num_bins
         self.include_tensors_minmax = include_tensors_minmax
         self.include_tensors_kl = include_tensors_kl
+
+    @property
+    def th_dict(self):
+        return self.min_max_dict
+
+    @th_dict.setter
+    def th_dict(self, value):
+        self.min_max_dict = value
 
     def collect_gluon(self, name, _, arr):
         if name in self.include_tensors_kl:

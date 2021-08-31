@@ -286,6 +286,11 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
         tf_fp32_model = common.Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(tf_fp32_model, q_config)
         return tune_index_qmodel
+    elif 'mxnet' in framework:
+        from lpot.experimental import common
+        mx_fp32_model = common.Model(fp32_model)
+        tune_index_qmodel = adaptor.recover_tuned_model(mx_fp32_model, q_config)
+        return tune_index_qmodel
 
 
 def str2array(s):

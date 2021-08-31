@@ -1106,6 +1106,7 @@ class MXNetModel(BaseModel):
         #(TODO) MXNet does not support recover model from tuning history currently
         self.q_config = None
         self._model = model
+        self.calib_cache = {}
 
     def framework(self):
         return 'mxnet'
@@ -1119,21 +1120,17 @@ class MXNetModel(BaseModel):
         self._model = model
 
     def save(self, root=None):
-        if not root:
+        if root is None:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
-        os.makedirs(root, exist_ok=True)
+        os.makedirs(os.path.dirname(root), exist_ok=True)
 
         if isinstance(self._model, mx.gluon.HybridBlock):
             self._model.export(root)
             logger.info("Save quantized hybrid block model to {}.".format(root))
         else:
-            symbol, arg_params, aux_params = self._model
-            symbol.save(root + '-symbol.json')
-            save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in arg_params.items()}
-            save_dict.update(\
-                {('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
-            mx.nd.save(root + '-0000.params', save_dict)
+            symnet, args, auxs = self._model
+            mx.model.save_checkpoint(root, 0, symnet, args, auxs)
             logger.info("Save quantized symbol model to {}.".format(root))
 
 MODELS = {'tensorflow': TensorflowModel,
