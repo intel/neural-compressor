@@ -346,20 +346,22 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
 
 #### Validated Quantized Models
 
-<table class="docutils">
+<table>
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
@@ -370,7 +372,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>74.24%</td>
     <td>74.27%</td>
     <td>-0.04%</td>
-    <td>2.67x</td>
+    <td>7.64</td>
+    <td>21.54</td>
+    <td>2.82x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -379,6 +383,8 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>76.94%</td>
     <td>76.46%</td>
     <td>0.63%</td>
+    <td>9.54</td>
+    <td>24.28</td>
     <td>2.54x</td>
   </tr>
   <tr>
@@ -388,7 +394,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>77.21%</td>
     <td>76.45%</td>
     <td>0.99%</td>
-    <td>2.46x</td>
+    <td>12.92</td>
+    <td>30.65</td>
+    <td>2.37x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -397,7 +405,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>70.30%</td>
     <td>69.74%</td>
     <td>0.80%</td>
-    <td>1.63x</td>
+    <td>5.58</td>
+    <td>10.13</td>
+    <td>1.82x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -406,7 +416,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>74.27%</td>
     <td>73.97%</td>
     <td>0.41%</td>
-    <td>1.74x</td>
+    <td>6.78</td>
+    <td>12.42</td>
+    <td>1.83x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -415,7 +427,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>77.29%</td>
     <td>76.75%</td>
     <td>0.70%</td>
-    <td>2.11x</td>
+    <td>12.90</td>
+    <td>27.74</td>
+    <td>2.15x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -424,6 +438,8 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>80.36%</td>
     <td>80.27%</td>
     <td>0.11%</td>
+    <td>21.00</td>
+    <td>54.42</td>
     <td>2.59x</td>
   </tr>
   <tr>
@@ -433,7 +449,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>80.42%</td>
     <td>80.40%</td>
     <td>0.02%</td>
-    <td>1.86x</td>
+    <td>44.72</td>
+    <td>87.62</td>
+    <td>1.96x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -442,7 +460,9 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>73.93%</td>
     <td>70.96%</td>
     <td>4.19%</td>
-    <td>2.27x</td>
+    <td>2.96</td>
+    <td>9.88</td>
+    <td>3.34x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -451,25 +471,31 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <td>71.96%</td>
     <td>71.76%</td>
     <td>0.28%</td>
-    <td>1.78x</td>
+    <td>4.95</td>
+    <td>10.71</td>
+    <td>2.16x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
     <td>2.5.0</td>
-    <td>vgg16</td>
-    <td>72.13%</td>
-    <td>70.89%</td>
-    <td>1.75%</td>
-    <td>3.86x</td>
+    <td>ssd_resnet50_v1</td>
+    <td>37.91%</td>
+    <td>38.00%</td>
+    <td>-0.24%</td>
+    <td>145.96</td>
+    <td>422.11</td>
+    <td>2.89x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
     <td>2.5.0</td>
-    <td>vgg19</td>
-    <td>72.35%</td>
-    <td>71.01%</td>
-    <td>1.89%</td>
-    <td>3.90x</td>
+    <td>ssd_mobilenet_v1</td>
+    <td>23.02%</td>
+    <td>23.13%</td>
+    <td>-0.48%</td>
+    <td>12.19</td>
+    <td>26.85</td>
+    <td>2.20x</td>
   </tr>
 </tbody>
 </table>
@@ -482,132 +508,160 @@ Intel® Low Precision Optimization Tool provides numerous examples to show promi
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet18</td>
     <td>69.58%</td>
     <td>69.76%</td>
     <td>-0.26%</td>
-    <td>2.13x</td>
+    <td>13.59</td>
+    <td>24.97</td>
+    <td>1.84x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet50</td>
     <td>75.87%</td>
     <td>76.13%</td>
     <td>-0.34%</td>
-    <td>3.11x</td>
+    <td>25.67</td>
+    <td>54.12</td>
+    <td>2.11x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnext101_32x8d</td>
     <td>79.09%</td>
     <td>79.31%</td>
     <td>-0.28%</td>
-    <td>4.99x</td>
+    <td>62.44</td>
+    <td>147.88</td>
+    <td>2.37x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_mrpc</td>
-    <td>87.92%</td>
+    <td>88.16%</td>
     <td>88.73%</td>
-    <td>-0.91%</td>
-    <td>1.79x</td>
+    <td>-0.64%</td>
+    <td>41.33</td>
+    <td>81.93</td>
+    <td>1.98x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_cola</td>
-    <td>58.33%</td>
+    <td>58.29%</td>
     <td>58.84%</td>
-    <td>-0.87%</td>
-    <td>2.01x</td>
+    <td>-0.93%</td>
+    <td>39.30</td>
+    <td>86.58</td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_sts-b</td>
-    <td>88.46%</td>
+    <td>88.65%</td>
     <td>89.27%</td>
-    <td>-0.91%</td>
-    <td>2.01x</td>
+    <td>-0.70%</td>
+    <td>39.46</td>
+    <td>86.97</td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_sst-2</td>
-    <td>91.97%</td>
+    <td>91.63%</td>
     <td>91.86%</td>
-    <td>0.12%</td>
-    <td>2.00x</td>
+    <td>-0.25%</td>
+    <td>39.12</td>
+    <td>82.59</td>
+    <td>2.11x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_rte</td>
+    <td>69.31%</td>
     <td>69.68%</td>
-    <td>69.68%</td>
-    <td>0.00%</td>
+    <td>-0.52%</td>
+    <td>39.81</td>
+    <td>81.98</td>
+    <td>2.06x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>bert_large_mrpc</td>
+    <td>87.48%</td>
+    <td>88.33%</td>
+    <td>-0.95%</td>
+    <td>112.61</td>
+    <td>287.44</td>
+    <td>2.55x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>bert_large_squad</td>
+    <td>92.79</td>
+    <td>93.05</td>
+    <td>-0.28%</td>
+    <td>497.79</td>
+    <td>953.74</td>
     <td>1.92x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>bert_large_mrpc</td>
-    <td>87.60%</td>
-    <td>88.33%</td>
-    <td>-0.83%</td>
-    <td>2.47x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>bert_large_squad</td>
-    <td>92.99</td>
-    <td>93.05</td>
-    <td>-0.06%</td>
-    <td>1.85x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_large_qnli</td>
     <td>91.12%</td>
     <td>91.82%</td>
     <td>-0.76%</td>
-    <td>2.47x</td>
+    <td>112.43</td>
+    <td>291.10</td>
+    <td>2.59x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_large_rte</td>
-    <td>71.84%</td>
+    <td>72.92%</td>
     <td>72.56%</td>
-    <td>-0.99%</td>
-    <td>1.44x</td>
+    <td>0.50%</td>
+    <td>148.60</td>
+    <td>287.03</td>
+    <td>1.93x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_large_cola</td>
-    <td>61.97%</td>
+    <td>62.85%</td>
     <td>62.57%</td>
-    <td>-0.97%</td>
-    <td>2.48x</td>
+    <td>0.45%</td>
+    <td>112.54</td>
+    <td>283.38</td>
+    <td>2.52x</td>
   </tr>
 </tbody>
 </table>
