@@ -13,13 +13,15 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br>CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br>CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
@@ -30,7 +32,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>74.24%</td>
     <td>74.27%</td>
     <td>-0.04%</td>
-    <td>2.67x</td>
+    <td>7.64</td>
+    <td>21.54</td>
+    <td>2.82x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -39,6 +43,8 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>76.94%</td>
     <td>76.46%</td>
     <td>0.63%</td>
+    <td>9.54</td>
+    <td>24.28</td>
     <td>2.54x</td>
   </tr>
   <tr>
@@ -48,7 +54,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>77.21%</td>
     <td>76.45%</td>
     <td>0.99%</td>
-    <td>2.46x</td>
+    <td>12.92</td>
+    <td>30.65</td>
+    <td>2.37x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -57,7 +65,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>70.30%</td>
     <td>69.74%</td>
     <td>0.80%</td>
-    <td>1.63x</td>
+    <td>5.58</td>
+    <td>10.13</td>
+    <td>1.82x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -66,7 +76,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>74.27%</td>
     <td>73.97%</td>
     <td>0.41%</td>
-    <td>1.74x</td>
+    <td>6.78</td>
+    <td>12.42</td>
+    <td>1.83x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -75,7 +87,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>77.29%</td>
     <td>76.75%</td>
     <td>0.70%</td>
-    <td>2.11x</td>
+    <td>12.90</td>
+    <td>27.74</td>
+    <td>2.15x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -84,6 +98,8 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>80.36%</td>
     <td>80.27%</td>
     <td>0.11%</td>
+    <td>21.00</td>
+    <td>54.42</td>
     <td>2.59x</td>
   </tr>
   <tr>
@@ -93,7 +109,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>80.42%</td>
     <td>80.40%</td>
     <td>0.02%</td>
-    <td>1.86x</td>
+    <td>44.72</td>
+    <td>87.62</td>
+    <td>1.96x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -102,7 +120,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>73.93%</td>
     <td>70.96%</td>
     <td>4.19%</td>
-    <td>2.27x</td>
+    <td>2.96</td>
+    <td>9.88</td>
+    <td>3.34x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -111,79 +131,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>71.96%</td>
     <td>71.76%</td>
     <td>0.28%</td>
-    <td>1.78x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>vgg16</td>
-    <td>72.13%</td>
-    <td>70.89%</td>
-    <td>1.75%</td>
-    <td>3.86x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>vgg19</td>
-    <td>72.35%</td>
-    <td>71.01%</td>
-    <td>1.89%</td>
-    <td>3.90x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>resnetv2_50</td>
-    <td>70.41%</td>
-    <td>69.64%</td>
-    <td>1.11%</td>
-    <td>1.31x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>resnetv2_101</td>
-    <td>72.60%</td>
-    <td>71.87%</td>
-    <td>1.02%</td>
-    <td>1.49x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>resnetv2_152</td>
-    <td>72.94%</td>
-    <td>72.37%</td>
-    <td>0.79%</td>
-    <td>1.42x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>densenet121</td>
-    <td>72.31%</td>
-    <td>72.89%</td>
-    <td>-0.80%</td>
-    <td>1.52x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>densenet161</td>
-    <td>76.36%</td>
-    <td>76.29%</td>
-    <td>0.09%</td>
-    <td>1.84x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>densenet169</td>
-    <td>74.49%</td>
-    <td>74.65%</td>
-    <td>-0.21%</td>
-    <td>1.49x</td>
+    <td>4.95</td>
+    <td>10.71</td>
+    <td>2.16x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -192,7 +142,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>37.91%</td>
     <td>38.00%</td>
     <td>-0.24%</td>
-    <td>2.84x</td>
+    <td>145.96</td>
+    <td>422.11</td>
+    <td>2.89x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -201,7 +153,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>23.02%</td>
     <td>23.13%</td>
     <td>-0.48%</td>
-    <td>2.28x</td>
+    <td>12.19</td>
+    <td>26.85</td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -210,7 +164,20 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>30.33%</td>
     <td>30.38%</td>
     <td>-0.16%</td>
-    <td>3.33x</td>
+    <td>152.71</td>
+    <td>541.75</td>
+    <td>3.55x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>faster_rcnn_resnet101_saved</td>
+    <td>30.37%</td>
+    <td>30.38%</td>
+    <td>-0.03%</td>
+    <td>151.55</td>
+    <td>613.76</td>
+    <td>4.05x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -219,7 +186,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>28.61%</td>
     <td>28.73%</td>
     <td>-0.42%</td>
-    <td>2.65x</td>
+    <td>77.73</td>
+    <td>201.69</td>
+    <td>2.59x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -228,7 +197,130 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>77.61%</td>
     <td>77.67%</td>
     <td>-0.08%</td>
-    <td>1.48x</td>
+    <td>1.24</td>
+    <td>1.86</td>
+    <td>1.50x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>vgg16</td>
+    <td>72.13%</td>
+    <td>70.89%</td>
+    <td>1.75%</td>
+    <td>16.91</td>
+    <td>61.21</td>
+    <td>3.62x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>vgg19</td>
+    <td>72.35%</td>
+    <td>71.01%</td>
+    <td>1.89%</td>
+    <td>20.58</td>
+    <td>74.47</td>
+    <td>3.62x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>resnetv2_50</td>
+    <td>70.36%</td>
+    <td>69.64%</td>
+    <td>1.03%</td>
+    <td>15.20</td>
+    <td>18.59</td>
+    <td>1.22x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>resnetv2_101</td>
+    <td>72.58%</td>
+    <td>71.87%</td>
+    <td>0.99%</td>
+    <td>25.54</td>
+    <td>34.33</td>
+    <td>1.34x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>resnetv2_152</td>
+    <td>72.92%</td>
+    <td>72.37%</td>
+    <td>0.76%</td>
+    <td>37.25</td>
+    <td>49.86</td>
+    <td>1.34x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>densenet121</td>
+    <td>72.31%</td>
+    <td>72.89%</td>
+    <td>-0.80%</td>
+    <td>30.56</td>
+    <td>44.87</td>
+    <td>1.47x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>densenet161</td>
+    <td>76.36%</td>
+    <td>76.29%</td>
+    <td>0.09%</td>
+    <td>53.69</td>
+    <td>85.54</td>
+    <td>1.59x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>densenet169</td>
+    <td>74.49%</td>
+    <td>74.65%</td>
+    <td>-0.21%</td>
+    <td>39.50</td>
+    <td>56.68</td>
+    <td>1.44x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>ssd_resnet50_v1_ckpt</td>
+    <td>37.89%</td>
+    <td>38.00%</td>
+    <td>-0.29%</td>
+    <td>142.82</td>
+    <td>481.75</td>
+    <td>3.37x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>ssd_mobilenet_v1_ckpt</td>
+    <td>23.02%</td>
+    <td>23.13%</td>
+    <td>-0.48%</td>
+    <td>12.22</td>
+    <td>32.22</td>
+    <td>2.64x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>mask_rcnn_inception_v2_ckpt</td>
+    <td>28.61%</td>
+    <td>28.73%</td>
+    <td>-0.42%</td>
+    <td>82.38</td>
+    <td>204.74</td>
+    <td>2.49x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -237,7 +329,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>78.53%</td>
     <td>76.75%</td>
     <td>2.32%</td>
-    <td>1.17x</td>
+    <td>26.23</td>
+    <td>27.53</td>
+    <td>1.05x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -246,7 +340,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>78.05%</td>
     <td>78.12%</td>
     <td>-0.09%</td>
-    <td>2.71x</td>
+    <td>3.11</td>
+    <td>6.89</td>
+    <td>2.22x</td>
   </tr>
 </tbody>
 </table>
@@ -261,132 +357,171 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>bert_large_squad</td>
-    <td>92.4835</td>
-    <td>92.9805</td>
-    <td>-0.53%</td>
-    <td>2.82x</td>
+    <td>92.35</td>
+    <td>92.98</td>
+    <td>-0.67%</td>
+    <td>397.58</td>
+    <td>875.35</td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>bert_base_mrpc</td>
     <td>86.03%</td>
     <td>86.52%</td>
     <td>-0.57%</td>
-    <td>1.52x</td>
+    <td>42.25</td>
+    <td>75.95</td>
+    <td>1.80x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>resnet_v1_50_slim</td>
-    <td>76.05%</td>
+    <td>76.03%</td>
     <td>75.18%</td>
-    <td>1.16%</td>
-    <td>2.91x</td>
+    <td>1.13%</td>
+    <td>7.07</td>
+    <td>23.60</td>
+    <td>3.34x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>resnet_v1_101_slim</td>
-    <td>77.15%</td>
+    <td>77.12%</td>
     <td>76.40%</td>
-    <td>0.98%</td>
-    <td>3.38x</td>
+    <td>0.94%</td>
+    <td>12.53</td>
+    <td>43.21</td>
+    <td>3.45x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>resnet_v1_152_slim</td>
-    <td>77.56%</td>
+    <td>77.58%</td>
     <td>76.81%</td>
-    <td>0.98%</td>
-    <td>3.71x</td>
+    <td>1.00%</td>
+    <td>17.76</td>
+    <td>65.32</td>
+    <td>3.68x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>inception_v1_slim</td>
     <td>70.41%</td>
     <td>69.77%</td>
     <td>0.92%</td>
-    <td>1.95x</td>
+    <td>5.62</td>
+    <td>12.09</td>
+    <td>2.15x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
+    <td>inception_v2_slim</td>
+    <td>74.38%</td>
+    <td>73.98%</td>
+    <td>0.54%</td>
+    <td>6.82</td>
+    <td>14.40</td>
+    <td>2.11x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>1.15.0-up3</td>
     <td>inception_v3_slim</td>
     <td>78.32%</td>
     <td>77.99%</td>
     <td>0.42%</td>
-    <td>2.56x</td>
+    <td>11.63</td>
+    <td>31.22</td>
+    <td>2.68x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>inception_v4_slim</td>
     <td>80.35%</td>
     <td>80.19%</td>
     <td>0.20%</td>
-    <td>2.87x</td>
+    <td>21.63</td>
+    <td>62.51</td>
+    <td>2.89x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>vgg16_slim</td>
     <td>72.16%</td>
     <td>70.89%</td>
     <td>1.79%</td>
-    <td>3.89x</td>
+    <td>17.09</td>
+    <td>60.87</td>
+    <td>3.56x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>vgg19_slim</td>
     <td>72.22%</td>
     <td>71.01%</td>
     <td>1.70%</td>
-    <td>3.81x</td>
+    <td>20.46</td>
+    <td>73.54</td>
+    <td>3.59x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>resnetv2_50_slim</td>
-    <td>70.39%</td>
+    <td>70.36%</td>
     <td>69.72%</td>
-    <td>0.96%</td>
-    <td>1.40x</td>
+    <td>0.92%</td>
+    <td>13.25</td>
+    <td>19.39</td>
+    <td>1.46x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>resnetv2_101_slim</td>
-    <td>72.51%</td>
+    <td>72.59%</td>
     <td>71.91%</td>
-    <td>0.83%</td>
-    <td>1.61x</td>
+    <td>0.95%</td>
+    <td>23.21</td>
+    <td>35.98</td>
+    <td>1.55x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>1.15.0-up2</td>
+    <td>1.15.0-up3</td>
     <td>resnetv2_152_slim</td>
-    <td>72.98%</td>
+    <td>72.93%</td>
     <td>72.40%</td>
-    <td>0.80%</td>
-    <td>1.62x</td>
+    <td>0.73%</td>
+    <td>33.40</td>
+    <td>52.74</td>
+    <td>1.58x</td>
   </tr>
 </tbody>
 </table>
@@ -401,393 +536,523 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet18</td>
     <td>69.58%</td>
     <td>69.76%</td>
     <td>-0.26%</td>
-    <td>2.13x</td>
+    <td>13.59</td>
+    <td>24.97</td>
+    <td>1.84x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet50</td>
     <td>75.87%</td>
     <td>76.13%</td>
     <td>-0.34%</td>
-    <td>3.11x</td>
+    <td>25.67</td>
+    <td>54.12</td>
+    <td>2.11x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnext101_32x8d</td>
     <td>79.09%</td>
     <td>79.31%</td>
     <td>-0.28%</td>
-    <td>4.99x</td>
+    <td>62.44</td>
+    <td>147.88</td>
+    <td>2.37x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_mrpc</td>
-    <td>87.92%</td>
+    <td>88.16%</td>
     <td>88.73%</td>
-    <td>-0.91%</td>
-    <td>1.79x</td>
+    <td>-0.64%</td>
+    <td>41.33</td>
+    <td>81.93</td>
+    <td>1.98x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_cola</td>
-    <td>58.33%</td>
+    <td>58.29%</td>
     <td>58.84%</td>
-    <td>-0.87%</td>
-    <td>2.01x</td>
+    <td>-0.93%</td>
+    <td>39.30</td>
+    <td>86.58</td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_sts-b</td>
-    <td>88.46%</td>
+    <td>88.65%</td>
     <td>89.27%</td>
-    <td>-0.91%</td>
-    <td>2.01x</td>
+    <td>-0.70%</td>
+    <td>39.46</td>
+    <td>86.97</td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_sst-2</td>
-    <td>91.97%</td>
+    <td>91.63%</td>
     <td>91.86%</td>
-    <td>0.12%</td>
-    <td>2.00x</td>
+    <td>-0.25%</td>
+    <td>39.12</td>
+    <td>82.59</td>
+    <td>2.11x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_base_rte</td>
+    <td>69.31%</td>
     <td>69.68%</td>
-    <td>69.68%</td>
-    <td>0.00%</td>
+    <td>-0.52%</td>
+    <td>39.81</td>
+    <td>81.98</td>
+    <td>2.06x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>bert_large_mrpc</td>
+    <td>87.48%</td>
+    <td>88.33%</td>
+    <td>-0.95%</td>
+    <td>112.61</td>
+    <td>287.44</td>
+    <td>2.55x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>bert_large_squad</td>
+    <td>92.79</td>
+    <td>93.05</td>
+    <td>-0.28%</td>
+    <td>497.79</td>
+    <td>953.74</td>
     <td>1.92x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>bert_large_mrpc</td>
-    <td>87.60%</td>
-    <td>88.33%</td>
-    <td>-0.83%</td>
-    <td>2.47x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>bert_large_squad</td>
-    <td>92.99</td>
-    <td>93.05</td>
-    <td>-0.06%</td>
-    <td>1.85x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_large_qnli</td>
     <td>91.12%</td>
     <td>91.82%</td>
     <td>-0.76%</td>
-    <td>2.47x</td>
+    <td>112.43</td>
+    <td>291.10</td>
+    <td>2.59x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_large_rte</td>
-    <td>71.84%</td>
+    <td>72.92%</td>
     <td>72.56%</td>
-    <td>-0.99%</td>
-    <td>1.44x</td>
+    <td>0.50%</td>
+    <td>148.60</td>
+    <td>287.03</td>
+    <td>1.93x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>bert_large_cola</td>
-    <td>61.97%</td>
+    <td>62.85%</td>
     <td>62.57%</td>
-    <td>-0.97%</td>
-    <td>2.48x</td>
+    <td>0.45%</td>
+    <td>112.54</td>
+    <td>283.38</td>
+    <td>2.52x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
+    <td>dlrm</td>
+    <td>80.27%</td>
+    <td>80.27%</td>
+    <td>0.00%</td>
+    <td>0.01</td>
+    <td>0.01</td>
+    <td>1.00x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
     <td>inception_v3</td>
     <td>69.39%</td>
     <td>69.54%</td>
     <td>-0.21%</td>
-    <td>2.24x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>peleenet</td>
-    <td>71.54%</td>
-    <td>72.08%</td>
-    <td>-0.75%</td>
-    <td>1.49x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>yolo_v3</td>
-    <td>24.50%</td>
-    <td>24.54%</td>
-    <td>-0.17%</td>
-    <td>2.36x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>se_resnext50_32x4d</td>
-    <td>79.02%</td>
-    <td>79.08%</td>
-    <td>-0.07%</td>
-    <td>3.17x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>mobilenet_v2</td>
-    <td>70.73%</td>
-    <td>71.86%</td>
-    <td>-1.57%</td>
-    <td>1.61x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.6.0+cpu</td>
-    <td>blendcnn</td>
-    <td>68.40%</td>
-    <td>68.40%</td>
-    <td>0.00%</td>
-    <td>1.56x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.5.0a0+b58f89b</td>
-    <td>resnet50_ipex</td>
-    <td>75.80%</td>
-    <td>76.13%</td>
-    <td>-0.44%</td>
-    <td>1.66x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>roberta_base_mrpc</td>
-    <td>85.88%</td>
-    <td>85.51%</td>
-    <td>0.44%</td>
-    <td>2.04x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>camembert_base_mrpc</td>
-    <td>84.88%</td>
-    <td>84.22%</td>
-    <td>0.78%</td>
-    <td>1.76x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>distilbert_base_mrpc</td>
-    <td>81.05%</td>
-    <td>80.99%</td>
-    <td>0.07%</td>
-    <td>1.70x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>albert_base_mrpc</td>
-    <td>88.25%</td>
-    <td>88.50%</td>
-    <td>-0.28%</td>
-    <td>1.39x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>bart_wnli</td>
-    <td>47.89%</td>
-    <td>52.11%</td>
-    <td>-8.11%</td>
-    <td>1.11x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>mbart_wnli</td>
-    <td>56.34%</td>
-    <td>56.34%</td>
-    <td>0.00%</td>
-    <td>1.91x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>pegasus_billsum</td>
-    <td>50.23</td>
-    <td>51.21</td>
-    <td>-1.91%</td>
-    <td>1.54x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>rnnt</td>
-    <td>92.48</td>
-    <td>92.55</td>
-    <td>-0.08%</td>
-    <td>2.84x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>flaubert_mrpc</td>
-    <td>79.81%</td>
-    <td>80.19%</td>
-    <td>-0.48%</td>
-    <td>1.27x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>barthez_mrpc</td>
-    <td>83.76%</td>
-    <td>83.81%</td>
-    <td>-0.06%</td>
-    <td>1.78x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>longformer_mrpc</td>
-    <td>90.71%</td>
-    <td>91.46%</td>
-    <td>-0.81%</td>
-    <td>1.11x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>layoutlm_mrpc</td>
-    <td>81.22%</td>
-    <td>78.01%</td>
-    <td>4.12%</td>
+    <td>29.40</td>
+    <td>52.01</td>
     <td>1.77x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
+    <td>peleenet</td>
+    <td>71.54%</td>
+    <td>72.08%</td>
+    <td>-0.75%</td>
+    <td>24.99</td>
+    <td>33.14</td>
+    <td>1.33x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>yolo_v3</td>
+    <td>24.50%</td>
+    <td>24.54%</td>
+    <td>-0.17%</td>
+    <td>117.56</td>
+    <td>243.60</td>
+    <td>2.07x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>se_resnext50_32x4d</td>
+    <td>79.02%</td>
+    <td>79.08%</td>
+    <td>-0.07%</td>
+    <td>33.41</td>
+    <td>63.55</td>
+    <td>1.90x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>mobilenet_v2</td>
+    <td>70.73%</td>
+    <td>71.86%</td>
+    <td>-1.57%</td>
+    <td>15.34</td>
+    <td>23.27</td>
+    <td>1.52x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>blendcnn</td>
+    <td>68.40%</td>
+    <td>68.40%</td>
+    <td>0.00%</td>
+    <td>2.43</td>
+    <td>2.52</td>
+    <td>1.03x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>gpt_wikitext</td>
+    <td>60.06</td>
+    <td>60.20</td>
+    <td>-0.23%</td>
+    <td>545.94</td>
+    <td>590.43</td>
+    <td>1.08x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>roberta_base_mrpc</td>
+    <td>85.37%</td>
+    <td>85.51%</td>
+    <td>-0.17%</td>
+    <td>40.61</td>
+    <td>82.25</td>
+    <td>2.03x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>camembert_base_mrpc</td>
+    <td>84.72%</td>
+    <td>84.22%</td>
+    <td>0.60%</td>
+    <td>44.23</td>
+    <td>83.24</td>
+    <td>1.88x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>distilbert_base_mrpc</td>
+    <td>81.17%</td>
+    <td>80.99%</td>
+    <td>0.21%</td>
+    <td>26.24</td>
+    <td>45.65</td>
+    <td>1.74x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>albert_base_mrpc</td>
+    <td>88.77%</td>
+    <td>88.50%</td>
+    <td>0.31%</td>
+    <td>303.38</td>
+    <td>374.12</td>
+    <td>1.23x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>funnel_mrpc</td>
+    <td>91.72%</td>
+    <td>92.26%</td>
+    <td>-0.58%</td>
+    <td>86.83</td>
+    <td>89.71</td>
+    <td>1.03x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>bart_wnli</td>
+    <td>49.30%</td>
+    <td>52.11%</td>
+    <td>-5.41%</td>
+    <td>321.66</td>
+    <td>363.76</td>
+    <td>1.13x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>mbart_wnli</td>
+    <td>56.34%</td>
+    <td>56.34%</td>
+    <td>0.00%</td>
+    <td>175.87</td>
+    <td>342.64</td>
+    <td>1.95x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>t5_wmt_en_ro</td>
+    <td>24.39</td>
+    <td>24.52</td>
+    <td>-0.55%</td>
+    <td>2530.55</td>
+    <td>2674.40</td>
+    <td>1.06x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>marianmt_wmt_en_ro</td>
+    <td>22.39</td>
+    <td>22.23</td>
+    <td>0.72%</td>
+    <td>3522.83</td>
+    <td>3758.02</td>
+    <td>1.07x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>pegasus_billsum</td>
+    <td>50.23</td>
+    <td>51.21</td>
+    <td>-1.91%</td>
+    <td>40000.00</td>
+    <td>62500.00</td>
+    <td>1.56x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>rnnt</td>
+    <td>92.48</td>
+    <td>92.55</td>
+    <td>-0.08%</td>
+    <td>182.23</td>
+    <td>554.61</td>
+    <td>3.04x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>xlm-roberta-base_mrpc</td>
+    <td>87.93%</td>
+    <td>88.62%</td>
+    <td>-0.78%</td>
+    <td>88.30</td>
+    <td>90.27</td>
+    <td>1.02x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>flaubert_mrpc</td>
+    <td>79.81%</td>
+    <td>80.19%</td>
+    <td>-0.48%</td>
+    <td>19.46</td>
+    <td>24.80</td>
+    <td>1.27x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>barthez_mrpc</td>
+    <td>83.25%</td>
+    <td>83.81%</td>
+    <td>-0.66%</td>
+    <td>69.93</td>
+    <td>104.06</td>
+    <td>1.49x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>longformer_mrpc</td>
+    <td>90.97%</td>
+    <td>91.46%</td>
+    <td>-0.53%</td>
+    <td>528.43</td>
+    <td>656.89</td>
+    <td>1.24x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>layoutlm_mrpc</td>
+    <td>81.22%</td>
+    <td>78.01%</td>
+    <td>4.12%</td>
+    <td>48.18</td>
+    <td>88.37</td>
+    <td>1.83x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
     <td>deberta_mrpc</td>
     <td>90.29%</td>
     <td>90.91%</td>
     <td>-0.68%</td>
-    <td>1.51x</td>
+    <td>89.03</td>
+    <td>135.90</td>
+    <td>1.53x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>squeezebert_mrpc</td>
-    <td>87.10%</td>
+    <td>87.96%</td>
     <td>87.65%</td>
-    <td>-0.62%</td>
-    <td>1.78x</td>
+    <td>0.36%</td>
+    <td>47.68</td>
+    <td>56.26</td>
+    <td>1.18x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>dlrm_fx</td>
     <td>80.19%</td>
     <td>80.27%</td>
     <td>-0.10%</td>
+    <td>0.00</td>
+    <td>0.01</td>
     <td>1.67x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet18_fx</td>
     <td>69.61%</td>
     <td>69.76%</td>
     <td>-0.22%</td>
-    <td>2.22x</td>
+    <td>13.42</td>
+    <td>26.41</td>
+    <td>1.97x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>xlnet_base_mrpc</td>
     <td>89.43%</td>
     <td>89.47%</td>
     <td>-0.04%</td>
-    <td>1.25x</td>
+    <td>101.99</td>
+    <td>128.57</td>
+    <td>1.26x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
-    <td>transfo_xl_mrpc</td>
-    <td>82.09%</td>
-    <td>81.20%</td>
-    <td>1.09%</td>
-    <td>1.32x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>ctrl_mrpc</td>
     <td>82.00%</td>
     <td>82.00%</td>
     <td>0.00%</td>
-    <td>2.60x</td>
+    <td>474.58</td>
+    <td>1265.14</td>
+    <td>2.67x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>xlm_mrpc</td>
     <td>80.50%</td>
     <td>79.56%</td>
     <td>1.18%</td>
-    <td>3.02x</td>
+    <td>177.14</td>
+    <td>536.52</td>
+    <td>3.03x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>maskrcnn_fx</td>
     <td>37.70%</td>
     <td>37.80%</td>
     <td>-0.26%</td>
-    <td>1.65x</td>
+    <td>116.62</td>
+    <td>179.57</td>
+    <td>1.54x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>ssd_resnet34_fx</td>
-    <td>19.48</td>
+    <td>19.511</td>
     <td>19.63</td>
-    <td>-0.75%</td>
-    <td>3.81x</td>
+    <td>-0.61%</td>
+    <td>378.40</td>
+    <td>1347.00</td>
+    <td>3.56x</td>
   </tr>
 </tbody>
 </table>
@@ -802,51 +1067,61 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet18_qat</td>
     <td>69.75%</td>
     <td>69.76%</td>
     <td>-0.02%</td>
-    <td>2.11x</td>
+    <td>13.66</td>
+    <td>25.60</td>
+    <td>1.87x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet50_qat</td>
-    <td>76.10%</td>
+    <td>76.05%</td>
     <td>76.13%</td>
-    <td>-0.04%</td>
-    <td>3.20x</td>
+    <td>-0.11%</td>
+    <td>25.22</td>
+    <td>54.32</td>
+    <td>2.15x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>resnet18_qat_fx</td>
-    <td>69.86%</td>
+    <td>69.72%</td>
     <td>69.76%</td>
-    <td>0.14%</td>
-    <td>2.25x</td>
+    <td>-0.05%</td>
+    <td>13.53</td>
+    <td>26.72</td>
+    <td>1.97x</td>
   </tr>
   <tr>
     <td>pytorch</td>
-    <td>1.8.0+cpu</td>
+    <td>1.9.0+cpu</td>
     <td>mobilenet_v2_qat</td>
-    <td>71.57%</td>
+    <td>71.45%</td>
     <td>71.86%</td>
-    <td>-0.39%</td>
-    <td>1.73x</td>
+    <td>-0.56%</td>
+    <td>15.29</td>
+    <td>22.79</td>
+    <td>1.49x</td>
   </tr>
 </tbody>
 </table>
@@ -861,13 +1136,15 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
@@ -875,55 +1152,67 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>resnet50v1</td>
-    <td>76.03%</td>
+    <td>76.08%</td>
     <td>76.33%</td>
-    <td>-0.39%</td>
-    <td>3.34x</td>
+    <td>-0.32%</td>
+    <td>6.29</td>
+    <td>20.85</td>
+    <td>3.32x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>inceptionv3</td>
-    <td>77.80%</td>
+    <td>77.73%</td>
     <td>77.64%</td>
-    <td>0.21%</td>
-    <td>2.71x</td>
+    <td>0.11%</td>
+    <td>11.18</td>
+    <td>31.76</td>
+    <td>2.84x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>mobilenet1.0</td>
-    <td>71.71%</td>
+    <td>71.69%</td>
     <td>72.22%</td>
-    <td>-0.71%</td>
-    <td>2.54x</td>
+    <td>-0.74%</td>
+    <td>1.60</td>
+    <td>3.96</td>
+    <td>2.48x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>mobilenetv2_1.0</td>
-    <td>70.77%</td>
+    <td>70.78%</td>
     <td>70.87%</td>
-    <td>-0.14%</td>
-    <td>2.69x</td>
+    <td>-0.12%</td>
+    <td>1.93</td>
+    <td>5.33</td>
+    <td>2.76x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>resnet18_v1</td>
-    <td>70.00%</td>
+    <td>70.02%</td>
     <td>70.14%</td>
-    <td>-0.21%</td>
+    <td>-0.17%</td>
+    <td>3.01</td>
+    <td>9.49</td>
     <td>3.15x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>squeezenet1.0</td>
-    <td>56.89%</td>
+    <td>56.74%</td>
     <td>56.96%</td>
-    <td>-0.13%</td>
-    <td>2.61x</td>
+    <td>-0.38%</td>
+    <td>2.38</td>
+    <td>6.24</td>
+    <td>2.62x</td>
   </tr>
   <tr>
     <td>mxnet</td>
@@ -932,7 +1221,9 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>80.21%</td>
     <td>80.23%</td>
     <td>-0.03%</td>
-    <td>4.66x</td>
+    <td>37.68</td>
+    <td>178.55</td>
+    <td>4.74x</td>
   </tr>
   <tr>
     <td>mxnet</td>
@@ -941,16 +1232,20 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <td>74.94%</td>
     <td>75.54%</td>
     <td>-0.79%</td>
-    <td>3.78x</td>
+    <td>15.28</td>
+    <td>59.86</td>
+    <td>3.92x</td>
   </tr>
   <tr>
     <td>mxnet</td>
     <td>1.7.0</td>
     <td>resnet152_v1</td>
-    <td>78.31%</td>
+    <td>78.21%</td>
     <td>78.54%</td>
-    <td>-0.29%</td>
-    <td>3.17x</td>
+    <td>-0.42%</td>
+    <td>17.79</td>
+    <td>58.81</td>
+    <td>3.31x</td>
   </tr>
 </tbody>
 </table>
@@ -965,123 +1260,171 @@ The below tables are models enabled by the Intel® Low Precision Optimization To
     <th rowspan="2">Version</th>
     <th rowspan="2">Model</th>
     <th colspan="3">Accuracy</th>
-    <th>Performance speed up</th>
+    <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <td>INT8 Tuning Accuracy</td>
-    <td>FP32 Accuracy Baseline</td>
-    <td>Acc Ratio [(INT8-FP32)/FP32]</td>
-    <td>Realtime Latency Ratio[FP32/INT8]</td>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>resnet50_v1_5</td>
     <td>73.83%</td>
     <td>73.99%</td>
     <td>-0.22%</td>
-    <td>1.75x</td>
+    <td>11.99</td>
+    <td>20.62</td>
+    <td>1.72x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
-    <td>bert_base_mrpc</td>
+    <td>1.8.0</td>
+    <td>bert_base_mrpc_static</td>
     <td>85.29%</td>
     <td>86.03%</td>
-    <td>-0.85%</td>
-    <td>2.04x</td>
+    <td>-0.86%</td>
+    <td>14.34</td>
+    <td>32.15</td>
+    <td>2.24x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
+    <td>bert_base_mrpc_dynamic</td>
+    <td>85.29%</td>
+    <td>86.03%</td>
+    <td>-0.86%</td>
+    <td>27.57</td>
+    <td>67.56</td>
+    <td>2.45x</td>
+  </tr>
+  <tr>
+    <td>onnxrt</td>
+    <td>1.8.0</td>
     <td>vgg16</td>
     <td>69.45%</td>
     <td>69.44%</td>
     <td>0.01%</td>
-    <td>1.27x</td>
+    <td>72.53</td>
+    <td>95.64</td>
+    <td>1.32x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
+    <td>ssd_mobilenet_v1</td>
+    <td>22.41%</td>
+    <td>23.10%</td>
+    <td>-2.99%</td>
+    <td>16.27</td>
+    <td>18.74</td>
+    <td>1.15x</td>
+  </tr>
+  <tr>
+    <td>onnxrt</td>
+    <td>1.8.0</td>
     <td>ssd_mobilenet_v2</td>
-    <td>23.77%</td>
+    <td>23.80%</td>
     <td>24.68%</td>
-    <td>-3.69%</td>
-    <td>1.11x</td>
+    <td>-3.57%</td>
+    <td>20.59</td>
+    <td>25.11</td>
+    <td>1.22x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>distilbert_base_mrpc</td>
     <td>85.05%</td>
     <td>84.56%</td>
     <td>0.58%</td>
-    <td>2.32x</td>
+    <td>6.35</td>
+    <td>17.24</td>
+    <td>2.72x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>mobilebert_mrpc</td>
     <td>86.03%</td>
-    <td>86.28%</td>
-    <td>-0.29%</td>
-    <td>1.26x</td>
+    <td>86.27%</td>
+    <td>-0.28%</td>
+    <td>15.40</td>
+    <td>17.52</td>
+    <td>1.14x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>roberta_base_mrpc</td>
     <td>88.73%</td>
     <td>89.46%</td>
     <td>-0.82%</td>
-    <td>2.01x</td>
+    <td>14.08</td>
+    <td>35.92</td>
+    <td>2.55x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>resnet50-v1-12</td>
-    <td>74.32%</td>
-    <td>74.61%</td>
-    <td>-0.39%</td>
-    <td>1.58x</td>
+    <td>74.77%</td>
+    <td>74.97%</td>
+    <td>-0.27%</td>
+    <td>11.13</td>
+    <td>20.29</td>
+    <td>1.82x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>resnet_v1_5_mlperf</td>
     <td>76.11%</td>
     <td>76.47%</td>
     <td>-0.47%</td>
-    <td>1.55x</td>
+    <td>12.66</td>
+    <td>20.51</td>
+    <td>1.62x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>mobilenet_v3_mlperf</td>
     <td>75.24%</td>
     <td>75.39%</td>
     <td>-0.20%</td>
-    <td>1.19x</td>
+    <td>3.84</td>
+    <td>5.76</td>
+    <td>1.50x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
+    <td>1.8.0</td>
     <td>bert_squad_model_zoo</td>
-    <td>80.09</td>
+    <td>79.93</td>
     <td>80.67</td>
-    <td>-0.72%</td>
-    <td>1.42x</td>
+    <td>-0.91%</td>
+    <td>91.35</td>
+    <td>168.07</td>
+    <td>1.84x</td>
   </tr>
   <tr>
     <td>onnxrt</td>
-    <td>1.6.0</td>
-    <td>gpt2_lm_head_wikitext_model_zoo</td>
-    <td>70.30</td>
-    <td>71.00</td>
-    <td>-0.99%</td>
-    <td>1.34x</td>
+    <td>1.8.0</td>
+    <td>mobilebert_squad_mlperf</td>
+    <td>89.72</td>
+    <td>90.03</td>
+    <td>-0.34%</td>
+    <td>115.82</td>
+    <td>122.00</td>
+    <td>1.05x</td>
   </tr>
 </tbody>
 </table>
