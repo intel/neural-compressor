@@ -32,7 +32,7 @@ class ConvInteger(QuantOperatorBase):
         assert node.op_type in ["Conv", "FusedConv"]
 
         (quantized_input_names, zero_point_names, scale_names, nodes) = \
-            self.quantizer.quantize_inputs(node, [0, 1])
+                                        self.quantizer.quantize_inputs(node, [0, 1])
 
         # quantize bias if exist
         quantized_bias_name = ""
@@ -104,15 +104,15 @@ class QLinearConv(QuantOperatorBase):
 
         if self.quantizer.is_input_a_weight(node.input[1]) and self.per_channel:
             (quantized_input_names, zero_point_names, scale_names, nodes) = \
-                self.quantizer.quantize_inputs(node, [0])
+                                                self.quantizer.quantize_inputs(node, [0])
             quant_weight_tuple = self.quantizer.quantize_weight_per_channel(node.input[1], 
-                                                                            self.weight_dtype, 0)
+                                                self.weight_dtype, self.weight_scheme, 0)
             quantized_input_names.append(quant_weight_tuple[0])
             zero_point_names.append(quant_weight_tuple[1])
             scale_names.append(quant_weight_tuple[2])
         else:
             (quantized_input_names, zero_point_names, scale_names, nodes) = \
-                self.quantizer.quantize_inputs(node, [0, 1])
+                                            self.quantizer.quantize_inputs(node, [0, 1])
 
         quantized_bias_name = ""
         bias_present = False

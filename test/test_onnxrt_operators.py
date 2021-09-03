@@ -90,7 +90,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                'algorithm': 'minmax',
                                'scheme':'sym',
                                'granularity': 'per_tensor'},
-                     'activation':{'dtype': 3,
+                     'activation':{'dtype': 2,
                                    'algorithm': 'minmax',
                                    'scheme':'asym',
                                    'granularity':'per_tensor'}}}

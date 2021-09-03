@@ -62,9 +62,9 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
             R.dims[0] = R_num_dir * R_4_hidden_size
 
         quant_input_weight_tuple = self.quantizer.quantize_weight_per_channel(node.input[1], 
-                                                                              self.weight_dtype, 0)
+                                                        self.weight_dtype, self.weight_scheme, 0)
         quant_recurrent_weight_tuple = self.quantizer.quantize_weight_per_channel(node.input[2], 
-                                                                              self.weight_dtype, 0)
+                                                        self.weight_dtype, self.weight_scheme, 0)
 
         W_quant_weight = model.get_initializer(quant_input_weight_tuple[0])
         R_quant_weight = model.get_initializer(quant_recurrent_weight_tuple[0])

@@ -23,22 +23,25 @@ class QuantOperatorBase:
         if self.node.name in self.quantizer.config:
             self.per_channel = False
             self.algorithm = 'minmax'
-            self.scheme = 'sym'
+            self.weight_scheme = 'sym'
             self.weight_dtype = None
             self.activation_dtype = None
+            self.activation_scheme = 'asym'
             if self.quantizer.config[self.node.name] != 'fp32':
                 if 'weight' in self.quantizer.config[self.node.name].keys():
                     self.per_channel = self.quantizer.config[self.node.name]\
                         ['weight']['granularity'] == 'per_channel'
                     self.algorithm = self.quantizer.config[self.node.name]\
                         ['weight']['algorithm']
-                    self.scheme = self.quantizer.config[self.node.name]\
+                    self.weight_scheme = self.quantizer.config[self.node.name]\
                         ['weight']['scheme']
                     self.weight_dtype = self.quantizer.config[self.node.name]\
                         ['weight']['dtype']
                 if 'activation' in self.quantizer.config[self.node.name].keys():
                     self.activation_dtype = self.quantizer.config[self.node.name]\
                         ['activation']['dtype']
+                    self.activation_scheme = self.quantizer.config[self.node.name]\
+                        ['activation']['scheme']
 
     def quantize(self):
         '''

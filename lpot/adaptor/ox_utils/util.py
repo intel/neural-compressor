@@ -50,10 +50,11 @@ def collate_preds(results):
         collate_results = np.concatenate(results)
     return collate_results
 
-def quantize_data_with_scale_zero(data, qType, scale, zero_point):
+def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
     '''
         :parameter data: data to quantize
         :parameter qType: data type to quantize to. Supported types UINT8 and INT8
+        :parameter scheme: sym or asym quantization.
         :parameter scale: computed scale of quantized data
         :parameter zero_point: computed zero point of quantized data
         :return: quantized weights
@@ -62,21 +63,22 @@ def quantize_data_with_scale_zero(data, qType, scale, zero_point):
             - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
                 m = max(abs(rmin), abs(rmax))
     '''
-    if qType == onnx_proto.TensorProto.INT8:
+    if qType == onnx_proto.TensorProto.INT8 and scheme == 'sym':
         # signed byte type
         quantized_data = (np.asarray(data) / scale).round().astype('b')
-    elif qType == onnx_proto.TensorProto.UINT8:
+    elif qType == onnx_proto.TensorProto.UINT8 and scheme == 'asym':
         quantized_data = ((np.asarray(data) / scale).round() + zero_point).astype('B')
     else:
-        raise ValueError("Unexpected data type {} requested. Only INT8 and UINT8 \
-                                                    are supported.".format(qType))
+        raise ValueError("Unexpected combination of data type {} and scheme {}.".format(
+                                                                        qType, scheme))
     return quantized_data
 
-def quantize_data(data, quantize_range, qType):
+def quantize_data(data, quantize_range, qType, scheme):
     '''
         :parameter data: data to quantize
         :parameter quantize_range: list of data to weight pack.
         :parameter qType: data type to quantize to. Supported types UINT8 and INT8
+        :param scheme: sym or asym quantization.
         :return: minimum, maximum, zero point, scale, and quantized weights
         To pack weights, we compute a linear transformation
             - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
@@ -92,21 +94,21 @@ def quantize_data(data, quantize_range, qType):
     rmin = min(min(data), 0)
     rmax = max(max(data), 0)
 
-    if qType == onnx_proto.TensorProto.INT8:
+    if scheme == 'sym' and qType == onnx_proto.TensorProto.INT8:
         max_range = max(abs(rmin), abs(rmax))
         scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
         zero_point = 0
-    elif qType == onnx_proto.TensorProto.UINT8:
+    elif scheme == 'asym' and qType == onnx_proto.TensorProto.UINT8:
         scale = (float(rmax) - rmin) / quantize_range if rmin != rmax else 1
-        zero_point = round((0 - rmin) / scale)  # round to nearest integer
+        zero_point = round((0 - rmin) / scale)
     else:
-        raise ValueError("Unexpected data type {} requested. Only INT8 and UINT8 \
-                                                    are supported.".format(qType))
+        raise ValueError("Unexpected combination of data type {} and scheme {}.".format(
+            qType, scheme))
 
-    quantized_data = quantize_data_with_scale_zero(data, qType, scale, zero_point)
+    quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 
-def quantize_data_per_channel(tensor_value, qType, scale_value, zo_value):
+def quantize_data_per_channel(tensor_value, qType, scheme, scale_value, zo_value):
     channel_count = tensor_value.shape[0] # TBD, default from axis 0
     new_per_channel_tensor_values = []
     for i in range(channel_count):
@@ -116,6 +118,7 @@ def quantize_data_per_channel(tensor_value, qType, scale_value, zo_value):
         new_per_channel_tensor_values.append(quantize_data_with_scale_zero(\
                                                        per_channel_tensor_value,
                                                        qType,
+                                                       scheme,
                                                        per_channel_scale_value,
                                                        per_channel_zero_value))
     # combine per_channel_data into one

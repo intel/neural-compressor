@@ -73,7 +73,7 @@ class QPad(QuantOperatorBase):
                     node.input[2] = quantized_padding_constant_name
                 else:
                     pad_value_qnodes = self.quantizer._get_quantize_input_nodes(node, 2, 
-                                                                 self.activation_dtype)
+                                             self.activation_dtype, self.activation_scheme)
                     self.quantizer.new_nodes += pad_value_qnodes
                     node.input[2] = pad_value_qnodes[0].output[0]
             else:

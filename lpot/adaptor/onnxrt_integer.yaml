@@ -30,13 +30,13 @@
           'Conv': &key_1_6_0 {
             'weight': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -44,13 +44,13 @@
           'FusedConv': {
             'weight': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -64,7 +64,7 @@
                     },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                         }

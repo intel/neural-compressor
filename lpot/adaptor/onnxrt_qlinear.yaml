@@ -37,8 +37,8 @@
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -52,7 +52,7 @@
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -60,13 +60,13 @@
           'Gather': {
             'weight':   {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_channel'],
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor'],
                         }
@@ -81,7 +81,7 @@
                     },
              'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                         }

@@ -178,7 +178,7 @@ def get_torch_version():
         assert False, 'Got an unknow version of torch: {}'.format(e)
     return torch_version
 
-def export_onnx_model(model, path):
+def export_onnx_model(model, path, opset=12):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
     torch_out = model(x)
 
@@ -187,7 +187,7 @@ def export_onnx_model(model, path):
                     x,                         # model input (or a tuple for multiple inputs)
                     path,                      # where to save the model (can be a file or file-like object)
                     export_params=True,        # store the trained parameter weights inside the model file
-                    opset_version=12,          # the ONNX version to export the model to, please ensure at least 11.
+                    opset_version=opset,          # the ONNX version to export the model to, please ensure at least 11.
                     do_constant_folding=True,  # whether to execute constant folding for optimization
                     input_names = ["input"],   # the model"s input names
                     output_names = ["output"], # the model"s output names
@@ -265,6 +265,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
         export_onnx_model(self.rn50_model, self.rn50_export_path)
+        export_onnx_model(self.rn50_model, 'rn50_9.onnx', 9)
         self.rn50_model = onnx.load(self.rn50_export_path)
         self.ir3_model = build_ir3_model()
         self.gather_model = build_model_with_gather()
@@ -276,6 +277,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("non_MSE.yaml")
         os.remove("benchmark.yaml")
         os.remove("gather.yaml")
+        os.remove("rn50_9.onnx")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
         os.remove("best_model.onnx")
@@ -318,7 +320,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                              'imagenet')}
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
-        q_config = {'fused Conv_0': {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8}}}
+        q_config = {'fused Conv_0': {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8, 'scheme': 'sym'}}}
         adaptor.quantize_config = q_config
         version = get_torch_version()
         q_model.save('./best_model.onnx')
@@ -341,6 +343,18 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.model = common.Model(self.rn50_model)
             q_model = quantizer()
             eval_func(q_model)
+
+        import copy
+        tmp_model = copy.deepcopy(self.rn50_model)
+        tmp_model.opset_import[0].version = 10
+        quantizer.model = common.Model(tmp_model)
+        q_model = quantizer()
+        tmp_model.opset_import.extend([onnx.helper.make_opsetid("", 11)]) 
+        quantizer.model = common.Model(tmp_model)
+        q_model = quantizer()
+        model = onnx.load('rn50_9.onnx')
+        quantizer.model = common.Model(model)
+        q_model = quantizer()
 
         framework_specific_info = {"device": "cpu",
                      "approach": "post_training_static_quant",
@@ -366,7 +380,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.eval_dataloader = self.gather_dataloader
             quantizer.model = common.Model(self.gather_model)
             q_model = quantizer()
- 
+
         for fake_yaml in ["non_MSE.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader

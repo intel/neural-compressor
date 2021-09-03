@@ -316,15 +316,19 @@ class ONNXRTAdaptor(Adaptor):
             if not_filter:
                 new_tensor_value = self._requantize_bias(model, tensor_name, tensor_value)
             elif self.quantize_config[node_name]['weight']['granularity'] == 'per_tensor':
-                new_tensor_value = quantize_data_with_scale_zero(tensor_value,
-                                                               q_type,
-                                                               scale_value,
-                                                               zo_value)
+                new_tensor_value = quantize_data_with_scale_zero(
+                    tensor_value,
+                    q_type,
+                    self.quantize_config[node_name]['weight']['scheme'],
+                    scale_value,
+                    zo_value)
             else:
-                new_tensor_value = quantize_data_per_channel(tensor_value,
-                                                             q_type,
-                                                             scale_value,
-                                                             zo_value)
+                new_tensor_value = quantize_data_per_channel(
+                    tensor_value,
+                    q_type,
+                    self.quantize_config[node_name]['weight']['scheme'],
+                    scale_value,
+                    zo_value)
             model.set_initializer(tensor_name, new_tensor_value)
         return model
 
@@ -469,7 +473,6 @@ class ONNXRTAdaptor(Adaptor):
         quantize_config['calib_iteration'] = tune_cfg['calib_iteration']
         granularity = 'per_tensor'
         algorithm = 'minmax'
-        scheme = 'sym'
 
         from onnx import onnx_pb as onnx_proto
         for _, op in enumerate(self.quantizable_ops):
@@ -483,14 +486,16 @@ class ONNXRTAdaptor(Adaptor):
                         node_config[tensor]['granularity'] = granularity
                     if 'algorithm' not in config:
                         node_config[tensor]['algorithm'] = algorithm
-                    if 'scheme' not in config:
-                        node_config[tensor]['scheme'] = scheme
                     if config['dtype'] == "int8":
                         node_config[tensor]['dtype'] = \
                                   onnx_proto.TensorProto.INT8 # pylint: disable=no-member
+                        if 'scheme' not in config:
+                            node_config[tensor]['scheme'] = 'sym'
                     else:
                         node_config[tensor]['dtype'] = \
                                  onnx_proto.TensorProto.UINT8 # pylint: disable=no-member
+                        if 'scheme' not in config:
+                            node_config[tensor]['scheme'] = 'asym'
                 quantize_config[op.name] = node_config
 
         return quantize_config
