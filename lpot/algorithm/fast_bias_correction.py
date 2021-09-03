@@ -115,14 +115,8 @@ class FastBiasCorrection(Algorithm):
             bias_shift = bias_shift.reshape(bias_shift.shape[0], -1)
             bias_shift = np.mean(bias_shift, axis=1)
 
-            bias_shift_magnitude = np.inf
-            if np.count_nonzero(fp32_bias == 0) == 0:
-                bias_shift_magnitude = np.max(np.abs((bias_shift - fp32_bias) / fp32_bias))
+            tensor_dict[q_bias_name] = fp32_bias + bias_shift 
 
-            if bias_shift_magnitude < self.threshold:
-                tensor_dict[q_bias_name] = fp32_bias + bias_shift 
-            else:
-                logger.debug("Skip bias correction for {}.".format(q_bias_name))
 
         if len(tensor_dict) > 0:
             adaptor.set_tensor(q_model, tensor_dict)
