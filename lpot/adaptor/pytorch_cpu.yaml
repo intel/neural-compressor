@@ -64,8 +64,19 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'Embedding': *cap_static_s8_1_7_EmbeddingBag,
-          'QuantStub': {
+          # Embedding, LayerNorm, InstanceNorm3d have accuracy issue now,
+          # So fallback to fp32, will remove when PyTorch fixed this issue.
+          'Embedding': &cap_static_s8_1_7_Embedding {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+          'LayerNorm': *cap_static_s8_1_7_Embedding,
+          'InstanceNorm3d': *cap_static_s8_1_7_Embedding,
+          'QuantStub': &cap_static_s8_1_7_QuantStub {
             'activation': {
                         'dtype': ['uint8'],
                         'scheme': ['asym'],
@@ -88,7 +99,7 @@
                         },
                     },
           'ConvTranspose2d': *cap_static_s8_1_7_ConvTranspose1d,
-          'default': {
+          'default': &cap_static_s8_1_7_default {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym'],
