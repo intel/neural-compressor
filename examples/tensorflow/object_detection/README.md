@@ -113,8 +113,7 @@ tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 
 ##### ssd_resnet34
 ```shell
-wget --no-check-certificate https://zenodo.org/record/3345892/files/tf_ssd_resnet34_22.1.zip?download=1 -o ssd_resnet34.zip
-unzip ssd_resnet34.zip
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/ssd_resnet34_fp32_1200x1200_pretrained_model.pb
 ```
 You need to install intel-tensorflow==2.4.0 to enable ssd_resnet34 model.
 
@@ -135,9 +134,11 @@ Now we support both pb and ckpt formats.
   # The cmd of running ssd_resnet50_v1
   bash run_tuning.sh --config=ssd_resnet50_v1.yaml --input_model=/tmp/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/ --output_model=./tensorflow-ssd_resnet50_v1-tune.pb
   ```
-
-Make sure to add dataset_location=/path/to/dataset/coco_val.record in config file: "ssd_resnet50_v1.yaml"
-
+> Note
+>
+> 1. Make sure to add dataset_location=/path/to/dataset/coco_val.record in config file: "ssd_resnet50_v1.yaml"
+>
+> 2. For ssd_resnet34 model, anno_path of evaluation/accuracy/metric/COCOmAP in config file should be "label_map.yaml"
 
 Details of enabling Intel® Low Precision Optimization Tool on ssd_resnet50_v1 for Tensorflow.
 =========================
