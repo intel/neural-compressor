@@ -14,11 +14,14 @@
 # limitations under the License.
 
 """Workload service."""
-
+from lpot.ux.components.optimization.tuning_history import tuning_history
 from lpot.ux.utils.exceptions import NotFoundException
 from lpot.ux.utils.templates.workdir import Workdir
+from lpot.ux.web.communication import MessageQueue
 from lpot.ux.web.service.request_data_processor import RequestDataProcessor
 from lpot.ux.web.service.response_generator import Response, ResponseGenerator
+
+mq = MessageQueue()
 
 
 class WorkloadService:
@@ -27,13 +30,10 @@ class WorkloadService:
     @staticmethod
     def get_config(data: dict) -> Response:
         """Get config file for requested Workload."""
-        workload_id = RequestDataProcessor.get_string_value(data, "workload_id")
-        workdir = Workdir()
-        workload_data = workdir.get_workload_data(workload_id)
-        config_path = workload_data.get("config_path")
+        config_path = WorkloadService._get_workload_data_from_input_data(data).get("config_path")
 
         if not config_path:
-            raise NotFoundException(f"Unable to find config file for {workload_id}")
+            raise NotFoundException("Unable to find config file")
 
         return ResponseGenerator.serve_from_filesystem(
             path=config_path,
@@ -43,13 +43,12 @@ class WorkloadService:
     @staticmethod
     def get_code_template(data: dict) -> Response:
         """Get code template file for requested Workload."""
-        workload_id = RequestDataProcessor.get_string_value(data, "workload_id")
-        workdir = Workdir()
-        workload_data = workdir.get_workload_data(workload_id)
-        code_template_path = workload_data.get("code_template_path")
+        code_template_path = WorkloadService._get_workload_data_from_input_data(data).get(
+            "code_template_path",
+        )
 
         if not code_template_path:
-            raise NotFoundException(f"Unable to find code template file for {workload_id}")
+            raise NotFoundException("Unable to find code template file")
 
         return ResponseGenerator.serve_from_filesystem(
             path=code_template_path,
@@ -59,13 +58,10 @@ class WorkloadService:
     @staticmethod
     def get_output(data: dict) -> Response:
         """Get config file for requested Workload."""
-        workload_id = RequestDataProcessor.get_string_value(data, "workload_id")
-        workdir = Workdir()
-        workload_data = workdir.get_workload_data(workload_id)
-        log_path = workload_data.get("log_path")
+        log_path = WorkloadService._get_workload_data_from_input_data(data).get("log_path")
 
         if not log_path:
-            raise NotFoundException(f"Unable to find output log for {workload_id}")
+            raise NotFoundException("Unable to find output log")
 
         try:
             response = ResponseGenerator.serve_from_filesystem(
@@ -79,3 +75,38 @@ class WorkloadService:
             response=response,
             refresh_time=3,
         )
+
+    @staticmethod
+    def request_history_snapshot(data: dict) -> None:
+        """Get tuning history for requested Workload."""
+        workload_id = RequestDataProcessor.get_string_value(data, "workload_id")
+        WorkloadService.send_history_snapshot(workload_id)
+
+    @staticmethod
+    def send_history_snapshot(workload_id: str) -> None:
+        """Get tuning history for requested Workload."""
+        try:
+            response = tuning_history(workload_id)
+            mq.post_success("tuning_history", response)
+        except NotFoundException:
+            mq.post_error(
+                "tuning_history",
+                {
+                    "workload_id": workload_id,
+                },
+            )
+
+    @staticmethod
+    def _get_workload_data_from_input_data(data: dict) -> dict:
+        """Return data for requested Workload."""
+        workload_id = RequestDataProcessor.get_string_value(data, "workload_id")
+        return WorkloadService.get_workload_data_by_id(workload_id)
+
+    @staticmethod
+    def get_workload_data_by_id(workload_id: str) -> dict:
+        """Return data for requested Workload."""
+        workdir = Workdir()
+        workload_data = workdir.get_workload_data(workload_id)
+        if not workload_data:
+            raise NotFoundException(f"Unable to find workload with id: {workload_id}")
+        return workload_data

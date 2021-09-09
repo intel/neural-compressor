@@ -290,7 +290,7 @@
                 </ng-container>
                 <button id="remove-transform-btn" mat-icon-button color="warn" class="browse"
                   (click)="removeTransformation(index)" matTooltip="Remove this transformation">
-                  &#x2573;
+                  <img class="icon" src="./../../assets/057b-trash-outlined.svg">
                 </button>
               </span>
               <br *ngIf="!last">
@@ -355,11 +355,25 @@
       </mat-checkbox>
 
       <ng-container *ngIf="showAdvancedParams">
+        <h2>Quantization</h2>
+        <mat-card>
+          <form [formGroup]="secondFormGroup">
+            <mat-form-field class="form-field" appearance="outline">
+              <mat-label>approach</mat-label>
+              <mat-select formControlName="approach">
+                <mat-option *ngFor="let approach of approaches" [value]="approach.name" matTooltipPosition="right"
+                  [matTooltip]="approach.help">
+                  {{ approach.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </form>
+        </mat-card>
+
         <ng-container *ngIf="tuningEnabled">
           <h2>Tune</h2>
           <mat-card>
             <form [formGroup]="secondFormGroup">
-
               <mat-form-field class="form-field" appearance="outline">
                 <mat-label>tuning strategy</mat-label>
                 <mat-select formControlName="strategy">
@@ -399,27 +413,9 @@
                 <mat-label>random seed</mat-label>
                 <input type="number" formControlName="randomSeed" matInput>
               </mat-form-field>
-
             </form>
           </mat-card>
         </ng-container>
-
-        <h2>Quantization</h2>
-        <mat-card>
-          <form [formGroup]="secondFormGroup">
-
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>approach</mat-label>
-              <mat-select formControlName="approach">
-                <mat-option *ngFor="let approach of approaches" [value]="approach.name" matTooltipPosition="right"
-                  [matTooltip]="approach.help">
-                  {{ approach.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-          </form>
-        </mat-card>
 
         <h2>Benchmarking</h2>
         <form [formGroup]="secondFormGroup">

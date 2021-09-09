@@ -84,6 +84,9 @@ class Router:
             "workload/code_template.py": RealtimeRoutingDefinition(
                 WorkloadService.get_code_template,
             ),
+            "workload/tuning_history": DeferredRoutingDefinition(
+                WorkloadService.request_history_snapshot,
+            ),
             "save_example_workload": DeferredRoutingDefinition(save_example_workload),
         }
 

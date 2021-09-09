@@ -104,7 +104,8 @@ export class ModelService {
       {
         id: newModel.id,
         model_path: newModel.model_path,
-        domain: newModel.domain
+        domain: newModel.domain,
+        domain_flavour: newModel.domain_flavour
       });
   }
 
@@ -158,6 +159,7 @@ export class ModelService {
 
 export interface NewModel {
   domain: string;
+  domain_flavour: string;
   framework: string;
   id: string;
   input?: string;

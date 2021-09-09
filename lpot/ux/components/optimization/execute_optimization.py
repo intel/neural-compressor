@@ -17,10 +17,12 @@
 
 import json
 import os
+import threading
 from typing import Any, Dict, Optional
 
 from lpot.ux.components.optimization.factory import OptimizationFactory
 from lpot.ux.components.optimization.optimization import Optimization
+from lpot.ux.components.optimization.tuning_history import Watcher
 from lpot.ux.utils.exceptions import ClientErrorException
 from lpot.ux.utils.executor import Executor
 from lpot.ux.utils.logger import log
@@ -81,9 +83,15 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
             log_name="output",
         )
 
+        tuning_history_watcher = Watcher(request_id)
+        threading.Thread(target=tuning_history_watcher, daemon=True).start()
+
         proc = executor.call(
             optimization.command,
         )
+
+        tuning_history_watcher.stop()
+
         optimization_time = executor.process_duration
         if optimization_time:
             optimization_time = round(optimization_time, 2)

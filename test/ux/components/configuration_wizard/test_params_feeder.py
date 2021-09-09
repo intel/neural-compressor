@@ -22,6 +22,7 @@ from lpot.ux.components.configuration_wizard.params_feeder import Feeder
 from lpot.ux.utils.exceptions import ClientErrorException
 
 
+@patch("sys.argv", ["lpot_ux.py", "-p5000"])
 class TestParamsFeeder(unittest.TestCase):
     """Main test class for params feeder."""
 

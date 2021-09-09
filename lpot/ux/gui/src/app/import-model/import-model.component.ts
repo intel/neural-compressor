@@ -82,7 +82,7 @@ export class ImportModelComponent implements OnInit {
   showGraphButton = false;
   showDomainSpinner = false;
   useEvaluationData = true;
-  fileBrowserParams = ['label_file', 'vocab_file'];
+  fileBrowserParams = ['label_file', 'vocab_file', 'anno_path'];
 
   constructor(
     private _formBuilder: FormBuilder,
@@ -157,6 +157,14 @@ export class ImportModelComponent implements OnInit {
           if (result['status'] === 'error') {
             this.frameworkWarning = result['data']['message'];
           } else {
+            this.firstFormGroup.get('domainFlavour').setValue(result['data']['domain_flavour']);
+            if (result['data']['domain'].length) {
+              this.firstFormGroup.get('modelDomain').setValue(result['data']['domain']);
+              this.getConfig();
+              this.showDomainSpinner = true;
+            } else {
+              this.firstFormGroup.get('modelDomain').reset();
+            }
             this.firstFormGroup.get('framework').setValue(result['data']['framework']);
             this.getPossibleValues();
             this.frameworkVersion = result['data']['framework_version'];
@@ -172,11 +180,15 @@ export class ImportModelComponent implements OnInit {
                   this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
                 } else {
                   this.boundaryNodes[param] = 'select';
-                  const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
-                  if (nonCustomParams.length === 1) {
-                    this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
-                  } else if (nonCustomParams.includes('softmax_tensor')) {
-                    this.firstFormGroup.get(param.slice(0, -1)).setValue(['softmax_tensor']);
+                  if (result['data']['domain'] === 'object_detection' && result['data']['domain_flavour'] === 'ssd' && ["detection_bboxes", "detection_scores", "detection_classes"].every((val) => result['data']['outputs'].includes(val))) {
+                    this.firstFormGroup.get('output').setValue(["detection_bboxes", "detection_scores", "detection_classes"]);
+                  } else {
+                    const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
+                    if (nonCustomParams.length === 1) {
+                      this.firstFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
+                    } else if (nonCustomParams.includes('softmax_tensor')) {
+                      this.firstFormGroup.get(param.slice(0, -1)).setValue(['softmax_tensor']);
+                    }
                   }
                 }
               } else {
@@ -214,6 +226,7 @@ export class ImportModelComponent implements OnInit {
       framework: ['', Validators.required],
       modelLocation: ['', Validators.required],
       modelDomain: ['', Validators.required],
+      domainFlavour: [''],
       input: [''],
       inputOther: [''],
       output: [''],
@@ -391,7 +404,7 @@ export class ImportModelComponent implements OnInit {
             }
             this.secondFormGroup.get('transform').setValue(transform);
             const transformNames = Object.keys(transform);
-            this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value, domain: this.firstFormGroup.get('modelDomain').value })
+            this.modelService.getPossibleValues('transform', { framework: this.firstFormGroup.get('framework').value, domain: this.firstFormGroup.get('modelDomain').value, domain_flavour: this.firstFormGroup.get('domainFlavour').value })
               .subscribe(
                 resp => {
                   this.showDomainSpinner = false;
@@ -479,6 +492,7 @@ export class ImportModelComponent implements OnInit {
     let model: NewModel;
     model = {
       domain: this.firstFormGroup.get('modelDomain').value,
+      domain_flavour: this.firstFormGroup.get('domainFlavour').value,
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
       model_path: this.firstFormGroup.get('modelLocation').value,
@@ -496,6 +510,7 @@ export class ImportModelComponent implements OnInit {
     model = {
       project_name: this.getFileName(this.firstFormGroup.get('modelLocation').value),
       domain: this.firstFormGroup.get('modelDomain').value,
+      domain_flavour: this.firstFormGroup.get('domainFlavour').value,
       framework: this.firstFormGroup.get('framework').value,
       id: this.id,
       model_path: this.firstFormGroup.get('modelLocation').value,
@@ -670,6 +685,7 @@ export class ImportModelComponent implements OnInit {
 export interface FullModel {
   project_name: string;
   domain: string;
+  domain_flavour: string;
   framework: string;
   id: string;
   model_path: string;

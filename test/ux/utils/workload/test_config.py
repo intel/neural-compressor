@@ -14,6 +14,7 @@
 # limitations under the License.
 """Config test."""
 import unittest
+from copy import deepcopy
 from unittest.mock import MagicMock, mock_open, patch
 
 import yaml
@@ -722,6 +723,19 @@ class TestConfig(unittest.TestCase):
         config.set_accuracy_goal(1234)
 
         self.assertEqual(1234, config.tuning.accuracy_criterion.relative)
+        self.assertIsNone(config.tuning.accuracy_criterion.absolute)
+
+    def test_set_absolute_accuracy_goal(self) -> None:
+        """Test set_accuracy_goal with absolute value."""
+        predefined_config = deepcopy(self.predefined_config)
+        if predefined_config.get("tuning", {}).get("accuracy_criterion", None) is not None:
+            predefined_config["tuning"]["accuracy_criterion"] = {"absolute": 0.01}
+        config = Config(predefined_config)
+
+        config.set_accuracy_goal(0.1234)
+
+        self.assertIsNone(config.tuning.accuracy_criterion.relative)
+        self.assertEqual(0.1234, config.tuning.accuracy_criterion.absolute)
 
     def test_set_accuracy_goal_to_negative_value(self) -> None:
         """Test set_accuracy_goal."""

@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 from lpot.ux.components.model_zoo.download_model import download_model
 
 
+@patch("sys.argv", ["lpot_ux.py", "-p5000"])
 class TestDownloadModel(unittest.TestCase):
     """DownloadModel tests."""
 

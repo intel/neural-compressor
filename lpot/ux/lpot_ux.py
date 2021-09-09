@@ -17,11 +17,18 @@
 """WSGI Web Server."""
 import sys
 
-from lpot.ux.utils.environment import Environment
-from lpot.ux.utils.exceptions import NotFoundException
-from lpot.ux.utils.logger import change_log_level
-from lpot.ux.web.configuration import Configuration
-from lpot.ux.web.server import run_server
+import gevent.monkey
+
+already_patched = gevent.monkey.is_module_patched("threading")
+if not already_patched:
+    can_patch_ssl = "ssl" not in sys.modules
+    gevent.monkey.patch_all(ssl=can_patch_ssl)
+
+from lpot.ux.utils.environment import Environment  # noqa: E402
+from lpot.ux.utils.exceptions import NotFoundException  # noqa: E402
+from lpot.ux.utils.logger import change_log_level  # noqa: E402
+from lpot.ux.web.configuration import Configuration  # noqa: E402
+from lpot.ux.web.server import run_server  # noqa: E402
 
 
 def main() -> None:

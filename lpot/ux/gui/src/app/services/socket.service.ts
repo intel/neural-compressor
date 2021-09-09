@@ -33,6 +33,7 @@ export class SocketService {
   public modelDownloadProgress$ = new BehaviorSubject({});
   public benchmarkStart$ = new BehaviorSubject({});
   public benchmarkFinish$ = new BehaviorSubject({});
+  public tuningHistory$ = new BehaviorSubject({});
 
   constructor(
     private http: HttpClient
@@ -42,6 +43,7 @@ export class SocketService {
     this.setupBoundaryNodesConnection();
     this.setupModelDownload();
     this.setupBenchmark();
+    this.setupTuningHistory();
   }
 
   setupOptimizationConnection() {
@@ -80,6 +82,12 @@ export class SocketService {
     });
   }
 
+  setupTuningHistory() {
+    this.socket.on('tuning_history', (data) => {
+      this.tuningHistory$.next(data);
+    });
+  }
+
   getBoundaryNodes(newModel: NewModel) {
     return this.http.post(
       this.baseUrl + 'api/get_boundary_nodes',
@@ -87,5 +95,13 @@ export class SocketService {
         id: newModel.id,
         model_path: newModel.model_path
       });
+  }
+
+  getTuningHistory(id: string) {
+    return this.http.get(this.baseUrl + 'api/workload/tuning_history', {
+      params: {
+        workload_id: id,
+      }
+    });
   }
 }

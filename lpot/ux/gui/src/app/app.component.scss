@@ -60,11 +60,11 @@
 
 .footer {
   position: fixed;
-  bottom: 5px;
-  left: 50%;
-  width: 98%;
+  bottom: 0px;
+  width: 100%;
+  text-align: center;
   color: $dark-gray;
-  padding-top: 5px;
+  background-color: #fafafa;
 }
 
 .menu-btn {

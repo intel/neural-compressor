@@ -18,6 +18,7 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
 from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.model.domain import Domain
 
 
 class Model(ABC):
@@ -48,6 +49,11 @@ class Model(ABC):
     def get_model_graph(self) -> Graph:
         """Get model graph."""
         raise NotImplementedError(f"Reading graph for model {self.path} is not supported.")
+
+    @property
+    def domain(self) -> Domain:
+        """Get model domain."""
+        return Domain()
 
     @staticmethod
     @abstractmethod

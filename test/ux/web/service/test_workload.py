@@ -41,7 +41,29 @@ class TestWorkloadService(unittest.TestCase):
 
         with self.assertRaisesRegex(
             NotFoundException,
-            "Unable to find config file for requested workload id",
+            "Unable to find workload with id: requested workload id",
+        ):
+            WorkloadService.get_config(
+                {
+                    "workload_id": ["requested workload id"],
+                },
+            )
+
+        mocked_get_workload_data.assert_called_with("requested workload id")
+
+    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    def test_get_config_fails_when_config_path_missing(
+        self,
+        mocked_get_workload_data: MagicMock,
+    ) -> None:
+        """Test get_config."""
+        mocked_get_workload_data.return_value = {
+            "config_path": None,
+        }
+
+        with self.assertRaisesRegex(
+            NotFoundException,
+            "Unable to find config file",
         ):
             WorkloadService.get_config(
                 {
@@ -94,7 +116,29 @@ class TestWorkloadService(unittest.TestCase):
 
         with self.assertRaisesRegex(
             NotFoundException,
-            "Unable to find code template file for requested workload id",
+            "Unable to find workload with id: requested workload id",
+        ):
+            WorkloadService.get_code_template(
+                {
+                    "workload_id": ["requested workload id"],
+                },
+            )
+
+        mocked_get_workload_data.assert_called_with("requested workload id")
+
+    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    def test_get_code_template_fails_when_code_template_path_missing(
+        self,
+        mocked_get_workload_data: MagicMock,
+    ) -> None:
+        """Test get_code_template."""
+        mocked_get_workload_data.return_value = {
+            "code_template_path": None,
+        }
+
+        with self.assertRaisesRegex(
+            NotFoundException,
+            "Unable to find code template file",
         ):
             WorkloadService.get_code_template(
                 {
@@ -147,7 +191,29 @@ class TestWorkloadService(unittest.TestCase):
 
         with self.assertRaisesRegex(
             NotFoundException,
-            "Unable to find output log for requested workload id",
+            "Unable to find workload with id: requested workload id",
+        ):
+            WorkloadService.get_output(
+                {
+                    "workload_id": ["requested workload id"],
+                },
+            )
+
+        mocked_get_workload_data.assert_called_with("requested workload id")
+
+    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    def test_get_output_fails_when_log_path_missing(
+        self,
+        mocked_get_workload_data: MagicMock,
+    ) -> None:
+        """Test get_output."""
+        mocked_get_workload_data.return_value = {
+            "log_path": None,
+        }
+
+        with self.assertRaisesRegex(
+            NotFoundException,
+            "Unable to find output log",
         ):
             WorkloadService.get_output(
                 {
@@ -213,6 +279,11 @@ class TestWorkloadService(unittest.TestCase):
             path="/some/fake/output/path.log",
             mimetype="text/plain",
         )
+
+    def test_get_history_snapshot_fails_when_no_workload_id_requested(self) -> None:
+        """Test get_history_snapshot."""
+        with self.assertRaisesRegex(ClientErrorException, "Missing workload_id parameter"):
+            WorkloadService.request_history_snapshot({})
 
 
 if __name__ == "__main__":

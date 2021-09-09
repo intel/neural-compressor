@@ -23,6 +23,7 @@ from lpot.ux.components.configuration_wizard.configuration_parser import Configu
 from lpot.ux.utils.exceptions import ClientErrorException
 
 
+@patch("sys.argv", ["lpot_ux.py", "-p5000"])
 class TestParser(unittest.TestCase):
     """Main test class for parser."""
 

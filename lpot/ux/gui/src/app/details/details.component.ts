@@ -21,6 +21,7 @@ import { ErrorComponent } from '../error/error.component';
 import { GraphComponent } from '../graph/graph.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
+import { EChartsOption } from 'echarts';
 
 @Component({
   selector: 'app-details',
@@ -40,8 +41,11 @@ export class DetailsComponent implements OnInit, OnChanges {
   accuracyData;
   performanceData;
   sizeData;
+  historyData = {};
+  accuracyReferenceLines = {};
   executionDetails = {};
-  view: any[] = window.innerWidth < 1500 ? [273, 200] : [307, 300];
+  view: any[] = [307, 300];
+  viewLine: any[] = [700, 300];
 
   // options
   labels = ['Input', 'Optimized'];
@@ -50,13 +54,16 @@ export class DetailsComponent implements OnInit, OnChanges {
   animations: boolean = true;
   xAxis: boolean = true;
   yAxis: boolean = true;
+  yScaleMin: number;
+  yScaleMax: number;
   showYAxisLabel: boolean = true;
   showXAxisLabel: boolean = true;
   timeline: boolean = true;
 
   colorScheme = {
-    domain: ['#004A86',
+    domain: [
       '#0095CA',
+      '#004A86',
       '#EDB200',
       '#B24501',
       '#41728A',
@@ -71,8 +78,25 @@ export class DetailsComponent implements OnInit, OnChanges {
       '#C98F00',]
   };
 
+  chartOption: EChartsOption = {
+    xAxis: {
+      type: 'category',
+      data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    },
+    yAxis: {
+      type: 'value',
+    },
+    series: [
+      {
+        data: [820, 932, 901, 934, 1290, 1330, 1320],
+        type: 'line',
+      },
+    ],
+  };
+
+
   constructor(
-    private activatedRoute: ActivatedRoute,
+    public activatedRoute: ActivatedRoute,
     private modelService: ModelService,
     private socketService: SocketService,
     public dialog: MatDialog,
@@ -81,11 +105,21 @@ export class DetailsComponent implements OnInit, OnChanges {
     this.router.routeReuseStrategy.shouldReuseRoute = () => false;
   }
 
-  onResize(event) {
-    this.view = window.innerWidth < 1500 ? [273, 200] : [307, 300];
+  onResize() {
+    if (window.innerWidth < 1500) {
+      this.view = [273, 200];
+      this.viewLine = [800, 200];
+    } else if (window.innerWidth < 2000) {
+      this.view = [293, 250];
+      this.viewLine = [900, 250];
+    } else {
+      this.view = [307, 300];
+      this.viewLine = [1000, 300];
+    }
   }
 
   ngOnInit() {
+    this.onResize();
     this.startDetails();
     this.token = this.modelService.getToken();
     this.socketService.optimizationFinish$
@@ -121,6 +155,76 @@ export class DetailsComponent implements OnInit, OnChanges {
           }
         }
       });
+
+    this.socketService.getTuningHistory(this.activatedRoute.snapshot.params.id).subscribe();
+
+    this.socketService.tuningHistory$
+      .subscribe(result => {
+        if (result['status'] === 'success' && result['data'] && this.activatedRoute.snapshot.params.id === result['data']['workload_id']) {
+          this.historyData['data'] = result['data'];
+          if (result['data']['history'][0]) {
+            this.getHistoryData(result);
+          }
+        }
+      });
+  }
+
+  getHistoryData(result) {
+    this.historyData['accuracy'] = [{
+      "name": "Accuracy",
+      "series": []
+    }];
+    this.historyData['performance'] = [{
+      "name": "Performance",
+      "series": []
+    }];
+    this.yScaleMin = result['data']['history'][0]['accuracy'];
+    this.yScaleMax = result['data']['history'][0]['accuracy'];
+
+    result['data']['history'].forEach((record, index) => {
+      if (this.historyData['data']['baseline_performance']) {
+        this.historyData['performance'][0]['series'].push({
+          name: index + 1,
+          value: record['performance']
+        });
+      }
+      this.historyData['accuracy'][0]['series'].push({
+        name: index + 1,
+        value: record['accuracy']
+      });
+
+      this.findMinMaxAccuracy(record['accuracy']);
+    });
+    this.findMinMaxAccuracy(result['data']['baseline_accuracy']);
+    this.findMinMaxAccuracy(result['data']['baseline_accuracy']);
+    this.setAccuracyScale();
+
+    this.accuracyReferenceLines = [{
+      name: 'baseline accuracy',
+      value: result['data']['baseline_accuracy']
+    },
+    {
+      name: 'minimal accepted accuracy',
+      value: result['data']['minimal_accuracy']
+    }];
+  }
+
+  findMinMaxAccuracy(accuracyValue: number) {
+    accuracyValue < this.yScaleMin ? this.yScaleMin = accuracyValue : null;
+    accuracyValue > this.yScaleMax ? this.yScaleMax = accuracyValue : null;
+  }
+
+  setAccuracyScale() {
+    this.yScaleMin = 0.98 * this.yScaleMin;
+    this.yScaleMax = 1.02 * this.yScaleMax;
+  }
+
+  axisFormat(val) {
+    if (val % 1 === 0) {
+      return val.toLocaleString();
+    } else {
+      return '';
+    }
   }
 
   ngOnChanges() {

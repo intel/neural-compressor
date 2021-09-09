@@ -198,19 +198,6 @@ def _load_json_as_list(path: str) -> list:
     return []
 
 
-def find_boundary_nodes(model_path: str) -> Dict[str, Any]:
-    """Update model's input and output nodes in config file."""
-    from lpot.ux.components.model.repository import ModelRepository
-
-    model_repository = ModelRepository()
-    model = model_repository.get_model(model_path)
-
-    return {
-        "inputs": model.get_input_nodes(),
-        "outputs": model.get_output_nodes(),
-    }
-
-
 def check_module(module_name: str) -> None:
     """Check if module exists. Raise exception when not found."""
     if module_name == "onnxrt":

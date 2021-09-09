@@ -28,8 +28,6 @@ mq = MessageQueue()
 
 def get_boundary_nodes(data: Dict[str, Any]) -> None:
     """Get configuration."""
-    from lpot.ux.utils.utils import find_boundary_nodes
-
     request_id = str(data.get("id", ""))
     model_path = data.get("model_path", None)
 
@@ -66,10 +64,18 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
             )
         framework_version = get_module_version(framework)
 
-        response_data = find_boundary_nodes(model_path)
-        response_data["id"] = request_id
-        response_data["framework"] = framework
-        response_data["framework_version"] = framework_version
+        model_repository = ModelRepository()
+        model = model_repository.get_model(model_path)
+
+        response_data = {
+            "id": request_id,
+            "framework": framework,
+            "framework_version": framework_version,
+            "inputs": model.get_input_nodes(),
+            "outputs": model.get_output_nodes(),
+        }
+
+        response_data.update(model.domain.serialize())  # type: ignore
     except ClientErrorException as err:
         mq.post_error(
             "boundary_nodes_finish",

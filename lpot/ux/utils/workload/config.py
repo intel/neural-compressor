@@ -236,8 +236,11 @@ class Config(JsonSerializer):
                 "Accuracy goal should be non negative real number.",
             )
 
-        if self.tuning.accuracy_criterion and self.tuning.accuracy_criterion.relative:
-            self.tuning.accuracy_criterion.relative = accuracy_goal
+        if self.tuning.accuracy_criterion:
+            if self.tuning.accuracy_criterion.relative:
+                self.tuning.accuracy_criterion.relative = accuracy_goal
+            elif self.tuning.accuracy_criterion.absolute:
+                self.tuning.accuracy_criterion.absolute = accuracy_goal
 
     def set_accuracy_metric(self, metric: dict) -> None:
         """Update accuracy metric in config."""

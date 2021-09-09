@@ -61,9 +61,9 @@
           <td class="icon-button">Model path:</td>
           <td>
             {{ model['model_path'] ? getFileName(model['model_path']) : null }}
-            <img *ngIf="model['model_path']" class="icon-button right"
-              src="./../../assets/146a-copy-solid.svg" matTooltip="Copy full model path to clipboard"
-              matTooltipPosition="after" (click)="copyToClipboard(model['model_path'])">
+            <img *ngIf="model['model_path']" class="icon-button right" src="./../../assets/146a-copy-solid.svg"
+              matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+              (click)="copyToClipboard(model['model_path'])">
           </td>
         </tr>
         <tr>
@@ -71,9 +71,9 @@
           <td>
             {{ model['model_output_path'] ? getFileName(model['model_output_path']) :
             null }}
-            <img *ngIf="model['model_output_path']" class="icon-button right"
-              src="./../../assets/146a-copy-solid.svg" matTooltip="Copy full model path to clipboard"
-              matTooltipPosition="after" (click)="copyToClipboard(model['model_output_path'])">
+            <img *ngIf="model['model_output_path']" class="icon-button right" src="./../../assets/146a-copy-solid.svg"
+              matTooltip="Copy full model path to clipboard" matTooltipPosition="after"
+              (click)="copyToClipboard(model['model_output_path'])">
           </td>
         </tr>
       </table>
@@ -84,7 +84,6 @@
   <div class="cards grid">
     <mat-card class="execution-details">
       <h2>Execution details</h2>
-      <br>
       <span class="exec">
         {{ model['execution_details'] ? getTooltip(model['execution_details']) : getTooltip(executionDetails) }}
       </span>
@@ -93,7 +92,7 @@
     <div>
       <mat-card class="comparison">
         <h2>Comparison</h2>
-        <table>
+        <table class="comparison-table">
           <tr>
             <td class="cell">
               <p class="big-number energy">
@@ -133,7 +132,7 @@
 
       <mat-card class="comparison">
         <h2>{{ labels[0] }} model</h2>
-        <table>
+        <table class="comparison-table">
           <tr>
             <td class="cell">
               <p class="big-number">
@@ -166,7 +165,7 @@
 
       <mat-card class="comparison">
         <h2>{{ labels[1] }} model</h2>
-        <table>
+        <table class="comparison-table">
           <tr>
             <td class="cell">
               <p class="big-number">
@@ -202,22 +201,55 @@
     </div>
   </div>
 
+  <ng-container *ngIf="historyData['data'] 
+    && historyData['data']['last_tune_accuracy'] 
+    && historyData['data']['history']
+    && historyData['data']['history'].length > 1">
+    <div class="cards grid">
+      <mat-card class="first-row">
+        <h2>Accuracy - tuning history</h2>
+        <p>
+          <ngx-charts-line-chart class="inline" (window:resize)="onResize()" [view]="viewLine" [scheme]="colorScheme"
+            [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
+            [yScaleMin]="yScaleMin" [yScaleMax]="yScaleMax" [results]="historyData['accuracy']"
+            [xAxisTickFormatting]="axisFormat" [referenceLines]="accuracyReferenceLines" [showRefLines]="true"
+            [showRefLabels]="true">
+          </ngx-charts-line-chart>
+        </p>
+      </mat-card>
+    </div>
+
+    <div class="cards grid">
+      <mat-card class="first-row" *ngIf="historyData['data']['baseline_performance']">
+        <h2>Duration - tuning history</h2>
+        <p>
+          <ngx-charts-line-chart class="inline" (window:resize)="onResize()" [view]="viewLine" [scheme]="colorScheme"
+            [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
+            [results]="historyData['performance']" [xAxisTickFormatting]="axisFormat" [yAxisLabel]="'[ms]'">
+          </ngx-charts-line-chart>
+        </p>
+      </mat-card>
+    </div>
+  </ng-container>
+
+
   <div class="cards grid">
-    <mat-card *ngIf="model['acc_input_model'] && model['status'] !== 'wip'">
+    <mat-card class="first-row" *ngIf="model['acc_input_model'] && model['status'] !== 'wip'">
       <h2>Parameters comparison</h2>
-      <ngx-charts-bar-vertical-2d *ngIf="accuracyData" class="inline" (window:resize)="onResize($event)"
-        [view]="view" [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel"
-        [xAxis]="xAxis" [yAxis]="yAxis" [results]="accuracyData">
-      </ngx-charts-bar-vertical-2d>
-      <ngx-charts-bar-vertical-2d *ngIf="performanceData" class="inline" (window:resize)="onResize($event)"
-        [view]="view" [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel"
-        [xAxis]="xAxis" [yAxis]="yAxis" [results]="performanceData">
-      </ngx-charts-bar-vertical-2d>
-      <ngx-charts-bar-vertical-2d *ngIf="sizeData" class="inline" (window:resize)="onResize($event)" [view]="view"
-        [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel"
-        [xAxis]="xAxis" [yAxis]="yAxis" [results]="sizeData">
-      </ngx-charts-bar-vertical-2d>
-      <br />
+      <p>
+        <ngx-charts-bar-vertical-2d *ngIf="accuracyData" class="inline" (window:resize)="onResize()" [view]="view"
+          [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis"
+          [yAxis]="yAxis" [results]="accuracyData">
+        </ngx-charts-bar-vertical-2d>
+        <ngx-charts-bar-vertical-2d *ngIf="performanceData" class="inline" (window:resize)="onResize()" [view]="view"
+          [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis"
+          [yAxis]="yAxis" [results]="performanceData">
+        </ngx-charts-bar-vertical-2d>
+        <ngx-charts-bar-vertical-2d *ngIf="sizeData" class="inline" (window:resize)="onResize()" [view]="view"
+          [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis"
+          [yAxis]="yAxis" [results]="sizeData">
+        </ngx-charts-bar-vertical-2d>
+      </p>
       <ngx-charts-legend class="chart-legend" [data]="labels" [title]="'Legend'" [colors]="colors">
       </ngx-charts-legend>
     </mat-card>

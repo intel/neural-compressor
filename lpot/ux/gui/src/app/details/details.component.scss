@@ -17,8 +17,8 @@
   white-space: pre;
 }
 
-table {
-  width: 700px;
+.comparison-table {
+  width: 100%;
 }
 
 .big-number {
@@ -105,9 +105,15 @@ p {
   .first-row {
     width: 820px !important;
   }
+}
 
-  p {
-    text-align: left !important;
+@media all and (min-width:2000px) {
+  .comparison {
+    width: 800px;
+  }
+
+  .first-row {
+    width: 1020px !important;
   }
 }
 
@@ -157,4 +163,8 @@ p {
 .chart-legend {
   float: right;
   width: 160px !important;
+}
+
+.demo-chart {
+  height: 400px;
 }
