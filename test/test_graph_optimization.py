@@ -72,6 +72,21 @@ def build_fake_yaml_3():
         yaml.dump(y, f)
     f.close()
 
+def build_fake_yaml_4():
+    fake_yaml_4 = '''
+        model:
+          name: fake_yaml_4
+          framework: pytorch
+          inputs: input
+          outputs: op_to_store
+        graph_optimization:
+          precisions: [bf16]
+        '''
+    y = yaml.load(fake_yaml_4, Loader=yaml.SafeLoader)
+    with open('fake_yaml_4.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
 class MyMetric(object):
     def __init__(self, *args):
         self.pred_list = []
@@ -156,6 +171,7 @@ class TestGraphOptimization(unittest.TestCase):
         build_fake_yaml()
         build_fake_yaml_2()
         build_fake_yaml_3()
+        build_fake_yaml_4()
 
     @classmethod
     def tearDownClass(self):
@@ -163,6 +179,32 @@ class TestGraphOptimization(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_2.yaml')
         os.remove('fake_yaml_3.yaml')
+        os.remove('fake_yaml_4.yaml')
+
+    def test_not_supported_model(self):
+        import torchvision
+        model = torchvision.models.resnet18()
+        from lpot.experimental import Graph_Optimization
+        graph_optimizer = Graph_Optimization('fake_yaml_4.yaml')
+        graph_optimizer.input = 'input'
+        graph_optimizer.output = 'op_to_store'
+        graph_optimizer.model = model
+        try:
+            output_graph = graph_optimizer()
+        except SystemExit:
+            pass
+
+    def test_not_supported_model_without_yaml(self):
+        import torchvision
+        model = torchvision.models.resnet18()
+        from lpot.experimental import Graph_Optimization
+        graph_optimizer = Graph_Optimization()
+        graph_optimizer.input = 'input'
+        graph_optimizer.output = 'op_to_store'
+        try:
+            graph_optimizer.model = model
+        except SystemExit:
+            pass
 
     @disable_random()
     def test_graph_optimization_with_evaluation(self):

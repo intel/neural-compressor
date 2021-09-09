@@ -23,7 +23,7 @@ import signal
 import psutil
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
-from ..conf.config import Conf
+from ..conf.config import Benchmark_Conf
 from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils.utility import set_backend
@@ -36,6 +36,7 @@ from .common import Model as LpotModel
 from .common import Metric as LpotMetric
 from .common import Postprocess as LpotPostprocess
 from .common import _generate_common_dataloader
+from ..model.model import get_model_fwk_name
 
 def set_env_var(env_var, value, overwrite_existing=False):
     """Sets the specified environment variable. Only set new env in two cases:
@@ -77,13 +78,15 @@ class Benchmark(object):
 
     """
 
-    def __init__(self, conf_fname):
-        self.conf = Conf(conf_fname)
-        self.framework = self.conf.usr_cfg.model.framework.lower()
+    def __init__(self, conf_fname=None):
+        self.framework = None
         self._model = None
         self._b_dataloader = None
         self._results = {}
-        set_backend(self.framework)
+        self.conf = Benchmark_Conf(conf_fname)
+        if self.conf.usr_cfg.model.framework != 'NA':
+            self.framework = self.conf.usr_cfg.model.framework.lower()
+            set_backend(self.framework)
 
     def __call__(self, mode='performance'):
         cfg = self.conf.usr_cfg
@@ -302,6 +305,11 @@ class Benchmark(object):
             self._model = user_model
 
         cfg = self.conf.usr_cfg
+        if cfg.model.framework == 'NA':
+            self.framework = get_model_fwk_name(user_model)
+            cfg.model.framework = self.framework
+            set_backend(self.framework)  
+
         # (TODO) ugly to set these params, but tensorflow need
         if self.framework == 'tensorflow':
             self._model.name = cfg.model.name

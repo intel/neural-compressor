@@ -23,6 +23,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_train_func,
 from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
+from ..conf.config import Pruning_Conf
 
 class Pruning(Component):
     """This is base class of pruning object.
@@ -38,9 +39,10 @@ class Pruning(Component):
 
     """
 
-    def __init__(self, conf_fname):
+    def __init__(self, conf_fname=None):
         super(Pruning, self).__init__()
-        self._init_with_conf(conf_fname)
+        self.conf = Pruning_Conf(conf_fname)
+        self._init_with_conf()
 
         self._pruning_func = None
         self.pruners = []
@@ -85,6 +87,8 @@ class Pruning(Component):
             pruner.post_epoch_end()
 
     def pre_process(self):
+        assert isinstance(self._model, BaseModel), 'need set lpot Model for pruning....'
+
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
@@ -98,7 +102,6 @@ class Pruning(Component):
 
         self.generate_hooks()
         self.generate_pruners()
-        assert isinstance(self._model, BaseModel), 'need set lpot Model for pruning....'
 
         if self._train_dataloader is None and self._pruning_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader

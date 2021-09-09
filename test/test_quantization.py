@@ -239,5 +239,14 @@ class TestQuantization(unittest.TestCase):
         quantizer.model = self.constant_graph
         output_graph = quantizer()
 
+    def test_quantization_without_yaml(self):
+        from lpot.experimental import Quantization, common
+        quantizer = Quantization()
+        quantizer.model = self.constant_graph
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        output_graph = quantizer()
+
 if __name__ == "__main__":
     unittest.main()

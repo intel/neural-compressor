@@ -137,26 +137,33 @@ def get_model_fwk_name(model):
         except:
             return 'NA'
         else:
-            return 'tensorflow,' + model_type
+            return 'tensorflow'
 
     def _is_mxnet(model):
         try:
             is_mxnet = isinstance(model, mx.gluon.HybridBlock) or \
-            (hasattr(model, '__len__') and len(model) > 1 and \
-            isinstance(model[0], mx.symbol.Symbol))
+                (hasattr(model, '__len__') and len(model) > 1 and \
+                isinstance(model[0], mx.symbol.Symbol))
         except:
             return 'NA'
         else:
-            return 'mxnet'
+            return 'mxnet' if is_mxnet else 'NA'
+
+    #check if the input model is a lpot model
+    for name, lpotmodel in MODELS.items():
+        if isinstance(model, lpotmodel):
+            return 'pytorch' if name == 'pytorch_ipex' or name == 'pytorch_fx' else name
+    if isinstance(model, TensorflowBaseModel):
+        return 'tensorflow'
 
     checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
-
     for handler in checker:
         fwk_name = handler(model)
         if fwk_name != 'NA':
-            return fwk_name
-
-    return 'NA'
+            break    
+    assert fwk_name != 'NA', 'Framework is not detected correctly from model format.'        
+    
+    return fwk_name
 
 def validate_graph_node(graph_def, node_names):
     """Validate nodes exist in the graph_def

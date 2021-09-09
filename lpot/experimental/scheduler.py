@@ -201,6 +201,7 @@ class Scheduler(object):
         train_cfg = DotDict()
         eval_cfg = DotDict()
         tuning_cfg = DotDict()
+        model_cfg = DotDict()
         for combine_component in args:
             # check if config is valid
             assert combine_component.framework == framework, "Combined components should have " \
@@ -223,9 +224,12 @@ class Scheduler(object):
             # But eval is defined at root yaml field.
             component_eval_cfg = combine_component.cfg.get('evaluation', DotDict())
             component_tuning_cfg = combine_component.cfg.get('tuning', DotDict())
+            component_model_cfg = combine_component.cfg.get('model', DotDict())
+
             self._sync_config(train_cfg, component_train_cfg)
             self._sync_config(eval_cfg, component_eval_cfg)
             self._sync_config(tuning_cfg, component_tuning_cfg)
+            self._sync_config(model_cfg, component_model_cfg)
             combine_component._model = self._model
             if component_eval_cfg and component_train_cfg:
                 # create attributes if eval and train are defined in component config
@@ -248,6 +252,7 @@ class Scheduler(object):
             deep_set(dist_component_cfg, 'evaluation', eval_cfg)
             deep_set(dist_component_cfg, 'tuning', tuning_cfg)
             deep_set(dist_component_cfg, 'device', device)
+            deep_set(dist_component_cfg, 'model', model_cfg)
             dist_component._model = self._model
             dist_component.framework = framework
             dist_component.cfg = dist_component_cfg

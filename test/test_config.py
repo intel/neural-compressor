@@ -327,7 +327,7 @@ class TestConf(unittest.TestCase):
               algorithm:  minmax
         '''
         helper(test)
-        config = conf.Conf('fake_conf.yaml')
+        config = conf.Quantization_Conf('fake_conf.yaml')
 
         framework_modelwise_capability = {
             'CONV2D': {
@@ -365,7 +365,7 @@ class TestConf(unittest.TestCase):
               dtype: ['uint8', 'fp32']
         '''
         helper(test)
-        config = conf.Conf('fake_conf.yaml')
+        config = conf.Quantization_Conf('fake_conf.yaml')
 
         framework_modelwise_capability = {
             'CONV2D': {
@@ -412,7 +412,7 @@ class TestConf(unittest.TestCase):
           
         '''
         helper(test)
-        config = conf.Conf('fake_conf.yaml')
+        config = conf.Quantization_Conf('fake_conf.yaml')
 
         framework_modelwise_capability = {
             'CONV2D': {

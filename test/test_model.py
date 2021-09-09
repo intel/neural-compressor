@@ -206,7 +206,7 @@ class TestTensorflowModel(unittest.TestCase):
         if tf.version.VERSION < '2.3.0':
             return
         keras_model = build_keras()
-        self.assertEqual('tensorflow', get_model_fwk_name(keras_model).split(',')[0])
+        self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
 
         model = Model(keras_model)
         self.assertGreaterEqual(len(model.output_node_names), 1)
@@ -251,6 +251,16 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf temp_saved_model')
         os.system('rm -rf {}'.format(tmp_saved_model_path))
 
+    def test_tensorflow(self):
+        from lpot.model.model import TensorflowBaseModel
+        ori_model = build_graph()
+        self.assertEqual('tensorflow', get_model_fwk_name(ori_model))
+        self.assertEqual('tensorflow', get_model_fwk_name(TensorflowBaseModel(ori_model)))
+        try:
+            get_model_fwk_name([])
+        except AssertionError:
+            pass
+
 def export_onnx_model(model, path):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
     torch_out = model(x)
@@ -292,7 +302,7 @@ class TestONNXModel(unittest.TestCase):
 class TestPyTorchModel(unittest.TestCase):
     def testPyTorch(self):
         import torchvision
-        from lpot.model.model import PyTorchModel, PyTorchIpexModel
+        from lpot.model.model import PyTorchModel, PyTorchIpexModel, PyTorchFXModel
         ori_model = torchvision.models.mobilenet_v2()
         self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
@@ -308,6 +318,10 @@ class TestPyTorchModel(unittest.TestCase):
         with self.assertRaises(AssertionError):
             ipex_model.workspace_path = './pytorch'
         ipex_model.save('./')
+
+        self.assertEqual('pytorch', get_model_fwk_name(PyTorchModel(ori_model)))
+        self.assertEqual('pytorch', get_model_fwk_name(PyTorchIpexModel(ori_model)))
+        self.assertEqual('pytorch', get_model_fwk_name(PyTorchFXModel(ori_model)))
 
 def load_mxnet_model(symbol_file, param_file):
     symbol = mx.sym.load(symbol_file)

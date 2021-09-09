@@ -22,7 +22,7 @@ import tempfile
 import sys
 import numpy as np
 import yaml
-from ..conf.config import Conf
+from ..conf.config import Graph_Optimization_Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
@@ -62,24 +62,17 @@ class Graph_Optimization():
         self._input = []
         self._output = []
         self.conf = None
-        self.__init_env(conf_fname, self._model)
-        set_backend('tensorflow')
+        self._init_with_conf(conf_fname)
 
-    def __init_env(self, conf_fname, model_obj):
-        if self.conf:
-            logger.debug("Graph optimization conf has been initialized.")
-            return
-
-        if conf_fname:
-            self.conf = Conf(conf_fname)
-        elif not conf_fname and model_obj:
-            self.gen_graph_optimization_yaml(model_obj)
-        else:
-            return
-
+    def _init_with_conf(self, conf_fname):
+        self.conf = Graph_Optimization_Conf(conf_fname)
         cfg = self.conf.usr_cfg
+
+        if cfg.model.framework != 'NA':
+            self.framework = cfg.model.framework.lower()
+            set_backend(self.framework)
+
         cfg.tuning.strategy.name = 'automixedprecision'
-        self.framework = cfg.model.framework.lower()
         seed = cfg.tuning.random_seed
         random.seed(seed)
         np.random.seed(seed)
@@ -127,15 +120,16 @@ class Graph_Optimization():
         """
 
         assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
-        self.__init_env(self.conf_name, self._model)
 
         cfg = self.conf.usr_cfg
-
         if self.framework == 'tensorflow':
             self._model.name = cfg.model.name
             self._model.output_tensor_names = cfg.model.outputs
             self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
+        else: 
+            logger.warning("Only TensorFlow graph optimization is supported at current stage.") 
+            sys.exit(0) 
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
@@ -197,32 +191,24 @@ class Graph_Optimization():
         from .data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)
 
-    def gen_graph_optimization_yaml(self, model_obj):
-        default_yaml_template = {'model': {'framework': 'tensorflow', 'name': 'resnet50'},
-                                           'device': 'cpu',
-                                           'graph_optimization': {'precisions': ['bf16, fp32']}}
+    def set_config_by_model(self, model_obj):
         if model_obj.framework() != 'tensorflow':
             logger.warning("Only TensorFlow graph optimization is supported at current stage.")
             sys.exit(0)
-        default_yaml_template['model']['framework'] = model_obj.framework()
+        self.conf.usr_cfg.model.framework = model_obj.framework()
 
         if self._precisions == ['bf16'] and not CpuInfo().bf16:
             if os.getenv('FORCE_BF16') == '1':
-                logger.warning("Graph optimization will generate bf16 graph alought " \
+                logger.warning("Graph optimization will generate bf16 graph although " \
                                "the hardware doesn't support bf16 instruction.")
             else:
                 logger.warning("Graph optimization exits due to the hardware " \
                                "doesn't support bf16 instruction.")
                 sys.exit(0)
-
-        default_yaml_template['graph_optimization']['precisions'] = self._precisions
-        default_yaml_template['model']['inputs'] = self._input
-        default_yaml_template['model']['outputs'] = self._output
-
-        graph_optimization_yaml_path = tempfile.mkstemp(suffix='.yaml')[1]
-        with open(graph_optimization_yaml_path, 'w', encoding='utf-8') as f:
-            yaml.dump(default_yaml_template, f)
-        self.conf = Conf(graph_optimization_yaml_path)
+        
+        self.conf.usr_cfg.graph_optimization.precisions = self._precisions
+        self.conf.usr_cfg.model.inputs = self._input
+        self.conf.usr_cfg.model.outputs = self._output
 
     @property
     def precisions(self):
@@ -309,6 +295,11 @@ class Graph_Optimization():
             self._model = LpotModel(user_model)
         else:
             self._model = user_model
+
+        if self.conf.usr_cfg.model.framework == 'NA':
+            self.set_config_by_model(self._model)
+            self.framework = self.conf.usr_cfg.model.framework.lower()
+            set_backend(self.framework)
 
     @property
     def metric(self):

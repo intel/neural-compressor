@@ -16,7 +16,7 @@
 # limitations under the License.
 
 import sys
-from lpot.model.model import get_model_fwk_name, MODELS
+from lpot.model.model import get_model_fwk_name, MODELS, get_model_type
 from lpot.utils import logger
 from lpot.utils.utility import get_backend
 
@@ -39,11 +39,9 @@ class Model(object):
         """
         backend = get_backend()
         framework = get_model_fwk_name(root)
-        if framework == 'NA':
-            assert False, 'Framework is not detected correctly from model format.'
             
-        if framework.split(',')[0] == 'tensorflow':
-            model_type = framework.split(',')[-1]
+        if framework == 'tensorflow':
+            model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
         elif framework == 'pytorch':
             assert backend != 'NA', 'please set pytorch backend'

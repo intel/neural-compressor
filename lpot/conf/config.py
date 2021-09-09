@@ -729,6 +729,109 @@ schema = Schema({
     }
 })
 
+quantization_default_schema = Schema({
+    Optional('model', default={'name': 'default_model_name', \
+                               'framework': 'NA', \
+                                'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('quantization', default={'approach': 'post_training_static_quant', \
+                                      'calibration': {'sampling_size': [100]}, \
+                                      'recipes': {'scale_propagation_max_pooling': True,
+                                                      'scale_propagation_concat': True,
+                                                      'first_conv_or_matmul_quantization': True},
+                                      'model_wise': {'weight': {'bit': [7.0]},
+                                                     'activation': {}}}): dict,
+
+    Optional('tuning', default={
+        'strategy': {'name': 'basic'},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
+        'objective': 'performance',
+        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
+})
+
+pruning_default_schema = Schema({
+    Optional('model', default={'name': 'default_model_name', \
+                               'framework': 'NA', \
+                                'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('tuning', default={
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('pruning', default={'approach': {'weight_compression':{'initial_sparsity': 0, \
+                                            'target_sparsity': 0.97, 'start_epoch': 0, \
+                                            'end_epoch': 4}}}): dict
+})
+
+graph_optimization_default_schema = Schema({
+    Optional('model', default={'name': 'resnet50', \
+                               'framework': 'NA', \
+                                'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('quantization', default={'approach': 'post_training_static_quant', \
+                                    'calibration': {'sampling_size': [100]}, \
+                                    'recipes': {'scale_propagation_max_pooling': True,
+                                                    'scale_propagation_concat': True,
+                                                    'first_conv_or_matmul_quantization': True},
+                                    'model_wise': {'weight': {'bit': [7.0]},
+                                                    'activation': {}}}): dict,
+
+    Optional('tuning', default={
+        'strategy': {'name': 'basic'},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
+        'objective': 'performance',
+        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict,
+
+    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict
+})
+
+benchmark_default_schema = Schema({
+    Optional('model', default={'name': 'resnet50', \
+                               'framework': 'NA', \
+                                'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('quantization', default={'approach': 'post_training_static_quant', \
+                                    'calibration': {'sampling_size': [100]}, \
+                                    'recipes': {'scale_propagation_max_pooling': True,
+                                                    'scale_propagation_concat': True,
+                                                    'first_conv_or_matmul_quantization': True},
+                                    'model_wise': {'weight': {'bit': [7.0]},
+                                                    'activation': {}}}): dict,
+
+    Optional('tuning', default={
+        'strategy': {'name': 'basic'},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
+        'objective': 'performance',
+        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
+})
 
 class Conf(object):
     """config parser.
@@ -737,12 +840,9 @@ class Conf(object):
         cfg_fname (string): The path to the configuration file.
 
     """
-
     def __init__(self, cfg_fname):
         assert cfg_fname is not None
         self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
-        self._model_wise_tune_space = None
-        self._opwise_tune_space = None
 
     def _read_cfg(self, cfg_fname):
         """Load a config file following yaml syntax.
@@ -777,6 +877,22 @@ class Conf(object):
             raise RuntimeError(
                 "The yaml file format is not correct. Please refer to document."
             )
+
+class Quantization_Conf(Conf):
+    """config parser.
+
+    Args:
+        cfg_fname (string): The path to the configuration file.
+
+    """
+
+    def __init__(self, cfg_fname):
+        if cfg_fname:
+            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+        else:
+            self.usr_cfg = DotDict(quantization_default_schema.validate(dict()))
+        self._model_wise_tune_space = None
+        self._opwise_tune_space = None
 
     def _merge_dicts(self, src, dst):
         """Helper function to merge src dict into dst dict.
@@ -950,3 +1066,45 @@ class Conf(object):
         keys, values = zip(*cfg_dict.items())
         lists = [dict(zip(keys, v)) for v in itertools.product(*values)]
         return lists
+
+class Pruning_Conf(Conf):
+    """config parser.
+
+    Args:
+        cfg_fname (string): The path to the configuration file.
+
+    """
+
+    def __init__(self, cfg_fname):
+        if cfg_fname:
+            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+        else:
+            self.usr_cfg = DotDict(pruning_default_schema.validate(dict()))
+
+class Graph_Optimization_Conf(Quantization_Conf):
+    """config parser.
+
+    Args:
+        cfg_fname (string): The path to the configuration file.
+
+    """
+
+    def __init__(self, cfg_fname):
+        if cfg_fname:
+            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+        else:
+            self.usr_cfg = DotDict(graph_optimization_default_schema.validate(dict()))
+
+class Benchmark_Conf(Conf):
+    """config parser.
+
+    Args:
+        cfg_fname (string): The path to the configuration file.
+
+    """
+
+    def __init__(self, cfg_fname):
+        if cfg_fname:
+            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+        else:
+            self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))

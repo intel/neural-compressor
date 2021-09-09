@@ -28,6 +28,8 @@ from ..utils.create_obj_from_config import create_dataloader
 from ..adaptor import FRAMEWORKS
 from .common import Model as LpotModel
 from ..model import BaseModel
+from ..conf.config import Quantization_Conf
+from ..utils.utility import set_backend
 
 class Quantization(Component):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -49,9 +51,10 @@ class Quantization(Component):
 
     """
 
-    def __init__(self, conf_fname):
+    def __init__(self, conf_fname=None):
         super(Quantization, self).__init__()
-        self._init_with_conf(conf_fname)
+        self.conf = Quantization_Conf(conf_fname)
+        self._init_with_conf()
 
         seed = self.cfg.tuning.random_seed
         random.seed(seed)

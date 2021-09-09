@@ -55,6 +55,26 @@ def build_benchmark():
     with open('fake.py', "w", encoding="utf-8") as f:
         f.writelines(seq)
 
+def build_benchmark_without_yaml():
+    seq = [
+        "from argparse import ArgumentParser\n",
+        "arg_parser = ArgumentParser(description='Parse args')\n",
+        "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
+        "args = arg_parser.parse_args()\n",
+
+        "from lpot.data import DATASETS\n",
+        "dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)\n",
+
+        "from lpot.experimental import Benchmark, common\n",
+        "benchmarker = Benchmark()\n",
+        "benchmarker.model = args.input_model\n",
+        "benchmarker.b_dataloader = common.DataLoader(dataset)\n",
+        "benchmarker()\n"
+    ]
+
+    with open('fake2.py', "w", encoding="utf-8") as f:
+        f.writelines(seq)
+
 def build_fake_model():
     graph_path = tempfile.mkstemp(suffix='.pb')[1]
     try:
@@ -100,6 +120,7 @@ class TestObjective(unittest.TestCase):
         self.graph_path = build_fake_model()
         build_fake_yaml()
         build_benchmark()
+        build_benchmark_without_yaml()
 
     @classmethod
     def tearDownClass(self):
@@ -118,6 +139,14 @@ class TestObjective(unittest.TestCase):
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
             self.assertIsNotNone(throughput)
 
+    def test_benchmark_without_yaml(self):
+        from lpot.utils import logger
+        os.system("python fake2.py --input_model={}".format(self.graph_path))
+        for i in range(2):
+            with open(f'2_4_{i}.log', "r") as f:
+                for line in f:
+                    throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
+            self.assertIsNotNone(throughput)
 
 if __name__ == "__main__":
     unittest.main()

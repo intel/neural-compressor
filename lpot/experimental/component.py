@@ -21,7 +21,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_train_func,
 from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
-
+from ..model.model import get_model_fwk_name
 
 class Component(object):
     """This is base class of LPOT Component
@@ -40,11 +40,11 @@ class Component(object):
         self.hooks = None
         self.hooks_dict = None
 
-    def _init_with_conf(self, conf_fname):
-        self.conf = Conf(conf_fname)
+    def _init_with_conf(self):
         self.cfg = self.conf.usr_cfg
-        self.framework = self.cfg.model.framework.lower()
-        set_backend(self.framework)
+        if self.cfg.model.framework != 'NA':
+            self.framework = self.cfg.model.framework.lower()
+            set_backend(self.framework)
 
     def pre_process(self):
         """ Initialize the dataloader and train/eval functions from yaml config.
@@ -334,6 +334,11 @@ class Component(object):
             self._model = Model(user_model)
         else:
             self._model = user_model
+        
+        if self.cfg.model.framework == 'NA':
+            self.framework = get_model_fwk_name(user_model)
+            self.cfg.model.framework = self.framework
+            set_backend(self.framework)   
 
         if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
             self._model.name = self.cfg.model.name
