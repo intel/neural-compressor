@@ -135,6 +135,7 @@
         'Conv2D + Relu6',
         'Conv2D + BiasAdd',
         'DepthwiseConv2dNative + BiasAdd + Relu6',
+        'DepthwiseConv2dNative + BiasAdd + Relu',
         'DepthwiseConv2dNative + Add + Relu6',
         'DepthwiseConv2dNative + BiasAdd',
         'MatMul + BiasAdd + Relu',
