@@ -40,6 +40,7 @@ from lpot.adaptor.ox_utils.registry import CreateOpQuantizer, CreateDefaultOpQua
 from lpot.adaptor.ox_utils.util import quantize_data_with_scale_zero, quantize_data, \
                                        QuantizedValue, QuantizedInitializer
 from lpot.model.onnx_model import ONNXModel
+from lpot.utils.utility import CpuInfo
 
 
 def _get_qrange_for_qType(qType, reduce_range=False):
@@ -62,7 +63,7 @@ class ONNXQuantizer:
                  op_types_to_quantize):
         self.model = ONNXModel(model)
         self.config = q_config
-        self.reduce_range = False
+        self.reduce_range = False if CpuInfo().vnni else True
         self.mode = mode  # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
         self.fuse_dynamic_quant = False
