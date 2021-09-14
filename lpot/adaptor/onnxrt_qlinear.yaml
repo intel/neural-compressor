@@ -21,7 +21,7 @@
     names: int8, uint8, fp32
     valid_mixed_precisions: []
   
-  ops: &common_ops
+  ops:
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip', 
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
         'FusedConv', 'GlobalAveragePool', 'Add']     
@@ -71,7 +71,20 @@
                         'granularity': ['per_tensor'],
                         }
                     },
- 
+          'MatMul': {
+            'weight':   {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'default': {
              'weight': {
                         'dtype': ['int8', 'fp32'],
@@ -92,16 +105,102 @@
       level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
 -
   version:
+    name: '1.8.0'
+
+  precisions: 
+    <<: *common_precisions
+
+  ops: &common_ops
+    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
+        'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
+    fp32: ['*'] # '*' means all op types
+
+  capabilities:
+    int8: {
+          'FusedConv': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'Conv': {
+            'weight':   {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'Gather': {
+            'weight':   {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_channel'],
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor'],
+                        }
+                    },
+          'MatMul': {
+            'weight':   {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+             'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor']
+                    },
+             'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+  graph_optimization: 
+    <<: *default_optimization
+-
+  version:
     name: 'default'
 
   precisions: 
     <<: *common_precisions
 
   ops:
-    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
-        'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
-    fp32: ['*'] # '*' means all op types
+    <<: *common_ops
 
   capabilities:
     <<: *common_capabilities

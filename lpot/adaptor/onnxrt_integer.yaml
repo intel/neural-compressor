@@ -55,6 +55,20 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'default': {
             'weight': {
                         'dtype': ['int8', 'fp32'],
@@ -73,6 +87,78 @@
 
   graph_optimization: &default_optimization # from onnxruntime graph_optimization_level
     level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']    
+-
+  version:
+    name: '1.8.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    int8: {
+          'Conv': {
+            'weight': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'FusedConv': {
+            'weight': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor']
+                    },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor']
+                        }
+                    }
+          }
+
+  graph_optimization:
+    <<: *default_optimization
 -
   version:
     name: 'default'

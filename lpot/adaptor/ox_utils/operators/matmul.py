@@ -35,8 +35,17 @@ class MatMulInteger(QuantOperatorBase):
         node = self.node
         assert (node.op_type == "MatMul")
 
-        (quantized_input_names, zero_point_names, scale_names, nodes) = \
-            self.quantizer.quantize_inputs(node, [0, 1])
+        if self.quantizer.is_input_a_weight(node.input[1]) and self.per_channel:
+            (quantized_input_names, zero_point_names, scale_names, nodes) = \
+                self.quantizer.quantize_inputs(node, [0])
+            quant_weight_tuple = self.quantizer.quantize_weight_per_channel(node.input[1],
+                                                self.weight_dtype, self.weight_scheme, -1)
+            quantized_input_names.append(quant_weight_tuple[0])
+            zero_point_names.append(quant_weight_tuple[1])
+            scale_names.append(quant_weight_tuple[2])
+        else:
+            (quantized_input_names, zero_point_names, scale_names, nodes) = \
+                self.quantizer.quantize_inputs(node, [0, 1])
 
         matmul_integer_output = node.output[0] + "_output_quantized"
         matmul_integer_name = node.name + "_quant" if node.name != "" else ""
@@ -88,8 +97,17 @@ class QLinearMatMul(QuantOperatorBase):
         node = self.node
         assert (node.op_type == "MatMul")
 
-        (quantized_input_names, zero_point_names, scale_names, nodes) = \
-            self.quantizer.quantize_inputs(node, [0, 1])
+        if self.quantizer.is_input_a_weight(node.input[1]) and self.per_channel:
+            (quantized_input_names, zero_point_names, scale_names, nodes) = \
+                self.quantizer.quantize_inputs(node, [0])
+            quant_weight_tuple = self.quantizer.quantize_weight_per_channel(node.input[1],
+                                                self.weight_dtype, self.weight_scheme, -1)
+            quantized_input_names.append(quant_weight_tuple[0])
+            zero_point_names.append(quant_weight_tuple[1])
+            scale_names.append(quant_weight_tuple[2])
+        else:
+            (quantized_input_names, zero_point_names, scale_names, nodes) = \
+                self.quantizer.quantize_inputs(node, [0, 1])
 
         data_found, output_scale_name, output_zp_name, _, _ = \
             self.quantizer._get_quantization_params(node.output[0])

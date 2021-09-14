@@ -30,8 +30,8 @@ def build_static_yaml():
             'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
             'weight': {'dtype': ['fp32'], 'scheme':['sym']}
             }
-          }                                       
-
+          }
+ 
         evaluation:
           accuracy:
             metric:
@@ -221,6 +221,16 @@ def build_ir3_model():
     model.ir_version = 3
     return model
 
+def build_matmul_model():
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
+    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
+    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
+    matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
+    model = helper.make_model(graph)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
 def build_model_with_gather():
     b_value = np.random.randint(2, size=(10)).astype(np.int32)
     B_init = helper.make_tensor('B', TensorProto.INT32, [10], b_value.reshape(10).tolist())
@@ -237,6 +247,21 @@ def build_model_with_gather():
     graph = helper.make_graph([squeeze, node, add], 'test_graph_1', [A], [F], [B_init, E_init])
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
+
+class MatmulDataset:
+    def __init__(self):
+        self.data = []
+        self.label = []
+        for i in range(3):
+            self.data.append([np.random.randn(1,5,5).astype('float32'), 
+                              np.random.randn(1,5,1).astype('float32')])
+            self.label.append(np.random.randn(1,5,1).astype('float32'))
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.label[idx]
+
+    def __len__(self):
+        return len(self.data)
 
 class TestAdaptorONNXRT(unittest.TestCase):
 
@@ -255,6 +280,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
     gather_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 100, 4), label=True)
     gather_dataloader = DATALOADERS['onnxrt_qlinearops'](gather_dataset)
 
+    matmul_dataset = MatmulDataset()
+    matmul_dataloader = DATALOADERS['onnxrt_qlinearops'](matmul_dataset)
+
     @classmethod
     def setUpClass(self):
         build_static_yaml()
@@ -269,6 +297,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.rn50_model = onnx.load(self.rn50_export_path)
         self.ir3_model = build_ir3_model()
         self.gather_model = build_model_with_gather()
+        self.matmul_model = build_matmul_model()
 
     @classmethod
     def tearDownClass(self):
@@ -379,6 +408,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.calib_dataloader = self.gather_dataloader
             quantizer.eval_dataloader = self.gather_dataloader
             quantizer.model = common.Model(self.gather_model)
+            q_model = quantizer()
+
+            quantizer.model = common.Model(self.matmul_model)
+            q_model = quantizer()
+
+            quantizer.eval_dataloader = self.matmul_dataloader
+            q_model = quantizer()
+
+            quantizer.calib_dataloader = self.matmul_dataloader
+            quantizer.eval_dataloader = self.matmul_dataloader
+            quantizer.model = common.Model(self.matmul_model)
             q_model = quantizer()
 
         for fake_yaml in ["non_MSE.yaml"]:
