@@ -131,11 +131,17 @@ def _load_meta(model_network_path):
         print ("Tensorflow model file [%s] loaded successfully." % model_network_path)
         return graph
 
-def get_input_output(graph_path, input_meta=False):
+def get_input_output(graph_path, args):
     # give a fix shape if not get input shape 
     fix_dynamic_shape = 300
 
-    if input_meta:
+    if args.use_lpot:
+        from lpot.experimental import common
+        model = common.Model(graph_path)
+        graph_def = model.graph_def
+        output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
+
+    elif args.is_meta:
         # meta file
         graph_def = _load_meta(graph_path)
         output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
@@ -144,6 +150,7 @@ def get_input_output(graph_path, input_meta=False):
         output_graph_def = freeze_graph(input_checkpoint=graph_prefix, output_graph=output_freeze_model_dir, output_node_names=output_nodes['outputs'])
         print("****** {} is a ckpt model, now save freezed model at {}".format(graph_path, output_freeze_model_dir))
         # output_nodes = summarize_graph(output_graph_def, fix_dynamic_shape)
+
     else:
         graph_def = tf_v1.GraphDef()
         load_graph = _load_pb(graph_def, graph_file_name=graph_path)

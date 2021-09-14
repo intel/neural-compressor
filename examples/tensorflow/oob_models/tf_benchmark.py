@@ -27,20 +27,26 @@ def metrics_generator(array, tolerance):
     success_rate = np.sum(array < tolerance) / array.size
     return max_diff, mean_diff, median_diff, success_rate
 
-def initialize_graph(model_details, disable_optimize_for_inference):
+def initialize_graph(model_details, args):
     graph = tf_v1.Graph()
     with graph.as_default():
         input_variables = {
             in_name + ":0": tf_v1.Variable(val)
             for in_name, val in model_details['input'].items()}
 
-        od_graph_def = tf_v1.GraphDef()
-        with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_dir']), 'rb') as fid:
-            serialized_graph = fid.read()
-            od_graph_def.ParseFromString(serialized_graph)
-            od_graph_def = delete_assign(od_graph_def)
+        if args.use_lpot:
+            from lpot.experimental import common
+            model = common.Model(model_details['model_dir'])
+            od_graph_def = model.graph_def
+        else:
+            od_graph_def = tf_v1.GraphDef()
+            with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_dir']), 'rb') as fid:
+                serialized_graph = fid.read()
+                od_graph_def.ParseFromString(serialized_graph)
+                od_graph_def = delete_assign(od_graph_def)
+
         # optimize for inference
-        if not disable_optimize_for_inference:
+        if not args.disable_optimize:
             # optimize graph for inference
             input_list = [ in_name for in_name,val in model_details['input'].items() ]
             output_list = [ out_name for out_name in model_details['output'] ]
@@ -73,7 +79,7 @@ def create_tf_config(args):
 
 def run_benchmark(model_details, args):
     tf_config = create_tf_config(args)
-    graph = initialize_graph(model_details, args.disable_optimize)
+    graph = initialize_graph(model_details, args)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
     run_metadata = tf_v1.RunMetadata()
 
@@ -204,6 +210,7 @@ if __name__ == "__main__":
     parser.add_argument("--is_meta", action='store_true', help="input a meta file")
     parser.add_argument("--save_graph", action='store_true', help="save_graph")
     parser.add_argument("--benchmark", action='store_true', help="Benchmark.")
+    parser.add_argument("--use_lpot", action='store_true', help="Find input/output via lpot.")
     # tuning
     parser.add_argument("--yaml", type=str, help="config yaml file of lpot.", default='./config.yaml')
     parser.add_argument("--tune", action='store_true', help="Do lpot optimize.")
@@ -217,7 +224,7 @@ if __name__ == "__main__":
         # generate model detail
         model_dir = args.model_path
         model_detail = {}
-        model_input_output = get_input_output(model_dir, args.is_meta)
+        model_input_output = get_input_output(model_dir, args)
         # ckpt/meta model will save freezed pb in the same dir
         model_dir = model_dir if not args.is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']

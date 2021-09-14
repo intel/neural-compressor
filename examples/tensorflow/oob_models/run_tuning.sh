@@ -87,6 +87,48 @@ vggvox
 --------
 )
 
+# bs !=1 when tuning
+models_need_bs16=(
+--------
+icnet-camvid-ava-0001
+icnet-camvid-ava-sparse-30-0001
+icnet-camvid-ava-sparse-60-0001
+--------
+)
+models_need_bs32=(
+--------
+adv_inception_v3
+ens3_adv_inception_v3
+--------
+)
+
+# lpot graph_def
+models_need_lpot_graphdef=(
+--------
+pose-ae-multiperson
+pose-ae-refinement
+centernet_hg104
+DETR
+Elmo
+Time_series_LSTM
+Unet
+WD
+ResNest101
+ResNest50
+ResNest50-3D
+adversarial_text
+Attention_OCR
+AttRec
+GPT2
+Parallel_WaveNet
+PNASNet-5
+VAE-CF
+DLRM
+Deep_Speech_2
+--------
+)
+
+
 # run_tuning
 function run_tuning {
     input="input"
@@ -101,6 +143,18 @@ function run_tuning {
     if [[ "${models_need_disable_optimize[@]}"  =~ " ${topology} " ]]; then
       echo "$topology need to disable optimize_for_inference!"
       extra_cmd+=" --disable_optimize "
+    fi
+    if [[ "${models_need_bs16[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need to set bs = 16!"
+      extra_cmd+=" -b 16 "
+    fi
+    if [[ "${models_need_bs32[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need to set bs = 32!"
+      extra_cmd+=" -b 32 "
+    fi
+    if [[ "${models_need_lpot_graphdef[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need lpot graph_def!"
+      extra_cmd+=" --use_lpot "
     fi
 
     python tf_benchmark.py \

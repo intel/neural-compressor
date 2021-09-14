@@ -107,6 +107,33 @@ vggvox
 --------
 )
 
+# lpot graph_def
+models_need_lpot_graphdef=(
+--------
+pose-ae-multiperson
+pose-ae-refinement
+centernet_hg104
+DETR
+Elmo
+Time_series_LSTM
+Unet
+WD
+ResNest101
+ResNest50
+ResNest50-3D
+adversarial_text
+Attention_OCR
+AttRec
+GPT2
+Parallel_WaveNet
+PNASNet-5
+VAE-CF
+DLRM
+Deep_Speech_2
+--------
+)
+
+
 # run_tuning
 function run_benchmark {
     extra_cmd=" --num_iter ${iters} --num_warmup 10 "
@@ -118,6 +145,10 @@ function run_benchmark {
     if [[ "${models_need_disable_optimize[@]}"  =~ " ${topology} " ]]; then
       echo "$topology need to disable optimize_for_inference!"
       extra_cmd+=" --disable_optimize "
+    fi
+    if [[ "${models_need_lpot_graphdef[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need lpot graph_def!"
+      extra_cmd+=" --use_lpot "
     fi
 
     python tf_benchmark.py \
