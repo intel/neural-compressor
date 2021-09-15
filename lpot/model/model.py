@@ -149,6 +149,11 @@ def get_model_fwk_name(model):
         else:
             return 'mxnet' if is_mxnet else 'NA'
 
+    if isinstance(model, str):
+        absmodel = os.path.abspath(os.path.expanduser(model))
+        assert os.path.exists(absmodel) or os.path.exists(absmodel+'.pb'), \
+            'invalid input path, the file does not exist!'
+
     #check if the input model is a lpot model
     for name, lpotmodel in MODELS.items():
         if isinstance(model, lpotmodel):
@@ -162,7 +167,7 @@ def get_model_fwk_name(model):
         if fwk_name != 'NA':
             break    
     assert fwk_name != 'NA', 'Framework is not detected correctly from model format.'        
-    
+
     return fwk_name
 
 def validate_graph_node(graph_def, node_names):

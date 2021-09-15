@@ -260,6 +260,10 @@ class TestTensorflowModel(unittest.TestCase):
             get_model_fwk_name([])
         except AssertionError:
             pass
+        try:
+            get_model_fwk_name('./model.pb')
+        except AssertionError:
+            pass
 
 def export_onnx_model(model, path):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
