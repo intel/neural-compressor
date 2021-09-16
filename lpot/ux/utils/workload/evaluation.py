@@ -62,6 +62,8 @@ class Metric(JsonSerializer):
         """Return metric dict for config."""
         if self.name in ["MSE", "RMSE", "MAE"]:
             return {self.name: {"compare_label": self.param}}
+        if self.name in ["COCOmAP"]:
+            return {self.name: {"anno_path": self.param}}
         if self.name:
             return {self.name: self.param}
         return {}

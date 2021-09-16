@@ -21,7 +21,6 @@ import { ErrorComponent } from '../error/error.component';
 import { GraphComponent } from '../graph/graph.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
-import { EChartsOption } from 'echarts';
 
 @Component({
   selector: 'app-details',
@@ -77,23 +76,6 @@ export class DetailsComponent implements OnInit, OnChanges {
       '#515A3D',
       '#C98F00',]
   };
-
-  chartOption: EChartsOption = {
-    xAxis: {
-      type: 'category',
-      data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    },
-    yAxis: {
-      type: 'value',
-    },
-    series: [
-      {
-        data: [820, 932, 901, 934, 1290, 1330, 1320],
-        type: 'line',
-      },
-    ],
-  };
-
 
   constructor(
     public activatedRoute: ActivatedRoute,

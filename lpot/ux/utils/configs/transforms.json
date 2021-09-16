@@ -156,13 +156,15 @@
                 "params": [
                     {
                         "name": "mean",
-                        "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": "[0.0]"
+                        "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape. Comma separated list of float values.",
+                        "value": "0.0",
+                        "label": "mean [R, G, B]"
                     },
                     {
                         "name": "std",
-                        "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": "[1.0]"
+                        "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape. Comma separated list of float values.",
+                        "value": "1.0",
+                        "label": "std [R, G, B]"
                     }
                 ]
             },
@@ -393,13 +395,15 @@
                 "params": [
                     {
                         "name": "mean",
-                        "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": "[0.0]"
+                        "help": "Means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape. Comma separated list of float values.",
+                        "value": "0.0",
+                        "label": "mean [R, G, B]"
                     },
                     {
                         "name": "std",
-                        "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape",
-                        "value": "[1.0]"
+                        "help": "Stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape. Comma separated list of float values.",
+                        "value": "1.0",
+                        "label": "std [R, G, B]"
                     }
                 ]
             },

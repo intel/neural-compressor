@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Parameters feeder module."""
-
+import os
 from typing import Any, Dict, List, Optional
 
 from lpot.experimental.metric.metric import framework_metrics
@@ -30,6 +30,7 @@ from lpot.ux.utils.utils import (
     load_precisions_config,
     load_transforms_config,
 )
+from lpot.ux.web.configuration import Configuration
 
 
 class Feeder:
@@ -214,11 +215,12 @@ class Feeder:
         for metric, value in metrics_updated.copy().items():
             if isinstance(value, dict):
                 for key in value.copy().keys():
-                    help_msg_key = f"__help__{key}"
-                    metrics_updated[metric][help_msg_key] = help_dict.get(
-                        metric,
-                        {},
-                    ).get(help_msg_key, "")
+                    for field in ["help", "label"]:
+                        msg_key = f"__{field}__{key}"
+                        metrics_updated[metric][msg_key] = help_dict.get(
+                            metric,
+                            {},
+                        ).get(msg_key, "")
             metrics_updated[f"__help__{metric}"] = help_dict.get(
                 f"__help__{metric}",
                 "",
@@ -228,7 +230,7 @@ class Feeder:
     def _parse_help_in_dict(self, data: dict) -> list:
         parsed_list = []
         for key, value in data.items():
-            if key.startswith("__help__"):
+            if key.startswith("__help__") or key.startswith("__label__"):
                 continue
             if isinstance(value, dict):
                 parsed_list.append(
@@ -239,13 +241,15 @@ class Feeder:
                     },
                 )
             else:
-                parsed_list.append(
-                    {
-                        "name": key,
-                        "help": data.get(f"__help__{key}", ""),
-                        "value": value,
-                    },
-                )
+                item = {
+                    "name": key,
+                    "help": data.get(f"__help__{key}", ""),
+                    "value": value,
+                }
+                label = data.get(f"__label__{key}")
+                if label:
+                    item["label"] = label
+                parsed_list.append(item)
         return parsed_list
 
 
@@ -256,7 +260,8 @@ def _update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
         if metric == "topk":
             metrics.update({metric: {"k": [1, 5]}})
         elif metric == "COCOmAP":
-            metrics.update({metric: {"anno_path": ""}})
+            annotation_path = os.path.join(Configuration().workdir, "label_map.yaml")
+            metrics.update({metric: {"anno_path": annotation_path}})
         elif metric in ["MSE", "RMSE", "MAE"]:
             metrics.update({metric: {"compare_label": True}})
         else:

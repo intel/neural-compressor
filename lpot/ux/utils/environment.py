@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Environment manager class."""
-
 import os
 import sys
 
@@ -59,19 +58,26 @@ class Environment:
         if not os.path.isfile(workload_list_migrator.workloads_json):
             return
         workload_list_migrator.load_workloads_data()
+        updated_workloads = {}
         for workload_id, workload_data in workload_list_migrator.workloads_data.get(
             "workloads",
             {},
         ).items():
-            workload_path = workload_data.get("workload_path", None)
-            if workload_path is None:
-                continue
-            workload_json_path = os.path.join(workload_path, "workload.json")
-            workload_migrator = WorkloadMigrator(
-                workload_json_path=workload_json_path,
-            )
-            workload_migrator.migrate()
-            workload_migrator.dump()
+            try:
+                workload_path = workload_data.get("workload_path", None)
+                if workload_path is None:
+                    continue
+                workload_json_path = os.path.join(workload_path, "workload.json")
+                workload_migrator = WorkloadMigrator(
+                    workload_json_path=workload_json_path,
+                )
+                workload_migrator.migrate()
+                workload_migrator.dump()
+                updated_workloads[workload_id] = workload_data
+            except Exception:
+                pass
+        workload_list_migrator.workloads_data["workloads"] = updated_workloads
+        workload_list_migrator.dump()
 
     @staticmethod
     def clean_workloads_wip_status() -> None:

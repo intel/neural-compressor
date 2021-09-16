@@ -20,7 +20,8 @@
     },
     "__help__COCOmAP": null,
     "COCOmAP": {
-        "__help__anno_path": "annotation path"
+        "__help__anno_path": "annotation path",
+        "__label__anno_path": "annotation path"
     },
     "__help__BLEU": null,
     "__help__custom": "Create your own metric. After you choose this option code template will be generated on the server",

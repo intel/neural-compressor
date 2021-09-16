@@ -144,5 +144,27 @@ mat-button-toggle-group {
 
 #choose-file-btn,
 #choose-dataset-btn {
-  margin-right: 10px;
+  margin-right: 5px;
+}
+
+::ng-deep {
+  .custom-slider {
+    width: 50%;
+  }
+
+  .custom-slider .ngx-slider .ngx-slider-selection {
+    background: $energy-blue;
+  }
+
+  .custom-slider .ngx-slider .ngx-slider-pointer {
+    background-color: $energy-blue;
+  }
+
+  .custom-slider .ngx-slider .ngx-slider-pointer:after {
+    display: none;
+  }
+}
+
+::ng-deep .mat-form-field-required-marker {
+  color: $red;
 }

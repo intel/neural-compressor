@@ -57,6 +57,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { SystemInfoComponent } from './system-info/system-info.component';
 import { LongNamePipe } from './pipes/long-name.pipe';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { NgxSliderModule } from '@angular-slider/ngx-slider';
 
 @NgModule({
   declarations: [
@@ -103,6 +104,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     NgDatePipesModule,
     NgxChartsModule,
     NgxGraphModule,
+    NgxSliderModule,
     ReactiveFormsModule,
   ],
   providers: [

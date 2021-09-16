@@ -34,7 +34,6 @@ class ConfigurationParser:
                 "y",
                 "height",
                 "width",
-                "size",
                 "offset_height",
                 "offset_width",
                 "target_height",
@@ -42,10 +41,10 @@ class ConfigurationParser:
                 "dim",
                 "resize_side",
                 "label_shift",
-                "size",
             ],
             "float": ["scale", "central_fraction"],
-            "list<float>": ["mean", "std", "perm", "mean_value", "ratio"],
+            "list<float>": ["mean", "std", "mean_value", "ratio"],
+            "list<int>": ["perm", "size"],
             "bool": ["random_crop", "random_flip_left_right"],
         }
         self.dataloader_types: Dict[str, List[str]] = {

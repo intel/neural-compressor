@@ -94,12 +94,14 @@
                     {
                         "name": "img_dir",
                         "help": "Image file directory",
-                        "value": "val2017"
+                        "value": "val2017",
+                        "label": "image directory"
                     },
                     {
                         "name": "anno_dir",
-                        "help": "Annotation file directory",
-                        "value": "annotations/instances_val2017.json"
+                        "help": "Annotation file, relative to dataset location",
+                        "value": "annotations/instances_val2017.json",
+                        "label": "annotation file"
                     }
                 ]
             },
@@ -334,12 +336,14 @@
                     {
                         "name": "img_dir",
                         "help": "Image file directory",
-                        "value": "val2017"
+                        "value": "val2017",
+                        "label": "image directory"
                     },
                     {
                         "name": "anno_dir",
-                        "help": "Annotation file directory",
-                        "value": "annotations/instances_val2017.json"
+                        "help": "Annotation file, relative to dataset location",
+                        "value": "annotations/instances_val2017.json",
+                        "label": "annotation file"
                     }
                 ]
             },
@@ -352,11 +356,6 @@
                         "name": "root",
                         "help": null,
                         "value": ""
-                    },
-                    {
-                        "name": "num_cores",
-                        "help": "The number of input Datasets to interleave from in parallel",
-                        "value": 28
                     }
                 ]
             },

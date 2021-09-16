@@ -38,18 +38,15 @@
           <a class="file-button"
             href="{{ apiBaseUrl }}api/workload/config.yaml?workload_id={{ model['id'] }}&token={{ token }}"
             target="_blank">
-            Show config
-          </a>
+            Show config</a>
           <a class="file-button"
             href="{{ apiBaseUrl }}api/workload/output.log?workload_id={{ model['id'] }}&token={{ token }}"
             target="_blank">
-            Show output
-          </a>
+            Show output</a>
           <a *ngIf="model['code_template_path']" class="file-button"
             href="{{ apiBaseUrl }}api/workload/code_template.py?workload_id={{ model['id'] }}&token={{ token }}"
             target="_blank">
-            Show code template
-          </a>
+            Show code template</a>
           <a class="precision">
             precision: {{ model.input_precision }} &#8594; {{ model.output_precision }}
           </a>

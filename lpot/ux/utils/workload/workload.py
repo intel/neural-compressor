@@ -66,6 +66,8 @@ class Workload(JsonSerializer):
         if not self.domain:
             raise ClientErrorException("Domain is not defined!")
 
+        self.domain_flavour: str = data.get("domain_flavour", "")
+
         self.framework: str = data.get(
             "framework",
             get_framework_from_path(self.model_path),
@@ -106,7 +108,7 @@ class Workload(JsonSerializer):
         self.config_name = "config.yaml"
         self.predefined_config_path = data.get(
             "config_path",
-            get_predefined_config_path(self.framework, self.domain),
+            get_predefined_config_path(self.framework, self.domain, self.domain_flavour),
         )
         self.config_path = os.path.join(
             self.workload_path,

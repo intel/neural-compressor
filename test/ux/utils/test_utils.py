@@ -134,6 +134,8 @@ class TestUtils(unittest.TestCase):
         self._assert_predefined_config_path(
             framework="tensorflow",
             domain="image_recognition",
+            domain_flavour="",
+            expected_filename="image_recognition.yaml",
         )
 
     def test_get_predefined_tf_object_detection_config_path(self) -> None:
@@ -141,6 +143,26 @@ class TestUtils(unittest.TestCase):
         self._assert_predefined_config_path(
             framework="tensorflow",
             domain="object_detection",
+            domain_flavour="",
+            expected_filename="object_detection.yaml",
+        )
+
+    def test_get_predefined_tf_object_detection_ssd_config_path(self) -> None:
+        """Test getting predefined config path for TF object detection models."""
+        self._assert_predefined_config_path(
+            framework="tensorflow",
+            domain="object_detection",
+            domain_flavour="ssd",
+            expected_filename="object_detection_ssd.yaml",
+        )
+
+    def test_get_predefined_tf_object_detection_unknown_flavour_config_path(self) -> None:
+        """Test getting predefined config path for TF object detection models."""
+        self._assert_predefined_config_path(
+            framework="tensorflow",
+            domain="object_detection",
+            domain_flavour="foo",
+            expected_filename="object_detection.yaml",
         )
 
     def test_get_predefined_tf_nlp_config_path(self) -> None:
@@ -148,6 +170,8 @@ class TestUtils(unittest.TestCase):
         self._assert_predefined_config_path(
             framework="tensorflow",
             domain="nlp",
+            domain_flavour="",
+            expected_filename="nlp.yaml",
         )
 
     def test_get_predefined_tf_recommendation_config_path(self) -> None:
@@ -155,6 +179,8 @@ class TestUtils(unittest.TestCase):
         self._assert_predefined_config_path(
             framework="tensorflow",
             domain="recommendation",
+            domain_flavour="",
+            expected_filename="recommendation.yaml",
         )
 
     def test_get_predefined_onnx_image_recognition_config_path(self) -> None:
@@ -162,6 +188,8 @@ class TestUtils(unittest.TestCase):
         self._assert_predefined_config_path(
             framework="onnxrt",
             domain="image_recognition",
+            domain_flavour="",
+            expected_filename="image_recognition.yaml",
         )
 
     def test_get_predefined_onnx_nlp_config_path(self) -> None:
@@ -169,6 +197,8 @@ class TestUtils(unittest.TestCase):
         self._assert_predefined_config_path(
             framework="onnxrt",
             domain="nlp",
+            domain_flavour="",
+            expected_filename="nlp.yaml",
         )
 
     def test_get_predefined_config_path_framework_failure(self) -> None:
@@ -266,9 +296,15 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(NotFoundException):
             verify_file_path(path)
 
-    def _assert_predefined_config_path(self, framework: str, domain: str) -> None:
+    def _assert_predefined_config_path(
+        self,
+        framework: str,
+        domain: str,
+        domain_flavour: str,
+        expected_filename: str,
+    ) -> None:
         """Assert predefined config path."""
-        result = get_predefined_config_path(framework, domain)
+        result = get_predefined_config_path(framework, domain, domain_flavour)
         expected = os.path.join(
             os.path.abspath(
                 os.path.dirname(
@@ -278,7 +314,7 @@ class TestUtils(unittest.TestCase):
             "configs",
             "predefined_configs",
             f"{framework}",
-            f"{domain}.yaml",
+            expected_filename,
         )
         self.assertEqual(result, expected)
         self.assertEqual(os.path.isfile(result), True)

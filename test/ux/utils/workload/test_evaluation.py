@@ -112,6 +112,23 @@ class TestMetricConfig(unittest.TestCase):
                 },
             )
 
+    def test_COCOmAP_metric_serializer(self) -> None:
+        """Test COCOmAP metric config serializer."""
+        for metric_name in ["COCOmAP"]:
+            data = {
+                "name": metric_name,
+                "param": "/foo/bar/baz",
+            }
+            metric = Metric(data)
+            result = metric.serialize()
+
+            self.assertDictEqual(
+                result,
+                {
+                    f"{metric_name}": {"anno_path": "/foo/bar/baz"},
+                },
+            )
+
     def test_unnamed_metric_serializer(self) -> None:
         """Test unnamed metric config serializer."""
         data = {

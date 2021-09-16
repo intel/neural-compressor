@@ -36,6 +36,7 @@ export class ImportModelComponent implements OnInit {
   domains = [];
   metrics = [];
   precisions = [];
+  precisionIndex;
   metricParam: string | boolean;
   metricParams = [];
   objectives = [];
@@ -61,6 +62,9 @@ export class ImportModelComponent implements OnInit {
     output: []
   };
   graph = {};
+  sliderOptions;
+  resizeValues;
+  resizeCustom;
 
   boundaryNodes: {
     inputs: 'none' | 'custom' | 'select',
@@ -180,8 +184,11 @@ export class ImportModelComponent implements OnInit {
                   this.firstFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
                 } else {
                   this.boundaryNodes[param] = 'select';
-                  if (result['data']['domain'] === 'object_detection' && result['data']['domain_flavour'] === 'ssd' && ["detection_bboxes", "detection_scores", "detection_classes"].every((val) => result['data']['outputs'].includes(val))) {
-                    this.firstFormGroup.get('output').setValue(["detection_bboxes", "detection_scores", "detection_classes"]);
+                  if (result['data']['domain'] === 'object_detection' && result['data']['domain_flavour'] === 'ssd') {
+                    if (["detection_bboxes", "detection_scores", "detection_classes"].every((val) => result['data']['outputs'].includes(val))) {
+                      this.firstFormGroup.get('output').setValue(["detection_bboxes", "detection_scores", "detection_classes"]);
+                    }
+                    this.resizeValues = [[1200, 1200], [300, 300], 'custom'];
                   } else {
                     const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
                     if (nonCustomParams.length === 1) {
@@ -231,7 +238,6 @@ export class ImportModelComponent implements OnInit {
       inputOther: [''],
       output: [''],
       outputOther: [''],
-      precision: ['int8', Validators.required]
     });
     this.secondFormGroup = this._formBuilder.group({
       accuracyGoal: [0.01],
@@ -279,7 +285,27 @@ export class ImportModelComponent implements OnInit {
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('precision', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
-        resp => this.precisions = resp['precision'],
+        resp => {
+          this.precisions = resp['precision'];
+          this.precisionIndex = this.precisions.length - 1;
+          this.sliderOptions = {
+            floor: 0,
+            ceil: this.precisions.length ? this.precisions.length - 1 : 2,
+            step: 1,
+            showTicks: true,
+            showTicksValues: false,
+            showTicksTooltips: true,
+            hideLimitLabels: true,
+            hidePointerLabels: true,
+            showSelectionBar: true,
+            getLegend: (value: number): string => {
+              return this.precisions[value].label ?? this.precisions[value].name;
+            },
+            ticksTooltip: (value: number): string => {
+              return this.precisions[value].help;
+            }
+          };
+        },
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('metric', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
@@ -347,7 +373,7 @@ export class ImportModelComponent implements OnInit {
   }
 
   addNewTransformation(name?: string) {
-    this.transformationParams.push({ name: name ? name : '', params: {} });
+    this.transformationParams.push({ name: name ?? '', params: {} });
   }
 
   removeTransformation(index: number) {
@@ -416,6 +442,9 @@ export class ImportModelComponent implements OnInit {
                       if (Array.isArray(this.transformationParams[index]['params'])) {
                         this.transformationParams[index]['params'].forEach(param => {
                           param.value = transform[name][param.name];
+                          if (this.resizeValues && param.name === 'size') {
+                            param.value = this.resizeValues[0];
+                          }
                         });
                       }
                     }
@@ -516,7 +545,7 @@ export class ImportModelComponent implements OnInit {
       model_path: this.firstFormGroup.get('modelLocation').value,
       inputs: this.getBoundaryNodes('input'),
       outputs: this.getBoundaryNodes('output'),
-      precision: this.firstFormGroup.get('precision').value,
+      precision: this.precisions[this.precisionIndex].name,
       transform: this.getTransformParams(this.transformationParams),
       tuning: this.tuningEnabled,
       quantization: {
@@ -541,7 +570,7 @@ export class ImportModelComponent implements OnInit {
         metric_param: this.metricParam,
         batch_size: this.secondFormGroup.get('batchSize').value,
         cores_per_instance: this.secondFormGroup.get('cores_per_instance').value,
-        instances: this.secondFormGroup.get('num_of_instance').value ? this.secondFormGroup.get('num_of_instance').value : Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4),
+        instances: this.secondFormGroup.get('num_of_instance').value ?? Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4),
         inter_nr_of_threads: this.secondFormGroup.get('inter_num_of_threads').value,
         intra_nr_of_threads: this.secondFormGroup.get('intra_num_of_threads').value,
         iterations: this.secondFormGroup.get('iteration').value,
@@ -588,7 +617,11 @@ export class ImportModelComponent implements OnInit {
   getParams(obj: any[]): {} {
     let newObj = {};
     obj.forEach(item => {
-      newObj[item['name']] = item['value'];
+      if (item['name'] === 'size' && this.resizeCustom && item['value'] === 'custom') {
+        newObj[item['name']] = this.resizeCustom;
+      } else {
+        newObj[item['name']] = item['value'];
+      }
     });
     return newObj;
   }
@@ -643,6 +676,8 @@ export class ImportModelComponent implements OnInit {
         if (paramFile) {
           if (paramFile === 'evaluation' || paramFile === 'quantization') {
             this.dataLoaderParams[paramFile].find(x => x.name === fieldName).value = chosenFile;
+          } else if (paramFile === 'metric') {
+            this.metricParam = chosenFile;
           } else {
             paramFile.find(x => x.name === fieldName).value = chosenFile;
           }

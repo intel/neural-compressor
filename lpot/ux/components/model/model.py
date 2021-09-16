@@ -53,6 +53,26 @@ class Model(ABC):
     @property
     def domain(self) -> Domain:
         """Get model domain."""
+        try:
+            node_names = {node.id for node in self.get_model_graph().nodes}
+        except Exception:
+            return Domain()
+
+        def has_name_part(name_part: str) -> bool:
+            """Check if a node exists with given name_part."""
+            return bool([name for name in node_names if name_part in name])
+
+        def has_all_name_parts(name_parts: List[str]) -> bool:
+            """Check if there is a node for every name_part."""
+            missing = [name_part for name_part in name_parts if not has_name_part(name_part)]
+            return not missing
+
+        if has_all_name_parts(["bboxes", "scores", "classes", "ssd"]):
+            return Domain(domain="object_detection", domain_flavour="ssd")
+        if has_all_name_parts(["boxes", "yolo"]):
+            return Domain(domain="object_detection", domain_flavour="yolo")
+        if has_all_name_parts(["boxes", "scores", "classes"]):
+            return Domain(domain="object_detection")
         return Domain()
 
     @staticmethod

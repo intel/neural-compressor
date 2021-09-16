@@ -10,118 +10,131 @@
   <mat-horizontal-stepper #stepper>
     <mat-step [stepControl]="firstFormGroup" [completed]="false">
       <p class="required">
-        * - required field
+        <a class="mat-form-field-required-marker">*</a> - required field
       </p>
       <h2>Model</h2>
       <form [formGroup]="firstFormGroup">
-        <ng-template matStepLabel>Select model</ng-template>
+        <mat-card>
+          <ng-template matStepLabel>Select model and precision</ng-template>
 
-        <span class="spinner-wrapper">
-          <mat-form-field class="form-field long" appearance="outline">
-            <mat-label>model</mat-label>
-            <input required formControlName="modelLocation" matInput>
-          </mat-form-field>
-          <button id="choose-file-btn" mat-raised-button color="primary" class="fixed-height"
-            (click)="openDialog('modelLocation', 'models')">
-            <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
-            Choose file
-          </button>
-          <button id="show-graph-btn" *ngIf="showGraphButton" mat-raised-button color="accent" class="fixed-height"
-            (click)="showGraph()">
-            <img class="icon" src="./../../assets/298a-workflow-process-solid.svg">
-            Show graph
-          </button>
-          <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="25"></mat-spinner>
-        </span>
+          <span class="spinner-wrapper">
+            <mat-form-field class="form-field long" appearance="outline">
+              <mat-label>model</mat-label>
+              <input required formControlName="modelLocation" matInput>
+            </mat-form-field>
+            <button id="choose-file-btn" mat-raised-button color="primary" class="fixed-height"
+              (click)="openDialog('modelLocation', 'models')">
+              <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
+              Choose file
+            </button>
+            <button id="show-graph-btn" *ngIf="showGraphButton" mat-raised-button color="accent" class="fixed-height"
+              (click)="showGraph()">
+              <img class="icon" src="./../../assets/298a-workflow-process-solid.svg">
+              Show graph
+            </button>
+            <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="25"></mat-spinner>
+          </span>
 
-        <div class="white-fill" *ngIf="!boundaryNodesVisible()">
-        </div>
-
-        <div *ngIf="boundaryNodesVisible()">
-          <ng-container *ngIf="boundaryNodes.inputs === 'select'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>input *</mat-label>
-              <mat-select formControlName="input" multiple>
-                <mat-option *ngFor="let input of inputs" [value]="input"
-                  [ngClass]="input === 'custom' ? 'custom-option' : null"
-                  [disabled]="order['input'][0] === 'custom' && input !== 'custom'"
-                  (onSelectionChange)="boundaryNodesChanged($event.source.value, 'input')">
-                  {{ input === 'custom' ? '(Add your custom input node)' : input }}
-                  {{ inputs.length > 1 && order['input'].indexOf(input) !== -1 && input !== 'custom' ?
-                  '(' + (order['input'].indexOf(input) + 1) + ')' : null }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </ng-container>
-          <ng-container *ngIf="boundaryNodes.inputs === 'custom'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>input *</mat-label>
-              <input formControlName="input" matInput>
-            </mat-form-field>
-          </ng-container>
-          <ng-container *ngIf="boundaryNodes.outputs === 'select'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>output *</mat-label>
-              <mat-select formControlName="output" multiple>
-                <mat-option *ngFor="let output of outputs" [value]="output"
-                  [ngClass]="output === 'custom' ? 'custom-option' : null"
-                  [disabled]="order['output'][0] === 'custom' && output !== 'custom'"
-                  (onSelectionChange)="boundaryNodesChanged($event.source.value, 'output')">
-                  {{ output === 'custom' ? '(Add your custom output node)' : output }}
-                  {{ outputs.length > 1 && order['output'].indexOf(output) !== -1 && output !== 'custom' ?
-                  '(' + (order['output'].indexOf(output) + 1) + ')' : null }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <ng-container
-              *ngIf="firstFormGroup.get('output').value.length === 1 && firstFormGroup.get('output').value[0] === 'custom'">
-              <mat-form-field class="form-field" appearance="outline"
-                matTooltip="Multiple custom nodes should be separated by comma">
-                <mat-label>output *</mat-label>
-                <input formControlName="outputOther" matInput>
+          <div *ngIf="boundaryNodesVisible()">
+            <ng-container *ngIf="boundaryNodes.inputs === 'select'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph input <a class="mat-form-field-required-marker">*</a></mat-label>
+                <mat-select formControlName="input" multiple>
+                  <mat-option *ngFor="let input of inputs" [value]="input"
+                    [ngClass]="input === 'custom' ? 'custom-option' : null"
+                    [disabled]="order['input'][0] === 'custom' && input !== 'custom'"
+                    (onSelectionChange)="boundaryNodesChanged($event.source.value, 'input')">
+                    {{ input === 'custom' ? '(Add your custom input node)' : input }}
+                    {{ inputs.length > 1 && order['input'].indexOf(input) !== -1 && input !== 'custom' ?
+                    '(' + (order['input'].indexOf(input) + 1) + ')' : null }}
+                  </mat-option>
+                </mat-select>
               </mat-form-field>
             </ng-container>
-          </ng-container>
-          <ng-container *ngIf="boundaryNodes.outputs === 'custom'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>output *</mat-label>
-              <input formControlName="output" matInput>
-            </mat-form-field>
-          </ng-container>
-          <br>
-          <a *ngIf="boundaryNodesVisible()" class="info">
-            Order of the inputs and outputs matters.
-          </a>
-        </div>
-      </form>
-      <br>
-      <div class="float-right">
-        <button mat-raised-button matStepperNext>
-          <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
-          Next
-        </button>
-      </div>
-    </mat-step>
+            <ng-container *ngIf="boundaryNodes.inputs === 'custom'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph input <a class="mat-form-field-required-marker">*</a></mat-label>
+                <input formControlName="input" matInput>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="boundaryNodes.outputs === 'select'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph output <a class="mat-form-field-required-marker">*</a></mat-label>
+                <mat-select formControlName="output" multiple>
+                  <mat-option *ngFor="let output of outputs" [value]="output"
+                    [ngClass]="output === 'custom' ? 'custom-option' : null"
+                    [disabled]="order['output'][0] === 'custom' && output !== 'custom'"
+                    (onSelectionChange)="boundaryNodesChanged($event.source.value, 'output')">
+                    {{ output === 'custom' ? '(Add your custom output node)' : output }}
+                    {{ outputs.length > 1 && order['output'].indexOf(output) !== -1 && output !== 'custom' ?
+                    '(' + (order['output'].indexOf(output) + 1) + ')' : null }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <ng-container
+                *ngIf="firstFormGroup.get('output').value.length === 1 && firstFormGroup.get('output').value[0] === 'custom'">
+                <mat-form-field class="form-field" appearance="outline"
+                  matTooltip="Multiple custom nodes should be separated by comma">
+                  <mat-label>graph output <a class="mat-form-field-required-marker">*</a></mat-label>
+                  <input formControlName="outputOther" matInput>
+                </mat-form-field>
+              </ng-container>
+            </ng-container>
+            <ng-container *ngIf="boundaryNodes.outputs === 'custom'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph output <a class="mat-form-field-required-marker">*</a></mat-label>
+                <input formControlName="output" matInput>
+              </mat-form-field>
+            </ng-container>
+            <br>
+            <a *ngIf="boundaryNodesVisible()" class="info">
+              Order of the inputs and outputs matters.
+            </a>
+          </div>
+        </mat-card>
 
-    <mat-step [stepControl]="secondFormGroup" [completed]="false">
-      <ng-template matStepLabel>Select precision</ng-template>
-      <h2>Precision</h2>
-      <form [formGroup]="firstFormGroup">
-        <mat-button-toggle-group formControlName="precision">
-          <mat-button-toggle *ngFor="let precision of precisions" [matTooltip]="precision.help"
-            [value]="precision.name">{{ precision.name }}</mat-button-toggle>
-        </mat-button-toggle-group>
-        <h2>
-          <mat-checkbox [(ngModel)]="firstFormGroup.get('precision').value !== 'fp32' ? tuningEnabled : tuningDisabled"
-            [ngModelOptions]="{standalone: true}" [disabled]="firstFormGroup.get('precision').value === 'fp32'"
-            (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning" class="tuning-checkbox">
-            Run tuning
-          </mat-checkbox>
-        </h2>
+        <ng-container *ngIf="firstFormGroup.get('framework').value">
+          <h2>Model domain</h2>
+          <mat-card>
+            <div class="spinner-wrapper">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>model domain</mat-label>
+                <mat-select formControlName="modelDomain" required>
+                  <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
+                    [matTooltip]="domain.help">
+                    <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
+                    <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}</ng-container>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-spinner class="spinner" *ngIf="showDomainSpinner" [diameter]="25"></mat-spinner>
+            </div>
+          </mat-card>
+        </ng-container>
       </form>
-      <br>
-      <br>
-      <br>
+
+      <ng-container *ngIf="precisions.length > 1">
+        <h2>Precision</h2>
+        <mat-card>
+          <p>Please refer to
+            <a href="https://software.intel.com/content/www/us/en/develop/articles/intel-sdm.html" target="_blank">
+              Intel Software Developer Manuals</a>
+            for precision support.
+          </p>
+          <div class="custom-slider">
+            <ngx-slider [(value)]="precisionIndex" [options]="sliderOptions"></ngx-slider>
+          </div>
+          <h2>
+            <mat-checkbox [(ngModel)]="precisions[precisionIndex].name !== 'fp32' ? tuningEnabled : tuningDisabled"
+              [ngModelOptions]="{standalone: true}" [disabled]="precisions[precisionIndex].name === 'fp32'"
+              (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning" class="tuning-checkbox">
+              Run tuning
+            </mat-checkbox>
+          </h2>
+        </mat-card>
+      </ng-container>
+
+      <br />
       <div class="float-right">
         <button mat-raised-button matStepperNext>
           <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
@@ -133,29 +146,12 @@
     <mat-step [stepControl]="secondFormGroup" [completed]="false">
       <ng-template matStepLabel>Set configuration</ng-template>
 
-      <form [formGroup]="firstFormGroup">
-        <h2>Model domain</h2>
-        <div class="spinner-wrapper">
-          <mat-form-field class="form-field" appearance="outline">
-            <mat-label>model domain</mat-label>
-            <mat-select formControlName="modelDomain" required>
-              <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
-                [matTooltip]="domain.help">
-                <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
-                <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}</ng-container>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-spinner class="spinner" *ngIf="showDomainSpinner" [diameter]="25"></mat-spinner>
-        </div>
-      </form>
-
       <form [formGroup]="secondFormGroup">
 
         <h2>Evaluation</h2>
         <span class="inline">
           <mat-form-field class="form-field" appearance="outline">
-            <mat-label>evaluation dataset</mat-label>
+            <mat-label>evaluation dataset type</mat-label>
             <mat-select formControlName="dataLoaderEvaluation"
               (selectionChange)="setDefaultDataLoaderParam($event, 'evaluation')">
               <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
@@ -165,11 +161,27 @@
             </mat-select>
           </mat-form-field>
         </span>
+        <span *ngIf="showDatasetLocation['evaluation']" class="inline">
+          <mat-form-field class="form-field long" appearance="outline">
+            <mat-label>dataset location <a class="mat-form-field-required-marker">*</a></mat-label>
+            <input formControlName="datasetLocationEvaluation" matInput>
+          </mat-form-field>
+          <button id="choose-dataset-btn" mat-raised-button color="primary" class="browse"
+            (click)="openDialog('datasetLocationEvaluation', 'datasets')">
+            <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+            Choose dataset
+          </button>
+          <mat-checkbox *ngIf="precisions[precisionIndex] && precisions[precisionIndex].name === 'int8'"
+            [checked]="true" (change)="calibrationDataChange($event.checked)" class="checkbox">
+            Use the same data as calibration
+          </mat-checkbox>
+        </span>
+        <br />
         <span class="inline">
           <ng-container *ngFor="let param of dataLoaderParams['evaluation']">
             <ng-container *ngIf="param.name !== 'root'">
               <mat-form-field class="form-field" appearance="outline">
-                <mat-label>{{ param.name }}</mat-label>
+                <mat-label>{{ param.label || param.name }}</mat-label>
                 <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
                   matTooltipPosition="right" [matTooltip]="param.help">
               </mat-form-field>
@@ -181,30 +193,15 @@
             </ng-container>
           </ng-container>
         </span>
-        <span *ngIf="showDatasetLocation['evaluation']" class="inline">
-          <mat-form-field class="form-field long" appearance="outline">
-            <mat-label>dataset location *</mat-label>
-            <input formControlName="datasetLocationEvaluation" matInput>
-          </mat-form-field>
-          <button id="choose-dataset-btn" mat-raised-button color="primary" class="browse"
-            (click)="openDialog('datasetLocationEvaluation', 'datasets')">
-            <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-            Choose dataset
-          </button>
-          <mat-checkbox *ngIf="firstFormGroup.get('precision').value === 'int8'" [checked]="true"
-            (change)="calibrationDataChange($event.checked)" class="checkbox">
-            Use the same data as calibration
-          </mat-checkbox>
-        </span>
         <br>
         <a *ngIf="secondFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="custom">
           Fill the code template before tuning
         </a>
 
-        <ng-container *ngIf="tuningEnabled && !useEvaluationData && firstFormGroup.get('precision').value === 'int8'">
+        <ng-container *ngIf="tuningEnabled && !useEvaluationData && precisions[precisionIndex].name === 'int8'">
           <span class="inline">
             <mat-form-field class="form-field" appearance="outline">
-              <mat-label>calibration dataset</mat-label>
+              <mat-label>calibration dataset type</mat-label>
               <mat-select formControlName="dataLoaderQuantization"
                 (selectionChange)="setDefaultDataLoaderParam($event, 'quantization')">
                 <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
@@ -214,11 +211,23 @@
               </mat-select>
             </mat-form-field>
           </span>
+          <span *ngIf="showDatasetLocation['quantization']" class="inline">
+            <mat-form-field class="form-field long" appearance="outline">
+              <mat-label>dataset location <a class="mat-form-field-required-marker">*</a></mat-label>
+              <input formControlName="datasetLocationQuantization" matInput (change)="useForQuantization()">
+            </mat-form-field>
+            <button id="choose-dataset-quant-btn" mat-raised-button color="primary" class="browse"
+              (click)="openDialog('datasetLocationQuantization', 'datasets')">
+              <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+              Choose dataset
+            </button>
+          </span>
+          <br />
           <span class="inline">
             <ng-container *ngFor="let param of dataLoaderParams['quantization']">
               <ng-container *ngIf="param.name !== 'root'">
                 <mat-form-field class="form-field" appearance="outline">
-                  <mat-label>{{ param.name }}</mat-label>
+                  <mat-label>{{ param.label || param.name }}</mat-label>
                   <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
                     matTooltipPosition="right" [matTooltip]="param.help">
                 </mat-form-field>
@@ -230,24 +239,13 @@
               </ng-container>
             </ng-container>
           </span>
-          <span *ngIf="showDatasetLocation['quantization']" class="inline">
-            <mat-form-field class="form-field long" appearance="outline">
-              <mat-label>dataset location *</mat-label>
-              <input formControlName="datasetLocationQuantization" matInput (change)="useForQuantization()">
-            </mat-form-field>
-            <button id="choose-dataset-quant-btn" mat-raised-button color="primary" class="browse"
-              (click)="openDialog('datasetLocationQuantization', 'datasets')">
-              <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
-              Choose dataset
-            </button>
-          </span>
           <a *ngIf="secondFormGroup.get('dataLoaderQuantization').value === 'custom'" class="custom">
             Fill the code template before tuning
           </a>
           <br>
         </ng-container>
-        <mat-form-field *ngIf="firstFormGroup.get('precision').value === 'int8'" class="form-field"
-          appearance="outline">
+        <mat-form-field *ngIf="precisions[precisionIndex] && precisions[precisionIndex].name === 'int8'"
+          class="form-field" appearance="outline">
           <mat-label>calibration sampling size</mat-label>
           <input formControlName="samplingSize" matInput placeholder="100">
         </mat-form-field>
@@ -275,8 +273,27 @@
                 </mat-form-field>
                 <ng-container *ngIf="isArray(transformItem['params'])">
                   <ng-container *ngFor="let param of transformItem['params']; let index = index">
-                    <mat-form-field class="form-field" appearance="outline">
-                      <mat-label>{{ param.name }}</mat-label>
+                    <ng-container *ngIf="resizeValues && param.name === 'size'">
+                      <mat-form-field class="form-field" appearance="outline">
+                        <mat-label>size</mat-label>
+                        <mat-select [(ngModel)]="param.value" [ngModelOptions]="{standalone: true}">
+                          <mat-option *ngFor="let resizeValue of resizeValues" [value]="resizeValue"
+                            matTooltipPosition="right" [ngClass]="resizeValue === 'custom' ? 'custom-option' : null"
+                            [matTooltip]="param.help">
+                            {{ resizeValue === 'custom' ? '(Add your custom size)' : resizeValue }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </ng-container>
+                    <mat-form-field *ngIf="resizeValues && param.name === 'size' && param.value === 'custom'"
+                      class="form-field" appearance="outline">
+                      <mat-label>{{ param.label || param.name }}</mat-label>
+                      <input [(ngModel)]="resizeCustom" matInput [ngModelOptions]="{standalone: true}"
+                        matTooltipPosition="right" [matTooltip]="param.help">
+                    </mat-form-field>
+                    <mat-form-field *ngIf="!resizeValues || param.name !== 'size'" class="form-field"
+                      appearance="outline">
+                      <mat-label>{{ param.label || param.name }}</mat-label>
                       <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}"
                         matTooltipPosition="right" [matTooltip]="param.help">
                     </mat-form-field>
@@ -323,7 +340,7 @@
           <ng-container *ngFor="let param of metricParams">
             <ng-container *ngIf="isArray(param.value)">
               <mat-form-field class="form-field" appearance="outline">
-                <mat-label>{{ param.name }}</mat-label>
+                <mat-label>{{ param.label || param.name }}</mat-label>
                 <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
                   <mat-option *ngFor="let option of param.value" [value]="option">{{ option }}</mat-option>
                 </mat-select>
@@ -331,7 +348,7 @@
             </ng-container>
             <ng-container *ngIf="typeOf(param.value) === 'boolean'">
               <mat-form-field class="form-field" appearance="outline">
-                <mat-label>{{ param.name }}</mat-label>
+                <mat-label>{{ param.label || param.name }}</mat-label>
                 <mat-select [(ngModel)]="metricParam" [ngModelOptions]="{standalone: true}">
                   <mat-option [value]="true">yes</mat-option>
                   <mat-option [value]="false">no</mat-option>
@@ -340,10 +357,15 @@
             </ng-container>
             <ng-container *ngIf="typeOf(param.value) === 'string'">
               <mat-form-field class="form-field" appearance="outline">
-                <mat-label>{{ param.name }}</mat-label>
+                <mat-label>{{ param.label || param.name }}</mat-label>
                 <input [(ngModel)]="metricParam" matInput [ngModelOptions]="{standalone: true}"
                   matTooltipPosition="right" [matTooltip]="param.help">
               </mat-form-field>
+              <button id="choose-eval-btn" *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button
+                color="primary" class="browse" (click)="openDialog(param.name, 'all', 'metric')">
+                <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
+                Choose file
+              </button>
             </ng-container>
           </ng-container>
         </mat-card>

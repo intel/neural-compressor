@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Parameters feeder test."""
-
+import os
 import unittest
 from typing import Dict
 from unittest.mock import MagicMock, patch
@@ -22,6 +22,7 @@ from lpot.ux.components.configuration_wizard.params_feeder import Feeder
 from lpot.ux.utils.exceptions import ClientErrorException
 
 
+@patch.dict(os.environ, {"HOME": "/foo/bar"})
 @patch("sys.argv", ["lpot_ux.py", "-p5000"])
 class TestParamsFeeder(unittest.TestCase):
     """Main test class for params feeder."""
@@ -798,7 +799,7 @@ class TestParamsFeeder(unittest.TestCase):
                     {
                         "name": "anno_path",
                         "help": "",
-                        "value": "",
+                        "value": "/foo/bar/workdir/label_map.yaml",
                     },
                 ],
             },
@@ -863,6 +864,112 @@ class TestParamsFeeder(unittest.TestCase):
 
     @patch(
         "lpot.ux.components.configuration_wizard.params_feeder.framework_metrics",
+        {"tensorflow": FakeMetrics},
+    )
+    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
+    @patch("lpot.ux.components.configuration_wizard.params_feeder.check_module")
+    def test_get_metrics_with_label(
+        self,
+        mocked_check_module: MagicMock,
+        mocked_load_help_lpot_params: MagicMock,
+    ) -> None:
+        """Test that get_domains fails when no config given."""
+        self.maxDiff = None
+        mocked_load_help_lpot_params.return_value = {
+            "__help__COCOmAP": None,
+            "COCOmAP": {
+                "__help__anno_path": "annotation path",
+                "__label__anno_path": "annotation path",
+            },
+            "__help__metric1": "help for metric1",
+            "__help__metric3": "help for metric3",
+        }
+
+        expected = [
+            {
+                "name": "topk",
+                "help": "",
+                "params": [
+                    {
+                        "name": "k",
+                        "help": "",
+                        "value": [1, 5],
+                    },
+                ],
+            },
+            {
+                "name": "COCOmAP",
+                "help": None,
+                "params": [
+                    {
+                        "name": "anno_path",
+                        "help": "annotation path",
+                        "value": "/foo/bar/workdir/label_map.yaml",
+                        "label": "annotation path",
+                    },
+                ],
+            },
+            {
+                "name": "MSE",
+                "help": "",
+                "params": [
+                    {
+                        "name": "compare_label",
+                        "help": "",
+                        "value": True,
+                    },
+                ],
+            },
+            {
+                "name": "RMSE",
+                "help": "",
+                "params": [
+                    {
+                        "name": "compare_label",
+                        "help": "",
+                        "value": True,
+                    },
+                ],
+            },
+            {
+                "name": "MAE",
+                "help": "",
+                "params": [
+                    {
+                        "name": "compare_label",
+                        "help": "",
+                        "value": True,
+                    },
+                ],
+            },
+            {
+                "name": "metric1",
+                "help": "help for metric1",
+                "value": None,
+            },
+            {
+                "name": "custom",
+                "help": "",
+                "value": None,
+            },
+        ]
+
+        feeder = Feeder(
+            data={
+                "config": {
+                    "framework": "tensorflow",
+                },
+            },
+        )
+
+        actual = feeder.get_metrics()
+
+        mocked_check_module.assert_called_once_with("tensorflow")
+        mocked_load_help_lpot_params.assert_called_once_with("metrics")
+        self.assertEqual(expected, actual)
+
+    @patch(
+        "lpot.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"onnxrt_qlinearops": FakeMetrics},
     )
     @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
@@ -902,7 +1009,7 @@ class TestParamsFeeder(unittest.TestCase):
                     {
                         "name": "anno_path",
                         "help": "",
-                        "value": "",
+                        "value": "/foo/bar/workdir/label_map.yaml",
                     },
                 ],
             },

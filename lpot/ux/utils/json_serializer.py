@@ -29,6 +29,14 @@ class JsonSerializer:
         # be skipped during serialization
         self._skip = ["_skip"]
 
+    def __eq__(self, other: Any) -> bool:
+        """Compare self to other instance."""
+        if type(self) is not type(other):
+            # don't attempt to compare against unrelated types
+            raise NotImplementedError
+
+        return self.serialize() == other.serialize()
+
     def serialize(
         self,
         serialization_type: str = "default",

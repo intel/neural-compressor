@@ -14,7 +14,7 @@
 # limitations under the License.
 """Graph class."""
 
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from lpot.ux.components.graph.edge import Edge
 from lpot.ux.components.graph.node import Node
@@ -65,11 +65,3 @@ class Graph(JsonSerializer):
         if id not in self._nodes:
             raise NotFoundException(f"Node id: {id} not found in Graph")
         return self._nodes[id]
-
-    def __eq__(self, other: Any) -> bool:
-        """Compare graph to other instance."""
-        if not isinstance(other, Graph):
-            # don't attempt to compare against unrelated types
-            raise NotImplementedError
-
-        return self.serialize() == other.serialize()

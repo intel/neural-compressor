@@ -15,9 +15,12 @@
 """Test frozen pb Model."""
 
 import unittest
+from typing import List
 from unittest.mock import MagicMock, patch
 
 from lpot.ux.components.graph.graph import Graph
+from lpot.ux.components.graph.node import Node
+from lpot.ux.components.model.domain import Domain
 from lpot.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
 
 
@@ -109,6 +112,79 @@ class TestFrozenPbModel(unittest.TestCase):
 
         self.assertEqual(expected, model.get_model_graph())
 
+        mocked_tensorflow_graph_reader.assert_called_once_with(model)
+
+    def test_domain_object_detection_domain(self) -> None:
+        """Test getting domain of a model."""
+        self.assert_model_domain_matches_expected(
+            node_names=["boxes", "scores", "classes"],
+            expected_domain="object_detection",
+            expected_domain_flavour="",
+        )
+
+    def test_domain_object_detection_domain_ssd(self) -> None:
+        """Test getting domain of a model."""
+        self.assert_model_domain_matches_expected(
+            node_names=["bboxes", "scores", "classes", "ssd"],
+            expected_domain="object_detection",
+            expected_domain_flavour="ssd",
+        )
+
+    def test_domain_object_detection_domain_yolo(self) -> None:
+        """Test getting domain of a model."""
+        self.assert_model_domain_matches_expected(
+            node_names=["boxes", "yolo"],
+            expected_domain="object_detection",
+            expected_domain_flavour="yolo",
+        )
+
+    def test_domain_unknown(self) -> None:
+        """Test getting domain of a model."""
+        self.assert_model_domain_matches_expected(
+            node_names=["foo", "bar", "baz", "ssd"],
+            expected_domain="",
+            expected_domain_flavour="",
+        )
+
+    @patch("lpot.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    def test_domain_graph_reader_exception(
+        self,
+        mocked_tensorflow_graph_reader: MagicMock,
+    ) -> None:
+        """Test getting domain of a model."""
+        mocked_tensorflow_graph_reader.return_value.read.side_effect = Exception()
+
+        model = FrozenPbModel("/path/to/frozen_pb.pb")
+
+        expected = Domain(domain="", domain_flavour="")
+
+        self.assertEqual(expected, model.domain)
+        mocked_tensorflow_graph_reader.assert_called_once_with(model)
+
+    @patch("lpot.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    def assert_model_domain_matches_expected(
+        self,
+        mocked_tensorflow_graph_reader: MagicMock,
+        node_names: List[str],
+        expected_domain: str,
+        expected_domain_flavour: str,
+    ) -> None:
+        """Test getting domain of a model."""
+
+        def graph_with_nodes() -> Graph:
+            """Create a graph with named nodes."""
+            graph = Graph()
+            for name in node_names:
+                graph.add_node(Node(id=name, label=name))
+            return graph
+
+        mocked_tensorflow_graph_reader.return_value.read.return_value = graph_with_nodes()
+
+        model = FrozenPbModel("/path/to/frozen_pb.pb")
+
+        expected = Domain(domain=expected_domain, domain_flavour=expected_domain_flavour)
+
+        self.assertEqual(expected, model.domain)
         mocked_tensorflow_graph_reader.assert_called_once_with(model)
 
 

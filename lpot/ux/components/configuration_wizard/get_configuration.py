@@ -37,6 +37,7 @@ def get_predefined_configuration(
     model_name = Path(model_path).stem
 
     domain = data.get("domain", None)
+    domain_flavour = data.get("domain_flavour", "")
 
     if not domain:
         raise ClientErrorException("Domain is not defined!")
@@ -48,7 +49,7 @@ def get_predefined_configuration(
         )
 
     config = Config()
-    predefined_config_path = get_predefined_config_path(framework, domain)
+    predefined_config_path = get_predefined_config_path(framework, domain, domain_flavour)
     config.load(predefined_config_path)
 
     return {

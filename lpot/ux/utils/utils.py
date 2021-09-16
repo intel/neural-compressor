@@ -97,19 +97,24 @@ def is_dataset_file(path: str) -> bool:
     return extension in dataset_extensions
 
 
-def get_predefined_config_path(framework: str, domain: str) -> str:
+def get_predefined_config_path(framework: str, domain: str, domain_flavour: str = "") -> str:
     """Get predefined config for specified model domain."""
-    config_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
-        "predefined_configs",
-        f"{framework}",
+    possible_filenames = [
+        f"{domain}_{domain_flavour}.yaml",
         f"{domain}.yaml",
-    )
-    if config_path and os.path.isfile(config_path):
-        return config_path
+    ]
+    for filename in possible_filenames:
+        config_path = os.path.join(
+            os.path.dirname(__file__),
+            "configs",
+            "predefined_configs",
+            f"{framework}",
+            filename,
+        )
+        if config_path and os.path.isfile(config_path):
+            return config_path
     raise Exception(
-        f"Could not found predefined config for {framework} {domain} model.",
+        f"Could not found predefined config for {framework} {domain} {domain_flavour} model.",
     )
 
 

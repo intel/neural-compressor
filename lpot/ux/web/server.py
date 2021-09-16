@@ -52,6 +52,7 @@ def run_server(configuration: Configuration) -> None:
 
     cors_allowed_origins = f"{configuration.scheme}://{addr}:{gui_port}"
 
+    app.config["JSON_SORT_KEYS"] = False
     app.secret_key = token
     CORS(app, origins=cors_allowed_origins)
     socketio.init_app(
