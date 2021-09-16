@@ -138,6 +138,14 @@ class TestFrozenPbModel(unittest.TestCase):
             expected_domain_flavour="yolo",
         )
 
+    def test_domain_image_recognition_resnet(self) -> None:
+        """Test getting domain of a model."""
+        self.assert_model_domain_matches_expected(
+            node_names=["resnet_model/Pad"],
+            expected_domain="image_recognition",
+            expected_domain_flavour="",
+        )
+
     def test_domain_unknown(self) -> None:
         """Test getting domain of a model."""
         self.assert_model_domain_matches_expected(

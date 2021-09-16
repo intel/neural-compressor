@@ -73,6 +73,8 @@ class Model(ABC):
             return Domain(domain="object_detection", domain_flavour="yolo")
         if has_all_name_parts(["boxes", "scores", "classes"]):
             return Domain(domain="object_detection")
+        if has_all_name_parts(["resnet"]):
+            return Domain(domain="image_recognition")
         return Domain()
 
     @staticmethod

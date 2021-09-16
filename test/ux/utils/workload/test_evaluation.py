@@ -148,10 +148,11 @@ class TestConfigsConfig(unittest.TestCase):
         """Configs config test constructor."""
         super().__init__(*args, **kwargs)
 
-    @patch("psutil.cpu_count")
-    def test_configs_constructor(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_configs_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config constructor."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
 
         data = {
             "cores_per_instance": 2,
@@ -162,35 +163,31 @@ class TestConfigsConfig(unittest.TestCase):
         }
         configs = Configs(data)
 
-        self.assertEqual(
-            configs.cores_per_instance,
-            2,
-        )
+        self.assertEqual(configs.cores_per_instance, 2)
         self.assertEqual(configs.num_of_instance, 4)
         self.assertEqual(configs.inter_num_of_threads, 8)
         self.assertEqual(configs.intra_num_of_threads, 16)
         self.assertEqual(configs.kmp_blocktime, 3)
 
-    @patch("psutil.cpu_count")
-    def test_configs_constructor_defaults(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_configs_constructor_defaults(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config constructor defaults."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
 
         configs = Configs()
 
-        self.assertEqual(
-            configs.cores_per_instance,
-            4,
-        )
-        self.assertEqual(configs.num_of_instance, 2)
+        self.assertEqual(configs.cores_per_instance, 5)
+        self.assertEqual(configs.num_of_instance, 3)
         self.assertIsNone(configs.inter_num_of_threads)
         self.assertIsNone(configs.intra_num_of_threads)
         self.assertIsNone(configs.kmp_blocktime)
 
-    @patch("psutil.cpu_count")
-    def test_configs_serializer(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_configs_serializer(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config serializer."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
 
         data = {
             "cores_per_instance": 2,
@@ -293,10 +290,11 @@ class TestAccuracyConfig(unittest.TestCase):
         """Accuracy config test constructor."""
         super().__init__(*args, **kwargs)
 
-    @patch("psutil.cpu_count")
-    def test_accuracy_constructor(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_accuracy_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Accuracy config constructor."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
         data = {
             "metric": {"topk": 1},
             "configs": {
@@ -421,10 +419,11 @@ class TestPerformanceConfig(unittest.TestCase):
         """Initialize Performance config test."""
         super().__init__(*args, **kwargs)
 
-    @patch("psutil.cpu_count")
-    def test_performance_constructor(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_performance_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Performance config constructor."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
         data = {
             "warmup": 100,
             "iteration": 1000,
@@ -532,10 +531,12 @@ class TestPerformanceConfig(unittest.TestCase):
             },
         )
 
-    @patch("psutil.cpu_count")
-    def test_performance_constructor_defaults(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_performance_constructor_defaults(self, mock_hwinfo: MagicMock) -> None:
         """Test Performance config constructor defaults."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
+
         performance = Performance()
 
         self.assertEqual(performance.warmup, 10)
@@ -543,8 +544,8 @@ class TestPerformanceConfig(unittest.TestCase):
         self.assertEqual(performance.iteration, -1)
 
         self.assertIsNotNone(performance.configs)
-        self.assertEqual(performance.configs.cores_per_instance, 4)
-        self.assertEqual(performance.configs.num_of_instance, 2)
+        self.assertEqual(performance.configs.cores_per_instance, 5)
+        self.assertEqual(performance.configs.num_of_instance, 3)
         self.assertIsNone(performance.configs.inter_num_of_threads)
         self.assertIsNone(performance.configs.intra_num_of_threads)
         self.assertIsNone(performance.configs.kmp_blocktime)
@@ -561,10 +562,11 @@ class TestEvaluationConfig(unittest.TestCase):
         """Initialize Evaluation config test."""
         super().__init__(*args, **kwargs)
 
-    @patch("psutil.cpu_count")
-    def test_evaluation_constructor(self, mock_cpu_count: MagicMock) -> None:
+    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    def test_evaluation_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Evaluation config constructor."""
-        mock_cpu_count.return_value = 8
+        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.sockets = 3
         data = {
             "accuracy": {
                 "metric": {"topk": 1},

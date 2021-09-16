@@ -250,10 +250,11 @@ export class ImportModelComponent implements OnInit {
       transform: [''],
       transformParams: [''],
       samplingSize: [100],
+      calibrationBatchSize: [100],
       op: [''],
       strategy: [''],
       batchSize: [1],
-      cores_per_instance: [4],
+      cores_per_instance: [],
       num_of_instance: [],
       inter_num_of_threads: [''],
       intra_num_of_threads: [''],
@@ -267,15 +268,6 @@ export class ImportModelComponent implements OnInit {
       randomSeed: [],
       approach: [],
     });
-    if (this.modelService.systemInfo['cores_per_socket']) {
-      this.secondFormGroup.get('num_of_instance')
-        .setValue(Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4));
-    } else {
-      this.modelService.systemInfoChange.subscribe(resp => {
-        this.secondFormGroup.get('num_of_instance')
-          .setValue(Math.floor(Number(this.modelService.systemInfo['cores_per_socket']) / 4));
-      });
-    }
   }
 
   getPossibleValues() {
@@ -465,6 +457,8 @@ export class ImportModelComponent implements OnInit {
             this.secondFormGroup.get('metric').setValue(Object.keys(resp['config']['evaluation'].accuracy.metric)[0]);
             this.setDefaultMetricParam(this.secondFormGroup.get('metric'));
             this.secondFormGroup.get('kmp_blocktime').setValue(resp['config']['evaluation'].performance.configs.kmp_blocktime);
+            this.secondFormGroup.get('cores_per_instance').setValue(resp['config']['evaluation'].performance.configs.cores_per_instance);
+            this.secondFormGroup.get('num_of_instance').setValue(resp['config']['evaluation'].performance.configs.num_of_instance);
             this.secondFormGroup.get('warmup').setValue(resp['config']['evaluation'].performance.warmup);
             this.secondFormGroup.get('iteration').setValue(resp['config']['evaluation'].performance.iteration);
             this.secondFormGroup.get('batchSize').setValue(resp['config']['evaluation'].performance.dataloader.batch_size);
@@ -553,6 +547,7 @@ export class ImportModelComponent implements OnInit {
         dataloader: this.getQuantizationDataloader(),
         accuracy_goal: this.secondFormGroup.get('accuracyGoal').value,
         sampling_size: this.secondFormGroup.get('samplingSize').value,
+        batch_size: this.secondFormGroup.get('calibrationBatchSize').value,
         strategy: this.secondFormGroup.get('strategy').value,
         approach: this.secondFormGroup.get('approach').value,
         objective: this.secondFormGroup.get('objective').value,
@@ -658,6 +653,7 @@ export class ImportModelComponent implements OnInit {
 
   openDialog(fieldName: string, filter: FileBrowserFilter, paramFile?) {
     let form = 'firstFormGroup';
+    const fileCategories = { 'dev-v1.1.json': 'label_file', 'vocab.txt': 'vocab_file' };
     if (filter === 'datasets') {
       form = 'secondFormGroup';
     }
@@ -667,34 +663,62 @@ export class ImportModelComponent implements OnInit {
       height: '60%',
       data: {
         path: this[form].get(fieldName) && this[form].get(fieldName).value ? this[form].get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
-        filter: filter
+        filter: filter,
+        filesToFind: paramFile ? Object.keys(fileCategories) : null
       }
     });
 
-    dialogRef.afterClosed().subscribe(chosenFile => {
-      if (chosenFile) {
-        if (paramFile) {
+    dialogRef.afterClosed().subscribe(response => {
+      if (response.chosenFile) {
+        if (paramFile && paramFile !== 'datasetLocation') {
           if (paramFile === 'evaluation' || paramFile === 'quantization') {
-            this.dataLoaderParams[paramFile].find(x => x.name === fieldName).value = chosenFile;
+            this.dataLoaderParams[paramFile].find(x => x.name === fieldName).value = response.chosenFile;
           } else if (paramFile === 'metric') {
-            this.metricParam = chosenFile;
+            this.metricParam = response.chosenFile;
           } else {
-            paramFile.find(x => x.name === fieldName).value = chosenFile;
+            paramFile.find(x => x.name === fieldName).value = response.chosenFile;
           }
         } else {
-          this[form].get(fieldName).setValue(chosenFile);
+          this[form].get(fieldName).setValue(response.chosenFile);
           if (fieldName === 'datasetLocationEvaluation' && this.useEvaluationData) {
-            this.secondFormGroup.get('datasetLocationQuantization').setValue(chosenFile);
+            this.secondFormGroup.get('datasetLocationQuantization').setValue(response.chosenFile);
           }
+        }
+
+        if (response.foundFiles.length) {
+          Object.keys(fileCategories).forEach((fileCategory, categoryIndex) => {
+            const fileName = Object.keys(fileCategories)[categoryIndex];
+            const fieldName = fileCategories[fileCategory];
+            if (fieldName === 'label_file') {
+              this.dataLoaderParams['evaluation'].find(x => x.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
+              this.dataLoaderParams['quantization'].find(x => x.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
+            }
+            this.transformationParams
+              .find(transformation => transformation.params.find(param => param.name === fieldName)).params
+              .find(param => param.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
+          });
         }
       }
     });;
+  }
+
+  updateCalibrationBatchSize() {
+    const samplingSize = this.secondFormGroup.get('samplingSize').value;
+    if (samplingSize.includes(',')) {
+      this.secondFormGroup.get('calibrationBatchSize').setValue(samplingSize.substring(0, samplingSize.indexOf(',')));
+    } else {
+      this.secondFormGroup.get('calibrationBatchSize').setValue(samplingSize);
+    }
   }
 
   openErrorDialog(error) {
     const dialogRef = this.dialog.open(ErrorComponent, {
       data: error
     });
+  }
+
+  coresValidated(): boolean {
+    return this.secondFormGroup.get('cores_per_instance').value * this.secondFormGroup.get('num_of_instance').value <= this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'];
   }
 
   getFileName(path: string): string {
@@ -735,6 +759,7 @@ export interface FullModel {
   quantization: {
     accuracy_goal: number;
     sampling_size: number;
+    batch_size: number;
     op?: string[];
     strategy: string;
     approach: string;

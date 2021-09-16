@@ -19,6 +19,8 @@ from typing import Any, Dict, List, Union
 
 from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.utils.exceptions import ClientErrorException
+from lpot.ux.utils.hw_info import HWInfo
+from lpot.ux.utils.workload.config import Config
 
 
 def get_predefined_configuration(
@@ -26,7 +28,6 @@ def get_predefined_configuration(
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """Get configuration."""
     from lpot.ux.utils.utils import get_framework_from_path, get_predefined_config_path
-    from lpot.ux.utils.workload.config import Config
 
     model_path = data.get("model_path", "")
     if not ModelRepository.is_model_path(model_path):
@@ -52,9 +53,32 @@ def get_predefined_configuration(
     predefined_config_path = get_predefined_config_path(framework, domain, domain_flavour)
     config.load(predefined_config_path)
 
+    update_config_to_machine_specification(config)
+
     return {
         "config": config.serialize(),
         "framework": framework,
         "name": model_name,
         "domain": domain,
     }
+
+
+def update_config_to_machine_specification(config: Config) -> None:
+    """Change Config values based on local machine."""
+    hwinfo = HWInfo()
+
+    cores_per_socket = hwinfo.cores_per_socket
+    num_sockets = hwinfo.sockets
+
+    if not config.evaluation:
+        return
+
+    if config.evaluation.accuracy and config.evaluation.accuracy.dataloader:
+        config.evaluation.accuracy.dataloader.batch_size = cores_per_socket
+
+    if config.evaluation.performance:
+        config.evaluation.performance.configs.cores_per_instance = cores_per_socket
+        config.evaluation.performance.configs.num_of_instance = num_sockets
+
+        if config.evaluation.performance.dataloader:
+            config.evaluation.performance.dataloader.batch_size = cores_per_socket

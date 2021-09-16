@@ -319,32 +319,7 @@ class TestDataloaderConfig(unittest.TestCase):
         dataloader = Dataloader()
 
         self.assertIsNone(dataloader.last_batch)
-        self.assertEqual(dataloader.batch_size, 1)
-        self.assertIsNone(dataloader.dataset)
-        self.assertDictEqual(dataloader.transform, {})
-        self.assertIsNone(dataloader.filter)
-
-    def test_dataloader_constructor_batch_overwrite(self) -> None:
-        """Test dataloader config constructor with batch overwrite."""
-        dataloader = Dataloader(
-            data={"batch_size": 2},
-            batch_size=32,
-        )
-        self.assertIsNone(dataloader.last_batch)
-        self.assertEqual(
-            dataloader.batch_size,
-            32,
-        )  # Batch size from parameter has higher priority
-        self.assertIsNone(dataloader.dataset)
-        self.assertDictEqual(dataloader.transform, {})
-        self.assertIsNone(dataloader.filter)
-
-    def test_dataloader_constructor_defaults_batch_overwrite(self) -> None:
-        """Test dataloader config constructor defaults with batch overwrite."""
-        dataloader = Dataloader(batch_size=8)
-
-        self.assertIsNone(dataloader.last_batch)
-        self.assertEqual(dataloader.batch_size, 8)
+        self.assertIsNone(dataloader.batch_size)
         self.assertIsNone(dataloader.dataset)
         self.assertDictEqual(dataloader.transform, {})
         self.assertIsNone(dataloader.filter)
@@ -399,11 +374,9 @@ class TestDataloaderConfig(unittest.TestCase):
     def test_dataloader_serializer_defaults(self) -> None:
         """Test dataloader config serializer defaults."""
         dataloader = Dataloader()
-        self.assertDictEqual(
+        self.assertEqual(
             dataloader.serialize(),
-            {
-                "batch_size": 1,
-            },
+            {},
         )
 
 

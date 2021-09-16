@@ -8,7 +8,7 @@
   <img src="./../../assets/077-arrow-up.svg">
 </button>
 <button mat-raised-button id="file-browser-choose-btn" class="confirm" color="accent" [disabled]="!chosenFile"
-  [mat-dialog-close]="chosenFile" matTooltip="Save selection">Choose</button>
+  (click)="chooseFile(chosenFile, true)" matTooltip="Save selection">Choose</button>
 <br>
 <div class="file-container">
   <ng-container *ngFor="let item of contents">

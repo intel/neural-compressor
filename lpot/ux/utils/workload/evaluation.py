@@ -75,11 +75,9 @@ class Configs(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration Configs class."""
         super().__init__()
-        self.cores_per_instance: int = data.get("cores_per_instance", 4)
-        self.num_of_instance: int = data.get(
-            "num_of_instance",
-            HWInfo().cores // self.cores_per_instance,
-        )
+        hwinfo = HWInfo()
+        self.cores_per_instance: int = data.get("cores_per_instance", hwinfo.cores_per_socket)
+        self.num_of_instance: int = data.get("num_of_instance", hwinfo.sockets)
         self.inter_num_of_threads: int = data.get("inter_num_of_threads", None)
         self.intra_num_of_threads: int = data.get("intra_num_of_threads", None)
         self.kmp_blocktime: int = data.get("kmp_blocktime", None)

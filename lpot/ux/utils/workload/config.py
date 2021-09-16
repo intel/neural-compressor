@@ -181,8 +181,11 @@ class Config(JsonSerializer):
 
         return None
 
-    def set_performance_batch_size(self, batch_size: int) -> None:
-        """Update batch_size evaluation config."""
+    def set_accuracy_and_performance_batch_sizes(self, batch_size: int) -> None:
+        """Update batch_size evaluation configs."""
+        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.dataloader:
+            self.evaluation.accuracy.dataloader.batch_size = batch_size
+
         if (
             self.evaluation
             and self.evaluation.performance
@@ -191,7 +194,7 @@ class Config(JsonSerializer):
             self.evaluation.performance.dataloader.batch_size = batch_size
 
     def set_quantization_dataloader(self, dataloader: dict) -> None:
-        """Udpate dataloader in quantization config."""
+        """Update dataloader in quantization config."""
         if (
             self.quantization
             and self.quantization.calibration
@@ -219,6 +222,15 @@ class Config(JsonSerializer):
             )
         else:
             log.warning("Could not set quantization dataset path.")
+
+    def set_quantization_batch_size(self, batch_size: int) -> None:
+        """Update batch_size in quantization config."""
+        if (
+            self.quantization
+            and self.quantization.calibration
+            and self.quantization.calibration.dataloader
+        ):
+            self.quantization.calibration.dataloader.batch_size = batch_size
 
     def set_workspace(self, path: str) -> None:
         """Update tuning workspace path in config."""

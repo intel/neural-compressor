@@ -46,11 +46,11 @@ quantization:
   calibration:
     sampling_size: 500
     dataloader:
+      batch_size: 500
       dataset:
         bert:
           root: /path/to/eval.tf_record
           label_file: /path/to/dev-v1.1.json
-      batch_size: 64
   model_wise:
     weight:
       granularity: per_channel

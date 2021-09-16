@@ -24,6 +24,7 @@ import { FileBrowserFilter, ModelService } from '../services/model.service';
 export class FileBrowserComponent implements OnInit {
 
   contents = [];
+  foundFiles = [];
   currentPath: string;
   chosenFile: string;
   filter: FileBrowserFilter;
@@ -36,8 +37,8 @@ export class FileBrowserComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.filter = this.data.filter
-    this.getFileSystem(this.data.path)
+    this.filter = this.data.filter;
+    this.getFileSystem(this.data.path);
   }
 
   getFileSystem(path: string) {
@@ -50,7 +51,7 @@ export class FileBrowserComponent implements OnInit {
         error => {
           this.openErrorDialog(error);
         }
-      )
+      );
   }
 
   openErrorDialog(error) {
@@ -62,8 +63,32 @@ export class FileBrowserComponent implements OnInit {
   chooseFile(name: string, close: boolean) {
     this.chosenFile = name;
     if (close) {
-      this.dialogRef.close(this.chosenFile);
+      this.checkForFiles();
     }
+  }
+
+  checkForFiles() {
+    this.modelService.getFileSystem(this.currentPath, 'all')
+      .subscribe(
+        resp => {
+          this.contents = resp['contents'];
+          this.currentPath = resp['path'];
+          if (this.data.filesToFind) {
+            this.data.filesToFind.forEach(file => {
+              if (this.contents.find(x => x.name.includes(file))) {
+                this.foundFiles.push(this.contents.find(x => x.name.includes(file)));
+              }
+            });
+          }
+          this.dialogRef.close({
+            chosenFile: this.chosenFile,
+            foundFiles: this.foundFiles
+          });
+        },
+        error => {
+          this.openErrorDialog(error);
+        }
+      );
   }
 
   currentPathChange(event) {

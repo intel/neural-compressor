@@ -64,7 +64,7 @@ class TestCalibrationConfig(unittest.TestCase):
         self.assertEqual(calibration.dataloader.last_batch, "rollover")
         self.assertEqual(
             calibration.dataloader.batch_size,
-            1,
+            2,
         )  # Calibration batch size should be always set to 1
         self.assertIsNotNone(calibration.dataloader.dataset)
         self.assertEqual(calibration.dataloader.dataset.name, "TestDataset")
@@ -142,7 +142,7 @@ class TestCalibrationConfig(unittest.TestCase):
                 "sampling_size": "10, 50, 100, 200",
                 "dataloader": {
                     "last_batch": "rollover",
-                    "batch_size": 1,
+                    "batch_size": 2,
                     "dataset": {
                         "TestDataset": {
                             "dataset_param": "/some/path",
@@ -400,10 +400,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(quantization.calibration)
         self.assertEqual(quantization.calibration.sampling_size, "10, 50, 100, 200")
         self.assertEqual(quantization.calibration.dataloader.last_batch, "rollover")
-        self.assertEqual(
-            quantization.calibration.dataloader.batch_size,
-            1,
-        )  # Calibration batch size should be always set to 1
+        self.assertEqual(quantization.calibration.dataloader.batch_size, 2)
         self.assertIsNotNone(quantization.calibration.dataloader.dataset)
         self.assertEqual(
             quantization.calibration.dataloader.dataset.name,

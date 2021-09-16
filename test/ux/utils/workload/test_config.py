@@ -166,10 +166,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.quantization.calibration)
         self.assertEqual(config.quantization.calibration.sampling_size, 100)
         self.assertIsNone(config.quantization.calibration.dataloader.last_batch)
-        self.assertEqual(
-            config.quantization.calibration.dataloader.batch_size,
-            1,
-        )  # Calibration batch size should be always set to 1
+        self.assertEqual(config.quantization.calibration.dataloader.batch_size, 10)
         self.assertIsNotNone(config.quantization.calibration.dataloader.dataset)
         self.assertEqual(
             config.quantization.calibration.dataloader.dataset.name,
@@ -332,7 +329,7 @@ class TestConfig(unittest.TestCase):
         """Test Config serializer."""
         config = Config(self.predefined_config)
         result = config.serialize()
-
+        self.maxDiff = None
         self.assertDictEqual(
             result,
             {
@@ -347,7 +344,7 @@ class TestConfig(unittest.TestCase):
                     "calibration": {
                         "sampling_size": 100,
                         "dataloader": {
-                            "batch_size": 1,
+                            "batch_size": 10,
                             "dataset": {
                                 "ImageRecord": {
                                     "root": "/path/to/calibration/dataset",
@@ -623,15 +620,16 @@ class TestConfig(unittest.TestCase):
         """Test set_performance_batch_size."""
         config = Config(self.predefined_config)
 
-        config.set_performance_batch_size(1234)
+        config.set_accuracy_and_performance_batch_sizes(1234)
 
+        self.assertEqual(1234, config.evaluation.accuracy.dataloader.batch_size)
         self.assertEqual(1234, config.evaluation.performance.dataloader.batch_size)
 
     def test_set_performance_batch_size_on_empty_config(self) -> None:
         """Test set_performance_batch_size."""
         config = Config()
 
-        config.set_performance_batch_size(1234)
+        config.set_accuracy_and_performance_batch_sizes(1234)
 
         self.assertIsNone(config.evaluation)
 

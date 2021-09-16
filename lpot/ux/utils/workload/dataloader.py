@@ -78,17 +78,11 @@ class Transform(JsonSerializer):
 class Dataloader(JsonSerializer):
     """Configuration Dataloader class."""
 
-    def __init__(
-        self,
-        data: Dict[str, Any] = {},
-        batch_size: Optional[int] = None,
-    ) -> None:
+    def __init__(self, data: Dict[str, Any] = {}) -> None:
         """Initialize Configuration Dataloader class."""
         super().__init__()
         self.last_batch = data.get("last_batch", None)  # One of "rollover", "discard"
-        self.batch_size: int = data.get("batch_size", 1)  # > 0
-        if batch_size:
-            self.batch_size = batch_size
+        self.batch_size: Optional[int] = data.get("batch_size")
         self.dataset: Optional[Dataset] = None
         if data.get("dataset"):
             self.set_dataset(data.get("dataset", {}))

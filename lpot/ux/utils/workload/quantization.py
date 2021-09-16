@@ -31,7 +31,6 @@ class Calibration(JsonSerializer):
         if isinstance(data.get("dataloader"), dict):
             self.dataloader = Dataloader(
                 data=data.get("dataloader", {}),
-                batch_size=1,
             )
 
 
