@@ -560,6 +560,18 @@ def main():
                         else:
                             item = label_list[item]
                             writer.write(f"{index}\t{item}\n")
+
+    if False: # True to turn on onnx evaluation
+        logger.info("***Onnx Evalue***")
+        import onnx
+        from lpot.experimental import Benchmark, common
+
+        model = onnx.load("bert.onnx")
+        evaluator = Benchmark("bert.yaml")
+        evaluator.model = common.Model(model)
+        evalue_mode = "accuracy" # or performance 
+        evaluator(evalue_mode)
+
     return eval_results
 
 
