@@ -1,9 +1,14 @@
 ## original check:
 eval_accuracy = 0.8382
-throughput = 40.09
+throughput = 32.20
 
+You need to train the pretrained-model before evaluation,
 ```
 python run_glue.py  --model_name_or_path bert-base-cased   --task_name $TASK_NAME   --do_train  --do_eval  --max_seq_length 128  --per_device_train_batch_size 32   --learning_rate 2e-5   --output_dir /tmp/$TASK_NAME/ --overwrite_output_dir
+```
+Alternately, you could also specify --model_name_or_path to the directory of local .bin model to skip training.
+```
+python run_glue.py  --model_name_or_path /tmp/MRPC   --task_name $TASK_NAME   --do_eval  --max_seq_length 128  --per_device_train_batch_size 32   --learning_rate 2e-5   --output_dir /tmp/$TASK_NAME/ --overwrite_output_dir
 ```
 
 ## Lpot fine-tune:
@@ -59,6 +64,9 @@ python run_glue_tune.py  --task_name MRPC --max_seq_length 128  --output_dir /tm
 ```
 
 ## bigdl-nano (jemalloc + omp):
-
-
+accuracy = 0.8382
+throughput = 59.783
+```
+bigdl-nano-init python run_glue.py  --model_name_or_path /tmp/MRPC   --task_name $TASK_NAME   --do_eval  --max_seq_length 128  --per_device_train_batch_size 32   --learning_rate 2e-5   --output_dir /tmp/$TASK_NAME/ --overwrite_output_dir
+```
 
