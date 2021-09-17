@@ -45,3 +45,4 @@ class PyTorchDataLoader(BaseDataLoader):
             pin_memory=pin_memory,
             sampler=sampler,
             batch_sampler=batch_sampler)
+            

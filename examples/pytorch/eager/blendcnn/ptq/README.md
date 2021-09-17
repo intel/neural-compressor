@@ -58,6 +58,27 @@ dev_ids.tsv  dev.tsv  test.tsv  train.tsv
 
 ```
 
+## 3. Distillation of BlendCNN with BERT-Base as Teacher
+
+### 3.1 Fine-tune the pretrained BERT-Base model on MRPC dataset
+
+After preparation of step 2, you can fine-tune the pretrained BERT-Base model on MRPC dataset with below steps.
+```Shell
+mkdir -p models/bert/mrpc
+# fine-tune the pretrained BERT-Base model
+python finetune.py config/finetune/mrpc/train.json
+```
+When finished, you can find the fine-tuned BERT-Base model weights model_final.pt at `./models/bert/mrpc/`.
+
+### 3.2 Distilling the BlendCNN with BERT-Base
+
+```Shell
+mkdir -p models/blendcnn/
+# distilling the BlendCNN
+python distill.py --loss_weights 0.1 0.9
+```
+Follow the above steps, you will find distilled BlendCNN model weights best_model_weights.pt in `./models/blendcnn/`.
+
 Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNest
 ===========================================================================================
 

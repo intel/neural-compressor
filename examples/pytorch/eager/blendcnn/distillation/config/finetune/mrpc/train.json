@@ -5,8 +5,8 @@
     "cfg_model": "config/bert_base.json",
     "cfg_optim": "config/finetune/mrpc/optim.json",
     "model_file": "",
-    "pretrain_file": "../exp/bert/pretrain2/model_steps_300000.pt",
-    "save_dir": "../exp/bert/finetune/mrpc",
+    "pretrain_file": "models/uncased_L-12_H-768_A-12/bert_model.ckpt",
+    "save_dir": "models/bert/mrpc",
     "comments": [
         "../uncased_L-12_H-768_A-12/bert_model.ckpt"
     ]

@@ -1048,6 +1048,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                 print('.', end='', flush=True)
                 cnt += 1
                 output = model_(image)
+                if hasattr(criterion, "teacher_model_forward"):
+                    criterion.teacher_model_forward(image)
                 loss = criterion(output, target)
                 self.optimizer.zero_grad()
                 loss.backward()

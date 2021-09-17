@@ -500,6 +500,11 @@ optimizer_schema = Schema({
 criterion_schema = Schema({
     Optional('CrossEntropyLoss'): {
         Optional('reduction', default='mean'): And(str, lambda s: s in ['none', 'sum', 'mean'])
+    },
+    Optional('KnowledgeDistillationLoss'): {
+        Optional('temperature'): And(float, lambda s: s > 0),
+        Optional('loss_types'): And(list, lambda s: all(i in ['CE', 'KL'] for i in s)),
+        Optional('loss_weights'): And(list, lambda s: all(i >= 0 for i in s) and sum(s) == 1.0),
     }
 })
 
@@ -728,6 +733,11 @@ schema = Schema({
         Optional("train"): train_schema,
         Optional("approach"): approach_schema
     },
+
+    Optional('distillation'): {
+        Optional("train"): train_schema
+    },
+
     Optional("train"): train_schema
 })
 
@@ -831,6 +841,31 @@ benchmark_default_schema = Schema({
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
+})
+
+distillation_default_schema = Schema({
+    Optional('model', default={'name': 'default_model_name', \
+                               'framework': 'NA', \
+                               'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('tuning', default={
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('distillation', default={
+        'train': {'start_epoch': 0, 'end_epoch': 10, \
+                  'iteration': 1000, 'frequency': 1, \
+                  'optimizer': {'SGD': {'learning_rate': 0.001}}, \
+                  'criterion': {'KnowledgeDistillationLoss': \
+                                 {'temperature': 1.0, \
+                                  'loss_types': ['CE', 'KL'], \
+                                  'loss_weights': [0.5, 0.5]}}}}): dict,
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
 })
@@ -1110,3 +1145,17 @@ class Benchmark_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
         else:
             self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))
+
+class Distillation_Conf(Conf):
+    """config parser.
+
+    Args:
+        cfg_fname (string): The path to the configuration file.
+
+    """
+
+    def __init__(self, cfg_fname):
+        if cfg_fname:
+            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+        else:
+            self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
