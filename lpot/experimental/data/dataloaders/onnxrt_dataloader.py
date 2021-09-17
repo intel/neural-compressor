@@ -24,7 +24,8 @@ torch = LazyImport('torch')
 
 class ONNXRTBertDataLoader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
+                             sampler, batch_sampler, num_workers, pin_memory,
+                             shuffle, distributed):
         import numpy as np
         from torch.utils.data import DataLoader, SequentialSampler
         sampler = SequentialSampler(dataset)
@@ -33,14 +34,14 @@ class ONNXRTBertDataLoader(DefaultDataLoader):
         dynamic_length = dataset.dynamic_length
         model_type = dataset.model_type
         max_seq_length = dataset.max_seq_length
-        
+
         for batch in dataloader:
             try:
                 batch_seq_length = max_seq_length if not dynamic_length \
                     else torch.max(batch[-2], 0)[0].item()
                 batch = tuple(t.detach().cpu().numpy()  \
                             if not isinstance(t, np.ndarray) else t \
-                            for t in batch)    
+                            for t in batch)
                 if model_type == 'bert':
                     data = [
                         batch[0][:,:batch_seq_length],
@@ -60,16 +61,16 @@ class ONNXRTBertDataLoader(DefaultDataLoader):
 class ONNXRTDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
-                             shuffle):
+                             shuffle, distributed):
         if shuffle:
             logging.warning('Shuffle is not supported yet in ONNXRTDataLoader, ' \
                             'ignoring shuffle keyword.')
-        
+
         if isinstance(dataset, ONNXRTBertDataset):
             return ONNXRTBertDataLoader(dataset, batch_size, last_batch, collate_fn,
                                      sampler, batch_sampler, num_workers, pin_memory,
-                                     shuffle)                     
+                                     shuffle, distributed)
         else:
             return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
                                      sampler, batch_sampler, num_workers, pin_memory,
-                                     shuffle)
+                                     shuffle, distributed)

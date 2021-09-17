@@ -78,7 +78,7 @@ class TpeTuneStrategy(TuneStrategy):
 
     """
     def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         assert conf.usr_cfg.quantization.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
         self.hpopt_search_space = None
@@ -113,7 +113,8 @@ class TpeTuneStrategy(TuneStrategy):
             q_func,
             eval_dataloader,
             eval_func,
-            dicts)
+            dicts,
+            q_hooks)
 
     def __getstate__(self):
         """Magic method for pickle saving.
@@ -438,11 +439,11 @@ class TpeTuneStrategy(TuneStrategy):
             else:
                 del self.last_qmodel
 
-        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0], 
+        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0],
                                                                 str(self.objective.measurer),
                                                                 self.last_tune_result[1]) \
                                                                 if self.last_tune_result else 'n/a'
-        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0], 
+        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0],
                                                                 str(self.objective.measurer),
                                                                 self.best_tune_result[1]) \
                                                                 if self.best_tune_result else 'n/a'

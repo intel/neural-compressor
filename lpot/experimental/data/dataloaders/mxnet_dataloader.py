@@ -23,7 +23,7 @@ mx = LazyImport('mxnet')
 class MXNetDataLoader(BaseDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
-                             shuffle):
+                             shuffle, distributed):
         if shuffle:
             logging.warning('Shuffle is not supported yet in MXNetDataLoader, ' \
                             'ignoring shuffle keyword.')

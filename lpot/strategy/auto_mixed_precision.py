@@ -63,7 +63,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     """
 
     def __init__(self, model, conf, q_dataloader=None, q_func=None,
-                eval_dataloader=None, eval_func=None, dicts=None):
+                eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         super().__init__(
             model,
             conf,
@@ -71,7 +71,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             q_func,
             eval_dataloader,
             eval_func,
-            dicts)
+            dicts,
+            q_hooks)
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies

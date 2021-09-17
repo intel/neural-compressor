@@ -25,7 +25,7 @@ def build_fake_yaml_footprint():
           strategy:
             name: fake
           accuracy_criterion:
-            relative: 0.01        
+            relative: 0.01
           workspace:
             path: saved
         '''
@@ -52,7 +52,7 @@ def build_fake_yaml_model_size():
           strategy:
             name: fake
           accuracy_criterion:
-            relative: 0.01        
+            relative: 0.01
           workspace:
             path: saved
         '''
@@ -79,7 +79,7 @@ def build_fake_yaml():
           strategy:
             name: fake
           accuracy_criterion:
-            relative: 0.01        
+            relative: 0.01
           workspace:
             path: saved
         '''
@@ -170,7 +170,7 @@ def build_fake_strategy():
             "import copy\n",
             "@strategy_registry\n",
             "class FakeTuneStrategy(TuneStrategy):\n",
-            "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None):\n",
+            "  def __init__(self, model, cfg, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):\n",
             "    self.id = 0\n",
             "    self.resume = True if dicts else False\n",
             "    super(FakeTuneStrategy, self).__init__(model, cfg, q_dataloader, q_func, eval_dataloader, eval_func, dicts)\n",

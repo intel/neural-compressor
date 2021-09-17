@@ -91,7 +91,7 @@ registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
 class METRICS(object):
     def __init__(self, framework):
         assert framework in ("tensorflow", "tensorflow_itex",
-                            "pytorch", "pytorch_ipex", "pytorch_fx", \
+                             "pytorch", "pytorch_ipex", "pytorch_fx", \
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.metrics = framework_metrics[framework]().metrics
@@ -399,7 +399,7 @@ class PyTorchLoss():
             raise ValueError("Loss must have at least one example \
                                       before it can be computed.")
         return self._sum.item() / self._num_examples
-        
+
 @metric_registry('Loss', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Loss(BaseMetric):
     """A dummy metric for directly printing loss, it calculates the average of predictions.
@@ -429,8 +429,8 @@ class MAE(BaseMetric):
     """Computes Mean Absolute Error (MAE) loss.
 
     Args:
-        compare_label (bool): Whether to compare label. False if there are no labels 
-                              and will use FP32 preds as labels. 
+        compare_label (bool): Whether to compare label. False if there are no labels
+                              and will use FP32 preds as labels.
     """
     def __init__(self, compare_label=True):
         self.label_list = []
@@ -461,8 +461,8 @@ class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
 
     Args:
-        compare_label (bool): Whether to compare label. False if there are no labels 
-                              and will use FP32 preds as labels. 
+        compare_label (bool): Whether to compare label. False if there are no labels
+                              and will use FP32 preds as labels.
     """
     def __init__(self, compare_label=True):
         self.mse = MSE(compare_label)
@@ -484,8 +484,8 @@ class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
 
     Args:
-        compare_label (bool): Whether to compare label. False if there are no labels 
-                              and will use FP32 preds as labels.  
+        compare_label (bool): Whether to compare label. False if there are no labels
+                              and will use FP32 preds as labels.
     """
     def __init__(self, compare_label=True):
         self.label_list = []
@@ -602,11 +602,11 @@ class TensorflowMAP(BaseMetric):
 
     Args:
         anno_path (str): Annotation path.
-        iou_thrs (float or str): Minimal value for intersection over union that allows to 
-                                 make decision that prediction bounding box is true positive. 
-                                 You can specify one float value between 0 to 1 or 
+        iou_thrs (float or str): Minimal value for intersection over union that allows to
+                                 make decision that prediction bounding box is true positive.
+                                 You can specify one float value between 0 to 1 or
                                  string "05:0.05:0.95" for standard COCO thresholds.
-        map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+        map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
                           11-point interpolated AP, 0 for area under PR curve.
     """
     def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0, \
@@ -676,11 +676,11 @@ class TensorflowMAP(BaseMetric):
             if image_id in self.image_ids:
                 continue
             self.image_ids.append(image_id)
-            
+
             ground_truth = {}
             ground_truth['boxes'] = np.asarray(bboxes[idx])
             ground_truth['classes'] = np.asarray(labels[idx])
-            
+
             self.ground_truth_list.extend(
                 ExportSingleImageGroundtruthToCoco(
                     image_id=image_id,
@@ -743,11 +743,11 @@ class TensorflowMAP(BaseMetric):
 
 @metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowCOCOMAP(TensorflowMAP):
-    """Computes mean average precision using algorithm in COCO 
+    """Computes mean average precision using algorithm in COCO
 
     Args:
         anno_path (str): Annotation path.
-        iou_thrs (float or str): Intersection over union threshold. 
+        iou_thrs (float or str): Intersection over union threshold.
                         Set to "0.5:0.05:0.95" for standard COCO thresholds.
         map_points (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.
     """
@@ -759,7 +759,7 @@ class TensorflowCOCOMAP(TensorflowMAP):
 
 @metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowVOCMAP(TensorflowMAP):
-    """Computes mean average precision using algorithm in VOC 
+    """Computes mean average precision using algorithm in VOC
 
     Args:
         anno_path (str): Annotation path.
@@ -808,7 +808,7 @@ class mIOU(BaseMetric):
         mask = (labels >= 0) & (labels < self.num_classes)
         self.hist += np.bincount(
             self.num_classes * labels[mask].astype(int) +
-            preds[mask], minlength=self.num_classes ** 2).reshape(self.num_classes, 
+            preds[mask], minlength=self.num_classes ** 2).reshape(self.num_classes,
             self.num_classes)
 
     def reset(self):
@@ -817,21 +817,21 @@ class mIOU(BaseMetric):
 
     def result(self):
         """calculate metric"""
-        iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) - 
+        iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) -
         np.diag(self.hist))
         mean_iu = np.nanmean(iu)
         return mean_iu
 
 @metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops')
 class ONNXRTGLUE(BaseMetric):
-    """Computes GLUE score. 
+    """Computes GLUE score.
 
     Args:
-        task (str, default=mrpc): The name of the task. 
-                                  Choices include mrpc, qqp, qnli, rte, 
-                                  sts-b, cola, mnli, wnli. 
-                                  
-    """    
+        task (str, default=mrpc): The name of the task.
+                                  Choices include mrpc, qqp, qnli, rte,
+                                  sts-b, cola, mnli, wnli.
+
+    """
     def __init__(self, task='mrpc'):
         assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
             'mnli', 'wnli'], 'Unsupported task type'
@@ -861,7 +861,7 @@ class ONNXRTGLUE(BaseMetric):
         else:
             self.pred_list = np.append(self.pred_list, preds, axis=0)
             self.label_list = np.append(self.label_list, labels, axis=0)
-            
+
     def reset(self):
         """clear preds and labels storage"""
         self.pred_list = None
@@ -870,11 +870,11 @@ class ONNXRTGLUE(BaseMetric):
     def result(self):
         """calculate metric"""
         output_mode = transformers.glue_output_modes[self.task]
-        
+
         if output_mode == "classification":
             processed_preds = np.argmax(self.pred_list, axis=1)
         elif output_mode == "regression":
             processed_preds = np.squeeze(self.pred_list)
         result = transformers.glue_compute_metrics(\
-            self.task, processed_preds, self.label_list) 
-        return result[self.return_key[self.task]]            
+            self.task, processed_preds, self.label_list)
+        return result[self.return_key[self.task]]

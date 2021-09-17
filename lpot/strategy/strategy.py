@@ -107,7 +107,7 @@ class TuneStrategy(object):
     """
 
     def __init__(self, model, conf, q_dataloader=None, q_func=None,
-                 eval_dataloader=None, eval_func=None, resume=None):
+                 eval_dataloader=None, eval_func=None, resume=None, q_hooks=None):
         self.model = model
         self.cfg = conf.usr_cfg
 
@@ -129,6 +129,7 @@ class TuneStrategy(object):
         self.eval_dataloader = eval_dataloader
         self.calib_dataloader = q_dataloader
         self.q_func = q_func
+        self.q_hooks = q_hooks
         self.eval_func = eval_func
 
         framework_specific_info = {'device': self.cfg.device,
@@ -165,7 +166,7 @@ class TuneStrategy(object):
             assert self.calib_dataloader, "dataloader field of train field of quantization " \
                                           "section in yaml file must be configured."
             self.q_func = create_train_func(self.framework, self.calib_dataloader, \
-                                            self.adaptor, train_cfg)
+                                            self.adaptor, train_cfg, hooks=self.q_hooks)
 
         self.baseline = None
         self.last_tune_result = None

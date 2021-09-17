@@ -138,15 +138,17 @@ class Pruning(Component):
                                                eval_cfg.accuracy.metric, \
                                                eval_cfg.accuracy.postprocess, \
                                                fp32_baseline = False)
+        if getattr(self.train_dataloader, 'distributed', False):
+            self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
-        self._pruning_func(self._model \
-                if getattr(self._pruning_func, 'builtin', None) else self._model.model)
+        self._pruning_func(self._model if getattr(self._pruning_func, 'builtin', None) \
+                        else self._model.model)
         logger.info("Model pruning is done. Start to evaluate the pruned model.")
-        score = self._eval_func(self._model \
-                if getattr(self._eval_func, 'builtin', None) else self._model.model)
-
+        score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
+                        else self._model.model)
         logger.info("Pruned model score is {}.".format(str(score)))
+
         return self._model
 
     def generate_hooks(self):

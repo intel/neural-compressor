@@ -45,7 +45,7 @@ class DefaultDataLoader(BaseDataLoader):
 
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
                  sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
-                 shuffle=False):
+                 shuffle=False, distributed=False):
         self.dataset = dataset
         self.last_batch = last_batch
         self.sampler = sampler
@@ -55,6 +55,7 @@ class DefaultDataLoader(BaseDataLoader):
         self.collate_fn = collate_fn
         self._batch_size = batch_size
         self.shuffle = shuffle
+        self.distributed = distributed
         if self.collate_fn == None:
             self.collate_fn = default_collate
 
@@ -76,25 +77,16 @@ class DefaultDataLoader(BaseDataLoader):
             batch_sampler=self.batch_sampler,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            shuffle=self.shuffle)
+            shuffle=self.shuffle,
+            distributed=self.distributed)
 
-    def _generate_sampler(self, dataset):
-        if hasattr(dataset, "__getitem__"):
-            self.dataset_type = 'index'
-            return SequentialSampler(self.dataset)
-        elif hasattr(dataset, "__iter__"):
-            self.dataset_type = 'iter'
-            return IterableSampler()
-        else:
-            raise ValueError("dataset type only support (index, iter)")
-
-    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
+    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, sampler,
+                             batch_sampler, num_workers, pin_memory, shuffle, distributed):
 
         drop_last = False if last_batch == 'rollover' else True
-        sampler = self._generate_sampler(dataset)
+        sampler = self._generate_sampler(dataset, distributed)
         self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
-        self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, drop_last)
+        self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, drop_last, distributed)
 
         for batched_indices in self.batch_sampler:
             try:
@@ -103,3 +95,12 @@ class DefaultDataLoader(BaseDataLoader):
             except StopIteration:
                 return
 
+    def _generate_sampler(self, dataset, distributed):
+        if hasattr(dataset, "__getitem__"):
+            self.dataset_type = 'index'
+            return SequentialSampler(dataset, distributed)
+        elif hasattr(dataset, "__iter__"):
+            self.dataset_type = 'iter'
+            return IterableSampler(dataset)
+        else:
+            raise ValueError("dataset type only support (index, iter)")

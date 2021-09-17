@@ -31,6 +31,7 @@ from .query import QueryBackendCapability
 torch = LazyImport('torch')
 ipex = LazyImport('intel_pytorch_extension')
 json = LazyImport('json')
+hvd = LazyImport('horovod.torch')
 
 REDUCE_RANGE = False if CpuInfo().vnni else True
 logger.debug("Reduce range is {}".format(str(REDUCE_RANGE)))
@@ -917,10 +918,12 @@ class PyTorchAdaptor(TemplateAdaptor):
             self.fp32_preds_as_label = True
             results = []
 
+        cnt = 0
         with torch.no_grad():
             if metric:
                 metric.reset()
             for idx, (input, label) in enumerate(dataloader):
+                cnt += 1
                 if measurer is not None:
                     measurer.start()
 
@@ -946,6 +949,13 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if postprocess is not None:
                     output, label = postprocess((output, label))
                 if metric is not None and not self.fp32_preds_as_label:
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                            isinstance(dataloader.sampler, \
+                            torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        output = hvd.allgather(output)
+                        label = hvd.allgather(label)
                     metric.update(output, label)
                 if self.fp32_preds_as_label:
                     self.fp32_results.append(output) if fp32_baseline else \
@@ -970,6 +980,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         return acc
 
     def _pre_hook_for_qat(self):
+        # self.model.model is needed here.
         self.model.model.qconfig = torch.quantization.QConfig(
                             activation=torch.quantization.FakeQuantize.with_args(
                                     dtype=torch.quint8,
@@ -980,6 +991,14 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model.model, inplace=True)
+
+    def _pre_hook_for_hvd(self):
+        # TODO: lazy init here
+        hvd.init()
+        hvd.broadcast_parameters(self.model.model.state_dict(), root_rank=0)
+        hvd.broadcast_optimizer_state(self.optimizer, root_rank=0)
+        self.optimizer = hvd.DistributedOptimizer(
+            self.optimizer, named_parameters=self.model.model.named_parameters())
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
@@ -995,8 +1014,10 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         model_ = model.model
+        # self.model is set to lpot model here to hold the inplace change in FWK model.
         self.model = model
         optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
+        self.optimizer = optimizer
         criterion = criterion_tuple[0](**criterion_tuple[1])
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
@@ -1016,18 +1037,23 @@ class PyTorchAdaptor(TemplateAdaptor):
             cnt = 0
             if hooks is not None:
                 on_epoch_begin(nepoch)
+            if getattr(dataloader, 'distributed', False) \
+                    or isinstance(dataloader.sampler, \
+                    torch.utils.data.distributed.DistributedSampler):
+                dataloader.sampler.set_epoch(nepoch)
             for image, target in dataloader:
+                # TODO: to support adjust lr with epoch
                 if hooks is not None:
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = model_(image)
                 loss = criterion(output, target)
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 loss.backward()
                 if hooks is not None:
                     on_post_grad()
-                optimizer.step()
+                self.optimizer.step()
                 if hooks is not None:
                     on_batch_end()
                 if cnt >= iters:
@@ -2212,7 +2238,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE),
                             weight=torch.quantization.default_weight_fake_quant)
-        # prepare_qat_fx can not change inplaced
+        # prepare_qat_fx can not change inplaced. Use lpot model to hold FWK model and manually
+        # change the model.
         self.model.model = prepare_qat_fx(self.model.model, {"": qconfig})
 
     def _post_hook_for_qat(self):                              # pragma: no cover

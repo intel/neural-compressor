@@ -68,7 +68,7 @@ class SigOptTuneStrategy(TuneStrategy):
     """
 
     def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         super().__init__(
             model,
             conf,
@@ -76,7 +76,8 @@ class SigOptTuneStrategy(TuneStrategy):
             q_func,
             eval_dataloader,
             eval_func,
-            dicts)
+            dicts,
+            q_hooks)
 
         # SigOpt init
         client_token = conf.usr_cfg.tuning.strategy.sigopt_api_token
@@ -165,7 +166,7 @@ class SigOptTuneStrategy(TuneStrategy):
             # record the FP32 baseline
             self._add_tuning_history()
 
-        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0], 
+        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
                                                                 str(self.objective.measurer),
                                                                 self.baseline[1]) \
                                                                 if self.baseline else 'n/a'

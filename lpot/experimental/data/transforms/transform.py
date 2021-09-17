@@ -320,7 +320,7 @@ class ComposeTransform(BaseTransform):
     Returns:
         sample (tuple): tuple of processed image and label
     """
- 
+
     def __init__(self, transform_list):
         self.transform_list = transform_list
 
@@ -343,7 +343,7 @@ class CropToBoundingBox(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, offset_height, offset_width, target_height, target_width):
         self.offset_height = offset_height
         self.offset_width = offset_width
@@ -374,7 +374,7 @@ class MXNetCropToBoundingBox(CropToBoundingBox):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         image = mx.image.fixed_crop(
@@ -399,11 +399,11 @@ class ONNXRTCropToBoundingBox(CropToBoundingBox):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
-        image = image[self.offset_height : self.offset_height+self.target_height, 
-                      self.offset_width : self.offset_width+self.target_width, :] 
+        image = image[self.offset_height : self.offset_height+self.target_height,
+                      self.offset_width : self.offset_width+self.target_width, :]
         return (image, label)
 
 @transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
@@ -420,26 +420,26 @@ class TensorflowCropToBoundingBox(CropToBoundingBox):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.crop_to_bounding_box(image, self.offset_height,
                     self.offset_width, self.target_height, self.target_width)
         else:
-            image = image[self.offset_height : self.offset_height+self.target_height, 
-                    self.offset_width : self.offset_width+self.target_width, :] 
+            image = image[self.offset_height : self.offset_height+self.target_height,
+                    self.offset_width : self.offset_width+self.target_width, :]
         return (image, label)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops, pytorch, mxnet")
 class ResizeWithRatio(BaseTransform):
-    """Resize image with aspect ratio and pad it to max shape(optional). 
+    """Resize image with aspect ratio and pad it to max shape(optional).
        If the image is padded, the label will be processed at the same time.
        The input image should be np.array.
 
     Args:
-        min_dim (int, default=800): 
+        min_dim (int, default=800):
             Resizes the image such that its smaller dimension == min_dim
         max_dim (int, default=1365):
             Ensures that the image longest side doesn't exceed this value
@@ -449,7 +449,7 @@ class ResizeWithRatio(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, min_dim=800, max_dim=1365, padding=False, constant_value=0):
         self.min_dim = min_dim
         self.max_dim = max_dim
@@ -466,11 +466,11 @@ class ResizeWithRatio(BaseTransform):
             image_max = max(height, width)
             if round(image_max * scale) > self.max_dim:
                 scale = self.max_dim / image_max
-        if scale != 1: 
+        if scale != 1:
             image = cv2.resize(image, (round(height * scale), round(width * scale)))
-        
+
         bbox, str_label, int_label, image_id = label
-        
+
         if self.padding:
             h, w = image.shape[:2]
             pad_param = [[(self.max_dim-h)//2, self.max_dim-h-(self.max_dim-h)//2],
@@ -488,12 +488,12 @@ class ResizeWithRatio(BaseTransform):
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
                 framework="tensorflow")
 class TensorflowResizeWithRatio(BaseTransform):
-    """Resize image with aspect ratio and pad it to max shape(optional). 
+    """Resize image with aspect ratio and pad it to max shape(optional).
        If the image is padded, the label will be processed at the same time.
        The input image should be np.array or tf.Tensor.
 
     Args:
-        min_dim (int, default=800): 
+        min_dim (int, default=800):
             Resizes the image such that its smaller dimension == min_dim
         max_dim (int, default=1365):
             Ensures that the image longest side doesn't exceed this value
@@ -503,7 +503,7 @@ class TensorflowResizeWithRatio(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, min_dim=800, max_dim=1365, padding=False, constant_value=0):
         self.min_dim = min_dim
         self.max_dim = max_dim
@@ -528,7 +528,7 @@ class TensorflowResizeWithRatio(BaseTransform):
             image = tf.image.resize(image, (tf.math.round(height * scale), \
                                             tf.math.round(width * scale)))
             bbox, str_label, int_label, image_id = label
-            
+
             if self.padding:
                 shape = tf.shape(input=image)
                 h = tf.cast(shape[0], dtype=tf.float32)
@@ -557,7 +557,7 @@ class Transpose(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, perm):
         self.perm = perm
 
@@ -577,7 +577,7 @@ class TensorflowTranspose(Transpose):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
@@ -597,7 +597,7 @@ class MXNetTranspose(Transpose):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
@@ -614,7 +614,7 @@ class PyTorchTranspose(Transpose):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
@@ -629,7 +629,7 @@ class RandomVerticalFlip(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
@@ -644,7 +644,7 @@ class TensorflowRandomVerticalFlip(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if isinstance(image, tf.Tensor):
@@ -662,7 +662,7 @@ class RandomHorizontalFlip(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
@@ -677,7 +677,7 @@ class TensorflowRandomHorizontalFlip(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if isinstance(image, tf.Tensor):
@@ -695,7 +695,7 @@ class ToArray(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         from PIL import Image
         image, label = sample
@@ -712,7 +712,7 @@ np_dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64,
            'int64': np.int64, 'uint64': np.uint64, 'float32': np.float32,
            'float16': np.float16, 'float64': np.float64, 'bool': np.bool,
            'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
- 
+
 @transform_registry(transform_type="Cast",
                     process="general", framework="tensorflow")
 class CastTFTransform(BaseTransform):
@@ -724,14 +724,14 @@ class CastTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, dtype='float32'):
         self.tf_dtype_map = {'int16': tf.int16, 'uint8': tf.uint8, 'uint16': tf.uint16,
                         'uint32':tf.uint32, 'uint64': tf.uint64, 'complex64': tf.complex64,
                         'int32': tf.int32, 'int64':tf.int64, 'float32': tf.float32,
                         'float16': tf.float16, 'float64':tf.float64, 'bool': tf.bool,
                         'string': tf.string, 'int8': tf.int8, 'complex128': tf.complex128}
-        
+
         assert dtype in self.tf_dtype_map.keys(), 'Unknown dtype'
         self.dtype = dtype
 
@@ -754,7 +754,7 @@ class CastONNXTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, dtype='float32'):
         assert dtype in np_dtype_map.keys(), 'Unknown dtype'
         self.dtype = dtype
@@ -763,7 +763,7 @@ class CastONNXTransform(BaseTransform):
         image, label = sample
         image = image.astype(np_dtype_map[self.dtype])
         return (image, label)
- 
+
 @transform_registry(transform_type="Cast", process="general", framework="pytorch")
 class CastPyTorchTransform(BaseTransform):
     """Convert image to given dtype.
@@ -774,11 +774,11 @@ class CastPyTorchTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, dtype='float32'):
         dtype_map = {'int8': torch.int8, 'uint8': torch.uint8, 'complex128': torch.complex128,
-                     'int32':torch.int32, 'int64':torch.int64, 'complex64': torch.complex64, 
-                     'bfloat16':torch.bfloat16, 'float64':torch.float64, 'bool': torch.bool, 
+                     'int32':torch.int32, 'int64':torch.int64, 'complex64': torch.complex64,
+                     'bfloat16':torch.bfloat16, 'float64':torch.float64, 'bool': torch.bool,
                      'float16':torch.float16, 'int16':torch.int16, 'float32': torch.float32}
         assert dtype in dtype_map.keys(), 'Unknown dtype'
         self.dtype = dtype_map[dtype]
@@ -799,7 +799,7 @@ class CenterCropTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size):
         if isinstance(size, int):
             self.size = size, size
@@ -848,8 +848,8 @@ class PaddedCenterCropTransform(BaseTransform):
         h, w = image.shape[0], image.shape[1]
 
         padded_center_crop_size = \
-            int((self.image_size / (self.image_size + self.crop_padding)) * min(h, w))  
-        
+            int((self.image_size / (self.image_size + self.crop_padding)) * min(h, w))
+
         y0 = (h - padded_center_crop_size + 1) // 2
         x0 = (w - padded_center_crop_size + 1) // 2
         image = image[y0:y0 + padded_center_crop_size, x0:x0 + padded_center_crop_size, :]
@@ -862,7 +862,7 @@ class ResizeTFTransform(BaseTransform):
 
     Args:
         size (list or int): Size of the result
-        interpolation (str, default='bilinear'):Desired interpolation type, 
+        interpolation (str, default='bilinear'):Desired interpolation type,
                                                 support 'bilinear', 'nearest', 'bicubic'
 
     Returns:
@@ -886,7 +886,7 @@ class ResizeTFTransform(BaseTransform):
         if isinstance(image, tf.Tensor):
             image = tf.image.resize(image, self.size, method=self.interpolation)
         else:
-            image = cv2.resize(image, self.size, 
+            image = cv2.resize(image, self.size,
                 interpolation=interpolation_map[self.interpolation])
         return (image, label)
 
@@ -897,13 +897,13 @@ class ResizePytorchTransform(BaseTransform):
 
     Args:
         size (list or int): Size of the result
-        interpolation (str, default='bilinear'):Desired interpolation type, 
+        interpolation (str, default='bilinear'):Desired interpolation type,
                                                 support 'bilinear', 'nearest', 'bicubic'
 
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size, interpolation='bilinear'):
         self.size = size
         if interpolation in interpolation_pytorch_map.keys():
@@ -928,7 +928,7 @@ class RandomCropTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size):
         if isinstance(size, int):
             self.size = size, size
@@ -945,13 +945,13 @@ class RandomCropTFTransform(BaseTransform):
                 height, width = image.shape[0:2]
             elif len(image.shape) == 4:
                 height, width = image.shape[1:3]
-            
+
             if self.size[0] > height or self.size[1] > width:
                 raise ValueError('Crop size must be smaller than image size')
 
             if self.size[0] == height and self.size[1] == width:
                 return (image, label)
-            
+
             height = tf.cast(height, dtype=tf.float32)
             width = tf.cast(width, dtype=tf.float32)
             offset_height = (height - self.size[0]) / 2
@@ -959,7 +959,7 @@ class RandomCropTFTransform(BaseTransform):
             offset_height = tf.cast(offset_height, dtype=tf.int32)
             offset_width = tf.cast(offset_width, dtype=tf.int32)
 
-            image = tf.image.crop_to_bounding_box(image, offset_height, 
+            image = tf.image.crop_to_bounding_box(image, offset_height,
                         offset_width, self.size[0], self.size[1])
         else:
             transform = RandomCropTransform(self.size)
@@ -972,11 +972,11 @@ class RandomResizedCropPytorchTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
     Args:
-        size (list or int): 
+        size (list or int):
             Size of the result
         scale (tuple or list, default=(0.08, 1.0)):
             range of size of the origin size cropped
-        ratio (tuple or list, default=(3. / 4., 4. / 3.)): 
+        ratio (tuple or list, default=(3. / 4., 4. / 3.)):
             range of aspect ratio of the origin aspect ratio cropped
         interpolation (str, default='bilinear'):
             Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'
@@ -984,9 +984,9 @@ class RandomResizedCropPytorchTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
-    def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), 
-                        interpolation='bilinear'):    
+
+    def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
+                        interpolation='bilinear'):
         self.size = size
         self.scale = scale
         self.ratio = ratio
@@ -1011,11 +1011,11 @@ class RandomResizedCropMXNetTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
     Args:
-        size (list or int): 
+        size (list or int):
             Size of the result
         scale (tuple or list, default=(0.08, 1.0)):
             range of size of the origin size cropped
-        ratio (tuple or list, default=(3. / 4., 4. / 3.)): 
+        ratio (tuple or list, default=(3. / 4., 4. / 3.)):
             range of aspect ratio of the origin aspect ratio cropped
         interpolation (str, default='bilinear'):
             Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'
@@ -1023,9 +1023,9 @@ class RandomResizedCropMXNetTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
-    def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), 
-                        interpolation='bilinear'):    
+
+    def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
+                        interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -1057,11 +1057,11 @@ class RandomResizedCropTFTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
     Args:
-        size (list or int): 
+        size (list or int):
             Size of the result
         scale (tuple or list, default=(0.08, 1.0)):
             range of size of the origin size cropped
-        ratio (tuple or list, default=(3. / 4., 4. / 3.)): 
+        ratio (tuple or list, default=(3. / 4., 4. / 3.)):
             range of aspect ratio of the origin aspect ratio cropped
         interpolation (str, default='bilinear'):
             Desired interpolation type, support 'bilinear', 'nearest'
@@ -1069,7 +1069,7 @@ class RandomResizedCropTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
@@ -1146,12 +1146,12 @@ class RandomResizedCropTFTransform(BaseTransform):
             if squeeze:
                 image = tf.squeeze(image, axis=0)
         else:
-            transform = RandomResizedCropTransform(self.size, self.scale, 
+            transform = RandomResizedCropTransform(self.size, self.scale,
                     self.ratio, self.interpolation)
             image, label = transform(sample)
         return (image, label)
 
-@transform_registry(transform_type="Normalize", process="preprocess", 
+@transform_registry(transform_type="Normalize", process="preprocess",
                         framework="tensorflow")
 class NormalizeTFTransform(BaseTransform):
     """Normalize a image with mean and standard deviation.
@@ -1167,7 +1167,7 @@ class NormalizeTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, mean=[0.0], std=[1.0]):
         self.mean = mean
         self.std = std
@@ -1198,7 +1198,7 @@ class RescaleTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if isinstance(image, tf.Tensor):
@@ -1215,24 +1215,24 @@ class RescaleTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         if isinstance(image, np.ndarray):
-            image = image.astype('float32') / 255.    
+            image = image.astype('float32') / 255.
         return (image, label)
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
     framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet')
 class AlignImageChannelTransform(BaseTransform):
     """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
-        [H,W,3]->[H,W]. 
+        [H,W,3]->[H,W].
         Input image must be np.ndarray.
 
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, dim=3):
         if dim < 1 or dim > 4:
             raise ValueError('Unsupport image dim!')
@@ -1256,7 +1256,7 @@ class AlignImageChannelTransform(BaseTransform):
     framework='pytorch')
 class PyTorchAlignImageChannel(BaseTransform):
     """ Align image channel, now just support [H,W,4]->[H,W,3] and
-        [H,W,3]->[H,W]. 
+        [H,W,3]->[H,W].
         Input image must be PIL Image.
 
     Returns:
@@ -1288,7 +1288,7 @@ class ToNDArrayTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         image = mx.nd.array(image)
@@ -1306,7 +1306,7 @@ class ResizeMXNetTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
@@ -1326,7 +1326,7 @@ class ResizeMXNetTransform(BaseTransform):
         transformer = mx.gluon.data.vision.transforms.Resize(size=self.size,
                                 interpolation=self.interpolation)
         return (transformer(image), label)
-        
+
 
 @transform_registry(transform_type="Resize", process="preprocess", \
                 framework="onnxrt_qlinearops, onnxrt_integerops")
@@ -1335,13 +1335,13 @@ class ResizeTransform(BaseTransform):
 
     Args:
         size (list or int): Size of the result
-        interpolation (str, default='bilinear'):Desired interpolation type, 
+        interpolation (str, default='bilinear'):Desired interpolation type,
                                                 support 'bilinear', 'nearest', 'bicubic'
 
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size, interpolation='bilinear'):
         if isinstance(size, int):
             self.size = size, size
@@ -1380,7 +1380,7 @@ class CropResizeTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation not in ['bilinear', 'nearest', 'bicubic']:
             raise ValueError('Unsupported interpolation type!')
@@ -1419,13 +1419,13 @@ class PyTorchCropResizeTransform(BaseTransform):
         width (int):Width of the cropping area
         height (int):Height of the cropping area
         size (list or int): resize to new size after cropping
-        interpolation (str, default='bilinear'):Desired interpolation type, 
+        interpolation (str, default='bilinear'):Desired interpolation type,
                                                 support 'bilinear', 'nearest', 'bicubic'
 
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_pytorch_map.keys():
             self.interpolation = interpolation_pytorch_map[interpolation]
@@ -1454,13 +1454,13 @@ class MXNetCropResizeTransform(BaseTransform):
         width (int):Width of the cropping area
         height (int):Height of the cropping area
         size (list or int): resize to new size after cropping
-        interpolation (str, default='bilinear'):Desired interpolation type, 
+        interpolation (str, default='bilinear'):Desired interpolation type,
                                                 support 'bilinear', 'nearest', 'bicubic'
 
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_mxnet_map.keys():
             self.interpolation = interpolation_mxnet_map[interpolation]
@@ -1495,7 +1495,7 @@ class CropResizeTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_map.keys():
             self.interpolation = interpolation_map[interpolation]
@@ -1530,7 +1530,7 @@ class CenterCropTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size):
         if isinstance(size, int):
             self.height, self.width = size, size
@@ -1571,7 +1571,7 @@ class MXNetNormalizeTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, mean=[0.0], std=[1.0]):
         self.mean = mean
         self.std = std
@@ -1601,13 +1601,13 @@ class PyTorchNormalizeTransform(MXNetNormalizeTransform):
             means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
             otherwise its length should be same with the length of image shape
         std (list, default=[1.0]):
-            stds for each channel, if len(std)=1, std will be broadcasted to each channel, 
+            stds for each channel, if len(std)=1, std will be broadcasted to each channel,
             otherwise its length should be same with the length of image shape
 
     Returns:
         tuple of processed image and label
     """
- 
+
     def __call__(self, sample):
         image, label = sample
         transformer = torchvision.transforms.Normalize(self.mean, self.std)
@@ -1630,7 +1630,7 @@ class NormalizeTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, mean=[0.0], std=[1.0]):
         self.mean = mean
         self.std = std
@@ -1655,7 +1655,7 @@ class RandomCropTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size):
         if isinstance(size, int):
             self.height, self.width = size, size
@@ -1690,11 +1690,11 @@ class RandomResizedCropTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
     Args:
-        size (list or int): 
+        size (list or int):
             Size of the result
         scale (tuple or list, default=(0.08, 1.0)):
             range of size of the origin size cropped
-        ratio (tuple or list, default=(3. / 4., 4. / 3.)): 
+        ratio (tuple or list, default=(3. / 4., 4. / 3.)):
             range of aspect ratio of the origin aspect ratio cropped
         interpolation (str, default='bilinear'):
             Desired interpolation type, support 'bilinear', 'nearest'
@@ -1702,7 +1702,7 @@ class RandomResizedCropTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
- 
+
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
         if isinstance(size, int):
@@ -1767,7 +1767,7 @@ def _compute_softmax(scores):
     import math
     if not scores:
         return []
-    
+
     max_score = None
     for score in scores:
         if max_score is None or score > max_score:
@@ -2075,28 +2075,28 @@ class SquadV1PostTransform(BaseTransform):
     Args:
         label_file (str): path of label file
         vocab_file(str): path of vocabulary file
-        n_best_size (int, default=20): 
+        n_best_size (int, default=20):
             The total number of n-best predictions to generate in nbest_predictions.json
-        max_seq_length (int, default=384): 
-            The maximum total input sequence length after WordPiece tokenization. 
+        max_seq_length (int, default=384):
+            The maximum total input sequence length after WordPiece tokenization.
             Sequences longer than this will be truncated, shorter than this will be padded
-        max_query_length (int, default=64): 
-            The maximum number of tokens for the question. 
+        max_query_length (int, default=64):
+            The maximum number of tokens for the question.
             Questions longer than this will be truncated to this length
-        max_answer_length (int, default=30): 
+        max_answer_length (int, default=30):
             The maximum length of an answer that can be generated. This is needed because
             the start and end predictions are not conditioned on one another
-        do_lower_case (bool, default=True): 
-            Whether to lower case the input text. 
+        do_lower_case (bool, default=True):
+            Whether to lower case the input text.
             Should be True for uncased models and False for cased models
-        doc_stride (int, default=128): 
-            When splitting up a long document into chunks, 
+        doc_stride (int, default=128):
+            When splitting up a long document into chunks,
             how much stride to take between chunks
 
     Returns:
         tuple of processed prediction and label
     """
- 
+
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
 

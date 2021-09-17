@@ -68,7 +68,17 @@ class LazyImport(object):
 
     def __getattr__(self, name):
         if self.module is None:
-            self.module = __import__(self.module_name)
+            # __import__ returns top level module
+            top_level_module = __import__(self.module_name)
+            if len(self.module_name.split('.')) == 1:
+                self.module = top_level_module
+            else:
+                # for cases that input name is foo.bar.module
+                module_list = self.module_name.split('.')
+                temp_module = top_level_module
+                for temp_name in module_list[1:]:
+                    temp_module = getattr(temp_module, temp_name)
+                self.module = temp_module
 
         return getattr(self.module, name)
 
@@ -372,3 +382,4 @@ class OpPrecisionStatistics():
         self.output_handle('|' + 'Mixed Precision Statistics'.center(len(lines[0]) - 2, "*") + '|')
         for i in lines:
             self.output_handle(i)
+

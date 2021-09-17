@@ -85,16 +85,19 @@ def create_dataloader(framework, dataloader_cfg):
         if dataloader_cfg.get('last_batch') is not None else 'rollover'
     shuffle = dataloader_cfg['shuffle'] \
         if dataloader_cfg.get('shuffle') is not None else False
+    distributed = dataloader_cfg['distributed'] \
+        if dataloader_cfg.get('distributed') is not None else False
 
-    eval_dataset = create_dataset(framework,
-                                  copy.deepcopy(dataloader_cfg['dataset']),
-                                  copy.deepcopy(dataloader_cfg['transform']),
-                                  copy.deepcopy(dataloader_cfg['filter']),)
+    dataset = create_dataset(framework,
+                             copy.deepcopy(dataloader_cfg['dataset']),
+                             copy.deepcopy(dataloader_cfg['transform']),
+                             copy.deepcopy(dataloader_cfg['filter']),)
 
-    return DATALOADERS[framework](dataset=eval_dataset,
+    return DATALOADERS[framework](dataset=dataset,
                                   batch_size=batch_size,
                                   last_batch=last_batch,
-                                  shuffle=shuffle)
+                                  shuffle=shuffle,
+                                  distributed=distributed)
 
 
 def create_eval_func(framework, dataloader, adaptor,

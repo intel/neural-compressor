@@ -26,7 +26,7 @@ from ..model.model import get_model_fwk_name
 class Component(object):
     """This is base class of LPOT Component
     """
-    def __init__(self, combination=None):
+    def __init__(self, conf_fname=None, combination=None):
         self.conf = None
         self.cfg = None
         self.combination = combination
@@ -37,8 +37,28 @@ class Component(object):
         self._eval_func = None
         self._eval_dataloader = None
         self.adaptor = None
-        self.hooks = None
-        self.hooks_dict = None
+        self.hooks = {
+            'pre_epoch_begin': self.pre_epoch_begin,
+            'post_epoch_end': self.post_epoch_end,
+            'on_epoch_begin': self.on_epoch_begin,
+            'on_epoch_end': self.on_epoch_end,
+            'on_batch_begin': self.on_batch_begin,
+            'on_batch_end': self.on_batch_end,
+            'on_post_grad': self.on_post_grad
+        }
+        self.hooks_dict = {
+            'pre_epoch_begin': [],
+            'post_epoch_end': [],
+            'on_epoch_begin': [],
+            'on_epoch_end': [],
+            'on_batch_begin': [],
+            'on_batch_end': [],
+            'on_post_grad': []
+        }
+        if conf_fname is not None:
+            self.conf = Conf(conf_fname)
+            self._init_with_conf()
+
 
     def _init_with_conf(self):
         self.cfg = self.conf.usr_cfg
@@ -97,10 +117,12 @@ class Component(object):
                                                self.cfg.evaluation.accuracy.postprocess,
                                                fp32_baseline = False)
         # register Quantization Aware Training hooks
-        if 'Quantization' in self.combination:
+        if self.combination is not None and 'Quantization' in self.combination:
             self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_qat)
             self.register_hook('post_epoch_end', self.adaptor._post_hook_for_qat)
         # strategy will be considered in future
+        if getattr(self.train_dataloader, 'distributed', False):
+            self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         """ Initialize the dataloader and train/eval functions from yaml config.
@@ -163,25 +185,6 @@ class Component(object):
     def register_hook(self, scope, hook, input_args=None, input_kwargs=None):
         """ register hook for component. input_args and input_kwargs are reserved for user
             registered hooks."""
-        if self.hooks is None:
-            self.hooks = {
-                'pre_epoch_begin': self.pre_epoch_begin,
-                'post_epoch_end': self.post_epoch_end,
-                'on_epoch_begin': self.on_epoch_begin,
-                'on_epoch_end': self.on_epoch_end,
-                'on_batch_begin': self.on_batch_begin,
-                'on_batch_end': self.on_batch_end,
-                'on_post_grad': self.on_post_grad
-            }
-            self.hooks_dict = {
-                'pre_epoch_begin': [],
-                'post_epoch_end': [],
-                'on_epoch_begin': [],
-                'on_epoch_end': [],
-                'on_batch_begin': [],
-                'on_batch_end': [],
-                'on_post_grad': []
-            }
         self.hooks_dict[scope].append(hook)
 
     def __call__(self):
@@ -224,12 +227,12 @@ class Component(object):
 
     @eval_func.setter
     def eval_func(self, user_eval_func):
-        """Eval function for pruning.
+        """Eval function for component.
 
         Args:
             user_eval_func: This function takes "model" as input parameter
                          and executes entire training process with self
-                         contained training hyper-parameters. If pruning_func set,
+                         contained training hyper-parameters. If train_func set,
                          an evaluation process must be triggered and user should
                          set eval_dataloader with metric configured or directly eval_func
                          to make evaluation of the model executed.
@@ -334,11 +337,11 @@ class Component(object):
             self._model = Model(user_model)
         else:
             self._model = user_model
-        
+
         if self.cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
             self.cfg.model.framework = self.framework
-            set_backend(self.framework)   
+            set_backend(self.framework)
 
         if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
             self._model.name = self.cfg.model.name

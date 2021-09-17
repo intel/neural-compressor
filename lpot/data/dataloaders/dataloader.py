@@ -26,7 +26,7 @@ class DataLoader(object):
 
     def __new__(cls, framework, dataset, batch_size=1, collate_fn=None,
                  last_batch='rollover', sampler=None, batch_sampler=None,
-                 num_workers=0, pin_memory=False, shuffle=False):
+                 num_workers=0, pin_memory=False, shuffle=False, distributed=False):
 
         assert framework in ('tensorflow', 'tensorflow_itex',
                              'pytorch', 'pytorch_ipex', 'pytorch_fx', \
@@ -40,4 +40,5 @@ class DataLoader(object):
                                       batch_sampler=batch_sampler,
                                       num_workers=num_workers,
                                       pin_memory=pin_memory,
-                                      shuffle=shuffle)
+                                      shuffle=shuffle,
+                                      distributed=distributed)

@@ -28,23 +28,43 @@ class Fetcher(object):
         raise NotImplementedError
 
 class IterableFetcher(Fetcher):
-    def __init__(self, dataset, collate_fn, drop_last):
+    def __init__(self, dataset, collate_fn, drop_last, distributed):
         super(IterableFetcher, self).__init__(dataset, collate_fn, drop_last)
         self.dataset_iter = iter(dataset)
+        self.index_whole = 0
+        self.process_rank = 0 # The default rank is 0, which represents the main process
+        self.process_size = 1 # By default, process_size=1, only the main process is running
+        if distributed:
+            import horovod.tensorflow as hvd
+            hvd.init()
+            self.process_rank = hvd.rank()
+            self.process_size = hvd.size()
+            if self.process_size < 2:
+                raise EnvironmentError("The program is now trying to traverse" \
+                    " the distributed TensorFlow DefaultDataLoader in only one process." \
+                    " If you do not want to use distributed DataLoader, please set" \
+                    " 'distributed: False'. Or If you want to use distributed DataLoader," \
+                    " please set 'distributed: True' and launch multiple processes.")
 
     def __call__(self, batched_indices):
-        data = []
-        for _ in batched_indices:
+        batch_data = []
+        batch_size = len(batched_indices)
+        while True:
             try:
-                data.append(next(self.dataset_iter))
+                iter_data = next(self.dataset_iter)
+                if (self.index_whole-self.process_rank)%self.process_size == 0:
+                    batch_data.append(iter_data)
+                self.index_whole += 1
+                if len(batch_data) == batch_size:
+                    break
             except StopIteration:
                 break
-        if len(data) == 0 or (self.drop_last and len(data) < len(batched_indices)):
+        if len(batch_data) == 0 or (self.drop_last and len(batch_data) < len(batched_indices)):
             raise StopIteration
-        return self.collate_fn(data)
+        return self.collate_fn(batch_data)
 
 class IndexFetcher(Fetcher):
-    def __init__(self, dataset, collate_fn, drop_last):
+    def __init__(self, dataset, collate_fn, drop_last, distributed):
         super(IndexFetcher, self).__init__(dataset, collate_fn, drop_last)
 
     def __call__(self, batched_indices):

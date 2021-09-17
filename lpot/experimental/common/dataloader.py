@@ -29,7 +29,7 @@ class DataLoader(object):
 
     def __init__(self, dataset, batch_size=1, collate_fn=None,
                  last_batch='rollover', sampler=None, batch_sampler=None,
-                 num_workers=0, pin_memory=False, shuffle=False):
+                 num_workers=0, pin_memory=False, shuffle=False, distributed=False):
         assert hasattr(dataset, '__iter__') or \
                hasattr(dataset, '__getitem__'), \
                "dataset must implement __iter__ or __getitem__ magic method!"
@@ -42,6 +42,7 @@ class DataLoader(object):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.shuffle = shuffle
+        self.distributed = distributed
 
 def _generate_common_dataloader(dataloader, framework):
     if not isinstance(dataloader, DataLoader):
@@ -59,5 +60,6 @@ def _generate_common_dataloader(dataloader, framework):
             batch_sampler=dataloader.batch_sampler,
             num_workers=dataloader.num_workers,
             pin_memory=dataloader.pin_memory,
-            shuffle=dataloader.shuffle)
+            shuffle=dataloader.shuffle,
+            distributed=dataloader.distributed)
 

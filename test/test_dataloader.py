@@ -79,6 +79,20 @@ class TestBuiltinDataloader(unittest.TestCase):
             self.assertEqual(data[0][0].shape, (24,24))
             break
 
+        dataloader_args = {
+            'batch_size': 2,
+            'dataset': {"FashionMNIST": {'root': './', 'train':True, 'download':True}},
+            'transform': {'Resize': {'size': 24}},
+            'filter': None,
+            'distributed': True
+        }
+        dataloader = create_dataloader('pytorch', dataloader_args)
+        self.assertEqual(dataloader.dataloader.sampler.__class__.__name__, 'DistributedSampler')
+        for data in dataloader:
+            self.assertEqual(len(data[0]), 2)
+            self.assertEqual(data[0][0].shape, (24,24))
+            break
+
     def test_mxnet_dataset(self):
         dataloader_args = {
             'batch_size': 2,
@@ -500,14 +514,14 @@ class TestDataloader(unittest.TestCase):
         import json
         label = [{
             "paragraphs":[
-                {'context': 
+                {'context':
                     'Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season.',
                 'qas': [{
                     'answers': [
-                        {'answer_start': 177, 'text': 'Denver Broncos'}, 
-                        {'answer_start': 177, 'text': 'Denver Broncos'}, 
-                        {'answer_start': 177, 'text': 'Denver Broncos'}], 
-                    'question': 'Which NFL team represented the AFC at Super Bowl 50?', 
+                        {'answer_start': 177, 'text': 'Denver Broncos'},
+                        {'answer_start': 177, 'text': 'Denver Broncos'},
+                        {'answer_start': 177, 'text': 'Denver Broncos'}],
+                    'question': 'Which NFL team represented the AFC at Super Bowl 50?',
                     'id': '56be4db0acb8001400a502ec'}]
                 }
             ]
@@ -843,18 +857,18 @@ class TestDataloader(unittest.TestCase):
         im_npy = convert_npy('test_0.jpg')
         np.save('test_0.jpg.npy', im_npy)
         np.save('test_1.jpg.npy', im_npy)
-        
+
         fake_dict = {
             'info': {
-                'description': 'COCO 2017 Dataset', 
-                'url': 'http://cocodataset.org', 
-                'version': '1.0', 
+                'description': 'COCO 2017 Dataset',
+                'url': 'http://cocodataset.org',
+                'version': '1.0',
                 'year': 2017,
                 'contributor': 'COCO Consortium',
                 'date_created': '2017/09/01'
             },
             'licenses':{
-                    
+
             },
             'images':[{
                 'file_name': 'test_0.jpg',
@@ -1223,7 +1237,7 @@ class TestDataloader(unittest.TestCase):
             f.write("""1   702876  702977  Amrozi accused his brother , whom he called " the witness " , of deliberately distorting his evidence . Referring to him as only " the witness " , Amrozi accused his brother of deliberately distorting his evidence .""")
         with open('./MRPC/dev.tsv', 'a') as f:
             tsv_w = csv.writer(f, delimiter='\t')
-            tsv_w.writerow(['Quality', '#1 ID', '#2 ID', '#1 String', '#2 String']) 
+            tsv_w.writerow(['Quality', '#1 ID', '#2 ID', '#1 String', '#2 String'])
             tsv_w.writerow(['1', '1355540', '1355592', "He said the foodservice pie business doesn 'tfit thecompany 's long-term growth strategy .", "The foodservice pie businessdoes notfit our long-term growth strategy ."])
         with open('./MRPC/dev_ids.tsv', 'a') as f:
             tsv_w = csv.writer(f, delimiter='\t')
@@ -1238,8 +1252,8 @@ class TestDataloader(unittest.TestCase):
             tsv_w.writerow(['1', '702876', '702977', """Amrozi accused his brother , whom he called " the witness " , of deliberately distorting his evidence .""", """Referring to him as only " the witness " , Amrozi accused his brother of deliberately distorting his evidence ."""])
 
         datasets = DATASETS('onnxrt_integerops')
-        args = {'GLUE': 
-                    {'data_dir': './MRPC', 
+        args = {'GLUE':
+                    {'data_dir': './MRPC',
                      'model_name_or_path': 'bert-base-uncased',
                      'dynamic_length': True
                      }}
@@ -1252,10 +1266,10 @@ class TestDataloader(unittest.TestCase):
             self.assertEqual(inputs[0].shape[1], 48)
             self.assertEqual(len(label), 1)
             break
-        shutil.rmtree('./dataset_cached')        
-        
-        args = {'GLUE': 
-                    {'data_dir': './MRPC', 
+        shutil.rmtree('./dataset_cached')
+
+        args = {'GLUE':
+                    {'data_dir': './MRPC',
                      'model_type': 'roberta',
                      'model_name_or_path': 'roberta-base',
                      'dynamic_length': False
@@ -1266,8 +1280,8 @@ class TestDataloader(unittest.TestCase):
             self.assertEqual(len(inputs), 2)
             self.assertEqual(inputs[0].shape[1], 128)
             self.assertEqual(len(label), 1)
-            break            
- 
+            break
+
         shutil.rmtree('./MRPC')
         shutil.rmtree('./dataset_cached')
 

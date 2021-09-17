@@ -96,8 +96,7 @@ class BuildFakeModel(nn.Module):
         x = self.classifier(x)
         return x
 
-class TestStringMethods(unittest.TestCase):
-    @classmethod
+class CollectLayerHistogram(unittest.TestCase):
     def setUp(self):
         model = BuildFakeModel(width_mult=1)
         layer_tensor, include_layer = OrderedDict(), OrderedDict()
@@ -113,10 +112,6 @@ class TestStringMethods(unittest.TestCase):
             i += 1
         self.layer_histogram_collector = LayerHistogramCollector \
             (num_bins=8001, layer_tensor=layer_tensor, include_layer=include_layer, logger=logger)
-
-    @classmethod
-    def tearDown(self):
-        pass
         
     def test_layer_histogram(self):
         self.layer_histogram_collector.collect()

@@ -72,7 +72,7 @@ class BasicTuneStrategy(TuneStrategy):
     """
 
     def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         super(
             BasicTuneStrategy,
             self).__init__(
@@ -82,7 +82,8 @@ class BasicTuneStrategy(TuneStrategy):
             q_func,
             eval_dataloader,
             eval_func,
-            dicts)
+            dicts,
+            q_hooks)
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies

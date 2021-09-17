@@ -476,6 +476,7 @@ dataloader_schema = Schema({
     Optional('filter'): filter_schema,
     Optional('transform'): transform_schema,
     Optional('shuffle'): bool,
+    Optional('distributed'): bool,
 })
 
 configs_schema = Schema({
@@ -726,7 +727,8 @@ schema = Schema({
     Optional('pruning'): {
         Optional("train"): train_schema,
         Optional("approach"): approach_schema
-    }
+    },
+    Optional("train"): train_schema
 })
 
 quantization_default_schema = Schema({

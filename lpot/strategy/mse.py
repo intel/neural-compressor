@@ -73,7 +73,7 @@ class MSETuneStrategy(TuneStrategy):
     """
 
     def __init__(self, model, conf, dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
+                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         self.ordered_ops = None
         super().__init__(
             model,
@@ -82,7 +82,8 @@ class MSETuneStrategy(TuneStrategy):
             q_func,
             eval_dataloader,
             eval_func,
-            dicts)
+            dicts,
+            q_hooks)
 
     def __getstate__(self):
         for history in self.tuning_history:

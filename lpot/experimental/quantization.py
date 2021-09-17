@@ -136,7 +136,10 @@ class Quantization(Component):
             self._calib_func,
             self._eval_dataloader,
             self._eval_func,
-            _resume)
+            _resume,
+            self.hooks)
+        if getattr(self._calib_dataloader, 'distributed', False):
+            self.register_hook('pre_epoch_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         try:
@@ -147,7 +150,7 @@ class Quantization(Component):
         except Exception as e:
             logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
             import traceback
-            traceback.print_exc() 
+            traceback.print_exc()
         finally:
             if self.strategy.best_qmodel:
                 logger.info(

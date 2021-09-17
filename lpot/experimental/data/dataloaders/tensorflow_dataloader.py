@@ -15,10 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from lpot.experimental.data.datasets import dataset
 from lpot.utils.utility import LazyImport
 from abc import abstractmethod
 import collections
 import numpy as np
+from math import ceil, floor
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
 from .fetcher import FETCHERS
 from .default_dataloader import default_collate
@@ -57,7 +59,8 @@ class TFDataDataLoader(BaseDataLoader):
 
     def _generate_dataloader(self, dataset, batch_size=1, last_batch='rollover', \
                              collate_fn=None, sampler=None, batch_sampler=None, \
-                             num_workers=None, pin_memory=None, shuffle=False):
+                             num_workers=None, pin_memory=None, shuffle=False, \
+                             distributed=False):
         drop_last = False if last_batch == 'rollover' else True
         if shuffle:
             logging.warning('Shuffle is not supported yet in TFDataLoader, ' \
@@ -110,7 +113,8 @@ class TFDataDataLoader(BaseDataLoader):
 
 class TensorflowBertDataLoader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
-                             sampler, batch_sampler, num_workers, pin_memory, shuffle):
+                             sampler, batch_sampler, num_workers, pin_memory, shuffle,
+                             distributed):
 
         if shuffle:
             logging.warning('Shuffle is not supported yet in TensorflowBertDataLoader, ' \
@@ -119,9 +123,10 @@ class TensorflowBertDataLoader(DefaultDataLoader):
             elem = batch[0]
             return elem
         drop_last = False if last_batch == 'rollover' else True
-        sampler = self._generate_sampler(dataset)
+        sampler = self._generate_sampler(dataset, distributed)
         self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
-        self.fetcher = FETCHERS[self.dataset_type](dataset, bert_collate_fn, drop_last)
+        self.fetcher = FETCHERS[self.dataset_type]\
+            (dataset, bert_collate_fn, drop_last, distributed)
 
         for batched_indices in self.batch_sampler:
             try:
@@ -137,18 +142,80 @@ class TensorflowDataLoader(BaseDataLoader):
     """
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, \
-                sampler, batch_sampler, num_workers, pin_memory, shuffle):
+                sampler, batch_sampler, num_workers, pin_memory, shuffle, distributed):
 
         if shuffle:
             logging.warning('Shuffle is not supported yet in TensorflowDataLoader, ' \
                             'ignoring shuffle keyword.')
         if isinstance(dataset, tf.data.Dataset):
-            return TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
+            if hasattr(dataset, '_batch_size'):
+                raise TypeError(f"Parameter 'batch_size={batch_size}'" \
+                    " conflicts with 'tf.data.Dataset'," \
+                    f" because {dataset} is already a BatchDataset." \
+                    f" Please pass in 'tf.data.Dataset' without batch attributes.")
+            process_rank = 0 # The default rank is 0, which represents the main process
+            process_size = 1 # By default, process_size=1, only the main process is running
+            if self.distributed:
+                import horovod.tensorflow as hvd
+                hvd.init()
+                process_rank = hvd.rank()
+                process_size = hvd.size()
+                if process_size < 2:
+                    raise EnvironmentError("The program is now trying to generate" \
+                        " the distributed TensorflowDataLoader in only one process." \
+                        " If you do not want to use distributed DataLoader, please set" \
+                        " 'distributed: False'. Or If you want to use distributed DataLoader," \
+                        " please set 'distributed: True' and launch multiple processes.")
+                dataset = dataset.shard(process_size, process_rank)
+            tf_dataloader = TFDataDataLoader(dataset, batch_size, last_batch=last_batch)
+            return tf_dataloader
         elif isinstance(dataset, TensorflowBertDataset):
-            return TensorflowBertDataLoader(dataset, batch_size, last_batch,
-                        collate_fn, sampler, batch_sampler, num_workers,
-                        pin_memory, shuffle)
+            if distributed:
+                raise NotImplementedError("Distributed TensorflowBertDataLoader" \
+                    " is not yet supported, please set 'distributed: False'")
+            tf_bert_dataloader  = TensorflowBertDataLoader(dataset, batch_size, \
+                last_batch, collate_fn, sampler, batch_sampler, \
+                num_workers, pin_memory, shuffle, distributed)
+            return tf_bert_dataloader
         else:
             return DefaultDataLoader(dataset, batch_size, last_batch, collate_fn,
                                      sampler, batch_sampler, num_workers,
-                                     pin_memory, shuffle)
+                                     pin_memory, shuffle, distributed)
+
+    def __bool__(self):
+        # workaround in assert dataloader which will overload __len__() without __bool__()
+        # provided. Calling __len__() in asserting is not supposed and may cause issues.
+        return True
+
+    def __len__(self):
+        try:
+            dataset_len = self.dataset.__len__()
+        except (AttributeError, TypeError):
+            dataset_len = 0
+            for _ in self.dataset:
+                dataset_len += 1
+        except:
+            raise ValueError(f"{self.dataset} is invalid, {self.dataset}" \
+                " does not support calculating the length of its dataloader")
+        process_rank = 0 # The default rank is 0, which represents the main process
+        process_size = 1 # By default, process_size=1, only the main process is running
+        if self.distributed:
+            import horovod.tensorflow as hvd
+            hvd.init()
+            process_rank = hvd.rank()
+            process_size = hvd.size()
+            if process_size < 2:
+                raise EnvironmentError("The program is now trying to get length of" \
+                    " the distributed TensorflowDataLoader in only one process." \
+                    " If you do not want to use distributed DataLoader, please set" \
+                    " 'distributed: False'. Or If you want to use distributed DataLoader," \
+                    " please set 'distributed: True' and launch multiple processes.")
+        if process_rank < (dataset_len % process_size):
+            self.dis_dataset_len = dataset_len // process_size + 1
+        else:
+            self.dis_dataset_len = dataset_len // process_size
+        if self.drop_last == False:
+            dataloader_len = ceil(self.dis_dataset_len / self.batch_size)
+        else:
+            dataloader_len = floor(self.dis_dataset_len / self.batch_size)
+        return dataloader_len
