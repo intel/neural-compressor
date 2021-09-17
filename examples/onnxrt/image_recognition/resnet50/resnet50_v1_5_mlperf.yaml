@@ -28,7 +28,6 @@ quantization:                                        # optional. tuning constrai
           data_path: /path/to/calibration/dataset    # NOTE: modify to calibration dataset location if needed
           image_list: /path/to/calibration/label     # data file, record image_names and their labels
       transform:
-        AlignImageChannel: {}
         ResizeWithAspectRatio: 
           height: 224
           width: 224
@@ -59,7 +58,6 @@ evaluation:                                          # optional. required if use
           data_path: /path/to/evaluation/dataset     # NOTE: modify to evaluation dataset location if needed
           image_list: /path/to/evaluation/label      # data file, record image_names and their labels
       transform:
-        AlignImageChannel: {}
         ResizeWithAspectRatio: 
           height: 224
           width: 224
@@ -87,7 +85,6 @@ evaluation:                                          # optional. required if use
           data_path: /path/to/evaluation/dataset     # NOTE: modify to evaluation dataset location if needed
           image_list: /path/to/evaluation/label      # data file, record image_names and their labels
       transform:
-        AlignImageChannel: {}
         ResizeWithAspectRatio: 
           height: 224
           width: 224

@@ -87,7 +87,7 @@ class ImagenetRaw(Dataset):
     def __getitem__(self, index):
         image_path, label = self.image_list[index], self.label_list[index]
         with Image.open(image_path) as image:
-            image = np.array(image)
+            image = np.array(image.convert('RGB'))
             if self.transform is not None:
                 image, label = self.transform((image, label))
             return (image, label)
@@ -121,7 +121,7 @@ class TensorflowImagenetRaw(ImagenetRaw):
     def __getitem__(self, index):
         image_path, label = self.image_list[index], self.label_list[index]
         with Image.open(image_path) as image:
-            image = np.array(image)
+            image = np.array(image.convert('RGB'))
             if self.transform is not None:
                 image, label = self.transform((image, label))
             if type(image).__name__ == 'Tensor':

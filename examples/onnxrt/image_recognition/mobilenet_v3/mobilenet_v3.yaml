@@ -24,10 +24,10 @@ quantization:                                        # optional. tuning constrai
     dataloader:
       batch_size: 1
       dataset:
-        ImageFolder:
-          root: /path/to/calibration/dataset/        # NOTE: modify to calibration dataset location if needed
+        ImagenetRaw:
+          data_path: /path/to/calibration/dataset
+          image_list: /path/to/calibration/label
       transform:
-        AlignImageChannel: {}
         BilinearImagenet: 
           height: 224
           width: 224
@@ -39,10 +39,10 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 1
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
+        ImagenetRaw:
+          data_path: /path/to/evaluation/dataset
+          image_list: /path/to/evaluation/label
       transform:
-        AlignImageChannel: {}
         BilinearImagenet: 
           height: 224
           width: 224
@@ -58,10 +58,10 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 1 
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
+        ImagenetRaw:
+          data_path: /path/to/evaluation/dataset
+          image_list: /path/to/evaluation/label
       transform:
-        AlignImageChannel: {}
         BilinearImagenet: 
           height: 224
           width: 224

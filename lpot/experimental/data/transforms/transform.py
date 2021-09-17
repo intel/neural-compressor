@@ -19,6 +19,7 @@ import numpy as np
 import collections
 from abc import abstractmethod
 from lpot.utils.utility import LazyImport, singleton
+from lpot.utils import logger
 
 torchvision = LazyImport('torchvision')
 torch = LazyImport('torch')
@@ -1234,6 +1235,7 @@ class AlignImageChannelTransform(BaseTransform):
     """
 
     def __init__(self, dim=3):
+        logger.warning("This transform is going to be deprecated")
         if dim < 1 or dim > 4:
             raise ValueError('Unsupport image dim!')
         self.dim = dim
@@ -1264,6 +1266,7 @@ class PyTorchAlignImageChannel(BaseTransform):
     """
 
     def __init__(self, dim=3):
+        logger.warning("This transform is going to be deprecated")
         if dim != 1 and dim != 3:
             raise ValueError('Unsupport image dim!')
         self.dim = dim
