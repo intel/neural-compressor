@@ -287,25 +287,25 @@ class TuneStrategy(object):
         """The main traverse logic, which could be override by some concrete strategy which needs
            more hooks.
         """
-        performance_only = False
         if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
             self.cfg.evaluation.accuracy.metric) and self.eval_func is None:
             logger.info("Neither evaluation function nor metric is defined." \
-                        " Generate quantized model with default quantization configuration.")
-            performance_only = True
+                        " Generate a quantized model with default quantization configuration.")
+            self.cfg.tuning.exit_policy.performance_only = True
+            logger.info("Generate a fake evaluation function.")
+            self.eval_func = self._fake_eval_func
 
-        if not performance_only:
-            # get fp32 model baseline
-            if self.baseline is None:
-                logger.info("Get FP32 model baseline.")
-                self.baseline = self._evaluate(self.model)
-                # record the FP32 baseline
-                self._add_tuning_history()
-            baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
-                                                                    str(self.objective.measurer),
-                                                                    self.baseline[1]) \
-                                                                    if self.baseline else 'n/a'
-            logger.info("FP32 baseline is: {}".format(baseline_msg))
+        # get fp32 model baseline
+        if self.baseline is None:
+            logger.info("Get FP32 model baseline.")
+            self.baseline = self._evaluate(self.model)
+            # record the FP32 baseline
+            self._add_tuning_history()
+        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
+                                                                str(self.objective.measurer),
+                                                                self.baseline[1]) \
+                                                                if self.baseline else 'n/a'
+        logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0
         for tune_cfg in self.next_tune_cfg():
@@ -330,13 +330,8 @@ class TuneStrategy(object):
             self.algo.origin_model = self.adaptor.pre_optimized_model
             self.last_qmodel = self.algo()
             assert self.last_qmodel
-
-            if performance_only:
-                self.best_qmodel = self.last_qmodel
-                break
-            else:
-                self.last_tune_result = self._evaluate(self.last_qmodel)
-                need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+            self.last_tune_result = self._evaluate(self.last_qmodel)
+            need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
 
             # record the tuning history
             saved_tune_cfg = copy.deepcopy(tune_cfg)
@@ -590,3 +585,6 @@ class TuneStrategy(object):
             self.tuning_history.append(tuning_history)
 
         self._save()
+
+    def _fake_eval_func(self, model):
+        return 1.

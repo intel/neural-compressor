@@ -68,6 +68,7 @@ class Quantization(Component):
             if self._eval_dataloader is None:
                 eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
                 if eval_dataloader_cfg is None:
+                    logger.info("Generate a fake evaluation function.")
                     self._eval_func = self._fake_eval_func
                 else:
                     if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
