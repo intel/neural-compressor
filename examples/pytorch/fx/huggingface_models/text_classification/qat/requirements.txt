@@ -1,0 +1,8 @@
+lpot
+transformers == 4.10.0
+datasets >= 1.8.0
+sentencepiece != 0.1.92
+protobuf
+scipy
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch >= 1.8.0+cpu
