@@ -98,18 +98,25 @@ class TFDataDataLoader(BaseDataLoader):
             # pylint: disable=no-name-in-module
             from tensorflow.python.framework.errors_impl import OutOfRangeError
             while True:
-                try:
-                    if not try_single_batch:
+                if not try_single_batch:
+                    try:
                         outputs = data_sess.run(iter_tensors)
                         yield outputs
-                    else:
-                        outputs = [squeeze_output(data_sess.run(iter_tensors)) \
-                            for i in range(0, batch_size) ]
+                    except OutOfRangeError:
+                        data_sess.close()
+                        return
+                else:
+                    try:
+                        outputs = []
+                        for i in range(0, batch_size):
+                            outputs.append(squeeze_output(data_sess.run(iter_tensors)))
                         outputs = default_collate(outputs)
                         yield outputs
-                except OutOfRangeError:
-                    data_sess.close()
-                    return
+                    except OutOfRangeError:
+                        outputs = default_collate(outputs)
+                        yield outputs
+                        data_sess.close()
+                        return
 
 class TensorflowBertDataLoader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
