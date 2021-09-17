@@ -808,6 +808,11 @@ class TensorFlowAdaptor(Adaptor):
                                                           is_asymmetric,
                                                           weight_bit)
         from .tf_utils.graph_converter import GraphConverter
+        tmp_graphdef = copy.deepcopy(model.graph_def)
+        for i in tmp_graphdef.node:
+            if i.op == 'Const' and i.input:
+                i.ClearField('input')
+        model.graph_def = tmp_graphdef
         converter = GraphConverter(model,
                                    qt_config=quantize_config,
                                    int8_sequences=self.op_wise_sequences,

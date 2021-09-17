@@ -317,7 +317,7 @@ def q_func(model):
 
     # `quantize_model` requires a recompile.
     q_aware_model.compile(loss='categorical_crossentropy',
-                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.01),
+                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.001),
                 metrics=['accuracy'])
     # q_aware_model.summary()
 
@@ -325,7 +325,8 @@ def q_func(model):
     train_labels_subset = y_train[0:1000]
 
     q_aware_model.fit(train_images_subset, train_labels_subset,
-                      batch_size=1, epochs=1, validation_split=0.1)
+                      batch_size=500, epochs=1,
+                      validation_data=(x_test, y_test))
 
     _, q_aware_model_accuracy = q_aware_model.evaluate(
         x_test, y_test, verbose=0)
@@ -335,7 +336,7 @@ def q_func(model):
     return 'trained_qat_model'
 
 class Dataset(object):
-    def __init__(self, batch_size=100):
+    def __init__(self, batch_size=500):
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
         x_train = x_train.astype('float32') / 255
@@ -358,8 +359,7 @@ class Dataset(object):
         self.test_labels = y_test
 
     def __len__(self):
-        # return len(self.test_images)
-        return 1000
+        return len(self.test_images)
 
     def __getitem__(self, idx):
         return self.test_images[idx], self.test_labels[idx]
