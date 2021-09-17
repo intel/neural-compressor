@@ -509,25 +509,59 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
-    loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
-    if len(input_tensor_names) == 0:
-        input_tensor_names = [i.name for _, i in \
-            loader.signature_def['serving_default'].inputs.items()]
-    else:
-        assert validate_graph_node(\
-            sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)), \
-                'tensor names {} not in the graph'.format(input_tensor_names)
+    if not os.listdir(os.path.join(model,'variables')):
+        sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
+        loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
+        if len(input_tensor_names) == 0:
+            input_tensor_names = [i.name for _, i in \
+                loader.signature_def['serving_default'].inputs.items()]
+        else:
+            assert validate_graph_node(\
+                sess.graph.as_graph_def(), tensor_to_node(input_tensor_names)), \
+                    'tensor names {} not in the graph'.format(input_tensor_names)
 
-    if len(output_tensor_names) == 0:
-        output_tensor_names = [i.name for _, i in \
-            loader.signature_def['serving_default'].outputs.items()]
-    else:
-        assert validate_graph_node(\
-            sess.graph.as_graph_def(), tensor_to_node(output_tensor_names)), \
-                'tensor names {} not in the graph'.format(output_tensor_names)
+        if len(output_tensor_names) == 0:
+            output_tensor_names = [i.name for _, i in \
+                loader.signature_def['serving_default'].outputs.items()]
+        else:
+            assert validate_graph_node(\
+                sess.graph.as_graph_def(), tensor_to_node(output_tensor_names)), \
+                    'tensor names {} not in the graph'.format(output_tensor_names)
 
-    return sess, input_tensor_names, output_tensor_names
+        return sess, input_tensor_names, output_tensor_names
+    else:
+        from tensorflow.python.eager import context
+        from tensorflow.python.saved_model import load
+        from tensorflow.python.saved_model import tag_constants
+        from tensorflow.python.saved_model import signature_constants
+        from tensorflow.python.framework.convert_to_constants import \
+        convert_variables_to_constants_v2
+        from tensorflow.python.training import saver
+        from tensorflow.core.protobuf import config_pb2
+        from tensorflow.python.grappler import tf_optimizer
+        from tensorflow.core.protobuf import meta_graph_pb2
+        _saved_model = load.load(model, [tag_constants.SERVING])
+        func = _saved_model.signatures[signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
+        frozen_func = convert_variables_to_constants_v2(func)
+        grappler_meta_graph_def = saver.export_meta_graph(
+        graph_def=frozen_func.graph.as_graph_def(), graph=frozen_func.graph)
+        if len(input_tensor_names) == 0:
+            input_tensor_names = [i.name.split(':')[0] for i in frozen_func.inputs]
+        if len(output_tensor_names) == 0:
+            output_tensor_names = [i.name.split(':')[0] for i in frozen_func.outputs]
+        # Add a collection 'train_op' so that Grappler knows the outputs.
+        fetch_collection = meta_graph_pb2.CollectionDef()
+        for array in frozen_func.inputs + frozen_func.outputs:
+            fetch_collection.node_list.value.append(array.name)
+            grappler_meta_graph_def.collection_def["train_op"].CopyFrom(
+            fetch_collection)
+        from tensorflow.python.eager import context
+        grappler_session_config = config_pb2.ConfigProto()
+        rewrite_options = grappler_session_config.graph_options.rewrite_options
+        rewrite_options.min_graph_nodes = -1
+        opt = tf_optimizer.OptimizeGraph(grappler_session_config,
+                                         grappler_meta_graph_def, graph_id=b"tf_graph")
+        return graph_def_session(opt, input_tensor_names, output_tensor_names, **kwargs)
 
 # it's necessary that a session with input output tensors to run the model
 SESSIONS = {'frozen_pb': frozen_pb_session,

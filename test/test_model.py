@@ -224,12 +224,19 @@ class TestTensorflowModel(unittest.TestCase):
 
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
+        center_resnet50_saved_model_url = 'https://gcs.tensorflow.google.cn/tfhub-modules/tensorflow/centernet/resnet50v1_fpn_512x512/1.tar.gz'
         dst_path = '/tmp/.lpot/saved_model.tar.gz'
+        center_dst_path = '/tmp/.lpot/center_saved_model.tar.gz'
         if not os.path.exists(dst_path):
           os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
-        
+        if not os.path.exists(center_dst_path):
+          os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(center_resnet50_saved_model_url, center_dst_path))
         os.system("tar -xvf {}".format(dst_path))
+        unzip_center_model = 'unzip_center_model'
+        os.system("mkdir -p {} ".format(unzip_center_model))
+        os.system("tar -xvf {} -C {}".format(center_dst_path,unzip_center_model))
         model = Model('ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/saved_model')
+        center_model = Model('unzip_center_model')
         from tensorflow.python.framework import graph_util  
         graph_def = graph_util.convert_variables_to_constants(
             sess=model.sess,
@@ -238,6 +245,7 @@ class TestTensorflowModel(unittest.TestCase):
      
         model.graph_def = graph_def
         tmp_saved_model_path = './tmp_saved_model'
+
         if os.path.exists(tmp_saved_model_path):
            os.system('rm -rf {}'.format(tmp_saved_model_path))
         os.system('mkdir -p {}'.format(tmp_saved_model_path))
@@ -250,6 +258,18 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03')
         os.system('rm -rf temp_saved_model')
         os.system('rm -rf {}'.format(tmp_saved_model_path))
+ 
+        center_graph_def = graph_util.convert_variables_to_constants(
+            sess=center_model.sess,
+            input_graph_def=center_model.graph_def,
+            output_node_names=center_model.output_node_names)
+     
+        center_model.graph_def = center_graph_def
+       
+        self.assertTrue(isinstance(center_model.graph_def, tf.compat.v1.GraphDef))
+        self.assertTrue(isinstance(center_model.graph, tf.compat.v1.Graph))
+        os.system('rm -rf unzip_center_model')
+
 
     def test_tensorflow(self):
         from lpot.model.model import TensorflowBaseModel
