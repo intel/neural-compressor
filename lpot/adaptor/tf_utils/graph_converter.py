@@ -566,7 +566,6 @@ class GraphConverter:
                         self.model.graph_def.library)
 
                     return self._itex_model
-
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
