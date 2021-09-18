@@ -113,10 +113,14 @@ class TFDataDataLoader(BaseDataLoader):
                         outputs = default_collate(outputs)
                         yield outputs
                     except OutOfRangeError:
-                        outputs = default_collate(outputs)
-                        yield outputs
-                        data_sess.close()
-                        return
+                        if len(outputs) == 0:
+                            data_sess.close()
+                            return
+                        else:
+                            outputs = default_collate(outputs)
+                            yield outputs
+                            data_sess.close()
+                            return
 
 class TensorflowBertDataLoader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
