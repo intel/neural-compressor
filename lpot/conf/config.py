@@ -1101,6 +1101,7 @@ class Quantization_Conf(Conf):
             return self._expand_tune_cfgs_recursively(combinations)
 
         keys, values = zip(*cfg_dict.items())
+        values = list(filter(None, values))
         lists = [dict(zip(keys, v)) for v in itertools.product(*values)]
         return lists
 
