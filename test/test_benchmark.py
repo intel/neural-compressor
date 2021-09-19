@@ -21,6 +21,7 @@ def build_fake_yaml():
             metric:
               topk: 1
           performance:
+            warmup: 5
             iteration: 20
             configs:
                cores_per_instance: 4
@@ -36,24 +37,38 @@ def build_fake_yaml():
 
 
 def build_benchmark():
-    seq = [
-        "from argparse import ArgumentParser\n",
-        "arg_parser = ArgumentParser(description='Parse args')\n",
-        "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
-        "args = arg_parser.parse_args()\n",
-
-        "from lpot.data import DATASETS\n",
-        "dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)\n",
-
-        "from lpot.experimental import Benchmark, common\n",
-        "benchmarker = Benchmark('fake_yaml.yaml')\n",
-        "benchmarker.b_dataloader = common.DataLoader(dataset)\n",
-        "benchmarker.model = args.input_model\n",
-        "benchmarker()\n"
-    ]
-
+    seq = '''
+from argparse import ArgumentParser
+arg_parser = ArgumentParser(description='Parse args')
+arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
+args = arg_parser.parse_args()
+from lpot.data import DATASETS
+dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
+from lpot.experimental import Benchmark, common
+benchmarker = Benchmark('fake_yaml.yaml')
+benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
+benchmarker.model = args.input_model
+benchmarker()
+    '''
+    # test normal case
     with open('fake.py', "w", encoding="utf-8") as f:
         f.writelines(seq)
+    f.close()
+    # test batchsize > len(dataset), use first batch
+    fake_data_5 = seq.replace('100, 256, 256, 1', '5, 256, 256, 1')
+    with open('fake_data_5.py', "w", encoding="utf-8") as f:
+        f.writelines(fake_data_5)
+    f.close()
+    # test batchsize < len(dataset) < 2*batchsize, discard first batch
+    fake_data_15 = seq.replace('100, 256, 256, 1', '15, 256, 256, 1')
+    with open('fake_data_15.py', "w", encoding="utf-8") as f:
+        f.writelines(fake_data_15)
+    f.close()
+    # test 2*batchsize < len(dataset) < warmup*batchsize, discard last batch
+    fake_data_25 = seq.replace('100, 256, 256, 1', '25, 256, 256, 1')
+    with open('fake_data_25.py', "w", encoding="utf-8") as f:
+        f.writelines(fake_data_25)
+    f.close()
 
 def build_benchmark_without_yaml():
     seq = [
@@ -81,7 +96,7 @@ def build_fake_model():
         graph = tf.Graph()
         graph_def = tf.GraphDef()
         with tf.Session(graph=graph) as sess:
-            x = tf.placeholder(tf.float64, shape=(1, 256, 256, 1), name='x')
+            x = tf.placeholder(tf.float64, shape=(None, 256, 256, 1), name='x')
             y_1 = tf.constant(np.random.random((3, 3, 1, 1)), name='y_1')
             y_2 = tf.constant(np.random.random((3, 3, 1, 1)), name='y_2')
             conv1 = tf.nn.conv2d(input=x, filter=y_1, strides=[1, 1, 1, 1], \
@@ -98,7 +113,7 @@ def build_fake_model():
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()
         with tf.compat.v1.Session(graph=graph) as sess:
-            x = tf.compat.v1.placeholder(tf.float64, shape=(1, 256, 256, 1), name='x')
+            x = tf.compat.v1.placeholder(tf.float64, shape=(None, 256, 256, 1), name='x')
             y_1 = tf.constant(np.random.random((3, 3, 1, 1)), name='y_1')
             y_2 = tf.constant(np.random.random((3, 3, 1, 1)), name='y_2')
             conv1 = tf.nn.conv2d(input=x, filters=y_1, strides=[1, 1, 1, 1], \
@@ -126,6 +141,14 @@ class TestObjective(unittest.TestCase):
     def tearDownClass(self):
         if os.path.exists('fake_yaml.yaml'):
             os.remove('fake_yaml.yaml')
+        if os.path.exists('fake.py'):
+            os.remove('fake.py')
+        if os.path.exists('fake_data_5.py'):
+            os.remove('fake_data_5.py')
+        if os.path.exists('fake_data_15.py'):
+            os.remove('fake_data_15.py')
+        if os.path.exists('fake_data_25.py'):
+            os.remove('fake_data_25.py')
         if os.path.exists('2_4_0.log'):
             os.remove('2_4_0.log')
         if os.path.exists('2_4_1.log'):
@@ -133,6 +156,31 @@ class TestObjective(unittest.TestCase):
 
     def test_benchmark(self):
         os.system("python fake.py --input_model={}".format(self.graph_path))
+        for i in range(2):
+            with open(f'2_4_{i}.log', "r") as f:
+                for line in f:
+                    throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
+            self.assertIsNotNone(throughput)
+
+    def test_benchmark_data_5(self):
+        os.system("python fake_data_5.py --input_model={}".format(self.graph_path))
+        for i in range(2):
+            with open(f'2_4_{i}.log', "r") as f:
+                for line in f:
+                    throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
+            self.assertIsNotNone(throughput)
+
+    def test_benchmark_data_15(self):
+        os.system("python fake_data_15.py --input_model={}".format(self.graph_path))
+        for i in range(2):
+            with open(f'2_4_{i}.log', "r") as f:
+                for line in f:
+                    throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
+            self.assertIsNotNone(throughput)
+
+
+    def test_benchmark_data_25(self):
+        os.system("python fake_data_25.py --input_model={}".format(self.graph_path))
         for i in range(2):
             with open(f'2_4_{i}.log', "r") as f:
                 for line in f:
