@@ -357,7 +357,20 @@ class ONNXRTAdaptor(Adaptor):
         _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         model.model = self._replace_gemm_with_matmul(tmp_model).model
+        model.model = self._rename_node(model.model)
         self.pre_optimized_model = model
+
+    def _rename_node(self, model):
+        node_names = [i.name for i in model.graph.node]
+        if len(set(node_names)) < len(node_names):
+            logger.warning("This model has nodes with the same name, please check \
+                renamed_model.onnx in workspace_path (default is lpot_workspace) \
+                for newly generated node name")
+        for idx, node in enumerate(model.graph.node):
+            if node_names.count(node.name) > 1:
+                node.name = node.op_type + '_lpot_rename_' + str(idx)
+        onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
+        return model
 
     def _replace_gemm_with_matmul(self, model):
         new_nodes = []

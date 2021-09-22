@@ -131,6 +131,31 @@ def build_gather_yaml():
     with open("gather.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_rename_yaml():
+    fake_yaml = """
+        model:
+          name: test
+          framework: onnxrt_integerops
+
+        quantization:                                        
+          approach: post_training_dynamic_quant 
+          calibration:
+              sampling_size: 1
+
+        evaluation:
+          accuracy:
+            metric:
+              Accuracy: {}
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+        """
+    with open("rename.yaml", "w", encoding="utf-8") as f:
+        f.write(fake_yaml)
 
 def build_non_MSE_yaml():
     fake_yaml = """
@@ -248,6 +273,23 @@ def build_model_with_gather():
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
 
+def build_rename_model():
+    b_value = np.random.randint(2, size=(10)).astype(np.int32)
+    B_init = helper.make_tensor('B', TensorProto.INT32, [10], b_value.reshape(10).tolist())
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 100, 4])
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [100, 4])
+    squeeze = onnx.helper.make_node('Squeeze', ['A'], ['D'], name='')
+    B = helper.make_tensor_value_info('B', TensorProto.INT32, [10])
+    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [10, 4])
+    node = onnx.helper.make_node('Gather', ['D', 'B'], ['C'], name='')
+    e_value = np.random.randint(2, size=(10)).astype(np.float32)
+    E_init = helper.make_tensor('E', TensorProto.FLOAT, [10, 1], e_value.reshape(10).tolist())
+    F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [10, 4])
+    add = onnx.helper.make_node('Add', ['C', 'E'], ['F'], name='')
+    graph = helper.make_graph([squeeze, node, add], 'test_graph_1', [A], [F], [B_init, E_init])
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
 class MatmulDataset:
     def __init__(self):
         self.data = []
@@ -269,7 +311,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     mb_v2_model = torchvision.models.mobilenet_v2()
     rn50_export_path = "rn50.onnx"
     rn50_model = torchvision.models.resnet50()
- 
+
     datasets = DATASETS('onnxrt_qlinearops')
     cv_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
@@ -280,11 +322,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
     gather_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 100, 4), label=True)
     gather_dataloader = DATALOADERS['onnxrt_qlinearops'](gather_dataset)
 
+    rename_dataloader = gather_dataloader
+
     matmul_dataset = MatmulDataset()
     matmul_dataloader = DATALOADERS['onnxrt_qlinearops'](matmul_dataset)
 
     @classmethod
     def setUpClass(self):
+        build_rename_yaml()
         build_static_yaml()
         build_dynamic_yaml()
         build_gather_yaml()
@@ -298,6 +343,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.ir3_model = build_ir3_model()
         self.gather_model = build_model_with_gather()
         self.matmul_model = build_matmul_model()
+        self.rename_model = build_rename_model()
 
     @classmethod
     def tearDownClass(self):
@@ -306,12 +352,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("non_MSE.yaml")
         os.remove("benchmark.yaml")
         os.remove("gather.yaml")
+        os.remove("rename.yaml")
         os.remove("rn50_9.onnx")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
         os.remove("best_model.onnx")
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
+        shutil.rmtree("./lpot_workspace", ignore_errors=True)
 
     def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
@@ -365,6 +413,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
 
     def test_adaptor(self):
+        for fake_yaml in ["rename.yaml"]:
+            quantizer = Quantization(fake_yaml)
+            quantizer.calib_dataloader = self.rename_dataloader
+            quantizer.eval_dataloader = self.rename_dataloader
+            quantizer.model = common.Model(self.rename_model)
+            q_model = quantizer()
+
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
