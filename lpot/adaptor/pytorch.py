@@ -49,6 +49,49 @@ def get_torch_version():
     version = LooseVersion(torch_version)
     return version
 
+def pytorch_forward_wrapper(model, input, device='cpu', conf=None):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        if device=='cpu':
+            output = model(**input)
+        elif device=='ipex':
+            # have to split the case to avoid exposing ipex.DEVICE outside
+            # which require intel extension installed
+            for inp in input.keys():
+                input[inp] = input[inp].to(ipex.DEVICE) \
+                    if isinstance(input[inp], torch.Tensor) else input[inp]
+            with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                output = model(**input)
+        else: # pragma: no cover
+            for inp in input.keys():
+                input[inp] = input[inp].to("dpcpp" if device=="gpu" else device) \
+                    if isinstance(input[inp], torch.Tensor) else input[inp]
+            output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if device=='cpu':
+            output = model(*input)
+        elif device=='ipex':
+            input = [inp.to(ipex.DEVICE) \
+                     if isinstance(inp, torch.Tensor) else inp
+                     for inp in input]
+            with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                output = model(*input)
+        else: # pragma: no cover
+            tmp_device = "dpcpp" if device=="gpu" else device
+            input = [inp.to(tmp_device) \
+                    if isinstance(inp, torch.Tensor) else inp
+                    for inp in input] # pylint: disable=E1133
+            output = model(*input)
+    else:
+        if device=='cpu' or not isinstance(input, torch.Tensor):
+            output = model(input)
+        elif device=='ipex':
+            input = input.to(ipex.DEVICE)
+            with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                output = model(input)
+        else: # pragma: no cover
+            input = input.to("dpcpp" if device=="gpu" else device) # pylint: disable=no-member
+            output = model(input)
+    return output
 
 def get_ops_recursively(model, prefix, ops={}):
         """This is a helper function for `graph_info`,
@@ -927,21 +970,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if measurer is not None:
                     measurer.start()
 
-                if isinstance(input, dict) or isinstance(input, UserDict):
-                    if self.device == "gpu":                    # pragma: no cover
-                        for inp in input.keys():
-                            input[inp] = input[inp].to("dpcpp") \
-                                if isinstance(input[inp], torch.Tensor) else input[inp]
-                    output = model_(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    if self.device == "gpu":                    # pragma: no cover
-                        input = [inp.to("dpcpp")
-                                 if isinstance(inp, torch.Tensor) else inp for inp in input]
-                    output = model_(*input)
-                else:
-                    if self.device == "gpu" and isinstance(input, torch.Tensor):# pragma: no cover
-                        input = input.to("dpcpp")
-                    output = model_(input)
+                output = pytorch_forward_wrapper(model_, input, device=self.device)
                 if self.device == "gpu":                         # pragma: no cover
                     output = output.to("cpu")
                 if measurer is not None:
@@ -1047,7 +1076,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = model_(image)
+                output = pytorch_forward_wrapper(model_, image, device=self.device)
                 if hasattr(criterion, "teacher_model_forward"):
                     criterion.teacher_model_forward(image)
                 loss = criterion(output, target)
@@ -1928,22 +1957,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor): # pragma: no cover
                 if measurer is not None:
                     measurer.start()
 
-                if isinstance(input, dict) or isinstance(input, UserDict):
-                    for inp in input.keys():
-                        input[inp] = input[inp].to(ipex.DEVICE) \
-                            if isinstance(input[inp], torch.Tensor) else input[inp]
-                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model_(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    input = [inp.to(ipex.DEVICE)
-                             if isinstance(inp, torch.Tensor) else inp for inp in input]
-                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model_(*input)
-                else:
-                    if isinstance(input, torch.Tensor):
-                        input = input.to(ipex.DEVICE)  # pylint: disable=no-member
-                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model_(input)
+                output = pytorch_forward_wrapper(model_, input, device='ipex', conf=conf)
                 label = label.to("cpu")
                 output = output.to("cpu")
                 if measurer is not None:
@@ -2200,12 +2214,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 if measurer is not None:
                     measurer.start()
 
-                if isinstance(input, dict) or isinstance(input, UserDict):
-                    output = model_(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    output = model_(*input)
-                else:
-                    output = model_(input)
+                output = pytorch_forward_wrapper(model_, input, device=self.device)
                 if measurer is not None:
                     measurer.end()
                 if postprocess is not None:
@@ -2283,12 +2292,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             cnt = 0
             if hooks is not None:
                 on_epoch_begin(nepoch)
-            for image, target in dataloader:
+            for input, target in dataloader:
                 if hooks is not None:
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = model.model(image)
+                output = pytorch_forward_wrapper(model.model, input, device=self.device)
                 loss = criterion(output, target)
                 if hooks is not None:
                     on_post_grad()

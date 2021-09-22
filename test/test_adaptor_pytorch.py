@@ -516,6 +516,26 @@ class TestPytorchAdaptor(unittest.TestCase):
         get_ops_recursively(model, '', op_map)
         self.assertTrue(op_map['conv1'] == 'Conv2d')
 
+    def test_forward_wrapper(self):
+        vision_model = torchvision.models.resnet18()
+        class dummymodel(torch.nn.Module):
+            def __init__(self, model):
+                super(dummymodel, self).__init__()
+                self._model = model
+            def forward(self,input=None):
+                return self._model(input)
+
+        data = [[{'input': torch.rand(3,256,256)}, torch.ones(1,1)], ]
+        # dataloader.batch_size=100
+        dataloader = common.DataLoader(data, batch_size=1)
+
+        quantizer = Quantization('dynamic_yaml.yaml')
+        model = dummymodel(vision_model)
+        quantizer.model = common.Model(model)
+        quantizer.calib_dataloader = dataloader
+        quantizer.eval_dataloader = dataloader
+        quantizer()
+
     def test_floatfunctions_fallback(self):
         class ModelWithFunctionals(torch.nn.Module):
             def __init__(self):
