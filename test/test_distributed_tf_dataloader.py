@@ -13,6 +13,7 @@ import shutil
 
 class TestDistributedTFDataDataloader(unittest.TestCase):
     def setUp(self):
+        tf.compat.v1.enable_eager_execution()
         self.dataset = tf.data.Dataset.from_tensors((tf.ones([3, 224, 224]), tf.ones([1000]))).repeat(600)
         self.count = 0
 
