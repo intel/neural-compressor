@@ -222,6 +222,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf simple_model')
         os.system('rm -rf keras_model')
 
+    @unittest.skipIf(tf.version.VERSION < '2.4.0', "Only supports tf 2.4.0 or above")
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
         center_resnet50_saved_model_url = 'https://gcs.tensorflow.google.cn/tfhub-modules/tensorflow/centernet/resnet50v1_fpn_512x512/1.tar.gz'
