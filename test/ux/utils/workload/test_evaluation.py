@@ -192,6 +192,7 @@ class TestMetricConfig(unittest.TestCase):
                 },
             )
 
+
 class TestConfigsConfig(unittest.TestCase):
     """Configs config tests."""
 

@@ -18,7 +18,7 @@
 from threading import Thread
 from typing import Any, Callable, Dict
 
-from werkzeug.wrappers import BaseResponse as WebResponse
+from werkzeug.wrappers import Response as WebResponse
 
 from lpot.ux.components.benchmark.execute_benchmark import execute_benchmark
 from lpot.ux.components.configuration_wizard.get_boundary_nodes import get_boundary_nodes

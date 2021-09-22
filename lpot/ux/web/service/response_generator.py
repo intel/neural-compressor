@@ -17,7 +17,7 @@
 from typing import Optional
 
 from flask import send_file
-from werkzeug.wrappers import BaseResponse as Response
+from werkzeug.wrappers import Response
 
 from lpot.ux.utils.exceptions import (
     AccessDeniedException,

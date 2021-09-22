@@ -24,7 +24,7 @@ from flask import Request as WebRequest
 from flask import jsonify, request
 from flask_cors import CORS
 from flask_socketio import SocketIO
-from werkzeug.wrappers import BaseResponse as WebResponse
+from werkzeug.wrappers import Response as WebResponse
 
 from lpot.ux.utils.exceptions import InternalException
 from lpot.ux.utils.logger import log

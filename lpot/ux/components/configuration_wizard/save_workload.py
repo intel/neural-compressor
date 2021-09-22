@@ -20,6 +20,7 @@ from shutil import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from lpot.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
+from lpot.ux.utils.exceptions import NotFoundException
 from lpot.ux.utils.templates.workdir import Workdir
 from lpot.ux.utils.utils import replace_with_values
 from lpot.ux.utils.workload.config import Config
@@ -29,15 +30,14 @@ from lpot.ux.utils.workload.workload import Workload
 logging.basicConfig(level=logging.INFO)
 
 
-def change_performance_dataloader_to_dummy_if_needed(
+def change_performance_dataloader_to_dummy_if_possible(
     model_domain: str,
-    workload: Workload,
+    config: Config,
 ) -> None:
     """Change config.evaluation.performance.dataloader.dataset to Dummy_v2."""
     if model_domain not in ["image_recognition", "object_detection"]:
         return
 
-    config = workload.config
     if not (
         config.evaluation
         and config.evaluation.performance
@@ -67,7 +67,7 @@ def change_performance_dataloader_to_dummy_if_needed(
                 "label_shape": [1],
             },
         )
-    except Exception:
+    except (NotFoundException, ValueError):
         pass
 
 
@@ -108,7 +108,7 @@ def get_shape_from_transforms(transforms: List[Transform]) -> list:
             shapes["width"] = parameters.get("width")
 
     if not shapes["height"] or not shapes["width"]:
-        raise Exception
+        raise NotFoundException("Unable to detect shape for Dummy dataset")
 
     return [shapes.get(dimension) for dimension in shape_elements_order]
 
@@ -148,7 +148,7 @@ def save_workload(
     )
 
     update_config(workload, parsed_data, workdir)
-    change_performance_dataloader_to_dummy_if_needed(model_domain, workload)
+    change_performance_dataloader_to_dummy_if_possible(model_domain, workload.config)
     workload.config.dump(os.path.join(workdir.workload_path, workload.config_name))
     return workload.serialize()
 
