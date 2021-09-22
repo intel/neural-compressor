@@ -60,6 +60,8 @@ class Metric(JsonSerializer):
         serialization_type: str = "default",
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """Return metric dict for config."""
+        if self.param and isinstance(self.param, dict):
+            return {self.name: self.param}
         if self.name in ["MSE", "RMSE", "MAE"]:
             return {self.name: {"compare_label": self.param}}
         if self.name in ["COCOmAP"] and self.param:

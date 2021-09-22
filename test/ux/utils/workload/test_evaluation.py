@@ -156,6 +156,41 @@ class TestMetricConfig(unittest.TestCase):
 
         self.assertDictEqual(result, {})
 
+    def test_COCOmAP_yaml_style_with_params(self) -> None:
+        """Test metric with already defined params defaults in yaml style."""
+        data = {"COCOmAP": {"anno_path": "/path/to/annotation"}}
+        metric = Metric(data)
+        self.assertDictEqual(
+            metric.serialize(),
+            data,
+        )
+
+    def test_COCOmAP_yaml_style_without_params(self) -> None:
+        """Test metric without defined params defaults in yaml style."""
+        data = {"COCOmAP": {}}
+        metric = Metric(data)
+        self.assertDictEqual(
+            metric.serialize(),
+            data,
+        )
+
+    def test_MSE_RMSE_MAE_metric_yaml_style(self) -> None:
+        """Test MSE, RMSE and MAE metrics serialization in yaml style."""
+        for metric_name in ["MSE", "RMSE", "MAE"]:
+            data = {
+                f"{metric_name}": {
+                    "compare_label": True,
+                },
+            }
+            metric = Metric(data)
+            result = metric.serialize()
+
+            self.assertDictEqual(
+                result,
+                {
+                    f"{metric_name}": {"compare_label": True},
+                },
+            )
 
 class TestConfigsConfig(unittest.TestCase):
     """Configs config tests."""
