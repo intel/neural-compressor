@@ -157,7 +157,7 @@ export class ImportModelComponent implements OnInit {
     this.socketService.boundaryNodesFinish$
       .subscribe(result => {
         this.showSpinner = false;
-        if (result['data'] && this.firstFormGroup.get('modelLocation').value) {
+        if (result['data'] && this.firstFormGroup.get('modelLocation').value && result['data'].id === this.id) {
           if (result['status'] === 'error') {
             this.frameworkWarning = result['data']['message'];
           } else {

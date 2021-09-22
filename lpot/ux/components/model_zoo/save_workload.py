@@ -16,7 +16,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict
 
 from lpot.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
 from lpot.ux.components.model_zoo.download_config import download_config
@@ -28,9 +28,7 @@ from lpot.ux.web.communication import MessageQueue
 logging.basicConfig(level=logging.INFO)
 
 
-def save_workload(
-    data: Dict[str, Any],
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+def save_workload(data: Dict[str, Any]) -> None:
     """Get configuration."""
     mq = MessageQueue()
 
@@ -69,4 +67,5 @@ def save_workload(
     workload.config.set_model_path(data["model_path"])
 
     workload.config.dump(os.path.join(workdir.workload_path, workload.config_name))
-    return workload.serialize()
+
+    mq.post_success("example_workload_saved", {"id": workload.id})

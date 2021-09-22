@@ -34,6 +34,7 @@ export class SocketService {
   public benchmarkStart$ = new BehaviorSubject({});
   public benchmarkFinish$ = new BehaviorSubject({});
   public tuningHistory$ = new BehaviorSubject({});
+  public exampleWorkloadSaved$ = new BehaviorSubject({});
 
   constructor(
     private http: HttpClient
@@ -44,6 +45,7 @@ export class SocketService {
     this.setupModelDownload();
     this.setupBenchmark();
     this.setupTuningHistory();
+    this.setupExampleWorkloadSaved();
   }
 
   setupOptimizationConnection() {
@@ -85,6 +87,12 @@ export class SocketService {
   setupTuningHistory() {
     this.socket.on('tuning_history', (data) => {
       this.tuningHistory$.next(data);
+    });
+  }
+
+  setupExampleWorkloadSaved() {
+    this.socket.on('example_workload_saved', (data) => {
+      this.exampleWorkloadSaved$.next(data);
     });
   }
 

@@ -234,7 +234,7 @@ class TestConfig(unittest.TestCase):
         )
 
         self.assertIsNotNone(config.evaluation.performance)
-        self.assertEqual(config.evaluation.performance.warmup, 10)
+        self.assertEqual(config.evaluation.performance.warmup, 5)
         self.assertEqual(config.evaluation.performance.iteration, -1)
         self.assertIsNotNone(config.evaluation.performance.configs)
         self.assertEqual(
@@ -246,7 +246,7 @@ class TestConfig(unittest.TestCase):
             2,
         )
         self.assertEqual(config.evaluation.performance.configs.inter_num_of_threads, None)
-        self.assertEqual(config.evaluation.performance.configs.kmp_blocktime, None)
+        self.assertEqual(1, config.evaluation.performance.configs.kmp_blocktime)
         self.assertIsNotNone(config.evaluation.performance.dataloader)
         self.assertIsNone(config.evaluation.performance.dataloader.last_batch)
         self.assertEqual(
@@ -389,11 +389,12 @@ class TestConfig(unittest.TestCase):
                         },
                     },
                     "performance": {
-                        "warmup": 10,
+                        "warmup": 5,
                         "iteration": -1,
                         "configs": {
                             "cores_per_instance": 3,
                             "num_of_instance": 2,
+                            "kmp_blocktime": 1,
                         },
                         "dataloader": {
                             "batch_size": 1,
@@ -705,6 +706,14 @@ class TestConfig(unittest.TestCase):
         config.set_quantization_dataset_path("new dataset path")
 
         self.assertIsNone(config.quantization)
+
+    def test_set_quantization_batch_size(self) -> None:
+        """Test set_quantization_batch_size."""
+        config = Config(self.predefined_config)
+
+        config.set_quantization_batch_size("31337")
+
+        self.assertEqual(31337, config.quantization.calibration.dataloader.batch_size)
 
     def test_set_workspace(self) -> None:
         """Test set_workspace."""

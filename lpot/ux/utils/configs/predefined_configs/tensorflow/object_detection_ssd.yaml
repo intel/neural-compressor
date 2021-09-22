@@ -60,7 +60,7 @@ evaluation:                                          # optional. used to config 
         Resize:
           size: [1200, 1200]
   performance:
-    iteration: 100
+    iteration: 10
     configs:
       cores_per_instance: 28
       num_of_instance: 1

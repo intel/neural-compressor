@@ -188,16 +188,16 @@ class TestConfigsConfig(unittest.TestCase):
     @patch("lpot.ux.utils.workload.evaluation.HWInfo")
     def test_configs_constructor_defaults(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config constructor defaults."""
-        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.cores = 5
         mock_hwinfo.return_value.sockets = 3
 
         configs = Configs()
 
-        self.assertEqual(configs.cores_per_instance, 5)
-        self.assertEqual(configs.num_of_instance, 3)
+        self.assertEqual(configs.cores_per_instance, 4)
+        self.assertEqual(configs.num_of_instance, 1)
         self.assertIsNone(configs.inter_num_of_threads)
         self.assertIsNone(configs.intra_num_of_threads)
-        self.assertIsNone(configs.kmp_blocktime)
+        self.assertEqual(1, configs.kmp_blocktime)
 
     @patch("lpot.ux.utils.workload.evaluation.HWInfo")
     def test_configs_serializer(self, mock_hwinfo: MagicMock) -> None:
@@ -550,21 +550,21 @@ class TestPerformanceConfig(unittest.TestCase):
     @patch("lpot.ux.utils.workload.evaluation.HWInfo")
     def test_performance_constructor_defaults(self, mock_hwinfo: MagicMock) -> None:
         """Test Performance config constructor defaults."""
-        mock_hwinfo.return_value.cores_per_socket = 5
+        mock_hwinfo.return_value.cores = 5
         mock_hwinfo.return_value.sockets = 3
 
         performance = Performance()
 
-        self.assertEqual(performance.warmup, 10)
+        self.assertEqual(performance.warmup, 5)
 
         self.assertEqual(performance.iteration, -1)
 
         self.assertIsNotNone(performance.configs)
-        self.assertEqual(performance.configs.cores_per_instance, 5)
-        self.assertEqual(performance.configs.num_of_instance, 3)
+        self.assertEqual(performance.configs.cores_per_instance, 4)
+        self.assertEqual(performance.configs.num_of_instance, 1)
         self.assertIsNone(performance.configs.inter_num_of_threads)
         self.assertIsNone(performance.configs.intra_num_of_threads)
-        self.assertIsNone(performance.configs.kmp_blocktime)
+        self.assertEqual(1, performance.configs.kmp_blocktime)
 
         self.assertIsNone(performance.dataloader)
 

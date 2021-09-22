@@ -55,7 +55,7 @@
       <br>
       <table>
         <tr>
-          <td class="icon-button">Model path:</td>
+          <td class="icon-button">Input model path:</td>
           <td>
             {{ model['model_path'] ? getFileName(model['model_path']) : null }}
             <img *ngIf="model['model_path']" class="icon-button right" src="./../../assets/146a-copy-solid.svg"
@@ -64,7 +64,7 @@
           </td>
         </tr>
         <tr>
-          <td class="icon-button">Output path:</td>
+          <td class="icon-button">Optimized model path:</td>
           <td>
             {{ model['model_output_path'] ? getFileName(model['model_output_path']) :
             null }}

@@ -68,7 +68,6 @@ def update_config_to_machine_specification(config: Config) -> None:
     hwinfo = HWInfo()
 
     cores_per_socket = hwinfo.cores_per_socket
-    num_sockets = hwinfo.sockets
 
     if not config.evaluation:
         return
@@ -77,8 +76,8 @@ def update_config_to_machine_specification(config: Config) -> None:
         config.evaluation.accuracy.dataloader.batch_size = cores_per_socket
 
     if config.evaluation.performance:
-        config.evaluation.performance.configs.cores_per_instance = cores_per_socket
-        config.evaluation.performance.configs.num_of_instance = num_sockets
+        config.evaluation.performance.configs.cores_per_instance = 4
+        config.evaluation.performance.configs.num_of_instance = cores_per_socket // 4
 
         if config.evaluation.performance.dataloader:
-            config.evaluation.performance.dataloader.batch_size = cores_per_socket
+            config.evaluation.performance.dataloader.batch_size = 1

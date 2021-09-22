@@ -223,14 +223,14 @@ class Config(JsonSerializer):
         else:
             log.warning("Could not set quantization dataset path.")
 
-    def set_quantization_batch_size(self, batch_size: int) -> None:
+    def set_quantization_batch_size(self, batch_size: str) -> None:
         """Update batch_size in quantization config."""
         if (
             self.quantization
             and self.quantization.calibration
             and self.quantization.calibration.dataloader
         ):
-            self.quantization.calibration.dataloader.batch_size = batch_size
+            self.quantization.calibration.dataloader.batch_size = int(batch_size)
 
     def set_workspace(self, path: str) -> None:
         """Update tuning workspace path in config."""

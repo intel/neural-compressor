@@ -66,6 +66,15 @@ export class PredefinedModelsComponent implements OnInit {
 
     this.socketService.modelDownloadFinish$
       .subscribe(response => {
+        if (response['status'] && response['status'] !== 'success') {
+          this.openErrorDialog({
+            error: response['data']['message'],
+          });
+        }
+      });
+
+    this.socketService.exampleWorkloadSaved$
+      .subscribe(response => {
         if (response['status']) {
           if (response['status'] === 'success') {
             if (this.model.id) {
@@ -145,9 +154,9 @@ export class PredefinedModelsComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(chosenFile => {
-      if (chosenFile) {
-        this.model.dataset_path = chosenFile;
+    dialogRef.afterClosed().subscribe(response => {
+      if (response.chosenFile) {
+        this.model.dataset_path = response.chosenFile;
       }
     });;
   }
