@@ -159,7 +159,11 @@ class TensorflowDataLoader(BaseDataLoader):
             logging.warning('Shuffle is not supported yet in TensorflowDataLoader, ' \
                             'ignoring shuffle keyword.')
         if isinstance(dataset, tf.data.Dataset):
-            if hasattr(dataset, '_batch_size'):
+            if int(tf.__version__[0]) > 1:
+                has_batch = hasattr(dataset, '_batch_size')
+            else:
+                has_batch = hasattr(dataset._dataset, '_batch_size')
+            if has_batch:
                 raise TypeError(f"Parameter 'batch_size={batch_size}'" \
                     " conflicts with 'tf.data.Dataset'," \
                     f" because {dataset} is already a BatchDataset." \
