@@ -7,12 +7,12 @@ import yaml
 import numpy as np
 import tensorflow as tf
 
-from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from lpot.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tensorflow import TensorflowQuery
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -88,7 +88,7 @@ class TestItexEnabling(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)

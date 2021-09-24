@@ -62,7 +62,7 @@ parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
 parser.add_argument('--dist-backend', default='gloo', type=str,
                     help='distributed backend')
 parser.add_argument('--tune', action='store_true',
-                    help='int8 quantization tune with Low Precision Optimization Tool')
+                    help='int8 quantization tune with Neural Compressor')
 parser.add_argument('--weights', type=str, metavar='PATH', 
                     default='weights/peleenet_acc7208.pth.tar',
                     help='path to init checkpoint (default: none)')
@@ -73,7 +73,7 @@ parser.add_argument('-w', "--warmup_iter", default=5, type=int,
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool'
+                    help='path to checkpoint tuned by Neural Compressor'
                          ' (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark for int8')
@@ -163,7 +163,7 @@ def main():
     if args.tune:
         model.eval()
         model.module.fuse_model()
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer()
@@ -174,7 +174,7 @@ def main():
         model.eval()
         model.module.fuse_model()
         if args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:

@@ -16,8 +16,8 @@
 
 import unittest
 
-from lpot.ux.utils.exceptions import ClientErrorException
-from lpot.ux.utils.workload.graph_optimization import GraphOptimization
+from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.workload.graph_optimization import GraphOptimization
 
 
 class GraphOptimizationConfig(unittest.TestCase):

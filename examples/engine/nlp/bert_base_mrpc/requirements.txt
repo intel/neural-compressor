@@ -1,4 +1,4 @@
-lpot
+neural-compressor
 onnx
 onnxruntime
 numpy==1.19

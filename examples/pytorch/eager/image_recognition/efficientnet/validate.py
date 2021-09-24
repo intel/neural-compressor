@@ -64,7 +64,7 @@ parser.add_argument('--tf-preprocessing', dest='tf_preprocessing', action='store
                     help='use tensorflow mnasnet preporcessing')
 parser.add_argument('--no-cuda', dest='no_cuda', action='store_true',
                     help='')
-parser.add_argument('--tune', action='store_true', help='int8 quantization tune with lpot')
+parser.add_argument('--tune', action='store_true', help='int8 quantization tune with neural_compressor')
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
@@ -72,7 +72,7 @@ parser.add_argument('-w', "--warmup_iter", default=5, type=int,
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool'
+                    help='path to checkpoint tuned by Neural Compressor'
                          ' (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark for int8')
@@ -121,7 +121,7 @@ def main():
         model.eval()
         model.fuse_model()
         conf_yaml = "conf_" + args.model + ".yaml"
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(conf_yaml)
         quantizer.model = common.Model(model)
         q_model = quantizer()
@@ -149,7 +149,7 @@ def main():
     model.eval()
     model.fuse_model()
     if args.int8:
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
         new_model = load(
             os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
     else:

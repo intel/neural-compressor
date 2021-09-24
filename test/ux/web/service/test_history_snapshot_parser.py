@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.web.service.history_snapshot_parser import HistorySnapshotParser
+from neural_compressor.ux.web.service.history_snapshot_parser import HistorySnapshotParser
 
 
 class TestWorkloadService(unittest.TestCase):

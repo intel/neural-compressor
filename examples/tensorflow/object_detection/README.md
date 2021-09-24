@@ -17,8 +17,8 @@ Currently, we've enabled below models.
 Recommend python 3.6 or higher version.
 
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -140,10 +140,10 @@ Now we support both pb and ckpt formats.
 >
 > 2. For ssd_resnet34 model, anno_path of evaluation/accuracy/metric/COCOmAP in config file should be "label_map.yaml"
 
-Details of enabling Intel® Low Precision Optimization Tool on ssd_resnet50_v1 for Tensorflow.
+Details of enabling Intel® Neural Compressor on ssd_resnet50_v1 for Tensorflow.
 =========================
 
-This is a tutorial of how to enable ssd_resnet50_v1 model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable ssd_resnet50_v1 model with Intel® Neural Compressor.
 ## User Code Analysis
 1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
 
@@ -153,7 +153,7 @@ For ssd_resnet50_v1, we applied the latter one because our philosophy is to enab
 
 
 ### q_dataloader Part Adaption
-Specifically, we need to add one generator to iterate the dataset per Intel® Low Precision Optimization Tool requirements. The easiest way is to implement *__iter__* interface. Below function will yield the images to feed the model as input.
+Specifically, we need to add one generator to iterate the dataset per Intel® Neural Compressor requirements. The easiest way is to implement *__iter__* interface. Below function will yield the images to feed the model as input.
 
 ```python
 def __iter__(self):
@@ -177,7 +177,7 @@ def __iter__(self):
 ### Evaluation Part Adaption
 The Class model_infer has the run_accuracy function which actually could be re-used as the eval_func.
 
-Compare with the original version, we added the additional parameter **input_graph** as the Intel® Low Precision Optimization Tool would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors.
+Compare with the original version, we added the additional parameter **input_graph** as the Intel® Neural Compressor would call this interface with the graph to be evaluated. The following code snippet also need to be added into the run_accuracy function to update the class members like self.input_tensor and self.output_tensors.
 ```python
 if input_graph:
     graph_def = get_graph_def(self.args.input_graph, self.output_layers)
@@ -236,7 +236,7 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need update infer_detections.py like below.
 ```python
-from lpot.experimental import Quantization,common
+from neural_compressor.experimental import Quantization,common
 
 quantizer = Quantization(args.config)
 quantizer.model = common.Model(args.input_graph)

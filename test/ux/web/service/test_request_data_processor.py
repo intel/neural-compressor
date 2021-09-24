@@ -17,8 +17,8 @@
 import unittest
 from typing import Any, Dict
 
-from lpot.ux.utils.exceptions import ClientErrorException
-from lpot.ux.web.service.request_data_processor import RequestDataProcessor
+from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.web.service.request_data_processor import RequestDataProcessor
 
 
 class TestRequestDataProcessor(unittest.TestCase):

@@ -10,7 +10,7 @@ regex
 sentencepiece
 # For XLM
 sacremoses
-lpot
+neural-compressor
 tensorboard
 scikit-learn
 

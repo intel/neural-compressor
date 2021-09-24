@@ -136,7 +136,7 @@ def main():
         return test(model, test_loader)
 
 
-    from lpot.experimental import Component, common
+    from neural_compressor.experimental import Component, common
     component = Component(args.config)
     component.model = common.Model(model)
     component.train_func = train_func

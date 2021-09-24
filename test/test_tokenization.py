@@ -1,8 +1,8 @@
-from lpot.experimental.data.transforms.tokenization import FullTokenizer
+from neural_compressor.experimental.data.transforms.tokenization import FullTokenizer
 import unittest
 import os
 import shutil
-from lpot.utils.utility import LazyImport
+from neural_compressor.utils.utility import LazyImport
 tf =  LazyImport('tensorflow') 
 
 basic_text = ["un", "##aff", "##able"]

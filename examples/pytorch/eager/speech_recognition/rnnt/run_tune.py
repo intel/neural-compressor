@@ -48,7 +48,7 @@ def get_args():
                         help='For accuracy measurement only.')
     parser.add_argument('--int8', dest='int8', action='store_true', help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     args = parser.parse_args()
     return args
 
@@ -121,8 +121,8 @@ def main():
         print('Throughput: %.3f samples/sec' % (10**9/latency_per_sample))
 
     if args.tune:
-        # Dynamic Quantization with LPOT
-        from lpot.experimental import Quantization, common
+        # Dynamic Quantization with Neural Compressor
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func
@@ -130,7 +130,7 @@ def main():
         q_model.save(args.tuned_checkpoint)
 
     elif args.int8:
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         if args.accuracy_only:
             eval_func(int8_model)

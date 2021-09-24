@@ -5,7 +5,7 @@ import numpy as np
 import yaml
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -42,8 +42,8 @@ def build_fake_yaml():
     f.close()
 
 def quantize(model,q_data, e_data):
-    from lpot.experimental import Quantization , common
-    from lpot.experimental.common import DataLoader
+    from neural_compressor.experimental import Quantization , common
+    from neural_compressor.experimental.common import DataLoader
 
     quantizer = Quantization('fake_yaml.yaml')
 

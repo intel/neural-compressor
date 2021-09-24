@@ -17,7 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.hw_info import HWInfo
+from neural_compressor.ux.utils.hw_info import HWInfo
 
 
 class TestHWInfo(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestHWInfo(unittest.TestCase):
         hw_info = HWInfo()
         self.assertEqual(hw_info.sockets, 4)
 
-    @patch("lpot.ux.utils.hw_info.get_number_of_sockets")
+    @patch("neural_compressor.ux.utils.hw_info.get_number_of_sockets")
     @patch("platform.release")
     @patch("platform.system")
     @patch("psutil.LINUX", False)
@@ -102,7 +102,7 @@ class TestHWInfo(unittest.TestCase):
         hw_info = HWInfo()
         self.assertEqual(hw_info.system, "Linux kernel_ver-88-generic")
 
-    @patch("lpot.ux.utils.hw_info.get_number_of_sockets")
+    @patch("neural_compressor.ux.utils.hw_info.get_number_of_sockets")
     @patch("platform.release")
     @patch("platform.system")
     @patch("psutil.LINUX", False)

@@ -7,7 +7,7 @@ This document is used to list steps of reproducing PyTorch BERT tuning zoo resul
 >
 > 1. PyTorch quantization implementation in imperative path has limitation on automatically execution.
 >    It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
->    Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
+>    Intel® Neural Compressor has no capability to solve this framework limitation. Intel® Neural Compressor supposes user have done these two steps before invoking Intel® Neural Compressor interface.
 >    For details, please refer to https://pytorch.org/docs/stable/quantization.html
 > 2. The latest version of pytorch enabled INT8 layer_norm op, but the accuracy was regression. So you should tune BERT model on commit 24aac321718d58791c4e6b7cfa50788a124dae23.
 
@@ -62,7 +62,7 @@ python setup.py install
 
 ### 3. Prepare pretrained model
 
-Before use Intel® Low Precision Optimization Tool, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
+Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
 
 ```shell
 cd examples/pytorch/eager/language_translation
@@ -165,7 +165,7 @@ python $SQUAD_DIR/evaluate-v1.1.py $SQUAD_DIR/dev-v1.1.json ../models/wwm_uncase
 
 please refer to [BERT large SQuAD instructions](README.md#run_squadpy-fine-tuning-on-squad-for-question-answering)
 
-* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
+* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by neural_compressor tuning as below.
 
 #### GPT
 
@@ -336,14 +336,14 @@ Where output_dir is path of checkpoint which be created by fine tuning.
 where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
 Where output_dir is path of checkpoint which be created by fine tuning.
 
-Examples of enabling Intel® Low Precision Optimization Tool
+Examples of enabling Intel® Neural Compressor
 ============================================================
 
-This is a tutorial of how to enable BERT model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable BERT model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics in tuning.metrics field of model-specific yaml config file.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
@@ -372,7 +372,7 @@ tuning:
 
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 
-> **Note** : lpot does NOT support "mse" tuning strategy for pytorch framework
+> **Note** : neural_compressor does NOT support "mse" tuning strategy for pytorch framework
 
 ### prepare
 
@@ -390,7 +390,7 @@ After prepare step is done, we just need update run_squad_tune.py and run_glue_t
 
 ```python
 if args.tune:
-    def eval_func_for_lpot(model):
+    def eval_func_for_nc(model):
         result, _ = evaluate(args, model, tokenizer)
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
@@ -403,7 +403,7 @@ if args.tune:
         return acc
     eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization("./conf.yaml")
     if eval_task != "squad":
         eval_task = 'classifier'
@@ -412,7 +412,7 @@ if args.tune:
     quantizer.model = common.Model(model)
     quantizer.calib_dataloader = common.DataLoader(
         eval_dataset, batch_size=args.eval_batch_size)
-    quantizer.eval_func = eval_func_for_lpot
+    quantizer.eval_func = eval_func_for_nc
     q_model = quantizer()
     q_model.save("PATH to saved model")
     exit(0)

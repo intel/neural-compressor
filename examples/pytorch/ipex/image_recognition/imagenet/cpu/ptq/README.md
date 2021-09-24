@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool(LPOT).
+This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Neural Compressor.
 
 # Prerequisite
 
@@ -104,19 +104,19 @@ bash run_benchmark.sh --topology=mobilenet_v2_ipex --dataset_location=/path/to/i
 # Saving and loading model:
 
 * Saving model:
-  After tuning with LPOT, we can get LPOT.model:
+  After tuning with Neural Compressor, we can get neural_compressor.model:
 
 ```
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-lpot_model = quantizer()
+nc_model = quantizer()
 ```
 
-Here, lpot_model is LPOT model class, so it has "save" API:
+Here, nc_model is Neural Compressor model class, so it has "save" API:
 
 ```python
-lpot_model.save("Path_to_save_configure_file")
+nc_model.save("Path_to_save_configure_file")
 ```
 
 * loading model:
@@ -141,20 +141,20 @@ with torch.no_grad():
 
 Please refer to [Sample code](./main.py).
 
-Examples of enabling LPOT auto tuning on PyTorch ResNet
+Examples of enabling Neural Compressor auto tuning on PyTorch ResNet
 =======================================================
 
-This is a tutorial of how to enable a PyTorch classification model with LPOT.
+This is a tutorial of how to enable a PyTorch classification model with Neural Compressor.
 
 # User Code Analysis
 
-LPOT supports three usages:
+Neural Compressor supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by LPOT. So here we integrate PyTorch ResNet with LPOT by the first use case for simplicity.
+As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Neural Compressor. So here we integrate PyTorch ResNet with Neural Compressor by the first use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -235,14 +235,14 @@ The related code please refer to examples/pytorch/ipex/image_recognition/imagene
 
 ### Tuning With Intel PyTorch Extension
 
-1. Tuning With LPOT
+1. Tuning With Neural Compressor
 
     ```python
-      from lpot.experimental import Quantization, common
+      from neural_compressor.experimental import Quantization, common
       quantizer = Quantization("./conf_ipex.yaml")
       quantizer.model = common.Model(model)
-      lpot_model = quantizer()
-      lpot_model.save("Path_to_save_configure_file")
+      nc_model = quantizer()
+      nc_model.save("Path_to_save_configure_file")
     ```
 
 2. Saving and Run ipex model
@@ -250,10 +250,10 @@ The related code please refer to examples/pytorch/ipex/image_recognition/imagene
     * Saving model
 
     ```python
-      lpot_model.save("Path_to_save_configure_file")
+      nc_model.save("Path_to_save_configure_file")
     ```
 
-    Here, lpot_model is the result of LPOT tuning. It is LPOT.model class, so it has "save"     API.
+    Here, nc_model is the result of Neural Compressor tuning. It is neural_compressor.model class, so it has "save" API.
 
     * Run ipex model:
 

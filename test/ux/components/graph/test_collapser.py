@@ -17,9 +17,9 @@
 import unittest
 from typing import List
 
-from lpot.ux.components.graph.collapser import Collapser
-from lpot.ux.components.graph.graph import Graph
-from lpot.ux.components.graph.node import GroupNode, Node
+from neural_compressor.ux.components.graph.collapser import Collapser
+from neural_compressor.ux.components.graph.graph import Graph
+from neural_compressor.ux.components.graph.node import GroupNode, Node
 
 
 def _create_simple_node(name: str, groups: List[str]) -> Node:

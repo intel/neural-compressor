@@ -8,4 +8,5 @@ Full Publications
 * [Using Low-Precision Optimizations for High-Performance DL Inference Applications](https://techdecoded.intel.io/essentials/using-low-precision-optimizations-for-high-performance-dl-inference-applications/#gs.z20k91) (Apr 2021)
 * [Quantization support for ONNX using LPOT (Low precision optimization tool)](https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391) (Mar 2021)
 * [DL Boost Quantization with CERN's 3D-GANs model](https://www.nextplatform.com/2021/02/01/cern-uses-dlboost-oneapi-to-juice-inference-without-accuracy-loss/) (Feb 2021)
-* [Intel Low Precision Optimization Tool](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/intel-low-precision-optimization-tool.html) (Sep 2020)
+* [Reduced Precision Strategies for Deep Learning: 3DGAN Use Case](https://indico.cern.ch/event/852553/contributions/4059283/attachments/2126838/3581708/Rehm_Florian-IML-Reduced_Precision.pdf) - [presentation](https://indico.cern.ch/event/852553/contributions/4059283/attachments/2126838/3588271/IML2020_wedam_rehm.mp4) on [4th IML Machine Learning Workshop](https://indico.cern.ch/event/852553/contributions/4059283/) (Oct 2020)
+* [Intel Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/intel-low-precision-optimization-tool.html) (Sep 2020)

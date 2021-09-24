@@ -5,10 +5,10 @@ from torch.quantization import QuantStub, DeQuantStub
 import torchvision
 import unittest
 import os
-from lpot.adaptor import FRAMEWORKS
-from lpot.model import MODELS
-import lpot.adaptor.pytorch as lpot_torch
-from lpot.experimental import Quantization, common
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.model import MODELS
+import neural_compressor.adaptor.pytorch as nc_torch
+from neural_compressor.experimental import Quantization, common
 import shutil
 import copy
 import numpy as np
@@ -134,7 +134,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
-    lpot_model = MODELS['pytorch'](model)
+    nc_model = MODELS['pytorch'](model)
 
     @classmethod
     def setUpClass(self):
@@ -153,7 +153,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_quantization_saved(self):
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
 
         for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', \
                           'fx_dynamic_yaml.yaml', 'fx_ptq_yaml.yaml']:
@@ -183,20 +183,20 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
     def test_tuning_ipex(self):
-        from lpot.experimental import Quantization
+        from neural_compressor.experimental import Quantization
         model = torchvision.models.resnet18()
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
-        lpot_model = quantizer()
-        lpot_model.save("./saved")
+        nc_model = quantizer()
+        nc_model.save("./saved")
         try:
             script_model = torch.jit.script(model.to(ipex.DEVICE))
         except:
             script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from lpot.experimental import Benchmark
+        from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         evaluator.model = common.Model(script_model)
         evaluator.b_dataloader = common.DataLoader(dataset)

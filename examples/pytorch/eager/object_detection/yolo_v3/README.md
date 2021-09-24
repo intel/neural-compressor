@@ -1,13 +1,13 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with Intel® Low Precision Optimization Tool(LPOT).
+This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with Intel® Neural Compressor.
 
 > **Note**
 >
 > PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> LPOT requires users to complete these two manual steps before triggering auto-tuning process.
+> Neural Compressor requires users to complete these two manual steps before triggering auto-tuning process.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
@@ -39,20 +39,20 @@ cd examples/pytorch/eager/object_detection/yolo_v3/
 python test.py --weights_path weights/yolov3.weights -t
 ```
 
-Examples Of Enabling LPOT Auto Tuning On PyTorch YOLOV3
+Examples Of Enabling Neural Compressor Auto Tuning On PyTorch YOLOV3
 =======================================================
 
-This is a tutorial of how to enable a PyTorch model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a PyTorch model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports three usage as below:
+Intel® Neural Compressor supports three usage as below:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-Here we integrate PyTorch YOLO V3 with Intel® Low Precision Optimization Tool by the third use case for simplicity.
+Here we integrate PyTorch YOLO V3 with Intel® Neural Compressor by the third use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -117,15 +117,15 @@ def eval_func(model):
     return AP.mean()
 model.eval()
 model.fuse_model()
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
 dataloader = torch.utils.data.DataLoader(
     dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn
 )
-lpot_dataloader = yolo_dataLoader(dataloader)
+nc_dataloader = yolo_dataLoader(dataloader)
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-quantizer.calib_dataloader = lpot_dataloader
+quantizer.calib_dataloader = nc_dataloader
 quantizer.eval_func = eval_func
 q_model = quantizer()
 ```

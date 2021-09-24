@@ -1,13 +1,13 @@
 Metrics
 =======
 
-In terms of evaluating the performance of a specific model, we should have general metrics to measure the performance of different models. Different frameworks always have their own Metric module but with different features and APIs. LPOT Metrics supports code-free configuration through a yaml file, with built-in metrics, so that LPOT can achieve performance and accuracy without code changes from the user. In special cases, users can also register their own metric classes through the LPOT method.
+In terms of evaluating the performance of a specific model, we should have general metrics to measure the performance of different models. Different frameworks always have their own Metric module but with different features and APIs. Neural Compressor Metrics supports code-free configuration through a yaml file, with built-in metrics, so that Neural Compressor can achieve performance and accuracy without code changes from the user. In special cases, users can also register their own metric classes through below method.
 
 ## How to use Metrics
 
 ### Config built-in metric in a yaml file
 
-Users can specify an LPOT built-in metric such as shown below:
+Users can specify an Neural Compressor built-in metric such as shown below:
 
 ```yaml
 evaluation:
@@ -44,7 +44,7 @@ After defining the metric class, users need to register it with a user-defined m
 
 ```python
 
-from lpot.quantization import Quantization, common
+from neural_compressor.quantization import Quantization, common
 quantizer = Quantization(yaml_file)
 quantizer.model = common.Model(graph)
 quantizer.metric = common.Metric(NewMetric, 'metric_name')
@@ -55,7 +55,7 @@ q_model = quantizer()
 
 ## Built-in metric support list
 
-LPOT supports some built-in metrics that are popularly used in industry. 
+Neural Compressor supports some built-in metrics that are popularly used in industry. 
 
 Refer to [this HelloWorld example](/examples/helloworld/tf_example1) on how to config a built-in metric.
 

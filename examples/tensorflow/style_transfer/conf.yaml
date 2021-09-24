@@ -21,7 +21,7 @@ model:                                               # mandatory. used to specif
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 2
       dataset:
         style_transfer:
@@ -30,7 +30,7 @@ quantization:                                        # optional. tuning constrai
 
 evaluation:
   performance:
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 2
       dataset:
         style_transfer:

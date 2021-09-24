@@ -19,8 +19,8 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import yaml
 
-from lpot.ux.utils.exceptions import ClientErrorException
-from lpot.ux.utils.workload.config import Config
+from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.workload.config import Config
 
 
 class TestConfig(unittest.TestCase):
@@ -963,7 +963,7 @@ class TestConfig(unittest.TestCase):
 
         self.assertIsNone(config.evaluation)
 
-    @patch("lpot.ux.utils.workload.config.load_precisions_config")
+    @patch("neural_compressor.ux.utils.workload.config.load_precisions_config")
     def test_set_optimization_precision_to_unknown_precision(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -998,7 +998,7 @@ class TestConfig(unittest.TestCase):
             config.set_optimization_precision("framework_foo", "unknown_precision")
         mocked_load_precisions_config.assert_called_once()
 
-    @patch("lpot.ux.utils.workload.config.load_precisions_config")
+    @patch("neural_compressor.ux.utils.workload.config.load_precisions_config")
     def test_set_optimization_precision_to_unknown_framework(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -1032,7 +1032,7 @@ class TestConfig(unittest.TestCase):
             config.set_optimization_precision("framework_baz", "precision1")
         mocked_load_precisions_config.assert_called_once()
 
-    @patch("lpot.ux.utils.workload.config.load_precisions_config")
+    @patch("neural_compressor.ux.utils.workload.config.load_precisions_config")
     def test_set_optimization_precision(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -1064,7 +1064,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual("precision2", config.graph_optimization.precisions)
         mocked_load_precisions_config.assert_called_once()
 
-    @patch("lpot.ux.utils.workload.config.load_precisions_config")
+    @patch("neural_compressor.ux.utils.workload.config.load_precisions_config")
     def test_set_optimization_precision_on_empty_config(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -1103,7 +1103,7 @@ class TestConfig(unittest.TestCase):
         read_yaml = yaml.dump(self.predefined_config, sort_keys=False)
 
         with patch(
-            "lpot.ux.utils.workload.config.open",
+            "neural_compressor.ux.utils.workload.config.open",
             mock_open(read_data=read_yaml),
         ) as mocked_open:
             config.load("path to yaml file")
@@ -1125,7 +1125,7 @@ class TestConfig(unittest.TestCase):
             sort_keys=False,
         )
 
-        with patch("lpot.ux.utils.workload.config.open", mock_open()) as mocked_open:
+        with patch("neural_compressor.ux.utils.workload.config.open", mock_open()) as mocked_open:
             config.dump("path to yaml file")
 
             mocked_open.assert_called_once_with("path to yaml file", "w")

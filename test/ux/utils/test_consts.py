@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.utils.consts import github_info
+from neural_compressor.ux.utils.consts import github_info
 
 
 class TestConsts(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestConsts(unittest.TestCase):
         """Test if github_info is built as expected."""
         self.assertIs(type(github_info), dict)
         self.assertEqual(github_info.get("user"), "intel")
-        self.assertEqual(github_info.get("repository"), "lpot")
+        self.assertEqual(github_info.get("repository"), "neural-compressor")
         self.assertRegex(github_info.get("tag", ""), "^v[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
 
 

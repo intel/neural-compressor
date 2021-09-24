@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from lpot.model.model import MODELS, get_model_fwk_name, get_model_type
-from lpot.utils.utility import LazyImport
+from neural_compressor.model.model import MODELS, get_model_fwk_name, get_model_type
+from neural_compressor.utils.utility import LazyImport
 onnx = LazyImport('onnx')
  
 class Loader(object):

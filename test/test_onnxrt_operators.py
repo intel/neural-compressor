@@ -6,7 +6,7 @@ import onnx
 import numpy as np
 from onnx import helper, TensorProto, numpy_helper, onnx_pb
 from onnxruntime.quantization.quant_utils import QuantizationMode
-from lpot.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
+from neural_compressor.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
 import onnxruntime as ort
 
 

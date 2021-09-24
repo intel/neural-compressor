@@ -16,8 +16,8 @@ class Dataset(object):
       return len(self.test_images)
 
 # Define a customized Metric function 
-from lpot.experimental import Quantization,  common
-from lpot.metric import BaseMetric
+from neural_compressor.experimental import Quantization,  common
+from neural_compressor.metric import BaseMetric
 class MyMetric(BaseMetric):
   def __init__(self, *args):
       self.pred_list = []

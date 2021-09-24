@@ -18,7 +18,7 @@ import os
 import shutil
 import unittest
 
-from lpot.ux.utils.executor import Executor
+from neural_compressor.ux.utils.executor import Executor
 
 
 class TestExecutor(unittest.TestCase):

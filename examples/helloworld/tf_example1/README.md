@@ -1,6 +1,6 @@
 tf_example1 example
 =====================
-This example is used to demonstrate how to utilize LPOT builtin dataloader and metric to enabling quantization without coding effort.
+This example is used to demonstrate how to utilize Neural Compressor builtin dataloader and metric to enabling quantization without coding effort.
 
 1. Download the FP32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
@@ -25,8 +25,8 @@ quantization:                                        # optional. tuning constrai
     weight:
       granularity: per_channel
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -44,7 +44,7 @@ evaluation:                                          # optional. required if use
 3. Run quantization
 We only need to add the following lines for quantization to create an int8 model.
 ```python
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization('./conf.yaml')
     quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
     quantized_model = quantizer()

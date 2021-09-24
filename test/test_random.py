@@ -113,7 +113,7 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_ru_random_one_trial(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
@@ -123,7 +123,7 @@ class TestQuantization(unittest.TestCase):
         quantizer()
 
     def test_ru_random_max_trials(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)

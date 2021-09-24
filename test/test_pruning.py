@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
     fake_yaml = """
@@ -58,13 +58,13 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             epochs = 16
             iters = 30
             criterion = nn.CrossEntropyLoss()
@@ -87,22 +87,22 @@ class TestPruning(unittest.TestCase):
                         break
                 prune.on_epoch_end()
         prune.model = common.Model(self.model)
-        prune.pruning_func = training_func_for_lpot
+        prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
         _ = prune()
 
     def test_pruning_external(self):
-        from lpot.experimental import common
-        from lpot import Pruning
-        from lpot.conf.config import Pruning_Conf
+        from neural_compressor.experimental import common
+        from neural_compressor import Pruning
+        from neural_compressor.conf.config import Pruning_Conf
         conf = Pruning_Conf('fake.yaml')
         prune = Pruning(conf)
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             epochs = 16
             iters = 30
             criterion = nn.CrossEntropyLoss()
@@ -125,12 +125,12 @@ class TestPruning(unittest.TestCase):
                         break
                 prune.on_epoch_end()
         prune.model = common.Model(self.model)
-        prune.pruning_func = training_func_for_lpot
+        prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
         _ = prune(common.Model(self.model), \
                   train_dataloader=dummy_dataloader, \
-                  pruning_func=training_func_for_lpot, \
+                  pruning_func=training_func_for_nc, \
                   eval_dataloader=dummy_dataloader)
 
 if __name__ == "__main__":

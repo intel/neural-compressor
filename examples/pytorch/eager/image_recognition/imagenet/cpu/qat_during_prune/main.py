@@ -44,7 +44,7 @@ parser.add_argument("--config", default=None, help="tuning config")
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                    help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
 
@@ -66,8 +66,8 @@ def main():
 
     if args.tune:
         model.fuse_model()
-        from lpot.experimental import Quantization, common, Pruning, Component
-        from lpot.experimental.scheduler import Scheduler
+        from neural_compressor.experimental import Quantization, common, Pruning, Component
+        from neural_compressor.experimental.scheduler import Scheduler
         quantizer = Quantization('./qat_conf.yaml')
         prune = Pruning('./prune_conf.yaml')
         scheduler = Scheduler()

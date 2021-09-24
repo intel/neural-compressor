@@ -17,8 +17,8 @@
 import unittest
 import uuid
 
-from lpot.ux.components.graph.attribute import Attribute
-from lpot.ux.utils.json_serializer import JsonSerializer
+from neural_compressor.ux.components.graph.attribute import Attribute
+from neural_compressor.ux.utils.json_serializer import JsonSerializer
 
 
 def _get_random_string() -> str:

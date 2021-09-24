@@ -159,7 +159,7 @@ class eval_classifier_optimized_graph:
         arg_parser.add_argument('--tune',
                                 dest='tune',
                                 action='store_true',
-                                help='use lpot to tune.')
+                                help='use neural_compressor to tune.')
         arg_parser.add_argument("--warmup-steps",
                                 type=int, default=50,
                                 help="number of warmup steps")
@@ -176,11 +176,11 @@ class eval_classifier_optimized_graph:
         self.args = arg_parser.parse_args()
 
     def auto_tune(self):
-        """This is lpot tuning part to generate a quantized pb
+        """This is neural_compressor tuning part to generate a quantized pb
         Returns:
             graph: it will return a quantized pb
         """
-        from lpot.experimental import Quantization
+        from neural_compressor.experimental import Quantization
         infer_graph = load_graph(self.args.input_graph)
         quantizer = Quantization(self.args.config)
         if self.args.calib_data:
@@ -292,7 +292,7 @@ class eval_classifier_optimized_graph:
             return accuracy
 
     def run(self):
-        """ This is lpot function include tuning and benchmark option """
+        """ This is neural_compressor function include tuning and benchmark option """
 
         if self.args.tune:
             q_model = evaluate_opt_graph.auto_tune()

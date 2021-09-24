@@ -5,8 +5,8 @@ import unittest
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 class TestColumnWiseMulFusion(unittest.TestCase):

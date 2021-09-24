@@ -41,23 +41,23 @@ class eval_classifier_optimized_graph:
 
     arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
 
-    arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
+    arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
     arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode, support performance and accuracy')
 
     self.args = arg_parser.parse_args()
 
   def run(self):
-      """ This is lpot function include tuning and benchmark option """
+      """ This is neural_compressor function include tuning and benchmark option """
 
       if self.args.tune:
-          from lpot.experimental import Quantization, common
+          from neural_compressor.experimental import Quantization, common
           quantizer = Quantization(self.args.config)
           quantizer.model = common.Model(self.args.input_graph)
           q_model = quantizer()
           q_model.save(self.args.output_graph)
 
       if self.args.benchmark:
-          from lpot.experimental import Benchmark, common
+          from neural_compressor.experimental import Benchmark, common
           evaluator = Benchmark(self.args.config)
           evaluator.model = common.Model(self.args.input_graph)
           evaluator(self.args.mode)

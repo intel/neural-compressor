@@ -5,7 +5,7 @@ import yaml
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -91,7 +91,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset(
@@ -150,7 +150,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset(

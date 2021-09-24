@@ -6,10 +6,10 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from transformers import BertForSequenceClassification
-from lpot.data import DATASETS
+from neural_compressor.data import DATASETS
 
 def build_fake_yaml():
     fake_yaml = """
@@ -153,10 +153,10 @@ class TestGradientSensitivity(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_gradient_sensitivity(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             inputs = {'input_ids': torch.rand([1,12]).long(),
                       'attention_mask': torch.rand([1,12]).long(),
                       'labels': torch.tensor([1]).long()}
@@ -173,12 +173,12 @@ class TestGradientSensitivity(unittest.TestCase):
             prune.on_batch_end()
             prune.on_epoch_end()
 
-        def eval_func_for_lpot(model):
+        def eval_func_for_nc(model):
             pass
 
         prune.model = common.Model(self.model)
-        prune.pruning_func = training_func_for_lpot
-        prune.eval_func = eval_func_for_lpot
+        prune.pruning_func = training_func_for_nc
+        prune.eval_func = eval_func_for_nc
         _ = prune()
         for bertlayer in self.model.bert.encoder.layer:
             self.assertEqual(bertlayer.attention.self.query.weight.shape, (512, 768))
@@ -202,7 +202,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_unstructured_pruning(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune_cv = Pruning('fake_unstructured.yaml')
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)

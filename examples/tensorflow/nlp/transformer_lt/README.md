@@ -1,14 +1,14 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow Intel® Low Precision Optimization Tool tuning zoo result of Transformer-LT.
+This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer-LT.
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 
 ### 2. Install Intel Tensorflow
@@ -42,10 +42,10 @@ bash prepare_dataset_model.sh
 python main.py --input_graph=/path/to/fp32_graphdef.pb --inputs_file=/path/to/newstest2014.en --reference_file=/path/to/newstest2014.de --vocab_file=/path/to/vocab.txt --config=./transformer_lt.yaml --tune
 ```
 
-Details of enabling Intel® Low Precision Optimization Tool on transformer-lt for Tensorflow.
+Details of enabling Intel® Neural Compressor on transformer-lt for Tensorflow.
 =========================
 
-This is a tutorial of how to enable transformer-lt model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable transformer-lt model with Intel® Neural Compressor.
 ## User Code Analysis
 1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
 
@@ -108,8 +108,8 @@ In this case we calibrate and quantize the model, and use our calibration datalo
 After prepare step is done, we add tune code to generate quantized model.
 
 ```python
-    from lpot.experimental import Quantization
-    from lpot.adaptor.tf_utils.util import write_graph
+    from neural_compressor.experimental import Quantization
+    from neural_compressor.adaptor.tf_utils.util import write_graph
     quantizer = Quantization(FLAGS.config)
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
     quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, batch_size=FLAGS.batch_size)
@@ -119,4 +119,4 @@ After prepare step is done, we add tune code to generate quantized model.
     q_model.save(FLAGS.output_model)
 ```
 
-The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantizer() function will return a best quantized model under time constraint.

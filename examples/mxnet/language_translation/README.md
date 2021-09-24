@@ -10,8 +10,8 @@ This document is used to list steps of reproducing MXNet BERT_base MRPC/Squad tu
 ### 1. Installation
 
   ```Shell
-  # Install Intel® Low Precision Optimization Tool
-  pip install lpot
+  # Install Intel® Neural Compressor
+  pip install neural-compressor
 
   # Install MXNet
   pip install mxnet
@@ -67,20 +67,20 @@ python3 finetune_squad.py \
 ```
  
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on MXNet BERT_base
+Examples of enabling Intel® Neural Compressor auto tuning on MXNet BERT_base
 =======================================================
 
-This is a tutorial of how to enable a MXNet BERT base model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a MXNet BERT base model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-We integrate MXNet BERT_base MRPC/Squad with Intel® Low Precision Optimization Tool by the second use case.
+We integrate MXNet BERT_base MRPC/Squad with Intel® Neural Compressor by the second use case.
 
 ### Write Yaml config file
 
@@ -107,7 +107,7 @@ Because we use the second use case which need user to provide a custom "eval_fun
 
 
 ### code update
-First, we need to construct evaluate function for lpot. At eval_func, we get the dev_data_list for the origin script, and return acc metric to lpot.
+First, we need to construct evaluate function for neural_compressor. At eval_func, we get the dev_data_list for the origin script, and return acc metric to neural_compressor.
 
 ```python
     # define test_func
@@ -128,9 +128,9 @@ First, we need to construct evaluate function for lpot. At eval_func, we get the
 After prepare step is done, we just need update main.py like below.
 
 ```python
-    # Intel® Low Precision Optimization Tool auto-tuning
+    # Intel® Neural Compressor auto-tuning
     calib_data = dev_data_list[0][1]
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization("./bert.yaml")
     quantizer.model = common.Model(model)
     quantizer.calib_dataloader = calib_data

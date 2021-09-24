@@ -17,7 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.parser import BenchmarkParserFactory, OptimizationParser
+from neural_compressor.ux.utils.parser import BenchmarkParserFactory, OptimizationParser
 
 
 class TestTuningParser(unittest.TestCase):

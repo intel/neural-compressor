@@ -4,19 +4,19 @@
 import unittest
 import os
 import copy
-from lpot.adaptor.tf_utils.util import read_graph
-from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
-from lpot.adaptor.tf_utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
+from neural_compressor.adaptor.tf_utils.util import read_graph
+from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
     ssd_resnet50_model = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
-    dst_path = '/tmp/.lpot/ssd_resnet50_v1.tgz'
+    dst_path = '/tmp/.neural_compressor/ssd_resnet50_v1.tgz'
     unzipped_folder_name = 'ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03'
 
     @classmethod
     def setUpClass(self):
         if not os.path.exists(self.dst_path):
           os.system(
-              "mkdir -p /tmp/.lpot && wget {} -O {}".format(
+              "mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(
                   self.ssd_resnet50_model, self.dst_path, self.dst_path))
 
         os.system("tar xvf {}".format(self.dst_path))

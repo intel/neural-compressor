@@ -138,7 +138,7 @@ def eval_func(infer_graph, iteration=-1):
     output_tensor = infer_graph.get_tensor_by_name(\
         'model/Transformer/strided_slice_19:0')
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    from lpot.data import DATALOADERS
+    from neural_compressor.data import DATALOADERS
     dataloader = DATALOADERS['tensorflow'](ds, batch_size=FLAGS.batch_size, 
                                            collate_fn=collate_fn)
     config = tf.compat.v1.ConfigProto()
@@ -225,7 +225,7 @@ class Dataset(object):
 def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.mode == 'tune':
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(FLAGS.config)
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
         quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, \

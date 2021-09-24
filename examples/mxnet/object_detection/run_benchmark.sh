@@ -5,7 +5,7 @@ help()
 {
    cat <<- EOF
 
-   Desc: Run lpot MXNet Object Detection example.
+   Desc: Run neural_compressor MXNet Object Detection example.
 
    -h --help              help info
 
@@ -32,7 +32,7 @@ function main {
   # default parameters
   topology='mobilenet1.0'
   dataset='voc'
-  output_model='./lpot_ssd_model'
+  output_model='./nc_ssd_model'
   dataset_location='~/.mxnet/datasets/'
   batch_size=32
   iters=10

@@ -2,7 +2,7 @@
 set -x
 
 function main {
-  output_model="./lpot_workspace/pytorch/blendcnn/"
+  output_model="./nc_workspace/pytorch/blendcnn/"
   init_params "$@"
   run_tuning
 

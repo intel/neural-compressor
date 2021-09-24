@@ -17,7 +17,7 @@
 import unittest
 from typing import Any, List
 
-from lpot.ux.utils.json_serializer import JsonSerializer
+from neural_compressor.ux.utils.json_serializer import JsonSerializer
 
 
 class SubClassToTest(JsonSerializer):

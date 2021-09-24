@@ -6,10 +6,10 @@ import os
 import tensorflow as tf
 import yaml
 
-from lpot.adaptor.tf_utils.util import read_graph
-from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import read_graph
+from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.adaptor.tensorflow import TensorflowQuery
+from neural_compressor.adaptor.tf_utils.util import disable_random
 from tensorflow.python.framework import graph_util
 
 
@@ -50,15 +50,15 @@ def build_fake_yaml():
 
 class TestTensorflowConcat(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/inceptionv3_fp32_pretrained_model.pb'
-    pb_path = '/tmp/.lpot/inceptionv3_fp32.pb'
+    pb_path = '/tmp/.neural_compressor/inceptionv3_fp32.pb'
 
     @classmethod
     def setUpClass(self):
         if not os.path.exists(self.pb_path):
             os.system(
-                "mkdir -p /tmp/.lpot && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
+                "mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+            os.path.dirname(__file__), "../neural_compressor/adaptor/tensorflow.yaml")).get_eightbit_patterns()
         build_fake_yaml()
 
     @classmethod
@@ -69,7 +69,7 @@ class TestTensorflowConcat(unittest.TestCase):
 
         output_graph_def = read_graph(self.pb_path)
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset(
             'dummy', shape=(100, 299, 299, 3), label=True)
@@ -80,7 +80,7 @@ class TestTensorflowConcat(unittest.TestCase):
         found_quantized_concat_node = False
 
         target_concat_node_name = 'v0/cg/incept_v3_a0/concat_eightbit_quantized_concatv2'
-        from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+        from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
         cur_graph = GraphAnalyzer()
         cur_graph.graph = output_graph.graph_def
         graph_info = cur_graph.parse_graph()
@@ -131,7 +131,7 @@ class TestTensorflowConcat(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset(

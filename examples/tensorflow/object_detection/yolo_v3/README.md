@@ -1,4 +1,4 @@
-This document describes the step-by-step to reproduce Yolo-v3 tuning result with LPOT.
+This document describes the step-by-step to reproduce Yolo-v3 tuning result with Neural Compressor.
 
 ## Prerequisite
 
@@ -7,14 +7,14 @@ This document describes the step-by-step to reproduce Yolo-v3 tuning result with
 Recommend python 3.6 or higher version.
 
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow==1.15.0up3
 ```
-> Note: Supported Tensorflow versions please refer to LPOT readme file.
+> Note: Supported Tensorflow versions please refer to Neural Compressor readme file.
 
 ### 3. Installation Dependency packages
 ```shell
@@ -63,7 +63,7 @@ tensorflow records using the `https://github.com/tensorflow/models.git` dedicate
 #### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
-## Get Quantized Yolo-v3 model with LPOT
+## Get Quantized Yolo-v3 model with Neural Compressor
 
 ### 1.Config the yolo_v3.yaml with the valid cocoraw data path.
 
@@ -76,4 +76,4 @@ cd examples/tensorflow/object_detection/yolo_v3
 python infer_detections.py --input_graph /path/to/yolov3_fp32.pb --config ./yolo_v3.yaml --output_graph /path/to/save/yolov3_tuned3.pb
 ```
 
-Finally, the LPOT will generate the quantized Yolo-v3 model with relative 1% loss.
+Finally, the program will generate the quantized Yolo-v3 model with relative 1% loss.

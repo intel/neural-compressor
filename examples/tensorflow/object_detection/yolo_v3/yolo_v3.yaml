@@ -1,4 +1,4 @@
-model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. neural_compressor uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: yolo_v3
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: inputs
@@ -7,7 +7,7 @@ model:                                               # mandatory. lpot uses this
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 100                  # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 1
       dataset:
         COCORecord:

@@ -49,13 +49,13 @@ def get_args():
     parser.add_argument("--log_dir", required=True)
     parser.add_argument("--configure_path", default="")
     parser.add_argument('--tune', dest='tune', action='store_true', 
-                        help='tune best int8 model with LPOT on calibration dataset')
+                        help='tune best int8 model with Neural Compressor on calibration dataset')
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
     parser.add_argument("--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     args = parser.parse_args()
     return args
 
@@ -97,7 +97,7 @@ def main():
         fullpath = None
         use_int8 = False
         settings.mode = lg.TestMode.AccuracyOnly
-        for path, dirs, files in os.walk('lpot_workspace'):
+        for path, dirs, files in os.walk('nc_workspace'):
             if 'ipex_config_tmp.json' in files:
                 fullpath = os.path.join(path, 'ipex_config_tmp.json')
                 use_int8 = True
@@ -116,15 +116,15 @@ def main():
         return accu
 
     if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         import shutil
-        shutil.rmtree('lpot_workspace', ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
         sut = PytorchSUT(args.pytorch_config_toml, args.pytorch_checkpoint,
                          args.dataset_dir, args.manifest, args.perf_count,
                          True, False, None)
         model = sut.greedy_decoder._model.encoder
 
-        class LPOT_dataloader(object):
+        class NC_dataloader(object):
             def __init__(self, sut):
                 self.sut = sut
                 self.batch_size = 1
@@ -145,7 +145,7 @@ def main():
                         feature = feature.permute(2, 0, 1)
                     yield (feature, feature_length), None
 
-        calib_dataloader = LPOT_dataloader(sut)
+        calib_dataloader = NC_dataloader(sut)
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = calib_dataloader
@@ -158,7 +158,7 @@ def main():
         config_file = None
         if args.int8:
             config_file = os.path.join(args.tuned_checkpoint, "best_configure.json")
-            assert os.path.exists(config_file), "there is no ipex config file, Please tune with LPOT first!"
+            assert os.path.exists(config_file), "there is no ipex config file, Please tune with Neural Compressor first!"
         sut = PytorchSUT(args.pytorch_config_toml, args.pytorch_checkpoint,
                          args.dataset_dir, args.manifest, args.perf_count,
                          args.bf16, args.int8, config_file)

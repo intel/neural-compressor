@@ -508,7 +508,7 @@ class TrainingArguments:
     _n_gpu: int = field(init=False, repr=False, default=-1)
     tune: bool = field(
         default=False,
-        metadata={"help": "Whether to run lpot tuning."})
+        metadata={"help": "Whether to run neural_compressor tuning."})
     benchmark: bool = field(
         default=False,
         metadata={"help": "run benchmark."})
@@ -517,13 +517,13 @@ class TrainingArguments:
         metadata={"help":"run benchmark."})
     tuned_checkpoint: str = field(
         default="./",
-        metadata={"help":"path to checkpoint tuned by Low Precision Optimization Tool (default: ./)."})
+        metadata={"help":"path to checkpoint tuned by Neural Compressor (default: ./)."})
     accuracy_only: bool = field(
         default=False,
-        metadata={"help":"Whether to only test accuracy for model tuned by Low Precision Optimization Tool."})
+        metadata={"help":"Whether to only test accuracy for model tuned by Neural Compressor."})
     iters: int = field(
         default=0,
-        metadata={"help":"Iteration number for Low Precision Optimization Tool benchmark/accuracy test."}
+        metadata={"help":"Iteration number for Neural Compressor benchmark/accuracy test."}
     )
     warmup_iter: int = field(
         default=5,

@@ -6,9 +6,9 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from lpot.experimental.scheduler import Scheduler
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.experimental.scheduler import Scheduler
 
 def build_fake_yaml():
     fake_yaml = """
@@ -271,7 +271,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
         scheduler = Scheduler()
         scheduler.model = common.Model(self.model)
@@ -279,7 +279,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             epochs = 16
             iters = 30
             criterion = nn.CrossEntropyLoss()
@@ -302,14 +302,14 @@ class TestPruning(unittest.TestCase):
                         break
                 prune.on_epoch_end()
 
-        prune.pruning_func = training_func_for_lpot
+        prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
         scheduler.append(prune)
         opt_model = scheduler()
 
     def test_pure_yaml_pruning(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake2.yaml')
         scheduler = Scheduler()
         scheduler.model = common.Model(self.model)
@@ -317,7 +317,7 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
 
     def test_combine(self):
-        from lpot.experimental import Pruning, common, Quantization
+        from neural_compressor.experimental import Pruning, common, Quantization
         self.q_model.fuse_model()
         quantizer = Quantization('./fake3.yaml')
         prune = Pruning('./fake2.yaml')
@@ -333,7 +333,7 @@ class TestPruning(unittest.TestCase):
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
     def test_combine_fx(self):
-        from lpot.experimental import Pruning, common, Quantization
+        from neural_compressor.experimental import Pruning, common, Quantization
         quantizer = Quantization('./fake5.yaml')
         prune = Pruning('./fake4.yaml')
         scheduler = Scheduler()

@@ -1,10 +1,10 @@
 """Tests for the metrics module."""
 import numpy as np
 import unittest
-from lpot.metric import METRICS
-from lpot.experimental.metric.f1 import evaluate
-from lpot.experimental.metric.evaluate_squad import evaluate as evaluate_squad
-from lpot.experimental.metric import bleu
+from neural_compressor.metric import METRICS
+from neural_compressor.experimental.metric.f1 import evaluate
+from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
+from neural_compressor.experimental.metric import bleu
 
 class TestMetrics(unittest.TestCase):
     def testmIOU(self):

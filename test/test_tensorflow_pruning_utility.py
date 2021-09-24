@@ -48,7 +48,7 @@ class TestTensorflowPruning(unittest.TestCase):
     
     @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_pruning_utility(self):
-        from lpot.experimental import common
+        from neural_compressor.experimental import common
         pruning_model = common.Model("baseline_model")
         all_weights_name = pruning_model.get_all_weight_names()
         df, sparsity = pruning_model.report_sparsity()

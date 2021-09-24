@@ -243,7 +243,7 @@ parser.add_argument('--calib_mode', type=str, default='customize',
                     help='calibration mode used for generating calibration table '
                          'for the quantized symbol.')
 parser.add_argument('--tune',action='store_true', default=False,
-                    help='Get bert tuning quantization model with lpot.')
+                    help='Get bert tuning quantization model with neural_compressor.')
 
 args = parser.parse_args()
 
@@ -848,7 +848,7 @@ def preprocess_dataset(tokenizer,
 
 
 def gen_dataset():
-    """generate dataset for lpot."""
+    """generate dataset for neural_compressor."""
     log.info('Loading dev data...')
     if version_2:
         dev_data = SQuAD('dev', version='2.0')
@@ -882,7 +882,7 @@ def gen_dataset():
     return dev_dataloader
 
 def eval_func(model):
-    """evaluation function for lpot."""
+    """evaluation function for neural_compressor."""
     EM_acc = evaluate(model)
     return EM_acc
 
@@ -900,9 +900,9 @@ if __name__ == '__main__':
         train()
         evaluate(net)
     elif args.tune:
-        # lpot auto-tuning
+        # neural_compressor auto-tuning
         dev_dataloader = gen_dataset()
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./bert.yaml")
         quantizer.model = common.Model(net)
         quantizer.calib_dataloader = dev_dataloader

@@ -34,7 +34,7 @@ from transformers.trainer_utils import EvaluationStrategy, is_main_process
 from transformers.training_args import ParallelMode
 from utils import (
     Seq2SeqDataCollator,
-    Seq2SeqDataCollator_lpot,
+    Seq2SeqDataCollator_nc,
     Seq2SeqDataset,
     assert_all_frozen,
     build_compute_metrics_fn,
@@ -316,7 +316,7 @@ def main():
             tokenizer.save_pretrained(training_args.output_dir)
 
     if training_args.tune:
-        def eval_func_for_lpot(model):
+        def eval_func_for_nc(model):
             trainer.model = model
             results = trainer.evaluate(
                 eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
@@ -334,22 +334,22 @@ def main():
                         acc = sum([v for k,v in results.items() if "rouge" in k])/4
                         break
             return acc
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(
                                                 eval_dataset, 
                                                 batch_size=training_args.eval_batch_size,
-                                                collate_fn=Seq2SeqDataCollator_lpot(tokenizer, data_args, training_args.tpu_num_cores)
+                                                collate_fn=Seq2SeqDataCollator_nc(tokenizer, data_args, training_args.tpu_num_cores)
                                                 )
-        quantizer.eval_func = eval_func_for_lpot
+        quantizer.eval_func = eval_func_for_nc
         q_model = quantizer()
         q_model.save(training_args.tuned_checkpoint)
         exit(0)
 
     if training_args.benchmark:
         if training_args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                     os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
         else:
@@ -374,7 +374,7 @@ def main():
     
     if training_args.accuracy_only:
         if training_args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                     os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
         else:

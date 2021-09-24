@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
     fake_yaml = """
@@ -46,7 +46,7 @@ class TestPatternLock(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pattern_lock(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
         weight = self.model.layer1[0].conv1.weight
@@ -60,7 +60,7 @@ class TestPatternLock(unittest.TestCase):
         dummy_dataset = DummyDataset([tuple([100, 3, 256, 256])])
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             epochs = 2
             iters = 30
             criterion = nn.CrossEntropyLoss()
@@ -85,7 +85,7 @@ class TestPatternLock(unittest.TestCase):
         dummy_dataset = DummyDataset(tuple([100, 3, 256, 256]), label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.model = common.Model(self.model)
-        prune.pruning_func = training_func_for_lpot
+        prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
         _ = prune()

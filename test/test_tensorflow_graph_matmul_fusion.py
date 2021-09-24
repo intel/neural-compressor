@@ -7,8 +7,8 @@ import yaml
 import numpy as np
 import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import dtypes
-from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tensorflow import TensorflowQuery
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -43,7 +43,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../lpot/adaptor/tensorflow.yaml")).get_eightbit_patterns()
+            os.path.dirname(__file__), "../neural_compressor/adaptor/tensorflow.yaml")).get_eightbit_patterns()
 
     @classmethod
     def tearDownClass(self):
@@ -66,7 +66,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -95,7 +95,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             sess.run(z, feed_dict={x: x_data, y: y_data})
             float_graph_def = sess.graph.as_graph_def()
 
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -131,7 +131,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from lpot.experimental import Quantization, common
+                    from neural_compressor.experimental import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -164,7 +164,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from lpot.experimental import Quantization, common
+                    from neural_compressor.experimental import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -195,7 +195,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -226,7 +226,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -257,7 +257,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -288,7 +288,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -321,7 +321,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -353,7 +353,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization('fake_yaml.yaml')
                 dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
@@ -393,7 +393,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from lpot.experimental import Quantization, common
+                    from neural_compressor.experimental import Quantization, common
                     quantizer = Quantization('fake_yaml.yaml')
                     dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)

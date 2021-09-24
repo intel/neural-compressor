@@ -503,7 +503,7 @@ def main():
     parser.add_argument("--do_bf16", action='store_true',
                         help="run bf16 evaluation / training.")
     parser.add_argument("--tune", action='store_true',
-                        help="run Low Precision Optimization Tool to tune int8 acc.")
+                        help="run Neural Compressor to tune int8 acc.")
     parser.add_argument("--warmup", type=int, default=2,
                         help="warmup for performance")
     parser.add_argument('-i', "--iter", default=0, type=int,
@@ -515,7 +515,7 @@ def main():
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
 
@@ -644,7 +644,7 @@ def main():
                results.update(result)
 
             if args.tune:
-                def eval_func_for_lpot(model):
+                def eval_func_for_nc(model):
                     result, perf = evaluate(args, model, tokenizer, prefix=prefix)
                     bert_task_acc_keys = ['acc_and_f1', 'f1', 'mcc', 'spearmanr', 'acc']
                     for key in bert_task_acc_keys:
@@ -670,7 +670,7 @@ def main():
                         from torch.utils import mkldnn as mkldnn_utils
                         model = mkldnn_utils.to_mkldnn(model)
                         print(model)
-                    from lpot.experimental import Quantization, common
+                    from neural_compressor.experimental import Quantization, common
                     quantizer = Quantization(args.config)
                     if eval_task != "squad":
                         eval_task = 'classifier'
@@ -679,7 +679,7 @@ def main():
                     quantizer.model = common.Model(model)
                     quantizer.calib_dataloader = common.DataLoader(
                                                  eval_dataset, batch_size=args.eval_batch_size)
-                    quantizer.eval_func = eval_func_for_lpot
+                    quantizer.eval_func = eval_func_for_nc
                     q_model = quantizer()
                     q_model.save(args.tuned_checkpoint)
                 exit(0)
@@ -689,7 +689,7 @@ def main():
                 model.to(args.device)
 
                 if args.int8:
-                    from lpot.utils.pytorch import load
+                    from neural_compressor.utils.pytorch import load
                     new_model = load(
                         os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
                 else:

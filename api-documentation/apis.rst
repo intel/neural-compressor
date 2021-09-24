@@ -1,20 +1,20 @@
 APIs
 ####
 
-.. automodule:: lpot.benchmark
+.. automodule:: neural_compressor.benchmark
    :members:
 
-.. autoclass:: lpot.benchmark.Benchmark
+.. autoclass:: neural_compressor.benchmark.Benchmark
    :members:
 
-.. automodule:: lpot.objective
+.. automodule:: neural_compressor.objective
    :members:
 
-.. automodule:: lpot.pruning
+.. automodule:: neural_compressor.pruning
    :members:
 
-.. automodule:: lpot.quantization
+.. automodule:: neural_compressor.quantization
    :members:
 
-.. automodule:: lpot.version
+.. automodule:: neural_compressor.version
    :members:

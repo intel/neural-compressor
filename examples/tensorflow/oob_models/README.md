@@ -9,8 +9,8 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow OO
   Recommend python 3.6 or higher version.
 
   ```bash
-  # Install Intel® Low Precision Optimization Tool
-  pip install lpot
+  # Install Intel® Neural Compressor
+  pip install neural-compressor
   pip install intel-tensorflow
   ```
 > Note: Supported Tensorflow [Version](../../../README.md).

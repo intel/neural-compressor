@@ -8,10 +8,10 @@ from onnx import helper, TensorProto, numpy_helper
 
 
 sys.path.append('..')
-from lpot.experimental.data.datasets.dataset import Dataset
-from lpot.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
-from lpot.model.onnx_model import ONNXModel
-from lpot.data import DATASETS, DATALOADERS
+from neural_compressor.experimental.data.datasets.dataset import Dataset
+from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.data import DATASETS, DATALOADERS
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''

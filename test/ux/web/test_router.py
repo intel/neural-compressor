@@ -20,9 +20,9 @@ import unittest
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.web.communication import Request
-from lpot.ux.web.exceptions import ServiceNotFoundException
-from lpot.ux.web.router import Router
+from neural_compressor.ux.web.communication import Request
+from neural_compressor.ux.web.exceptions import ServiceNotFoundException
+from neural_compressor.ux.web.router import Router
 
 MOCKED_HOME = os.path.abspath(os.path.dirname(__file__))
 
@@ -49,7 +49,7 @@ class TestRouter(unittest.TestCase):
         with self.assertRaises(ServiceNotFoundException):
             router.handle(request)
 
-    @patch("lpot.ux.web.router.get_directory_entries")
+    @patch("neural_compressor.ux.web.router.get_directory_entries")
     def test_executes_expected_realtime_function(
         self,
         mocked_get_directory_entries: MagicMock,
@@ -67,8 +67,8 @@ class TestRouter(unittest.TestCase):
         self.assertEqual({}, response.command)
         self.assertEqual(expected_return, response.data)
 
-    @patch("lpot.ux.web.router.get_boundary_nodes")
-    @patch("lpot.ux.web.router.Thread")
+    @patch("neural_compressor.ux.web.router.get_boundary_nodes")
+    @patch("neural_compressor.ux.web.router.Thread")
     def test_executes_expected_deferred_function(
         self,
         mocked_thread: MagicMock,
@@ -90,8 +90,8 @@ class TestRouter(unittest.TestCase):
 
     def test_handle_fails_on_unsupported_route_definition_type(self) -> None:
         """Test that not supported route definition type fails."""
-        from lpot.ux.components.file_browser.file_browser import get_directory_entries
-        from lpot.ux.web.router import RoutingDefinition
+        from neural_compressor.ux.components.file_browser.file_browser import get_directory_entries
+        from neural_compressor.ux.web.router import RoutingDefinition
 
         router = Router()
         router.routes = {
@@ -104,7 +104,7 @@ class TestRouter(unittest.TestCase):
 
     def _get_workdir_path(self) -> str:
         """Build local path to workdir."""
-        return os.path.join(MOCKED_HOME, ".lpot")
+        return os.path.join(MOCKED_HOME, ".neural_compressor")
 
     def _mocked_workdir_init(self, *args: Any, **kwargs: Any) -> None:
         self.assertEqual(MOCKED_HOME, kwargs.get("workspace_path"))

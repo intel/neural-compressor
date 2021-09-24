@@ -17,7 +17,7 @@
 
 from tensorflow.python.framework import tensor_util
 import tensorflow as tf
-from lpot.utils import logger
+from neural_compressor.utils import logger
 import numpy as np
 from ..graph.graph import Graph
 from ..ops.op import OPERATORS
@@ -31,7 +31,7 @@ class TensorflowExtractor(object):
     and output_tensors, these tensors record the source/dest op name. All of these nodes
     (in a list) will compose a graph, which is Graph class, as the return object.
     Args:
-        model: lpot TensorflowBaseModel
+        model: neural_compressor TensorflowBaseModel
     Return:
         Graph: Graph class, the new graph object
 

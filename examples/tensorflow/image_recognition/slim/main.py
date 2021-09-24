@@ -20,7 +20,7 @@
 import numpy as np
 from argparse import ArgumentParser
 import tensorflow as tf
-from lpot.model.nets_factory import TFSlimNetsFactory
+from neural_compressor.model.nets_factory import TFSlimNetsFactory
 import copy
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -55,7 +55,7 @@ def main(_):
 
   arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
 
-  arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use lpot to tune.')
+  arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
 
   args = arg_parser.parse_args()
 
@@ -65,14 +65,14 @@ def main(_):
   factory.register('inception_v4', inception_v4, input_shape, inception_v4_arg_scope)
 
   if args.tune:
-      from lpot.experimental import Quantization
+      from neural_compressor.experimental import Quantization
       quantizer = Quantization(args.config)
       quantizer.model = args.input_graph
       q_model = quantizer()
       q_model.save(args.output_graph)
 
   if args.benchmark:
-      from lpot.experimental import Benchmark
+      from neural_compressor.experimental import Benchmark
       evaluator = Benchmark(args.config)
       evaluator.model = args.input_graph
       evaluator(args.mode)

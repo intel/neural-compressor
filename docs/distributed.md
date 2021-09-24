@@ -3,7 +3,7 @@ Distributed Training
 
 ## Introduction
 
-LPOT uses [horovod](https://github.com/horovod/horovod) for distributed training.
+Neural Compressor uses [horovod](https://github.com/horovod/horovod) for distributed training.
 
 ## horovod installation
 
@@ -17,13 +17,13 @@ pip install horovod
 Distributed training is supported in PyTorch currently, TensorFlow support is working in progress. To enable distributed training, the steps are:
 
 1. Setting up distributed training scripts. We have 2 options here:
-    - Option 1: Enable distributed training with pure yaml configuration. In this case, LPOT builtin training function is used.
-    - Option 2: Pass the user defined training function to LPOT. In this case, please follow the horovod documentation and below example to know how to write such training function with horovod on different frameworks.
+    - Option 1: Enable distributed training with pure yaml configuration. In this case, Neural Compressor builtin training function is used.
+    - Option 2: Pass the user defined training function to Neural Compressor. In this case, please follow the horovod documentation and below example to know how to write such training function with horovod on different frameworks.
 2. use horovodrun to execute your program.
 
 ### Option 1: pure yaml configuration
 
-To enable distributed training in LPOT, user only need to add a field: `Distributed: True` in dataloader configuration:
+To enable distributed training in Neural Compressor, user only need to add a field: `Distributed: True` in dataloader configuration:
 
 ```
 dataloader:
@@ -34,10 +34,10 @@ dataloader:
       root: /path/to/dataset
 ```
 
-In user's code, pass the yaml file to LPOT, and LPOT internally wrap the dataloader for the distributed training. The example codes are as following:
+In user's code, pass the yaml file to Neural Compressor components, in which it constructs the real dataloader for the distributed training. The example codes are as following:
 
 ```
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization(yaml_file)
 quantizer.model = common.Model(model)
 q_model = quantizer()
@@ -45,7 +45,7 @@ q_model = quantizer()
 
 ### Option2: user defined training function
 
-LPOT supports User defined training function for distributed training which requires user to modify training script following horovod requirements. We provide a MNIST example to show how to do that and following are the steps for PyTorch.
+Neural Compressor supports User defined training function for distributed training which requires user to modify training script following horovod requirements. We provide a MNIST example to show how to do that and following are the steps for PyTorch.
 
 - Partition dataset via DistributedSampler:
 
@@ -93,10 +93,10 @@ def train_func(model):
     return train(args, model, train_loader, optimizer)
 ```
 
-- Use user defined training function in LPOT:
+- Use user defined training function in Neural Compressor:
 
 ```
-from lpot.experimental import Component, common
+from neural_compressor.experimental import Component, common
 component = Component(yaml_file)
 component.model = common.Model(model)
 component.train_func = train_func
@@ -116,7 +116,7 @@ horovodrun -np <num_of_processes> -H <hosts> python train.py
 
 ## security
 
-horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with LPOT, user needs to ensure the SSH setting on all hosts.
+horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with Neural Compressor, user needs to ensure the SSH setting on all hosts.
 
 ## Examples
 Following PyTorch examples are supported:

@@ -10,14 +10,14 @@ def main():
     args = arg_parser.parse_args()
 
     if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('./conf.yaml')
         quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
         quantized_model = quantizer()
         quantized_model.save('./int8.pb')
 
     if args.benchmark:
-        from lpot.experimental import Benchmark, common
+        from neural_compressor.experimental import Benchmark, common
         evaluator = Benchmark('./conf.yaml')
         evaluator.model = common.Model('int8.pb')
         evaluator(mode='accuracy')

@@ -238,7 +238,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         model.eval()
         model.module.fuse_model()
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf_dump_tensors.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer()

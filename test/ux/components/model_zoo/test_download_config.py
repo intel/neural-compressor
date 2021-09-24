@@ -17,14 +17,14 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.model_zoo.download_config import download_config
+from neural_compressor.ux.components.model_zoo.download_config import download_config
 
 
 @patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
 class TestDownloadConfig(unittest.TestCase):
     """DownloadConfig tests."""
 
-    @patch("lpot.ux.components.model_zoo.download_config.Downloader")
+    @patch("neural_compressor.ux.components.model_zoo.download_config.Downloader")
     def test_download_config(self, downloader_mock: MagicMock) -> None:
         """Test download_config."""
         data = {

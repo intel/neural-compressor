@@ -6,7 +6,7 @@ import unittest
 import tensorflow as tf
 
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -123,11 +123,12 @@ class TestConfigRegex(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            for i in output_graph_def.node:
-              if i.op.find('Add') != -1:
-                  i.op = 'Add'
-            from lpot.experimental import Quantization, common
 
+            for i in output_graph_def.node:
+                if i.op.find('Add') != -1:
+                    i.op = 'Add'
+
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -179,11 +180,12 @@ class TestConfigRegex(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
+
             for i in output_graph_def.node:
                 if i.op.find('Add') != -1:
                     i.op = 'Add'
-            from lpot.experimental import Quantization, common
 
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml_with_invalid_cfg.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)

@@ -3,8 +3,8 @@ import tensorflow as tf
 import numpy as np
 import copy
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
-from lpot.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 
 
 class TestFoldBatchnorm(unittest.TestCase):

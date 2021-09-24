@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized PyTorch ssd_resnet34 300*300 models tuning results via LPOT.
+This document list steps of reproducing Intel Optimized PyTorch ssd_resnet34 300*300 models tuning results via Neural Compressor.
 
 Our example comes from MLPerf Training Inference Suite
 
@@ -29,14 +29,14 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
 # Run
 
-### 1. Enable ssd_resnet34 example with quant aware training strategy of LPOT.
+### 1. Enable ssd_resnet34 example with quant aware training strategy of Neural Compressor.
 
   The changes made are as follows:
   1. add conf.yaml:
     This file contains the configuration of quantization.
   2. add ssd/main.py:\
-    we add the eval_func and training_func_for_lpot with reference to https://github.com/mlcommons/training/blob/master/single_stage_detector/ssd/train.py \
-    we import lpot in it.
+    we add the eval_func and training_func_for_nc with reference to https://github.com/mlcommons/training/blob/master/single_stage_detector/ssd/train.py \
+    we import neural_compressor in it.
   3. edit ssd/ssd300.py:
     we replace view() with reshape() in function bbox_view().
 

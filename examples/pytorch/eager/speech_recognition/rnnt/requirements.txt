@@ -1,4 +1,4 @@
-lpot
+neural-compressor
 sox
 absl-py
 toml

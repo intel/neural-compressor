@@ -2,7 +2,7 @@ future
 numpy
 onnx
 pydot
-lpot
+neural-compressor
 scikit-learn
 tqdm
 --find-links https://download.pytorch.org/whl/torch_stable.html

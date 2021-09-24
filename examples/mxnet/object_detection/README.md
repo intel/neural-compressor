@@ -39,22 +39,22 @@ This document describes the step-by-step instructions for reproducing MXNet SSD-
 
 ### SSD-ResNet50_v1-VOC
 ```bash
-bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_resnet50_voc
+bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./nc_ssd_resnet50_voc
 ```
 
 ### SSD-Mobilenet1.0-VOC
 ```bash
-bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_mobilenet1.0_voc
+bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=voc --dataset_location=/PATH/TO/DATASET --output_model=./nc_ssd_mobilenet1.0_voc
 ```
 
 ### SSD-ResNet50_v1-COCO
 ```bash
-bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_resnet50_coco
+bash run_tuning.sh --topology=ssd-resnet50_v1 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./nc_ssd_resnet50_coco
 ```
 
 ### SSD-Mobilenet1.0-COCO
 ```bash
-bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./lpot_ssd_mobilenet1.0_coco
+bash run_tuning.sh --topology=ssd-mobilenet1.0 --dataset_name=coco --dataset_location=/PATH/TO/DATASET --output_model=./nc_ssd_mobilenet1.0_coco
 ```
 
 # benchmark 
@@ -72,7 +72,7 @@ For more detail, see:
 ```bash
   bash run_tuning.sh -h
 
-   Desc: Run lpot MXNet Object Detection example.
+   Desc: Run neural_compressor MXNet Object Detection example.
 
    -h --help              help info
 
@@ -84,23 +84,23 @@ For more detail, see:
 
    --input_model          prefix of fp32 model (eg: ./model/ssd-mobilenet )
 
-   --output_model         Best tuning model by lpot will saved in this name prefix. default is './lpot_ssd_model'
+   --output_model         Best tuning model by neural_compressor will saved in this name prefix. default is './nc_ssd_model'
 ```
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on MXNet Object detection
+Examples of enabling Intel® Neural Compressor auto tuning on MXNet Object detection
 =======================================================
 
-This is a tutorial of how to enable a MXNet Object detection model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a MXNet Object detection model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 "model", calibration dataset "q_dataloader", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file.
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As this example use VOC/COCO dataset, use VOCMApMetrics/COCOEval as metric which is can find [here](https://github.com/dmlc/gluon-cv/blob/20a2ed3942720550728ce36c2be53b2d5bbbb6fd/gluoncv/utils/metrics/voc_detection.py#L13) and [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with Intel® Low Precision Optimization Tool by the second use case.
+As this example use VOC/COCO dataset, use VOCMApMetrics/COCOEval as metric which is can find [here](https://github.com/dmlc/gluon-cv/blob/20a2ed3942720550728ce36c2be53b2d5bbbb6fd/gluoncv/utils/metrics/voc_detection.py#L13) and [here](https://cocodataset.org/). So we integrate MXNet SSD-ResNet50_v1/SSD-Mobilenet1.0 with Intel® Neural Compressor by the second use case.
 
 ### Write Yaml config file
 
@@ -127,7 +127,7 @@ Because we use the second use case which need user to provide a custom "eval_fun
 
 ### code update
 
-First, we need to construct evaluate function for Intel® Low Precision Optimization Tool. At eval_func, we get the val_dataset for the origin script, and return mAP metric to Intel® Low Precision Optimization Tool.
+First, we need to construct evaluate function for Intel® Neural Compressor. At eval_func, we get the val_dataset for the origin script, and return mAP metric to Intel® Neural Compressor.
 
 ```python
     # define test_func
@@ -151,7 +151,7 @@ After preparation is done, we just need update main.py like below.
 ```python
 
     # Doing auto-tuning here
-    from lpot.experimental import Quantization
+    from neural_compressor.experimental import Quantization
     quantizer = Quantization("./ssd.yaml")
     quantizer.model = common.Model(net)
     quantizer.calib_dataloader = val_data

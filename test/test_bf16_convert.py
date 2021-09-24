@@ -8,7 +8,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from lpot.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
+from neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -242,12 +242,12 @@ def create_test_graph():
 
 class TestBF16Convert(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
-    pb_path = '/tmp/.lpot/resnet50_fp32_pretrained_model.pb'
+    pb_path = '/tmp/.neural_compressor/resnet50_fp32_pretrained_model.pb'
 
     @classmethod
     def setUpClass(self):
         if not os.path.exists(self.pb_path):
-            os.system('mkdir -p /tmp/.lpot && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+            os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())
@@ -286,7 +286,7 @@ class TestBF16Convert(unittest.TestCase):
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -336,7 +336,7 @@ class TestBF16Convert(unittest.TestCase):
         quant_data = (q_data, label)
         evl_data = (q_data, label)
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_bf16_rnn.yaml')
         quantizer.calib_dataloader = common.DataLoader(

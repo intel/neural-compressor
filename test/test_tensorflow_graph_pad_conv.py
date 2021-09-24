@@ -4,7 +4,7 @@ import os
 import yaml
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():
@@ -69,7 +69,7 @@ class TestFoldPadConv(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -111,7 +111,7 @@ class TestFoldPadConv(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -151,7 +151,7 @@ class TestFoldPadConv(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)

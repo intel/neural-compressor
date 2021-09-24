@@ -3,9 +3,9 @@ import unittest
 import os
 import numpy as np
 import shutil
-from lpot.utils.create_obj_from_config import create_dataset, create_dataloader
-from lpot.data.dataloaders.dataloader import DataLoader
-from lpot.data import DATASETS, DATALOADERS, TRANSFORMS
+from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
 from PIL import Image
 
 class TestBuiltinDataloader(unittest.TestCase):
@@ -690,7 +690,7 @@ class TestDataloader(unittest.TestCase):
     def test_coco_raw(self):
         import json
         import collections
-        from lpot.data import TRANSFORMS
+        from neural_compressor.data import TRANSFORMS
         import mxnet as mx
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
@@ -819,7 +819,7 @@ class TestDataloader(unittest.TestCase):
     def test_coco_npy(self):
         import json
         import collections
-        from lpot.data import TRANSFORMS
+        from neural_compressor.data import TRANSFORMS
         import mxnet as mx
         import cv2
         import numpy as np

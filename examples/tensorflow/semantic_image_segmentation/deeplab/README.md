@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via LPOT.
+This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via Neural Compressor.
 
 > **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
@@ -56,18 +56,18 @@ python deeplab/export_model.py \
 # Run
 ```shell
 cd examples/tensorflow/semantic_image_segmentation/deeplab
-bash run_tuning.sh --config=deeplab.yaml --input_model=/PATH/TO/deeplab_export.pb --output_model=./lpot_deeplab.pb
+bash run_tuning.sh --config=deeplab.yaml --input_model=/PATH/TO/deeplab_export.pb --output_model=./nc_deeplab.pb
 ```
 
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on Deeplab model for tensorflow
+Examples of enabling Intel® Neural Compressor auto tuning on Deeplab model for tensorflow
 =======================================================
 
-This is a tutorial of how to enable deeplab model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable deeplab model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 "model", yaml configured calibration dataloader in calibration field and evaluation dataloader in evaluation field, metric in tuning.metric field of model-specific yaml config file.
 
@@ -76,7 +76,7 @@ Intel® Low Precision Optimization Tool supports two usages:
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-We provide Deeplab model pretrained on PASCAL VOC 2012, Using mIOU as metric which is built-in supported by Intel® Low Precision Optimization Tool.
+We provide Deeplab model pretrained on PASCAL VOC 2012, Using mIOU as metric which is built-in supported by Intel® Neural Compressor.
 
 ### Write Yaml config file
 
@@ -86,7 +86,7 @@ In examples directory, there is a template.yaml. We could remove most of the ite
 ```yaml
 # deeplab.yaml
 
-model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. neural_compressor uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: deeplab
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
@@ -102,8 +102,8 @@ quantization:                                        # optional. tuning constrai
         ParseDecodeVoc: {}
 
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       mIOU: 
         num_classes: 21                              # built-in metrics are topk, map, f1, allow user to register new metric.
@@ -144,7 +144,7 @@ Here we choose topk which is built-in metric and set accuracy criterion as toler
 After completed preparation steps, we just need to add below tuning part in `eval_classifier_optimized_graph` class.
 
 ```python
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization(self.args.config)
 quantizer.model = common.Model(self.args.input_graph)
 q_model = quantizer()
@@ -153,7 +153,7 @@ q_model.save(self.args.output_graph)
 
 ### Benchmark
 ```python
-from lpot.experimental import Benchmark, common
+from neural_compressor.experimental import Benchmark, common
 evaluator = Benchmark(self.args.config)
 evaluator.model = common.Model(self.args.input_graph)
 evaluator(self.args.mode)

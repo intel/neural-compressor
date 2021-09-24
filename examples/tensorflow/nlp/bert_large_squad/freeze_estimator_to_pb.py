@@ -310,7 +310,7 @@ def main(_):
       is_training=False,
       drop_remainder=False)
 
-  from lpot.adaptor.tf_utils.util import is_ckpt_format
+  from neural_compressor.adaptor.tf_utils.util import is_ckpt_format
   assert is_ckpt_format(FLAGS.input_model), 'invalid chekpoint path....'
   ckpt_model = [os.path.splitext(i)[0] for i in os.listdir(FLAGS.input_model) \
       if i.endswith('.meta')][0]
@@ -332,7 +332,7 @@ def main(_):
       train_batch_size=32,
       predict_batch_size=8)
 
-  from lpot.adaptor.tf_utils.util import get_estimator_graph
+  from neural_compressor.adaptor.tf_utils.util import get_estimator_graph
   graph = get_estimator_graph(estimator, predict_input_fn)
   write_graph(graph.as_graph_def(), FLAGS.output_model)
 

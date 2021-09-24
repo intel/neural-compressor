@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from lpot.utils import logger
+from neural_compressor.utils import logger
 import copy
 import re
 import numpy as np

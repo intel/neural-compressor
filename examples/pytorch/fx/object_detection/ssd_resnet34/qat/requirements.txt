@@ -6,4 +6,4 @@ torchaudio==0.9.0
 matplotlib
 pycocotools
 absl-py
-lpot
+neural-compressor

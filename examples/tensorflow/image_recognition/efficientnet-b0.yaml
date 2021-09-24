@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-model:                                               # mandatory. lpot uses this model name and framework name to decide where to save tuning history and deploy yaml.
+model:                                               # mandatory. neural_compressor uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: efficientnet-b0
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: truediv
@@ -38,8 +38,8 @@ quantization:                                        # optional. tuning constrai
           mean: [123.675, 116.28, 103.53]
           std: [58.395, 57.12, 57.375]
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:

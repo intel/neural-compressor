@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via LPOT.
+This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via Neural Compressor.
 
 > **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
@@ -37,7 +37,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```
 
 ### 3. Prepare pre-trained model
-  In this version, Intel® Low Precision Optimization Tool just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
+  In this version, Intel® Neural Compressor just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
 
   1. Download the checkpoint file from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models)
   ```shell
@@ -98,7 +98,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet50_v1.yaml \
       --input_model=/PATH/TO/resnet50_fp32_pretrained_model.pb \
-      --output_model=./lpot_resnet50_v1.pb
+      --output_model=./nc_resnet50_v1.pb
   ```
 
 ### 2. ResNet50 V1.5
@@ -111,7 +111,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet50_v1_5.yaml \
-          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./lpot_resnet50_v15.pb
+          --input_model=/PATH/TO/resnet50_v1.pb --output_model=./nc_resnet50_v15.pb
   ```
 
 ### 3. ResNet101
@@ -125,7 +125,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet101.yaml \
       --input_model=/PATH/TO/resnet101_fp32_pretrained_model.pb \
-      --output_model=./lpot_resnet101.pb
+      --output_model=./nc_resnet101.pb
   ```
 
 ### 4. MobileNet V1
@@ -139,7 +139,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=mobilenet_v1.yaml \
       --input_model=/PATH/TO/mobilenet_v1_1.0_224_frozen.pb \
-      --output_model=./lpot_mobilenetv1.pb
+      --output_model=./nc_mobilenetv1.pb
   ```
 
 ### 5. MobileNet V2*
@@ -148,7 +148,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=mobilenet_v2.yaml \
       --input_model=/PATH/TO/frozen_mobilenet_v2.pb \
-      --output_model=./lpot_mobilenetv2.pb
+      --output_model=./nc_mobilenetv2.pb
   ```
 
 ### 6. Inception V1*
@@ -157,7 +157,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v1.yaml \
       --input_model=/PATH/TO/frozen_inception_v1.pb \
-      --output_model=./lpot_inceptionv1.pb
+      --output_model=./nc_inceptionv1.pb
   ```
 
 ### 7. Inception V2*
@@ -166,7 +166,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v2.yaml \
       --input_model=/PATH/TO/frozen_inception_v2.pb \
-      --output_model=./lpot_inceptionv2.pb
+      --output_model=./nc_inceptionv2.pb
   ```
 
 ### 8. Inception V3
@@ -180,7 +180,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v3.yaml \
       --input_model=/PATH/TO/inceptionv3_fp32_pretrained_model.pb \
-      --output_model=./lpot_inceptionv3.pb
+      --output_model=./nc_inceptionv3.pb
   ```
 
 ### 9. Inception V4
@@ -194,7 +194,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_v4.yaml \
       --input_model=/PATH/TO/inceptionv4_fp32_pretrained_model.pb \
-      --output_model=./lpot_inceptionv4.pb
+      --output_model=./nc_inceptionv4.pb
   ```
 
 ### 10. Inception ResNet V2*
@@ -203,7 +203,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=inception_resnet_v2.yaml \
       --input_model=/PATH/TO/frozen_inception_resnet_v2.pb \
-      --output_model=./lpot_irv2.pb
+      --output_model=./nc_irv2.pb
   ```
 
 ### 11. VGG 16*
@@ -211,7 +211,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=vgg16.yaml \
-          --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./lpot_vgg16.pb
+          --input_model=/PATH/TO/frozen_vgg16.pb --output_model=./nc_vgg16.pb
   ```
 
 ### 12. VGG 19*
@@ -219,7 +219,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=vgg19.yaml \
-          --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./lpot_vgg19.pb
+          --input_model=/PATH/TO/frozen_vgg19.pb --output_model=./nc_vgg19.pb
   ```
 
 ### 13. ResNet v2 50
@@ -227,7 +227,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet_v2_50.yaml \
-          --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./lpot_resnetv2_50.pb
+          --input_model=/PATH/TO/frozen_resnet50v2_50.pb --output_model=./nc_resnetv2_50.pb
   ```
 
 ### 14. ResNet v2 101
@@ -235,7 +235,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet_v2_101.yaml \
-          --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./lpot_resnetv2_101.pb
+          --input_model=/PATH/TO/frozen_resnetv2_101.pb --output_model=./nc_resnetv2_101.pb
   ```
 
 ### 15. ResNet v2 152
@@ -244,7 +244,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=resnet_v2_152.yaml \
       --input_model=/PATH/TO/frozen_resnetv2_152.pb \
-      --output_model=./lpot_resnetv2_152.pb
+      --output_model=./nc_resnetv2_152.pb
   ```
 
 ### 16. Densenet-121
@@ -252,7 +252,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet121.yaml \
-          --input_model=/PATH/TO/densenet121.pb --output_model=./lpot_densenet121
+          --input_model=/PATH/TO/densenet121.pb --output_model=./nc_densenet121
   ```
 
 ### 17. Densenet-161
@@ -260,7 +260,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet161.yaml \
-          --input_model=/PATH/TO/densenet161.pb --output_model=./lpot_densenet161
+          --input_model=/PATH/TO/densenet161.pb --output_model=./nc_densenet161
   ```
 
 ### 18. Densenet-169
@@ -268,7 +268,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=densenet169.yaml \
-          --input_model=/PATH/TO/densenet169.pb --output_model=./lpot_densenet169
+          --input_model=/PATH/TO/densenet169.pb --output_model=./nc_densenet169
   ```
 
 ### 19. Nasnet-mobile* 
@@ -276,7 +276,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   ```shell
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=nasnet_mobile.yaml \
-          --input_model=/PATH/TO/frozen_nasnet_mobile.pb --output_model=./lpot_nasnet_mobile
+          --input_model=/PATH/TO/frozen_nasnet_mobile.pb --output_model=./nc_nasnet_mobile
   ```
 
 ### 20. EfficientNet-b0
@@ -291,17 +291,17 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   cd examples/tensorflow/image_recognition
   bash run_tuning.sh --config=efficientnet-b0.yaml \
       --input_model=/PATH/TO/efficientnet-b0 \
-      --output_model=./lpot_efficientnet-b0.pb
+      --output_model=./nc_efficientnet-b0.pb
   ```
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow ResNet50 V1.5
+Examples of enabling Intel® Neural Compressor auto tuning on TensorFlow ResNet50 V1.5
 =======================================================
 
-This is a tutorial of how to enable a TensorFlow image recognition model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a TensorFlow image recognition model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 "model", yaml configured calibration dataloader in calibration field and evaluation dataloader in evaluation field, metric in tuning.metric field of model-specific yaml config file.
 
@@ -310,7 +310,7 @@ Intel® Low Precision Optimization Tool supports two usages:
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate Tensorflow [ResNet50 V1.5](https://github.com/IntelAI/models/tree/v1.6.0/models/image_recognition/tensorflow/resnet50v1_5/inference) in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0) with Intel® Low Precision Optimization Tool by the first use case for simplicity. 
+As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which is built-in supported by Intel® Neural Compressor. So here we integrate Tensorflow [ResNet50 V1.5](https://github.com/IntelAI/models/tree/v1.6.0/models/image_recognition/tensorflow/resnet50v1_5/inference) in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0) with Intel® Neural Compressor by the first use case for simplicity. 
 
 ### Write Yaml config file
 
@@ -342,8 +342,8 @@ quantization:                                        # optional. tuning constrai
     activation:
       algorithm: minmax
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -387,7 +387,7 @@ Here we choose topk which is built-in metric and set accuracy criterion as toler
 There are three preparation steps in here:
 1. Prepare environment
 ```shell
-pip install intel-tensorflow==1.15.2 lpot
+pip install intel-tensorflow==1.15.2 neural_compressor
 ```
 2. Get the model source code
 ```shell
@@ -404,19 +404,19 @@ After completed preparation steps, we just need to add below tuning part in `eva
 
 ```python
   def auto_tune(self):
-    """This is Intel® Low Precision Optimization Tool tuning part to generate a quantized pb
+    """This is Intel® Neural Compressor tuning part to generate a quantized pb
 
     Returns:
         graph: it will return a quantized pb
     """
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization(self.args.config)
     quantizer.model = common.Model(self.args.input_graph)
     q_model = quantizer()
     return q_model
 ```
 
-Finally, add one line in `__main__` function of `eval_image_-classifier_inference.py` to use Intel® Low Precision Optimization Tool by yourself as below.
+Finally, add one line in `__main__` function of `eval_image_-classifier_inference.py` to use Intel® Neural Compressor by yourself as below.
 ```python
 q_graph = evaluate_opt_graph.auto_tune()
 ```

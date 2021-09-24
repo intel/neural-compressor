@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.web.communication import (
+from neural_compressor.ux.web.communication import (
     Message,
     MessageQueue,
     Request,

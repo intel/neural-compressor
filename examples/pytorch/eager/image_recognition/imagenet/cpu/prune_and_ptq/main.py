@@ -43,7 +43,7 @@ parser.add_argument('--pretrained', dest='pretrained', action='store_true',
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                    help='path to checkpoint tuned by Neural Compressor (default: ./)')
 
 def main():
     args = parser.parse_args()
@@ -70,9 +70,9 @@ def main():
     print('using CPU...')
 
     if args.tune and args.prune:
-        from lpot.experimental.scheduler import Scheduler
-        from lpot.experimental import Quantization, Pruning, common
-        from lpot.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
+        from neural_compressor.experimental.scheduler import Scheduler
+        from neural_compressor.experimental import Quantization, Pruning, common
+        from neural_compressor.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
         prune = Pruning('./prune_conf.yaml')
         quantizer = Quantization('./ptq_conf.yaml')
         scheduler = Scheduler()
@@ -84,7 +84,7 @@ def main():
         return
 
     elif args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         model.eval()
         model.fuse_model()
         quantizer = Quantization("./ptq_conf.yaml")
@@ -94,7 +94,7 @@ def main():
         return
 
     elif args.prune:
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('./prune_conf.yaml')
 
         prune.model = common.Model(model)

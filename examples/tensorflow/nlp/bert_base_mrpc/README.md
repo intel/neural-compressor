@@ -1,15 +1,15 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow Intel® Low Precision Optimization Tool tuning zoo result of bert base model on mrpc task.
+This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of bert base model on mrpc task.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow 1.15 up2
 Check your python version and use pip install 1.15.0 up2 from links below:
@@ -81,10 +81,10 @@ If you want the model without iterator inside the graph, you can add --strip_ite
 
 python run_classifier.py --task_name=MRPC --data_dir=data/MRPC --vocab_file=model/vocab.txt --bert_config_file=model/bert_config.json --init_checkpoint=model/model.ckpt-343 --max_seq_length=128 --train_batch_size=32 --learning_rate=2e-5 --num_train_epochs=3.0 --output_dir=model --output_model=output_model --config=bert.yaml --tune
 
-Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
+Details of enabling Intel® Neural Compressor on bert model for Tensorflow.
 =========================
 
-This is a tutorial of how to enable bert model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable bert model with Intel® Neural Compressor.
 ## User Code Analysis
 1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
 
@@ -93,7 +93,7 @@ This is a tutorial of how to enable bert model with Intel® Low Precision Optimi
 For bert, we applied the first one as we  already have write dataset and metric for bert mrpc task. 
 
 ### Write Yaml config file
-In examples directory, there is a mrpc.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal lpot.
+In examples directory, there is a mrpc.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 model:
@@ -141,7 +141,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 
 #### Tune
 ```python
-      from lpot.experimental import Quantization, common
+      from neural_compressor.experimental import Quantization, common
       quantizer = Quantization(FLAGS.config)
       dataset = Dataset(eval_file, FLAGS.eval_batch_size)
       quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
@@ -153,8 +153,8 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```
 #### Benchmark
 ```python
-      from lpot.experimental import Benchmark, common
-      from lpot.model.model import get_model_type
+      from neural_compressor.experimental import Benchmark, common
+      from neural_compressor.model.model import get_model_type
       evaluator = Benchmark(FLAGS.config)
       dataset = Dataset(eval_file, FLAGS.eval_batch_size)
       evaluator.b_dataloader = common.DataLoader(\
@@ -167,5 +167,5 @@ After prepare step is done, we add tune and benchmark code to generate quantized
           evaluator.model = common.Model(estimator, input_fn=estimator_input_fn)
       evaluator(FLAGS.mode)
 ```
-The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantizer() function will return a best quantized model under time constraint.
 

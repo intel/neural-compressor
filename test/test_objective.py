@@ -1,4 +1,4 @@
-"""Tests for lpot quantization"""
+"""Tests for neural_compressor quantization"""
 import unittest
 import os
 import importlib
@@ -161,7 +161,7 @@ def build_fake_model1():
     return graph
 
 def build_fake_strategy():
-    with open(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), \
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), \
               'strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
@@ -218,15 +218,15 @@ class TestObjective(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_model_size.yaml')
         os.remove('fake_yaml_footprint.yaml')
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_performance(self):
-        from lpot.data import DATASETS
+        from neural_compressor.data import DATASETS
         dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
-        from lpot.experimental import Quantization, common
-        from lpot.utils.utility import get_size
+        from neural_compressor.experimental import Quantization, common
+        from neural_compressor.utils.utility import get_size
 
         quantizer = Quantization('fake_yaml.yaml')
         quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -234,15 +234,15 @@ class TestObjective(unittest.TestCase):
         quantizer.model = self.constant_graph
         q_model = quantizer()
 
-        from lpot.experimental import Benchmark, common
+        from neural_compressor.experimental import Benchmark, common
         benchmarker = Benchmark('fake_yaml.yaml')
         benchmarker.b_dataloader = common.DataLoader(dataset)
         benchmarker.model = self.constant_graph_1
         benchmarker()
 
     def test_model_size(self):
-        from lpot.experimental import Benchmark, common
-        from lpot.data import DATASETS
+        from neural_compressor.experimental import Benchmark, common
+        from neural_compressor.data import DATASETS
         dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
         benchmarker = Benchmark('fake_yaml_model_size.yaml')
@@ -251,8 +251,8 @@ class TestObjective(unittest.TestCase):
         benchmarker(mode='accuracy')
 
     def test_footprint(self):
-        from lpot.experimental import Benchmark, common
-        from lpot.data import DATASETS
+        from neural_compressor.experimental import Benchmark, common
+        from neural_compressor.data import DATASETS
         dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
         benchmarker = Benchmark('fake_yaml_footprint.yaml')

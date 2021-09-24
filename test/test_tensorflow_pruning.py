@@ -326,8 +326,8 @@ class TestTensorflowPruning(unittest.TestCase):
 
     @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_tensorflow_pruning(self):
-        from lpot.experimental import Pruning, common
-        from lpot.utils import logger
+        from neural_compressor.experimental import Pruning, common
+        from neural_compressor.utils import logger
 
         prune = Pruning("./fake_yaml.yaml")
         prune.eval_dataloader = common.DataLoader(Dataset())

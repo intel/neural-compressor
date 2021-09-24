@@ -200,7 +200,7 @@ def main():
     parser.add_argument('--overwrite_cache', action='store_true',
                         help="Overwrite the cached training and evaluation sets")
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with lpot.')
+                        help='Get bert tuning quantization model with neural_compressor.')
     parser.add_argument('--config',type=str,
                         help='Tuning config file path')
     parser.add_argument('--output_model',type=str, default='gpt2_tune.onnx',
@@ -260,7 +260,7 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model  
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         quantize.calib_dataloader = common.DataLoader(ds, batch_size=args.per_gpu_eval_batch_size)

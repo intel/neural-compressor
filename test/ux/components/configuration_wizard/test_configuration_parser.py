@@ -19,8 +19,8 @@ import unittest
 from typing import Any, Dict, List, Optional, Union
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
-from lpot.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
+from neural_compressor.ux.utils.exceptions import ClientErrorException
 
 
 @patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
@@ -526,7 +526,7 @@ class TestEvaluationParser(TestParser):
                 },
             )
 
-    @patch("lpot.ux.components.configuration_wizard.configuration_parser.HWInfo")
+    @patch("neural_compressor.ux.components.configuration_wizard.configuration_parser.HWInfo")
     def test_too_big_num_cores_fails(self, mocked_hw_info: MagicMock) -> None:
         """Test parsing evaluation with non positive cores per instance."""
         mocked_hw_info.return_value.cores = 4
@@ -557,7 +557,7 @@ class TestEvaluationParser(TestParser):
                 },
             )
 
-    @patch("lpot.ux.components.configuration_wizard.configuration_parser.HWInfo")
+    @patch("neural_compressor.ux.components.configuration_wizard.configuration_parser.HWInfo")
     def test_too_big_instances_fails(self, mocked_hw_info: MagicMock) -> None:
         """Test parsing evaluation with non positive cores per instance."""
         mocked_hw_info.return_value.cores = 12

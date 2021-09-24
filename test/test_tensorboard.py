@@ -189,7 +189,7 @@ class TestTensorboard(unittest.TestCase):
     
     @unittest.skipIf(tf.version.VERSION > '2.5.0', " Skip test_bf16_fallback case for tf 2.6.0 and above.")
     def test_run_basic_one_trial(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (1, 224, 224, 3), label=True)

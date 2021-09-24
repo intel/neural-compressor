@@ -1,7 +1,7 @@
 """Tests for config file"""
 import unittest
 import os
-from lpot.conf import config as conf
+from neural_compressor.conf import config as conf
 
 
 def helper(content):

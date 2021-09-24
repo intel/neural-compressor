@@ -1,6 +1,6 @@
 tf_example3 example
 =====================
-This example is used to demonstrate how to utilize LPOT builtin dataloader and metric to enabling quantization for models defined in slim.
+This example is used to demonstrate how to utilize Neural Compressor builtin dataloader and metric to enabling quantization for models defined in slim.
  
 
 1. Prepare 
@@ -54,7 +54,7 @@ evaluation:                                          # optional. required if use
   ```
 * In order to do quantization for slim models, we need to get graph from slim .ckpt first. 
 ```python
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization('./conf.yaml')
 
     # Do quantization

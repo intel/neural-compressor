@@ -161,7 +161,7 @@ class TestTensorflowQAT(unittest.TestCase):
         os.remove('fake_yaml_train.yaml')
     @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_qat_with_external_q_func(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         quantizer.eval_dataloader = common.DataLoader(Dataset())
         quantizer.model = './baseline_model'

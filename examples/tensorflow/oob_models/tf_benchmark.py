@@ -34,8 +34,8 @@ def initialize_graph(model_details, args):
             in_name + ":0": tf_v1.Variable(val)
             for in_name, val in model_details['input'].items()}
 
-        if args.use_lpot:
-            from lpot.experimental import common
+        if args.use_nc:
+            from neural_compressor.experimental import common
             model = common.Model(model_details['model_dir'])
             od_graph_def = model.graph_def
         else:
@@ -210,11 +210,11 @@ if __name__ == "__main__":
     parser.add_argument("--is_meta", action='store_true', help="input a meta file")
     parser.add_argument("--save_graph", action='store_true', help="save_graph")
     parser.add_argument("--benchmark", action='store_true', help="Benchmark.")
-    parser.add_argument("--use_lpot", action='store_true', help="Find input/output via lpot.")
+    parser.add_argument("--use_nc", action='store_true', help="Find input/output via neural_compressor.")
     # tuning
-    parser.add_argument("--yaml", type=str, help="config yaml file of lpot.", default='./config.yaml')
-    parser.add_argument("--tune", action='store_true', help="Do lpot optimize.")
-    parser.add_argument("--output_path", help="path of lpot convert model", default='./lpot-tune.pb')
+    parser.add_argument("--yaml", type=str, help="config yaml file of neural_compressor.", default='./config.yaml')
+    parser.add_argument("--tune", action='store_true', help="Do neural_compressor optimize.")
+    parser.add_argument("--output_path", help="path of neural_compressor convert model", default='./nc-tune.pb')
     # args
     args = parser.parse_args()
 
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     # tune
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         inputs = model_detail['input']
         outputs = model_detail['output']
         _write_inputs_outputs_to_yaml(args.yaml, "./config_tmp.yaml", list(inputs.keys()), outputs)

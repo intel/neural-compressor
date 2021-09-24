@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.utils.workload.quantization import (
+from neural_compressor.ux.utils.workload.quantization import (
     Advance,
     Calibration,
     Quantization,

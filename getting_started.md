@@ -3,43 +3,43 @@ Getting Started
 
 ## Installation
 
-The Intel® LPOT library is released as part of the
+The Intel® Neural Compressor library is released as part of the
 [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html) (AI Kit).
 The AI Kit provides a consolidated package of Intel's latest deep learning and
 machine optimizations all in one place for ease of development. Along with
-LPOT, the AI Kit includes Intel-optimized versions of deep learning frameworks
+Neural Compressor, the AI Kit includes Intel-optimized versions of deep learning frameworks
 (such as TensorFlow and PyTorch) and high-performing Python libraries to
 streamline end-to-end data science and AI workflows on Intel architectures.
 
 
 ### Linux Installation
 
-You can install just the LPOT library from binary or source, or you can get
-the Intel-optimized framework together with the LPOT library by installing the
+You can install just the library from binary or source, or you can get
+the Intel-optimized framework together with the library by installing the
 Intel® oneAPI AI Analytics Toolkit.
 
 #### Install from binary
 
   ```Shell
   # install from pip
-  pip install lpot
+  pip install neural-compressor
 
   # install from conda
-  conda install lpot -c conda-forge -c intel 
+  conda install neural-compressor -c conda-forge -c intel 
   ```
 
 #### Install from source
 
   ```Shell
-  git clone https://github.com/intel/lpot.git
-  cd lpot
+  git clone https://github.com/intel/neural-compressor.git
+  cd neural-compressor
   pip install -r requirements.txt
   python setup.py install
   ```
 
 #### Install from AI Kit
 
-The AI Kit, which includes the LPOT
+The AI Kit, which includes the 
 library, is distributed through many common channels,
 including from Intel's website, YUM, APT, Anaconda, and more.
 Select and [download](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html)
@@ -60,58 +60,60 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 - Download and install [anaconda](https://anaconda.org/).
 
-- Create a virtual environment named lpot in anaconda:
+- Create a virtual environment named nc in anaconda:
 
     ```shell
     # Here we install python 3.7 for instance. You can also choose python 3.6, 3.8, or 3.9.
-    conda create -n lpot python=3.7
-    conda activate lpot
+    conda create -n nc python=3.7
+    conda activate nc 
     ```
 
 #### Install from binary
 
   ```Shell
   # install from pip
-  pip install lpot
+  pip install neural-compressor
 
   # install from conda
-  conda install lpot -c conda-forge -c intel 
+  conda install neural-compressor -c conda-forge -c intel 
   ```
 
 #### Install from source
 
 ```shell
-git clone https://github.com/intel/lpot.git
-cd lpot
+git clone https://github.com/intel/neural-compressor.git
+cd neural-compressor
 pip install -r requirements.txt
 python setup.py install
 ```
 
 ## Tutorials and Examples
 
-Read the following resources to learn how to use LPOT.
+Read the following resources to learn how to use Neural Compressor.
 
 ### Tutorial
 
-The [Tutorial](../docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Low Precision Optimization Tool's features with examples.
+The [Tutorial](../docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Neural Compressor's features with examples.
 
 ### Examples
 
-[Examples](examples_readme.md) are provided to demonstrate the usage of Intel® Low Precision Optimization Tool in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime. Hello World examples are also available.
+[Examples](examples_readme.md) are provided to demonstrate the usage of Intel® Neural Compressor in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime. Hello World examples are also available.
 
 
 ## Developer Documentation
 
-View LPOT [Documentation](docs/doclist.rst) for getting started, deep dive, and advanced resources to help you use and develop LPOT.
+View Neural Compressor [Documentation](docs/doclist.rst) for getting started, deep dive, and advanced resources to help you use and develop Neural Compressor.
 
 ## System Requirements
 
-Intel® Low Precision Optimization Tool supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
+Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
 
 * Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
 * future Intel Xeon Scalable processor (code name Sapphire Rapids)
 
-Intel® Low Precision Optimization Tool requires installing the pertinent Intel-optimized framework version for TensorFlow, PyTorch, MXNet and ONNX runtime.
+Intel® Neural Compressor requires installing the Intel-optimized framework version for the supported DL framework you use: TensorFlow, PyTorch, MXNet, or ONNX runtime. 
+
+Note: Intel Neural Compressor supports Intel-optimized and official frameworks for some TensorFlow versions. Refer to [Supported Frameworks](README.md#Supported-Frameworks) for specifics.
 
 ### Validated Hardware/Software Environment
 
@@ -192,7 +194,7 @@ Intel® Low Precision Optimization Tool requires installing the pertinent Intel-
 
 ## Validated Models
 
-Intel® Low Precision Optimization Tool provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](docs/full_model_list.md).
+Intel® Neural Compressor provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](docs/full_model_list.md).
 
 <table class="docutils">
 <thead>

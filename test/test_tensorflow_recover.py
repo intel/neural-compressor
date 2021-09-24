@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import tensor_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -102,14 +102,14 @@ class TestTensorflowRecover(unittest.TestCase):
             with gfile.GFile('./test.pb', "wb") as f:
                 f.write(constant_graph.SerializeToString())
 
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization("./fake_yaml.yaml")
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = constant_graph
             q_model = quantizer()
 
-            from lpot.utils.utility import recover
+            from neural_compressor.utils.utility import recover
             recover_model = recover('./test.pb', './saved/history.snapshot', 0)
 
             q_model_const_value = {}
@@ -168,7 +168,7 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
             with gfile.GFile('./test.pb', "wb") as f:
                 f.write(constant_graph.SerializeToString())
 
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
             quantizer = Quantization("./fake_yaml_2.yaml")
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -176,7 +176,7 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
             q_model = quantizer()
             found_cast_op = False
 
-            from lpot.utils.utility import recover
+            from neural_compressor.utils.utility import recover
             recover_model = recover('./test.pb', './saved/history.snapshot', 0)
 
             q_model_const_value = {}

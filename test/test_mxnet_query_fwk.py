@@ -8,14 +8,14 @@ import yaml
 sys.path.append('..')
 
 import mxnet as mx
-import lpot
+import neural_compressor
 
 class TestMXNetQuery(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.yaml_path = os.path.join(os.getcwd() + "/../lpot/adaptor/mxnet.yaml")
-        self.Queryhandler = lpot.adaptor.mxnet.MXNetQuery(self.yaml_path)
+        self.yaml_path = os.path.join(os.getcwd() + "/../neural_compressor/adaptor/mxnet.yaml")
+        self.Queryhandler = neural_compressor.adaptor.mxnet.MXNetQuery(self.yaml_path)
         self.version = mx.__version__
 
     def test_get_specified_version_cfg(self):

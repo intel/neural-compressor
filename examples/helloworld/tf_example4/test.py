@@ -2,7 +2,7 @@ import tensorflow as tf
 import time
 import numpy as np
 from tensorflow import keras
-from lpot.experimental import Quantization,  common
+from neural_compressor.experimental import Quantization,  common
 
 tf.compat.v1.disable_eager_execution()
 

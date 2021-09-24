@@ -44,7 +44,7 @@ from transformers import (
     set_seed,
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
-from transformers.data.data_collator import default_data_collator_lpot
+from transformers.data.data_collator import default_data_collator_nc
 
 logger = logging.getLogger(__name__)
 
@@ -366,7 +366,7 @@ def main():
     train_dataset = lm_datasets["train"]
     eval_dataset = lm_datasets["validation"]
     if training_args.tune:
-        def eval_func_for_lpot(model_tuned):
+        def eval_func_for_nc(model_tuned):
             trainer = Trainer(
                 model=model_tuned,
                 args=training_args,
@@ -387,22 +387,22 @@ def main():
                         perplexity = results[key]
                         break
             return 100-perplexity
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(
                                                 eval_dataset, 
                                                 batch_size=training_args.eval_batch_size,
-                                                collate_fn=default_data_collator_lpot
+                                                collate_fn=default_data_collator_nc
                                                 )
-        quantizer.eval_func = eval_func_for_lpot
+        quantizer.eval_func = eval_func_for_nc
         q_model = quantizer()
         q_model.save(training_args.tuned_checkpoint)
         exit(0)
 
     if training_args.accuracy_only:
         if training_args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                     os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
         else:
@@ -432,7 +432,7 @@ def main():
 
     if training_args.benchmark:
         if training_args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                     os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
         else:

@@ -3,7 +3,7 @@ Tuning Strategies
 
 ## Introduction
 
-Intel® Low Precision Optimization Tool aims to help users quickly deploy
+Intel® Neural Compressor aims to help users quickly deploy
 the low-precision inference solution on popular Deep Learning frameworks
 such as TensorFlow, PyTorch, and MxNet. Using built-in strategies, it
 automatically optimizes low-precision recipes for deep learning models to
@@ -21,7 +21,7 @@ below:
 
 Strategies begin with an adaptor layer (Framework Adaptor) where the user
 passes a framework-specific model to initialize an instance of the
-`lpot.Quantization() class`; strategies call the `self.adaptor.query_fw_capability(model)` to get the framework and
+`neural_compressor.Quantization() class`; strategies call the `self.adaptor.query_fw_capability(model)` to get the framework and
 model-specific quantization capabilities. From there, each strategy merges
 model-specific configurations in a `yaml` configuration file to filter some
 capability from the first step in order to generate the tuning space. Each
@@ -32,7 +32,7 @@ tuning phase stops when the `accuracy` criteria is met.
 
 ## Configurations
 
-Detailed configuration templates can be found [here](../lpot/template).
+Detailed configuration templates can be found [here](../neural_compressor/template).
 
 ### Model-specific configurations
 
@@ -49,7 +49,7 @@ quantization:                                        # optional. tuning constrai
     first_conv_or_matmul_quantization: True          # optional. default value is True.
   calibration:
     sampling_size: 1000, 2000                        # optional. default value is 100. used to set how many samples should be used in calibration.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       dataset:
         TFRecordDataset:
           root: /path/to/tf_record
@@ -144,7 +144,7 @@ tuning:
 optimization of black-box functions. This strategy comes from the [Bayesian
 optimization](https://github.com/fmfn/BayesianOptimization) package and
 changed it to a discrete version that complied with the strategy standard of
-Intel® Low Precision Optimization Tool. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
+Intel® Neural Compressor. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
 the prior/posterior distribution over the black-box function with the tuning
 history, and then finds the tuning configuration that maximizes the expected
 improvement. For now, `Bayesian` just focus on op-wise quantize configs tuning 
@@ -313,7 +313,7 @@ tuning:
 
 #### Usage
 
-Compare to `Basic`, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt`.`sigopt_experiment_name` is optional, the default name is `lpot-tune`.
+Compare to `Basic`, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt`.`sigopt_experiment_name` is optional, the default name is `nc-tune`.
 
 ```yaml
 tuning:
@@ -321,7 +321,7 @@ tuning:
     name: sigopt
     sigopt_api_token: YOUR-ACCOUNT-API-TOKEN
     sigopt_project_id: PROJECT-ID
-    sigopt_experiment_name: lpot-tune
+    sigopt_experiment_name: nc-tune
   accuracy_criterion:
     relative:  0.01
   exit_policy:
@@ -330,11 +330,11 @@ tuning:
 
 ```
 
-For details, [how to use sigopt strategy in lpot](./sigopt_strategy.md) is available.
+For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
 
 ## Customize a New Tuning Strategy
 
-Intel® Low Precision Optimization Tool supports new strategy extension by implementing a subclass of `TuneStrategy` class in lpot.strategy package
+Intel® Neural Compressor supports new strategy extension by implementing a subclass of `TuneStrategy` class in neural_compressor.strategy package
  and registering this strategy by `strategy_registry` decorator.
 
 for example, user can implement a `Abc` strategy like below:
@@ -355,4 +355,4 @@ The `next_tune_cfg` function is used to yield the next tune configuration accord
  all the tuning space till a quantization configuration meets pre-defined accuracy criterion.
 
 If the traverse behavior of `TuneStrategy` base class does not meet new strategy requirement, it could re-implement `traverse` function with self own logic.
-An example like this is under [TPE Strategy](../lpot/strategy/strategy.py).
+An example like this is under [TPE Strategy](../neural_compressor/strategy/strategy.py).

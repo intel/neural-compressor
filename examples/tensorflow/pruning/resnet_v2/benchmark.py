@@ -30,7 +30,7 @@ class EvalDataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 
-from lpot.experimental import Benchmark, common
+from neural_compressor.experimental import Benchmark, common
 evaluator = Benchmark('benchmark.yaml')
 evaluator.model = common.Model('./pruned_model')
 evaluator.b_dataloader = common.DataLoader(EvalDataset())

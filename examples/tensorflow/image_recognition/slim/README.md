@@ -50,10 +50,10 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
 
 # Run
 ## tune
-  ./run_tuning.sh --config=model.yaml --input_model=/path/to/input_model.ckpt --output=/path/to/save/lpot_tuned.pb
+  ./run_tuning.sh --config=model.yaml --input_model=/path/to/input_model.ckpt --output=/path/to/save/nc_tuned.pb
 
 ## benchmark
-  ./run_tuning.sh --config=model.yaml --input_model=/path/to/lpot_tuned.pb
+  ./run_tuning.sh --config=model.yaml --input_model=/path/to/nc_tuned.pb
 
 ### 1. resnet_v1_50
 
@@ -61,7 +61,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=resnet_v1_50.yaml \
       --input_model=/PATH/TO/resnet_v1_50.ckpt \
-      --output_model=./lpot_resnet_v1_50.pb
+      --output_model=./nc_resnet_v1_50.pb
   ```
 
 ### 2. resnet_v1_101
@@ -70,7 +70,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet101.yaml \
           --input_model=/PATH/TO/resnet_v1_101.ckpt \
-          --output_model=./lpot_resnet_v1_101.pb
+          --output_model=./nc_resnet_v1_101.pb
   ```
 
 ### 3. resnet_v1_152
@@ -79,7 +79,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=resnet_v1_152.yaml \
           --input_model=/PATH/TO/resnet_v1_152.ckpt \
-          --output_model=./lpot_resnet_v1_152.pb
+          --output_model=./nc_resnet_v1_152.pb
 
   ```
 
@@ -89,7 +89,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet_v2_50.yaml \
           --input_model=/PATH/TO/resnet_v2_50.ckpt \
-          --output_model=./lpot_resnet_v2_50.pb
+          --output_model=./nc_resnet_v2_50.pb
 
   ```
 
@@ -99,7 +99,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet_v2_101.yaml \
           --input_model=/PATH/TO/resnet_v2_101.ckpt \
-          --output_model=./lpot_resnet_v2_101.pb
+          --output_model=./nc_resnet_v2_101.pb
 
   ```
 
@@ -109,7 +109,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../resnet_v2_152.yaml \
           --input_model=/PATH/TO/resnet_v2_152.ckpt \
-          --output_model=./lpot_resnet_v2_152.pb
+          --output_model=./nc_resnet_v2_152.pb
 
   ```
 
@@ -119,7 +119,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../inception_v1.yaml \
           --input_model=/PATH/TO/inception_v1.ckpt \
-          --output_model=./lpot_inception_v1.pb
+          --output_model=./nc_inception_v1.pb
 
   ```
 
@@ -129,7 +129,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../inception_v2.yaml \
       --input_model=/PATH/TO/inception_v2.ckpt \
-      --output_model=./lpot_inception_v2.pb
+      --output_model=./nc_inception_v2.pb
   ```
 
 ### 9. inception_v3
@@ -138,7 +138,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=inception_v3.yaml \
       --input_model=/PATH/TO/inception_v3.ckpt \
-      --output_model=./lpot_inception_v3.pb
+      --output_model=./nc_inception_v3.pb
   ```
 
 ### 10. inception_v4
@@ -147,7 +147,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../inception_v4.yaml \
       --input_model=/PATH/TO/inception_v4.ckpt \
-      --output_model=./lpot_inception_v4.pb
+      --output_model=./nc_inception_v4.pb
   ```
 
 ### 11. vgg16
@@ -156,7 +156,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../vgg16.yaml \
           --input_model=/PATH/TO/vgg_16.ckpt \
-          --output_model=./lpot_vgg_16.pb
+          --output_model=./nc_vgg_16.pb
   ```
 
 ### 12. vgg19
@@ -165,17 +165,17 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow sl
   cd examples/tensorflow/image_recognition/slim
   bash run_tuning.sh --config=../vgg19.yaml \
           --input_model=/PATH/TO/vgg_19.ckpt \
-          --output_model=./lpot_vgg_19.pb
+          --output_model=./nc_vgg_19.pb
   ```
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on TensorFlow Inception V1
+Examples of enabling Intel® Neural Compressor auto tuning on TensorFlow Inception V1
 =======================================================
 
-This is a tutorial of how to enable a TensorFlow slim model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a TensorFlow slim model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 "model", yaml configured calibration dataloader in calibration field and evaluation dataloader in evaluation field, metric in tuning.metric field of model-specific yaml config file.
 
@@ -184,7 +184,7 @@ Intel® Low Precision Optimization Tool supports two usages:
 
 2. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As Inception V1 is a typical image recognition model, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. It's easy to directly use 1 method that to configure a yaml file.
+As Inception V1 is a typical image recognition model, use Top-K as metric which is built-in supported by Intel® Neural Compressor. It's easy to directly use 1 method that to configure a yaml file.
 
 ### Write Yaml config file
 
@@ -216,8 +216,8 @@ quantization:                                        # optional. tuning constrai
     activation:
       algorithm: minmax
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -261,7 +261,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 There are three preparation steps in here:
 1. Prepare environment
 ```shell
-pip install intel-tensorflow==1.15.2 lpot
+pip install intel-tensorflow==1.15.2 neural_compressor
 ```
 2. Prepare the ImageNet dataset and pretrained ckpt file
 ```shell
@@ -274,8 +274,8 @@ This tool support tune and benchmark the model, when in the tune phase, make sur
 
 ```python
 
-    from lpot.experimental import Quantization
-    from lpot.adaptor.tf_utils.util import get_slim_graph
+    from neural_compressor.experimental import Quantization
+    from neural_compressor.adaptor.tf_utils.util import get_slim_graph
     quantizer = Quantization(self.args.config)
     slim_graph = get_slim_graph(args.input_graph, model_func, arg_scope, images, **kwargs)
     q_model = quantizer(slim_graph)
@@ -286,7 +286,7 @@ when in benchmark phase:
 
 ```python
 
-    from lpot.experimental import Benchmark
+    from neural_compressor.experimental import Benchmark
     evaluator = Benchmark(args.config)
     results = evaluator(model=args.input_graph)
 ```

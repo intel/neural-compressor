@@ -55,7 +55,7 @@ class Options():
         parser.add_argument('--verify', type=str, default=None,
                             help='put the path to resuming file if needed')
         parser.add_argument("--tune", action='store_true',
-                            help="run Low Precision Optimization Tool to tune int8 acc.")
+                            help="run Neural Compressor to tune int8 acc.")
         parser.add_argument('data', metavar='DIR',
                             help='path to dataset')
         parser.add_argument('-i', '--iterations', default=0, type=int, metavar='N',
@@ -65,7 +65,7 @@ class Options():
         parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                             help='run benchmark')
         parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                            help='path to checkpoint tuned by Low Precision Optimization Tool'
+                            help='path to checkpoint tuned by Neural Compressor'
                                  ' (default: ./)')
         parser.add_argument('--int8', dest='int8', action='store_true',
                             help='run benchmark for int8')
@@ -134,7 +134,7 @@ def main():
     model.fuse_model()
 
     if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer()
@@ -142,7 +142,7 @@ def main():
         exit(0)
 
     if args.int8:
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
         new_model = load(
             os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
     else:

@@ -27,7 +27,7 @@ def build_fake_yaml(sigopt_api_token,sigopt_project_id):
               name: sigopt
               sigopt_api_token: {}
               sigopt_project_id: {}
-              sigopt_experiment_name: lpot-tune
+              sigopt_experiment_name: nc-tune
             accuracy_criterion:
               relative: 0.01
             workspace:
@@ -55,7 +55,7 @@ def build_fake_yaml2(sigopt_api_token,sigopt_project_id):
             name: sigopt
             sigopt_api_token: {}
             sigopt_project_id: {}
-            sigopt_experiment_name: lpot-tune
+            sigopt_experiment_name: nc-tune
           exit_policy:
             max_trials: 3
           accuracy_criterion:
@@ -121,7 +121,7 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree('saved', ignore_errors=True)
 
     def test_run_basic_one_trial(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
@@ -132,7 +132,7 @@ class TestQuantization(unittest.TestCase):
 
 
     def test_run_basic_max_trials(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)

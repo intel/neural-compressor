@@ -1,7 +1,7 @@
 Full Validated Models
 =====================
 
-The below tables are models enabled by the Intel® Low Precision Optimization Tool.
+The below tables are models enabled by the Intel® Neural Compressor.
 
 
 ### TensorFlow 2.x models

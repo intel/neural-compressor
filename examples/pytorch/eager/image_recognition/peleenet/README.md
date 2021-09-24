@@ -1,12 +1,12 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch PeleeNet tuning results with Intel® Low Precision Optimization Tool.
+This document describes the step-by-step instructions for reproducing PyTorch PeleeNet tuning results with Intel® Neural Compressor.
 
 > **Note**
 >
 > * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> * Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
+> * Intel® Neural Compressor supposes user have done these two steps before invoking Intel® Neural Compressor interface.
 >   For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
@@ -39,20 +39,20 @@ cd examples/pytorch/eager/image_recognition/peleenet
 python main.py --tune --pretrained -j 1 /path/to/imagenet
 ```
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
+Examples of enabling Intel® Neural Compressor auto tuning on PyTorch ResNet
 ==========================================================================================
 
-This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a PyTorch classification model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports three usages:
+Intel® Neural Compressor supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As PeleeNet are typical classification models, use Top-K as metric and imagenet dataset which are built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch PeleeNet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
+As PeleeNet are typical classification models, use Top-K as metric and imagenet dataset which are built-in supported by Intel® Neural Compressor. So here we integrate PyTorch PeleeNet with Intel® Neural Compressor by the first use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -81,8 +81,8 @@ quantization:                                        # optional. tuning constrai
             mean: [0.485, 0.456, 0.406]
             std: [0.229, 0.224, 0.225]
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -146,7 +146,7 @@ After prepare step is done, we just need update main.py like below.
 
 ```python
 model.module.fuse()
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 q_model = quantizer()

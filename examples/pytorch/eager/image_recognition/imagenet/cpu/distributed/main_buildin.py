@@ -64,7 +64,7 @@ parser.add_argument('-w', "--warmup_iter", default=5, type=int,
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                    help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
 
@@ -122,7 +122,7 @@ def main_worker(args):
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     model.module.fuse_model()
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization(args.config)
     quantizer.model = common.Model(model)
     q_model = quantizer()

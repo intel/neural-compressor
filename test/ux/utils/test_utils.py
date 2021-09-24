@@ -19,8 +19,8 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
-from lpot.ux.utils.utils import (
+from neural_compressor.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
+from neural_compressor.ux.utils.utils import (
     check_module,
     get_dataset_path,
     get_file_extension,
@@ -30,7 +30,7 @@ from lpot.ux.utils.utils import (
     is_development_env,
     is_hidden,
     load_dataloader_config,
-    load_help_lpot_params,
+    load_help_nc_params,
     load_model_config,
     load_transforms_config,
     release_tag,
@@ -78,7 +78,7 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(Exception):
             get_dataset_path(framework, domain)
 
-    @patch("lpot.ux.components.model.tensorflow.frozen_pb.get_model_type")
+    @patch("neural_compressor.ux.components.model.tensorflow.frozen_pb.get_model_type")
     def test_get_tensorflow_framework_from_path(self, mocked_get_model_type: MagicMock) -> None:
         """Test getting framework name from path."""
         mocked_get_model_type.return_value = "frozen_pb"
@@ -244,28 +244,28 @@ class TestUtils(unittest.TestCase):
         self.assertIs(type(result), list)
         self.assertIsNot(result, [])
 
-    def test_load_metrics_help_lpot_params(self) -> None:
-        """Test getting lpot metrics tooltips."""
-        result = load_help_lpot_params("metrics")
+    def test_load_metrics_help_nc_params(self) -> None:
+        """Test getting neural_compressor metrics tooltips."""
+        result = load_help_nc_params("metrics")
         self.assertIs(type(result), dict)
         self.assertIsNot(result, {})
 
-    def test_load_objectives_help_lpot_params(self) -> None:
-        """Test getting lpot objectives tooltips."""
-        result = load_help_lpot_params("objectives")
+    def test_load_objectives_help_nc_params(self) -> None:
+        """Test getting neural_compressor objectives tooltips."""
+        result = load_help_nc_params("objectives")
         self.assertIs(type(result), dict)
         self.assertIsNot(result, {})
 
-    def test_load_strategies_help_lpot_params(self) -> None:
-        """Test getting lpot strategies tooltips."""
-        result = load_help_lpot_params("strategies")
+    def test_load_strategies_help_nc_params(self) -> None:
+        """Test getting neural_compressor strategies tooltips."""
+        result = load_help_nc_params("strategies")
         self.assertIs(type(result), dict)
         self.assertIsNot(result, {})
 
-    def test_load_non_existing_help_lpot_params(self) -> None:
-        """Test getting lpot strategies tooltips."""
+    def test_load_non_existing_help_nc_params(self) -> None:
+        """Test getting neural_compressor strategies tooltips."""
         with self.assertRaises(FileNotFoundError):
-            load_help_lpot_params("unknown_param")
+            load_help_nc_params("unknown_param")
 
     def verify_file_path(self) -> None:
         """Check if path can be accessed."""
@@ -321,40 +321,40 @@ class TestUtils(unittest.TestCase):
 
     def test_is_development_env(self) -> None:
         """Check if development env is activated."""
-        os.environ.update({"LPOT_MODE": "development"})
+        os.environ.update({"NC_MODE": "development"})
         is_develop = is_development_env()
         self.assertTrue(is_develop)
 
     def test_is_production_env(self) -> None:
         """Check if production env is activated."""
-        os.environ.update({"LPOT_MODE": "production"})
+        os.environ.update({"NC_MODE": "production"})
         is_develop = is_development_env()
         self.assertFalse(is_develop)
 
-    def test_is_empty_lpot_mode_env(self) -> None:
+    def test_is_empty_nc_mode_env(self) -> None:
         """Check if development env is activated."""
-        if os.environ.get("LPOT_MODE", None) is not None:
-            del os.environ["LPOT_MODE"]
+        if os.environ.get("NC_MODE", None) is not None:
+            del os.environ["NC_MODE"]
         is_develop = is_development_env()
         self.assertFalse(is_develop)
 
-    @patch("lpot.ux.utils.utils.lpot_version", "3.14.15")
+    @patch("neural_compressor.ux.utils.utils.nc_version", "3.14.15")
     def test_release_tag(self) -> None:
         """Test release tag building."""
         self.assertEqual("v3.14.15", release_tag())
 
-    @patch("lpot.ux.utils.utils.lpot_version", "42.12dev20200102.foo")
+    @patch("neural_compressor.ux.utils.utils.nc_version", "42.12dev20200102.foo")
     def test_release_tag_for_dev_version(self) -> None:
         """Test release tag building."""
         self.assertEqual("v42.12", release_tag())
 
-    @patch("lpot.ux.utils.utils.lpot_version", "")
+    @patch("neural_compressor.ux.utils.utils.nc_version", "")
     def test_release_tag_for_empty(self) -> None:
         """Test release tag building."""
         with self.assertRaisesRegexp(ValueError, "Unable to parse version "):
             release_tag()
 
-    @patch("lpot.ux.utils.utils.lpot_version", "foo.bar.baz")
+    @patch("neural_compressor.ux.utils.utils.nc_version", "foo.bar.baz")
     def test_release_tag_for_invalid_version(self) -> None:
         """Test release tag building."""
         with self.assertRaisesRegexp(ValueError, "Unable to parse version foo.bar.ba"):

@@ -1,8 +1,8 @@
 """Tests for Distributed TensorFlow Dataloader."""
-from lpot import data
-from lpot.utils.create_obj_from_config import create_dataset, create_dataloader
-from lpot.data.dataloaders.dataloader import DataLoader
-from lpot.data import DATASETS, DATALOADERS, TRANSFORMS
+from neural_compressor import data
+from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
 import tensorflow as tf
 import numpy as np
 import collections

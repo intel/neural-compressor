@@ -58,10 +58,10 @@ class BertConfig(object):
         layer in the Transformer encoder.
       hidden_act: The non-linear activation function (function or string) in the
         encoder and pooler.
-      hidden_dropout_prob: The dropout probablpoty for all fully connected
+      hidden_dropout_prob: The dropout probability for all fully connected
         layers in the embeddings, encoder, and pooler.
       attention_probs_dropout_prob: The dropout ratio for the attention
-        probablpoties.
+        probabilities.
       max_position_embeddings: The maximum sequence length that this model might
         ever be used with. Typically set this to something large just in case
         (e.g., 512 or 1024 or 2048).
@@ -410,7 +410,7 @@ def dropout(input_tensor, dropout_prob):
 
   Args:
     input_tensor: float Tensor.
-    dropout_prob: Python float. The probablpoty of dropping out a value (NOT of
+    dropout_prob: Python float. The probability of dropping out a value (NOT of
       *keeping* a dimension as in `tf.nn.dropout`).
 
   Returns:
@@ -518,7 +518,7 @@ def embedding_postprocessor(input_tensor,
     max_position_embeddings: int. Maximum sequence length that might ever be
       used with this model. This can be longer than the sequence length of
       input_tensor, but cannot be shorter.
-    dropout_prob: float. Dropout probablpoty applied to the final output tensor.
+    dropout_prob: float. Dropout probability applied to the final output tensor.
 
   Returns:
     float tensor with same shape as `input_tensor`.
@@ -646,8 +646,8 @@ def attention_layer(from_tensor,
   [batch_size, seq_length, size_per_head].
 
   Then, the query and key tensors are dot-producted and scaled. These are
-  softmaxed to obtain attention probablpoties. The value tensors are then
-  interpolated by these probablpoties, then concatenated back to a single
+  softmaxed to obtain attention probabilities. The value tensors are then
+  interpolated by these probabilities, then concatenated back to a single
   tensor and returned.
 
   In practice, the multi-headed attention are done with transposes and
@@ -666,8 +666,8 @@ def attention_layer(from_tensor,
     query_act: (optional) Activation function for the query transform.
     key_act: (optional) Activation function for the key transform.
     value_act: (optional) Activation function for the value transform.
-    attention_probs_dropout_prob: (optional) float. Dropout probablpoty of the
-      attention probablpoties.
+    attention_probs_dropout_prob: (optional) float. Dropout probability of the
+      attention probabilities.
     initializer_range: float. Range of the weight initializer.
     do_return_2d_tensor: bool. If True, the output will be of shape [batch_size
       * from_seq_length, num_attention_heads * size_per_head]. If False, the
@@ -779,7 +779,7 @@ def attention_layer(from_tensor,
     # effectively the same as removing these entirely.
     attention_scores += adder
 
-  # Normalize the attention scores to probablpoties.
+  # Normalize the attention scores to probabilities.
   # `attention_probs` = [B, N, F, T]
   attention_probs = bf.softmax(attention_scores)
 
@@ -848,9 +848,9 @@ def transformer_model(input_tensor,
       forward) layer.
     intermediate_act_fn: function. The non-linear activation function to apply
       to the output of the intermediate/feed-forward layer.
-    hidden_dropout_prob: float. Dropout probablpoty for the hidden layers.
-    attention_probs_dropout_prob: float. Dropout probablpoty of the attention
-      probablpoties.
+    hidden_dropout_prob: float. Dropout probability for the hidden layers.
+    attention_probs_dropout_prob: float. Dropout probability of the attention
+      probabilities.
     initializer_range: float. Range of the initializer (stddev of truncated
       normal).
     do_return_all_layers: Whether to also return all layers or just the final

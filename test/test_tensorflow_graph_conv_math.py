@@ -6,9 +6,9 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-from lpot.adaptor.tf_utils.graph_rewriter.generic.fuse_conv_with_math import FuseConvWithMathOptimizer
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_conv_with_math import FuseConvWithMathOptimizer
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 class TestConvWithMath(unittest.TestCase):
     @disable_random()

@@ -18,10 +18,10 @@ import unittest
 from typing import List
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.graph.graph import Graph
-from lpot.ux.components.graph.node import Node
-from lpot.ux.components.model.domain import Domain
-from lpot.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
+from neural_compressor.ux.components.graph.graph import Graph
+from neural_compressor.ux.components.graph.node import Node
+from neural_compressor.ux.components.model.domain import Domain
+from neural_compressor.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
 
 
 class TestFrozenPbModel(unittest.TestCase):
@@ -32,22 +32,22 @@ class TestFrozenPbModel(unittest.TestCase):
         super().setUp()
 
         get_model_type_patcher = patch(
-            "lpot.ux.components.model.model_type_getter.lpot_get_model_type",
+            "neural_compressor.ux.components.model.model_type_getter.nc_get_model_type",
         )
         self.addCleanup(get_model_type_patcher.stop)
         get_model_type_mock = get_model_type_patcher.start()
         get_model_type_mock.side_effect = self._get_model_type
 
-        lpot_tensorflow_model_patcher = patch(
-            "lpot.ux.components.model.tensorflow.model.LpotModel",
+        nc_tensorflow_model_patcher = patch(
+            "neural_compressor.ux.components.model.tensorflow.model.NCModel",
         )
-        self.addCleanup(lpot_tensorflow_model_patcher.stop)
-        lpot_model_instance_mock = lpot_tensorflow_model_patcher.start()
-        lpot_model_instance_mock.return_value.input_node_names = [
+        self.addCleanup(nc_tensorflow_model_patcher.stop)
+        nc_model_instance_mock = nc_tensorflow_model_patcher.start()
+        nc_model_instance_mock.return_value.input_node_names = [
             "first input node",
             "second input node",
         ]
-        lpot_model_instance_mock.return_value.output_node_names = [
+        nc_model_instance_mock.return_value.output_node_names = [
             "first output node",
             "second output node",
         ]
@@ -70,7 +70,7 @@ class TestFrozenPbModel(unittest.TestCase):
         """Test getting correct framework name."""
         self.assertFalse(FrozenPbModel.supports_path("/path/to/model.txt"))
 
-    @patch("lpot.ux.components.model.tensorflow.model.check_module")
+    @patch("neural_compressor.ux.components.model.tensorflow.model.check_module")
     def test_guard_requirements_installed(self, mocked_check_module: MagicMock) -> None:
         """Test guard_requirements_installed."""
         model = FrozenPbModel("/path/to/frozen_pb.pb")
@@ -101,7 +101,7 @@ class TestFrozenPbModel(unittest.TestCase):
             model.get_output_nodes(),
         )
 
-    @patch("lpot.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    @patch("neural_compressor.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
     def test_get_model_graph(self, mocked_tensorflow_graph_reader: MagicMock) -> None:
         """Test getting Graph of a model."""
         expected = Graph()
@@ -154,7 +154,7 @@ class TestFrozenPbModel(unittest.TestCase):
             expected_domain_flavour="",
         )
 
-    @patch("lpot.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    @patch("neural_compressor.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
     def test_domain_graph_reader_exception(
         self,
         mocked_tensorflow_graph_reader: MagicMock,
@@ -169,7 +169,7 @@ class TestFrozenPbModel(unittest.TestCase):
         self.assertEqual(expected, model.domain)
         mocked_tensorflow_graph_reader.assert_called_once_with(model)
 
-    @patch("lpot.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    @patch("neural_compressor.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
     def assert_model_domain_matches_expected(
         self,
         mocked_tensorflow_graph_reader: MagicMock,

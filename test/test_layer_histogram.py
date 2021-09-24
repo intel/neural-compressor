@@ -1,7 +1,7 @@
 """Tests for collecting layer histogram."""
-from lpot.utils.collect_layer_histogram import LayerHistogramCollector
+from neural_compressor.utils.collect_layer_histogram import LayerHistogramCollector
 from collections import OrderedDict
-from lpot.utils import logger
+from neural_compressor.utils import logger
 import numpy as np
 import torch
 import torch.nn as nn

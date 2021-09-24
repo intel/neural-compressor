@@ -1,15 +1,15 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Intel® Low Precision Optimization Tool magnitude pruning feature.
+This document is used to list steps of reproducing Intel® Neural Compressor magnitude pruning feature.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow 2.4.0 or above.
 ```shell

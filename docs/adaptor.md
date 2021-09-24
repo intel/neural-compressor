@@ -3,15 +3,15 @@ Adaptor
 
 ## Introduction
 
-Intel® Low Precision Optimization Tool (LPOT) built the low-precision inference
-solution on popular Deep Learning frameworks such as TensorFlow, PyTorch,
-MXNet, and ONNX Runtime. The adaptor layer is the bridge between the LPOT
+Intel® Neural Compressor builds the low-precision inference
+solution on popular deep learning frameworks such as TensorFlow, PyTorch,
+MXNet, and ONNX Runtime. The adaptor layer is the bridge between the 
 tuning strategy and vanilla framework quantization APIs.
 
 ## Adaptor Design
 
-LPOT supports a new adaptor extension by
-implementing a subclass `Adaptor` class in the lpot.adaptor package
+Neural Compressor supports a new adaptor extension by
+implementing a subclass `Adaptor` class in the neural_compressor.adaptor package
 and registering this strategy by the `adaptor_registry` decorator.
 
 For example, a user can implement an `Abc` adaptor like below:
@@ -46,7 +46,7 @@ class AbcAdaptor(Adaptor):
 #### Background
 
 Besides the adaptor API, we also introduced the Query API which describes the
-behavior of a specific framework. With this API, LPOT can easily query the
+behavior of a specific framework. With this API, Neural Compressor can easily query the
 following information on the current runtime framework.
 
 *  The runtime version information.
@@ -54,13 +54,13 @@ following information on the current runtime framework.
 *  The supported sequence of each quantizable op.
 *  The instance of each sequence.
 
-In the past, the above information was generally defined and hidden in every corner of the code which made effective maintenance difficult. With the Query API, we only need to create one unified yaml file and call the corresponding API to get the information. For example, the [tensorflow.yaml](../lpot/adaptor/tensorflow.yaml) keeps the current Tensorflow framework ability. We recommend that the end user not make modifications if requirements are not clear.
+In the past, the above information was generally defined and hidden in every corner of the code which made effective maintenance difficult. With the Query API, we only need to create one unified yaml file and call the corresponding API to get the information. For example, the [tensorflow.yaml](../neural_compressor/adaptor/tensorflow.yaml) keeps the current Tensorflow framework ability. We recommend that the end user not make modifications if requirements are not clear.
 
 #### Unify Config Introduction
 
 Below is a fragment of the Tensorflow configuration file.
 
-* **precisions** field defines the supported precision for LPOT.
+* **precisions** field defines the supported precision for Neural Compressor.
     -  valid_mixed_precision enumerates all supported precision combinations for specific scenario. For example, if one hardware doesn't support bf16， it should be `int8 + fp32`.
 * **ops** field defines the valid OP type list for each precision.
 * **capabilities** field focuses on the quantization ability of specific ops such as granularity, scheme, and algorithm. The activation assumes the same data type for both input and output activation by default based on op semantics defined by frameworks.
@@ -193,13 +193,13 @@ Below is a fragment of the Tensorflow configuration file.
 ```
 #### Query API Introduction
 
-The abstract class `QueryBackendCapability` is defined in [query.py](../lpot/adaptor/query.py#L21). Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation [TensorflowQuery](../lpot/adaptor/tensorflow.py#L628).
+The abstract class `QueryBackendCapability` is defined in [query.py](../neural_compressor/adaptor/query.py#L21). Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation [TensorflowQuery](../neural_compressor/adaptor/tensorflow.py#L628).
 
 
 ## Customize a New Framework Backend
 
 Look at onnxruntime as an example. ONNX Runtime is a backend proposed by Microsoft, and is based on the MLAS kernel by default.
-Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/python/tools/quantization), so the question becomes how to integrate onnxruntime quantization tools into LPOT.
+Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/python/tools/quantization), so the question becomes how to integrate onnxruntime quantization tools into Neural Compressor.
 
 1. Capability
    
@@ -214,7 +214,7 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
    * &1.8 nodes_to_quantize, nodes_to_exclude
    * op_types_to_quantize
 
-   We can pass a tune capability to LPOT such as:
+   We can pass a tune capability to Neural Compressor such as:
 
    ```yaml
    {'optypewise': {'conv': 
@@ -243,7 +243,7 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
 
 2. Parse tune config
    
-   LPOT can generate a tune config from your tune capability such as the
+   Neural Compressor can generate a tune config from your tune capability such as the
    following: 
 
    ```yaml
@@ -286,4 +286,4 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
 
 4. Do quantization
    
-   This part depends on your backend implementations. Refer to [onnxruntime](../lpot/adaptor/onnxrt.py) as an example.
+   This part depends on your backend implementations. Refer to [onnxruntime](../neural_compressor/adaptor/onnxrt.py) as an example.

@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.utils.workload.pruning import Magnitude, Pruning
+from neural_compressor.ux.utils.workload.pruning import Magnitude, Pruning
 
 
 class TestMagnitudeConfig(unittest.TestCase):

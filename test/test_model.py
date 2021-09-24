@@ -3,16 +3,16 @@ import numpy as np
 import unittest
 import os
 
-from lpot.model import MODELS
+from neural_compressor.model import MODELS
 import torchvision
 import torch
 import onnx
 import mxnet.gluon.nn as nn
 import mxnet as mx
 import tensorflow as tf
-import lpot.model.model as LpotModel
-from lpot.model.model import get_model_fwk_name
-from lpot.experimental.common.model import Model
+import neural_compressor.model.model as NCModel
+from neural_compressor.model.model import get_model_fwk_name
+from neural_compressor.experimental.common.model import Model
 
 def build_graph():
     try:
@@ -135,14 +135,14 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
 
     def test_validate_graph_node(self):
-        from lpot.model.model import validate_graph_node
+        from neural_compressor.model.model import validate_graph_node
         graph = build_graph()
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), []))
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), ['test']))
         self.assertEqual(True, validate_graph_node(graph.as_graph_def(), ['x']))
 
     def test_estimator(self):
-        from lpot.adaptor.tf_utils.util import get_estimator_graph
+        from neural_compressor.adaptor.tf_utils.util import get_estimator_graph
         model_fn = build_estimator()
         input_fn = build_input_fn() 
         estimator = tf.estimator.Estimator(
@@ -156,9 +156,9 @@ class TestTensorflowModel(unittest.TestCase):
     def test_ckpt(self):
         mobilenet_ckpt_url = \
             'http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz'
-        dst_path = '/tmp/.lpot/mobilenet_v1_1.0_224.tgz'
+        dst_path = '/tmp/.neural_compressor/mobilenet_v1_1.0_224.tgz'
         if not os.path.exists(dst_path):
-          os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(
+          os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(
                   mobilenet_ckpt_url, dst_path))
 
         os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
@@ -176,9 +176,9 @@ class TestTensorflowModel(unittest.TestCase):
         tf.compat.v1.reset_default_graph()
         inception_ckpt_url = \
             'http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz'
-        dst_path = '/tmp/.lpot/slim/inception_v1_2016_08_28.tar.gz'
+        dst_path = '/tmp/.neural_compressor/slim/inception_v1_2016_08_28.tar.gz'
         if not os.path.exists(dst_path):
-            os.system("mkdir -p /tmp/.lpot/slim")
+            os.system("mkdir -p /tmp/.neural_compressor/slim")
             os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
 
         os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
@@ -191,7 +191,7 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
         # test net factory
-        from lpot.model.nets_factory import TFSlimNetsFactory
+        from neural_compressor.model.nets_factory import TFSlimNetsFactory
         factory = TFSlimNetsFactory()
         from tf_slim.nets import inception
         input_shape = [None, 224, 224, 3] 
@@ -226,12 +226,12 @@ class TestTensorflowModel(unittest.TestCase):
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
         center_resnet50_saved_model_url = 'https://gcs.tensorflow.google.cn/tfhub-modules/tensorflow/centernet/resnet50v1_fpn_512x512/1.tar.gz'
-        dst_path = '/tmp/.lpot/saved_model.tar.gz'
-        center_dst_path = '/tmp/.lpot/center_saved_model.tar.gz'
+        dst_path = '/tmp/.neural_compressor/saved_model.tar.gz'
+        center_dst_path = '/tmp/.neural_compressor/center_saved_model.tar.gz'
         if not os.path.exists(dst_path):
-          os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
+          os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
         if not os.path.exists(center_dst_path):
-          os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(center_resnet50_saved_model_url, center_dst_path))
+          os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(center_resnet50_saved_model_url, center_dst_path))
         os.system("tar -xvf {}".format(dst_path))
         unzip_center_model = 'unzip_center_model'
         os.system("mkdir -p {} ".format(unzip_center_model))
@@ -273,7 +273,7 @@ class TestTensorflowModel(unittest.TestCase):
 
 
     def test_tensorflow(self):
-        from lpot.model.model import TensorflowBaseModel
+        from neural_compressor.model.model import TensorflowBaseModel
         ori_model = build_graph()
         self.assertEqual('tensorflow', get_model_fwk_name(ori_model))
         self.assertEqual('tensorflow', get_model_fwk_name(TensorflowBaseModel(ori_model)))
@@ -317,7 +317,7 @@ class TestONNXModel(unittest.TestCase):
     def test_model(self):
         self.assertEqual('onnxruntime', get_model_fwk_name(self.cnn_export_path))
         model = MODELS['onnxruntime'](self.cnn_model)
-        self.assertEqual(True, isinstance(model, LpotModel.ONNXModel))
+        self.assertEqual(True, isinstance(model, NCModel.ONNXModel))
         self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
 
         model.save('test.onnx')
@@ -327,7 +327,7 @@ class TestONNXModel(unittest.TestCase):
 class TestPyTorchModel(unittest.TestCase):
     def testPyTorch(self):
         import torchvision
-        from lpot.model.model import PyTorchModel, PyTorchIpexModel, PyTorchFXModel
+        from neural_compressor.model.model import PyTorchModel, PyTorchIpexModel, PyTorchFXModel
         ori_model = torchvision.models.mobilenet_v2()
         self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
@@ -382,7 +382,7 @@ class TestMXNetModel(unittest.TestCase):
     def test_model(self):
         self.assertEqual('mxnet', get_model_fwk_name(self.net))
         model = MODELS['mxnet'](self.net)
-        self.assertEqual(True, isinstance(model, LpotModel.MXNetModel))
+        self.assertEqual(True, isinstance(model, NCModel.MXNetModel))
         self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
 
         model.save('./test')

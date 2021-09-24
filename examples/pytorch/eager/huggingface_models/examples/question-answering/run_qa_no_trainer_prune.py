@@ -772,7 +772,7 @@ def main():
                                post_processing_function, prune)
 
     if args.prune:
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning(args.config)
         prune.model = common.Model(model)
         prune.train_dataloader = train_dataloader

@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.components.model.repository import ModelRepository
+from neural_compressor.ux.components.model.repository import ModelRepository
 
 
 class TestModelRepository(unittest.TestCase):

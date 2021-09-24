@@ -23,7 +23,7 @@ Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/ma
 wget https://github.com/onnx/models/blob/master/text/machine_comprehension/bert-squad/model/bertsquad-10.onnx
 ```
 
-Update BERT-Squad model opset version to 12 due to lpot requirement.
+Update BERT-Squad model opset version to 12 due to neural_compressor requirement.
 
 ```python
 import onnx

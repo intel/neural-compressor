@@ -7,7 +7,7 @@
 Before using `SigOpt` strategy, a SigOpt account is necessary.
 - Each account has its own api token. Find your api token and then fill in the configure item `sigopt_api_token`. 
 - Create a new project and write the corresponding name into the configure item `sigopt_project_id`.
-- Set the name for this experiment in configure item `sigopt_experiment_id`, the default is lpot-tune.
+- Set the name for this experiment in configure item `sigopt_experiment_id`, the default is nc-tune.
 
 ### SigOpt introduction
 
@@ -21,9 +21,9 @@ SigOpt has two concepts: [project](https://app.sigopt.com/projects) and [experim
 - Evaluate your metric
 - Report an Observation to SigOpt
 
-In LPOT sigopt strategy, the metrics add accuracy as constraint and optimize for latency.
+In Neural Compressor sigopt strategy, the metrics add accuracy as constraint and optimize for latency.
 
-### LPOT configuration
+### Neural Compressor configuration
 
 Compare to `Basic` strategy, `sigopt_api_token` is necessary for `SigOpt` strategy. Create the corresponding project name `sigopt_project_id` in the account before using the strategy.
 
@@ -33,7 +33,7 @@ tuning:
     name: sigopt
     sigopt_api_token: YOUR-ACCOUNT-API-TOKEN
     sigopt_project_id: PROJECT-ID
-    sigopt_experiment_name: lpot-tune
+    sigopt_experiment_name: nc-tune
   accuracy_criterion:
     relative:  0.01
   exit_policy:

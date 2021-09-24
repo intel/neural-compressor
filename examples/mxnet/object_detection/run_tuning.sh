@@ -5,7 +5,7 @@ help()
 {
    cat <<- EOF
 
-   Desc: Run lpot MXNet Object Detection example.
+   Desc: Run neural_compressor MXNet Object Detection example.
 
    -h --help              help info
 
@@ -17,7 +17,7 @@ help()
 
    --input_model          prefix of fp32 model (eg: ./model/ssd-mobilenet )
 
-   --output_model         Best tuning model by lpot will saved in this name prefix. default is './lpot_ssd_model'
+   --output_model         Best tuning model by neural_compressor will saved in this name prefix. default is './nc_ssd_model'
 
 EOF
    exit 0
@@ -33,7 +33,7 @@ function main {
 
 topology='ssd_mobilenet1.0'
 dataset='voc'
-output_model='./lpot_ssd_model'
+output_model='./nc_ssd_model'
 dataset_location='~/.mxnet/datasets/'
 # init params
 function init_params {

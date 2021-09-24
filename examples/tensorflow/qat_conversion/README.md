@@ -1,15 +1,15 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow keras Intel® Low Precision Optimization Tool QAT conversion.
+This document is used to list steps of reproducing TensorFlow keras Intel® Neural Compressor QAT conversion.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow and TensorFlow Model Optimization
 ```shell

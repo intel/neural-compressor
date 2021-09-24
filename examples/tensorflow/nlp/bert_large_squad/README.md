@@ -1,15 +1,15 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow Intel® Low Precision Optimization Tool tuning zoo result of bert large model on squad v1.1 task.
+This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of bert large model on squad v1.1 task.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow 1.15 up2
 Check your python version and use pip install 1.15.0 up2 from links below:
@@ -17,7 +17,7 @@ https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
 
-Intel Tensorflow 2.5.0 also supports since LPOT 1.6 release.
+Intel Tensorflow 2.5.0 also supports since Neural Compressor 1.6 release.
 ```python
 pip install intel-tensorflow==2.5.0
 ```
@@ -85,10 +85,10 @@ Now the tool will generate an int8 model with iterator inside the graph if you w
   ```
 
 
-Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
+Details of enabling Intel® Neural Compressor on bert model for Tensorflow.
 =========================
 
-This is a tutorial of how to enable bert model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable bert model with Intel® Neural Compressor.
 ## User Code Analysis
 1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
 
@@ -97,7 +97,7 @@ This is a tutorial of how to enable bert model with Intel® Low Precision Optimi
 For bert, we applied the first one as we  already have built-in dataset and metric for bert squad task. 
 
 ### Write Yaml config file
-In examples directory, there is a bert.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal lpot.
+In examples directory, there is a bert.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 model: 
@@ -162,7 +162,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 
 #### Tune
 ```python
-        from lpot.quantization import Quantization
+        from neural_compressor.quantization import Quantization
         quantizer = Quantization('./bert.yaml')
         quantizer.model = FLAGS.input_model
         q_model = quantizer()
@@ -171,7 +171,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```
 #### Benchmark
 ```python
-        from lpot.experimental import Benchmark
+        from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('./bert.yaml')
         evaluator.model = FLAGS.input_model
         results = evaluator()
@@ -184,4 +184,4 @@ After prepare step is done, we add tune and benchmark code to generate quantized
             print('Latency: {:.3f} ms'.format(latency * 1000))
             print('Throughput: {:.3f} images/sec'.format(1./ latency))
 ```
-The Intel® Low Precision Optimization Tool quantizer() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantizer() function will return a best quantized model under time constraint.

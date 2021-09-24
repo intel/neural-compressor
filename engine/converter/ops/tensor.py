@@ -29,7 +29,7 @@ class Tensor(object):
                  dtype=None,
                  location=None):
         self._name = name
-        # assume data in lpot tensor should be numpy array
+        # assume data in neural_compressor tensor should be numpy array
         # however, we don't assign the data diretly if the tensor is
         # const like weight when parse model
         # otherwise it will make a bloated new graph

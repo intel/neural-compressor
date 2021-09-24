@@ -81,7 +81,7 @@ def default_data_collator(features: List[InputDataClass]) -> Dict[str, torch.Ten
 
     return batch
 
-def default_data_collator_lpot(features: List[InputDataClass]) -> Dict[str, torch.Tensor]:
+def default_data_collator_nc(features: List[InputDataClass]) -> Dict[str, torch.Tensor]:
     """
     Very simple data collator that simply collates batches of dict-like objects and performs special handling for
     potential keys named:

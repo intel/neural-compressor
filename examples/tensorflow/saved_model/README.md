@@ -1,15 +1,15 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow saved model Intel® Low Precision Optimization Tool tuning zoo result.
+This document is used to list steps of reproducing TensorFlow saved model Intel® Neural Compressor tuning zoo result.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -37,5 +37,5 @@ object detection
 
 ## Run Command
   ```shell
-  bash run_tuning.sh --config=./config.yaml --input_model=./ssd_resnet50_v1 --output_model=./lpot_ssd_resnet50_v1
+  bash run_tuning.sh --config=./config.yaml --input_model=./ssd_resnet50_v1 --output_model=./nc_ssd_resnet50_v1
   ```

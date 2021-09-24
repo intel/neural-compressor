@@ -523,7 +523,7 @@ def main():
     parser.add_argument("--mkldnn_eval", action='store_true',
                         help="evaluation with MKLDNN")
     parser.add_argument("--tune", action='store_true',
-                        help="run Low Precision Optimization Tool to tune int8 acc.")
+                        help="run Neural Compressor to tune int8 acc.")
     parser.add_argument("--task_name", default=None, type=str, required=True,
                         help="SQuAD task")
     parser.add_argument("--warmup", type=int, default=5,
@@ -536,7 +536,7 @@ def main():
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
 
@@ -670,7 +670,7 @@ def main():
                results.update(result)
 
             if args.tune:
-                def eval_func_for_lpot(model):
+                def eval_func_for_nc(model):
                     result, _ = evaluate(args, model, tokenizer)
                     for key in sorted(result.keys()):
                         logger.info("  %s = %s", key, str(result[key]))
@@ -687,14 +687,14 @@ def main():
                 dataset = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=False)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
                 eval_task = "squad"
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization(args.config)
                 dataset = quantizer.dataset('bert', dataset=dataset, task=eval_task,
                                             model_type=args.model_type)
                 quantizer.model = common.Model(model)
                 quantizer.calib_dataloader = common.DataLoader(
                     dataset, batch_size=args.eval_batch_size)
-                quantizer.eval_func = eval_func_for_lpot
+                quantizer.eval_func = eval_func_for_nc
                 q_model = quantizer()
                 q_model.save(args.tuned_checkpoint)
                 exit(0)
@@ -703,7 +703,7 @@ def main():
                 model = model_class.from_pretrained(checkpoint, mix_qkv=True)
                 model.to(args.device)
                 if args.int8:
-                    from lpot.utils.pytorch import load
+                    from neural_compressor.utils.pytorch import load
                     new_model = load(
                         os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
                 else:

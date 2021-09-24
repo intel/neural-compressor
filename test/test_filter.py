@@ -5,8 +5,8 @@ import os
 import json
 import shutil
 from PIL import Image
-from lpot.data import FILTERS, TRANSFORMS, DATASETS, DATALOADERS
-from lpot.utils.create_obj_from_config import create_dataset, get_preprocess, create_dataloader
+from neural_compressor.data import FILTERS, TRANSFORMS, DATASETS, DATALOADERS
+from neural_compressor.utils.create_obj_from_config import create_dataset, get_preprocess, create_dataloader
 
 class TestCOCOFilter(unittest.TestCase):
     def testLabelBalanceCOCORecord(self):

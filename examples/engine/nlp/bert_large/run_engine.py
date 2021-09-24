@@ -74,7 +74,7 @@ def main():
     args = get_args()
 
     if args.benchmark:
-        from lpot.experimental import Benchmark, common
+        from neural_compressor.experimental import Benchmark, common
         ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case, args.perf_count)
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(args.input_model)
@@ -82,7 +82,7 @@ def main():
         evaluator(args.mode)
 
     if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case, args.perf_count)
         quantizer = Quantization(args.config)
         quantizer.model = common.Model(args.input_model)

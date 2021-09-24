@@ -17,7 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, call, patch
 
-from lpot.ux.components.model.onnxrt.model import OnnxrtModel
+from neural_compressor.ux.components.model.onnxrt.model import OnnxrtModel
 
 
 class TestOnnxrtModel(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestOnnxrtModel(unittest.TestCase):
         """Test getting correct framework name."""
         self.assertFalse(OnnxrtModel.supports_path("/path/to/model.pb"))
 
-    @patch("lpot.ux.components.model.onnxrt.model.check_module")
+    @patch("neural_compressor.ux.components.model.onnxrt.model.check_module")
     def test_guard_requirements_installed(self, mocked_check_module: MagicMock) -> None:
         """Test guard_requirements_installed."""
         model = OnnxrtModel("/path/to/model.onnx")
@@ -44,19 +44,19 @@ class TestOnnxrtModel(unittest.TestCase):
 
         mocked_check_module.assert_has_calls([call("onnx"), call("onnxruntime")])
 
-    @patch("lpot.ux.components.model.onnxrt.model.check_module")
+    @patch("neural_compressor.ux.components.model.onnxrt.model.check_module")
     def test_get_input_nodes(self, mocked_check_module: MagicMock) -> None:
         """Test getting input nodes."""
         model = OnnxrtModel("/path/to/model.onnx")
         self.assertIsNone(model.get_input_nodes())
 
-    @patch("lpot.ux.components.model.onnxrt.model.check_module")
+    @patch("neural_compressor.ux.components.model.onnxrt.model.check_module")
     def test_get_output_nodes(self, mocked_check_module: MagicMock) -> None:
         """Test getting output nodes."""
         model = OnnxrtModel("/path/to/model.onnx")
         self.assertIsNone(model.get_output_nodes())
 
-    @patch("lpot.ux.components.model.onnxrt.model.check_module")
+    @patch("neural_compressor.ux.components.model.onnxrt.model.check_module")
     def test_get_input_and_output_nodes(self, mocked_check_module: MagicMock) -> None:
         """Test getting input nodes."""
         model = OnnxrtModel("/path/to/model.onnx")
@@ -68,7 +68,7 @@ class TestOnnxrtModel(unittest.TestCase):
         with self.assertRaisesRegex(
             AttributeError,
             "Model path: /path/to/model.pb is not supported by "
-            "lpot.ux.components.model.onnxrt.model.OnnxrtModel class.",
+            "neural_compressor.ux.components.model.onnxrt.model.OnnxrtModel class.",
         ):
             OnnxrtModel("/path/to/model.pb")
 

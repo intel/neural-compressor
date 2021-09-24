@@ -38,7 +38,7 @@
                     "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
                     "instances": 1,
                     "cores_per_instance": 6,
-                    "command": "python /path/to/lpot/ux/components/tune/tune_model.py --input-graph /path/to/model.pb --output-graph /path/to/output_model.pb --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --framework tensorflow"
+                    "command": "python /path/to/neural_compressor/ux/components/tune/tune_model.py --input-graph /path/to/model.pb --output-graph /path/to/output_model.pb --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --framework tensorflow"
                 },
                 "input_model_benchmark": {
                     "performance": {
@@ -50,8 +50,8 @@
                         "batch_size": 1,
                         "framework": "tensorflow",
                         "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
-                        "benchmark_script": "/path/to/lpot/ux/components/benchmark/benchmark_model.py",
-                        "command": "python /path/to/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/model.pb --mode performance --framework tensorflow"
+                        "benchmark_script": "/path/to/neural_compressor/ux/components/benchmark/benchmark_model.py",
+                        "command": "python /path/to/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/model.pb --mode performance --framework tensorflow"
                     }
                 },
                 "optimized_model_benchmark": {
@@ -64,8 +64,8 @@
                         "batch_size": 1,
                         "framework": "tensorflow",
                         "config_path": "/path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml",
-                        "benchmark_script": "/path/to/lpot/ux/components/benchmark/benchmark_model.py",
-                        "command": "python /path/to/lpot/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/output_model.pb --mode performance --framework tensorflow"
+                        "benchmark_script": "/path/to/neural_compressor/ux/components/benchmark/benchmark_model.py",
+                        "command": "python /path/to/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/model_2a6fdf0a1d047908e18754a939f7b5555076e03fd579b38144fb8533bd7e90b1/config.yaml --input-graph /path/to/output_model.pb --mode performance --framework tensorflow"
                     }
                 }
             },

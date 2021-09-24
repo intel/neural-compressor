@@ -6,7 +6,7 @@ import shutil
 import warnings
 import torch
 import torchvision.models.resnet as models
-from lpot.utils import logger
+from neural_compressor.utils import logger
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -86,7 +86,7 @@ def main_worker(args):
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     if args.distillation:
-        from lpot.experimental import Distillation, common
+        from neural_compressor.experimental import Distillation, common
         distiller = Distillation(args.config)
 
         distiller.model = common.Model(model)

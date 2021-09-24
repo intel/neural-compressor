@@ -54,7 +54,7 @@ pip install torchvision==0.7.0 --no-deps
 
 ## 2. Prepare pretrained model
 
-Before use Intel® Low Precision Optimization Tool, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
+Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
 
 ### Text-classification
 
@@ -85,7 +85,7 @@ The dev set results will be present within the text file 'eval_results.txt' in t
 
 please refer to [BERT base scripts and instructions](examples/text-classification/README.md#PyTorch version).
 
-* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
+* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by neural_compressor tuning as below.
 
 #### XLM-RoBERTa
 For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
@@ -229,7 +229,7 @@ Where summarization dataset can be one of xsum,billsum etc.
 
 Where output_dir is path of checkpoint which be created by fine tuning.
 
-* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by lpot tuning as below.
+* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by neural_compressor tuning as below.
 
 #### Language-modeling
 ##### Finetune command
@@ -255,7 +255,7 @@ python run_clm.py \
 >
 > dataset_config_name : just for dialogpt: wikitext-2-raw-v1.
 
-# Start to lpot tune for Model Quantization
+# Start to neural_compressor tune for Model Quantization
 ```shell
 cd examples/pytorch/eager/huggingface_models
 ```
@@ -300,7 +300,7 @@ sh run_tuning.sh --topology=topology_name --input_model=/path/to/checkpoint/dir
 > /path/to/checkpoint/dir is the path to finetune output_dir 
 
 
-# Start to lpot tune for Model Pruning
+# Start to neural_compressor tune for Model Pruning
 
 Below are example NLP tasks for model pruning together with task specific fine-tuning.
 It requires the pre-trained bert-base sparsity model `Intel/bert-base-uncased-sparse-70-unstructured` from Intel Huggingface portal.
@@ -363,7 +363,7 @@ python examples/text-classification/run_glue_no_trainer_gradient_prune.py
       --do_prune --do_eval --output_model /path/to/output/
 ```
 
-# Start to lpot tune for Model Distillation
+# Start to neural_compressor tune for Model Distillation
 
 Below are example NLP tasks for model distillation from a task specific fine-tuned large model to a smaller model.
 It requires the pre-trained task specific model such as `textattack/roberta-base-SST-2` from textattack Huggingface portal.
@@ -380,14 +380,14 @@ python examples/text-classification/run_glue_no_trainer_distillation.py \
 --output_dir /path/to/output_dir --config distillation.yaml --seed 5143
 ```
 
-Examples of enabling Intel® Low Precision Optimization Tool
+Examples of enabling Intel® Neural Compressor
 ============================================================
 
-This is a tutorial of how to enable BERT model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable BERT model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics in tuning.metrics field of model-specific yaml config file.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
@@ -419,7 +419,7 @@ tuning:
 
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 
-> **Note** : lpot does NOT support "mse" tuning strategy for pytorch framework
+> **Note** : neural_compressor does NOT support "mse" tuning strategy for pytorch framework
 
 ### Code Prepare
 
@@ -427,7 +427,7 @@ We just need update run_squad_tune.py and run_glue_tune.py like below
 
 ```python
 if training_args.tune:
-    def eval_func_for_lpot(model_tuned):
+    def eval_func_for_nc(model_tuned):
         trainer = Trainer(
             model=model_tuned,
             args=training_args,
@@ -445,14 +445,14 @@ if training_args.tune:
                 acc = result[key]
                 break
         return acc
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization("./conf.yaml")
     calibration_dataset = quantizer.dataset('bert', dataset=eval_dataset,
                                          task="classifier", model_type=config.model_type)
     quantizer.model = common.Model(model)
     quantizer.calib_dataloader = common.DataLoader(
         calibration_dataset, batch_size=training_args.per_device_eval_batch_size)
-    quantizer.eval_func = eval_func_for_lpot
+    quantizer.eval_func = eval_func_for_nc
     q_model = quantizer()
     q_model.save(training_args.tuned_checkpoint)
     exit(0)
@@ -462,7 +462,7 @@ For seq2seq task,We need update run_seq2seq_tune.py like below
 
 ```python
 if training_args.tune:
-    def eval_func_for_lpot(model):
+    def eval_func_for_nc(model):
         trainer.model = model
         results = trainer.evaluate(
             eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
@@ -480,15 +480,15 @@ if training_args.tune:
                     acc = sum([v for k,v in results.items() if "rouge" in k])/4
                     break
         return acc
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization("./conf.yaml")
     quantizer.model = common.Model(model)
     quantizer.calib_dataloader = common.DataLoader(
                                             eval_dataset, 
                                             batch_size=training_args.eval_batch_size,
-                                            collate_fn=Seq2SeqDataCollator_lpot(tokenizer, data_args, training_args.tpu_num_cores)
+                                            collate_fn=Seq2SeqDataCollator_nc(tokenizer, data_args, training_args.tpu_num_cores)
                                             )
-    quantizer.eval_func = eval_func_for_lpot
+    quantizer.eval_func = eval_func_for_nc
     q_model = quantizer()
     q_model.save(training_args.tuned_checkpoint)
     exit(0)
@@ -498,7 +498,7 @@ For language modeling task,We need update run_clm_tune.py like below
 
 ```python
 if training_args.tune:
-    def eval_func_for_lpot(model_tuned):
+    def eval_func_for_nc(model_tuned):
         trainer = Trainer(
             model=model_tuned,
             args=training_args,
@@ -519,15 +519,15 @@ if training_args.tune:
                     perplexity = results[key]
                     break
         return 100-perplexity
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization("./conf.yaml")
     quantizer.model = common.Model(model)
     quantizer.calib_dataloader = common.DataLoader(
                                             eval_dataset, 
                                             batch_size=training_args.eval_batch_size,
-                                            collate_fn=default_data_collator_lpot
+                                            collate_fn=default_data_collator_nc
                                             )
-    quantizer.eval_func = eval_func_for_lpot
+    quantizer.eval_func = eval_func_for_nc
     q_model = quantizer()
     q_model.save(training_args.tuned_checkpoint)
     exit(0)

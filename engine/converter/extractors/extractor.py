@@ -17,7 +17,7 @@
 
 from .tf_extractor import TensorflowExtractor
 from .onnx_extractor import ONNXExtractor
-from lpot.utils import logger
+from neural_compressor.utils import logger
 
 
 EXTRACTORS = {

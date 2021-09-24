@@ -18,8 +18,8 @@ import unittest
 from typing import Dict
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.configuration_wizard.params_feeder import Feeder
-from lpot.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.components.configuration_wizard.params_feeder import Feeder
+from neural_compressor.ux.utils.exceptions import ClientErrorException
 
 
 @patch.dict(os.environ, {"HOME": "/foo/bar"})
@@ -42,7 +42,7 @@ class TestParamsFeeder(unittest.TestCase):
         ):
             feeder.feed()
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.Feeder.get_frameworks")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder.get_frameworks")
     def test_feed_for_framework_works(self, mocked_get_frameworks: MagicMock) -> None:
         """Test that calling feed with not supported param fails."""
         frameworks = [
@@ -58,8 +58,8 @@ class TestParamsFeeder(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.ModelRepository.get_frameworks")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_model_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.ModelRepository.get_frameworks")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_model_config")
     def test_get_frameworks(
         self,
         mocked_load_model_config: MagicMock,
@@ -108,7 +108,7 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
             feeder.get_domains()
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_model_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_model_config")
     def test_get_domains(
         self,
         mocked_load_model_config: MagicMock,
@@ -181,7 +181,7 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Domain not set."):
             feeder.get_models()
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_model_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_model_config")
     def test_get_models(
         self,
         mocked_load_model_config: MagicMock,
@@ -250,7 +250,7 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
             feeder.get_dataloaders()
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_dataloader_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_dataloader_config")
     def test_get_dataloaders_for_unknown_framework(
         self,
         mocked_load_dataloader_config: MagicMock,
@@ -281,7 +281,7 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_dataloader_config.assert_called_once()
         self.assertEqual([], actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_dataloader_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_dataloader_config")
     def test_get_dataloaders(
         self,
         mocked_load_dataloader_config: MagicMock,
@@ -325,7 +325,7 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
             feeder.get_transforms()
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
     def test_get_transforms_for_unknown_framework(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -364,7 +364,7 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_transforms_config.assert_called_once()
         self.assertEqual([], actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
     def test_get_transforms_without_domain(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -408,8 +408,8 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_transforms_config.assert_called_once()
         self.assertEqual(expected, actual)
 
-    @patch("lpot.ux.utils.utils.load_transforms_filter_config")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch("neural_compressor.ux.utils.utils.load_transforms_filter_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
     def test_get_transforms_with_domain_not_in_filters(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -472,8 +472,8 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_transforms_filter_config.assert_called_once()
         self.assertEqual(expected, actual)
 
-    @patch("lpot.ux.utils.utils.load_transforms_filter_config")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch("neural_compressor.ux.utils.utils.load_transforms_filter_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
     def test_get_transforms(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -536,16 +536,16 @@ class TestParamsFeeder(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @patch(
-        "lpot.ux.components.configuration_wizard.params_feeder.OBJECTIVES",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.OBJECTIVES",
         {"objective1": {}, "objective2": {}, "objective3": {}},
     )
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
     def test_get_objectives(
         self,
-        mocked_load_help_lpot_params: MagicMock,
+        mocked_load_help_nc_params: MagicMock,
     ) -> None:
         """Test get_objectives function."""
-        mocked_load_help_lpot_params.return_value = {
+        mocked_load_help_nc_params.return_value = {
             "__help__objective1": "help1",
             "__help__objective_unknown": "this should be skipped",
             "__help__objective2": "help2",
@@ -567,20 +567,20 @@ class TestParamsFeeder(unittest.TestCase):
 
         actual = Feeder.get_objectives()
 
-        mocked_load_help_lpot_params.assert_called_once_with("objectives")
+        mocked_load_help_nc_params.assert_called_once_with("objectives")
         self.assertEqual(expected, actual)
 
     @patch(
-        "lpot.ux.components.configuration_wizard.params_feeder.STRATEGIES",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.STRATEGIES",
         {"strategy1": {}, "strategy2": {}, "strategy3": {}, "sigopt": {}},
     )
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
     def test_get_strategies(
         self,
-        mocked_load_help_lpot_params: MagicMock,
+        mocked_load_help_nc_params: MagicMock,
     ) -> None:
         """Test get_strategies function."""
-        mocked_load_help_lpot_params.return_value = {
+        mocked_load_help_nc_params.return_value = {
             "__help__strategy1": "help1",
             "__help__strategy_unknown": "this should be skipped",
             "__help__strategy2": "help2",
@@ -602,10 +602,10 @@ class TestParamsFeeder(unittest.TestCase):
 
         actual = Feeder.get_strategies()
 
-        mocked_load_help_lpot_params.assert_called_once_with("strategies")
+        mocked_load_help_nc_params.assert_called_once_with("strategies")
         self.assertEqual(expected, actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_precisions_config")
     def test_get_precisions(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -640,7 +640,7 @@ class TestParamsFeeder(unittest.TestCase):
             actual,
         )
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_precisions_config")
     def test_get_precisions_for_unknown_framework(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -668,7 +668,7 @@ class TestParamsFeeder(unittest.TestCase):
 
         self.assertEqual([], actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_precisions_config")
     def test_get_precisions_for_missing_framework(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -759,18 +759,18 @@ class TestParamsFeeder(unittest.TestCase):
             }
 
     @patch(
-        "lpot.ux.components.configuration_wizard.params_feeder.framework_metrics",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"pytorch": FakeMetrics},
     )
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.check_module")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_pytorch(
         self,
         mocked_check_module: MagicMock,
-        mocked_load_help_lpot_params: MagicMock,
+        mocked_load_help_nc_params: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_load_help_lpot_params.return_value = {
+        mocked_load_help_nc_params.return_value = {
             "__help__topk": "help for topk",
             "topk": {
                 "__help__k": "help for k in topk",
@@ -859,23 +859,23 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("ignite")
-        mocked_load_help_lpot_params.assert_called_once_with("metrics")
+        mocked_load_help_nc_params.assert_called_once_with("metrics")
         self.assertEqual(expected, actual)
 
     @patch(
-        "lpot.ux.components.configuration_wizard.params_feeder.framework_metrics",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"tensorflow": FakeMetrics},
     )
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.check_module")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_with_label(
         self,
         mocked_check_module: MagicMock,
-        mocked_load_help_lpot_params: MagicMock,
+        mocked_load_help_nc_params: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
         self.maxDiff = None
-        mocked_load_help_lpot_params.return_value = {
+        mocked_load_help_nc_params.return_value = {
             "__help__COCOmAP": None,
             "COCOmAP": {
                 "__help__anno_path": "annotation path",
@@ -965,22 +965,22 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("tensorflow")
-        mocked_load_help_lpot_params.assert_called_once_with("metrics")
+        mocked_load_help_nc_params.assert_called_once_with("metrics")
         self.assertEqual(expected, actual)
 
     @patch(
-        "lpot.ux.components.configuration_wizard.params_feeder.framework_metrics",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"onnxrt_qlinearops": FakeMetrics},
     )
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.check_module")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_onnxrt(
         self,
         mocked_check_module: MagicMock,
-        mocked_load_help_lpot_params: MagicMock,
+        mocked_load_help_nc_params: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_load_help_lpot_params.return_value = {
+        mocked_load_help_nc_params.return_value = {
             "__help__topk": "help for topk",
             "topk": {
                 "__help__k": "help for k in topk",
@@ -1069,19 +1069,19 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("onnxrt")
-        mocked_load_help_lpot_params.assert_called_once_with("metrics")
+        mocked_load_help_nc_params.assert_called_once_with("metrics")
         self.assertEqual(expected, actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.framework_metrics", {})
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.load_help_lpot_params")
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.check_module")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics", {})
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_unknown_framework(
         self,
         mocked_check_module: MagicMock,
-        mocked_load_help_lpot_params: MagicMock,
+        mocked_load_help_nc_params: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_load_help_lpot_params.return_value = {
+        mocked_load_help_nc_params.return_value = {
             "__help__topk": "help for topk",
             "topk": {
                 "__help__k": "help for k in topk",
@@ -1110,16 +1110,16 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("unknown_framework")
-        mocked_load_help_lpot_params.assert_called_once_with("metrics")
+        mocked_load_help_nc_params.assert_called_once_with("metrics")
         self.assertEqual(expected, actual)
 
-    @patch("lpot.ux.components.configuration_wizard.params_feeder.Feeder")
+    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder")
     def test_get_possible_values(
         self,
         mocked_feeder: MagicMock,
     ) -> None:
         """Test get_possible_values function."""
-        from lpot.ux.components.configuration_wizard.params_feeder import get_possible_values
+        from neural_compressor.ux.components.configuration_wizard.params_feeder import get_possible_values
 
         data = {
             "foo": "bar",

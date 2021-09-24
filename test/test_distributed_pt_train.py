@@ -8,8 +8,8 @@ import torchvision
 import torch.nn as nn
 import horovod.torch as hvd
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_py():
     fake_py = """
@@ -22,8 +22,8 @@ import torchvision
 import torch.nn as nn
 import horovod.torch as hvd
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 
 
@@ -32,7 +32,7 @@ class TestPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
 
     def test_pruning_internal(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
         prune.model = common.Model(self.model)
@@ -136,7 +136,7 @@ class TestDistributed(unittest.TestCase):
             assert 0
 
     def test_single_node(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
         prune.model = common.Model(self.model)

@@ -1,5 +1,5 @@
 
-Intel® Low Precision Optimization Tool Documentation
+Intel® Neural Compressor Documentation
 ####################################################
 
 Welcome to the project.
@@ -19,7 +19,7 @@ Sections
    contributions.md
    legal_information.md
    security_policy.md
-   Intel® LPOT repository <https://github.com/intel/lpot>
+   Intel® Neural Compressor repository <https://github.com/intel/neural-compressor>
 
     
 

@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 
 sys.path.append('..')
-from lpot.model.onnx_model import ONNXModel
+from neural_compressor.model.onnx_model import ONNXModel
 
 def get_onnx_model():
     model = torchvision.models.resnet18()
@@ -48,10 +48,10 @@ class TestOnnxModelUtil(unittest.TestCase):
         self.model = ONNXModel(model)
 
     def test_split_shared_input(self):
-        from lpot.adaptor.ox_utils.util import split_shared_input
+        from neural_compressor.adaptor.ox_utils.util import split_shared_input
         model = split_shared_input(self.model)
-        self.assertIsNone(model.get_initializer('mul_weight_lpot_split_Mul1'))
-        self.assertIsNotNone(model.get_initializer('mul_weight_lpot_split_Mul2'))
+        self.assertIsNone(model.get_initializer('mul_weight_nc_split_Mul1'))
+        self.assertIsNotNone(model.get_initializer('mul_weight_nc_split_Mul2'))
 
     def tearDown(self):
         os.remove('./test_model.onnx')

@@ -45,7 +45,7 @@ flags.DEFINE_bool(
     'strip_iterator', False, 'whether to strip the iterator of the model')
 
 def strip_iterator(graph_def):
-    from lpot.adaptor.tf_utils.util import strip_unused_nodes
+    from neural_compressor.adaptor.tf_utils.util import strip_unused_nodes
     input_node_names = ['input_ids', 'input_mask', 'segment_ids']
     output_node_names = ['unstack']
     # create the placeholder and merge with the graph
@@ -72,13 +72,13 @@ def strip_iterator(graph_def):
 def main(_):
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
     if FLAGS.benchmark:
-        from lpot.experimental import Benchmark
+        from neural_compressor.experimental import Benchmark
         evaluator = Benchmark(FLAGS.config)
         evaluator.model = FLAGS.input_model
         evaluator(FLAGS.mode)
 
     elif FLAGS.tune:
-        from lpot.experimental import Quantization
+        from neural_compressor.experimental import Quantization
         quantizer = Quantization(FLAGS.config)
         quantizer.model = FLAGS.input_model
         q_model = quantizer()

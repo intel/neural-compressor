@@ -5,9 +5,9 @@ Graph Optimization
 
 Graph optimization is primarily focused on two scenarios, shown below:
 
-1. **FP32 optimization**. This is similar to the TensorFlow optimization tool [optimize_for_inference](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/optimize_for_inference.py) while LPOT enables more optimizations (such as common subexpression elimination).
+1. **FP32 optimization**. This is similar to the TensorFlow optimization tool [optimize_for_inference](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/optimize_for_inference.py) while Neural Compressor enables more optimizations (such as common subexpression elimination).
 
-2. **Auto-mixed precision optimization**. LPOT generates the optimal model with auto-mixed precision ([bfloat16](https://cloud.google.com/tpu/docs/bfloat16) and FP32) and allows for additional auto-tuning per accuracy requirements.
+2. **Auto-mixed precision optimization**. Neural Compressor generates the optimal model with auto-mixed precision ([bfloat16](https://cloud.google.com/tpu/docs/bfloat16) and FP32) and allows for additional auto-tuning per accuracy requirements.
 
 
 ## How to use it
@@ -16,10 +16,10 @@ See the following three examples which demonstrate graph optimization API usage.
 
 ### FP32 Optimization
 
-LPOT runs the graph optimization under FP32 Optimization by default. In other words, the **precisions** field is explicitly set to **fp32**:
+Neural Compressor runs the graph optimization under FP32 Optimization by default. In other words, the **precisions** field is explicitly set to **fp32**:
 
 ```python
-    from lpot.experimental import Graph_Optimization
+    from neural_compressor.experimental import Graph_Optimization
     graph_optimizer = Graph_Optimization()
     graph_optimizer.precisions = 'fp32' #Optional, default is 'fp32'
     graph_optimizer.input = 'input'  # Optional
@@ -35,7 +35,7 @@ LPOT runs the graph optimization under FP32 Optimization by default. In other wo
 The only difference between this and the default mode (FP32 optimization) is that **bf16** must be added to the **precisions** field.
 
   ```python
-      from lpot.experimental import Graph_Optimization
+      from neural_compressor.experimental import Graph_Optimization
       graph_optimizer = Graph_Optimization()
       graph_optimizer.precisions = 'bf16, fp32'
       graph_optimizer.input = 'input'  # Optional
@@ -45,19 +45,19 @@ The only difference between this and the default mode (FP32 optimization) is tha
   ```
 Note the **fp32** is optional when the **bf16** is set to precisions field. The below example has the identical action under the hardware platform supports bf16, e.g, the CPX platform.
   ```python
-      from lpot.experimental import Graph_Optimization
+      from neural_compressor.experimental import Graph_Optimization
       graph_optimizer = Graph_Optimization()
       graph_optimizer.precisions = 'bf16'
       graph_optimizer.model = '/path/to/model'
       optimized_model = graph_optimizer()
   ```
-For those platforms without bf16 enabling, like CLX. LPOT also could leverage the graph optimization feature to generate the model under bf16 precision.The usage is just adding the `FORCE_BF16=1` before the cmd.
-e.g, `FORCE_BF16=1 /path/to/executable_lpot_wrapper`. If we don't add such prefix `FORCE_BF16=1`, the LPOT would exit consequently.
+For those platforms without bf16 enabling, like CLX. Neural Compressor also could leverage the graph optimization feature to generate the model under bf16 precision.The usage is just adding the `FORCE_BF16=1` before the cmd.
+e.g, `FORCE_BF16=1 /path/to/executable_nc_wrapper`. If we do not add such prefix `FORCE_BF16=1`, the program would exit consequently.
 
 
 #### Auto-mixed precision with auto-tuning
 
-LPOT also supports tuning the model in graph optimization mode. The end user must replace the quantization field with graph_optimization parts such as shown below. The **precisions** field only supports **bf16** and **fp32**.
+Neural Compressor also supports tuning the model in graph optimization mode. The end user must replace the quantization field with graph_optimization parts such as shown below. The **precisions** field only supports **bf16** and **fp32**.
 
   ```yaml
   graph_optimization:
@@ -65,12 +65,12 @@ LPOT also supports tuning the model in graph optimization mode. The end user mus
   ```
 Note that if we remove the evaluation field from the yaml file, the graph optimization will only convert the model depending on the precisions setting.
 
-When the graph_optimization field is set and the evaluation field exists in the yaml file, LPOT executes the similar process like quantization. It means the LPOT converts op into bf16 as much as possible and checks the metric later. If the metric meets the criterion, LPOT exits or it fallbacks one op to fp32 and re-runs the above process until it meets the exit policy setting.
+When the graph_optimization field is set and the evaluation field exists in the yaml file, Neural Compressor executes the similar process like quantization. It converts op into bf16 as much as possible and checks the metric later. If the metric meets the criterion, Neural Compressor exits or it fallbacks one op to fp32 and re-runs the above process until it meets the exit policy setting.
 
 Below is an example of using yaml to trigger graph optimization.
 
   ```python
-      from lpot.experimental import Graph_Optimization
+      from neural_compressor.experimental import Graph_Optimization
       graph_optimizer = Graph_Optimization('/path/to/config.yaml')
       graph_optimizer.model = '/path/to/model'
       optimized_model = graph_optimizer()
@@ -98,7 +98,7 @@ Graph_Optimization class also support Graph_Optimization_Conf class as it's argu
   ```
   2. Measure the performance on original FP32 model.
 
-  First of all, we create the **resnet50_measurement.yaml** with below settings for leveraging LPOT Benchmark API.
+  First of all, we create the **resnet50_measurement.yaml** with below settings for leveraging Neural Compressor Benchmark API.
 
   ```yaml
     model:
@@ -119,7 +119,7 @@ Graph_Optimization class also support Graph_Optimization_Conf class as it's argu
 
   Then, we can leverage the Benchmark API to measure the performance.
   ```python
-  from lpot.experimental import Benchmark
+  from neural_compressor.experimental import Benchmark
   evaluator = Benchmark('/path/to/resnet50_measurement.yaml')
   evaluator.model = '/path/to/resnet50_fp32_pretrained_model.pb'
   evaluator('performance')
@@ -135,16 +135,16 @@ Graph_Optimization class also support Graph_Optimization_Conf class as it's argu
 ```
 3. Re-Measure the performance on optimized FP32 model.
   ```python
-  from lpot.experimental import Graph_Optimization
+  from neural_compressor.experimental import Graph_Optimization
 
   graph_optimizer = Graph_Optimization()
   graph_optimizer.model = '/path/to/resnet50_fp32_pretrained_model.pb'
   output_graph = graph_optimizer()
   output_graph.save('/path/to/fp32_optimized_model')
   ```
-Then, We measure the optimized performance via LPOT Benchmark API again.
+Then, We measure the optimized performance via Neural Compressor Benchmark API again.
   ```python
-  from lpot.experimental import Benchmark
+  from neural_compressor.experimental import Benchmark
   evaluator = Benchmark('/path/to/resnet50_measurement.yaml')
   evaluator.model = '/path/to/fp32_optimized_model'
   evaluator('performance')

@@ -73,7 +73,7 @@ refer [intel/intel-extension-for-pytorch at mlperf/inference-1.1 (github.com)](h
          --output_json $local_data_dir/dev-clean-wav.json
 ```
 
-### 5. tune RNN-T with LPOT
+### 5. tune RNN-T with Neural Compressor
   Please update the setup_env_offline.sh or setup_env_server.sh and user.conf according to your platform resource.
 ```
   # offline

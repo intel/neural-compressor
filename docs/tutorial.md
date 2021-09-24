@@ -1,9 +1,9 @@
 Tutorial
 ========
 
-This tutorial provides instructions (with examples) on how to integrate models with Intel® Low Precision Optimization Tool (LPOT). 
+This tutorial provides instructions (with examples) on how to integrate models with Intel® Neural Compressor. 
 
-The following diagram shows steps for enabling model with LPOT:
+The following diagram shows steps for enabling model with Neural Compressor:
 
 ![Tutorial](imgs/tutorial.png "Tutorial") 
 
@@ -16,21 +16,21 @@ To write launcher code, a user needs to prepare four components:
 *	`Postprocess`      <span style="color:red">*optional*</span>
 *	`Metric`
 
-LPOT constructs the whole quantization/pruning process using these four components. 
+Neural Compressor constructs the whole quantization/pruning process using these four components. 
 
-LPOT has added built-in support for popular dataloaders/datasets and metrics to ease the preparation. Refer to [dataset](./dataset.md) and [metric](./metric.md) to learn how to use them in yaml. 
+Neural Compressor has added built-in support for popular dataloaders/datasets and metrics to ease the preparation. Refer to [dataset](./dataset.md) and [metric](./metric.md) to learn how to use them in yaml. 
 
-LPOT also supports registering custom datasets and custom metrics by code. 
+Neural Compressor also supports registering custom datasets and custom metrics by code. 
 
-As for model, LPOT abstract a common API, named [lpot.experimental.common.Model](../lpot/experimental/common/model.py), to cover the case in which model, weight, and other necessary info are separately stored. Refer to [model](./model.md) to learn how to use it.
+As for model, Neural Compressor abstract a common API, named [neural_compressor.experimental.common.Model](../neural_compressor/experimental/common/model.py), to cover the case in which model, weight, and other necessary info are separately stored. Refer to [model](./model.md) to learn how to use it.
 
-Postprocess is treated as a special transform by LPOT which is only needed when a model output is mismatching with the expected input of LPOT built-in metrics. If a user is using a custom metric, the postprocess is not needed as the custom metric implementation needed ensures it can handle the model output correctly. On the other hand, the postprocess logic becomes part of the custom metric implementation.
+Postprocess is treated as a special transform by Neural Compressor which is only needed when a model output is mismatching with the expected input of Neural Compressor built-in metrics. If a user is using a custom metric, the postprocess is not needed as the custom metric implementation needed ensures it can handle the model output correctly. On the other hand, the postprocess logic becomes part of the custom metric implementation.
 
-The example below shows how to enable LPOT on TensorFlow mobilenet_v1 with a built-in dataloader, dataset, and metric.
+The example below shows how to enable Neural Compressor on TensorFlow mobilenet_v1 with a built-in dataloader, dataset, and metric.
 
 ```python
 # main.py
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization('./conf.yaml')
 quantizer.model = common.Model("./mobilenet_v1_1.0_224_frozen.pb")
 quantized_model = quantizer()
@@ -82,13 +82,13 @@ evaluation:
 
 ```
 
-In this example, we use an LPOT built-in `ImageRecord` dataset and a `topk` metric.
+In this example, we use an Neural Compressor built-in `ImageRecord` dataset and a `topk` metric.
 
-If the user wants to use a dataset or metric that is not supported by the LPOT built-in, the user can register a custom one as demonstrated in the below helloworld example.
+If the user wants to use a dataset or metric that is not supported by built-in, the user can register a custom one as demonstrated in the below helloworld example.
 
 ```python
 # main.py
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 
 class Dataset(object):
   def __init__(self):
@@ -133,7 +133,7 @@ q_model = quantizer()
 >
 > In the customized dataset, the `__getitem__()` interface must be implemented and return a single sample and label. In this example, it returns the (image, label) pair. The user can return (image, 0) for a label-free case.
 
-In the customized metric, the update() function records the predicted result of each mini-batch. The result() function is invoked by LPOT at the end of the evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from the customized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
+In the customized metric, the update() function records the predicted result of each mini-batch. The result() function is invoked by Neural Compressor at the end of the evaluation to return a scalar to reflect model accuracy. By default, this scalar is higher-is-better. If this scalar returned from the customized metric is a lower-is-better value, `tuning.accuracy_criterion.higher_is_better` in yaml should be set to `False`.
 
 ```yaml
 # conf.yaml

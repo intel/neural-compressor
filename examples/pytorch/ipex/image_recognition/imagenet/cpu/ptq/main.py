@@ -101,7 +101,7 @@ parser.add_argument('--benchmark', dest='benchmark', action='store_true',
 parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                    help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
 parser.add_argument('--ipex', dest='ipex', action='store_true',
@@ -286,7 +286,7 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
 
     if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         if args.ipex:
             quantizer = Quantization("./conf_ipex.yaml")
         else:
@@ -315,7 +315,7 @@ def main_worker(gpu, ngpus_per_node, args):
             else:
                 if pytorch_version < '1.7':
                     model.fuse_model()
-                from lpot.utils.pytorch import load
+                from neural_compressor.utils.pytorch import load
                 new_model = load(
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:

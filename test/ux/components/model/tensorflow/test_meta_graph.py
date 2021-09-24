@@ -17,7 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.model.tensorflow.meta_graph import MetaGraphModel
+from neural_compressor.ux.components.model.tensorflow.meta_graph import MetaGraphModel
 
 
 class TestMetaGraphModel(unittest.TestCase):
@@ -28,22 +28,22 @@ class TestMetaGraphModel(unittest.TestCase):
         super().setUp()
 
         get_model_type_patcher = patch(
-            "lpot.ux.components.model.model_type_getter.lpot_get_model_type",
+            "neural_compressor.ux.components.model.model_type_getter.nc_get_model_type",
         )
         self.addCleanup(get_model_type_patcher.stop)
         get_model_type_mock = get_model_type_patcher.start()
         get_model_type_mock.side_effect = self._get_model_type
 
-        lpot_tensorflow_model_patcher = patch(
-            "lpot.ux.components.model.tensorflow.model.LpotModel",
+        nc_tensorflow_model_patcher = patch(
+            "neural_compressor.ux.components.model.tensorflow.model.NCModel",
         )
-        self.addCleanup(lpot_tensorflow_model_patcher.stop)
-        lpot_model_instance_mock = lpot_tensorflow_model_patcher.start()
-        lpot_model_instance_mock.return_value.input_node_names = [
+        self.addCleanup(nc_tensorflow_model_patcher.stop)
+        nc_model_instance_mock = nc_tensorflow_model_patcher.start()
+        nc_model_instance_mock.return_value.input_node_names = [
             "first input node",
             "second input node",
         ]
-        lpot_model_instance_mock.return_value.output_node_names = [
+        nc_model_instance_mock.return_value.output_node_names = [
             "first output node",
             "second output node",
         ]
@@ -66,7 +66,7 @@ class TestMetaGraphModel(unittest.TestCase):
         """Test getting correct framework name."""
         self.assertFalse(MetaGraphModel.supports_path("/path/to/model.txt"))
 
-    @patch("lpot.ux.components.model.tensorflow.model.check_module")
+    @patch("neural_compressor.ux.components.model.tensorflow.model.check_module")
     def test_guard_requirements_installed(self, mocked_check_module: MagicMock) -> None:
         """Test guard_requirements_installed."""
         model = MetaGraphModel("/path/to/meta_graph/")

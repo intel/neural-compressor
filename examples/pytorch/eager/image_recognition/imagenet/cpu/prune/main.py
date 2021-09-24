@@ -76,7 +76,7 @@ def main_worker(args):
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     if args.prune:
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning(args.config)
 
         prune.model = common.Model(model)

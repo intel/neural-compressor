@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized PyTorch ssd_resnet34 models tuning results via LPOT.
+This document list steps of reproducing Intel Optimized PyTorch ssd_resnet34 models tuning results via Neural Compressor.
 
 Our example comes from MLPerf Inference Benchmark Suite
 
@@ -51,7 +51,7 @@ GCC5 or above is needed.
 
 # Run
 
-### 1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of LPOT.
+### 1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of Neural Compressor.
 
   The changes made are as follows:
   1. add conf.yaml:
@@ -63,9 +63,9 @@ GCC5 or above is needed.
           anno_dir: convert_dataset/annotations/instances_val2017.json
         ```
     Note: the npy file does not exist in current folder and will be generated after the progress is initialized. So please keep npy_dir path pointing to preprocessed/coco-1200-pt/NCHW/val2017/ in current folder, You can also use absolute path by adding your current path before preprocessed/coco-1200-pt/NCHW/val2017/.
-    Such as: /home/xxx/lpot/examples/pytorch/fx/object_detection/ssd_resnet34/ptq/preprocessed/coco-1200-pt/NCHW/val2017/
+    Such as: /home/xxx/neural_compressor/examples/pytorch/fx/object_detection/ssd_resnet34/ptq/preprocessed/coco-1200-pt/NCHW/val2017/
   2. edit python/main.py:
-    we import lpot in it.
+    we import neural_compressor in it.
   3. edit python/model/ssd_r34.py:
     we wrap functions with @torch.fx.wrap to avoid ops cannot be traced by fx mode.
 

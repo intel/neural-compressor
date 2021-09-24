@@ -1,8 +1,8 @@
 # Introduction
 
-This example is used to demonstrate 3D-Unet int8 accuracy by tuning with LPOT on PyTorch FBGEMM path.
+This example is used to demonstrate 3D-Unet int8 accuracy by tuning with Neural Compressor on PyTorch FBGEMM path.
 
-The 3D-Unet source code comes from [mlperf](https://github.com/mlcommons/inference/tree/master/vision/medical_imaging/3d-unet), commit SHA is **b7e8f0da170a421161410d18e5d2a05d75d6bccf**. [nnUnet](https://github.com/MIC-DKFZ/nnUNet) commit SHA is **b38c69b345b2f60cd0d053039669e8f988b0c0af**. User could diff them with this example to know which changes are made to integrate with LPOT.
+The 3D-Unet source code comes from [mlperf](https://github.com/mlcommons/inference/tree/master/vision/medical_imaging/3d-unet), commit SHA is **b7e8f0da170a421161410d18e5d2a05d75d6bccf**. [nnUnet](https://github.com/MIC-DKFZ/nnUNet) commit SHA is **b38c69b345b2f60cd0d053039669e8f988b0c0af**. User could diff them with this example to know which changes are made to integrate with Neural Compressor.
 
 The model is performing [BraTS 2019](https://www.med.upenn.edu/cbica/brats2019/data.html) brain tumor segmentation task.
 
@@ -50,7 +50,7 @@ The model is performing [BraTS 2019](https://www.med.upenn.edu/cbica/brats2019/d
 ## running cmd
 
 ```shell
-  make run_pytorch_LPOT_tuning
+  make run_pytorch_NC_tuning
   
   or
 

@@ -30,7 +30,7 @@ quantization:                                        # optional. tuning constrai
         BilinearImagenet: 
           height: 224
           width: 224
-  recipes:                                           # optional. used to switch lpot int8 receipts ON or OFF.
+  recipes:                                           # optional. used to switch neural_compressor int8 receipts ON or OFF.
     scale_propagation_max_pooling: False
   model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
     activation:
@@ -52,8 +52,8 @@ quantization:                                        # optional. tuning constrai
              },
            }
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:

@@ -17,7 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.utils.workload.evaluation import (
+from neural_compressor.ux.utils.workload.evaluation import (
     Accuracy,
     Configs,
     Evaluation,
@@ -200,7 +200,7 @@ class TestConfigsConfig(unittest.TestCase):
         """Configs config test constructor."""
         super().__init__(*args, **kwargs)
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_configs_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config constructor."""
         mock_hwinfo.return_value.cores_per_socket = 5
@@ -221,7 +221,7 @@ class TestConfigsConfig(unittest.TestCase):
         self.assertEqual(configs.intra_num_of_threads, 16)
         self.assertEqual(configs.kmp_blocktime, 3)
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_configs_constructor_defaults(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config constructor defaults."""
         mock_hwinfo.return_value.cores = 5
@@ -235,7 +235,7 @@ class TestConfigsConfig(unittest.TestCase):
         self.assertIsNone(configs.intra_num_of_threads)
         self.assertEqual(1, configs.kmp_blocktime)
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_configs_serializer(self, mock_hwinfo: MagicMock) -> None:
         """Test Configs config serializer."""
         mock_hwinfo.return_value.cores_per_socket = 5
@@ -342,7 +342,7 @@ class TestAccuracyConfig(unittest.TestCase):
         """Accuracy config test constructor."""
         super().__init__(*args, **kwargs)
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_accuracy_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Accuracy config constructor."""
         mock_hwinfo.return_value.cores_per_socket = 5
@@ -471,7 +471,7 @@ class TestPerformanceConfig(unittest.TestCase):
         """Initialize Performance config test."""
         super().__init__(*args, **kwargs)
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_performance_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Performance config constructor."""
         mock_hwinfo.return_value.cores_per_socket = 5
@@ -583,7 +583,7 @@ class TestPerformanceConfig(unittest.TestCase):
             },
         )
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_performance_constructor_defaults(self, mock_hwinfo: MagicMock) -> None:
         """Test Performance config constructor defaults."""
         mock_hwinfo.return_value.cores = 5
@@ -614,7 +614,7 @@ class TestEvaluationConfig(unittest.TestCase):
         """Initialize Evaluation config test."""
         super().__init__(*args, **kwargs)
 
-    @patch("lpot.ux.utils.workload.evaluation.HWInfo")
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
     def test_evaluation_constructor(self, mock_hwinfo: MagicMock) -> None:
         """Test Evaluation config constructor."""
         mock_hwinfo.return_value.cores_per_socket = 5

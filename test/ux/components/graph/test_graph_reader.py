@@ -17,15 +17,15 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.graph.graph import Graph
-from lpot.ux.components.graph.graph_reader import GraphReader
+from neural_compressor.ux.components.graph.graph import Graph
+from neural_compressor.ux.components.graph.graph_reader import GraphReader
 
 
 class TestGraphReader(unittest.TestCase):
     """Test GraphReader class."""
 
-    @patch("lpot.ux.components.graph.graph_reader.Collapser")
-    @patch("lpot.ux.components.graph.graph_reader.ModelRepository")
+    @patch("neural_compressor.ux.components.graph.graph_reader.Collapser")
+    @patch("neural_compressor.ux.components.graph.graph_reader.ModelRepository")
     def test_read(
         self,
         mocked_model_repository: MagicMock,
@@ -38,7 +38,7 @@ class TestGraphReader(unittest.TestCase):
         model_graph = Graph()
         collapsed_graph = Graph()
 
-        mocked_model = MagicMock("lpot.ux.components.model.Model").return_value
+        mocked_model = MagicMock("neural_compressor.ux.components.model.Model").return_value
         mocked_model.get_model_graph.return_value = model_graph
 
         mocked_model_repository.return_value.get_model.return_value = mocked_model

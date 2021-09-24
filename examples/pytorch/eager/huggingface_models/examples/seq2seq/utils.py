@@ -329,7 +329,7 @@ class Seq2SeqDataCollator:
         )
         return batch_encoding.data
 
-class Seq2SeqDataCollator_lpot(Seq2SeqDataCollator):
+class Seq2SeqDataCollator_nc(Seq2SeqDataCollator):
     def __call__(self, batch) -> Dict[str, torch.Tensor]:
         if hasattr(self.tokenizer, "prepare_seq2seq_batch"):
             batch = self._encode(batch)

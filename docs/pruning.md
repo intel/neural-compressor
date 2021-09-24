@@ -17,7 +17,7 @@ Unstructured pruning means pruning unstructured sparsity (aka random sparsity) p
 
 Filter/Channel pruning means pruning a larger part of the network, such as filters or layers, according to some rules.
 
-## Pruning Algorithms supported by LPOT
+## Pruning Algorithms supported by Neural Compressor
 
 |    Pruning Type        |                 Algorithm                   | PyTorch | Tensorflow |
 |------------------------|---------------------------------------------|---------|------------|
@@ -26,7 +26,7 @@ Filter/Channel pruning means pruning a larger part of the network, such as filte
 |  structured pruning    | pattern_lock                                |   Yes   |     N/A    | 
 | filter/channel pruning | gradient_sensitivity                        |   Yes   |     N/A    |
 
-LPOT also supports the two-shot execution of unstructured pruning and post-training quantization.
+Neural Compressor also supports the two-shot execution of unstructured pruning and post-training quantization.
 
 - basic_magnitude:
 
@@ -52,10 +52,10 @@ LPOT also supports the two-shot execution of unstructured pruning and post-train
 
 ### User facing API
 
-LPOT pruning API is defined under `lpot.experimental.Pruning`, which takes a user defined yaml file as input. The user defined yaml defines training, pruning and evaluation behaviors.
+Neural Compressor pruning API is defined under `neural_compressor.experimental.Pruning`, which takes a user defined yaml file as input. The user defined yaml defines training, pruning and evaluation behaviors.
 
 ```
-# pruning.py in lpot/experimental
+# pruning.py in neural_compressor/experimental
 class Pruning():
     def __init__(self, conf_fname_or_obj):
         # The initialization function of pruning, taking the path or Pruning_Conf class to user-defined yaml as input
@@ -76,13 +76,13 @@ class Pruning():
     def pruning_func(self, user_pruning_func)
         # The training function provided by user. This function takes framework runtime model object as input parameter, 
         # and executes entire training process with self contained training hyper-parameters.
-        # It is optional if training could be configured by lpot built-in dataloader/optimizer/criterion.
+        # It is optional if training could be configured by neural_compressor built-in dataloader/optimizer/criterion.
         ...
 
     @eval_func.setter
     def eval_func(self, user_eval_func)
         # The evaluation function provided by user. This function takes framework runtime model object as input parameter and executes evaluation process.
-        # It is optional if evaluation could be configured by lpot built-in dataloader/optimizer/criterion.
+        # It is optional if evaluation could be configured by neural_compressor built-in dataloader/optimizer/criterion.
         ...
 
     @train_dataloader.setter
@@ -122,7 +122,7 @@ class Pruning():
 Simplest launcher code if training behavior is defined in user-defined yaml.
 
 ```
-from lpot.experimental import Pruning, common
+from neural_compressor.experimental import Pruning, common
 prune = Pruning('/path/to/user/pruning/yaml')
 prune.model = common.Model(model)
 model = prune()
@@ -244,9 +244,9 @@ The `approach` section defines which pruning algorithm is used and how to apply 
 
 ### Pruning with user-defined pruning_func()
 
-User can pass the customized training/evaluation functions to `Pruning` for flexible scenarios. `Pruning`  In this case, pruning process can be done by pre-defined hooks in LPOT. User needs to put those hooks inside the training function.
+User can pass the customized training/evaluation functions to `Pruning` for flexible scenarios. `Pruning`  In this case, pruning process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.
 
-LPOT defines several hooks for user pass
+Neural Compressor defines several hooks for user pass
 
 ```
 on_epoch_begin(epoch) : Hook executed at each epoch beginning
@@ -294,7 +294,7 @@ def pruning_func(model):
 In this case, the launcher code is like the following:
 
 ```python
-from lpot.experimental import Pruning, common
+from neural_compressor.experimental import Pruning, common
 prune = Pruning(args.config)
 prune.model = common.Model(model)
 prune.pruning_func = pruning_func
@@ -303,10 +303,10 @@ model = prune()
 
 ### Scheduler for Pruning and Quantization
 
-LPOT defined Scheduler to automatically pipeline execute prune and post-training quantization. After appending separate component into scheduler pipeline, scheduler executes them one by one. In following example it executes the pruning and then post-training quantization.
+Neural Compressor defined Scheduler to automatically pipeline execute prune and post-training quantization. After appending separate component into scheduler pipeline, scheduler executes them one by one. In following example it executes the pruning and then post-training quantization.
 
 ```python
-from lpot.experimental import Quantization, common, Pruning, Scheduler
+from neural_compressor.experimental import Quantization, common, Pruning, Scheduler
 prune = Pruning(prune_conf)
 quantizer = Quantization(post_training_quantization_conf)
 scheduler = Scheduler()
@@ -318,8 +318,8 @@ opt_model = scheduler()
 
 ## Examples
 
-### Examples in LPOT
-Following examples are supported in LPOT:
+### Examples in Neural Compressor
+Following examples are supported in Neural Compressor:
 
 - CNN Examples:
   - [resnet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/prune/README.md): magnitude pruning on resnet.

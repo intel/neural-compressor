@@ -216,7 +216,7 @@ def get_args():
                         help='run benchmark')
     parser.add_argument('--int8', dest='int8', action='store_true', help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     args = parser.parse_args()
 
     # don't use defaults in argparser. Instead we default to a dict, override that with a profile
@@ -582,8 +582,8 @@ def main():
 
     os.chdir(os.path.join(sys.path[0], ".."))
     if args.tune:
-        # Quantization with LPOT
-        from lpot.experimental import Quantization, common
+        # Quantization with Neural Compressor
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(raw_model)
         quantizer.eval_func = eval_func
@@ -591,7 +591,7 @@ def main():
         q_model.save(args.tuned_checkpoint)
 
     elif args.int8:
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), raw_model)
         if args.accuracy:
             eval_func(int8_model)

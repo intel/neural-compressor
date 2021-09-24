@@ -1,16 +1,15 @@
 {% set version = "1.6" %}
 {% set buildnumber = 0 %}
 package:
-  name: lpot
+  name: neural-compressor
   version: {{version}}
 build:
   script_env:
-    - LPOT_WHL
+    - NC_WHL
   number: {{buildnumber}}
-  noarch: python
-  script: pip install --no-deps {{LPOT_WHL}}
+  script: pip install --no-deps {{NC_WHL}}
   entry_points:
-    - neural_compressor_bench = lpot.ux.neural_compressor_bench:main
+    - neural_compressor_bench = neural_compressor.ux.neural_compressor_bench:main
 requirements:
   build:
     - python
@@ -39,17 +38,17 @@ requirements:
     - prettytable
 test:
   imports:
-    - lpot
+    - neural_compressor
 about:
-  home: https://github.com/intel/lpot
+  home: https://github.com/intel/neural-compressor
   license: Apache 2.0
   license_family: Apache
   license_file: LICENSE
   description: '
     <strong>LEGAL NOTICE: Use of this software package is subject to the software license agreement (as set forth above, in the license section of the installed Conda package and/or the README file) and all notices, disclaimers or license terms for third party or open source software included in or with the software.</strong>
     <br/><br/>
-    EULA: <a href="https://github.com/intel/lpot/blob/master/LICENSE" target="_blank">Apache 2.0</a><br/>
-    Third Party Programs: https://github.com/intel/lpot/blob/master/third-party-programs.txt
+    EULA: <a href="https://github.com/intel/neural-compressor/blob/master/LICENSE" target="_blank">Apache 2.0</a><br/>
+    Third Party Programs: https://github.com/intel/neural-compressor/blob/master/third-party-programs.txt
     <br/><br/>
-    Intel® Low Precision Optimization Tool.
+    Intel® Neural Compressor.
     '

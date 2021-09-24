@@ -22,7 +22,7 @@ model:                                               # mandatory. used to specif
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 50                                # optional. default value is 100. used to set how many samples should be used in calibration.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       dataset:
         COCORecord:
           root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
@@ -36,10 +36,10 @@ quantization:                                        # optional. tuning constrai
   #        }
 
 evaluation:                                          # optional. used to config evaluation process.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric: 
       COCOmAP: {}
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 1
       dataset:
         COCORecord:

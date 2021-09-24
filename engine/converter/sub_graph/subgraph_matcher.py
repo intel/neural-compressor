@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from .pattern import supported_patterns, PATTERNS
-from lpot.utils import logger
+from neural_compressor.utils import logger
 
 EXECUTOR_TYPE = {
     "MatMulWithBias": "InnerProduct",

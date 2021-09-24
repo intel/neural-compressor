@@ -37,11 +37,11 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
     "config", None,
-    "lpot config for the model.")
+    "neural_compressor config for the model.")
 
 flags.DEFINE_string(
     "input_model", None,
-    "lpot input model path.")
+    "neural_compressor input model path.")
 
 ## Required parameters
 flags.DEFINE_string(
@@ -726,7 +726,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
-    # if use lpot reuse the eval metric
+    # if use neural_compressor reuse the eval metric
     elif mode == tf.estimator.ModeKeys.EVAL:
 
       def metric_fn(per_example_loss, label_ids, logits, is_real_example):
@@ -1024,7 +1024,7 @@ def main(_):
       is_training=False,
       drop_remainder=False)
 
-  from lpot.experimental import Quantization, common
+  from neural_compressor.experimental import Quantization, common
   quantizer = Quantization(FLAGS.config)
   quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
   pb_path = os.path.join(FLAGS.output_dir, "bert_base_mrpc.pb")

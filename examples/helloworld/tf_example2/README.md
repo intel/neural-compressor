@@ -4,15 +4,15 @@ tf_example2 example
 Step-by-Step
 ============
 
-This is Hello World to demonstrate how to quick start with Intel® Low Precision Optimization Tool. It is a Keras model on mnist dataset defined by helloworld/train.py, we will implement a customized metric and a customized dataloader for quantization and evaluation.
+This is Hello World to demonstrate how to quick start with Intel® Neural Compressor. It is a Keras model on mnist dataset defined by helloworld/train.py, we will implement a customized metric and a customized dataloader for quantization and evaluation.
 
 
 ## Prerequisite
 
 ### 1. Installation
 ```shell
-# Install Intel® Low Precision Optimization Tool
-pip install lpot
+# Install Intel® Neural Compressor
+pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow
 ```shell
@@ -93,7 +93,7 @@ q_model = quantizer()
 ```
 
 ### 5. Run quantized model
-please get the input and output op name from lpot_workspace/tensorflow/hello_world/deploy.yaml
+please get the input and output op name from nc_workspace/tensorflow/hello_world/deploy.yaml
 ```yaml
 model:
   name: hello_world

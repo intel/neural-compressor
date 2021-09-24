@@ -367,7 +367,7 @@ class Dataset(object):
 if __name__ == '__main__':
     build_fake_yaml()
     train()
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization('fake_yaml.yaml')
     quantizer.eval_dataloader = common.DataLoader(Dataset())
     quantizer.model = './baseline_model'

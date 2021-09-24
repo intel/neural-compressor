@@ -21,7 +21,7 @@ class dataloader(object):
             yield self.test_images[self.i: self.i + self.batch_size], self.test_labels[self.i: self.i + self.batch_size]
             self.i = self.i + self.batch_size
 
-from lpot.experimental import Benchmark, common
+from neural_compressor.experimental import Benchmark, common
 evaluator = Benchmark('mnist.yaml')
 evaluator.model = common.Model('quantized_model')
 evaluator.b_dataloader = dataloader()

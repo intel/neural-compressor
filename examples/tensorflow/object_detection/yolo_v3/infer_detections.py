@@ -16,7 +16,7 @@ flags.DEFINE_string("input_graph", None, "input graph")
 
 flags.DEFINE_string("output_graph", None, "input graph")
 
-flags.DEFINE_string("config", None, "LPOT config file")
+flags.DEFINE_string("config", None, "Neural Compressor config file")
 
 flags.DEFINE_float("conf_threshold", 0.5, "confidence threshold")
 
@@ -140,7 +140,7 @@ def main(_):
         run_benchmark()
     else:
         FLAGS.batch_size = 1
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(FLAGS.config)
         quantizer.model = common.Model(FLAGS.input_graph)
         kwargs = {'conf_threshold': FLAGS.conf_threshold,

@@ -43,7 +43,7 @@ evaluation:                                          # optional. required if use
 3. Run quantization
 We only need to add the following lines for quantization to create an int8 model.
 ```python
-    from lpot.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization, common
     quantizer = Quantization('./conf.yaml')
     quantizer.model = common.Model('./mobilenet_v1_1.0_224_frozen.pb')
     quantized_model = quantizer()
@@ -56,7 +56,7 @@ We only need to add the following lines for quantization to create an int8 model
 
 4. Run benchmark according to config
 ```python
-    from lpot.experimental import Quantization,  Benchmark, common
+    from neural_compressor.experimental import Quantization,  Benchmark, common
     evaluator = Benchmark('./conf.yaml')
     evaluator.model = common.Model('./int8.pb')
     results = evaluator()

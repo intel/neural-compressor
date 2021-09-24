@@ -1,8 +1,8 @@
 Contribution Guidelines
 =======================
 
-If you have improvements to Intel® Low Precision Optimization Tool, send your pull requests for
-[review](https://github.com/intel/lpot/pulls). If you are new to Github, view the pull request
+If you have improvements to Intel® Neural Compressor, send your pull requests for
+[review](https://github.com/intel/neural-compressor/pulls). If you are new to Github, view the pull request
 [How To](https://help.github.com/articles/using-pull-requests/).
 
 
@@ -12,8 +12,8 @@ Before sending your pull requests, follow the information below:
 - Changes are consistent with the Python [Coding Style](https://github.com/google/styleguide/blob/gh-pages/pyguide.md).
 - Use pylint to check your Python code.
 - Use flake8 and autopep8 to make Python code clean. 
-- Add unit tests in [Unit Tests](https://github.com/intel/lpot/tree/master/test) to cover the code you would like to contribute.
-- Run [Unit Tests](https://github.com/intel/lpot/tree/master/test).
+- Add unit tests in [Unit Tests](https://github.com/intel/neural-compressor/tree/master/test) to cover the code you would like to contribute.
+- Run [Unit Tests](https://github.com/intel/neural-compressor/tree/master/test).
 
 ## Pull Request Template
 
@@ -43,7 +43,7 @@ Provide the development or test environment info.
 ## Support
 
 Submit your questions, feature requests, and bug reports to the
-[GitHub issues](https://github.com/intel/lpot/issues) page. You may also reach out to lpot.maintainers@intel.com.
+[GitHub issues](https://github.com/intel/neural-compressor/issues) page. You may also reach out to [Maintainers](neural_compressor.maintainers@intel.com).
 
 ## Contributor Covenant Code of Conduct
 

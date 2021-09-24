@@ -20,8 +20,8 @@ model:                                               # mandatory. used to specif
 quantization:                                        # optional. required for QAT and PTQ.
   approach: quant_aware_training                     # mandatory. supported values are quant_aware_training and post_training_static_quant.
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
 

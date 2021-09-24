@@ -11,10 +11,10 @@ Knowledge distillation is one of popular approaches of network compression, whic
 
 ### User facing API
 
-LPOT distillation API is defined under `lpot.experimental.Distillation`, which takes a user defined yaml file as input. The user defined yaml defines distillation and evaluation behaviors.
+Neural Compressor distillation API is defined under `neural_compressor.experimental.Distillation`, which takes a user defined yaml file as input. The user defined yaml defines distillation and evaluation behaviors.
 
 ```python
-# distillation.py in lpot/experimental
+# distillation.py in neural_compressor/experimental
 class Distillation():
     def __init__(self, conf_fname_or_obj):
         # The initialization function of distillation, taking the path or Distillation_Conf class to user-defined yaml as input
@@ -40,13 +40,13 @@ class Distillation():
     def train_func(self, user_train_func)
         # The training function provided by user. This function takes framework runtime model object as input parameter, 
         # and executes entire training process with self contained training hyper-parameters.
-        # It is optional if training could be configured by lpot built-in dataloader/optimizer/criterion.
+        # It is optional if training could be configured by neural_compressor built-in dataloader/optimizer/criterion.
         ...
 
     @eval_func.setter
     def eval_func(self, user_eval_func)
         # The evaluation function provided by user. This function takes framework runtime model object as input parameter and executes evaluation process.
-        # It is optional if evaluation could be configured by lpot built-in dataloader/optimizer/criterion.
+        # It is optional if evaluation could be configured by neural_compressor built-in dataloader/optimizer/criterion.
         ...
 
     @train_dataloader.setter
@@ -88,7 +88,7 @@ class Distillation():
 Simplest launcher code if training behavior is defined in user-defined yaml.
 
 ```python
-from lpot.experimental import Distillation, common
+from neural_compressor.experimental import Distillation, common
 distiller = Distillation('/path/to/user/yaml')
 distiller.student_model = common.Model(student_model)
 distiller.teacher_model = common.Model(teacher_model)
@@ -141,8 +141,8 @@ distillation:
         momentum: 0.9
         weight_decay: 0.0004
         nesterov: False
-evaluation:                              # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                              # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                              # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                              # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                            # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -162,10 +162,10 @@ evaluation:                              # optional. required if user doesn't pr
 
 #### `train`
 
-The `train` section defines the training behavior, including what training hyper-parameter would be used and which dataloader is used during training. For criterion, we provided a built-in knowledge distillation loss class for distillation loss calculation. It is defined under `lpot.experimental.common.criterion` with following structure.
+The `train` section defines the training behavior, including what training hyper-parameter would be used and which dataloader is used during training. For criterion, we provided a built-in knowledge distillation loss class for distillation loss calculation. It is defined under `neural_compressor.experimental.common.criterion` with following structure.
 
 ```python
-# criterion.py in lpot/experimental/common
+# criterion.py in neural_compressor/experimental/common
 class KnowledgeDistillationLoss():
     def __init__(self, temperature=1.0, 
                  loss_types=['CE', 'CE'], 
@@ -189,9 +189,9 @@ class KnowledgeDistillationLoss():
 
 ### Distillation with user-defined train_func()
 
-User can pass the customized training/evaluation functions to `Distillation` for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in LPOT. User needs to put those hooks inside the training function.
+User can pass the customized training/evaluation functions to `Distillation` for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.
 
-LPOT defines several hooks for user pass
+Neural Compressor defines several hooks for user pass
 
 ```
 pre_epoch_begin() : Hook executed before training begins
@@ -231,8 +231,8 @@ def train_func(model):
 In this case, the launcher code is like the following:
 
 ```python
-from lpot.experimental import Distillation, common
-from lpot.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
+from neural_compressor.experimental import Distillation, common
+from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
 distiller = Distillation(args.config)
 distiller.student_model = common.Model(model)
 distiller.teacher_model = common.Model(teacher)
@@ -243,8 +243,8 @@ model = distiller()
 
 ## Examples
 
-### Examples in LPOT
-Following examples are supported in LPOT:
+### Examples in Neural Compressor
+Following examples are supported in Neural Compressor:
 
 - CNN Examples:
   - [ResNet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/distillation/README.md): distillation of ResNet50 to ResNet18 on ImageNet dataset.

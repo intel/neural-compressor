@@ -1,15 +1,15 @@
 Benchmarking
 ============
 
-The benchmarking feature of LPOT is used to measure the model performance with the objective settings; the user can get the performance of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.
+The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings; the user can get the performance of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.
 
 The following examples show how to use benchmarking.
 
 ## Config evaluation filed in a yaml file
 
 ```yaml
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -49,11 +49,11 @@ The above example config two sub-fields named 'accuracy' and 'performance' which
 
 ## Use a user-specific dataloader to run benchmark
 
-In this case, configure your dataloader and LPOT will construct an evaluation function to run the benchmarking. The user can also register the postprocess transform and metric to get the accuracy.
+In this case, configure your dataloader and Neural Compressor will construct an evaluation function to run the benchmarking. The user can also register the postprocess transform and metric to get the accuracy.
 
 ```python
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
-from lpot.experimental import Benchmark, common
+from neural_compressor.experimental import Benchmark, common
 evaluator = Benchmark(config.yaml)
 evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
 # user can also register postprocess and metric, this is optional

@@ -60,11 +60,11 @@ flags.DEFINE_integer(
     "dupe_factor", 10,
     "Number of times to duplicate the input data (with different masks).")
 
-flags.DEFINE_float("masked_lm_prob", 0.15, "Masked LM probablpoty.")
+flags.DEFINE_float("masked_lm_prob", 0.15, "Masked LM probability.")
 
 flags.DEFINE_float(
     "short_seq_prob", 0.1,
-    "Probablpoty of creating sequences which are shorter than the "
+    "Probability of creating sequences which are shorter than the "
     "maximum length.")
 
 

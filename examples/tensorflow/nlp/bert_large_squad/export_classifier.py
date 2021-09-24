@@ -62,7 +62,7 @@ class ClassifierExporter:
     self.input_mask = placeholder(tf.int32, input_shape, name='input_mask')
     self.segment_ids = placeholder(tf.int32, input_shape, name='segment_ids')
 
-    self.loss, self.per_example_loss, self.logits, self.probablpoties = \
+    self.loss, self.per_example_loss, self.logits, self.probabilities = \
       create_model_top(bert_config, False, # is training
                        self.input_ids, self.input_mask, self.segment_ids,
                        self.label_ids, num_labels, use_one_hot_embeddings,
@@ -105,7 +105,7 @@ class ClassifierExporter:
         "loss": build_tensor_info(self.loss),
         "per_example_loss": build_tensor_info(self.per_example_loss),
         "logits": build_tensor_info(self.logits),
-        "probablpoties": build_tensor_info(self.probablpoties)
+        "probabilities": build_tensor_info(self.probabilities)
     }
 
     signature = signature_def_utils.build_signature_def(inputs, outputs)

@@ -12,7 +12,7 @@ tf.compat.v1.enable_eager_execution()
 from tensorflow import keras
 
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -108,8 +108,8 @@ class TestModelConversion(unittest.TestCase):
         shutil.rmtree(self._quantized_temp_path, ignore_errors=True)
 
     def test_model_conversion(self):
-        from lpot.experimental import ModelConversion, common
-        from lpot.conf.config import Conf
+        from neural_compressor.experimental import ModelConversion, common
+        from neural_compressor.conf.config import Conf
         conversion = ModelConversion()
         conversion.source = 'qat'
         conversion.destination = 'default'

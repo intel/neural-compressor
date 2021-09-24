@@ -15,7 +15,7 @@
 """ Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
 import argparse
 import logging
-from lpot.utils.logger import log
+from neural_compressor.utils.logger import log
 import math
 import os
 import random
@@ -485,8 +485,8 @@ def main():
 
     # Do distillation
     if args.do_distillation:
-        from lpot.experimental import Distillation, common
-        from lpot.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
+        from neural_compressor.experimental import Distillation, common
+        from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
         def train_func(model):
             return take_train_steps(args, model, train_dataloader, lr_scheduler, distiller)
 

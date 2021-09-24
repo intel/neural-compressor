@@ -318,8 +318,8 @@ class TrainDataset(object):
 
 if __name__ == '__main__':
     train()
-    from lpot.experimental import Pruning, common
-    from lpot.utils import logger
+    from neural_compressor.experimental import Pruning, common
+    from neural_compressor.utils import logger
     prune = Pruning("./prune.yaml")
     prune.eval_dataloader = common.DataLoader(EvalDataset())
     prune.train_dataloader = common.DataLoader(TrainDataset())

@@ -55,7 +55,7 @@ def main():
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./saved_results)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./saved_results)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
     parser.add_argument(
@@ -155,7 +155,7 @@ def main():
        MaskPostProcessor, FPN, RPNHead
     ]}
     if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         data_loaders_val = make_data_loader(cfg, is_train=False,
                                             is_distributed=distributed, is_calib=True)
@@ -170,7 +170,7 @@ def main():
         return
 
     if args.int8:
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
         model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model,
                      **{'prepare_custom_config_dict': prepare_custom_config_dict})
     if args.benchmark:

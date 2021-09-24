@@ -1,4 +1,4 @@
-lpot
+neural-compressor
 transformers == 4.10.0
 datasets >= 1.8.0
 sentencepiece != 0.1.92

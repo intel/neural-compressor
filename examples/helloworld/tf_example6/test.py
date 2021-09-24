@@ -10,7 +10,7 @@ def main():
     args = arg_parser.parse_args()
 
     if args.tune:
-        from lpot import Quantization
+        from neural_compressor import Quantization
         quantizer = Quantization('./conf.yaml')
         quantized_model = quantizer("./mobilenet_v1_1.0_224_frozen.pb")
         tf.io.write_graph(graph_or_graph_def=quantized_model,
@@ -19,7 +19,7 @@ def main():
                           as_text=False)
 
     if args.benchmark:
-        from lpot import Benchmark
+        from neural_compressor import Benchmark
         evaluator = Benchmark('./conf.yaml')
         results = evaluator('./int8.pb')
         batch_size = 1

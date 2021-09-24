@@ -19,8 +19,8 @@ from unittest.mock import MagicMock, patch
 
 from werkzeug.wrappers import Response
 
-from lpot.ux.utils.exceptions import ClientErrorException, NotFoundException
-from lpot.ux.web.service.workload import WorkloadService
+from neural_compressor.ux.utils.exceptions import ClientErrorException, NotFoundException
+from neural_compressor.ux.web.service.workload import WorkloadService
 
 
 class TestWorkloadService(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestWorkloadService(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Missing workload_id parameter"):
             WorkloadService.get_config({})
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_config_fails_when_no_workload_found(
         self,
         mocked_get_workload_data: MagicMock,
@@ -51,7 +51,7 @@ class TestWorkloadService(unittest.TestCase):
 
         mocked_get_workload_data.assert_called_with("requested workload id")
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_config_fails_when_config_path_missing(
         self,
         mocked_get_workload_data: MagicMock,
@@ -73,8 +73,8 @@ class TestWorkloadService(unittest.TestCase):
 
         mocked_get_workload_data.assert_called_with("requested workload id")
 
-    @patch("lpot.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_config(
         self,
         mocked_get_workload_data: MagicMock,
@@ -106,7 +106,7 @@ class TestWorkloadService(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Missing workload_id parameter"):
             WorkloadService.get_code_template({})
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_code_template_fails_when_no_workload_found(
         self,
         mocked_get_workload_data: MagicMock,
@@ -126,7 +126,7 @@ class TestWorkloadService(unittest.TestCase):
 
         mocked_get_workload_data.assert_called_with("requested workload id")
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_code_template_fails_when_code_template_path_missing(
         self,
         mocked_get_workload_data: MagicMock,
@@ -148,8 +148,8 @@ class TestWorkloadService(unittest.TestCase):
 
         mocked_get_workload_data.assert_called_with("requested workload id")
 
-    @patch("lpot.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_code_template(
         self,
         mocked_get_workload_data: MagicMock,
@@ -181,7 +181,7 @@ class TestWorkloadService(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Missing workload_id parameter"):
             WorkloadService.get_output({})
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_output_fails_when_no_workload_found(
         self,
         mocked_get_workload_data: MagicMock,
@@ -201,7 +201,7 @@ class TestWorkloadService(unittest.TestCase):
 
         mocked_get_workload_data.assert_called_with("requested workload id")
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_output_fails_when_log_path_missing(
         self,
         mocked_get_workload_data: MagicMock,
@@ -223,8 +223,8 @@ class TestWorkloadService(unittest.TestCase):
 
         mocked_get_workload_data.assert_called_with("requested workload id")
 
-    @patch("lpot.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_output(
         self,
         mocked_get_workload_data: MagicMock,
@@ -252,8 +252,8 @@ class TestWorkloadService(unittest.TestCase):
             mimetype="text/plain",
         )
 
-    @patch("lpot.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_output_with_failure(
         self,
         mocked_get_workload_data: MagicMock,

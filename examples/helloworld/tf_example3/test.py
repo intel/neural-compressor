@@ -6,7 +6,7 @@ tf.compat.v1.disable_eager_execution()
 
 def main():
 
-    from lpot.experimental import Quantization,  common
+    from neural_compressor.experimental import Quantization,  common
     quantizer = Quantization('./conf.yaml')
 
     # Do quantization

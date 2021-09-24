@@ -21,7 +21,7 @@ from onnx.numpy_helper import to_array
 import numpy as np
 import re
 from collections import namedtuple, OrderedDict
-from lpot.utils import logger
+from neural_compressor.utils import logger
 from .ops.tensor import Tensor
 from . import graph_utils as util
 
@@ -29,7 +29,7 @@ from . import graph_utils as util
 def get_node_children_names(model, node):
     """Get the node's output nodes' name in the graph
     Args:
-        model: lpot ONNXModel
+        model: neural_compressor ONNXModel
         node: NodeProto in onnx model
     Returns:
         outputs: names list
@@ -43,7 +43,7 @@ def get_node_children_names(model, node):
 def get_initializer_children_names(model, initializer):
     """Get the initializer's output nodes' name in the graph
     Args:
-        model: lpot ONNXModel
+        model: neural_compressor ONNXModel
         initializer: initializer in onnx model
     Returns:
         outputs: names list
@@ -61,7 +61,7 @@ def graph_node_names_details(model):
     tensor value and the input_tensor source op; output_names in value
     is the node ouput name list; outputs in value is for output_tensor dest op
     Args:
-        model: lpot ONNXModel
+        model: neural_compressor ONNXModel
     Returns:
         node_names_details: the graph node info dict
 
@@ -151,7 +151,7 @@ def onnx_extract_operator(node, model, nodes_dict):
     """decorate the operator in onnx
     Args:
         node: NodeProto
-        model: lpot ONNXModel
+        model: neural_compressor ONNXModel
         nodes_dict: dict, return value from graph_node_names_details
         tf_dtypes: dict, for get the dtype string
 

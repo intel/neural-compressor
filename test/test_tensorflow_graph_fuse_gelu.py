@@ -5,8 +5,8 @@ import unittest
 import tensorflow as tf
 
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu import FuseGeluOptimizer
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu import FuseGeluOptimizer
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 @unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.15.up2 and 1.15.up3")

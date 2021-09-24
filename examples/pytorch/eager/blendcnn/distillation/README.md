@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch BlendCNN distillation(with MRPC dataset) results with Intel® Low Precision Optimization Tool.
+This document describes the step-by-step instructions for reproducing PyTorch BlendCNN distillation(with MRPC dataset) results with Intel® Neural Compressor.
 
 # Prerequisite
 

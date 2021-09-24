@@ -88,7 +88,7 @@ parser.add_argument('-w', "--warmup_iter", default=5, type=int,
 parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                     help='run benchmark')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                    help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                    help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
 
@@ -249,7 +249,7 @@ def main_worker(gpu, ngpus_per_node, args):
         return
 
     if args.tune:
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             epochs = 8
             iters = 30
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -276,10 +276,10 @@ def main_worker(gpu, ngpus_per_node, args):
 
             return
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(args.config)
         quantizer.model = common.Model(model)
-        quantizer.q_func = training_func_for_lpot
+        quantizer.q_func = training_func_for_nc
         quantizer.eval_dataloader = val_loader
         q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
@@ -288,7 +288,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.benchmark:
         model.eval()
         if args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:

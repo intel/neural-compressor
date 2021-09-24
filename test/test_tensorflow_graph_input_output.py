@@ -6,8 +6,8 @@ import os
 import yaml
 import tensorflow as tf
 
-from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
-from lpot.adaptor.tf_utils.util import get_input_output_node_names
+from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -108,7 +108,7 @@ def build_fake_model_3():
 class TestGraphInputOutputDetection(unittest.TestCase):
     tf.compat.v1.disable_v2_behavior()
     mb_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
-    pb_path = '/tmp/.lpot/mobilenet_fp32.pb'
+    pb_path = '/tmp/.neural_compressor/mobilenet_fp32.pb'
     inputs = ['input']
     outputs = ['MobilenetV1/Predictions/Reshape_1']
 
@@ -117,7 +117,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         build_fake_yaml()
         build_fake_yaml_2()
         if not os.path.exists(self.pb_path):
-            os.system('mkdir -p /tmp/.lpot && wget {} -O {} '.format(self.mb_fp32_pb_url, self.pb_path))
+            os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.mb_fp32_pb_url, self.pb_path))
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())
@@ -190,7 +190,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.parse_graph()
 
         float_graph_def = g.dump_graph()
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)
@@ -206,7 +206,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         g.parse_graph()
 
         float_graph_def = g.dump_graph()
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml_2.yaml')
         dataset = quantizer.dataset('dummy', shape=(20, 224, 224, 3), label=True)

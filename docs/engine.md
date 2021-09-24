@@ -23,19 +23,19 @@ conda install absl-py --yes
 
 ```
 
-### 1. install lpot
+### 1. install neural-compressor
 
-As engine is part of lpot, just install lpot will build the binary and engine interface
+As engine is part of neural_compressor, just install neural-compressor will build the binary and engine interface
 
 ```
-pip install lpot
+pip install neural-compressor
 
 ```
 
 ### 2. install C++ binary by deploy bare metal engine
 
 ```
-cd <lpot_folder>/engine/executor
+cd <nc_folder>/engine/executor
 mkdir build
 cd build
 cmake ..
@@ -153,12 +153,12 @@ Engine python api support input numpy array and output numpy array. if you have 
 The `input_ids`, `segment_ids` and `input_mask` are the input numpy array data of a bert model, which have size (batch_size, seq_len). Note that the `out` is a list contains the bert model output numpy data (`out=[output numpy data]`). 
 
 
-## Get a low precision model using lpot tool
+## Get a low precision model using neural_compressor tool
 
 You may have a tensorflow or onnx model and want to have an high performance int8 engine ir, that will be easy to have 
 
 ```
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case)
 quantizer = Quantization(args.config)
 quantizer.model = common.Model(args.input_model)
@@ -171,7 +171,7 @@ q_model.save(args.output_model)
 The output_model is the generated int8 ir of engine. you can also test the benchmark of the engine model
 
 ```
-from lpot.experimental import Benchmark, common
+from neural_compressor.experimental import Benchmark, common
 ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case)
 evaluator = Benchmark(args.config)
 evaluator.model = common.Model(args.input_model)
@@ -180,5 +180,5 @@ evaluator(args.mode)
 
 ```
 
-Reference examples can be found at <lpot_folder>/examples/engine/nlp
+Reference examples can be found at <nc_folder>/examples/engine/nlp
 

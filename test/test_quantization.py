@@ -1,4 +1,4 @@
-"""Tests for lpot quantization"""
+"""Tests for neural_compressor quantization"""
 import numpy as np
 import unittest
 import os
@@ -167,7 +167,7 @@ def build_fake_model():
     return graph
 
 def build_fake_strategy():
-    with open(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'), 'w', encoding='utf-8') as f:
         seq = [
             "import time\n",
             "from .strategy import strategy_registry, TuneStrategy\n",
@@ -226,11 +226,11 @@ class TestQuantization(unittest.TestCase):
         os.remove('fake_yaml3.yaml')
         os.remove('fake_yaml4.yaml')
         os.remove('fake_yaml5.yaml')
-        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('lpot').origin), 'strategy/fake.py'))
+        os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_autosave(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -239,7 +239,7 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_resume(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml5.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -254,7 +254,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_autodump(self):
         # test auto_dump using old api
-        from lpot import Quantization
+        from neural_compressor import Quantization
         quantizer = Quantization('fake_yaml3.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)
@@ -263,7 +263,7 @@ class TestQuantization(unittest.TestCase):
                                  q_dataloader=dataloader, eval_dataloader=dataloader)
 
     def test_performance_only(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml4.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -272,7 +272,7 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_quantization_without_yaml(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization()
         quantizer.model = self.constant_graph
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
@@ -281,7 +281,7 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_invalid_eval_func(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)

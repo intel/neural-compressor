@@ -17,7 +17,7 @@
 import logging
 import unittest
 
-from lpot.ux.utils.logger import change_log_level, log
+from neural_compressor.ux.utils.logger import change_log_level, log
 
 
 class TestLogger(unittest.TestCase):

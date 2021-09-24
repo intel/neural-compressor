@@ -17,20 +17,20 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 import importlib.util
 moduleName = 'version'
-modulePath = os.getcwd() + '/lpot/version.py'
+modulePath = os.getcwd() + '/neural_compressor/version.py'
 spec = importlib.util.spec_from_file_location(moduleName,modulePath)
-LPOTversion = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(LPOTversion)
+NCversion = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(NCversion)
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Intel® Low Precision Optimization Tool'
-copyright = '2021, Intel® Low Precision Optimization Tool'
-author = 'Intel® LPOT developers'
+project = 'Intel® Neural Compressor'
+copyright = '2021, Intel® Neural Compressor'
+author = 'Intel® Neural Compressor developers'
 
 # The short X.Y version
-version = LPOTversion.__version__
+version = NCversion.__version__
 # The full version, including alpha/beta/rc tags
 release = ''
 
@@ -137,7 +137,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'ProjectnameIntelLowPrecisionOptimizationTool.tex', '\\textgreater{} Project name: Intel® Low Precision Optimization Tool Documentation',
+    (master_doc, 'ProjectnameIntelLowPrecisionOptimizationTool.tex', '\\textgreater{} Project name: Intel® Neural Compressor Documentation',
      'Various', 'manual'),
 ]
 
@@ -147,7 +147,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'projectnameintellowprecisionoptimizationtool', '> Project name: Intel® Low Precision Optimization Tool Documentation',
+    (master_doc, 'projectnameintellowprecisionoptimizationtool', '> Project name: Intel® Neural Compressor Documentation',
      [author], 1)
 ]
 
@@ -158,7 +158,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ProjectnameIntelLowPrecisionOptimizationTool', '> Project name: Intel® Low Precision Optimization Tool Documentation',
+    (master_doc, 'ProjectnameIntelLowPrecisionOptimizationTool', '> Project name: Intel® Neural Compressor Documentation',
      author, 'ProjectnameIntelLowPrecisionOptimizationTool', 'One line description of project.',
      'Miscellaneous'),
 ]
@@ -171,7 +171,7 @@ from os import getenv
 sphinx_md_useGitHubURL = True
 baseBranch = "master"
 commitSHA = getenv('GITHUB_SHA')
-githubBaseURL = 'https://github.com/' + (getenv('GITHUB_REPOSITORY') or 'intel/lpot') + '/'
+githubBaseURL = 'https://github.com/' + (getenv('GITHUB_REPOSITORY') or 'intel/neural-compressor') + '/'
 githubFileURL = githubBaseURL + "blob/"
 githubDirURL = githubBaseURL + "tree/"
 if commitSHA:

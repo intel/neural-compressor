@@ -9,8 +9,8 @@ import mxnet as mx
 import mxnet.gluon.nn as nn
 from pathlib import Path
 
-from lpot.experimental import Quantization, common
-from lpot.utils.utility import recover
+from neural_compressor.experimental import Quantization, common
+from neural_compressor.utils.utility import recover
 
 
 sys.path.append('..')
@@ -136,7 +136,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_utils(self):
-      import lpot.adaptor.mxnet_utils.util as utils
+      import neural_compressor.adaptor.mxnet_utils.util as utils
       self.assertTrue(utils.isiterable([1, 2, 3]))
       self.assertFalse(utils.isiterable(123))
 
@@ -269,7 +269,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         net = create_model(net.collect_params())
         qmodel_r = recover(net, WORKSPACE_DIR/'history.snapshot', -1)
 
-        from lpot.adaptor.mxnet_utils.util import prepare_model, prepare_dataloader
+        from neural_compressor.adaptor.mxnet_utils.util import prepare_model, prepare_dataloader
         dataloader = prepare_dataloader(qmodel, mx.cpu(), q_dataloader)
 
         # test calling prepare_dataloader for already prepared dataloader

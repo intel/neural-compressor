@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 
 import yaml
 
-from lpot.ux.utils.yaml_utils import float_representer
+from neural_compressor.ux.utils.yaml_utils import float_representer
 
 
 class TestYamlUtils(unittest.TestCase):

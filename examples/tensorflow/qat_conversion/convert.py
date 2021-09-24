@@ -1,4 +1,4 @@
-from lpot.experimental import ModelConversion, common
+from neural_compressor.experimental import ModelConversion, common
 conversion = ModelConversion()
 conversion.source = 'QAT'
 conversion.destination = 'default'

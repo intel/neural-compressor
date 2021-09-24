@@ -1,4 +1,4 @@
-"""Tests for lpot benchmark"""
+"""Tests for neural_compressor benchmark"""
 import unittest
 import os
 import yaml
@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 import tempfile
 import re
-from lpot.adaptor.tf_utils.util import write_graph
+from neural_compressor.adaptor.tf_utils.util import write_graph
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -42,10 +42,10 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-from lpot.data import DATASETS
+from neural_compressor.data import DATASETS
 dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
-from lpot.experimental import Benchmark, common
-from lpot.conf.config import Benchmark_Conf
+from neural_compressor.experimental import Benchmark, common
+from neural_compressor.conf.config import Benchmark_Conf
 benchmarker = Benchmark('fake_yaml.yaml')
 benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
 benchmarker.model = args.input_model
@@ -83,10 +83,10 @@ def build_benchmark_without_yaml():
         "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
         "args = arg_parser.parse_args()\n",
 
-        "from lpot.data import DATASETS\n",
+        "from neural_compressor.data import DATASETS\n",
         "dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)\n",
 
-        "from lpot.experimental import Benchmark, common\n",
+        "from neural_compressor.experimental import Benchmark, common\n",
         "benchmarker = Benchmark()\n",
         "benchmarker.model = args.input_model\n",
         "benchmarker.b_dataloader = common.DataLoader(dataset)\n",
@@ -194,7 +194,7 @@ class TestObjective(unittest.TestCase):
             self.assertIsNotNone(throughput)
 
     def test_benchmark_without_yaml(self):
-        from lpot.utils import logger
+        from neural_compressor.utils import logger
         os.system("python fake2.py --input_model={}".format(self.graph_path))
         for i in range(2):
             with open(f'2_4_{i}.log', "r") as f:

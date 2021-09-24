@@ -186,7 +186,7 @@ class ModelArguments:
         },
     )
     tune: bool = field(
-        default=False, metadata={"help": "tune quantized model with LPOT"}
+        default=False, metadata={"help": "tune quantized model with Neural Compressor"}
     )
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
@@ -524,9 +524,9 @@ def main():
         print('Latency: %.3f ms' % (1000 / throughput))
         print('Throughput: %.3f samples/sec' % result['eval_samples_per_second'])
 
-    # optimize and quantize with LPOT
+    # optimize and quantize with Neural Compressor
     if model_args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('conf_qat.yaml')
         quantizer.eval_func = eval_func
         quantizer.q_func = train_func
@@ -536,7 +536,7 @@ def main():
         return
 
     if model_args.int8:
-        from lpot.utils.pytorch import load
+        from neural_compressor.utils.pytorch import load
         model = load(training_args.output_dir, model)
     if model_args.benchmark:
         benchmark(model)

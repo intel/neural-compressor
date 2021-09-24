@@ -115,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument('--benchmark', dest='benchmark', action='store_true',
                         help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark for int8')
     opt = parser.parse_args()
@@ -169,16 +169,16 @@ if __name__ == "__main__":
 
         model.eval()
         model.fuse_model()
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
         dataloader = torch.utils.data.DataLoader(
             dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn
         )
-        lpot_dataloader = yolo_dataLoader(dataloader)
+        nc_dataloader = yolo_dataLoader(dataloader)
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = lpot_dataloader
+        quantizer.calib_dataloader = nc_dataloader
 
         q_model = quantizer()
         q_model.save(opt.tuned_checkpoint)
@@ -188,7 +188,7 @@ if __name__ == "__main__":
         model.eval()
         model.fuse_model()
         if opt.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                 os.path.abspath(os.path.expanduser(opt.tuned_checkpoint)), model)
         else:

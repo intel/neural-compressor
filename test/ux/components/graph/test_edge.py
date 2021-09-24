@@ -17,9 +17,9 @@
 import unittest
 import uuid
 
-from lpot.ux.components.graph.edge import Edge
-from lpot.ux.components.graph.node import Node
-from lpot.ux.utils.json_serializer import JsonSerializer
+from neural_compressor.ux.components.graph.edge import Edge
+from neural_compressor.ux.components.graph.node import Node
+from neural_compressor.ux.utils.json_serializer import JsonSerializer
 
 
 def _get_random_string() -> str:

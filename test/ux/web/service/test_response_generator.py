@@ -19,19 +19,19 @@ from unittest.mock import MagicMock, patch
 
 from werkzeug.wrappers import Response
 
-from lpot.ux.utils.exceptions import (
+from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
     InternalException,
     NotFoundException,
 )
-from lpot.ux.web.service.response_generator import ResponseGenerator
+from neural_compressor.ux.web.service.response_generator import ResponseGenerator
 
 
 class TestResponseGenerator(unittest.TestCase):
     """Test ResponseGenerator."""
 
-    @patch("lpot.ux.web.service.response_generator.verify_file_path")
+    @patch("neural_compressor.ux.web.service.response_generator.verify_file_path")
     def test_serve_from_filesystem_passes_verify_file_path_errors(
         self,
         mocked_verify_file_path: MagicMock,
@@ -42,8 +42,8 @@ class TestResponseGenerator(unittest.TestCase):
         with self.assertRaisesRegex(NotFoundException, "Expected Error Message"):
             ResponseGenerator.serve_from_filesystem("foo.txt")
 
-    @patch("lpot.ux.web.service.response_generator.send_file")
-    @patch("lpot.ux.web.service.response_generator.verify_file_path")
+    @patch("neural_compressor.ux.web.service.response_generator.send_file")
+    @patch("neural_compressor.ux.web.service.response_generator.verify_file_path")
     def test_serve_from_filesystem(
         self,
         mocked_verify_file_path: MagicMock,

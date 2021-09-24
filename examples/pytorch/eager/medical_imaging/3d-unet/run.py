@@ -149,7 +149,7 @@ def eval_func(model):
 
 sys.path.insert(0, os.path.join(os.getcwd(), "nnUnet"))
 from nnunet.training.model_restore import load_model_and_checkpoint_files
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 import pickle
 
 def main():
@@ -188,15 +188,15 @@ def main():
         quantizer.eval_func = eval_func
         quantizer.calib_dataloader = common.DataLoader(CalibrationDL())
         q_model = quantizer()
-        q_model.save('./lpot_workspace')
+        q_model.save('./nc_workspace')
         exit(0)
 
     if args.benchmark:
         model.eval()
         if args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
-                os.path.abspath(os.path.expanduser('./lpot_workspace')), model)
+                os.path.abspath(os.path.expanduser('./nc_workspace')), model)
         else:
             new_model = model
         eval_func(new_model)

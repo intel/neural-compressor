@@ -7,7 +7,7 @@ Step-by-Step
   ```shell
   conda create -n <env name> python=3.7
   conda activate <env name>
-  cd <lpot_folder>/examples/deepengine/nlp/bert_large
+  cd <nc_folder>/examples/deepengine/nlp/bert_large
   pip install 1.15.0 up2 from links below:
   https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
   pip install -r requirements.txt

@@ -5,14 +5,14 @@ from torch.quantization import QuantStub, DeQuantStub
 import torchvision
 import unittest
 import os
-from lpot.adaptor import FRAMEWORKS
-from lpot.model import MODELS
-from lpot.adaptor.pytorch import PyTorchVersionMode
-import lpot.adaptor.pytorch as lpot_torch
-from lpot.experimental import Quantization, common
-from lpot.conf.config import Quantization_Conf
-from lpot.utils.pytorch import load
-from lpot.utils.utility import recover
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.model import MODELS
+from neural_compressor.adaptor.pytorch import PyTorchVersionMode
+import neural_compressor.adaptor.pytorch as nc_torch
+from neural_compressor.experimental import Quantization, common
+from neural_compressor.conf.config import Quantization_Conf
+from neural_compressor.utils.pytorch import load
+from neural_compressor.utils.utility import recover
 import shutil
 import copy
 import numpy as np
@@ -24,7 +24,7 @@ try:
 except:
     TEST_IPEX = False
 
-PT_VERSION = lpot_torch.get_torch_version()
+PT_VERSION = nc_torch.get_torch_version()
 if PT_VERSION >= PyTorchVersionMode.PT18.value:
     FX_MODE = True
 else:
@@ -339,7 +339,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.quantization.resnet18()
-    lpot_model = MODELS['pytorch'](model)
+    nc_model = MODELS['pytorch'](model)
 
     @classmethod
     def setUpClass(self):
@@ -356,7 +356,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_get_all_weight_name(self):
-        assert len(list(self.lpot_model.get_all_weight_names())) == 62
+        assert len(list(self.nc_model.get_all_weight_names())) == 62
 
     def test_get_weight(self):
         for name, param in self.model.named_parameters():
@@ -364,10 +364,10 @@ class TestPytorchAdaptor(unittest.TestCase):
                 param.data.fill_(0.0)
             if name == "fc.bias":
                 param.data.fill_(0.1)
-        assert int(torch.sum(self.lpot_model.get_weight("layer4.1.conv2.weight"))) == 0
+        assert int(torch.sum(self.nc_model.get_weight("layer4.1.conv2.weight"))) == 0
         assert torch.allclose(
             torch.sum(
-                self.lpot_model.get_weight("fc.bias")),
+                self.nc_model.get_weight("fc.bias")),
             torch.tensor(100.))
 
     def test_get_input(self):
@@ -380,26 +380,26 @@ class TestPytorchAdaptor(unittest.TestCase):
         model.remove_hooks()
 
     def test_update_weights(self):
-        self.lpot_model.update_weights('fc.bias', torch.zeros([1000]))
-        assert int(torch.sum(self.lpot_model.get_weight("fc.bias"))) == 0
+        self.nc_model.update_weights('fc.bias', torch.zeros([1000]))
+        assert int(torch.sum(self.nc_model.get_weight("fc.bias"))) == 0
 
     def test_get_gradient(self):
         with self.assertRaises(AssertionError):
-            self.lpot_model.get_gradient('fc.bias')
+            self.nc_model.get_gradient('fc.bias')
 
-        for name, tensor in self.lpot_model._model.named_parameters():
+        for name, tensor in self.nc_model._model.named_parameters():
             if name == 'fc.bias':
                 tensor.grad = torch.zeros_like(tensor)
                 break
-        assert torch.equal(self.lpot_model.get_gradient('fc.bias'), torch.zeros_like(tensor))
+        assert torch.equal(self.nc_model.get_gradient('fc.bias'), torch.zeros_like(tensor))
 
         rand_input = torch.rand(100, 3, 256, 256).float()
         rand_input.grad = torch.ones_like(rand_input)
-        assert torch.equal(self.lpot_model.get_gradient(rand_input),
+        assert torch.equal(self.nc_model.get_gradient(rand_input),
                            torch.ones_like(rand_input))
 
     def test_report_sparsity(self):
-        df, total_sparsity = self.lpot_model.report_sparsity()
+        df, total_sparsity = self.nc_model.report_sparsity()
         self.assertTrue(total_sparsity > 0)
         self.assertTrue(len(df) == 22)
 
@@ -418,7 +418,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
             q_model.save('./saved')
-            # Load configure and weights by lpot.utils
+            # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
             # recover int8 model with only tune_cfg
             tune_cfg_file = './saved/best_configure.yaml'
@@ -428,9 +428,9 @@ class TestPytorchAdaptor(unittest.TestCase):
                                 history_cfg=history_cfg)
             eval_func(saved_model)
             shutil.rmtree('./saved', ignore_errors=True)
-        from lpot.experimental import Benchmark
+        from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
-        # Load configure and weights by lpot.model
+        # Load configure and weights by neural_compressor.model
         evaluator.model = common.Model(model)
         evaluator.b_dataloader = common.DataLoader(dataset)
         evaluator()
@@ -452,7 +452,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             q_model = quantizer()
             q_model.save('./saved')
-            # Load configure and weights by lpot.utils
+            # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
             # recover int8 model with only tune_cfg
             tune_cfg_file = './saved/best_configure.yaml'
@@ -464,7 +464,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             shutil.rmtree('./saved', ignore_errors=True)
 
     def test_tensorboard(self):
-        model = copy.deepcopy(self.lpot_model)
+        model = copy.deepcopy(self.nc_model)
         model.model.eval().fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
@@ -479,7 +479,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
 
     def test_tensor_dump_and_set(self):
-        model = copy.deepcopy(self.lpot_model)
+        model = copy.deepcopy(self.nc_model)
         model.model.eval().fuse_model()
         quantizer = Quantization('ptq_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
@@ -512,7 +512,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             iteration_list=[1, 2], inspect_type='all', save_to_disk=False)
 
     def test_get_graph_info(self):
-        from lpot.adaptor.pytorch import get_ops_recursively
+        from neural_compressor.adaptor.pytorch import get_ops_recursively
         model = copy.deepcopy(self.model)
         op_map = {}
         get_ops_recursively(model, '', op_map)
@@ -579,7 +579,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         model.model.quant.qconfig = torch.quantization.default_qconfig
         if PT_VERSION >= PyTorchVersionMode.PT18.value:
             model.model.dequant.qconfig = torch.quantization.default_qconfig
-        lpot_torch._fallback_quantizable_ops_recursively(
+        nc_torch._fallback_quantizable_ops_recursively(
             model.model, '', fallback_ops, white_list=self.adaptor.white_list)
         torch.quantization.add_observer_(model.model)
         model.model(x)
@@ -602,20 +602,20 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_tuning_ipex(self):
-        from lpot.experimental import Quantization
+        from neural_compressor.experimental import Quantization
         model = torchvision.models.resnet18()
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
-        lpot_model = quantizer()
-        lpot_model.save('./saved')
+        nc_model = quantizer()
+        nc_model.save('./saved')
         try:
             script_model = torch.jit.script(model.to(ipex.DEVICE))
         except:
             script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from lpot.experimental import Benchmark
+        from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         evaluator.model = common.Model(script_model)
         evaluator.b_dataloader = common.DataLoader(dataset)
@@ -638,7 +638,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
     def test_fx_quant(self):
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
             model_origin = torchvision.models.resnet18()
-            # run fx_quant in lpot and save the quantized GraphModule
+            # run fx_quant in neural_compressor and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
             quantizer.eval_func = eval_func
@@ -651,7 +651,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                               'convert_custom_config_dict': {'a': 1}})
             q_model = quantizer()
             q_model.save('./saved')
-            # Load configure and weights with lpot.utils
+            # Load configure and weights with neural_compressor.utils
             model_fx = load('./saved', model_origin,
                             **{'prepare_custom_config_dict': {'a': 1},
                                 'convert_custom_config_dict': {'a': 1}})
@@ -667,7 +667,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
             model_origin = torchvision.models.resnet18()
-            # run fx_quant in lpot and save the quantized GraphModule
+            # run fx_quant in neural_compressor and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -677,7 +677,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                               'convert_custom_config_dict': {'a': 1}})
             q_model = quantizer()
             q_model.save('./saved')
-            # Load configure and weights with lpot.utils
+            # Load configure and weights with neural_compressor.utils
             model_fx = load('./saved', model_origin,
                             **{'prepare_custom_config_dict': {'a': 1},
                                 'convert_custom_config_dict': {'a': 1}})
@@ -720,7 +720,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             nlayers = 5,
         )
 
-        # run fx_quant in lpot and save the quantized GraphModule
+        # run fx_quant in neural_compressor and save the quantized GraphModule
         model.eval()
         quantizer = Quantization('fx_dynamic_yaml.yaml')
         quantizer.model = common.Model(model,
@@ -729,7 +729,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_model = quantizer()
         q_model.save('./saved')
 
-        # Load configure and weights by lpot.utils
+        # Load configure and weights by neural_compressor.utils
         model_fx = load("./saved", model,
                         **{'prepare_custom_config_dict': {'a': 1},
                             'convert_custom_config_dict': {'a': 1}})

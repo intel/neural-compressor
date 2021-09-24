@@ -17,14 +17,14 @@ import unittest
 from collections import OrderedDict
 from typing import List
 
-from lpot.ux.components.configuration_wizard.save_workload import (
+from neural_compressor.ux.components.configuration_wizard.save_workload import (
     change_performance_dataloader_to_dummy_if_possible,
     get_height_width_from_size,
     get_shape_from_transforms,
 )
-from lpot.ux.utils.exceptions import NotFoundException
-from lpot.ux.utils.workload.config import Config
-from lpot.ux.utils.workload.dataloader import Dataset, Transform
+from neural_compressor.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.utils.workload.config import Config
+from neural_compressor.ux.utils.workload.dataloader import Dataset, Transform
 
 
 class TestUpdateConfigWithDummy(unittest.TestCase):

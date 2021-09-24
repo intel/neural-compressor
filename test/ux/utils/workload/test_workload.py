@@ -17,8 +17,8 @@
 import os
 import unittest
 
-from lpot.ux.utils.utils import _load_json_as_dict
-from lpot.ux.utils.workload.workload import WorkloadMigrator
+from neural_compressor.ux.utils.utils import _load_json_as_dict
+from neural_compressor.ux.utils.workload.workload import WorkloadMigrator
 
 
 class TestWorkloadsMigrator(unittest.TestCase):

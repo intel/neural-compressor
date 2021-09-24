@@ -5,9 +5,9 @@
 import unittest
 import tensorflow as tf
 
-from lpot.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu import ConvertLeakyReluOptimizer
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_leakyrelu import ConvertLeakyReluOptimizer
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 
 class TestConvertLeaklyRelu(unittest.TestCase):
     @disable_random()

@@ -11311,7 +11311,7 @@ n04442741	toastrack
 n04443164	tobacco pouch
 n04443257	tobacco shop, tobacconist shop, tobacconist
 n04443433	toboggan
-n04443766	toby, toby jug, toby fillpot jug
+n04443766	toby, toby jug, toby filneural_compressor jug
 n04444121	tocsin, warning bell
 n04444218	toe
 n04444749	toecap

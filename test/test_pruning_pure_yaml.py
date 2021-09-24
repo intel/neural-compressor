@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
     fake_yaml = """
@@ -83,7 +83,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_internal(self):
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
         prune.model = common.Model(self.model)

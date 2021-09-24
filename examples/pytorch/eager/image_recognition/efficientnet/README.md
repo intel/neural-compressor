@@ -44,20 +44,20 @@ cd examples/pytorch/eager/image_recognition/efficientnet
 python validate.py --tune --model mobilenetv3_rw --no-cuda --pretrained /path/to/imagenet
 ```
 
-Examples of enabling Intel® Low Precision Optimization Tool auto tuning on PyTorch ResNet
+Examples of enabling Intel® Neural Compressor auto tuning on PyTorch ResNet
 ==========================================================================================
 
 This is a tutorial of how to enable a PyTorch classification model.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports three usages:
+Intel® Neural Compressor supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-As Efficientnet series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch Efficientnet with Intel® Low Precision Optimization Tool by the first use case for simplicity.
+As Efficientnet series are typical classification models, use Top-K as metric which is built-in supported by Intel® Neural Compressor. So here we integrate PyTorch Efficientnet with Intel® Neural Compressor by the first use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -85,8 +85,8 @@ quantization:                                        # optional. tuning constrai
             mean: [0.485, 0.456, 0.406]
             std: [0.229, 0.224, 0.225]
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
@@ -148,7 +148,7 @@ After prepare step is done, we just need update main.py like below.
 ```python
 model.eval()
 model.fuse_model()
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf_efficientnet_b0.yaml")
 quantizer.model = common.Model(model)
 q_model = quantizer()

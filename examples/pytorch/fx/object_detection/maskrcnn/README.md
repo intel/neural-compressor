@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch MASK_RCNN tuning results with Intel® Low Precision Optimization Tool(LPOT).
+This document describes the step-by-step instructions for reproducing PyTorch MASK_RCNN tuning results with Intel® Neural Compressor.
 
 # Prerequisite
 
@@ -56,25 +56,25 @@ sh run_tuning.sh --output_model=/path/to/tuned_checkpoint
 # Saving and loading model:
 
 * Saving model:
-  After tuning with LPOT, we can get LPOT.model:
+  After tuning with Neural Compressor, we can get neural_compressor.model:
 
 ```
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-lpot_model = quantizer()
+nc_model = quantizer()
 ```
 
-Here, lpot_model is LPOT model class, so it has "save" API:
+Here, nc_model is Neural Compressor model class, so it has "save" API:
 
 ```python
-lpot_model.save("Path_to_save_configure_file")
+nc_model.save("Path_to_save_configure_file")
 ```
 
 * loading model:
 
 ```python
-from lpot.utils.pytorch import load
+from neural_compressor.utils.pytorch import load
 quantized_model = load(
     os.path.join(Path, 'best_configure.yaml'),
     os.path.join(Path, 'best_model_weights.pt'), fp32_model)
@@ -82,20 +82,20 @@ quantized_model = load(
 
 Please refer to [Sample code](./pytorch/tools/test_net.py)
 
-Examples of enabling LPOT auto tuning on PyTorch ResNet
+Examples of enabling Neural Compressor auto tuning on PyTorch ResNet
 =======================================================
 
-This is a tutorial of how to enable a PyTorch classification model with LPOT.
+This is a tutorial of how to enable a PyTorch classification model with Neural Compressor.
 
 # User Code Analysis
 
-LPOT supports three usages:
+Neural Compressor supports three usages:
 
 1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
 2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
 3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
 
-Here we integrate PyTorch maskrcnn with Intel® Low Precision Optimization Tool by the third use case for simplicity.
+Here we integrate PyTorch maskrcnn with Intel® Neural Compressor by the third use case for simplicity.
 
 ### Write Yaml Config File
 
@@ -168,7 +168,7 @@ def eval_func(q_model):
         return results.results['bbox']['AP']
 
 if args.tune:
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         model.eval()
         quantizer = Quantization("./conf.yaml")
         prepare_custom_config_dict = {"non_traceable_module_class": [

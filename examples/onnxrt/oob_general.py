@@ -75,7 +75,7 @@ if __name__ == "__main__":
         default=None,
         help='Pre-trained bert model onnx file.')
     parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get bert tuning quantization model with lpot.')
+                        help='Get bert tuning quantization model with neural_compressor.')
     parser.add_argument('--config',type=str, default=None,
                         help='Tuning config file path')
     parser.add_argument('--output_model',type=str, default=None,
@@ -102,8 +102,8 @@ if __name__ == "__main__":
         input_shapes = [shape.split('x') for shape in input_shapes]
         shapes = [tuple([args.benchmark_nums] + [int(dim) for dim in shape]) for shape in input_shapes]
 
-    from lpot.experimental.data.datasets.dummy_dataset import DummyDataset
-    from lpot.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
+    from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+    from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
     dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype=dtypes, label=True)
     dummy_dataloader = ONNXRTDataLoader(dummy_dataset, batch_size=args.eval_batch_size)
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         return evaluate_onnxrt(model, dummy_dataloader, reference)
 
     if args.benchmark:
-        from lpot.experimental import Benchmark, common
+        from neural_compressor.experimental import Benchmark, common
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(model)
         evaluator.b_dataloader = dummy_dataloader
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     if args.tune:
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         quantize.calib_dataloader = dummy_dataloader

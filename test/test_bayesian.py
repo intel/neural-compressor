@@ -257,7 +257,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_run_bayesian_one_trial(self):
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -267,7 +267,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_run_bayesian_max_trials(self):
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -276,7 +276,7 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_bayesian_opt_class(self):
-        from lpot.strategy.bayesian import BayesianOptimization
+        from neural_compressor.strategy.bayesian import BayesianOptimization
         pbounds = {}
         pbounds['x1'] = (0, 1)
         pbounds['x2'] = (0, 1)

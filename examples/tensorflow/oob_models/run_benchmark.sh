@@ -107,8 +107,8 @@ vggvox
 --------
 )
 
-# lpot graph_def
-models_need_lpot_graphdef=(
+# neural_compressor graph_def
+models_need_nc_graphdef=(
 --------
 pose-ae-multiperson
 pose-ae-refinement
@@ -146,9 +146,9 @@ function run_benchmark {
       echo "$topology need to disable optimize_for_inference!"
       extra_cmd+=" --disable_optimize "
     fi
-    if [[ "${models_need_lpot_graphdef[@]}"  =~ " ${topology} " ]]; then
-      echo "$topology need lpot graph_def!"
-      extra_cmd+=" --use_lpot "
+    if [[ "${models_need_nc_graphdef[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need neural_compressor graph_def!"
+      extra_cmd+=" --use_nc "
     fi
 
     python tf_benchmark.py \

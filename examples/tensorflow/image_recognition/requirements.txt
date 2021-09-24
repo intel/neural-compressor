@@ -1,2 +1,2 @@
 intel-tensorflow
-lpot
+neural-compressor

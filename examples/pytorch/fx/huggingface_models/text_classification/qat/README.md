@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized PyTorch bert-base-cased/uncased models tuning results via LPOT with quantization aware training.
+This document list steps of reproducing Intel Optimized PyTorch bert-base-cased/uncased models tuning results via Neural Compressor with quantization aware training.
 
 Our example comes from [Huggingface/transformers](https://github.com/huggingface/transformers)
 
@@ -35,13 +35,13 @@ PyTorch 1.8 is needed for pytorch_fx backend and huggingface/transformers.
 
 # Run
 
-### 1. Enable bert-base-cased/uncased example with the auto quantization aware training strategy of LPOT.
+### 1. Enable bert-base-cased/uncased example with the auto quantization aware training strategy of Neural Compressor.
 
   The changes made are as follows:
   1. add conf_qat.yaml:  
     This file contains the configuration of quantization.  
   2. edit run_glue_tune.py:  
-    - For quantization, We used lpot in it.  
+    - For quantization, We used neural_compressor in it.  
     - For training, we enbaled early stop strategy.  
 
 ### 2. To get the tuned model and its accuracy: 

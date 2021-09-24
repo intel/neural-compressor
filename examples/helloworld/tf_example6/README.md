@@ -43,7 +43,7 @@ evaluation:                                          # optional. required if use
 3. Run quantization
 We only need to add the following lines for quantization to create an int8 model.
 ```python
-    from lpot import Quantization
+    from neural_compressor import Quantization
     quantizer = Quantization('./conf.yaml')
     quantized_model = quantizer('./mobilenet_v1_1.0_224_frozen.pb')
     tf.io.write_graph(graph_or_graph_def=quantized_model,
@@ -59,7 +59,7 @@ We only need to add the following lines for quantization to create an int8 model
 4. Run benchmark according to config
 ```python
      # Optional, run benchmark 
-    from lpot import Benchmark
+    from neural_compressor import Benchmark
     evaluator = Benchmark('./conf.yaml')
     results = evaluator('./int8.pb')
  

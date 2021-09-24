@@ -12,7 +12,7 @@ Now it supports QAT(quantization aware training) model to default(quantized) mod
 See the following example which demonstrate model conversion API usage.
 
 ```python
-    from lpot.experimental import ModelConversion, common
+    from neural_compressor.experimental import ModelConversion, common
     conversion = ModelConversion()
     conversion.source = 'QAT'
     conversion.destination = 'default'
@@ -23,7 +23,7 @@ See the following example which demonstrate model conversion API usage.
 
 After this conversion is done, user could measure the accuracy or performance on quantized model.
   ```python
-    from lpot.experimental import Benchmark, common
+    from neural_compressor.experimental import Benchmark, common
     evaluator = Benchmark('/path/to/yaml')
     evaluator.model = common.Model('/path/to/quantized/saved_model')
     evaluator.b_dataloader = ...       # create benchmark dataloader like examples/tensorflow/qat/benchmark.py

@@ -17,8 +17,8 @@
 import unittest
 import uuid
 
-from lpot.ux.components.graph.graph import Graph
-from lpot.ux.components.graph.node import Node
+from neural_compressor.ux.components.graph.graph import Graph
+from neural_compressor.ux.components.graph.node import Node
 
 
 def _get_random_string() -> str:

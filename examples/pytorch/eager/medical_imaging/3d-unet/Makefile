@@ -175,8 +175,8 @@ run_pytorch_performance:
 run_pytorch_accuracy: mkdir_postprocessed_data
 	@python3 run.py --backend=pytorch --accuracy
 
-.PHONY: run_pytorch_LPOT_tuning
-run_pytorch_LPOT_tuning: mkdir_postprocessed_data
+.PHONY: run_pytorch_NC_tuning
+run_pytorch_NC_tuning: mkdir_postprocessed_data
 	@python3 run.py --backend=pytorch --accuracy --tune --mlperf_conf=./mlperf.conf
 
 .PHONY: run_onnxruntime_performance

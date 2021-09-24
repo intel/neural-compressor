@@ -1,6 +1,6 @@
 mxnet
 gluoncv
-lpot
+neural-compressor
 pycocotools
 
 pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability

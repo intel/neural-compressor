@@ -12,7 +12,7 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
 >
 > 1. PyTorch quantization implementation in imperative path has limitation on automatically execution.
 > It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> Intel® Low Precision Optimization Tool has no capability to solve this framework limitation. Intel® Low Precision Optimization Tool supposes user have done these two steps before invoking Intel® Low Precision Optimization Tool interface.
+> Intel® Neural Compressor has no capability to solve this framework limitation. Intel® Neural Compressor supposes user have done these two steps before invoking Intel® Neural Compressor interface.
 > For details, please refer to https://pytorch.org/docs/stable/quantization.html
 > 2. Please  ensure your PC have >370G memory to run DLRM 
 
@@ -49,14 +49,14 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
         --load-model=${model_path} --tune
   ```
 
-Examples of enabling Intel® Low Precision Optimization Tool
+Examples of enabling Intel® Neural Compressor
 =========================
 
-This is a tutorial of how to enable DLRM model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable DLRM model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Low Precision Optimization Tool supports two usages:
+Intel® Neural Compressor supports two usages:
 
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics in tuning.metrics field of model-specific yaml config file.
 
@@ -81,7 +81,7 @@ tuning:
   random_seed: 9527
 ```
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
-> **Note** : Intel® Low Precision Optimization Tool does NOT support "mse" tuning strategy for pytorch framework
+> **Note** : Intel® Neural Compressor does NOT support "mse" tuning strategy for pytorch framework
 
 ### prepare
 PyTorch quantization requires two manual steps:
@@ -118,7 +118,7 @@ dlrm.bot_l.insert(0, QuantStub())
 dlrm.bot_l.append(DeQuantStub())
 dlrm.top_l.insert(0, QuantStub())
 dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(dlrm)
 quantizer.calib_dataloader = eval_dataloader

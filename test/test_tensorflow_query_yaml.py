@@ -7,8 +7,8 @@ import os
 import tensorflow as tf
 
 
-from lpot.adaptor.tensorflow import TensorflowQuery
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tensorflow import TensorflowQuery
+from neural_compressor.adaptor.tf_utils.util import disable_random
 from tensorflow.python.framework import graph_util
 
 
@@ -52,7 +52,7 @@ class TestTFQueryYaml(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.tf_yaml_path = os.path.join(os.getcwd() + "/../lpot/adaptor/tensorflow.yaml")
+        self.tf_yaml_path = os.path.join(os.getcwd() + "/../neural_compressor/adaptor/tensorflow.yaml")
 
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)
@@ -121,7 +121,7 @@ class TestTFQueryYaml(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Quantization, common
+            from neural_compressor.experimental import Quantization, common
 
             quantizer = Quantization('fake_yaml_grappler.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)

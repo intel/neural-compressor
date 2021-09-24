@@ -7,7 +7,7 @@
 ```shell
 conda create -n <env name> python=3.7
 conda activate <env name>
-cd <lpot_folder>/examples/engine/nlp/distilbert_base_uncased_mrpc
+cd <neural_compressor_folder>/examples/engine/nlp/distilbert_base_uncased_mrpc
 pip install -r requirements.txt
 ```
 

@@ -17,7 +17,7 @@
 import unittest
 from typing import Any, List
 
-from lpot.ux.utils.workload.model import Model, parse_nodes
+from neural_compressor.ux.utils.workload.model import Model, parse_nodes
 
 
 class TestModelConfig(unittest.TestCase):

@@ -38,8 +38,8 @@ quantization:
      }
   } 
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       GLUE: 
         task: mrpc                                        # built-in metrics are topk, map, f1, allow user to register new metric.

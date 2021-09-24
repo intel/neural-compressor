@@ -196,8 +196,8 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
         # print(f"Accuracy: {total_accuracy}")
 
         if args.tune:
-            from lpot.experimental import Quantization
-            # lpot tune
+            from neural_compressor.experimental import Quantization
+            # neural_compressor tune
             model.load_state_dict(torch.load(args.input_model))
             dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
 
@@ -209,7 +209,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             q_model.save(args.tuned_checkpoint)
 
         elif args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             int8_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
             print(int8_model)
@@ -238,7 +238,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_model", default='', 
                         type=str, metavar='PATH', help='path to put tuned model')
     parser.add_argument("--tune", action='store_true',
-                        help="run Intel® Low Precision Optimization Tool to tune int8 acc.")
+                        help="run Intel® Neural Compressor to tune int8 acc.")
     parser.add_argument("--warmup", type=int, default=10,
                         help="warmup for performance")
     parser.add_argument("--iter", default=0, type=int,
@@ -250,10 +250,10 @@ if __name__ == '__main__':
     parser.add_argument("--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_yaml", default='./blendcnn.yaml', type=str, metavar='PATH',
-                        help='path to Intel® Low Precision Optimization Tool config file')
+                        help='path to Intel® Neural Compressor config file')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by  (default: ./saved_results)')
     parser.add_argument('--int8', dest='int8', action='store_true',
-                        help='run Intel® Low Precision Optimization Tool model benchmark')
+                        help='run Intel® Neural Compressor model benchmark')
     args = parser.parse_args()
     main(args.model_config, args)

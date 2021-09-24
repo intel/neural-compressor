@@ -35,30 +35,30 @@ flags = tf.compat.v1.flags
 
 FLAGS = flags.FLAGS
 
-# lpot tune or benchmark
+# neural_compressor tune or benchmark
 flags.DEFINE_bool(
     "tune", False,
-    "lpot tune the model.")
+    "neural_compressor tune the model.")
 
 flags.DEFINE_string(
     "config", None,
-    "lpot config for the model.")
+    "neural_compressor config for the model.")
 
 flags.DEFINE_string(
     "input_model", None,
-    "lpot input model path.")
+    "neural_compressor input model path.")
 
 flags.DEFINE_string(
     "output_model", None,
-    "lpot output model path.")
+    "neural_compressor output model path.")
 
 flags.DEFINE_bool(
     "benchmark", False,
-    "lpot benchmark the model.")
+    "neural_compressor benchmark the model.")
 
 flags.DEFINE_string(
     "mode", None,
-    "lpot benchmark performance or accuracy of the model.")
+    "neural_compressor benchmark performance or accuracy of the model.")
 
 
 ## Required parameters
@@ -163,7 +163,7 @@ flags.DEFINE_bool(
     'strip_iterator', False, 'whether to strip the iterator of the model')
 
 def strip_iterator(graph_def):
-    from lpot.adaptor.tf_utils.util import strip_unused_nodes
+    from neural_compressor.adaptor.tf_utils.util import strip_unused_nodes
     input_node_names = ['input_ids', 'input_mask', 'segment_ids']
     output_node_names = ['loss/Softmax']
     # create the placeholder and merge with the graph
@@ -772,7 +772,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
-    # if use lpot reuse the eval metric
+    # if use neural_compressor reuse the eval metric
     elif mode == tf.estimator.ModeKeys.EVAL:
 
       def metric_fn(per_example_loss, label_ids, logits, is_real_example):
@@ -1033,7 +1033,7 @@ def main(_):
         tf.compat.v1.logging.info("  %s = %s", key, str(result[key]))
         writer.write("%s = %s\n" % (key, str(result[key])))
 
-  # BELOW IS LPOT TUNING AND BENCHMARK CODE
+  # BELOW IS Neural Compressor TUNING AND BENCHMARK CODE
 
   class Dataset(object):
       def __init__(self, file_name, batch_size):
@@ -1051,7 +1051,7 @@ def main(_):
       elem = batch[0]
       return elem
 
-  from lpot.metric import METRICS
+  from neural_compressor.metric import METRICS
   class Accuracy(object):
       def __init__(self):
           self.metric = METRICS('tensorflow')['Accuracy']()
@@ -1085,7 +1085,7 @@ def main(_):
           is_training=False,
           drop_remainder=False)
 
-      from lpot.experimental import Quantization, common
+      from neural_compressor.experimental import Quantization, common
       quantizer = Quantization(FLAGS.config)
       dataset = Dataset(eval_file, FLAGS.eval_batch_size)
       quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
@@ -1101,7 +1101,7 @@ def main(_):
       eval_examples = processor.get_dev_examples(FLAGS.data_dir)
       eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
 
-      from lpot.experimental import Benchmark, common
+      from neural_compressor.experimental import Benchmark, common
       evaluator = Benchmark(FLAGS.config)
       dataset = Dataset(eval_file, FLAGS.eval_batch_size)
       evaluator.b_dataloader = common.DataLoader(\
@@ -1109,7 +1109,7 @@ def main(_):
       evaluator.metric = common.Metric(metric_cls=Accuracy)
 
 
-      from lpot.model.model import get_model_type
+      from neural_compressor.model.model import get_model_type
       model_type = get_model_type(FLAGS.input_model)
       if model_type == 'frozen_pb':
           evaluator.model = FLAGS.input_model

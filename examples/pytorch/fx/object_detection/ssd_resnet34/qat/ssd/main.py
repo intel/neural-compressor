@@ -79,7 +79,7 @@ def parse_args():
     parser.add_argument('--int8', action='store_true', help='int8')
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--warmup-inference', type=int, default=10, help='warmup for latency')                    
     parser.add_argument('--inference-iters', type=int, default=100,
                         help='number of iterations for inference')
@@ -300,7 +300,7 @@ def train300_mlperf_coco(args):
         return current_accuracy 
 
     if args.tune:
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             current_lr = args.lr * (global_batch_size / 32)
             current_momentum = 0.9
             optim = torch.optim.SGD(model.parameters(), lr=current_lr,
@@ -394,18 +394,18 @@ def train300_mlperf_coco(args):
                     iter_num += 1
             return
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(ssd300)
         quantizer.eval_func = eval_func
-        quantizer.q_func = training_func_for_lpot
+        quantizer.q_func = training_func_for_nc
         q_model = quantizer()
         q_model.save(args.tuned_checkpoint)
 
     if args.benchmark or args.accuracy:
         ssd300.eval()
         if args.int8:
-            from lpot.utils.pytorch import load
+            from neural_compressor.utils.pytorch import load
             new_model = load(
                 os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), ssd300)
         else:

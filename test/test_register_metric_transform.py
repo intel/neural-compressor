@@ -1,4 +1,4 @@
-"""Tests for lpot register metric and postprocess """
+"""Tests for neural_compressor register metric and postprocess """
 import numpy as np
 import unittest
 import os
@@ -21,7 +21,7 @@ def build_fake_yaml():
 
 class TestRegisterMetric(unittest.TestCase):
     model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet101_fp32_pretrained_model.pb'
-    pb_path = '/tmp/.lpot/resnet101_fp32_pretrained_model.pb'
+    pb_path = '/tmp/.neural_compressor/resnet101_fp32_pretrained_model.pb'
     #image_path = 'images/1024px-Doll_face_silver_Persian.jpg'
     image_path = 'images/cat.jpg'
 
@@ -29,7 +29,7 @@ class TestRegisterMetric(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
         if not os.path.exists(self.pb_path):
-            os.system("mkdir -p /tmp/.lpot && wget {} -O {}".format(self.model_url, self.pb_path))
+            os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(self.model_url, self.pb_path))
 
     def test_register_metric_postprocess(self):
         import PIL.Image 
@@ -39,9 +39,9 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from lpot import Benchmark, Quantization
-        from lpot.experimental.data.transforms.imagenet_transform import LabelShift
-        from lpot.experimental.metric.metric import TensorflowTopK
+        from neural_compressor import Benchmark, Quantization
+        from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
+        from neural_compressor.experimental.metric.metric import TensorflowTopK
 
         evaluator = Benchmark('fake_yaml.yaml')
 

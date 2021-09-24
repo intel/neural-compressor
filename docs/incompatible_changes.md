@@ -4,7 +4,7 @@
 
 The user-facing APIs are changed between v1.2 and v1.1. The major changes are:
 
-1. v1.2 abstracts `lpot.common.Model` concept to cover those cases whose weight and graph files are stored separately.
+1. v1.2 abstracts `neural_compressor.common.Model` concept to cover those cases whose weight and graph files are stored separately.
 
 2. v1.2 unifies the calling style by setting model, calibration dataloader, evaluation dataloader, and metric through `quantizer` attributes rather than passing as function inputs.
 
@@ -36,6 +36,6 @@ q_model.save('/path/to/output/dir') # explicitly call to save q_model
 
 ## Built-in transform/dataset/metric APIs
 
-v1.2 refines LPOT built-in transform/dataset/metric to unify APIs cross different framework backends.
+v1.2 refines Neural Compressor built-in transform/dataset/metric to unify APIs cross different framework backends.
 
 Refer to [dataset](./dataset.md), [transform](./transform.md), and [metric](./metric.md) to learn how to use them in yaml or code.

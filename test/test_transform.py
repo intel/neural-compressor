@@ -3,9 +3,9 @@ import numpy as np
 import random
 import unittest
 import os
-from lpot.data import TRANSFORMS, DATALOADERS
-from lpot.utils.create_obj_from_config import get_postprocess, create_dataset
-from lpot.utils.utility import LazyImport
+from neural_compressor.data import TRANSFORMS, DATALOADERS
+from neural_compressor.utils.create_obj_from_config import get_postprocess, create_dataset
+from neural_compressor.utils.utility import LazyImport
 from PIL import Image
 mx = LazyImport('mxnet')
 tf = LazyImport('tensorflow')
@@ -960,12 +960,12 @@ class TestImagenetTransform(unittest.TestCase):
             self.assertEqual(labels[0][0], 10)
             break
 
-        from lpot.experimental.data.transforms.imagenet_transform import ParseDecodeImagenet
+        from neural_compressor.experimental.data.transforms.imagenet_transform import ParseDecodeImagenet
         func = ParseDecodeImagenet()
         out = func(example.SerializeToString())
         self.assertEqual(out[0].eval(session=tf.compat.v1.Session()).shape, (100,100,3))
 
-        from lpot.experimental.data.datasets.dataset import TensorflowTFRecordDataset
+        from neural_compressor.experimental.data.datasets.dataset import TensorflowTFRecordDataset
         ds = TensorflowTFRecordDataset('test-0-of-0', func)
         dataloader = DATALOADERS['tensorflow'](dataset=ds, batch_size=1)
         for (inputs, labels) in dataloader:
@@ -1019,8 +1019,8 @@ class TestCOCOTransform(unittest.TestCase):
             self.assertEqual(inputs.shape, (1,4,5,3))
             self.assertEqual(labels[0].shape, (1,1,4))
 
-        from lpot.experimental.data.transforms.transform import TensorflowResizeWithRatio
-        from lpot.experimental.data.datasets.coco_dataset import ParseDecodeCoco
+        from neural_compressor.experimental.data.transforms.transform import TensorflowResizeWithRatio
+        from neural_compressor.experimental.data.datasets.coco_dataset import ParseDecodeCoco
         func = ParseDecodeCoco()
         out = func(example.SerializeToString())
         self.assertEqual(out[0].eval(session=tf.compat.v1.Session()).shape, (100,100,3))
@@ -1110,7 +1110,7 @@ class TestVOCTransform(unittest.TestCase):
             self.assertEqual(inputs.shape, (1,100,100,3))
             self.assertEqual(labels[0].shape, (100,100,1))
 
-        from lpot.experimental.data.transforms.transform import ParseDecodeVocTransform
+        from neural_compressor.experimental.data.transforms.transform import ParseDecodeVocTransform
         func = ParseDecodeVocTransform()
         out = func(example.SerializeToString())
         self.assertEqual(out[0].eval(session=tf.compat.v1.Session()).shape, (100,100,3))

@@ -103,7 +103,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
         tensors = TensorDataset(teacher_logits, *dataset.get_tensors()) # To Tensors
         train_dataloader = data_iter = DataLoader(tensors, batch_size=cfg_optim.batch_size, shuffle=False)
         
-        from lpot.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
+        from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
         criterion = PyTorchKnowledgeDistillationLoss(temperature=args.temperature,
                                                      loss_types=args.loss_types,
                                                      loss_weights=args.loss_weights)
@@ -143,7 +143,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
         # train_loop.train(get_loss, None, None) # not use pretrain file
         # print("Training has been done properly.")
         
-        from lpot.experimental import Distillation, common
+        from neural_compressor.experimental import Distillation, common
         distiller = Distillation(args.distillation_yaml)
 
         def train_func(model):
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     parser.add_argument("--warmup", type=int, default=10,
                         help="warmup for performance")
     parser.add_argument("--distillation_yaml", default='./distillation.yaml', type=str, metavar='PATH',
-                        help='path to Intel® Low Precision Optimization Tool config file')
+                        help='path to Intel® Neural Compressor config file')
 
     parser.add_argument("--temperature", default=1, type=float,
                         help='temperature parameter of distillation')

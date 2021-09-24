@@ -135,8 +135,8 @@ def get_input_output(graph_path, args):
     # give a fix shape if not get input shape 
     fix_dynamic_shape = 300
 
-    if args.use_lpot:
-        from lpot.experimental import common
+    if args.use_nc:
+        from neural_compressor.experimental import common
         model = common.Model(graph_path)
         graph_def = model.graph_def
         output_nodes = summarize_graph(graph_def, fix_dynamic_shape)

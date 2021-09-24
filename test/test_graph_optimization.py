@@ -9,9 +9,9 @@ import numpy as np
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
-from lpot.utils.utility import CpuInfo
-from lpot.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.util import disable_random
+from neural_compressor.utils.utility import CpuInfo
+from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -145,8 +145,8 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common
-            from lpot.conf.config import Graph_Optimization_Conf
+            from neural_compressor.experimental import Graph_Optimization, common
+            from neural_compressor.conf.config import Graph_Optimization_Conf
             conf = Graph_Optimization_Conf('fake_yaml.yaml')
             graph_optimizer = Graph_Optimization(conf)
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
@@ -186,7 +186,7 @@ class TestGraphOptimization(unittest.TestCase):
     def test_not_supported_model(self):
         import torchvision
         model = torchvision.models.resnet18()
-        from lpot.experimental import Graph_Optimization
+        from neural_compressor.experimental import Graph_Optimization
         graph_optimizer = Graph_Optimization('fake_yaml_4.yaml')
         graph_optimizer.input = 'input'
         graph_optimizer.output = 'op_to_store'
@@ -199,7 +199,7 @@ class TestGraphOptimization(unittest.TestCase):
     def test_not_supported_model_without_yaml(self):
         import torchvision
         model = torchvision.models.resnet18()
-        from lpot.experimental import Graph_Optimization
+        from neural_compressor.experimental import Graph_Optimization
         graph_optimizer = Graph_Optimization()
         graph_optimizer.input = 'input'
         graph_optimizer.output = 'op_to_store'
@@ -235,7 +235,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common
+            from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml.yaml')
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
@@ -279,7 +279,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common
+            from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml_2.yaml')
             graph_optimizer.model = output_graph_def
             output_graph = graph_optimizer()
@@ -320,7 +320,8 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[relu6.name.split(':')[0], relu62.name.split(':')[0]])
-            from lpot.experimental import Graph_Optimization
+
+            from neural_compressor.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.precisions = 'fp32'
             graph_optimizer.input = 'input'
@@ -368,7 +369,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization
+            from neural_compressor.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization('fake_yaml_3.yaml')
 
             graph_optimizer.model = output_graph_def
@@ -411,7 +412,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common
+            from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml_3.yaml')
             graph_optimizer.metric = common.Metric(MyMetric)
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
@@ -457,7 +458,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common, data
+            from neural_compressor.experimental import Graph_Optimization, common, data
             graph_optimizer = Graph_Optimization('fake_yaml.yaml')
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
@@ -502,7 +503,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization, common
+            from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml.yaml')
 
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
@@ -549,7 +550,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization
+            from neural_compressor.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.input = 'input'
             graph_optimizer.output = 'op_to_store'
@@ -657,7 +658,7 @@ class TestGraphOptimization(unittest.TestCase):
 
         float_graph_def.node.extend([post_relu_node])
 
-        from lpot.experimental import Graph_Optimization
+        from neural_compressor.experimental import Graph_Optimization
 
         graph_optimizer = Graph_Optimization()
 
@@ -699,7 +700,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization
+            from neural_compressor.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.input = 'input'
             graph_optimizer.output = 'op_to_store'
@@ -744,7 +745,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization
+            from neural_compressor.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.precisions = 'fp32'
 
@@ -789,7 +790,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from lpot.experimental import Graph_Optimization
+            from neural_compressor.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.input = 'input'
             graph_optimizer.output = 'op_to_store'

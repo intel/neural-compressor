@@ -19,7 +19,7 @@ model:                                               # mandatory. used to specif
   name: resnet_v2_prune
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   performance:                                       # optional. used to benchmark performance of passing model.
     iteration: 100
     configs:

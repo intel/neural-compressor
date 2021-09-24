@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
     fake_yaml = """
@@ -68,10 +68,11 @@ class TestDistillation(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_distillation(self):
-        from lpot.experimental import Distillation, common
-        from lpot.conf.config import Distillation_Conf
+        from neural_compressor.experimental import Distillation, common
+        from neural_compressor.conf.config import Distillation_Conf
         conf = Distillation_Conf('fake.yaml')
         distiller = Distillation(conf)
+        distiller = Distillation('fake.yaml')
         distiller.student_model = common.Model(self.student_model)
         distiller.teacher_model = common.Model(self.teacher_model)
         print('student model: {}'.format(distiller.student_model))
@@ -79,9 +80,9 @@ class TestDistillation(unittest.TestCase):
 
     def test_pruning_external(self):
         import tensorflow as tf
-        from lpot.experimental import Distillation
-        from lpot.utils.create_obj_from_config import create_train_func_for_distillation
-        from lpot.experimental.common.criterion import PyTorchKnowledgeDistillationLoss, \
+        from neural_compressor.experimental import Distillation
+        from neural_compressor.utils.create_obj_from_config import create_train_func_for_distillation
+        from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss, \
             TensorflowKnowledgeDistillationLoss
         distiller = Distillation('fake.yaml')
         datasets = DATASETS('pytorch')
@@ -98,7 +99,7 @@ class TestDistillation(unittest.TestCase):
         criterion.teacher_model = self.teacher_model
         optimizer = torch.optim.SGD(self.student_model.parameters(), lr=0.0001)
 
-        def training_func_for_lpot(model):
+        def training_func_for_nc(model):
             epochs = 3
             iters = 10
             for nepoch in range(epochs):
@@ -124,7 +125,7 @@ class TestDistillation(unittest.TestCase):
         distiller.teacher_model = self.teacher_model
         distiller.criterion = criterion
         distiller.optimizer = optimizer
-        distiller.train_func = training_func_for_lpot
+        distiller.train_func = training_func_for_nc
         distiller.eval_dataloader = dummy_dataloader
         distiller.train_dataloader = dummy_dataloader
         _ = distiller()

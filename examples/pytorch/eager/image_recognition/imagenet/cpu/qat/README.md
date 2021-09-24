@@ -1,12 +1,12 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Low Precision Optimization Tool.
+This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Neural Compressor.
 
 > **Note**
 >
 > * PyTorch eager mode quantization implementation  requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> * LPOT requires users to complete these two manual steps before triggering auto-tuning process.
+> * Neural Compressor requires users to complete these two manual steps before triggering auto-tuning process.
 >   For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
@@ -26,21 +26,21 @@ ls /path/to/imagenet
 train  val
 ```
 
-Examples Of Enabling LPOT Auto Tuning On PyTorch ResNet
+Examples Of Enabling Neural Compressor Auto Tuning On PyTorch ResNet
 =======================================================
 
-This is a tutorial of how to enable a PyTorch classification model with Intel® Low Precision Optimization Tool.
+This is a tutorial of how to enable a PyTorch classification model with Intel® Neural Compressor.
 
 ### User Code Analysis
 
-For quantization aware training mode, Intel® Low Precision Optimization Tool supports four usage as below:
+For quantization aware training mode, Intel® Neural Compressor supports four usage as below:
 
 1. User specifies fp32 "model", training function "q_func", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file, this option does not require customer to implement evaluation function.
 2. User specifies fp32 "model", training function "q_func" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself, this option require customer implement evaluation function by himself.
-3. User specifies fp32 "model", "calibration_dataloader", "eval_dataloader", and metric, optimizer, criterion in model-specific yaml config file. LPOT will construct buildin training function and evaluation function this option.
-4. User specifies fp32 "model", "calibration_dataloader", a custom "eval_func", and optimizer, criterion in model-specific yaml config file. LPOT will only construct buildin  evaluation function this option.
+3. User specifies fp32 "model", "calibration_dataloader", "eval_dataloader", and metric, optimizer, criterion in model-specific yaml config file. Neural Compressor will construct buildin training function and evaluation function this option.
+4. User specifies fp32 "model", "calibration_dataloader", a custom "eval_func", and optimizer, criterion in model-specific yaml config file. Neural Compressor will only construct buildin  evaluation function this option.
 
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Low Precision Optimization Tool. So here we integrate PyTorch ResNet with Intel® Low Precision Optimization Tool by the first or third use cases for simplicity.
+As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Neural Compressor. So here we integrate PyTorch ResNet with Intel® Neural Compressor by the first or third use cases for simplicity.
 
 ### With buildin training function
 
@@ -94,7 +94,7 @@ After prepare step is done, we just need update main.py like below.
 
 ```python
 model.module.fuse_model()
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization(args.config)
 quantizer.model = common.Model(model)
 quantizer.calib_dataloader = train_loader
@@ -154,7 +154,7 @@ The related code please refer to examples/pytorch/eager/image_recognition/imagen
 After prepare step is done, we just need update main.py like below.
 
 ```python
-def training_func_for_lpot(model):
+def training_func_for_nc(model):
     epochs = 8
     optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
     prev_loss = 100
@@ -197,10 +197,10 @@ def training_func_for_lpot(model):
             model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
     return
 model.module.fuse_model()
-from lpot.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-quantizer.q_func = training_func_for_lpot
+quantizer.q_func = training_func_for_nc
 quantizer.eval_dataloader = val_loader
 q_model = quantizer()
 ```

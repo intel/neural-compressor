@@ -2,9 +2,9 @@ import sys
 import os
 import unittest
 import numpy as np
-from lpot.experimental import Quantization, Benchmark, common
-from lpot.model.engine_model import EngineModel
-from lpot.data import DATASETS
+from neural_compressor.experimental import Quantization, Benchmark, common
+from neural_compressor.model.engine_model import EngineModel
+from neural_compressor.data import DATASETS
 
 def build_yaml():
     fake_yaml = """

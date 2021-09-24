@@ -16,7 +16,7 @@
 import time
 import unittest
 
-from lpot.ux.utils.expiring_dict import ExpiringDict, ExpiringDictItem
+from neural_compressor.ux.utils.expiring_dict import ExpiringDict, ExpiringDictItem
 
 
 class TestExpiringDictItem(unittest.TestCase):

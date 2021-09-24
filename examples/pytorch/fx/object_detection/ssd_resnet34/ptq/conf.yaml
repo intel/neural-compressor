@@ -21,7 +21,7 @@ quantization:                                        # optional. tuning constrai
   approach: post_training_static_quant               # mandatory. default value is post_training_dynamic_quant.   
   calibration:
     sampling_size: 50 100 500                        # optional. default value is 100. used to set how many samples should be used in calibration.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for lpot.Quantization.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 1
       dataset:
         COCONpy:

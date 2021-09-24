@@ -17,15 +17,15 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lpot.ux.components.optimization.tuning_history import tuning_history
-from lpot.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.components.optimization.tuning_history import tuning_history
+from neural_compressor.ux.utils.exceptions import NotFoundException
 
 
 @patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
 class TestTuningHistory(unittest.TestCase):
     """Test Tuning History."""
 
-    @patch("lpot.ux.utils.templates.workdir.Workdir.get_workload_data")
+    @patch("neural_compressor.ux.utils.templates.workdir.Workdir.get_workload_data")
     def test_get_history_snapshot_when_no_workload_found(
         self,
         mocked_get_workload_data_by_id: MagicMock,

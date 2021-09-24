@@ -39,7 +39,7 @@ quantization:
       }
   }
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
+evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   accuracy:
     metric:
       GLUE:

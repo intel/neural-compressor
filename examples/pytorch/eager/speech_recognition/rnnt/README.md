@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized PyTorch RNNT models tuning results via LPOT.
+This document list steps of reproducing Intel Optimized PyTorch RNNT models tuning results via Neural Compressor.
 
 Our example comes from MLPerf Inference Benchmark Suite
 
@@ -43,13 +43,13 @@ Our example comes from MLPerf Inference Benchmark Suite
 
 # Run
 
-### 1. Enable RNNT example with the auto dynamic quantization strategy of LPOT.
+### 1. Enable RNNT example with the auto dynamic quantization strategy of Neural Compressor.
 
   The changes made are as follows:
   1. add conf.yaml:
     This file contains the configuration of quantization.
   2. run.py->run_tune.py:
-    we added lpot support in it.
+    we added neural_compressor support in it.
   3. edit pytorch_SUT.py:
     remove jit script convertion
   4. edit pytorch/decoders.py:

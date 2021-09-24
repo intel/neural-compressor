@@ -22,7 +22,7 @@ from tensorflow.python.framework import tensor_util
 import numpy as np
 import re
 from collections import namedtuple, OrderedDict
-from lpot.utils import logger
+from neural_compressor.utils import logger
 from .ops.tensor import Tensor
 from . import graph_utils as util
 
@@ -103,7 +103,7 @@ def tf_extract_operator(node, model, nodes_dict):
     """decorate the operator in tensorflow
     Args:
         node: NodeDef
-        model: lpot TensorflowBaseModel
+        model: neural_compressor TensorflowBaseModel
         nodes_dict: dict, return value from graph_node_names_details
         tf_dtypes: dict, for get the dtype string
 

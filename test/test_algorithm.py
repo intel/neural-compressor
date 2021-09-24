@@ -1,4 +1,4 @@
-"""Tests for lpot quantization"""
+"""Tests for neural_compressor quantization"""
 import numpy as np
 import unittest
 import os
@@ -121,7 +121,7 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_fast_bias_correction(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -130,7 +130,7 @@ class TestQuantization(unittest.TestCase):
         output_graph = quantizer()
 
     def test_weight_correction(self):
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)

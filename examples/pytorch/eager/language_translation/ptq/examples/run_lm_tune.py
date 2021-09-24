@@ -525,7 +525,7 @@ def main():
     parser.add_argument('--server_ip', type=str, default='', help="For distant debugging.")
     parser.add_argument('--server_port', type=str, default='', help="For distant debugging.")
     parser.add_argument("--tune", action='store_true',
-                        help="run Low Precision Optimization Tool to tune int8 acc.")
+                        help="run Neural Compressor to tune int8 acc.")
     parser.add_argument('-i', "--iter", default=0, type=int,
                         help='For accuracy measurement only.')
     parser.add_argument('--config', type=str, default='conf.yaml', help="yaml config file")
@@ -536,7 +536,7 @@ def main():
     parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
                         help='For accuracy measurement only.')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
-                        help='path to checkpoint tuned by Low Precision Optimization Tool (default: ./)')
+                        help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark')
     args = parser.parse_args()
@@ -658,7 +658,7 @@ def main():
                 results.update(result)
 
             if args.tune:
-                def eval_func_for_lpot(model):
+                def eval_func_for_nc(model):
                     result = evaluate(args, model, tokenizer, prefix=prefix)
                     return 100 - result['perplexity'].numpy()
 
@@ -666,7 +666,7 @@ def main():
                 model.to(args.device)
                 model.eval()
 
-                from lpot.experimental import Quantization, common
+                from neural_compressor.experimental import Quantization, common
                 quantizer = Quantization(args.config)
                 eval_dataset = WikiDataset(tokenizer, args, file_path=args.eval_data_file if evaluate else args.train_data_file, block_size=args.block_size)
                 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
@@ -675,7 +675,7 @@ def main():
                 eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
                 quantizer.model = common.Model(model)
                 quantizer.calib_dataloader = eval_dataloader
-                quantizer.eval_func = eval_func_for_lpot
+                quantizer.eval_func = eval_func_for_nc
                 q_model = quantizer()
                 q_model.save(args.tuned_checkpoint)
                 exit(0)
@@ -685,7 +685,7 @@ def main():
                 model.to(args.device)
 
                 if args.int8:
-                    from lpot.utils.pytorch import load
+                    from neural_compressor.utils.pytorch import load
                     new_model = load(
                         os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
                 else:

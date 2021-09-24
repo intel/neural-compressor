@@ -7,9 +7,9 @@ import torchvision
 import torch.nn as nn
 from torch.quantization.quantize_fx import convert_fx, prepare_qat_fx
 
-from lpot.data import DATASETS
-from lpot.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from lpot.experimental.scheduler import Scheduler
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.experimental.scheduler import Scheduler
 
 fake_yaml = """
 model:
@@ -105,7 +105,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_oneshot(self):
-        from lpot.experimental import Pruning, common, Quantization
+        from neural_compressor.experimental import Pruning, common, Quantization
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -116,7 +116,7 @@ class TestPruning(unittest.TestCase):
         scheduler.model = common.Model(self.q_model)
         combination = scheduler.combine(prune, quantizer)
 
-        def train_func_for_lpot(model):
+        def train_func_for_nc(model):
             epochs = 5
             iters = 3
             criterion = nn.CrossEntropyLoss()
@@ -142,7 +142,7 @@ class TestPruning(unittest.TestCase):
                 combination.on_epoch_end()
             torch.quantization.convert(model, inplace=True)
 
-        combination.train_func = train_func_for_lpot
+        combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
@@ -155,7 +155,7 @@ class TestPruning(unittest.TestCase):
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
     def test_oneshot_fx(self):
-        from lpot.experimental import Pruning, common, Quantization
+        from neural_compressor.experimental import Pruning, common, Quantization
         datasets = DATASETS('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -165,7 +165,7 @@ class TestPruning(unittest.TestCase):
         scheduler.model = common.Model(self.model)
         combination = scheduler.combine(prune, quantizer)
 
-        def train_func_for_lpot(model):
+        def train_func_for_nc(model):
             epochs = 5
             iters = 3
             criterion = nn.CrossEntropyLoss()
@@ -194,7 +194,7 @@ class TestPruning(unittest.TestCase):
             model = convert_fx(model)
             return model
 
-        combination.train_func = train_func_for_lpot
+        combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)

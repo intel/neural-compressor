@@ -10,10 +10,10 @@ import numpy as np
 from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
-from lpot.adaptor import FRAMEWORKS
-from lpot.data import DATASETS, DATALOADERS
-from lpot.experimental import Quantization, common
-from lpot.experimental import Benchmark, common
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.data import DATASETS, DATALOADERS
+from neural_compressor.experimental import Quantization, common
+from neural_compressor.experimental import Benchmark, common
 
 def build_static_yaml():
     fake_yaml = """
@@ -44,7 +44,7 @@ def build_static_yaml():
             timeout: 0
           random_seed: 9527
           workspace: 
-            path: ./lpot_workspace/recover/
+            path: ./nc_workspace/recover/
         """
     with open("static.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
@@ -359,7 +359,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("best_model.onnx")
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
-        shutil.rmtree("./lpot_workspace", ignore_errors=True)
+        shutil.rmtree("./nc_workspace", ignore_errors=True)
 
     def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
@@ -367,7 +367,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                "random_seed": 1234,
                                "q_dataloader": None,
                                "backend": "qlinearops",
-                               "workspace_path": './lpot_workspace/{}/{}/'.format(
+                               "workspace_path": './nc_workspace/{}/{}/'.format(
                                                        'onnxrt',
                                                        'imagenet')}
         framework = "onnxrt_qlinearops"
@@ -392,7 +392,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      "random_seed": 1234,
                      "q_dataloader": None,
                      "backend": "qlinearops",
-                     "workspace_path": './lpot_workspace/{}/{}/'.format(
+                     "workspace_path": './nc_workspace/{}/{}/'.format(
                                              'onnxrt',
                                              'imagenet')}
         framework = "onnxrt_qlinearops"
@@ -445,7 +445,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      "random_seed": 1234,
                      "q_dataloader": None,
                      "backend": "qlinearops",
-                     "workspace_path": './lpot_workspace/{}/{}/'.format(
+                     "workspace_path": './nc_workspace/{}/{}/'.format(
                                              'onnxrt',
                                              'imagenet')}
         framework = "onnxrt_qlinearops"
@@ -491,8 +491,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.model = common.Model(self.ir3_model)
             q_model = quantizer()
 
-            from lpot.utils.utility import recover
-            model = recover(self.ir3_model, './lpot_workspace/recover/history.snapshot', 0)
+            from neural_compressor.utils.utility import recover
+            model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)
             self.assertTrue(model.model == q_model.model)
 
         for mode in ["performance", "accuracy"]:

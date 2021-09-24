@@ -6,7 +6,7 @@ import yaml
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from lpot.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import disable_random
 from tensorflow.python.ops import control_flow_ops
 
 
@@ -74,7 +74,7 @@ class TestSwitchOptimizer(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-        from lpot.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
+        from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
 
         convert_graph = SwitchOptimizer(output_graph_def).do_transformation()
         found_switch = False
@@ -103,7 +103,7 @@ class TestSwitchOptimizer(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-        from lpot.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
+        from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
 
         convert_graph = SwitchOptimizer(output_graph_def).do_transformation()
         found_switch = False

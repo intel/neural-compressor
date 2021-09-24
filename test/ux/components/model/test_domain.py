@@ -16,7 +16,7 @@
 
 import unittest
 
-from lpot.ux.components.model.domain import Domain
+from neural_compressor.ux.components.model.domain import Domain
 
 
 class TestDomain(unittest.TestCase):

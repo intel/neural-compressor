@@ -498,7 +498,7 @@ def main():
 
         prune_eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
         prune_eval_dataloader = tqdm(prune_eval_dataloader, desc="Evaluating")
-        from lpot.experimental import Pruning, common
+        from neural_compressor.experimental import Pruning, common
         def train_func(model):
             return take_train_steps(args, model, prune_eval_dataloader, metric, prune)
 

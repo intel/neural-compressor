@@ -80,7 +80,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.benchmark:
-        from lpot.experimental import Benchmark, common
+        from neural_compressor.experimental import Benchmark, common
         model = onnx.load(args.model_path)
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(model)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from lpot.experimental import Quantization, common
+        from neural_compressor.experimental import Quantization, common
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         q_model = quantize()
