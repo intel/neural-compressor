@@ -17,40 +17,86 @@
 import platform
 import re
 import subprocess
-from typing import Union
+from typing import Any, Dict, Union
 
 import cpuinfo
 import psutil
 
+from lpot.ux.utils.json_serializer import JsonSerializer
 from lpot.ux.utils.logger import log
 from lpot.ux.utils.utils import determine_ip
 
 
-class HWInfo:
+class HWInfo(JsonSerializer):
     """Class responsible for gathering information about platform hardware."""
+
+    initialized: bool = False
+
+    sockets: int = 0
+    cores: int = 0
+    cores_per_socket: int = 0
+    threads_per_socket: int = 0
+    total_memory: str = ""
+    system: str = ""
+    ip: str = ""
+    platform: str = ""
+    hyperthreading_enabled: bool = False
+    turboboost_enabled: Union[str, bool] = False
+    bios_version: str = ""
+    kernel: str = ""
+    min_cpu_freq: str = ""
+    max_cpu_freq: str = ""
 
     def __init__(self) -> None:
         """Initialize HW Info class and gather information platform hardware."""
+        super().__init__()
+        if not HWInfo.initialized:
+            self.initialize()
+
+    def serialize(
+        self,
+        serialization_type: str = "default",
+    ) -> Dict[str, Any]:
+        """Serialize class to dict."""
+        return {
+            "sockets": self.sockets,
+            "cores": self.cores,
+            "cores_per_socket": self.cores_per_socket,
+            "threads_per_socket": self.threads_per_socket,
+            "total_memory": self.total_memory,
+            "system": self.system,
+            "ip": self.ip,
+            "platform": self.platform,
+            "hyperthreading_enabled": self.hyperthreading_enabled,
+            "turboboost_enabled": self.turboboost_enabled,
+            "bios_version": self.bios_version,
+            "kernel": self.kernel,
+            "min_cpu_freq": self.min_cpu_freq,
+            "max_cpu_freq": self.max_cpu_freq,
+        }
+
+    def initialize(self) -> None:
+        """Set class variables."""
         cpu_info = cpuinfo.get_cpu_info()
-        self.sockets: int = get_number_of_sockets()
-        self.cores: int = psutil.cpu_count(logical=False)
-        self.cores_per_socket: int = int(psutil.cpu_count(logical=False) / self.sockets)
-        self.threads_per_socket: int = int(psutil.cpu_count(logical=True) / self.sockets)
-        self.total_memory: str = f"{psutil.virtual_memory().total / (1024 ** 3):.3f}GB"
-        self.system: str = get_distribution()
-        self.ip = determine_ip()
+        HWInfo.sockets = get_number_of_sockets()
+        HWInfo.cores = psutil.cpu_count(logical=False)
+        HWInfo.cores_per_socket = int(psutil.cpu_count(logical=False) / self.sockets)
+        HWInfo.threads_per_socket = int(psutil.cpu_count(logical=True) / self.sockets)
+        HWInfo.total_memory = f"{psutil.virtual_memory().total / (1024 ** 3):.3f}GB"
+        HWInfo.system = get_distribution()
+        HWInfo.ip = determine_ip()
         if cpu_info.get("brand"):
-            self.platform = cpu_info.get("brand")
+            HWInfo.platform = cpu_info.get("brand")
         elif cpu_info.get("brand_raw"):
-            self.platform = cpu_info.get("brand_raw")
+            HWInfo.platform = cpu_info.get("brand_raw")
         else:
-            self.platform = ""
-        self.hyperthreading_enabled: bool = psutil.cpu_count(logical=False) != psutil.cpu_count(
+            HWInfo.platform = ""
+        HWInfo.hyperthreading_enabled = psutil.cpu_count(logical=False) != psutil.cpu_count(
             logical=True,
         )
-        self.turboboost_enabled = is_turbo_boost_enabled()
-        self.bios_version = get_bios_version()
-        self.kernel: str = get_kernel_version()
+        HWInfo.turboboost_enabled = is_turbo_boost_enabled()
+        HWInfo.bios_version = get_bios_version()
+        HWInfo.kernel = get_kernel_version()
         try:
             min_cpu_freq = int(psutil.cpu_freq(percpu=False).min)
             max_cpu_freq = int(psutil.cpu_freq(percpu=False).max)
@@ -60,13 +106,14 @@ class HWInfo:
             max_cpu_freq = 0
         finally:
             if min_cpu_freq == 0:
-                self.min_cpu_freq = "n/a"
+                HWInfo.min_cpu_freq = "n/a"
             else:
-                self.min_cpu_freq = f"{min_cpu_freq}Hz"
+                HWInfo.min_cpu_freq = f"{min_cpu_freq}Hz"
             if max_cpu_freq == 0:
-                self.max_cpu_freq = "n/a"
+                HWInfo.max_cpu_freq = "n/a"
             else:
-                self.max_cpu_freq = f"{max_cpu_freq}Hz"
+                HWInfo.max_cpu_freq = f"{max_cpu_freq}Hz"
+        HWInfo.initialized = True
 
 
 def get_number_of_sockets() -> int:
@@ -113,11 +160,10 @@ def get_bios_version() -> str:
                 universal_newlines=False,
             )
             proc.wait()
+            bios_version = "n/a"
             if proc.stdout and proc.returncode == 0:
                 for line in proc.stdout:
                     bios_version = line.decode("utf-8", errors="ignore").strip()
-            else:
-                bios_version = "n/a"
 
             cmd = "grep microcode  /proc/cpuinfo -m1"
             proc = subprocess.Popen(
@@ -128,14 +174,14 @@ def get_bios_version() -> str:
                 universal_newlines=False,
             )
             proc.wait()
+            microcode = "n/a"
             if proc.stdout and proc.returncode == 0:
                 for line in proc.stdout:
                     microcode_raw = line.decode("utf-8", errors="ignore").strip()
                     result = re.search(r"microcode.*: (.*)", microcode_raw)
                     if result:
                         microcode = result.group(1)
-            else:
-                microcode = "n/a"
+
             return f"BIOS {bios_version} Microcode {microcode}"
         except Exception:
             return "n/a"

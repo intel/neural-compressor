@@ -14,7 +14,6 @@
 # limitations under the License.
 
 """Connector between api.py and components."""
-
 from threading import Thread
 from typing import Any, Callable, Dict
 
@@ -152,7 +151,7 @@ def get_model_graph(data: Dict[str, Any]) -> Graph:
 
 def get_system_info(data: Dict[str, Any]) -> dict:
     """Get system info."""
-    hw_info = vars(HWInfo())
+    hw_info = HWInfo().serialize()
     if "cores" in hw_info:
         del hw_info["cores"]
     return hw_info

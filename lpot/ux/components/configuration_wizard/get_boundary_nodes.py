@@ -20,7 +20,7 @@ from typing import Any, Dict
 from lpot.ux.components.model.repository import ModelRepository
 from lpot.ux.utils.exceptions import ClientErrorException, NotFoundException
 from lpot.ux.utils.logger import log
-from lpot.ux.utils.utils import check_module, get_module_version
+from lpot.ux.utils.utils import check_module
 from lpot.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -53,6 +53,7 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
                 f"Framework for specified model is not yet supported. "
                 f"Supported frameworks are: {', '.join(supported_frameworks)}.",
             )
+
         framework = model.get_framework_name()
         try:
             check_module(framework)
@@ -62,15 +63,10 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
                 f"Could not find installed {framework} module. "
                 f"Please install {framework}.",
             )
-        framework_version = get_module_version(framework)
-
-        model_repository = ModelRepository()
-        model = model_repository.get_model(model_path)
 
         response_data = {
             "id": request_id,
             "framework": framework,
-            "framework_version": framework_version,
             "inputs": model.get_input_nodes(),
             "outputs": model.get_output_nodes(),
         }

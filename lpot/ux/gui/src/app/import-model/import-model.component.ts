@@ -21,6 +21,7 @@ import { debounceTime, filter, map, pairwise } from 'rxjs/operators';
 import { ErrorComponent } from '../error/error.component';
 import { GraphComponent } from '../graph/graph.component';
 import { Router } from '@angular/router';
+import { Subject, combineLatest } from 'rxjs';
 declare var require: any;
 var shajs = require('sha.js')
 
@@ -71,9 +72,7 @@ export class ImportModelComponent implements OnInit {
     outputs: 'none' | 'custom' | 'select',
   };
 
-  frameworkVersion: string;
   frameworkWarning: string;
-
   firstFormGroup: FormGroup;
   secondFormGroup: FormGroup;
 
@@ -87,6 +86,11 @@ export class ImportModelComponent implements OnInit {
   showDomainSpinner = false;
   useEvaluationData = true;
   fileBrowserParams = ['label_file', 'vocab_file', 'anno_path'];
+
+  metricList$: Subject<boolean> = new Subject<boolean>();
+  metricValue$: Subject<boolean> = new Subject<boolean>();
+  dataLoaderList$: Subject<boolean> = new Subject<boolean>();
+  dataLoaderValue$: Subject<boolean> = new Subject<boolean>();
 
   constructor(
     private _formBuilder: FormBuilder,
@@ -138,7 +142,6 @@ export class ImportModelComponent implements OnInit {
         if (this.firstFormGroup.get('modelLocation').value) {
           this.showSpinner = true;
           this.showGraphButton = false;
-          this.frameworkVersion = null;
           this.frameworkWarning = null;
           this.socketService.getBoundaryNodes(this.getNewModel()).subscribe();
           this.modelService.getModelGraph(this.firstFormGroup.get('modelLocation').value)
@@ -171,7 +174,6 @@ export class ImportModelComponent implements OnInit {
             }
             this.firstFormGroup.get('framework').setValue(result['data']['framework']);
             this.getPossibleValues();
-            this.frameworkVersion = result['data']['framework_version'];
             ['inputs', 'outputs'].forEach(param => {
               this[param] = result['data'][param];
               if (Array.isArray(result['data'][param])) {
@@ -207,6 +209,26 @@ export class ImportModelComponent implements OnInit {
           }
         }
       });
+
+    combineLatest([
+      this.metricList$,
+      this.metricValue$
+    ]).subscribe(([metricList, metricValue]) => {
+      if (metricList === true && metricValue === true) {
+        this.setDefaultMetricParam(this.secondFormGroup.get('metric'));
+      }
+    });
+
+    combineLatest([
+      this.dataLoaderList$,
+      this.dataLoaderValue$
+    ]).subscribe(([dataLoaderList, dataLoaderValue]) => {
+      if (dataLoaderList === true && dataLoaderValue === true) {
+        this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderQuantization'), 'quantization');
+        this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
+      }
+    });
+
   }
 
   boundaryNodesChanged(value, type: 'input' | 'output') {
@@ -301,7 +323,10 @@ export class ImportModelComponent implements OnInit {
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('metric', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
-        resp => this.metrics = resp['metric'],
+        resp => {
+          this.metrics = resp['metric'];
+          this.metricList$.next(true);
+        },
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('domain', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
@@ -317,7 +342,10 @@ export class ImportModelComponent implements OnInit {
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('dataloader', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
-        resp => this.dataLoaders = resp['dataloader'],
+        resp => {
+          this.dataLoaders = resp['dataloader'];
+          this.dataLoaderList$.next(true);
+        },
         error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('strategy', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
@@ -326,37 +354,41 @@ export class ImportModelComponent implements OnInit {
   }
 
   setDefaultMetricParam(event) {
-    this.metricParams = this.metrics.find(x => x.name === event.value).params;
-    if (this.metricParams) {
-      this.metricParam = this.metricParams[0].value;
-      if (Array.isArray(this.metricParams[0].value)) {
-        this.metricParam = this.metricParams[0].value[0];
+    if (this.metrics.length) {
+      this.metricParams = this.metrics.find(x => x.name === event.value).params;
+      if (this.metricParams) {
+        this.metricParam = this.metricParams[0].value;
+        if (Array.isArray(this.metricParams[0].value)) {
+          this.metricParam = this.metricParams[0].value[0];
+        }
+      } else {
+        this.metricParam = null;
       }
-    } else {
-      this.metricParam = null;
     }
   }
 
   setDefaultDataLoaderParam(event, section: 'quantization' | 'evaluation') {
-    const parameters = this.dataLoaders.find(x => x.name === event.value).params;
-    this.dataLoaderParams[section] = [];
-    if (Array.isArray(parameters)) {
-      parameters.forEach((param, index) => {
-        this.dataLoaderParams[section][index] = {};
-        Object.keys(param).forEach(paramValue => {
-          this.dataLoaderParams[section][index][paramValue] = param[paramValue];
-        });
-      })
-    }
-    this.showDatasetLocation[section] = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
-    if (section === 'evaluation' && this.useEvaluationData) {
-      this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
-    }
-    const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
-    if (this.showDatasetLocation[section]) {
-      this.isFieldRequired('secondFormGroup', controlName, true);
-    } else {
-      this.isFieldRequired('secondFormGroup', controlName, false);
+    if (this.dataLoaders.length) {
+      const parameters = this.dataLoaders.find(x => x.name === event.value).params;
+      this.dataLoaderParams[section] = [];
+      if (Array.isArray(parameters)) {
+        parameters.forEach((param, index) => {
+          this.dataLoaderParams[section][index] = {};
+          Object.keys(param).forEach(paramValue => {
+            this.dataLoaderParams[section][index][paramValue] = param[paramValue];
+          });
+        })
+      }
+      this.showDatasetLocation[section] = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
+      if (section === 'evaluation' && this.useEvaluationData) {
+        this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
+      }
+      const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
+      if (this.showDatasetLocation[section]) {
+        this.isFieldRequired('secondFormGroup', controlName, true);
+      } else {
+        this.isFieldRequired('secondFormGroup', controlName, false);
+      }
     }
   }
 
@@ -448,14 +480,13 @@ export class ImportModelComponent implements OnInit {
               const dataLoader = Object.keys(resp['config']['quantization'].calibration.dataloader.dataset)[0];
               this.secondFormGroup.get('dataLoaderQuantization').setValue(dataLoader);
               this.secondFormGroup.get('dataLoaderEvaluation').setValue(dataLoader);
-              this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderQuantization'), 'quantization');
-              this.setDefaultDataLoaderParam(this.secondFormGroup.get('dataLoaderEvaluation'), 'evaluation');
+              this.dataLoaderValue$.next(true);
             }
           }
 
           if (resp['config']['evaluation']) {
             this.secondFormGroup.get('metric').setValue(Object.keys(resp['config']['evaluation'].accuracy.metric)[0]);
-            this.setDefaultMetricParam(this.secondFormGroup.get('metric'));
+            this.metricValue$.next(true);
             this.secondFormGroup.get('kmp_blocktime').setValue(resp['config']['evaluation'].performance.configs.kmp_blocktime);
             this.secondFormGroup.get('cores_per_instance').setValue(resp['config']['evaluation'].performance.configs.cores_per_instance);
             this.secondFormGroup.get('num_of_instance').setValue(resp['config']['evaluation'].performance.configs.num_of_instance);

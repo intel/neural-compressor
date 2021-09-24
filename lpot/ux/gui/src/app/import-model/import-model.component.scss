@@ -167,3 +167,8 @@ mat-button-toggle-group {
 ::ng-deep .mat-form-field-required-marker {
   color: $red;
 }
+
+.container {
+  display: grid;
+  justify-content: center;
+}
