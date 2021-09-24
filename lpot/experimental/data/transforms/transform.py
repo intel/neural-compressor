@@ -310,6 +310,18 @@ interpolation_mxnet_map = {
     'bicubic': 2,
 }
 
+def get_torchvision_map(interpolation):
+    try:
+        from torchvision.transforms.functional import InterpolationMode
+        interpolation_torchvision_map = {
+            0: InterpolationMode.NEAREST,
+            2: InterpolationMode.BILINEAR,
+            3: InterpolationMode.BICUBIC,
+        }
+        return interpolation_torchvision_map[interpolation]
+    except: # pragma: no cover
+        return interpolation
+
 @transform_registry(transform_type="Compose", process="general", \
                  framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow")
 class ComposeTransform(BaseTransform):
@@ -908,7 +920,7 @@ class ResizePytorchTransform(BaseTransform):
     def __init__(self, size, interpolation='bilinear'):
         self.size = size
         if interpolation in interpolation_pytorch_map.keys():
-            self.interpolation = interpolation_pytorch_map[interpolation]
+            self.interpolation = get_torchvision_map(interpolation_pytorch_map[interpolation])
         else:
             raise ValueError("Undefined interpolation type")
 
@@ -993,7 +1005,7 @@ class RandomResizedCropPytorchTransform(BaseTransform):
         self.ratio = ratio
 
         if interpolation in interpolation_pytorch_map.keys():
-            self.interpolation = interpolation_pytorch_map[interpolation]
+            self.interpolation = get_torchvision_map(interpolation_pytorch_map[interpolation])
         else:
             raise ValueError("Undefined interpolation type")
 
@@ -1431,7 +1443,7 @@ class PyTorchCropResizeTransform(BaseTransform):
 
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
         if interpolation in interpolation_pytorch_map.keys():
-            self.interpolation = interpolation_pytorch_map[interpolation]
+            self.interpolation = get_torchvision_map(interpolation_pytorch_map[interpolation])
         else:
             raise ValueError("Undefined interpolation type")
         self.x = x
