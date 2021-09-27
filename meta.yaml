@@ -10,7 +10,7 @@ build:
   noarch: python
   script: pip install --no-deps {{LPOT_WHL}}
   entry_points:
-    - lpot_ux = lpot.ux.lpot_ux:main
+    - neural_compressor_bench = lpot.ux.neural_compressor_bench:main
 requirements:
   build:
     - python

@@ -77,7 +77,9 @@ class Configuration:
 
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
-        parser = argparse.ArgumentParser(description="Run UX server.")
+        parser = argparse.ArgumentParser(
+            description="Run Intel(r) Neural Compressor Bench server.",
+        )
         parser.add_argument(
             "-p",
             "--port",

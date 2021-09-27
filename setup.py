@@ -38,7 +38,7 @@ setup(
         'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
         'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
         'prettytable'],
-    scripts=['lpot/ux/bin/lpot_ux'],
+    scripts=['lpot/ux/bin/neural_compressor_bench'],
     python_requires='>=3.6.0',
     classifiers=[
           'Intended Audience :: Science/Research',

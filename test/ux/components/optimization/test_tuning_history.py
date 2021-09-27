@@ -21,7 +21,7 @@ from lpot.ux.components.optimization.tuning_history import tuning_history
 from lpot.ux.utils.exceptions import NotFoundException
 
 
-@patch("sys.argv", ["lpot_ux.py", "-p5000"])
+@patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
 class TestTuningHistory(unittest.TestCase):
     """Test Tuning History."""
 

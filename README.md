@@ -148,7 +148,7 @@ python setup.py install
 * [Metric](docs/metric.md) introduces how to utilize LPOT's built-in metrics and how to develop a custom metric.
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize LPOT's features with examples. 
 * [Examples](/examples) are provided to demonstrate the usage of LPOT in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime.
-* [UX](docs/ux.md) is a web-based system used to simplify LPOT usage.
+* [Intel® Neural Compressor Bench](docs/bench.md) is a web-based system used to simplify Intel® Neural Compressor usage.
 * [Intel oneAPI AI Analytics Toolkit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) explains the AI Kit components, installation and configuration guides, and instructions for building and running sample apps.
 * [AI and Analytics Samples](https://github.com/oneapi-src/oneAPI-samples/tree/master/AI-and-Analytics) includes code samples for Intel oneAPI libraries.
 

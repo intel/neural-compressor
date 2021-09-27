@@ -30,7 +30,7 @@ class TestConfiguration(unittest.TestCase):
     @patch(
         "sys.argv",
         [
-            "lpot_ux.py",
+            "neural_compressor_bench.py",
         ],
     )
     @patch("secrets.token_hex")
@@ -55,7 +55,7 @@ class TestConfiguration(unittest.TestCase):
             configuration.get_url(),
         )
 
-    @patch("sys.argv", ["lpot_ux.py", "-P1234"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-P1234"])
     @patch("secrets.token_hex")
     def test_changing_gui_port(
         self,
@@ -74,7 +74,7 @@ class TestConfiguration(unittest.TestCase):
             configuration.get_url(),
         )
 
-    @patch("sys.argv", ["lpot_ux.py", "-p1234"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-p1234"])
     @patch("secrets.token_hex")
     def test_changing_server_port(
         self,
@@ -93,7 +93,7 @@ class TestConfiguration(unittest.TestCase):
             configuration.get_url(),
         )
 
-    @patch("sys.argv", ["lpot_ux.py", "-p 0"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-p 0"])
     def test_changing_server_port_too_low(self) -> None:
         """Test changing API port to invalid value."""
         configuration = Configuration()
@@ -103,7 +103,7 @@ class TestConfiguration(unittest.TestCase):
         ):
             configuration.set_up()
 
-    @patch("sys.argv", ["lpot_ux.py", "-p 65536"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-p 65536"])
     def test_changing_server_port_too_high(self) -> None:
         """Test changing API port to invalid value."""
         configuration = Configuration()
@@ -113,7 +113,7 @@ class TestConfiguration(unittest.TestCase):
         ):
             configuration.set_up()
 
-    @patch("sys.argv", ["lpot_ux.py", "-P 0"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-P 0"])
     def test_changing_gui_port_too_low(self) -> None:
         """Test changing GUI port to invalid value."""
         configuration = Configuration()
@@ -123,7 +123,7 @@ class TestConfiguration(unittest.TestCase):
         ):
             configuration.set_up()
 
-    @patch("sys.argv", ["lpot_ux.py", "-P 65536"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-P 65536"])
     def test_changing_gui_port_too_high(self) -> None:
         """Test changing GUI port to invalid value."""
         configuration = Configuration()
@@ -133,7 +133,7 @@ class TestConfiguration(unittest.TestCase):
         ):
             configuration.set_up()
 
-    @patch("sys.argv", ["lpot_ux.py", "-p1234", "-P5678"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-p1234", "-P5678"])
     @patch("secrets.token_hex")
     def test_changing_server_and_gui_port(
         self,
@@ -152,7 +152,7 @@ class TestConfiguration(unittest.TestCase):
             configuration.get_url(),
         )
 
-    @patch("sys.argv", ["lpot_ux.py", "-vv"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-vv"])
     def test_changing_log_level_to_defined_one(self) -> None:
         """Test changing log level."""
         configuration = Configuration()
@@ -160,7 +160,7 @@ class TestConfiguration(unittest.TestCase):
 
         self.assertEqual(logging.INFO, configuration.log_level)
 
-    @patch("sys.argv", ["lpot_ux.py", "-vvvvvvvvvvvvv"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-vvvvvvvvvvvvv"])
     def test_changing_log_level_to_not_defined_one(self) -> None:
         """Test changing log level to unknown one."""
         configuration = Configuration()
@@ -169,7 +169,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(logging.DEBUG, configuration.log_level)
 
     @patch("socket.socket.bind")
-    @patch("sys.argv", ["lpot_ux.py", "-p1234"])
+    @patch("sys.argv", ["neural_compressor_bench.py", "-p1234"])
     def test_changing_server_port_to_already_taken_fails(
         self,
         mock_socket_bind: MagicMock,
@@ -182,7 +182,7 @@ class TestConfiguration(unittest.TestCase):
             configuration.set_up()
 
     @patch("socket.socket.bind")
-    @patch("sys.argv", ["lpot_ux.py"])
+    @patch("sys.argv", ["neural_compressor_bench.py"])
     def test_when_all_ports_taken_it_fails(
         self,
         mock_socket_bind: MagicMock,
@@ -194,7 +194,7 @@ class TestConfiguration(unittest.TestCase):
             configuration = Configuration()
             configuration.set_up()
 
-    @patch("sys.argv", ["lpot_ux.py"])
+    @patch("sys.argv", ["neural_compressor_bench.py"])
     def test_many_instances_are_the_same(self) -> None:
         """Test that all instances references same object."""
         original_configuration = Configuration()
@@ -202,7 +202,7 @@ class TestConfiguration(unittest.TestCase):
 
         self.assertTrue(original_configuration is new_configuration)
 
-    @patch("sys.argv", ["lpot_ux.py"])
+    @patch("sys.argv", ["neural_compressor_bench.py"])
     def test_reloading_config_changes_token(self) -> None:
         """Test that reloading configuration changes token."""
         configuration = Configuration()
@@ -212,7 +212,7 @@ class TestConfiguration(unittest.TestCase):
 
         self.assertNotEqual(original_token, configuration.token)
 
-    @patch("sys.argv", ["lpot_ux.py"])
+    @patch("sys.argv", ["neural_compressor_bench.py"])
     @patch.dict(os.environ, {"HOME": "/foo/bar"})
     @patch("lpot.ux.web.configuration.os.path.isfile")
     def test_default_workdir_when_no_existing_config(self, mocked_isfile: MagicMock) -> None:
@@ -226,7 +226,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(os.path.join("/foo/bar", "workdir"), configuration.workdir)
         mocked_isfile.assert_called_once_with(workloads_list_filepath)
 
-    @patch("sys.argv", ["lpot_ux.py"])
+    @patch("sys.argv", ["neural_compressor_bench.py"])
     @patch.dict(os.environ, {"HOME": "/foo/bar"})
     @patch("lpot.ux.web.configuration.os.path.isfile")
     def test_default_workdir_uses_existing_config(self, mocked_isfile: MagicMock) -> None:

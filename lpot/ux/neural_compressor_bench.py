@@ -43,7 +43,7 @@ def main() -> None:
 
     change_log_level(configuration.log_level)
     print(
-        "LPOT UX Server started.\n"
+        "Intel(r) Neural Compressor Bench Server started.\n"
         "Setup port forwarding from "
         f"your local port {configuration.gui_port} to "
         f"{configuration.server_port} on this machine.\n"
@@ -54,7 +54,7 @@ def main() -> None:
 
 
 def prepare_environment() -> None:
-    """Prepare environment for LPOT UX."""
+    """Prepare environment for Intel® Neural Compressor Bench."""
     environment = Environment()
     environment.ensure_workdir_exists_and_writeable()
     environment.migrate_workloads_list()

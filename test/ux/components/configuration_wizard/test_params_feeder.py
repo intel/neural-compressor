@@ -23,7 +23,7 @@ from lpot.ux.utils.exceptions import ClientErrorException
 
 
 @patch.dict(os.environ, {"HOME": "/foo/bar"})
-@patch("sys.argv", ["lpot_ux.py", "-p5000"])
+@patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
 class TestParamsFeeder(unittest.TestCase):
     """Main test class for params feeder."""
 
