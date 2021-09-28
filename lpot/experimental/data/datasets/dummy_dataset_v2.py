@@ -23,7 +23,7 @@ from lpot.utils.utility import LazyImport
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
-@dataset_registry(dataset_type="dummy_v2", framework="tensorflow, tensorflow_itex, \
+@dataset_registry(dataset_type="dummy_v2", framework="tensorflow, tensorflow_itex, engine,\
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')

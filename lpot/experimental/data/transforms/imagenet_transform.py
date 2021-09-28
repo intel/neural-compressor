@@ -69,7 +69,8 @@ class QuantizedInput(BaseTransform):
         return image, label
 
 @transform_registry(transform_type="LabelShift", \
-    process="postprocess", framework="tensorflow, onnxrt_qlinearops, onnxrt_integerops")
+    process="postprocess", framework="tensorflow, onnxrt_qlinearops, \
+    onnxrt_integerops, engine")
 class LabelShift(BaseTransform):
     """Convert label to label - label_shift.
 

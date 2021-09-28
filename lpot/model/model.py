@@ -27,6 +27,7 @@ from lpot.conf.dotdict import deep_get, deep_set
 from lpot.conf import config as cfg
 from lpot.model.base_model import BaseModel
 from lpot.model.onnx_model import ONNXModel
+from lpot.model.engine_model import EngineModel
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -161,7 +162,30 @@ def get_model_fwk_name(model):
     if isinstance(model, TensorflowBaseModel):
         return 'tensorflow'
 
-    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
+    def _is_engine(model):
+        if model and os.path.isdir(model):
+            file_list = os.listdir(model)
+            is_engine = True
+            if len(file_list) == 2:
+                for file_name in file_list:
+                    file_ext= os.path.splitext(file_name)
+                    front, ext = file_ext
+                    if ext == ".yaml":
+                        is_engine &= True
+                    elif ext == ".bin":
+                        is_engine &= True
+                    else:
+                        is_engine &= False
+                        logger.error("Please Input yaml and bin for engine.")
+                        return 'NA'
+            else:
+                return 'NA'
+            if is_engine == True:
+                return 'engine'
+        else:
+            return 'NA'
+
+    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet, _is_engine]
     for handler in checker:
         fwk_name = handler(model)
         if fwk_name != 'NA':
@@ -1263,4 +1287,5 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch': PyTorchModel,
           'pytorch_ipex': PyTorchIpexModel,
           'pytorch_fx': PyTorchFXModel,
-          'onnxruntime': ONNXModel}
+          'onnxruntime': ONNXModel,
+          'engine': EngineModel}

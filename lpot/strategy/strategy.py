@@ -156,6 +156,10 @@ class TuneStrategy(object):
                and 'default_qconfig' in self.cfg['quantization']['op_wise']:
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
+        if framework == 'engine':
+            framework_specific_info.update(
+                 {'workspace_path': self.cfg.tuning.workspace.path})
+ 
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
 

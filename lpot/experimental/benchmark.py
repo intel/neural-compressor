@@ -173,6 +173,10 @@ class Benchmark(object):
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None,
                                             "benchmark": True})
+        if framework == 'engine':
+            framework_specific_info.update(
+                 {"workspace_path": cfg.tuning.workspace.path, \
+                  "b_dataloader": self._b_dataloader})
 
         assert isinstance(self._model, BaseModel), 'need set lpot Model for quantization....'
 

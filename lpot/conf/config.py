@@ -355,6 +355,9 @@ postprocess_schema = Schema({
         'label_file': str,
         'vocab_file': str
     },
+    Optional('Collect'): {
+        'length': int
+    },
 })
 
 dataset_schema = Schema({

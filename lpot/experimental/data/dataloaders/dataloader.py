@@ -19,6 +19,8 @@ from .tensorflow_dataloader import TensorflowDataLoader
 from .mxnet_dataloader import MXNetDataLoader
 from .pytorch_dataloader import PyTorchDataLoader
 from .onnxrt_dataloader import ONNXRTDataLoader
+from .engine_dataloader import EngineDataLoader
+from .default_dataloader import DefaultDataLoader
 
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "tensorflow_itex": TensorflowDataLoader,
@@ -27,5 +29,6 @@ DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "pytorch_ipex": PyTorchDataLoader,
                "pytorch_fx": PyTorchDataLoader,
                "onnxrt_qlinearops": ONNXRTDataLoader,
-               "onnxrt_integerops": ONNXRTDataLoader}
+               "onnxrt_integerops": ONNXRTDataLoader,
+               "engine": EngineDataLoader}
 

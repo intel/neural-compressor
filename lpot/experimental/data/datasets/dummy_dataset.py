@@ -27,7 +27,8 @@ logger = logging.getLogger()
 
 @dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
                                                     onnxrt_qlinearops, onnxrt_integerops, \
-                                                    pytorch, pytorch_ipex, pytorch_fx, mxnet",
+                                                    pytorch, pytorch_ipex, pytorch_fx, \
+                                                    mxnet, engine",
                                                     dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.

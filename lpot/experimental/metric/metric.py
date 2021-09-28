@@ -21,6 +21,7 @@ from lpot.utils.utility import LazyImport, singleton
 from lpot.utils import logger
 from sklearn.metrics import accuracy_score
 import numpy as np
+import collections
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -62,6 +63,12 @@ class ONNXRTITMetrics(object):
         self.metrics = {}
         self.metrics.update(ONNXRT_IT_METRICS)
 
+@singleton
+class EngineMetrics(object):
+    def __init__(self):
+        self.metrics = {}
+        self.metrics.update(ENGINE_METRICS)
+
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "tensorflow_itex": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
@@ -69,7 +76,8 @@ framework_metrics = {"tensorflow": TensorflowMetrics,
                      "pytorch_ipex": PyTorchMetrics,
                      "pytorch_fx": PyTorchMetrics,
                      "onnxrt_qlinearops": ONNXRTQLMetrics,
-                     "onnxrt_integerops": ONNXRTITMetrics}
+                     "onnxrt_integerops": ONNXRTITMetrics,
+                     "engine": EngineMetrics}
 
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
@@ -77,6 +85,7 @@ MXNET_METRICS = {}
 PYTORCH_METRICS = {}
 ONNXRT_QL_METRICS = {}
 ONNXRT_IT_METRICS = {}
+ENGINE_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "tensorflow_itex": TENSORFLOW_METRICS,
@@ -85,15 +94,16 @@ registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "pytorch_ipex": PYTORCH_METRICS,
                     "pytorch_fx": PYTORCH_METRICS,
                     "onnxrt_qlinearops": ONNXRT_QL_METRICS,
-                    "onnxrt_integerops": ONNXRT_IT_METRICS}
+                    "onnxrt_integerops": ONNXRT_IT_METRICS,
+                    "engine": ENGINE_METRICS,}
 
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "tensorflow_itex",
-                             "pytorch", "pytorch_ipex", "pytorch_fx", \
+        assert framework in ("tensorflow", "tensorflow_itex", "engine",
+                            "pytorch", "pytorch_ipex", "pytorch_fx", \
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
-                             "framework support tensorflow pytorch mxnet onnxrt"
+                             "framework support tensorflow pytorch mxnet onnxrt engine"
         self.metrics = framework_metrics[framework]().metrics
 
     def __getitem__(self, metric_type):
@@ -127,7 +137,8 @@ def metric_registry(metric_type, framework):
                 "onnxrt_integerops",
                 "pytorch",
                 "pytorch_ipex",
-                "pytorch_fx"], "The framework support tensorflow mxnet pytorch onnxrt"
+                "pytorch_fx",
+                "engine"], "The framework support tensorflow mxnet pytorch onnxrt engine"
 
             if metric_type in registry_metrics[single_framework].keys():
                 raise ValueError('Cannot have two metrics with the same name')
@@ -274,7 +285,8 @@ def _shape_validate(preds, labels):
             'Shape mismatch, label shape {} vs pred shape {}'.format(label.shape, pred.shape)
     return preds, labels
 
-@metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, \
+                 onnxrt_integerops, engine')
 class F1(BaseMetric):
     """Computes the F1 score of a binary classification problem.
 
@@ -324,7 +336,8 @@ def _accuracy_type_check(preds, labels):
            update_type = 'multilabel'
    return update_type
 
-@metric_registry('Accuracy', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('Accuracy', 'tensorflow, pytorch, onnxrt_qlinearops, \
+                onnxrt_integerops, engine')
 class Accuracy(BaseMetric):
     """Computes accuracy classification score.
 
@@ -399,8 +412,8 @@ class PyTorchLoss():
             raise ValueError("Loss must have at least one example \
                                       before it can be computed.")
         return self._sum.item() / self._num_examples
-
-@metric_registry('Loss', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+        
+@metric_registry('Loss', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
 class Loss(BaseMetric):
     """A dummy metric for directly printing loss, it calculates the average of predictions.
 
@@ -424,7 +437,7 @@ class Loss(BaseMetric):
         """calculate metric"""
         return self.sum / self.sample
 
-@metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
 class MAE(BaseMetric):
     """Computes Mean Absolute Error (MAE) loss.
 
@@ -456,7 +469,8 @@ class MAE(BaseMetric):
         assert aes_size, "predictions shouldn't be none"
         return aes_sum / aes_size
 
-@metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, \
+                onnxrt_integerops, engine')
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
 
@@ -479,7 +493,7 @@ class RMSE(BaseMetric):
         """calculate metric"""
         return np.sqrt(self.mse.result())
 
-@metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
 class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
 
@@ -553,7 +567,7 @@ class TensorflowTopK(BaseMetric):
         else:
             return self.num_correct / self.num_sample
 
-@metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops, engine')
 class GeneralTopK(BaseMetric):
     """Computes top k predictions accuracy.
 
@@ -596,7 +610,7 @@ class GeneralTopK(BaseMetric):
         else:
             return self.num_correct / self.num_sample
 
-@metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowMAP(BaseMetric):
     """Computes mean average precision.
 
@@ -741,7 +755,7 @@ class TensorflowMAP(BaseMetric):
 
             return box_metrics[self.map_key]
 
-@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowCOCOMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in COCO
 
@@ -757,7 +771,7 @@ class TensorflowCOCOMAP(TensorflowMAP):
         self.iou_thrs = '0.5:0.05:0.95'
         self.map_points = 101
 
-@metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowVOCMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in VOC
 
@@ -772,19 +786,21 @@ class TensorflowVOCMAP(TensorflowMAP):
         self.iou_thrs = 0.5
         self.map_points = 0
 
-@metric_registry('SquadF1', 'tensorflow')
+@metric_registry('SquadF1', 'tensorflow, engine')
 class SquadF1(BaseMetric):
     """Evaluate for v1.1 of the SQuAD dataset
 
     """
     def __init__(self):
         self._score_list = []
+        # squad metric only work when all data preds collected
 
     def update(self, preds, labels, sample_weight=None):
         """add preds and labels to storage"""
-        from .evaluate_squad import evaluate
-        result = evaluate(labels, preds)
-        self._score_list.append(result['f1'])
+        if preds:
+            from .evaluate_squad import evaluate
+            result = evaluate(labels, preds)
+            self._score_list.append(result['f1'])
 
     def reset(self):
         """clear preds and labels storage"""
@@ -792,10 +808,12 @@ class SquadF1(BaseMetric):
 
     def result(self):
         """calculate metric"""
+        if len(self._score_list) == 0:
+            return 0.
         return np.array(self._score_list).mean()
 
 
-@metric_registry('mIOU', 'tensorflow')
+@metric_registry('mIOU', 'tensorflow, engine')
 class mIOU(BaseMetric):
     def __init__(self, num_classes=21):
         self.num_classes = num_classes
@@ -822,7 +840,7 @@ class mIOU(BaseMetric):
         mean_iu = np.nanmean(iu)
         return mean_iu
 
-@metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops')
+@metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops, engine')
 class ONNXRTGLUE(BaseMetric):
     """Computes GLUE score.
 

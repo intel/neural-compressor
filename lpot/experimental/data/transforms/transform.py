@@ -170,6 +170,22 @@ class ONNXRTITTransforms(Transforms):
         general.update(ONNXRT_IT_TRANSFORMS["general"])
         return general
 
+class EngineTransforms(Transforms):
+    def _get_preprocess(self):
+        preprocess = {}
+        preprocess.update(ENGINE_TRANSFORMS["preprocess"])
+        return preprocess
+
+    def _get_postprocess(self):
+        postprocess = {}
+        postprocess.update(ENGINE_TRANSFORMS["postprocess"])
+        return postprocess
+
+    def _get_general(self):
+        general = {}
+        general.update(ENGINE_TRANSFORMS["general"])
+        return general
+
 framework_transforms = {"tensorflow": TensorflowTransforms,
                         "tensorflow_itex": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
@@ -177,7 +193,8 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
                         "pytorch_ipex": PyTorchTransforms,
                         "pytorch_fx": PyTorchTransforms,
                         "onnxrt_qlinearops": ONNXRTQLTransforms,
-                        "onnxrt_integerops": ONNXRTITTransforms}
+                        "onnxrt_integerops": ONNXRTITTransforms,
+                        "engine": EngineTransforms}
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
@@ -185,6 +202,7 @@ MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+ENGINE_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "tensorflow_itex": TENSORFLOW_TRANSFORMS,
@@ -193,14 +211,15 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "pytorch_ipex": PYTORCH_TRANSFORMS,
                        "pytorch_fx": PYTORCH_TRANSFORMS,
                        "onnxrt_qlinearops": ONNXRT_QL_TRANSFORMS,
-                       "onnxrt_integerops": ONNXRT_IT_TRANSFORMS}
+                       "onnxrt_integerops": ONNXRT_IT_TRANSFORMS,
+                       "engine": ENGINE_TRANSFORMS}
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "tensorflow_itex",
+        assert framework in ("tensorflow", "tensorflow_itex", "engine",
                              "pytorch", "pytorch_ipex", "pytorch_fx",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
-                             "framework support tensorflow pytorch mxnet onnxrt"
+                             "framework support tensorflow pytorch mxnet onnxrt engine"
         assert process in ("preprocess", "postprocess",
                            "general"), "process support preprocess postprocess, general"
         self.transforms = framework_transforms[framework](process).transforms
@@ -241,8 +260,9 @@ def transform_registry(transform_type, process, framework):
                 "pytorch_ipex",
                 "pytorch_fx",
                 "onnxrt_qlinearops",
-                "onnxrt_integerops"
-            ], "The framework support tensorflow mxnet pytorch onnxrt"
+                "onnxrt_integerops",
+                "engine"
+            ], "The framework support tensorflow mxnet pytorch onnxrt engine"
             if transform_type in registry_transforms[single_framework][process].keys():
                 raise ValueError('Cannot have two transforms with the same name')
             registry_transforms[single_framework][process][transform_type] = cls
@@ -323,7 +343,7 @@ def get_torchvision_map(interpolation):
         return interpolation
 
 @transform_registry(transform_type="Compose", process="general", \
-                 framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow")
+                 framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, engine")
 class ComposeTransform(BaseTransform):
     """Composes several transforms together.
 
@@ -2020,7 +2040,6 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
             if start_offset + length == len(all_doc_tokens):
                 break
             start_offset += min(length, doc_stride)
-
         for (doc_span_index, doc_span) in enumerate(doc_spans):
             tokens = []
             token_to_orig_map = {}
@@ -2082,8 +2101,33 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
             output_fn(feature)
             unique_id += 1
 
+@transform_registry(transform_type="Collect", \
+                process="postprocess", framework="engine")
+class CollectTransform(BaseTransform):
+    def __init__(self, length=10833):
+        self.length = length
+        self.unique_id = []
+        self.start_logits = []
+        self.end_logits = []
+        self.all_sample = (None, None)
+        self.idx = 1000000000
+
+    def __call__(self, sample):
+        all_results, label = sample
+        result_list = [np.expand_dims(result, 0) for result in all_results]
+        for result in result_list:
+            if len(self.unique_id) < self.length:
+                result = result.transpose(2,0,1)
+                self.unique_id.append(self.idx)
+                self.start_logits.append(result[0])
+                self.end_logits.append(result[1])
+                self.idx += 1
+        if len(self.unique_id) == self.length:
+            self.all_sample = ([self.unique_id, self.start_logits, self.end_logits], label)
+        return self.all_sample
+
 @transform_registry(transform_type="SquadV1", \
-                process="postprocess", framework="tensorflow")
+                process="postprocess", framework="tensorflow, engine")
 class SquadV1PostTransform(BaseTransform):
     """Postprocess the predictions of bert on SQuAD.
 
@@ -2151,6 +2195,8 @@ class SquadV1PostTransform(BaseTransform):
         return processed_results
 
     def __call__(self, sample):
+        if sample == (None, None):
+            return (None, None)
         all_results, label = sample
         all_results = self.process_result(all_results)
         example_index_to_features = collections.defaultdict(list)
@@ -2280,7 +2326,6 @@ class SquadV1PostTransform(BaseTransform):
 
                 assert len(nbest_json) >= 1
                 all_predictions[example.qas_id] = nbest_json[0]["text"]
-
         return (all_predictions, label)
 
 

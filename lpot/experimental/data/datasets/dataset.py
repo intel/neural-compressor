@@ -88,6 +88,12 @@ class PytorchMxnetWrapFunction():
             sample = self.transform(sample)
         return sample
 
+@singleton
+class EngineDatasets(object):
+    def __init__(self):
+        self.datasets = {}
+        self.datasets.update(ENGINE_DATASETS)
+
 framework_datasets = {"tensorflow": TensorflowDatasets,
                       "tensorflow_itex": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
@@ -95,7 +101,8 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
                       "pytorch_ipex": PyTorchDatasets,
                       "pytorch_fx": PyTorchDatasets,
                       "onnxrt_qlinearops": ONNXRTQLDatasets,
-                      "onnxrt_integerops": ONNXRTITDatasets}
+                      "onnxrt_integerops": ONNXRTITDatasets,
+                      "engine": EngineDatasets}
 
 """The datasets supported by lpot, it's model specific and can be configured by yaml file.
 
@@ -112,8 +119,8 @@ class DATASETS(object):
     def __init__(self, framework):
         assert framework in ["tensorflow", "tensorflow_itex",
                              "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
-                             "pytorch", "pytorch_ipex", "pytorch_fx"], \
-                             "framework support tensorflow pytorch mxnet onnxrt"
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "engine"], \
+                             "framework support tensorflow pytorch mxnet onnxrt engine"
         self.datasets = framework_datasets[framework]().datasets
 
     def __getitem__(self, dataset_type):
@@ -130,6 +137,7 @@ PYTORCHIPEX_DATASETS = {}
 PYTORCHFX_DATASETS = {}
 ONNXRTQL_DATASETS = {}
 ONNXRTIT_DATASETS = {}
+ENGINE_DATASETS = {}
 
 registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                     "tensorflow_itex": TENSORFLOWITEX_DATASETS,
@@ -138,7 +146,8 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                      "pytorch_ipex": PYTORCHIPEX_DATASETS,
                      "pytorch_fx": PYTORCHFX_DATASETS,
                      "onnxrt_integerops": ONNXRTQL_DATASETS,
-                     "onnxrt_qlinearops": ONNXRTIT_DATASETS}
+                     "onnxrt_qlinearops": ONNXRTIT_DATASETS,
+                     "engine": ENGINE_DATASETS}
 
 
 def dataset_registry(dataset_type, framework, dataset_format=''):
@@ -164,8 +173,9 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
                 "pytorch_ipex",
                 "pytorch_fx",
                 "onnxrt_qlinearops",
-                "onnxrt_integerops"
-            ], "The framework support tensorflow mxnet pytorch onnxrt"
+                "onnxrt_integerops",
+                "engine"
+            ], "The framework support tensorflow mxnet pytorch onnxrt engine"
             dataset_name = dataset_type + dataset_format
             if dataset_name in registry_datasets[single_framework].keys():
                 raise ValueError('Cannot have two datasets with the same name')
