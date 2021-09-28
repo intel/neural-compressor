@@ -189,8 +189,8 @@ def get_model_fwk_name(model):
     for handler in checker:
         fwk_name = handler(model)
         if fwk_name != 'NA':
-            break    
-    assert fwk_name != 'NA', 'Framework is not detected correctly from model format.'        
+            break
+    assert fwk_name != 'NA', 'Framework is not detected correctly from model format.'
 
     return fwk_name
 
@@ -954,9 +954,6 @@ class PyTorchBaseModel(BaseModel):
         self._workspace_path = ''
         self.is_quantized = False
         self.kwargs = kwargs if kwargs else None
-        # skip input argument 'self' in forward
-        self.input_args = OrderedDict().fromkeys(
-                inspect.getfullargspec(model.forward).args[1:], None)
 
     @property
     def model(self):
@@ -977,6 +974,9 @@ class PyTorchBaseModel(BaseModel):
             handle.remove()
 
     def generate_forward_pre_hook(self):
+        # skip input argument 'self' in forward
+        self.input_args = OrderedDict().fromkeys(
+                inspect.getfullargspec(self.model.forward).args[1:], None)
         # a wrapper is needed to insert self into the actual hook
         def actual_forward_pre_hook(module, input):
             args, _, _, values = inspect.getargvalues(inspect.stack()[1].frame)
