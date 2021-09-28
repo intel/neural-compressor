@@ -23,6 +23,7 @@ import pickle
 from collections import OrderedDict
 from pathlib import Path
 import yaml
+import numpy as np
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
 from ..utils.utility import fault_tolerant_file, equal_dicts
@@ -443,6 +444,8 @@ class TuneStrategy(object):
                                          fp32_baseline = self.baseline == None)
 
             val = self.objective.evaluate(eval_func, model)
+        assert np.isscalar(val[0]), \
+            "The eval_func should return a scalar, but not {}!".format(str(type(val[0])))
         return val
 
     def __getstate__(self):

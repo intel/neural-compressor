@@ -280,5 +280,17 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         output_graph = quantizer()
 
+    def test_invalid_eval_func(self):
+        from lpot.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        def invalid_eval_func(model):
+          return [1.]
+        quantizer.eval_func = invalid_eval_func
+        output_graph = quantizer()
+
 if __name__ == "__main__":
     unittest.main()
