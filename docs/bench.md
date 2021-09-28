@@ -98,19 +98,16 @@ Follow the comments in the generated code template to fill in required methods w
    * prepare dataset and a frozen pb model 
 * In the **Create low precision model** in first step:
    * select created frozen model
-   * select input_file, batch_size in inputs (in that order)
+   * select `input_file`, `batch_size` in inputs (in that order)
    * choose **custom** in output and enter `IteratorGetNext:3, unstack:0, unstack:1` in input field
-![Bert1](imgs/bench/bert1.png "Bert1")
-* in second step don't change anything
-![Bert2](imgs/bench/bert2.png "Bert2")
-* in third step :
    * choose NLP as model domain
-   * in **Calibration/label_file**, select **dev-v1.1.json** file from created dataset
-   * in **Calibration/dataset location**, select **evel.tf_record** file from created dataset
-   * in **Evaluation/Transforms/label_file**, select **dev-v1.1.json** file from created dataset  
-   * in **Evaluation/Transforms/vocab_file**, select **vocab.txt** file from created dataset
+![Bert1](imgs/bench/bert1.png "Bert1")
+
+* in second step :
+   * in **Calibration/dataset location**, select **eval.tf_record** file from created dataset
+   * label_file and vocab_file fields should be filled automatically
    * click **Finish** or change Advanced parameters
-![Bert3](imgs/bench/bert3.png "Bert3")
+![Bert2](imgs/bench/bert2.png "Bert2")
  
 
 ## Model Graph Display
