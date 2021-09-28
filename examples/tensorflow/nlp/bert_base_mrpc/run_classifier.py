@@ -159,6 +159,34 @@ flags.DEFINE_integer("num_inter_threads", 0, "number of inter threads.")
 
 flags.DEFINE_integer("num_intra_threads", 0, "number of intra threads.")
 
+flags.DEFINE_bool(
+    'strip_iterator', False, 'whether to strip the iterator of the model')
+
+def strip_iterator(graph_def):
+    from lpot.adaptor.tf_utils.util import strip_unused_nodes
+    input_node_names = ['input_ids', 'input_mask', 'segment_ids']
+    output_node_names = ['loss/Softmax']
+    # create the placeholder and merge with the graph
+    with tf.compat.v1.Graph().as_default() as g: 
+        input_ids = tf.compat.v1.placeholder(tf.int32, shape=(None,384), name="input_ids")
+        input_mask = tf.compat.v1.placeholder(tf.int32, shape=(None,384), name="input_mask")
+        segment_ids = tf.compat.v1.placeholder(tf.int32, shape=(None,384), name="segment_ids")
+        tf.import_graph_def(graph_def, name='')
+
+    graph_def = g.as_graph_def()
+    # change the input from iterator to placeholder
+    for node in graph_def.node:
+        for idx, in_tensor in enumerate(node.input):
+            if 'IteratorGetNext:0' == in_tensor or 'IteratorGetNext' == in_tensor:
+                node.input[idx] = 'input_ids'
+            if 'IteratorGetNext:1' in in_tensor:
+                node.input[idx] = 'input_mask'
+            if 'IteratorGetNext:2' in in_tensor:
+                node.input[idx] = 'segment_ids'
+
+    graph_def = strip_unused_nodes(graph_def, input_node_names, output_node_names)
+    return graph_def
+
 
 class LoggerHook(tf.estimator.SessionRunHook):
   """ Logs runtime. """
@@ -1065,6 +1093,8 @@ def main(_):
       quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.metric = common.Metric(metric_cls=Accuracy)
       q_model = quantizer()
+      if FLAGS.strip_iterator:
+          q_model.graph_def = strip_iterator(q_model.graph_def)
       q_model.save(FLAGS.output_model)
 
   if FLAGS.benchmark:

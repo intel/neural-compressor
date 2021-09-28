@@ -60,6 +60,24 @@ And your output_model will be located at ./output_model like the command below
       --config=mrpc.yaml \
       --tune
   ```
+If you want the model without iterator inside the graph, you can add --strip_iterator like:
+  ```shell
+    python run_classifier.py \
+      --task_name=MRPC \
+      --data_dir=data/MRPC \
+      --vocab_file=model/vocab.txt \
+      --bert_config_file=model/bert_config.json \
+      --init_checkpoint=model/model.ckpt-343 \
+      --max_seq_length=128 \
+      --train_batch_size=32 \
+      --learning_rate=2e-5 \
+      --num_train_epochs=3.0 \
+      --output_dir=model \
+      --output_model=output_model \
+      --config=mrpc.yaml \
+      --tune \
+      --strip_iterator
+  ```
 
 Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
 =========================

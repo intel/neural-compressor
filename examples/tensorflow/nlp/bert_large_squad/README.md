@@ -78,6 +78,13 @@ bash prepare_model.sh --output_dir=./model
   python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --tune
   ```
 
+Now the tool will generate an int8 model with iterator inside the graph if you want the tuned int8 model to be raw input with 3 inputs you can use command like below:
+
+  ```shell
+  python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --tune --strip_iterator
+  ```
+
+
 Details of enabling Intel® Low Precision Optimization Tool on bert model for Tensorflow.
 =========================
 
