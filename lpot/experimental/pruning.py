@@ -59,8 +59,11 @@ class Pruning(Component):
 
     def _on_batch_begin(self, batch_id):
         """ called on the beginning of batches"""
+        res = []
         for pruner in self.pruners:
-            pruner.on_batch_begin(batch_id)
+            res.append(pruner.on_batch_begin(batch_id))
+
+        return res
 
     def _on_post_grad(self):
         """ called after gradient computed """
@@ -70,16 +73,20 @@ class Pruning(Component):
 
     def _on_batch_end(self):
         """ called on the end of batches"""
+        res = []
         for pruner in self.pruners:
-            pruner.on_batch_end()
+            res.append(pruner.on_batch_end())
+        return res
 
     def _on_epoch_end(self):
         """ called on the end of epochs"""
+        res = []
         for pruner in self.pruners:
-            pruner.on_epoch_end()
+            res.append(pruner.on_epoch_end())
         stats, sparsity = self._model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
+        return res
 
     def _post_epoch_end(self):
         """ called after training """

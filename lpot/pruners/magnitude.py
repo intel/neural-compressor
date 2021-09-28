@@ -33,12 +33,15 @@ class BasicMagnitudePruner(Pruner):
             self.compute_mask()
 
     def on_batch_begin(self, batch_id):
+        res = dict()
+
         for weight in self.weights:
             if weight in self.masks:
                 new_weight = self.masks[weight] * \
                     np.array(self.model.get_weight(weight))
-                new_weight_zeros = (new_weight == 0).sum()
                 self.model.update_weights(weight, new_weight)
+                res[weight] = new_weight
+        return res
 
     def compute_mask(self):
         """compute masks according to absolute values"""
@@ -60,7 +63,9 @@ class BasicMagnitudePruner(Pruner):
                 self.masks[weight] = self.pattern.repeat_mask(reduced_mask)
 
     def on_epoch_end(self):
+        res = dict()
         if self.is_last_epoch:
+
             for weight in self.weights:
                 if weight in self.masks:
                     logger.info(
@@ -72,10 +77,15 @@ class BasicMagnitudePruner(Pruner):
                     new_weight = self.masks[weight] * \
                         np.array(self.model.get_weight(weight))
                     self.model.update_weights(weight, new_weight)
+                    res[weight] = new_weight
+        return res
 
     def on_batch_end(self):
+        res = dict()
         for weight in self.weights:
             if weight in self.masks:
                 new_weight = self.masks[weight] * \
                     np.array(self.model.get_weight(weight))
                 self.model.update_weights(weight, new_weight)
+                res[weight] = new_weight
+        return res

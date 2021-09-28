@@ -586,6 +586,7 @@ class TensorflowBaseModel(BaseModel):
 
         self._model = model
         self._name = ''
+        self._weights = None
         self.kwargs = kwargs
         self._graph_info = {}
         self._input_tensor_names = []
@@ -607,7 +608,17 @@ class TensorflowBaseModel(BaseModel):
     def name(self, name):
         self.kwargs.update({'name': name})
         self._name = name
-        
+
+    @property
+    def weights(self):
+        """ Getter to weights """
+        return self._weights
+
+    @weights.setter
+    def weights(self, new_weights):
+        """ Setter to weights """
+        self._weights = new_weights
+
     @property
     def q_config(self):
         return self._q_config
@@ -767,6 +778,73 @@ class TensorflowBaseModel(BaseModel):
         logger.info("Save quantized model to {}.".format(pb_file))
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
+    def get_all_weight_names(self):
+        import tensorflow as tf
+        names = []
+        for index, layer in enumerate(tf.keras.models.load_model(self._model).layers):
+            if len(layer.weights):
+                names.append(index)
+        return names
+
+    def update_weights(self, tensor_name, new_tensor):
+        pass
+
+    def get_weight(self, tensor_name):
+        return self.weights[tensor_name]
+
+    def report_sparsity(self):
+        """ Get sparsity of the model
+
+        Args:
+
+        Returns:
+            df (DataFrame): DataFrame of sparsity of each weight
+            total_sparsity (float): total sparsity of model
+
+        """
+        import pandas as pd
+        import tensorflow as tf
+        import numpy as np
+        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
+                                   'Std', 'Mean', 'Abs-Mean'])
+        pd.set_option('precision', 2)
+        param_dims = [2, 4]
+        params_size = 0
+        sparse_params_size = 0
+        for index, layer in enumerate(tf.keras.models.load_model(self._model).layers):
+            if not len(layer.weights):
+                continue
+            # Extract just the actual parameter's name, which in this context we treat
+            # as its "type"
+            weights = layer.get_weights()[0]
+            if weights.ndim in param_dims:
+                param_size, sparse_param_size, dense_param_size = compute_sparsity(
+                    weights)
+                density = dense_param_size / param_size
+                params_size += param_size
+                sparse_params_size += sparse_param_size
+                df.loc[len(df.index)] = ([
+                    index,
+                    list(weights.shape),
+                    dense_param_size,
+                    sparse_param_size,
+                    (1 - density) * 100,
+                    np.std(weights),
+                    np.mean(weights),
+                    np.mean(np.abs(weights))
+                ])
+
+        total_sparsity = sparse_params_size / params_size * 100
+
+        df.loc[len(df.index)] = ([
+            'Total sparsity:',
+            params_size,
+            "-",
+            int(sparse_params_size),
+            total_sparsity,
+            0, 0, 0])
+
+        return df, total_sparsity
 
     def save(self, root=None):
         if not root:

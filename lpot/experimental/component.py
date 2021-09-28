@@ -164,8 +164,10 @@ class Component(object):
 
     def on_batch_begin(self, batch_id):
         """ called on the beginning of batches"""
+        res_list = []
         for on_batch_begin_hook in self.hooks_dict['on_batch_begin']:
-            on_batch_begin_hook(batch_id)
+            res_list.append(on_batch_begin_hook(batch_id))
+        return res_list
 
     def on_post_grad(self):
         """ called on the end of backward"""
@@ -174,13 +176,19 @@ class Component(object):
 
     def on_batch_end(self):
         """ called on the end of batches"""
+        res_list = []
         for on_batch_end_hook in self.hooks_dict['on_batch_end']:
-            on_batch_end_hook()
+            res_list.append(on_batch_end_hook())
+        return res_list
 
     def on_epoch_end(self):
         """ called on the end of epochs"""
+        res_list = []
+
         for on_epoch_end_hook in self.hooks_dict['on_epoch_end']:
-            on_epoch_end_hook()
+            res_list.append(on_epoch_end_hook())
+
+        return res_list
 
     def register_hook(self, scope, hook, input_args=None, input_kwargs=None):
         """ register hook for component. input_args and input_kwargs are reserved for user
