@@ -20,8 +20,7 @@ Our example comes from MLPerf Inference Benchmark Suite
   GCC5 or above is needed.
 
   ```shell
-  cd examples/pytorch/utils/MLperf/loadgen
-  python setup.py install
+  bash prepare_loadgen.sh
   ```
 
 ### 2. Prepare Dataset

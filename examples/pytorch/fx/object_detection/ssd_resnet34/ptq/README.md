@@ -22,8 +22,7 @@ Check your gcc version with command : **gcc -v**
 GCC5 or above is needed.
 
   ```shell
-  cd examples/pytorch/utils/MLPerf/loadgen
-  python setup.py install
+  bash prepare_loadgen.sh
   ```
 
 ### 2. Prepare Dataset
