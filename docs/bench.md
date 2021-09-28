@@ -48,6 +48,10 @@ By clicking ![See models](imgs/bench/see_models.png "See models")  button you ca
 
 When clicking on configuration from the left hand side list, you can see its details view. You can see the results, rerun the tuning, check the configuration and console output. You can also see the model graph.
 
+### Tuning history
+
+If the configuration was tuned several times, in the details view there will be a chart showing accuracy and duration of historical tunings.
+
 ![Details](imgs/bench/details.png "Details")
 
 
