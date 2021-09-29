@@ -107,7 +107,6 @@ def main(config='config/distill/mrpc/train.json', args=None):
         criterion = PyTorchKnowledgeDistillationLoss(temperature=args.temperature,
                                                      loss_types=args.loss_types,
                                                      loss_weights=args.loss_weights)
-        criterion.teacher_model = teacher
 
     ### Models ###
 

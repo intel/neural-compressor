@@ -363,6 +363,23 @@ python examples/text-classification/run_glue_no_trainer_gradient_prune.py
       --do_prune --do_eval --output_model /path/to/output/
 ```
 
+# Start to lpot tune for Model Distillation
+
+Below are example NLP tasks for model distillation from a task specific fine-tuned large model to a smaller model.
+It requires the pre-trained task specific model such as `textattack/roberta-base-SST-2` from textattack Huggingface portal.
+The distillation configuration is specified in yaml file i.e. distillation.yaml.
+
+## SST-2 task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_distillation.py \
+--task_name sst2 --max_seq_length 128 \
+--model_name_or_path textattack/roberta-base-SST-2 \
+--do_distillation --per_device_train_batch_size 32 \
+--learning_rate 2e-5 --num_train_epochs 200 \
+--output_dir /path/to/output_dir --config distillation.yaml --seed 5143
+```
+
 Examples of enabling Intel® Low Precision Optimization Tool
 ============================================================
 

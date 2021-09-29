@@ -157,7 +157,7 @@ class KnowledgeDistillationLoss(object):
         """ Setter of teacher model """
         self._teacher_model = model
 
-    def teacher_model_forward(self, input):
+    def teacher_model_forward(self, input, teacher_model=None):
         raise NotImplementedError('Function teacher_model_forward '
                                   'should be framework related.')
     
@@ -170,14 +170,14 @@ class KnowledgeDistillationLoss(object):
                                   'should be framework related.')
 
     def loss_cal(self, student_outputs, targets):
-        assert self.teacher_outputs is not None, 'Output of teacher model is required, ' \
-            'please run teacher_model_forward to get output of teacher model first.'
         if self.loss_weights[0] > 0:
             origin_loss = self.student_targets_loss_cal(student_outputs, targets)
         else:
             origin_loss = 0
 
         if self.loss_weights[1] > 0:
+            assert self.teacher_outputs is not None, 'Output of teacher model is required, ' \
+                'please run teacher_model_forward to get output of teacher model first.'
             student_out_ = student_outputs / self.temperature
             teacher_out_ = self.teacher_outputs / self.temperature
             distillation_loss = self.teacher_student_loss_cal(student_out_, teacher_out_)
@@ -227,20 +227,21 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         targets_prob = torch.nn.functional.softmax(targets, dim=-1)
         return torch.nn.functional.kl_div(log_prob, targets_prob)
     
-    def teacher_model_forward(self, input):
-        model = self.teacher_model
-        assert isinstance(model, torch.nn.Module), \
-        'Teacher model should be a torch Module instead of {}'.format(type(model))
-        model.eval()
-        with torch.no_grad():
-            if isinstance(input, dict) or isinstance(input, UserDict):
-                outputs = model(**input)
-            elif isinstance(input, list) or isinstance(input, tuple):
-                outputs = model(*input)
-            else:
-                outputs = model(input)
-            self.teacher_outputs = outputs
-    
+    def teacher_model_forward(self, input, teacher_model=None):
+        if self.loss_weights[1] > 0:
+            model = self.teacher_model if teacher_model is None else teacher_model
+            assert isinstance(model, torch.nn.Module), \
+            'Teacher model should be a torch Module instead of {}'.format(type(model))
+            model.eval()
+            with torch.no_grad():
+                if isinstance(input, dict) or isinstance(input, UserDict):
+                    outputs = model(**input)
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    outputs = model(*input)
+                else:
+                    outputs = model(input)
+                self.teacher_outputs = outputs
+        
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
         return self.teacher_student_loss(student_outputs, teacher_outputs)
@@ -300,7 +301,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                 raise NotImplementedError('Now we only support CrossEntropyLoss'
                 ' for loss of student model output with respect to teacher model ouput.')
     
-    def teacher_model_forward(self, input):
+    def teacher_model_forward(self, input, teacher_model=None):
         pass
     
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):

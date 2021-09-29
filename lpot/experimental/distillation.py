@@ -35,7 +35,7 @@ class Distillation(Component):
 
     """
 
-    def __init__(self, conf_fname):
+    def __init__(self, conf_fname=None):
         super(Distillation, self).__init__()
         self.conf = Distillation_Conf(conf_fname)
         self._init_with_conf()
@@ -71,7 +71,7 @@ class Distillation(Component):
         if teacher_output is not None:
             self.criterion.teacher_outputs = teacher_output
         else:
-            self.criterion.teacher_model_forward(input)
+            self.criterion.teacher_model_forward(input, teacher_model=self.teacher_model.model)
 
     def _on_epoch_end(self):
         """ called on the end of epochs"""
