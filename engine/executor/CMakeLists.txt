@@ -1,6 +1,10 @@
-cmake_minimum_required(VERSION 3.12)
-
 project(engine)
+if(CMAKE_VERSION VERSION_LESS 3.12)
+    message("${CMAKE_VERSION} is less then the minimum required for engine build which is cmake 3.12, skip the engine build")
+elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.2.1)
+    message("GCC version less then the minimum required for engine build which is 7.2.1, skip the engine build")
+else()
+cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -fpic -Wall -fopenmp -march=native -Wl,-rpath,'$ORIGIN'")
@@ -115,3 +119,5 @@ target_link_libraries(inferencer
         ${CMAKE_THREAD_LIBS_INIT}
         engine
 )
+
+endif()

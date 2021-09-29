@@ -44,7 +44,8 @@ class build_ext(setuptools.command.build_ext.build_ext):
         os.chdir(str(build_temp))
         self.spawn(['cmake3', ext.sourcedir] + cmake_args)
         self.spawn(['make'] + build_args)
-        shutil.copy('inferencer', executable_path)
+        if os.path.exists('inferencer'):
+            shutil.copy('inferencer', executable_path)
         os.chdir(str(cwd))
 
 class CMakeExtension(Extension):
