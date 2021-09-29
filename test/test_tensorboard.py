@@ -186,7 +186,8 @@ class TestTensorboard(unittest.TestCase):
 
         shutil.rmtree("saved", ignore_errors=True)
         shutil.rmtree("runs/", ignore_errors=True)
-
+    
+    @unittest.skipIf(tf.version.VERSION > '2.5.0', " Skip test_bf16_fallback case for tf 2.6.0 and above.")
     def test_run_basic_one_trial(self):
         from lpot.experimental import Quantization, common
 

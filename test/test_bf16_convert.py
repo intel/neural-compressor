@@ -259,8 +259,6 @@ class TestBF16Convert(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_bf16_rnn.yaml')
-        os.remove('saved/history.snapshot')
-        os.remove('saved/deploy.yaml')
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_rn50_convert(self):
@@ -284,6 +282,7 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertTrue("relu2_BF16toFP32" in new_conv3.input)
 
+    @unittest.skipIf(tf.version.VERSION > '2.5.0', " Skip test_bf16_fallback case for tf 2.6.0 and above.")
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
 

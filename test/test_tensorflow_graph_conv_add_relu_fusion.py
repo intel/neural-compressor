@@ -7,7 +7,6 @@ from lpot.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import Qu
 from lpot.adaptor.tensorflow import TensorflowQuery
 from lpot.adaptor.tf_utils.util import disable_random
 
-
 class TestConvAddRelu(unittest.TestCase):
     @disable_random()
     def test_conv_add_relu(self):
@@ -30,6 +29,9 @@ class TestConvAddRelu(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[relu.name.split(':')[0]])
+            for i in output_graph_def.node:
+                if i.op.find('Add') != -1:
+                    i.op = 'Add'
             output_graph_def = QuantizeGraphHelper.remove_training_nodes(
                 output_graph_def, protected_nodes=[relu.name.split(':')[0]])
 

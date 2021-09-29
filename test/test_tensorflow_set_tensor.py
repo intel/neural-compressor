@@ -121,7 +121,9 @@ class TestSetTensor(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-
+            for i in constant_graph.node:
+                if i.op.find('Add') != -1:
+                    i.op = 'Add'
             from lpot.experimental import Quantization, common
             quantizer = Quantization("./fake_yaml.yaml")
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
