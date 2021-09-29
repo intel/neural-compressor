@@ -54,20 +54,15 @@ class Graph_Optimization():
     def __init__(self, conf_fname=None):
         self.conf_name = conf_fname
         self._model = None
-
         self._eval_dataloader = None
         self._eval_func = None
-
         self._precisions = 'fp32'
         self._input = []
         self._output = []
         self.conf = None
-        self._init_with_conf(conf_fname)
 
-    def _init_with_conf(self, conf_fname):
         self.conf = Graph_Optimization_Conf(conf_fname)
         cfg = self.conf.usr_cfg
-
         if cfg.model.framework != 'NA':
             self.framework = cfg.model.framework.lower()
             set_backend(self.framework)
@@ -205,10 +200,13 @@ class Graph_Optimization():
                 logger.warning("Graph optimization exits due to the hardware " \
                                "doesn't support bf16 instruction.")
                 sys.exit(0)
-        
+
         self.conf.usr_cfg.graph_optimization.precisions = self._precisions
         self.conf.usr_cfg.model.inputs = self._input
-        self.conf.usr_cfg.model.outputs = self._output
+        if isinstance(self._output, str) and ',' in self._output:
+            self.conf.usr_cfg.model.outputs = [s.strip() for s in self._output.split(',')]
+        else:
+            self.conf.usr_cfg.model.outputs = self._output
 
     @property
     def precisions(self):
