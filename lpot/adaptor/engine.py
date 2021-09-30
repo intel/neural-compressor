@@ -91,7 +91,7 @@ class EngineAdaptor(Adaptor):
         for op_type in int8_op_list:
             res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
         for node in model.graph.nodes:
-            if node.name in config:
+            if node.name in config and node.op_type in res:
                 if config[node.name] == 'fp32':
                     res[node.op_type]['FP32'] += 1
                 else:

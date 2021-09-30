@@ -44,6 +44,7 @@ supported_patterns = [
     'MatMulWithBiasAdd',
     'AddEmbeddings',
     'MatMulWithBiasTanh',
+    'MatMulWithBiasRelu',
     'LayerNormWithReduceMean',
     'StartEndLogits',
     'OutputData',

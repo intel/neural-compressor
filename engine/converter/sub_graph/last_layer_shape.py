@@ -89,6 +89,46 @@ class LastLayerShape(Pattern):
                     },
                     'returns': [0, 2]
                 },
+
+                # roberta_base / distil_bert_base
+                {
+                    'patterns': {
+                        'in': [[(0, 'LayerNorm'), (1, 'Gather'), (2, 'MatMulWithBias')]],
+                        'out': [[(0, 'LayerNorm'), (1, 'Reshape'), (2, 'StridedSlice'),
+                                (3, 'Reshape'), (4, 'MatMulWithBias')]]
+                    },
+                    'search_mode': 'op_type',
+                    'node_names': {
+                        0: 0,
+                        1: 'last_layer_reshape',
+                        2: 'last_layer_strided_slice',
+                        3: 1,
+                        4: 2
+                    },
+                    'input_tensors': {
+                        0: [[{
+                            0: [0]}, {0: [1]}, {0: [2]}
+                        ], [[0, 1, 2], 3]],
+                        1: [[{
+                            'input_data': [0]
+                        }], [[1], 2]],
+                        2: [[], [[], 1]],
+                        3: [[], [[], 1]],
+                        4: [[
+                            {2: [1]}, {2: [2]}
+                        ], [[1, 2], 3]]
+                    },
+                    'output_tensors': {
+                        0: [[], [[], 1]],
+                        1: [[], [[], 1]],
+                        2: [[], [[], 1]],
+                        3: [[{1: [0]}], [[0], 1]],
+                        4: [[{
+                            2: [0]
+                        }], [[0], 1]]
+                    },
+                    'returns': [0, 2]
+                }
             ]
         }
 
@@ -136,6 +176,32 @@ class LastLayerShape(Pattern):
                 attr3['dst_shape'] = '-1,' + str(hidden_size)
                 reshape_1_node_idx = model.get_node_id(new_node_names[i][2])
                 model.nodes[reshape_1_node_idx].attr = attr3
+
+            return model
+        
+        # roberta_base / distil_bert
+        pattern_dict = pattern_mapping_config['LastLayerShape'][2]
+        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        if len(new_node_names) != 0:
+            for i in range(len(new_node_names)):
+                ln_node = ret_old_nodes[i][0]
+                mat_node = ret_old_nodes[i][1]
+                hidden_size = int(ln_node.input_tensors[-1].shape[-1])
+                
+                ln_node_idx = model.get_node_id(new_node_names[i][0])
+                model.nodes[ln_node_idx].attr = ln_node.attr
+                reshape_0_node_idx = model.get_node_id(new_node_names[i][1])
+                model.nodes[reshape_0_node_idx].attr = OrderedDict({
+                    'dst_shape': '-1,-1,' + str(hidden_size), 'dims': '0,1'})
+                strided_slice_node_idx = model.get_node_id(new_node_names[i][2])
+                model.nodes[strided_slice_node_idx].attr = OrderedDict({
+                    'begin_mask': 5, 'ellipsis_mask': 0, 'end_mask': 5, 'new_axis_mask': 0,
+                    'shrink_axis_mask': 0, 'begin': '0,0,0',  'end': '0,1,0', 'strides': '1,1,1'})
+                reshape_1_node_idx = model.get_node_id(new_node_names[i][3])
+                model.nodes[reshape_1_node_idx].attr = OrderedDict({
+                        'dst_shape': '-1,' + str(hidden_size)})
+                mat_node_idx = model.get_node_id(new_node_names[i][4])
+                model.nodes[mat_node_idx].attr = mat_node.attr
 
             return model
         
