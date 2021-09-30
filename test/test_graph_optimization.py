@@ -310,19 +310,19 @@ class TestGraphOptimization(unittest.TestCase):
                               1, 2, 2, 1], padding="VALID", name='conv1_3')
         conv_bias = tf.math.add(conv_1, conv_bias)
         relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+        relu62 = tf.nn.relu6(conv_bias, name='op2_to_store')
 
-        out_name = relu6.name.split(':')[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
                 sess=sess,
                 input_graph_def=sess.graph_def,
-                output_node_names=[out_name])
+                output_node_names=[relu6.name.split(':')[0], relu62.name.split(':')[0]])
             from lpot.experimental import Graph_Optimization
             graph_optimizer = Graph_Optimization()
             graph_optimizer.precisions = 'fp32'
             graph_optimizer.input = 'input'
-            graph_optimizer.output = 'op_to_store'
+            graph_optimizer.output = 'op_to_store, op2_to_store'
 
             graph_optimizer.model = output_graph_def
             output_graph = graph_optimizer()
@@ -335,7 +335,7 @@ class TestGraphOptimization(unittest.TestCase):
             output_name = graph_optimizer.output
             self.assertEqual(found_cast_op, False)
             self.assertEqual(input_name, 'input')
-            self.assertEqual(output_name, 'op_to_store')
+            self.assertEqual(output_name, 'op_to_store, op2_to_store')
 
     @disable_random()
     def test_graph_optimization_with_yaml(self):
