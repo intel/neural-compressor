@@ -34,7 +34,7 @@ Experimental user-facing APIs consist of the following components:
 ```python
 # lpot.experimental.Quantization
 class Quantization(object):
-    def __init__(self, conf_fname):
+    def __init__(self, conf_fname_or_obj):
         ...
 
     def __call__(self):
@@ -69,7 +69,7 @@ class Quantization(object):
         ...
 
 ```
-The `conf_fname` parameter used in the class initialization is the path to the user yaml configuration file. This yaml file is used to control the entire tuning behavior on the model.
+The `conf_fname_or_obj` parameter used in the class initialization is the path to the user yaml configuration file or Quantization_Conf class. This yaml file is used to control the entire tuning behavior on the model.
 
 **LPOT User YAML Syntax**
 
@@ -139,7 +139,7 @@ q_model.save('/path/to/output/dir')
 
 ```python
 class Pruning(object):
-    def __init__(self, conf_fname):
+    def __init__(self, conf_fname_or_obj):
         ...
 
     def on_epoch_begin(self, epoch):
@@ -174,7 +174,7 @@ To learn how to use this API, refer to the [pruning document](../docs/pruning.md
 ### Benchmarking-related APIs
 ```python
 class Benchmark(object):
-    def __init__(self, conf_fname):
+    def __init__(self, conf_fname_or_obj):
         ...
 
     def __call__(self):

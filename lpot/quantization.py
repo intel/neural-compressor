@@ -35,13 +35,14 @@ class Quantization(object):
        these parameters.
 
     Args:
-        conf_fname (string): The path to the YAML configuration file containing accuracy goal,
-        tuning objective and preferred calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
+            Quantization_Conf class containing accuracy goal, tuning objective and preferred
+            calibration & quantization tuning space etc.
 
     """
 
-    def __init__(self, conf_fname):
-        self.exp_quantizer = ExpQuantization(conf_fname)
+    def __init__(self, conf_fname_or_obj):
+        self.exp_quantizer = ExpQuantization(conf_fname_or_obj)
 
     def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
                  eval_func=None):

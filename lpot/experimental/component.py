@@ -26,7 +26,7 @@ from ..model.model import get_model_fwk_name
 class Component(object):
     """This is base class of LPOT Component
     """
-    def __init__(self, conf_fname=None, combination=None):
+    def __init__(self, conf_fname_or_obj=None, combination=None):
         self.conf = None
         self.cfg = None
         self.combination = combination
@@ -55,8 +55,15 @@ class Component(object):
             'on_batch_end': [],
             'on_post_grad': []
         }
-        if conf_fname is not None:
-            self.conf = Conf(conf_fname)
+        if conf_fname_or_obj is not None:  # pragma: no cover
+            if isinstance(conf_fname_or_obj, str):
+                self.conf = Conf(conf_fname_or_obj)
+            elif isinstance(conf_fname_or_obj, Conf):
+                self.conf = conf_fname_or_obj
+            else:
+                assert False, \
+                    "Please pass a YAML configuration file path and name or \
+                    Conf class to Component"
             self._init_with_conf()
 
 

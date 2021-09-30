@@ -16,8 +16,8 @@ LPOT distillation API is defined under `lpot.experimental.Distillation`, which t
 ```python
 # distillation.py in lpot/experimental
 class Distillation():
-    def __init__(self, conf_fname):
-        # The initialization function of distillation, taking the path to user-defined yaml as input
+    def __init__(self, conf_fname_or_obj):
+        # The initialization function of distillation, taking the path or Distillation_Conf class to user-defined yaml as input
         ...
 
     def __call__(self):
@@ -90,6 +90,17 @@ Simplest launcher code if training behavior is defined in user-defined yaml.
 ```python
 from lpot.experimental import Distillation, common
 distiller = Distillation('/path/to/user/yaml')
+distiller.student_model = common.Model(student_model)
+distiller.teacher_model = common.Model(teacher_model)
+model = distiller()
+```
+Distillation class also support Distillation_Conf class as it's argument.
+
+```python
+from lpot.experimental import Distillation, common
+from lpot.conf.config import Distillation_Conf
+conf = Distillation_Conf('/path/to/user/yaml')
+distiller = Distillation(conf)
 distiller.student_model = common.Model(student_model)
 distiller.teacher_model = common.Model(teacher_model)
 model = distiller()

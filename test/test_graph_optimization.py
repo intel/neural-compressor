@@ -146,7 +146,9 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from lpot.experimental import Graph_Optimization, common
-            graph_optimizer = Graph_Optimization('fake_yaml.yaml')
+            from lpot.conf.config import Graph_Optimization_Conf
+            conf = Graph_Optimization_Conf('fake_yaml.yaml')
+            graph_optimizer = Graph_Optimization(conf)
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def

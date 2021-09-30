@@ -76,6 +76,17 @@ Below is an example of using yaml to trigger graph optimization.
       optimized_model = graph_optimizer()
   ```
 
+Graph_Optimization class also support Graph_Optimization_Conf class as it's argument.
+
+  ```python
+      from lpot.experimental import Graph_Optimization
+      from lpot.conf.config import Graph_Optimization_Conf
+      conf = Graph_Optimization_Conf('/path/to/config.yaml')
+      graph_optimizer = Graph_Optimization(conf)
+      graph_optimizer.model = '/path/to/model'
+      optimized_model = graph_optimizer()
+  ```
+
   ## Examples
 
   ### FP32 optimization

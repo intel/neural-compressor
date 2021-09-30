@@ -57,8 +57,8 @@ LPOT pruning API is defined under `lpot.experimental.Pruning`, which takes a use
 ```
 # pruning.py in lpot/experimental
 class Pruning():
-    def __init__(self, conf_fname):
-        # The initialization function of pruning, taking the path to user-defined yaml as input
+    def __init__(self, conf_fname_or_obj):
+        # The initialization function of pruning, taking the path or Pruning_Conf class to user-defined yaml as input
         ...
 
     def __call__(self):
@@ -124,6 +124,17 @@ Simplest launcher code if training behavior is defined in user-defined yaml.
 ```
 from lpot.experimental import Pruning, common
 prune = Pruning('/path/to/user/pruning/yaml')
+prune.model = common.Model(model)
+model = prune()
+```
+
+Pruning class also support Pruning_Conf class as it's argument.
+
+```
+from lpot.experimental import Pruning, common
+from lpot.conf.config import Pruning_Conf
+conf = Pruning_Conf('/path/to/user/pruning/yaml')
+prune = Pruning(conf)
 prune.model = common.Model(model)
 model = prune()
 ```

@@ -95,7 +95,9 @@ class TestPruning(unittest.TestCase):
     def test_pruning_external(self):
         from lpot.experimental import common
         from lpot import Pruning
-        prune = Pruning('fake.yaml')
+        from lpot.conf.config import Pruning_Conf
+        conf = Pruning_Conf('fake.yaml')
+        prune = Pruning(conf)
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)

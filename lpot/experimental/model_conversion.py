@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import pickle
 import random
 import tempfile
@@ -48,13 +47,13 @@ class ModelConversion():
          q_model = conversion()
 
     Args:
-        conf_fname (string): Optional. The path to the YAML configuration file containing 
-                             model conversion and evaluation setting if not specifed by code.
+        conf_fname_or_obj (string or obj): Optional. The path to the YAML configuration file or
+            Conf class containing model conversion and evaluation setting if not specifed by code.
 
     """
 
-    def __init__(self, conf_fname=None):
-        self.conf_name = conf_fname
+    def __init__(self, conf_fname_or_obj=None):
+        self.conf_name = conf_fname_or_obj
         self._model = None
         self.framework = 'tensorflow'
 
@@ -65,7 +64,18 @@ class ModelConversion():
         self._source = None
         self._destination = None
 
-        self.conf = Conf(conf_fname) if conf_fname else None
+        if conf_fname_or_obj is not None:
+            if isinstance(conf_fname_or_obj, str):
+                self.conf = Conf(conf_fname_or_obj)
+            elif isinstance(conf_fname_or_obj, Conf):
+                self.conf = conf_fname_or_obj
+            else:  # pragma: no cover
+                assert False, \
+                    "Please pass a YAML configuration file path or \
+                    Conf class to model_conversion"
+        else:
+            self.conf = None
+
         set_backend(self.framework)
 
     def __call__(self):

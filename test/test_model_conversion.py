@@ -6,6 +6,8 @@ import os
 import shutil
 import yaml
 import tensorflow as tf
+
+from lpot.experimental import model_conversion
 tf.compat.v1.enable_eager_execution()
 from tensorflow import keras
 
@@ -107,12 +109,24 @@ class TestModelConversion(unittest.TestCase):
 
     def test_model_conversion(self):
         from lpot.experimental import ModelConversion, common
+        from lpot.conf.config import Conf
         conversion = ModelConversion()
         conversion.source = 'qat'
         conversion.destination = 'default'
         conversion.model = common.Model(self._qat_temp_path)
         q_model = conversion()
         q_model.save(self._quantized_temp_path)
+        conf = Conf('fake_yaml.yaml')
+        conversion = ModelConversion(conf)
+        conversion.source = 'qat'
+        conversion.destination = 'default'
+        conversion.model = common.Model(self._qat_temp_path)
+        q_model = conversion()
+        conversion = ModelConversion('fake_yaml.yaml')
+        conversion.source = 'qat'
+        conversion.destination = 'default'
+        conversion.model = common.Model(self._qat_temp_path)
+        q_model = conversion()
 
         graph = tf.compat.v1.Graph()
         with graph.as_default():

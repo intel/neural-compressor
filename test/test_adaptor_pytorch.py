@@ -10,6 +10,7 @@ from lpot.model import MODELS
 from lpot.adaptor.pytorch import PyTorchVersionMode
 import lpot.adaptor.pytorch as lpot_torch
 from lpot.experimental import Quantization, common
+from lpot.conf.config import Quantization_Conf
 from lpot.utils.pytorch import load
 from lpot.utils.utility import recover
 import shutil
@@ -440,7 +441,8 @@ class TestPytorchAdaptor(unittest.TestCase):
             model = copy.deepcopy(self.model)
             if fake_yaml == 'ptq_yaml.yaml':
                 model.eval().fuse_model()
-            quantizer = Quantization(fake_yaml)
+            conf = Quantization_Conf(fake_yaml)
+            quantizer = Quantization(conf)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
             quantizer.model = common.Model(model)
             if fake_yaml == 'qat_yaml.yaml':

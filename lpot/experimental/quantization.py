@@ -46,14 +46,18 @@ class Quantization(Component):
        these parameters.
 
     Args:
-        conf_fname (string): The path to the YAML configuration file containing accuracy goal,
-        tuning objective and preferred calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or
+            Quantization_Conf class containing accuracy goal, tuning objective and preferred
+            calibration & quantization tuning space etc.
 
     """
 
-    def __init__(self, conf_fname=None):
+    def __init__(self, conf_fname_or_obj=None):
         super(Quantization, self).__init__()
-        self.conf = Quantization_Conf(conf_fname)
+        if isinstance(conf_fname_or_obj, Quantization_Conf):
+            self.conf = conf_fname_or_obj
+        else:
+            self.conf = Quantization_Conf(conf_fname_or_obj)
         self._init_with_conf()
 
         seed = self.cfg.tuning.random_seed

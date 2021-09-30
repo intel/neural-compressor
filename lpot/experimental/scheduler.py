@@ -95,7 +95,8 @@ class Scheduler(object):
         """Add lpot component into pipeline for sequential execution.
 
            Args:
-               conf_fname (string):          The path to user configuration yaml file.
+               conf_fname_or_obj (string or obj): The path to user configuration yaml file or
+                                                  conf class.
                calib_dataloader (generator): Optional. Data loader for calibration of Post-
                                              Training Static Quantization,
                                              or None for Post-Training Dynamic Quantization,

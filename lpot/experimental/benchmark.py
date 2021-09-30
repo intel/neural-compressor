@@ -73,17 +73,21 @@ class Benchmark(object):
        depend on user's code and has possibility to run unneccessary code
 
     Args:
-        conf_fname (string): The path to the YAML configuration file containing accuracy goal,
-        tuning objective and preferred calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or
+            Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+            calibration & quantization tuning space etc.
 
     """
 
-    def __init__(self, conf_fname=None):
+    def __init__(self, conf_fname_or_obj=None):
         self.framework = None
         self._model = None
         self._b_dataloader = None
         self._results = {}
-        self.conf = Benchmark_Conf(conf_fname)
+        if isinstance(conf_fname_or_obj, Benchmark_Conf):
+            self.conf = conf_fname_or_obj
+        else:
+            self.conf = Benchmark_Conf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
             set_backend(self.framework)

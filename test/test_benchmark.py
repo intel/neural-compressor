@@ -45,7 +45,13 @@ args = arg_parser.parse_args()
 from lpot.data import DATASETS
 dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 from lpot.experimental import Benchmark, common
+from lpot.conf.config import Benchmark_Conf
 benchmarker = Benchmark('fake_yaml.yaml')
+benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
+benchmarker.model = args.input_model
+benchmarker()
+conf = Benchmark_Conf('fake_yaml.yaml')
+benchmarker = Benchmark(conf)
 benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
 benchmarker.model = args.input_model
 benchmarker()

@@ -30,13 +30,14 @@ class Pruning:
        these parameters.
 
     Args:
-        conf_fname (string): The path to the YAML configuration file containing accuracy goal,
-        pruning objective and related dataloaders etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
+            Pruning_Conf class containing accuracy goal, pruning objective and related
+            dataloaders etc.
 
     """
 
-    def __init__(self, conf_fname):
-        self.exp_pruner = ExpPruning(conf_fname)
+    def __init__(self, conf_fname_or_obj):
+        self.exp_pruner = ExpPruning(conf_fname_or_obj)
 
     def on_epoch_begin(self, epoch):
         """ called on the begining of epochs"""

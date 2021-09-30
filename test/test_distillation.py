@@ -69,7 +69,9 @@ class TestDistillation(unittest.TestCase):
 
     def test_distillation(self):
         from lpot.experimental import Distillation, common
-        distiller = Distillation('fake.yaml')
+        from lpot.conf.config import Distillation_Conf
+        conf = Distillation_Conf('fake.yaml')
+        distiller = Distillation(conf)
         distiller.student_model = common.Model(self.student_model)
         distiller.teacher_model = common.Model(self.teacher_model)
         print('student model: {}'.format(distiller.student_model))

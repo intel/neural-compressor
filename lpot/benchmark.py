@@ -24,13 +24,14 @@ class Benchmark(object):
        setting, user can get the data of what they configured in yaml
 
     Args:
-        conf_fname (string): The path to the YAML configuration file containing accuracy goal,
-        tuning objective and preferred calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
+            Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+            calibration & quantization tuning space etc.
 
     """
 
-    def __init__(self, conf_fname):
-        self.exp_benchmarker = ExpBenchmark(conf_fname)
+    def __init__(self, conf_fname_or_obj):
+        self.exp_benchmarker = ExpBenchmark(conf_fname_or_obj)
 
     def __call__(self, model, b_dataloader=None, b_func=None):
 

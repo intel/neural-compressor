@@ -34,14 +34,18 @@ class Pruning(Component):
        these parameters.
 
     Args:
-        conf_fname (string): The path to the YAML configuration file containing accuracy goal,
-        pruning objective and related dataloaders etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or
+            Pruning_Conf class containing accuracy goal, pruning objective and related
+            dataloaders etc.
 
     """
 
-    def __init__(self, conf_fname=None):
+    def __init__(self, conf_fname_or_obj=None):
         super(Pruning, self).__init__()
-        self.conf = Pruning_Conf(conf_fname)
+        if isinstance(conf_fname_or_obj, Pruning_Conf):
+            self.conf = conf_fname_or_obj
+        else:
+            self.conf = Pruning_Conf(conf_fname_or_obj)
         self._init_with_conf()
 
         self._pruning_func = None
