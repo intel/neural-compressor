@@ -19,12 +19,12 @@ Filter/Channel pruning means pruning a larger part of the network, such as filte
 
 ## Pruning Algorithms supported by LPOT
 
-|    Pruning Type        |                 Algorithm                   | PyTorch |
-|------------------------|---------------------------------------------|---------|
-| unstructured pruning   | basic_magnitude                             |   Yes   |
-|                        | pattern_lock                                |   Yes   |
-|  structured pruning    | pattern_lock                                |   Yes   |
-| filter/channel pruning | gradient_sensitivity                        |   Yes   |
+|    Pruning Type        |                 Algorithm                   | PyTorch | Tensorflow |
+|------------------------|---------------------------------------------|---------|------------|
+| unstructured pruning   | basic_magnitude                             |   Yes   |     Yes    |
+|                        | pattern_lock                                |   Yes   |     N/A    | 
+|  structured pruning    | pattern_lock                                |   Yes   |     N/A    | 
+| filter/channel pruning | gradient_sensitivity                        |   Yes   |     N/A    |
 
 LPOT also supports the two-shot execution of unstructured pruning and post-training quantization.
 
@@ -313,6 +313,7 @@ Following examples are supported in LPOT:
 - CNN Examples:
   - [resnet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/prune/README.md): magnitude pruning on resnet.
   - [pruning and post-training quantization](../examples/pytorch/eager/image_recognition/imagenet/cpu/prune_and_ptq/README.md): magnitude pruning and then post-training quantization on resnet.
+  - [resnet_v2 example](../examples/tensorflow/pruning/resnet_v2/README.md): magnitude pruning on resnet_v2 for tensorflow.
 - NLP Examples:
   - [BERT example](../examples/pytorch/eager/language_translation/prune/README.md): magnitude pruning on DistilBERT.
   - [BERT example](../examples/pytorch/eager/huggingface_models/README.md): Pattern-lock and head-pruning on BERT-base.
