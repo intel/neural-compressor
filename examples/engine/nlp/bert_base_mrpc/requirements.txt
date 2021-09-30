@@ -3,3 +3,4 @@ onnx
 onnxruntime
 numpy==1.19
 pycocotools==2.0.0
+transformers
