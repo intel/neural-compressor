@@ -1,8 +1,9 @@
 Intel® Neural Compressor Bench
 =======
 
-Intel® Neural Compressor Bench is only available on Linux based hosts.
+Intel® Neural Compressor Bench is a web application for easier use of Intel® Neural Compressor. It is only available on Linux based hosts.
 
+# Introduction
 ## Start the Intel® Neural Compressor Bench
 
 1. Start the Intel® Neural Compressor Bench server:
@@ -28,42 +29,31 @@ Intel® Neural Compressor Bench is only available on Linux based hosts.
    Make certain that requested port forwarding is set up (depending on your OS) and then open the address in your web browser.
 
 ## Home
-
-This view shows introduction to Intel® Neural Compressor Bench and 2 buttons for creating new configurations in 2 different ways. First one links to **Examples**, the second one to **Config wizard**.
-
+This view shows introduction to Intel® Neural Compressor Bench and 2 buttons for creating new configurations in 2 different ways. First one links to **Quantize from presets** where you can find examples of models to chose from, the second one to **Quantize using wizard** where you can your custom models with many configurable parameters.
 ![Home](imgs/bench/home.png "Home")
 
-On the left hand side there is a panel with list of configurations.
 
-![Menu](imgs/bench/menu.png "Menu")
+# Quantize from presets
 
-One can see system information by clicking ![System info](imgs/bench/system_info.png "System info") button. The result is details dialog:
+## Description
+In this scenario you can use one of preset models divided into 2 domain categories: image recognition and object detection.
+![Examples](imgs/bench/examples.png "Examples")
 
-![System info table](imgs/bench/system_info_table.png "System info table") 
+You can use included models to test tuning. You have to point to the Dataset that you want to use and click **Finish** to add it to your models. A new model will be downloaded and added to the **My models** list, ready for tuning.
 
-By clicking ![See models](imgs/bench/see_models.png "See models")  button you can navigate to **My models list**.
+## Examples
+### ResNet50 v1.5
+Follow [instructions](../examples/tensorflow/image_recognition/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose **Image Recognition** domain, then click on **resnet50 v1 5** button and in the last step select the ImageRecord dataset like in the example below:
+![examples1](imgs/bench/examples-resnet.png "examples1")
+### MobileNet v1
+Follow [instructions](../examples/tensorflow/image_recognition/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose  **Image Recognition** domain, then click on **mobilenet v1** button and in the last step select the ImageRecord dataset like in the example below:
+![examples2](imgs/bench/examples-mobilenet.png "examples2")
+### SSD MobileNet v1
+Follow [instructions](../examples/tensorflow/object_detection/README.md) to get the COCORecord dataset. Then go to **Examples**, choose  **Object Detection** domain, then click on **ssd mobilenet v1** button and in the last step select the COCORecord dataset like in the example below:
+![examples3](imgs/bench/examples-ssd.png "examples3")
 
-
-## Configuration details
-
-When clicking on configuration from the left hand side list, you can see its details view. You can see the results, rerun the tuning, check the configuration and console output. You can also see the model graph.
-
-### Tuning history
-
-If the configuration was tuned several times, in the details view there will be a chart showing accuracy and duration of historical tunings.
-
-![Details](imgs/bench/details.png "Details")
-
-
-## My Models list
-
-This view lists all Model Configurations defined on a given server. 
-
-You can create a new model using pre-defined models by using a New Model Wizard or **Examples**:
-
-![My models](imgs/bench/my_models.png "My models")
-
-## New Model Configuration from New Model Wizard
+# Quantize using wizard
+## Description
 ### Basic parameters
 
 1. Enter information in all required fields (marked by a *) in the Wizard: 
@@ -74,25 +64,38 @@ You can create a new model using pre-defined models by using a New Model Wizard 
 2. Either save this configuration (by clicking **Finish**), or change some advanced parameters (by checking the checkbox ![Show advanced](imgs/bench/show_advanced.png "Show advanced")
 ).
 
-### Advanced parameters
+## Examples
+### ResNet50 v1.5
+* Follow [instructions](../examples/tensorflow/image_recognition/README.md) to:
+   * install Intel Tensorflow 1.15 up2
+   * prepare dataset and a frozen pb model 
+* In the **Create low precision model** in first step:
+   * select created frozen model
+   * inputs, outputs and model domain will be selected automatically
+![resnet1](imgs/bench/resnet1.png "resnet1")
 
-From the advanced parameters page, you can configure more features such as tuning, quantization, and benchmarking. 
+* in second step :
+   * in **Calibration/dataset location**, select **ImageRecord** file from created dataset
+   * transformation and other parameters will be filled automatically
+   * click **Finish** or change Advanced parameters
+![resnet2](imgs/bench/resnet2.png "resnet2")
 
-![Wizard advanced](imgs/bench/wizard_advanced.png "Wizard advanced")
+### SSD-ResNet34
+* Follow [instructions](../examples/tensorflow/object_detection/README.md) to:
+   * install Intel Tensorflow 1.15 up2
+   * prepare dataset and a frozen pb model 
+* In the **Create low precision model** in first step:
+   * select created frozen model
+   * inputs, outputs and model domain will be selected automatically
+![ssd1](imgs/bench/ssd1.png "ssd1")
 
-## New Model Configuration from Examples
+* in second step :
+   * in **Calibration/dataset location**, select **coco record** file from created dataset
+   * transformation and other parameters will be filled automatically
+   * click **Finish** or change Advanced parameters
+![ssd2](imgs/bench/ssd2.png "ssd2")
 
-![Examples](imgs/bench/examples.png "Examples")
-
-Included are models you can use to test tuning. You have to point to the Dataset that you want to use click **Finish** too add it to your models. A new model will be downloaded and added to the **My models** list, ready for tuning.
-
-## Custom dataset or metric
-
-If you choose **custom** in the Dataset or Metric section, the appropriate code templates will be generated for you to fill in with your code. The path to the template will be available by clicking the **Copy code template path** button located in the right-most column in the **My models** list.
-
-Follow the comments in the generated code template to fill in required methods with your own code.
-
-## BERT model configuration
+### BERT
 * Follow [instructions](../examples/tensorflow/nlp/bert_large_squad/README.md) to:
    * install Intel Tensorflow 1.15 up2
    * prepare dataset and a frozen pb model 
@@ -108,15 +111,45 @@ Follow the comments in the generated code template to fill in required methods w
    * label_file and vocab_file fields should be filled automatically
    * click **Finish** or change Advanced parameters
 ![Bert2](imgs/bench/bert2.png "Bert2")
- 
 
-## Model Graph Display
-For Tensorflow frozen pb models there will be a new button available ![Show graph](imgs/bench/show_graph_button.png "Show graph").
+## Advanced configs
 
-Click it to display graph of selected model:
+### Advanced parameters
 
-![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
+From the advanced parameters page, you can configure more features such as tuning, quantization, and benchmarking. 
 
+![Wizard advanced](imgs/bench/wizard_advanced.png "Wizard advanced")
+
+### Custom dataset or metric
+
+If you choose **custom** in the Dataset or Metric section, the appropriate code templates will be generated for you to fill in with your code. The path to the template will be available by clicking the **Copy code template path** button located in the right-most column in the **My models** list.
+
+Follow the comments in the generated code template to fill in required methods with your own code.
+
+# Available views
+On the left hand side there is a panel with list of configurations.
+
+![Menu](imgs/bench/menu.png "Menu")
+
+One can see system information by clicking ![System info](imgs/bench/system_info.png "System info") button. The result is details dialog:
+
+![System info table](imgs/bench/system_info_table.png "System info table") 
+
+By clicking ![See models](imgs/bench/see_models.png "See models")  button you can navigate to **My models list**.
+
+## My Models list
+
+This view lists all Model Configurations defined on a given server. 
+
+You can create a new model using pre-defined models by using a New Model Wizard or **Examples**:
+
+![My models](imgs/bench/my_models.png "My models")
+
+## Configuration details
+
+When clicking on configuration from the left hand side list, you can see its details view. You can see the results, rerun the tuning, check the configuration and console output. You can also see the model graph.
+
+![Details](imgs/bench/details.png "Details")
 
 ## Tuning
 
@@ -131,3 +164,14 @@ Now that you have created a Model Configuration, you can do the following:
       - The **Accuracy** section displays comparisons in accuracy metrics between the original and tuned models.
       - **Model size** compares the sizes of both models.
       - When automatic benchmarking is finished, **Throughput** shows the performance gain from tuning. 
+
+### Tuning history
+
+If the configuration was tuned several times, in the details view there will be a chart showing accuracy and duration of historical tunings.
+
+## Model Graph Display
+For Tensorflow frozen pb models there will be a new button available ![Show graph](imgs/bench/show_graph_button.png "Show graph").
+
+Click it to display graph of selected model:
+
+![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
