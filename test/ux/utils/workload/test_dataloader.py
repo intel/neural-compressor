@@ -17,7 +17,13 @@
 import unittest
 
 from neural_compressor.ux.utils.exceptions import ClientErrorException
-from neural_compressor.ux.utils.workload.dataloader import Dataloader, Dataset, Filter, LabelBalance, Transform
+from neural_compressor.ux.utils.workload.dataloader import (
+    Dataloader,
+    Dataset,
+    Filter,
+    LabelBalance,
+    Transform,
+)
 
 
 class TestDatasetConfig(unittest.TestCase):

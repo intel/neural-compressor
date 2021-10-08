@@ -217,7 +217,11 @@ class TestConfiguration(unittest.TestCase):
     @patch("neural_compressor.ux.web.configuration.os.path.isfile")
     def test_default_workdir_when_no_existing_config(self, mocked_isfile: MagicMock) -> None:
         """Test that when no existing config given, default will be used."""
-        workloads_list_filepath = os.path.join("/foo/bar", ".neural_compressor", "workloads_list.json")
+        workloads_list_filepath = os.path.join(
+            "/foo/bar",
+            ".neural_compressor",
+            "workloads_list.json",
+        )
 
         configuration = Configuration()
         mocked_isfile.return_value = False
@@ -231,7 +235,11 @@ class TestConfiguration(unittest.TestCase):
     @patch("neural_compressor.ux.web.configuration.os.path.isfile")
     def test_default_workdir_uses_existing_config(self, mocked_isfile: MagicMock) -> None:
         """Test that when existing config given, its value is used."""
-        workloads_list_filepath = os.path.join("/foo/bar", ".neural_compressor", "workloads_list.json")
+        workloads_list_filepath = os.path.join(
+            "/foo/bar",
+            ".neural_compressor",
+            "workloads_list.json",
+        )
 
         configuration = Configuration()
         mocked_isfile.return_value = True

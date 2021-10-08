@@ -23,7 +23,11 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from neural_compressor.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
+from neural_compressor.ux.utils.exceptions import (
+    AccessDeniedException,
+    ClientErrorException,
+    NotFoundException,
+)
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.proc import Proc
 from neural_compressor.version import __version__ as nc_version

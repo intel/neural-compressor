@@ -17,7 +17,9 @@
 from typing import Optional
 
 from neural_compressor.ux.components.optimization import Optimizations
-from neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization import GraphOptimization
+from neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization import (
+    GraphOptimization,
+)
 from neural_compressor.ux.components.optimization.optimization import Optimization
 from neural_compressor.ux.components.optimization.tune.tuning import Tuning
 from neural_compressor.ux.utils.exceptions import InternalException

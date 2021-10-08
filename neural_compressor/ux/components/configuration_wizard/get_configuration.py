@@ -27,7 +27,10 @@ def get_predefined_configuration(
     data: Dict[str, Any],
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """Get configuration."""
-    from neural_compressor.ux.utils.utils import get_framework_from_path, get_predefined_config_path
+    from neural_compressor.ux.utils.utils import (
+        get_framework_from_path,
+        get_predefined_config_path,
+    )
 
     model_path = data.get("model_path", "")
     if not ModelRepository.is_model_path(model_path):

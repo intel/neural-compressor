@@ -17,7 +17,13 @@
 import unittest
 
 from neural_compressor.ux.utils.exceptions import ClientErrorException
-from neural_compressor.ux.utils.workload.tuning import AccCriterion, ExitPolicy, Strategy, Tuning, Workspace
+from neural_compressor.ux.utils.workload.tuning import (
+    AccCriterion,
+    ExitPolicy,
+    Strategy,
+    Tuning,
+    Workspace,
+)
 
 
 class TestStrategyConfig(unittest.TestCase):

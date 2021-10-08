@@ -18,7 +18,9 @@ import logging
 import os
 from typing import Any, Dict
 
-from neural_compressor.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
+from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
+    ConfigurationParser,
+)
 from neural_compressor.ux.components.model_zoo.download_config import download_config
 from neural_compressor.ux.components.model_zoo.download_model import download_model
 from neural_compressor.ux.utils.templates.workdir import Workdir

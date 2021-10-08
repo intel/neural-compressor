@@ -19,7 +19,9 @@ import unittest
 from typing import Any, Dict, List, Optional, Union
 from unittest.mock import MagicMock, patch
 
-from neural_compressor.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
+from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
+    ConfigurationParser,
+)
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 
 

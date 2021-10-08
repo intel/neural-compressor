@@ -42,7 +42,9 @@ class TestParamsFeeder(unittest.TestCase):
         ):
             feeder.feed()
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder.get_frameworks")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder.get_frameworks",
+    )
     def test_feed_for_framework_works(self, mocked_get_frameworks: MagicMock) -> None:
         """Test that calling feed with not supported param fails."""
         frameworks = [
@@ -58,7 +60,10 @@ class TestParamsFeeder(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.ModelRepository.get_frameworks")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.ModelRepository.get_frameworks",
+    )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_model_config")
     def test_get_frameworks(
         self,
@@ -250,7 +255,10 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
             feeder.get_dataloaders()
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_dataloader_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_dataloader_config",
+    )
     def test_get_dataloaders_for_unknown_framework(
         self,
         mocked_load_dataloader_config: MagicMock,
@@ -281,7 +289,10 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_dataloader_config.assert_called_once()
         self.assertEqual([], actual)
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_dataloader_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_dataloader_config",
+    )
     def test_get_dataloaders(
         self,
         mocked_load_dataloader_config: MagicMock,
@@ -325,7 +336,10 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
             feeder.get_transforms()
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_transforms_config",
+    )
     def test_get_transforms_for_unknown_framework(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -364,7 +378,10 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_transforms_config.assert_called_once()
         self.assertEqual([], actual)
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_transforms_config",
+    )
     def test_get_transforms_without_domain(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -409,7 +426,10 @@ class TestParamsFeeder(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @patch("neural_compressor.ux.utils.utils.load_transforms_filter_config")
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_transforms_config",
+    )
     def test_get_transforms_with_domain_not_in_filters(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -473,7 +493,10 @@ class TestParamsFeeder(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @patch("neural_compressor.ux.utils.utils.load_transforms_filter_config")
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_transforms_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_transforms_config",
+    )
     def test_get_transforms(
         self,
         mocked_load_transforms_config: MagicMock,
@@ -539,7 +562,9 @@ class TestParamsFeeder(unittest.TestCase):
         "neural_compressor.ux.components.configuration_wizard.params_feeder.OBJECTIVES",
         {"objective1": {}, "objective2": {}, "objective3": {}},
     )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+    )
     def test_get_objectives(
         self,
         mocked_load_help_nc_params: MagicMock,
@@ -574,7 +599,9 @@ class TestParamsFeeder(unittest.TestCase):
         "neural_compressor.ux.components.configuration_wizard.params_feeder.STRATEGIES",
         {"strategy1": {}, "strategy2": {}, "strategy3": {}, "sigopt": {}},
     )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+    )
     def test_get_strategies(
         self,
         mocked_load_help_nc_params: MagicMock,
@@ -605,7 +632,10 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_help_nc_params.assert_called_once_with("strategies")
         self.assertEqual(expected, actual)
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_precisions_config",
+    )
     def test_get_precisions(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -640,7 +670,10 @@ class TestParamsFeeder(unittest.TestCase):
             actual,
         )
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_precisions_config",
+    )
     def test_get_precisions_for_unknown_framework(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -668,7 +701,10 @@ class TestParamsFeeder(unittest.TestCase):
 
         self.assertEqual([], actual)
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_precisions_config")
+    @patch(
+        "neural_compressor."
+        "ux.components.configuration_wizard.params_feeder.load_precisions_config",
+    )
     def test_get_precisions_for_missing_framework(
         self,
         mocked_load_precisions_config: MagicMock,
@@ -762,7 +798,9 @@ class TestParamsFeeder(unittest.TestCase):
         "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"pytorch": FakeMetrics},
     )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+    )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_pytorch(
         self,
@@ -866,7 +904,9 @@ class TestParamsFeeder(unittest.TestCase):
         "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"tensorflow": FakeMetrics},
     )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+    )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_with_label(
         self,
@@ -972,7 +1012,9 @@ class TestParamsFeeder(unittest.TestCase):
         "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
         {"onnxrt_qlinearops": FakeMetrics},
     )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+    )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_onnxrt(
         self,
@@ -1072,8 +1114,13 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_load_help_nc_params.assert_called_once_with("metrics")
         self.assertEqual(expected, actual)
 
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics", {})
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params")
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
+        {},
+    )
+    @patch(
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+    )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_unknown_framework(
         self,
@@ -1119,7 +1166,9 @@ class TestParamsFeeder(unittest.TestCase):
         mocked_feeder: MagicMock,
     ) -> None:
         """Test get_possible_values function."""
-        from neural_compressor.ux.components.configuration_wizard.params_feeder import get_possible_values
+        from neural_compressor.ux.components.configuration_wizard.params_feeder import (
+            get_possible_values,
+        )
 
         data = {
             "foo": "bar",

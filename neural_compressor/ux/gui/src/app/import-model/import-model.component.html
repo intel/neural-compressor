@@ -122,12 +122,13 @@
               for precision support.
             </p>
             <div class="custom-slider">
-              <ngx-slider [(value)]="precisionIndex" [options]="sliderOptions"></ngx-slider>
+              <ngx-slider [(value)]="precisionIndex" [options]="sliderOptions"
+                (valueChange)="onPrecisionChange($event)"></ngx-slider>
             </div>
             <h2>
-              <mat-checkbox [(ngModel)]="precisions[precisionIndex].name !== 'fp32' ? tuningEnabled : tuningDisabled"
-                [ngModelOptions]="{standalone: true}" [disabled]="precisions[precisionIndex].name === 'fp32'"
-                (change)="onTuningEnabledChange()" matTooltip="Enable/disable tuning" class="tuning-checkbox">
+              <mat-checkbox [(ngModel)]="tuningEnabled" [ngModelOptions]="{standalone: true}"
+                [disabled]="precisions[precisionIndex].name === 'fp32'" (change)="onTuningEnabledChange()"
+                matTooltip="Enable/disable tuning" class="tuning-checkbox">
                 Run tuning
               </mat-checkbox>
             </h2>

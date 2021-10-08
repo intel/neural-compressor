@@ -19,7 +19,9 @@ import os
 from shutil import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from neural_compressor.ux.components.configuration_wizard.configuration_parser import ConfigurationParser
+from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
+    ConfigurationParser,
+)
 from neural_compressor.ux.utils.exceptions import NotFoundException
 from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.utils import replace_with_values

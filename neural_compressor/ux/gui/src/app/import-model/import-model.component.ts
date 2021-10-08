@@ -54,7 +54,6 @@ export class ImportModelComponent implements OnInit {
   transformations = [];
   transformationParams = [];
   tuningEnabled = true;
-  tuningDisabled = false;
   tunings = [];
   inputs = [];
   outputs = [];
@@ -404,14 +403,14 @@ export class ImportModelComponent implements OnInit {
     this.transformationParams.splice(index, 1);;
   }
 
-  onPrecisionChange(event) {
-    if (event.value === 'int8') {
+  onPrecisionChange(precisionIndex) {
+    if (this.precisions[precisionIndex].name === 'int8') {
       this.tuningEnabled = true;
-    } else if (event.value === 'fp32') {
+    } else if (this.precisions[precisionIndex].name === 'fp32') {
       this.tuningEnabled = false;
       this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
       this.secondFormGroup.get('datasetLocationQuantization').setValue('');
-    } else if (event.value === 'bf16,fp32') {
+    } else if (this.precisions[precisionIndex].name === 'bf16,fp32') {
       this.tuningEnabled = true;
     }
   }

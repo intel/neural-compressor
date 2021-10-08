@@ -20,16 +20,26 @@ from typing import Any, Callable, Dict
 from werkzeug.wrappers import Response as WebResponse
 
 from neural_compressor.ux.components.benchmark.execute_benchmark import execute_benchmark
-from neural_compressor.ux.components.configuration_wizard.get_boundary_nodes import get_boundary_nodes
-from neural_compressor.ux.components.configuration_wizard.get_configuration import get_predefined_configuration
+from neural_compressor.ux.components.configuration_wizard.get_boundary_nodes import (
+    get_boundary_nodes,
+)
+from neural_compressor.ux.components.configuration_wizard.get_configuration import (
+    get_predefined_configuration,
+)
 from neural_compressor.ux.components.configuration_wizard.params_feeder import get_possible_values
 from neural_compressor.ux.components.configuration_wizard.save_workload import save_workload
 from neural_compressor.ux.components.file_browser.file_browser import get_directory_entries
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.graph_reader import GraphReader
-from neural_compressor.ux.components.manage_workspace import get_default_path, get_workloads_list, set_workspace
+from neural_compressor.ux.components.manage_workspace import (
+    get_default_path,
+    get_workloads_list,
+    set_workspace,
+)
 from neural_compressor.ux.components.model_zoo.list_models import list_models
-from neural_compressor.ux.components.model_zoo.save_workload import save_workload as save_example_workload
+from neural_compressor.ux.components.model_zoo.save_workload import (
+    save_workload as save_example_workload,
+)
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer

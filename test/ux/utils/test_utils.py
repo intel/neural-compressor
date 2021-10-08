@@ -19,7 +19,11 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from neural_compressor.ux.utils.exceptions import AccessDeniedException, ClientErrorException, NotFoundException
+from neural_compressor.ux.utils.exceptions import (
+    AccessDeniedException,
+    ClientErrorException,
+    NotFoundException,
+)
 from neural_compressor.ux.utils.utils import (
     check_module,
     get_dataset_path,

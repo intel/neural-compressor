@@ -101,7 +101,10 @@ class TestFrozenPbModel(unittest.TestCase):
             model.get_output_nodes(),
         )
 
-    @patch("neural_compressor.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    @patch(
+        "neural_compressor.ux.components.model.tensorflow.model.TensorflowReader",
+        autospec=True,
+    )
     def test_get_model_graph(self, mocked_tensorflow_graph_reader: MagicMock) -> None:
         """Test getting Graph of a model."""
         expected = Graph()
@@ -154,7 +157,10 @@ class TestFrozenPbModel(unittest.TestCase):
             expected_domain_flavour="",
         )
 
-    @patch("neural_compressor.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    @patch(
+        "neural_compressor.ux.components.model.tensorflow.model.TensorflowReader",
+        autospec=True,
+    )
     def test_domain_graph_reader_exception(
         self,
         mocked_tensorflow_graph_reader: MagicMock,
@@ -169,7 +175,10 @@ class TestFrozenPbModel(unittest.TestCase):
         self.assertEqual(expected, model.domain)
         mocked_tensorflow_graph_reader.assert_called_once_with(model)
 
-    @patch("neural_compressor.ux.components.model.tensorflow.model.TensorflowReader", autospec=True)
+    @patch(
+        "neural_compressor.ux.components.model.tensorflow.model.TensorflowReader",
+        autospec=True,
+    )
     def assert_model_domain_matches_expected(
         self,
         mocked_tensorflow_graph_reader: MagicMock,
