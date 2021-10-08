@@ -42,7 +42,7 @@ Supported deep learning frameworks are:
 * [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
 * [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0), [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0)
-* [Engine](./docs/engine.md), which is a built-in bare metal [inference engine](./engine) in Intel® Neural Compressor.
+* [Engine](./docs/engine.md), which is a built-in bare metal [acceleration library](./engine) for domain-specific NLP models.
 
 ## Installation
 
@@ -958,3 +958,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 * [Legal](legal_information.md)
 * [Security Policy](security_policy.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
+
+## Hiring
+
+We are hiring. Please send your resume to [INC Jobs](lpot.maintainers@intel.com) if you have interests in model compression techniques.
