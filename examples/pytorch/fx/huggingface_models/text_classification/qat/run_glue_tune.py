@@ -500,7 +500,9 @@ def main():
     for input in eval_dataloader:
         input_names = input.keys()
         break
-    model = symbolic_trace(model, input_names=input_names, batch_size=batch_size)
+    model = symbolic_trace(model, input_names=input_names, \
+                            batch_size=batch_size, \
+                            sequence_length=max_seq_length)
 
     def train_func(model):
         trainer.model_wrapped = model
