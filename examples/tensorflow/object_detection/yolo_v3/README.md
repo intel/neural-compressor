@@ -12,7 +12,9 @@ pip install neural-compressor
 ```
 ### 2. Install Intel Tensorflow
 ```shell
-pip install intel-tensorflow==1.15.0up3
+Check your python version and pip install 1.15.0 up3 from links as below:   
+pip install https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up3-cp36-cp36m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl   
+pip install https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up3-cp37-cp37m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
 ```
 > Note: Supported Tensorflow versions please refer to Neural Compressor readme file.
 
