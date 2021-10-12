@@ -334,11 +334,6 @@ export class DetailsComponent implements OnInit, OnChanges {
             'instances: ' + execution_details.optimized_model_benchmark.performance.instances + '\n\n\n';
         }
       }
-      if (execution_details.optimization) {
-        tooltip += 'OPTIMIZATION\n' +
-          'cores per instance: ' + execution_details.optimization.cores_per_instance + '\n' +
-          'instances: ' + execution_details.optimization.instances + '\n\n';
-      }
       return tooltip;
     }
     return null;

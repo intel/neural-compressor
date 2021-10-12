@@ -23,6 +23,7 @@ from neural_compressor.ux.components.configuration_wizard.configuration_parser i
     ConfigurationParser,
 )
 from neural_compressor.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.utils import replace_with_values
 from neural_compressor.ux.utils.workload.config import Config
@@ -127,6 +128,16 @@ def get_height_width_from_size(size: Any) -> Tuple[Optional[int], Optional[int]]
     return None, None
 
 
+def change_evaluation_accuracy_configs_to_machine_specs(
+    config: Config,
+) -> None:
+    """Change config.evaluation.accuracy.configs to match server."""
+    if config.evaluation and config.evaluation.accuracy and config.evaluation.accuracy.configs:
+        hwinfo = HWInfo()
+        config.evaluation.accuracy.configs.cores_per_instance = hwinfo.cores_per_socket
+        config.evaluation.accuracy.configs.num_of_instance = 1
+
+
 def save_workload(
     data: Dict[str, Any],
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -151,6 +162,7 @@ def save_workload(
 
     update_config(workload, parsed_data, workdir)
     change_performance_dataloader_to_dummy_if_possible(model_domain, workload.config)
+    change_evaluation_accuracy_configs_to_machine_specs(workload.config)
     workload.config.dump(os.path.join(workdir.workload_path, workload.config_name))
     return workload.serialize()
 
