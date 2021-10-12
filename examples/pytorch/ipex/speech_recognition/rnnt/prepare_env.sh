@@ -56,6 +56,7 @@
   echo "Install pytorch/ipex"
   export LD_LIBRARY_PATH=$WORKDIR/local/lib:$LD_LIBRARY_PATH
 
+  cd $WORKDIR
   bash prepare_loadgen.sh ${WORKDIR}
 
   echo "Install dependencies for pytorch_SUT.py"
