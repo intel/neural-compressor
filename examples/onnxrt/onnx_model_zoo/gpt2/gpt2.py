@@ -52,7 +52,7 @@ MODEL_CLASSES = {
 }
 
 class TextDataset(Dataset):
-    def __init__(self, tokenizer, args, file_path='train', block_size=512):
+    def __init__(self, tokenizer, args, file_path='train', block_size=1024):
         assert os.path.isfile(file_path)
         directory, filename = os.path.split(file_path)
         if not os.path.exists("./dataset_cached"):
@@ -170,9 +170,9 @@ def evaluate(args, model, tokenizer, prefix=""):
     
     if args.benchmark and args.mode == "accuracy":
         print("Batch size = %d" % args.eval_batch_size)
-        print("Accuracy: %.5f" % (100 - result['perplexity']))
+        print("Accuracy: %.5f" % (result['perplexity'].item()))
     
-    return 100 - result['perplexity']
+    return result['perplexity'].item()
 
 
 def main():
@@ -191,11 +191,11 @@ def main():
                         help="The model checkpoint for weights initialization.")
     parser.add_argument("--cache_dir", default="", type=str,
                         help="Optional directory to store the pre-trained models downloaded from s3 (instread of the default one)")
-    parser.add_argument("--block_size", default=-1, type=int,
+    parser.add_argument("--block_size", default=1024, type=int,
                         help="Optional input sequence length after tokenization."
                              "The training dataset will be truncated in block of this size for training."
                              "Default to the model max input length for single sentence inputs (take into account special tokens).")
-    parser.add_argument("--per_gpu_eval_batch_size", default=4, type=int,
+    parser.add_argument("--per_gpu_eval_batch_size", default=1, type=int,
                         help="Batch size per GPU/CPU for evaluation.")
     parser.add_argument('--overwrite_cache', action='store_true',
                         help="Overwrite the cached training and evaluation sets")
