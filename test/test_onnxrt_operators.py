@@ -7,8 +7,36 @@ import numpy as np
 from onnx import helper, TensorProto, numpy_helper, onnx_pb
 from onnxruntime.quantization.quant_utils import QuantizationMode
 from neural_compressor.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
+from neural_compressor.adaptor.ox_utils.util import QuantizedInitializer, QuantizedValue
 import onnxruntime as ort
 
+def build_model():
+    initializers = []
+    input = helper.make_tensor_value_info('input', TensorProto.FLOAT, [1, 3, 15, 15])
+    output = helper.make_tensor_value_info('reshape_output', TensorProto.FLOAT, [88, 11])
+
+    conv1_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [3, 3, 3, 3]).astype(np.float32), name='conv1_weight')
+    conv1_node = helper.make_node('Conv', ['input', 'conv1_weight'], ['conv1_output'], name='conv1')
+
+    conv2_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [5, 3, 3, 3]).astype(np.float32), name='conv2_weight')
+    conv2_node = helper.make_node('Conv', ['input', 'conv2_weight'], ['conv2_output'], name='conv2')
+
+    # 1, 8, 13, 13
+    concat_node = helper.make_node('Concat', ['conv1_output', 'conv2_output'], [
+                                        'concat_output'], name='Concat', axis=1)
+    # 1, 8, 11, 11
+    avg_args = {'kernel_shape': [3, 3]}
+    avgpool_node = helper.make_node('AveragePool', ['concat_output'], ['avg_output'], name='AveragePool', **avg_args)
+    reshape_node = onnx.helper.make_node('Reshape', ['avg_output', 'shape'], ['reshape_output'], name='Reshape')
+
+    initializers = [conv1_weight_initializer, conv2_weight_initializer]
+    initializers.append(onnx.numpy_helper.from_array(np.array([88, 11], dtype=np.int64), name='shape'))
+    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node, reshape_node],
+                              'test', [input], [output], initializer=initializers)
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
+    return model
 
 class TestAdaptorONNXRT(unittest.TestCase):
 
@@ -51,6 +79,22 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizable_op_types)
         quantizer.quantize_model()
         assert quantizer.model.model
+
+    def test_concat_reshape_pooling(self):
+        model = build_model()
+        q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
+                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        quantize_params = {'input': [np.float32(10.), np.uint8(0)],
+                           'conv1_weight': [np.float32(10.), np.uint8(0)],
+                           'conv1_output': [np.float32(10.), np.uint8(0)],
+                           'conv2_weight': [np.float32(10.), np.uint8(0)],
+                           'conv2_output': [np.float32(10.), np.uint8(0)],
+                           'concat_output': [np.float32(10.), np.uint8(0)],
+                           'avg_output': [np.float32(10.), np.uint8(0)],
+                           'shape': [np.float32(10.), np.uint8(0)],
+                           'reshape_output': [np.float32(10.), np.uint8(0)]}
+        quantizable_op_types = ['Reshape', 'Conv', 'Concat', 'AveragePool']
+        self.static_test(model, q_config, quantize_params, quantizable_op_types)
 
     def test_conv(self):
         for op in ['Conv', 'FusedConv']:

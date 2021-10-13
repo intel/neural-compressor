@@ -1,0 +1,4 @@
+onnx>=1.7
+onnxruntime==1.6.0
+opencv-python
+pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability

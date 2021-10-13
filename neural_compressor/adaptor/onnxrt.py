@@ -202,8 +202,8 @@ class ONNXRTAdaptor(Adaptor):
                             "QLinearMul", "QLinearRelu", "QLinearClip",
                             "QLinearLeakyRelu", "QLinearSigmoid", "MaxPool",
                             "EmbedLayerNormalization", "QLinearGlobalAveragePool", 
-                            "QLinearAdd", "Pad", "Split", "Gather",
-                            "QuantizeLinear", "DequantizeLinear"
+                            "QLinearAdd", "Pad", "Split", "Gather", "Reshape", "Concat",
+                            "QuantizeLinear", "DequantizeLinear", "QLinearAveragePool",
             ]
         else:
             int8_op_list = ["ConvInteger", "MatMulInteger", "QAttention",

@@ -29,6 +29,9 @@ from .operators.gavgpool import QGlobalAveragePool
 from .operators.lstm import LSTMQuant
 from .operators.split import QSplit
 from .operators.pad import QPad
+from .operators.concat import QLinearConcat
+from .operators.pooling import QLinearPool
+from .operators.direct_q8 import Direct8BitOp
 
 CommonOpsRegistry = {"Gather": GatherQuant, \
                      "EmbedLayerNormalization": EmbedLayerNormalizationQuant}
@@ -56,7 +59,10 @@ QLinearOpsRegistry = {
     "MaxPool": QMaxPool,
     "GlobalAveragePool": QGlobalAveragePool,
     "Split": QSplit,
-    "Pad": QPad
+    "Pad": QPad,
+    "Concat": QLinearConcat,
+    "Reshape": Direct8BitOp,
+    "AveragePool" : QLinearPool
 }
 QLinearOpsRegistry.update(CommonOpsRegistry)
 
