@@ -138,9 +138,7 @@ def run_benchmark(model_details, args):
 def _write_inputs_outputs_to_yaml(yaml_path, output_yaml_path, inputs, outputs):
     # deal with the inputs/outputs at yaml
     with open(yaml_path, 'r') as f:
-        # content = f.read()
-        # content = yaml.load(content, yaml.Loader)
-        content = yaml.load(f)
+        content = yaml.safe_load(f)
 
         tmp_i = ''
         tmp_o = ''
