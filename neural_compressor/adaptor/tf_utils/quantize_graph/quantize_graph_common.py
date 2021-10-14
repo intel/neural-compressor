@@ -349,12 +349,10 @@ class QuantizeGraphHelper():
                 max_value[np.abs(max_value) < epsilon] = epsilon
                 qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
             else:
-                min_value = np.min(float_tensor.flatten())
-                max_value = np.max(float_tensor.flatten())
+                min_value = np.min(float_tensor)
+                max_value = np.max(float_tensor)
                 min_value *= range_coefficent
                 max_value *= range_coefficent
-                # Same processing of min-max as in quantize_weight_eightbit
-                # function.
                 min_value = min(min_value, 0.0)
                 if min_value == max_value:
                     if abs(min_value) < 0.000001:
@@ -363,26 +361,11 @@ class QuantizeGraphHelper():
                         max_value = 2 * min_value
                     else:
                         max_value = min_value / 2.0
-
-                sess = tf.compat.v1.Session()
-                with sess.as_default():
-                    quantize_op = array_ops.quantize_v2(
-                        float_tensor,
-                        min_value,
-                        max_value,
-                        dtypes.qint8,
-                        mode=quantization_mode,
-                        round_mode="HALF_TO_EVEN")
-
-                    qint8_tensor = quantize_op[0].numpy(
-                    ) if tf.executing_eagerly() else quantize_op[0].eval()
-                    # Updated min-max values should be passed to the next
-                    # feeding node.
-                    min_value = quantize_op[1].numpy(
-                    ) if tf.executing_eagerly() else quantize_op[1].eval()
-                    max_value = quantize_op[2].numpy(
-                    ) if tf.executing_eagerly() else quantize_op[2].eval()
-                sess.close()
+                range_value = np.max(np.abs([min_value, max_value]))
+                qint8_tensor = (np.around(float_tensor * 127.0 / range_value)).astype(np.int8)
+                qint8_tensor = np.clip(qint8_tensor, -127, 127).astype(np.int8)
+                min_value = -range_value
+                max_value = range_value
         elif host_op_type == "DepthwiseConv2dNative":
             # get the max values based on dim 0 and 1 for depthwise conv
             # since, the output channel will be dim 2 * dim 3
