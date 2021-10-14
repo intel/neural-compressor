@@ -86,7 +86,13 @@ class TFDataDataLoader(BaseDataLoader):
         dataset = dataset.batch(1 if try_single_batch else batch_size, drop_last)
         if tf.executing_eagerly():
             for iter_tensors in dataset:
-                yield [elem.numpy() for elem in iter_tensors]
+                outputs = []
+                for elem in iter_tensors:
+                    if isinstance(elem,tf.Tensor):
+                        outputs.append(elem.numpy())
+                    else:
+                        outputs.append([e.numpy() for e in elem])
+                yield outputs
         else:
             ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
             iter_tensors = ds_iterator.get_next()

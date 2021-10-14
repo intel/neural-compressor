@@ -643,7 +643,6 @@ class TestDataloader(unittest.TestCase):
 
     def test_coco_record(self):
         import tensorflow as tf
-        tf.compat.v1.disable_eager_execution()
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
         im = Image.fromarray(random_array)
@@ -686,6 +685,11 @@ class TestDataloader(unittest.TestCase):
             self.assertEqual(labels[0].shape, (1,1,4))
         os.remove('test.record')
         os.remove('test.jpeg')
+
+    def test_coco_record_disable_eager(self):
+        import tensorflow as tf
+        tf.compat.v1.disable_eager_execution()
+        self.test_coco_record()
 
     def test_coco_raw(self):
         import json

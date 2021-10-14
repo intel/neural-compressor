@@ -21,7 +21,6 @@ import numpy as np
 from argparse import ArgumentParser
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-tf.compat.v1.disable_eager_execution()
 
 class eval_classifier_optimized_graph:
   """Evaluate image classifier with optimized TensorFlow graph"""

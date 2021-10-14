@@ -22,7 +22,6 @@ import time
 import numpy as np
 import tensorflow as tf
 from argparse import ArgumentParser
-tf.compat.v1.disable_eager_execution()
 
 class eval_object_detection_optimized_graph(object):
     
