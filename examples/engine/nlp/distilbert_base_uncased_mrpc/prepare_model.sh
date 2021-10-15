@@ -19,4 +19,4 @@ python distilbert_base_export.py \
    --task_name=MRPC \
    --output_model=distilbert_base_uncased_mrpc.onnx
 
-cp ./tmp/mrpc/distilbert_base_uncased/vocab.txt .
+cp ./tmp/mrpc/distilbert_base_uncased/vocab.txt ./data/.

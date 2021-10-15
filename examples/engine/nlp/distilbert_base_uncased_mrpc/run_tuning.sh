@@ -43,7 +43,7 @@ function run_tuning {
       --input_model=${input_model} \
       --output_model=$output_model \
       --data_dir=${dataset_location}/MRPC \
-      --vocab_file=vocab.txt \
+      --vocab_file=${dataset_location}/vocab.txt \
       --config=$config \
       --tune \
 

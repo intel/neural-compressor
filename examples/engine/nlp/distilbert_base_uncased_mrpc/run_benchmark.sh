@@ -47,7 +47,7 @@ function run_benchmark {
     python run_engine.py \
       --input_model=${input_model} \
       --data_dir=${dataset_location}/MRPC \
-      --vocab_file=vocab.txt \
+      --vocab_file=${dataset_location}/vocab.txt \
       --batch_size=${batch_size} \
       --config=$config \
       --benchmark \

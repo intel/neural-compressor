@@ -39,7 +39,7 @@ def get_args():
     parser.add_argument("--input_model", default="distilbert_base_uncased_mrpc.onnx",
                          type=str, help="input_model_path")
     parser.add_argument("--output_model", default="./ir/", type=str, help="output_model_path")
-    parser.add_argument("--vocab_file", default="vocab.txt", 
+    parser.add_argument("--vocab_file", default="./data/vocab.txt", 
                             type=str, help="vocab_file_path")
     parser.add_argument("--do_lower_case", type=bool, default=True,
                         help="vocab whether all lower case")

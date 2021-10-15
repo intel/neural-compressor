@@ -23,7 +23,6 @@ import json
 #FLAGS = flags.FLAGS
 
 F_version_2_with_negative = False
-F_predict_file = "build/data/dev-v1.1.json"
 F_max_seq_length = 384
 F_doc_stride = 128
 F_max_query_length = 64
@@ -52,7 +51,7 @@ class TF_BERTDataSet():
           vocab_file=vocab_file, do_lower_case=do_lower_case)
         tf.compat.v1.logging.info("***** Reading examples... *****")
         eval_examples = read_squad_examples(
-          input_file=F_predict_file, is_training=False)
+          input_file=label_file, is_training=False)
 
         eval_features = []
 
