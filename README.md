@@ -39,7 +39,7 @@ Supported deep learning frameworks are:
 
 >  **Note**: From the official TensorFlow 2.6.0, oneDNN support has been upstreamed. Download the official TensorFlow 2.6.0 binary for the CPU device and set the environment variable TF_ENABLE_ONEDNN_OPTS=1 before running the quantization process or deploying the quantized model.
 
-* [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.6.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
+* [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
 * [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0), [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0)
 * [Engine](./docs/engine.md), which is a built-in bare metal [inference engine](./engine) in Intel® Neural Compressor.
@@ -137,6 +137,11 @@ cd neural-compressor
 pip install -r requirements.txt
 python setup.py install
 ```
+
+> **Note**: To run examples from neural-compressor version<1.7 with neural-compressor binary version>=1.7, please replace model name in main.py.   
+>```shell
+> sed -i "s|lpot|neural_compressor|g" main.py
+>```
 
 ## Documentation
 
@@ -243,16 +248,16 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
     <td class="tg-7zrl">1.5.0+cpu</td>
   </tr>
   <tr>
-    <td class="tg-7zrl">1.6.0+cpu</td>
+    <td class="tg-7zrl">1.8.0+cpu</td>
   </tr>
   <tr>
-    <td class="tg-7zrl">1.8.0+cpu</td>
+    <td class="tg-7zrl">1.9.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">IPEX</td>
   </tr>
   <tr>
-    <td class="tg-cly1" rowspan="2">MXNet</td>
+    <td class="tg-cly1" rowspan="3">MXNet</td>
     <td class="tg-7zrl">1.8.0</td>
   </tr>
   <tr>
@@ -321,8 +326,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
   <tr>
     <td rowspan="2">SSD-ResNet34</td>
     <td>TensorFlow</td>
-    <td>WIP</td>
-    <td></td>
+    <td>Yes</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection">Link</a></td>
   </tr>
   <tr>
     <td>PyTorch</td>
@@ -377,9 +382,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>74.24%</td>
     <td>74.27%</td>
     <td>-0.04%</td>
-    <td>7.64</td>
-    <td>21.54</td>
-    <td>2.82x</td>
+    <td>7.56</td>
+    <td>21.24</td>
+    <td>2.81x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -388,9 +393,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>76.94%</td>
     <td>76.46%</td>
     <td>0.63%</td>
-    <td>9.54</td>
-    <td>24.28</td>
-    <td>2.54x</td>
+    <td>9.64</td>
+    <td>24.86</td>
+    <td>2.58x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -399,9 +404,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>77.21%</td>
     <td>76.45%</td>
     <td>0.99%</td>
-    <td>12.92</td>
-    <td>30.65</td>
-    <td>2.37x</td>
+    <td>12.73</td>
+    <td>30.80</td>
+    <td>2.42x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -410,9 +415,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>70.30%</td>
     <td>69.74%</td>
     <td>0.80%</td>
-    <td>5.58</td>
-    <td>10.13</td>
-    <td>1.82x</td>
+    <td>5.57</td>
+    <td>9.92</td>
+    <td>1.78x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -421,9 +426,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>74.27%</td>
     <td>73.97%</td>
     <td>0.41%</td>
-    <td>6.78</td>
-    <td>12.42</td>
-    <td>1.83x</td>
+    <td>6.69</td>
+    <td>12.33</td>
+    <td>1.84x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -433,8 +438,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>76.75%</td>
     <td>0.70%</td>
     <td>12.90</td>
-    <td>27.74</td>
-    <td>2.15x</td>
+    <td>27.46</td>
+    <td>2.13x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -443,8 +448,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>80.36%</td>
     <td>80.27%</td>
     <td>0.11%</td>
-    <td>21.00</td>
-    <td>54.42</td>
+    <td>20.88</td>
+    <td>54.13</td>
     <td>2.59x</td>
   </tr>
   <tr>
@@ -454,9 +459,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>80.42%</td>
     <td>80.40%</td>
     <td>0.02%</td>
-    <td>44.72</td>
-    <td>87.62</td>
-    <td>1.96x</td>
+    <td>44.47</td>
+    <td>87.69</td>
+    <td>1.97x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -465,9 +470,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>73.93%</td>
     <td>70.96%</td>
     <td>4.19%</td>
-    <td>2.96</td>
-    <td>9.88</td>
-    <td>3.34x</td>
+    <td>2.95</td>
+    <td>10.12</td>
+    <td>3.43x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -476,9 +481,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>71.96%</td>
     <td>71.76%</td>
     <td>0.28%</td>
-    <td>4.95</td>
-    <td>10.71</td>
-    <td>2.16x</td>
+    <td>4.97</td>
+    <td>10.39</td>
+    <td>2.09x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -487,9 +492,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>37.91%</td>
     <td>38.00%</td>
     <td>-0.24%</td>
-    <td>145.96</td>
-    <td>422.11</td>
-    <td>2.89x</td>
+    <td>140.46</td>
+    <td>411.03</td>
+    <td>2.93x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
@@ -498,9 +503,20 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>23.02%</td>
     <td>23.13%</td>
     <td>-0.48%</td>
-    <td>12.19</td>
-    <td>26.85</td>
+    <td>12.25</td>
+    <td>26.90</td>
     <td>2.20x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.5.0</td>
+    <td>ssd_resnet34</td>
+    <td>21.97%</td>
+    <td>22.16%</td>
+    <td>-0.86%</td>
+    <td>264.26</td>
+    <td>960.48</td>
+    <td>3.63x</td>
   </tr>
 </tbody>
 </table>
@@ -532,9 +548,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>69.58%</td>
     <td>69.76%</td>
     <td>-0.26%</td>
-    <td>13.59</td>
-    <td>24.97</td>
-    <td>1.84x</td>
+    <td>14.21</td>
+    <td>26.55</td>
+    <td>1.87x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -543,9 +559,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>75.87%</td>
     <td>76.13%</td>
     <td>-0.34%</td>
-    <td>25.67</td>
-    <td>54.12</td>
-    <td>2.11x</td>
+    <td>24.89</td>
+    <td>53.84</td>
+    <td>2.16x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -554,9 +570,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>79.09%</td>
     <td>79.31%</td>
     <td>-0.28%</td>
-    <td>62.44</td>
-    <td>147.88</td>
-    <td>2.37x</td>
+    <td>64.03</td>
+    <td>147.51</td>
+    <td>2.30x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -565,8 +581,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>88.16%</td>
     <td>88.73%</td>
     <td>-0.64%</td>
-    <td>41.33</td>
-    <td>81.93</td>
+    <td>41.15</td>
+    <td>81.56</td>
     <td>1.98x</td>
   </tr>
   <tr>
@@ -576,9 +592,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>58.29%</td>
     <td>58.84%</td>
     <td>-0.93%</td>
-    <td>39.30</td>
-    <td>86.58</td>
-    <td>2.20x</td>
+    <td>39.17</td>
+    <td>83.42</td>
+    <td>2.13x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -587,9 +603,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>88.65%</td>
     <td>89.27%</td>
     <td>-0.70%</td>
-    <td>39.46</td>
-    <td>86.97</td>
-    <td>2.20x</td>
+    <td>39.59</td>
+    <td>83.07</td>
+    <td>2.10x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -598,8 +614,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>91.63%</td>
     <td>91.86%</td>
     <td>-0.25%</td>
-    <td>39.12</td>
-    <td>82.59</td>
+    <td>39.39</td>
+    <td>83.17</td>
     <td>2.11x</td>
   </tr>
   <tr>
@@ -609,9 +625,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>69.31%</td>
     <td>69.68%</td>
     <td>-0.52%</td>
-    <td>39.81</td>
-    <td>81.98</td>
-    <td>2.06x</td>
+    <td>39.51</td>
+    <td>81.84</td>
+    <td>2.07x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -620,20 +636,20 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>87.48%</td>
     <td>88.33%</td>
     <td>-0.95%</td>
-    <td>112.61</td>
-    <td>287.44</td>
-    <td>2.55x</td>
+    <td>112.80</td>
+    <td>281.91</td>
+    <td>2.50x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_large_squad</td>
-    <td>92.79</td>
-    <td>93.05</td>
+    <td>92.78988</td>
+    <td>93.04683</td>
     <td>-0.28%</td>
-    <td>497.79</td>
-    <td>953.74</td>
-    <td>1.92x</td>
+    <td>503.92</td>
+    <td>934.01</td>
+    <td>1.85x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -642,9 +658,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>91.12%</td>
     <td>91.82%</td>
     <td>-0.76%</td>
-    <td>112.43</td>
-    <td>291.10</td>
-    <td>2.59x</td>
+    <td>111.08</td>
+    <td>289.13</td>
+    <td>2.60x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -653,9 +669,9 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>72.92%</td>
     <td>72.56%</td>
     <td>0.50%</td>
-    <td>148.60</td>
-    <td>287.03</td>
-    <td>1.93x</td>
+    <td>151.93</td>
+    <td>298.53</td>
+    <td>1.96x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -664,8 +680,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>62.85%</td>
     <td>62.57%</td>
     <td>0.45%</td>
-    <td>112.54</td>
-    <td>283.38</td>
+    <td>113.04</td>
+    <td>285.43</td>
     <td>2.52x</td>
   </tr>
 </tbody>
@@ -842,6 +858,100 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>30% sparsity on magnitude and quantization aware training</td>
     <td>ImageNet</td>
     <td>75.90(-0.30)</td>
+  </tr>
+</tbody>
+</table>
+
+#### Validated Knowledge Distillation Examples
+
+<table>
+<thead>
+  <tr>
+    <th rowspan="2">Example Name</th>
+    <th rowspan="2">Dataset</th>
+    <th rowspan="2">Student<br>(Accuracy)</th>
+    <th rowspan="2">Teacher<br>(Accuracy)</th>
+    <th rowspan="2">Student With Distillation<br>(Accuracy Improvement)</th>
+  </tr>
+  <tr>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="2">ResNet example</td>
+    <td rowspan="2">ImageNet</td>
+    <td rowspan="2">ResNet18<br>(0.6739)</td>
+    <td rowspan="2">ResNet50<br>(0.7399)</td>
+    <td rowspan="2">0.6845<br>(0.0106)</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td rowspan="2">BlendCnn example</td>
+    <td rowspan="2">MRPC</td>
+    <td rowspan="2">BlendCnn<br>(0.7034)</td>
+    <td rowspan="2">BERT-Base<br>(0.8382)</td>
+    <td rowspan="2">0.7034<br>(0)</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td rowspan="2">BiLSTM example</td>
+    <td rowspan="2">SST-2</td>
+    <td rowspan="2">BiLSTM<br>(0.7913)</td>
+    <td rowspan="2">RoBERTa-Base<br>(0.9404)</td>
+    <td rowspan="2">0.8085<br>(0.0172)</td>
+  </tr>
+  <tr>
+  </tr>
+</tbody>
+</table>
+
+#### Validated Engine Examples 
+
+<table>
+<thead>
+  <tr>
+    <th rowspan="2">Model</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance</th>
+  </tr>
+  <tr>
+    <th>INT8 Tuning Accuracy</th>
+    <th>FP32 Accuracy Baseline</th>
+    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
+    <th>Realtime Latency Ratio[FP32/INT8]</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>bert_base_mrpc</td>
+    <td>0.8235</td>
+    <td>83.09%</td>
+    <td>-0.89%</td>
+    <td>21.91</td>
+    <td>71.53</td>
+    <td>3.26x</td>
+  </tr>
+  <tr>
+    <td>bert_large</td>
+    <td>90.6648</td>
+    <td>90.87</td>
+    <td>-0.23%</td>
+    <td>232.38</td>
+    <td>954.96</td>
+    <td>4.11x</td>
+  </tr>
+  <tr>
+    <td>distilbert_base_uncased_mrpc</td>
+    <td>0.8407</td>
+    <td>84.31%</td>
+    <td>-0.28%</td>
+    <td>10.41</td>
+    <td>36.42</td>
+    <td>3.50x</td>
   </tr>
 </tbody>
 </table>
