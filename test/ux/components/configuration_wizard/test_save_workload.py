@@ -16,12 +16,14 @@
 import unittest
 from collections import OrderedDict
 from typing import List
+from unittest.mock import patch
 
 from neural_compressor.ux.components.configuration_wizard.save_workload import (
     change_performance_dataloader_to_dummy_if_possible,
     get_height_width_from_size,
     get_shape_from_transforms,
 )
+from neural_compressor.ux.components.model.shape import Shape
 from neural_compressor.ux.utils.exceptions import NotFoundException
 from neural_compressor.ux.utils.workload.config import Config
 from neural_compressor.ux.utils.workload.dataloader import Dataset, Transform
@@ -29,6 +31,33 @@ from neural_compressor.ux.utils.workload.dataloader import Dataset, Transform
 
 class TestUpdateConfigWithDummy(unittest.TestCase):
     """Test updating config with Dummy dataloader."""
+
+    def setUp(self) -> None:
+        """Prepare environment."""
+        super().setUp()
+
+        model_repository_patcher = patch(
+            "neural_compressor.ux.components.configuration_wizard.save_workload.ModelRepository",
+        )
+        self.addCleanup(model_repository_patcher.stop)
+        model_repository_mock = model_repository_patcher.start()
+
+        class MockedModelWithShapeOnly:
+            """Totally faked Model class with only one property."""
+
+            def __init__(self, shape: Shape):
+                """Initialize object."""
+                self.input_shape = shape
+
+        def mocked_get_model(path: str) -> MockedModelWithShapeOnly:
+            """Fake getting model based on path."""
+            if "trusted" in path:
+                shape = Shape(shape="1,2,3,4,5", trusted=True)
+            else:
+                shape = Shape(shape="6,7,8,9,0", trusted=False)
+            return MockedModelWithShapeOnly(shape)
+
+        model_repository_mock.return_value.get_model = mocked_get_model
 
     def test_get_shape_from_transforms_for_empty_list(self) -> None:
         """Test getting shape from transforms."""
@@ -317,6 +346,30 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             "dummy_v2",
             {
                 "input_shape": [10, 20, 3],
+                "label_shape": [1],
+            },
+        )
+        self.assertEqual(
+            expected_dataset,
+            config.evaluation.performance.dataloader.dataset,  # type: ignore
+        )
+
+    def test_change_performance_dataloader_to_dummy_when_trusted_shape_detected(self) -> None:
+        """Test change_performance_dataloader_to_dummy_if_possible."""
+        config = self.get_eligible_config()
+        config.model_path = "some model with trusted shape"
+
+        change_performance_dataloader_to_dummy_if_possible("image_recognition", config)
+
+        self.assertEqual(
+            OrderedDict(),
+            config.evaluation.performance.dataloader.transform,  # type: ignore
+        )
+
+        expected_dataset = Dataset(
+            "dummy_v2",
+            {
+                "input_shape": [1, 2, 3, 4, 5],
                 "label_shape": [1],
             },
         )

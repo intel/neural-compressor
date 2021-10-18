@@ -360,38 +360,6 @@
                 ]
             },
             {
-                "name": "dummy",
-                "help": "Dataset used for dummy data generation",
-                "show_dataset_location": false,
-                "params": [
-                    {
-                        "name": "shape",
-                        "help": "Support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor.",
-                        "value": []
-                    },
-                    {
-                        "name": "low",
-                        "help": "Low out the tensor value range from [0, 1] to [0, low] or [low, 0] if low < 0, if float, will implement all tensors with same low value.",
-                        "value": -128.0
-                    },
-                    {
-                        "name": "high",
-                        "help": "High the tensor value by add all tensor element value high. If list, length of list should be same with shape list.",
-                        "value": 127.0
-                    },
-                    {
-                        "name": "dtype",
-                        "help": "Support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool'.",
-                        "value": "float32"
-                    },
-                    {
-                        "name": "label",
-                        "help": "Whether to return 0 as label",
-                        "value": "False"
-                    }
-                ]
-            },
-            {
                 "name": "FashionMNIST",
                 "help": null,
                 "show_dataset_location": true,

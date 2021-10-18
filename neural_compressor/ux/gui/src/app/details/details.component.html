@@ -231,12 +231,12 @@
 
 
   <div class="cards grid">
-    <mat-card class="first-row" *ngIf="model['acc_input_model'] && model['status'] !== 'wip'">
+    <mat-card class="first-row" *ngIf="model['perf_throughput_input_model'] && model['status'] !== 'wip'">
       <h2>Parameters comparison</h2>
       <p>
-        <ngx-charts-bar-vertical-2d *ngIf="accuracyData" class="inline" (window:resize)="onResize()" [view]="view"
-          [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis"
-          [yAxis]="yAxis" [results]="accuracyData">
+        <ngx-charts-bar-vertical-2d *ngIf="accuracyData && model['acc_input_model']" class="inline"
+          (window:resize)="onResize()" [view]="view" [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel"
+          [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis" [results]="accuracyData">
         </ngx-charts-bar-vertical-2d>
         <ngx-charts-bar-vertical-2d *ngIf="performanceData" class="inline" (window:resize)="onResize()" [view]="view"
           [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis"

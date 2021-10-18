@@ -19,6 +19,7 @@ from typing import Any, List, Optional
 
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.model.domain import Domain
+from neural_compressor.ux.components.model.shape import Shape
 
 
 class Model(ABC):
@@ -76,6 +77,11 @@ class Model(ABC):
         if has_all_name_parts(["resnet"]):
             return Domain(domain="image_recognition")
         return Domain()
+
+    @property
+    def input_shape(self) -> Shape:
+        """Try to detect data shape."""
+        return Shape(trusted=True)
 
     @staticmethod
     @abstractmethod

@@ -94,6 +94,10 @@
   color: $red;
 }
 
+.shape-warning {
+  color: $orange;
+}
+
 .navigation-icon {
   width: 20px;
   position: relative;
@@ -149,6 +153,9 @@ mat-button-toggle-group {
 ::ng-deep {
   .custom-slider {
     width: 50%;
+    height: 50px;
+    position: relative;
+    top: -20px;
   }
 
   .custom-slider .ngx-slider .ngx-slider-selection {
@@ -171,4 +178,16 @@ mat-button-toggle-group {
 .container {
   display: grid;
   justify-content: center;
+}
+
+.width-900 {
+  min-width: 1097px;
+}
+
+.toggle-text {
+  padding: 10px;
+  position: relative;
+  top: -4px;
+  font-size: 110%;
+  cursor: pointer;
 }

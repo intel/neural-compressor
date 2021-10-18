@@ -22,6 +22,8 @@ from neural_compressor.utils.logger import Logger
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.reader.tensorflow_reader import TensorflowReader
 from neural_compressor.ux.components.model.model import Model
+from neural_compressor.ux.components.model.shape import Shape
+from neural_compressor.ux.components.model.tensorflow.utils import get_input_shape
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import check_module
 
@@ -67,6 +69,29 @@ class TensorflowModel(Model):
         Logger().get_logger().setLevel(log.level)
         self._nc_model_instance = NCModel(self.path)
         self._nc_model_instance.name = model_name
+
+    @property
+    def input_shape(self) -> Shape:
+        """Try to detect data shape."""
+        domain = self.domain.domain
+        default_shapes = {
+            "image_recognition": 224,
+            "object_detection": 300,
+        }
+        default_shape = default_shapes.get(domain, None)
+        if default_shape is None:
+            return Shape(trusted=True)
+
+        input_shape = [default_shape, default_shape, 3]
+        is_trusted = False
+        try:
+            # pylint: disable=maybe-no-member
+            input_shape = get_input_shape(self.nc_model_instance.graph_def, default_shape)
+            is_trusted = True
+        except Exception:
+            log.debug(f"Could not get input shape from model. Using default shape: {input_shape}")
+
+        return Shape(shape=", ".join(map(str, input_shape)), trusted=is_trusted)
 
     @staticmethod
     def get_framework_name() -> str:

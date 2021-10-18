@@ -27,7 +27,7 @@ from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.parser import BenchmarkParserFactory
 from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.utils import _load_json_as_dict
-from neural_compressor.ux.utils.workload.workload import Workload
+from neural_compressor.ux.utils.workload.workload import ExecutionMode, Workload
 from neural_compressor.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -138,9 +138,12 @@ def execute_real_benchmark(
     benchmark_total = 0
 
     for model_info in models:
+        model_precision = model_info.get("precision", None)
         benchmark_modes: List[str] = model_info.get("mode", [Benchmarks.PERF])
         if (
-            not workload.tune and Benchmarks.ACC not in benchmark_modes
+            ExecutionMode.ADVANCED == workload.execution_mode
+            and "fp32" == workload.output_precision
+            and Benchmarks.ACC not in benchmark_modes
         ):  # Accuracy information is provided only in tuning
             benchmark_modes.append(Benchmarks.ACC)
         model_info.update({"benchmark_modes": benchmark_modes})

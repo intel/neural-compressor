@@ -15,6 +15,7 @@
 """JsonSerializer module."""
 
 import re
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.ux.utils.logger import log
@@ -141,4 +142,6 @@ class JsonSerializer:
             if isinstance(serialized_value, dict) and not serialized_value:  # Ignore empty objects
                 return None
             return serialized_value
+        if isinstance(value, Enum):
+            return value.value
         return value

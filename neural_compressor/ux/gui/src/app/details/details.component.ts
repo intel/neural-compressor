@@ -124,10 +124,8 @@ export class DetailsComponent implements OnInit, OnChanges {
             this.model['perf_throughput_optimized_model'] = result['data']['perf_throughput_optimized_model'];
             this.executionDetails['input_model_benchmark'] = result['data']['execution_details']['input_model_benchmark'];
             this.executionDetails['optimized_model_benchmark'] = result['data']['execution_details']['optimized_model_benchmark'];
-            if (result['data']['acc_input_model']) {
-              this.model['acc_input_model'] = result['data']['acc_input_model'];
-              this.model['acc_optimized_model'] = result['data']['acc_optimized_model'];
-            }
+            this.model['acc_input_model'] ?? result['data']['acc_input_model'];
+            this.model['acc_optimized_model'] ?? result['data']['acc_optimized_model'];
             if (result['data']['current_step'] === result['data']['number_of_steps']) {
               this.model['status'] = result['status'];
               this.getDataForChart();

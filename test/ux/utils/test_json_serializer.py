@@ -15,6 +15,7 @@
 """Json Serializer test."""
 
 import unittest
+from enum import Enum
 from typing import Any, List
 
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
@@ -27,6 +28,13 @@ class SubClassToTest(JsonSerializer):
         """Initialize test class."""
         super().__init__()
         self.some_variable: str = "value"
+
+
+class SomEnum(Enum):
+    """Enum to test."""
+
+    FOO = "foo"
+    BAR = 12
 
 
 class ClassToTest(JsonSerializer):
@@ -59,6 +67,7 @@ class ClassToTest(JsonSerializer):
             "baz": None,
             "donk": 42,
         }
+        self.enum_value = SomEnum.FOO
 
 
 class TestJsonSerializer(unittest.TestCase):
@@ -91,6 +100,7 @@ class TestJsonSerializer(unittest.TestCase):
                 "bar": 12,
                 "donk": 42,
             },
+            "enum_value": "foo",
         }
         self.assertEqual(type(result), dict)
         self.assertDictEqual(result, expected)  # type: ignore

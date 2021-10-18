@@ -41,7 +41,6 @@ export class ImportModelComponent implements OnInit {
   metricParam: string | boolean;
   metricParams = [];
   objectives = [];
-  approaches = [];
   dataLoaders = [];
   dataLoaderParams = {
     evaluation: [],
@@ -53,7 +52,8 @@ export class ImportModelComponent implements OnInit {
   };
   transformations = [];
   transformationParams = [];
-  tuningEnabled = true;
+  tuningEnabled = false;
+  dummy = true;
   tunings = [];
   inputs = [];
   outputs = [];
@@ -72,6 +72,7 @@ export class ImportModelComponent implements OnInit {
   };
 
   frameworkWarning: string;
+  trustedShape: boolean;
   firstFormGroup: FormGroup;
   secondFormGroup: FormGroup;
 
@@ -164,6 +165,8 @@ export class ImportModelComponent implements OnInit {
             this.frameworkWarning = result['data']['message'];
           } else {
             this.firstFormGroup.get('domainFlavour').setValue(result['data']['domain_flavour']);
+            this.secondFormGroup.get('shape').setValue(result['data']['shape']);
+            this.trustedShape = result['data']['trusted'];
             if (result['data']['domain'].length) {
               this.firstFormGroup.get('modelDomain').setValue(result['data']['domain']);
               this.getConfig();
@@ -172,6 +175,12 @@ export class ImportModelComponent implements OnInit {
               this.firstFormGroup.get('modelDomain').reset();
             }
             this.firstFormGroup.get('framework').setValue(result['data']['framework']);
+            if (this.firstFormGroup.get('framework').value !== 'tensorflow') {
+              this.tuningEnabled = true;
+              this.isFieldRequired('secondFormGroup', 'datasetLocationEvaluation', true);
+              this.isFieldRequired('secondFormGroup', 'shape', false);
+            }
+            this.onTuningEnabledChange();
             this.getPossibleValues();
             ['inputs', 'outputs'].forEach(param => {
               this[param] = result['data'][param];
@@ -264,7 +273,7 @@ export class ImportModelComponent implements OnInit {
       accuracyGoal: [0.01],
       dataLoaderEvaluation: [''],
       dataLoaderQuantization: [''],
-      datasetLocationEvaluation: ['', Validators.required],
+      datasetLocationEvaluation: [''],
       datasetLocationQuantization: [''],
       datasetParams0: [''],
       datasetParams1: [''],
@@ -287,7 +296,7 @@ export class ImportModelComponent implements OnInit {
       timeout: [0],
       maxTrials: [100],
       randomSeed: [],
-      approach: [],
+      shape: ['', Validators.required],
     });
   }
 
@@ -335,10 +344,6 @@ export class ImportModelComponent implements OnInit {
       .subscribe(
         resp => this.objectives = resp['objective'],
         error => this.openErrorDialog(error));
-    this.modelService.getPossibleValues('quantization_approach', { framework: this.firstFormGroup.get('framework').value })
-      .subscribe(
-        resp => this.approaches = resp['quantization_approach'],
-        error => this.openErrorDialog(error));
     this.modelService.getPossibleValues('dataloader', { framework: this.firstFormGroup.get('framework').value })
       .subscribe(
         resp => {
@@ -383,7 +388,7 @@ export class ImportModelComponent implements OnInit {
         this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
       }
       const controlName = 'datasetLocation' + section.charAt(0).toUpperCase() + section.substr(1).toLowerCase();
-      if (this.showDatasetLocation[section]) {
+      if (this.showDatasetLocation[section] && !this.dummy) {
         this.isFieldRequired('secondFormGroup', controlName, true);
       } else {
         this.isFieldRequired('secondFormGroup', controlName, false);
@@ -403,23 +408,21 @@ export class ImportModelComponent implements OnInit {
     this.transformationParams.splice(index, 1);;
   }
 
-  onPrecisionChange(precisionIndex) {
-    if (this.precisions[precisionIndex].name === 'int8') {
-      this.tuningEnabled = true;
-    } else if (this.precisions[precisionIndex].name === 'fp32') {
-      this.tuningEnabled = false;
-      this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
-      this.secondFormGroup.get('datasetLocationQuantization').setValue('');
-    } else if (this.precisions[precisionIndex].name === 'bf16,fp32') {
-      this.tuningEnabled = true;
-    }
-  }
-
   onTuningEnabledChange() {
     if (!this.tuningEnabled) {
       this.secondFormGroup.get('datasetLocationQuantization').setValue('');
       this.isFieldRequired('secondFormGroup', 'datasetLocationQuantization', false);
+      if (this.firstFormGroup.get('framework').value === 'tensorflow') {
+        this.dummy = true;
+        this.isFieldRequired('secondFormGroup', 'datasetLocationEvaluation', false);
+        this.isFieldRequired('secondFormGroup', 'shape', true);
+      }
+    } else {
+      this.dummy = false;
+      this.isFieldRequired('secondFormGroup', 'datasetLocationEvaluation', true);
+      this.isFieldRequired('secondFormGroup', 'shape', false);
     }
+
   }
 
   isFieldRequired(form: string, field: string, required: boolean) {
@@ -441,7 +444,6 @@ export class ImportModelComponent implements OnInit {
 
           if (resp['config']['quantization']) {
             this.secondFormGroup.get('samplingSize').setValue(resp['config']['quantization'].calibration.sampling_size);
-            this.secondFormGroup.get('approach').setValue(resp['config']['quantization'].approach);
             this.transformationParams = [];
             let transform = {};
             if (resp['config']['quantization'].calibration.dataloader && resp['config']['quantization'].calibration.dataloader.transform) {
@@ -572,6 +574,7 @@ export class ImportModelComponent implements OnInit {
       precision: this.precisions[this.precisionIndex].name,
       transform: this.getTransformParams(this.transformationParams),
       tuning: this.tuningEnabled,
+      shape: this.secondFormGroup.get('shape').value,
       quantization: {
         dataset_path: this.getQuantizationDatasetPath(),
         dataloader: this.getQuantizationDataloader(),
@@ -579,7 +582,6 @@ export class ImportModelComponent implements OnInit {
         sampling_size: this.secondFormGroup.get('samplingSize').value,
         batch_size: this.secondFormGroup.get('calibrationBatchSize').value,
         strategy: this.secondFormGroup.get('strategy').value,
-        approach: this.secondFormGroup.get('approach').value,
         objective: this.secondFormGroup.get('objective').value,
         timeout: this.secondFormGroup.get('timeout').value,
         max_trials: this.secondFormGroup.get('maxTrials').value,
@@ -781,6 +783,7 @@ export interface FullModel {
   inputs: string[];
   outputs: string[];
   precision: string;
+  shape?: string;
   tuning: boolean,
   transform: {
     name: string;
@@ -792,7 +795,6 @@ export interface FullModel {
     batch_size: number;
     op?: string[];
     strategy: string;
-    approach: string;
     objective: string;
     timeout: number;
     max_trials: number;

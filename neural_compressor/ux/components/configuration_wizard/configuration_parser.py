@@ -256,4 +256,7 @@ def set_defaults(data: dict) -> dict:
     if "precision" not in data:
         data.update({"precision": "int8"})
 
+    if not data["tuning"]:
+        data["dataset_path"] = "no_dataset_location"
+
     return data

@@ -18,6 +18,7 @@ import json
 import os
 from copy import deepcopy
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -119,7 +120,13 @@ class Workload(JsonSerializer):
         self.output_precision = data.get("precision", data.get("output_precision"))
 
         self.mode = self.get_optimization_mode()
-        self.tune = data.get("tune", self.is_tuning_enabled(data))
+        self.tune = data.get("tune", data.get("tuning", False))
+        # FP32 precision works with GraphOptimization without auto-tune
+        if self.output_precision == "fp32":
+            self.tune = False
+
+        self.execution_mode = ExecutionMode.BASIC
+        self.set_execution_mode(data)
 
         self.initialize_config(data)
 
@@ -160,7 +167,6 @@ class Workload(JsonSerializer):
 
     def initialize_graph_optimization_config(self) -> None:
         """Initialize graph optimization config."""
-        self.config.quantization = None
         self.config.pruning = None
         self.config.set_optimization_precision(self.framework, self.output_precision)
 
@@ -203,18 +209,6 @@ class Workload(JsonSerializer):
 
         log.debug(f"Successfully saved workload to {json_path}")
 
-    def is_tuning_enabled(self, data: dict) -> bool:
-        """Check if tuning is enabled for workload."""
-        if self.output_precision == Precisions.FP32:
-            return False
-        elif self.output_precision in [Precisions.INT8, Precisions.MIXED]:
-            if data.get("tuning"):
-                return True
-            else:
-                return False
-        else:
-            raise ClientErrorException(f"Precision {self.output_precision} is not supported.")
-
     @property
     def model_output_name(self) -> str:
         """Get output model name."""
@@ -235,6 +229,24 @@ class Workload(JsonSerializer):
             output_name += "." + get_file_extension(self.model_path)
 
         return output_name
+
+    def set_execution_mode(self, data: dict) -> None:
+        """Set execution_mode."""
+        if "execution_mode" in data:
+            try:
+                execution_mode = data.get("execution_mode", ExecutionMode.BASIC)
+                self.execution_mode = ExecutionMode(execution_mode)
+            except ValueError:
+                self.execution_mode = ExecutionMode.BASIC
+        elif data.get("tuning", False):
+            self.execution_mode = ExecutionMode.ADVANCED
+
+
+class ExecutionMode(Enum):
+    """Supported execution modes."""
+
+    BASIC = "basic"
+    ADVANCED = "advanced"
 
 
 class WorkloadMigrator:

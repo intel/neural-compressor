@@ -72,6 +72,7 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
         }
 
         response_data.update(model.domain.serialize())  # type: ignore
+        response_data.update(model.input_shape.serialize())  # type: ignore
     except ClientErrorException as err:
         mq.post_error(
             "boundary_nodes_finish",

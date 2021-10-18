@@ -16,21 +16,36 @@
 
 import logging
 import os
+from copy import deepcopy
 from shutil import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
     ConfigurationParser,
 )
+from neural_compressor.ux.components.model.repository import ModelRepository
+from neural_compressor.ux.components.optimization import Optimizations
 from neural_compressor.ux.utils.exceptions import NotFoundException
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.utils import replace_with_values
 from neural_compressor.ux.utils.workload.config import Config
-from neural_compressor.ux.utils.workload.dataloader import Dataset, Transform
-from neural_compressor.ux.utils.workload.workload import Workload
+from neural_compressor.ux.utils.workload.dataloader import Dataloader, Dataset, Transform
+from neural_compressor.ux.utils.workload.workload import ExecutionMode, Workload
 
 logging.basicConfig(level=logging.INFO)
+
+
+def set_dataloader_to_dummy(dataloader: Dataloader, shape: list) -> None:
+    """Change dataloader configuration to dummy_v2."""
+    dataloader.transform.clear()
+    dataloader.dataset = Dataset(
+        "dummy_v2",
+        {
+            "input_shape": deepcopy(shape),
+            "label_shape": [1],
+        },
+    )
 
 
 def change_performance_dataloader_to_dummy_if_possible(
@@ -38,6 +53,18 @@ def change_performance_dataloader_to_dummy_if_possible(
     config: Config,
 ) -> None:
     """Change config.evaluation.performance.dataloader.dataset to Dummy_v2."""
+    detected_shape = ModelRepository().get_model(config.model_path).input_shape
+    if (
+        detected_shape.trusted
+        and detected_shape.shape
+        and config.evaluation
+        and config.evaluation.performance
+        and config.evaluation.performance.dataloader
+    ):
+        shape = ConfigurationParser.parse_value(detected_shape.shape, [int])
+        set_dataloader_to_dummy(config.evaluation.performance.dataloader, shape)
+        return
+
     if model_domain not in ["image_recognition", "object_detection"]:
         return
 
@@ -62,14 +89,7 @@ def change_performance_dataloader_to_dummy_if_possible(
             value for _, value in config.quantization.calibration.dataloader.transform.items()
         ]
         shape = get_shape_from_transforms(transforms)
-        config.evaluation.performance.dataloader.transform.clear()
-        config.evaluation.performance.dataloader.dataset = Dataset(
-            "dummy_v2",
-            {
-                "input_shape": shape,
-                "label_shape": [1],
-            },
-        )
+        set_dataloader_to_dummy(config.evaluation.performance.dataloader, shape)
     except (NotFoundException, ValueError):
         pass
 
@@ -138,6 +158,31 @@ def change_evaluation_accuracy_configs_to_machine_specs(
         config.evaluation.accuracy.configs.num_of_instance = 1
 
 
+def change_config_to_performance_mode(
+    config: Config,
+    data: dict,
+) -> None:
+    """Change config values to performance mode."""
+    shape_definition = data.get("shape", "")
+    shape = ConfigurationParser.parse_value(shape_definition, [int])
+    if (
+        config.quantization
+        and config.quantization.calibration
+        and config.quantization.calibration.dataloader
+    ):
+        set_dataloader_to_dummy(config.quantization.calibration.dataloader, shape)
+
+    if (
+        config.evaluation
+        and config.evaluation.performance
+        and config.evaluation.performance.dataloader
+    ):
+        set_dataloader_to_dummy(config.evaluation.performance.dataloader, shape)
+
+    if config.evaluation:
+        config.evaluation.accuracy = None
+
+
 def save_workload(
     data: Dict[str, Any],
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -161,8 +206,16 @@ def save_workload(
     )
 
     update_config(workload, parsed_data, workdir)
-    change_performance_dataloader_to_dummy_if_possible(model_domain, workload.config)
-    change_evaluation_accuracy_configs_to_machine_specs(workload.config)
+
+    if ExecutionMode.ADVANCED == workload.execution_mode:
+        change_performance_dataloader_to_dummy_if_possible(model_domain, workload.config)
+        change_evaluation_accuracy_configs_to_machine_specs(workload.config)
+    else:
+        change_config_to_performance_mode(workload.config, parsed_data)
+
+    if Optimizations.GRAPH == workload.mode:
+        workload.config.quantization = None
+
     workload.config.dump(os.path.join(workdir.workload_path, workload.config_name))
     return workload.serialize()
 

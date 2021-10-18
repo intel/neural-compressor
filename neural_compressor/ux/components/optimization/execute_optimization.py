@@ -29,6 +29,7 @@ from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.parser import OptimizationParser
 from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.utils import _load_json_as_dict, get_size
+from neural_compressor.ux.utils.workload.workload import ExecutionMode
 from neural_compressor.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -100,6 +101,14 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
         parser = OptimizationParser(logs)
         if proc.is_ok:
             response_data = parser.process()
+
+            if ExecutionMode.BASIC == workload.execution_mode:
+                response_data.update(
+                    {
+                        "acc_input_model": None,
+                        "acc_optimized_model": None,
+                    },
+                )
 
             optimized_model_path = response_data.get(
                 "path_optimized_model",
