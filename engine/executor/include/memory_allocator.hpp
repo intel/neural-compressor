@@ -21,6 +21,8 @@
 #include <map>
 #include <memory>
 #include <mutex>  // NOLINT
+#include <cstdlib>
+#include "i_malloc.hpp"
 
 namespace executor {
 using std::vector;
@@ -95,13 +97,20 @@ class MemoryAllocator {
 
   static StrategyList& Strategy() {
     static StrategyList* m_strategy_ = new StrategyList({{"cycle_buffer", false},
-                                                         {"direct_buffer", false}});
+                                                         {"direct_buffer", false},
+                                                         {"unified_buffer", false}});
     return *m_strategy_;
   }
 
+  static void InitStrategy() {
+    string memory_strategy = getenv("UNIFIED_BUFFER") != NULL ? "unified_buffer" : 
+                             (getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer");
+    SetStrategy(memory_strategy);
+  }
+
   static void SetStrategy(const string strategy) {
-    CHECK(strategy == "cycle_buffer" || strategy == "direct_buffer") <<
-      "only support memory strategy cycle buffer and direct buffer";
+    CHECK(strategy == "cycle_buffer" || strategy == "direct_buffer" || strategy == "unified_buffer") <<
+      "only support memory strategy cycle buffer, direct buffer and unified buffer";
     StrategyList& strategy_list = Strategy();
     strategy_list[strategy] = true;
     LOG(INFO) << "strategy list set success " << strategy;
@@ -145,10 +154,16 @@ class MemoryAllocator {
         (iter->second[0])--;
         status = iter->second[0];
       }
-      if (strategy_list["direct_buffer"] && status == 0 && inplace == false) {
-        auto free_ptr = iter->first;
-        free(free_ptr);
-        memory_buffer.erase(free_ptr);
+      if (status == 0 && inplace == false) {
+        if (strategy_list["direct_buffer"]) {
+          auto free_ptr = iter->first;
+          free(free_ptr);
+          memory_buffer.erase(free_ptr);
+        } else if (strategy_list["unified_buffer"]) {
+          auto free_ptr = iter->first;
+          i_free(free_ptr);
+          memory_buffer.erase(free_ptr);
+        }
       }
     } else {
       LOG(WARNING) << "free not existing memory pointer...";
@@ -171,6 +186,8 @@ class MemoryAllocator {
       return DirectBufferGetMemory(size, life_count);
     } else if (strategy_list["cycle_buffer"]) {
       return CycleBufferGetMemory(size, life_count);
+    } else if (strategy_list["unified_buffer"]) {
+      return UnifiedBufferGetMemory(size, life_count);
     } else {
       LOG(ERROR) << "please set the memory strategy";
     }
@@ -208,6 +225,14 @@ class MemoryAllocator {
     MemoryBuffer& memory_buffer = Buffer();
     LOG(INFO) << "direct buffer tensor size is " << memory_buffer.size();
     void* buf = reinterpret_cast<void*>(malloc(size));
+    memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
+    return buf;
+  }
+
+  static void* UnifiedBufferGetMemory(size_t size, const int life_count) {
+    MemoryBuffer& memory_buffer = Buffer(); 
+    LOG(INFO) << "unified buffer tensor size is " << memory_buffer.size();
+    void* buf = (void*) i_malloc(size);
     memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
     return buf;
   }

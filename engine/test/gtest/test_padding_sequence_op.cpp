@@ -173,8 +173,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(
 }
 
 static auto CasesFp32 = []() {
-  std::string memory_strategy = getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer";
-  MemoryAllocator::SetStrategy(memory_strategy);
+  MemoryAllocator::InitStrategy();
 
   std::vector<TestParams> cases;
 

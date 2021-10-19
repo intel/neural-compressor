@@ -49,6 +49,7 @@ add_subdirectory(${THIRD_PARTY_DIR}/yaml-cpp)
 add_library(engine SHARED
     src/model.cpp
     src/common.cpp
+    src/i_malloc.cpp
     src/operators/input.cpp
     src/operators/output.cpp
     src/operators/binary_add.cpp

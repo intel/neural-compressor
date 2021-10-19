@@ -37,6 +37,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/googletest ./g
 #### PART1: build host_operators.so shared library ####
 add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/common.cpp
+    ${HOST_SRC_DIR}/src/i_malloc.cpp
     ${HOST_SRC_DIR}/src/operators/binary_add.cpp
     ${HOST_SRC_DIR}/src/operators/layer_norm.cpp
     ${HOST_SRC_DIR}/src/operators/softmax.cpp
@@ -71,6 +72,7 @@ target_link_libraries(host_operators
 
 #### PART2: build gtest cases ####
 file(GLOB OPS_TEST_CASES_SRC
+    test_i_malloc.cpp
     test_binary_add_op.cpp
     test_layer_norm_op.cpp
     test_softmax_op.cpp

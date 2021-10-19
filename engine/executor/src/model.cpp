@@ -30,8 +30,7 @@ Model::Model(const string& conf_file, const string& weight_root):
 
 void Model::Init(const ModelConfig& conf) {
   name_ = conf.name();
-  string memory_strategy = getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer";
-  MemoryAllocator::get().SetStrategy(memory_strategy);
+  MemoryAllocator::InitStrategy();
   // For each operator, set up its input and output
   auto op_configs = conf.operators();
   input_vecs_.resize(op_configs.size());
