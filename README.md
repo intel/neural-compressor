@@ -138,6 +138,11 @@ pip install -r requirements.txt
 python setup.py install
 ```
 
+> **Note**: To run examples from neural-compressor version<1.7 with neural-compressor binary version>=1.7, please replace model name in main.py.   
+>```shell
+> sed -i "s|lpot|neural_compressor|g" main.py
+>```
+
 ## Documentation
 
 **Get Started**
