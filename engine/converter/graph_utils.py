@@ -884,17 +884,18 @@ def pattern_mapping_conf_validation(conf_dict):
             lambda s: And(all(list for i in s), len(s)==2, error='The value in input_tensors ' \
             'must be list and has length 2'),
             lambda s: Or(
-                Schema([{Or(int, str): Schema([int])}]).validate(s[0]),
+                And(Schema([{Or(int, str): Schema([int])}]).validate(s[0]),
+                    lambda s: Schema([[int], int]).validate(s[1])),
+
                 And(len(s[0])==0, isinstance(s[0], list),
+                    lambda s: Schema([[], int]).validate(s[1])),
+                
                 error='The first element can be empty list or contains several dict for telling'\
-                ' where can get the input_tensor of new_node'),
-            lambda s: Or(
-                Schema([[int], int]).validate(s[1]),
-                Schema([[], int]).validate(s[1],
-                error='The second element can be empty list or contains several int number for'\
-                ' telling the input_tensor index of new_node')
+                ' where can get the input_tensor of new_node, while the second element can be'\
+                ' empty list or contains several int number for telling the input_tensor index '\
+                'of new_node.'
             )
-        ))
+        )
     }),
 
     'output_tensors': Schema({
@@ -903,17 +904,18 @@ def pattern_mapping_conf_validation(conf_dict):
             lambda s: And(all(list for i in s), len(s)==2, error='The value in output_tensors ' \
             'must be list and has length 2'),
             lambda s: Or(
-                Schema([{int: Schema([int])}]).validate(s[0]),
+                And(Schema([{int: Schema([int])}]).validate(s[0]),
+                    lambda s: Schema([[int], int]).validate(s[1])),
+
                 And(len(s[0])==0, isinstance(s[0], list),
-                error='The first element can be empty list or contains a dict for telling'\
-                ' where can get the output_tensor of new_node'),
-            lambda s: Or(
-                Schema([[int], int]).validate(s[1]),
-                Schema([[], int]).validate(s[1],
-                error='The second element can be empty list or contains int number for'\
-                ' telling the output_tensor index of new_node')
+                    lambda s: Schema([[], int]).validate(s[1])),
+                
+                error='The first element can be empty list or contains several dict for telling'\
+                ' where can get the input_tensor of new_node, while the second element can be'\
+                ' empty list or contains several int number for telling the input_tensor index '\
+                'of new_node.'
             )
-        ))
+        )
     }),
 
     'returns': Or(Schema([]), Schema([int]), error='Returns can be empty list or contains some ' \

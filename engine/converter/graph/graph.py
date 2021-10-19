@@ -363,19 +363,85 @@ class Graph(object):
                 newgraph.graph_init('./ir/conf.yaml', './ir/model.bin')
                 out = newgraph.inference([input_0, input_1, input_2])
         '''
+        from ..ops import Tensor
         import yaml
+        from .. import graph_utils as util
+        import copy
+        self._nodes = []
+        self._node_id = {}
+        self._engine = None
         yamlPath = os.path.join(config)
         f = open(yamlPath, 'r', encoding='utf-8')
         cfg = f.read()
-        d = yaml.load(cfg)
-        if weight_data is None:
-            weight_data = b""
-        else:
+        d = yaml.load(cfg, Loader=yaml.FullLoader)
+        bin_file = None
+        if weight_data != None:
             bin_file = open(weight_data, 'rb')
-            weight_data = bin_file.read()
 
-        self.engine_init(d, weight_data)
+        tensor_name_2_class = OrderedDict()
+        for node in d['model']['operator']:
+            op = None
+            optype = d['model']['operator'][node]['type']
+            if optype == 'Input':
+                output_tensors = []
+                for (tensor_name, attrs) in d['model']['operator'][node]['output'].items():
+                    tensor_strides = None
+                    if "strides" in attrs.keys():
+                        tensor_strides = attrs["strides"]
+                    tensor_shape = None
+                    if "shape" in attrs.keys():
+                        tensor_shape = attrs["shape"]
+                    tensor_dtype = None
+                    if "dtype" in attrs.keys():
+                        tensor_dtype = attrs["dtype"]
+                    tensor_location = None
+                    tensor_data = None
+                    if 'location' in attrs.keys():
+                        tensor_location = attrs['location']
+                        bin_file.seek(tensor_location[0], 0)
+                        tensor_data = copy.deepcopy(bin_file.read(tensor_location[1]))
+                        DTYPES_DICT = { "fp32": np.float32,
+                                        "int8": np.int8,
+                                        "int32": np.int32,
+                                        "uint8": np.uint8,
+                                       }
+                        tensor_data = np.frombuffer(tensor_data, dtype=DTYPES_DICT[tensor_dtype])
+                    tensorclass = Tensor()
+                    if tensor_location == None:
+                        tensorclass = Tensor(tensor_name, ['input_data'], [], tensor_shape,
+                                             tensor_data, tensor_dtype, tensor_location)
+                    else:
+                        tensorclass = Tensor(tensor_name, [], [], tensor_shape, tensor_data,
+                                             tensor_dtype, tensor_location)
+                    tensor_name_2_class[tensor_name] = tensorclass
+                    output_tensors.append(tensorclass)
+                op = util.construct_node(node, 'Input', [], copy.deepcopy(output_tensors))
 
+            elif optype == 'Output':
+                input_tensors = []
+                for tensor_name in d['model']['operator'][node]['input']:
+                    tensor = tensor_name_2_class[tensor_name]
+                    input_tensors.append(tensor)
+                op = util.construct_node(node, 'Output', copy.deepcopy(input_tensors))
+
+            else:
+                input_tensors = []
+                output_tensors = []
+                attr = {}
+                for tensor_name in d['model']['operator'][node]['output']:
+                    tensor = Tensor(tensor_name, [node])
+                    tensor_name_2_class[tensor_name] = tensor
+                    output_tensors.append(tensor)
+                for tensor_name in d['model']['operator'][node]['input']:
+                    tensor = tensor_name_2_class[tensor_name]
+                    tensor.dest_op.append(node)
+                    input_tensors.append(tensor)
+                if 'attr' in d['model']['operator'][node].keys():
+                    attr = d['model']['operator'][node]['attr']
+
+                op = util.construct_node(node, optype, copy.deepcopy(input_tensors),
+                                         copy.deepcopy(output_tensors), attr)
+            self.insert_nodes(len(self.nodes), [op])
 
     def save(self, output_dir=None):
         logger.info("Start to emit the intermediate representation of model...")

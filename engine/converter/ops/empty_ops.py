@@ -326,3 +326,9 @@ class Relu(Operator):
 class MatMulWithBiasRelu(Operator):
     def __init__(self):
         super().__init__()
+
+@operator_registry(operator_type='Matmul')
+class Matmul(Operator):
+    def __init__(self):
+        super().__init__()
+

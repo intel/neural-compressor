@@ -1,6 +1,6 @@
 from io import open
 from setuptools import find_packages, setup, Extension
-import setuptools.command.build_ext
+from setuptools.command.build_ext import build_ext
 import os
 import re
 import sys
@@ -15,38 +15,33 @@ try:
 except Exception as error:
     assert False,  "Error: Could not open '%s' due %s\n" % (filepath, error)
 
-class build_ext(setuptools.command.build_ext.build_ext):
-    def run(self):
+class build_ext(build_ext):
+    def build_extension(self, ext):
         if not sys.platform.startswith("win"):
-            for ext in self.extensions:
-                self.build_cmake(ext)
-            super().run()
+            import pathlib
+            cwd = pathlib.Path().absolute()
+    
+            build_temp = pathlib.Path(self.build_temp)
+            build_temp.mkdir(parents=True, exist_ok=True)
+            extdir = pathlib.Path(self.get_ext_fullpath(ext.name))
+            executable_path = extdir.parent.absolute()
+            cmake_args = [
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(extdir.parent.absolute()),
+                '-DPYTHON_EXECUTABLE={}'.format(sys.executable)
+            ]
+    
+            build_args = [
+                '-j'
+            ]
+    
+            os.chdir(str(build_temp))
+            self.spawn(['cmake3', ext.sourcedir] + cmake_args)
+            self.spawn(['make'] + build_args)
+            if os.path.exists('inferencer'):
+                shutil.copy('inferencer', executable_path)
+            os.chdir(str(cwd))
         else:
             print("Engine is not support windows for now")
-
-    def build_cmake(self, ext):
-        import pathlib
-        cwd = pathlib.Path().absolute()
-
-        build_temp = pathlib.Path(self.build_temp)
-        build_temp.mkdir(parents=True, exist_ok=True)
-        extdir = pathlib.Path(self.get_ext_fullpath(ext.name))
-        executable_path = extdir.parent.absolute()
-        cmake_args = [
-            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(extdir.parent.absolute()),
-            '-DPYTHON_EXECUTABLE={}'.format(sys.executable)
-        ]
-
-        build_args = [
-            '-j'
-        ]
-
-        os.chdir(str(build_temp))
-        self.spawn(['cmake3', ext.sourcedir] + cmake_args)
-        self.spawn(['make'] + build_args)
-        if os.path.exists('inferencer'):
-            shutil.copy('inferencer', executable_path)
-        os.chdir(str(cwd))
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=""):
