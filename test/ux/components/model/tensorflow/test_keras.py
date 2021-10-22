@@ -91,6 +91,11 @@ class TestKerasModel(unittest.TestCase):
         self.assertIsNone(model.get_input_nodes())
         self.assertIsNone(model.get_output_nodes())
 
+    def test_shape_elements_order(self) -> None:
+        """Test getting shape elements order."""
+        model = KerasModel("/path/to/keras.pb")
+        self.assertListEqual(model.shape_elements_order, ["height", "width", "channels"])
+
 
 if __name__ == "__main__":
     unittest.main()

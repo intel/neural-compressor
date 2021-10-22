@@ -83,6 +83,11 @@ class Model(ABC):
         """Try to detect data shape."""
         return Shape(trusted=True)
 
+    @property
+    def shape_elements_order(self) -> List[str]:
+        """Get order of input shape channels."""
+        raise NotImplementedError
+
     @staticmethod
     @abstractmethod
     def get_framework_name() -> str:

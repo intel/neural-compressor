@@ -97,6 +97,11 @@ class TestSavedModelModel(unittest.TestCase):
             model.get_output_nodes(),
         )
 
+    def test_shape_elements_order(self) -> None:
+        """Test getting shape elements order."""
+        model = SavedModelModel("/path/to/saved_model")
+        self.assertListEqual(model.shape_elements_order, ["height", "width", "channels"])
+
 
 if __name__ == "__main__":
     unittest.main()

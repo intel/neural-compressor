@@ -22,20 +22,22 @@ quantization:                                        # optional. tuning constrai
   calibration:
     sampling_size: 100                               # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
+      batch_size: 1
       dataset:
-        ImageFolder:
-          root: /path/to/calibration/dataset/        # NOTE: modify to calibration dataset location if needed
+        ImagenetRaw:
+          data_path: /path/to/calibration/dataset
+          image_list: /path/to/calibration/label
       transform:
         ResizeCropImagenet:
           height: 224
           width: 224
           mean_value: [0.485, 0.456, 0.406]
   op_wise: {
-     'Gemm_174_MatMul': {
-     'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
-     'weight': {'dtype': ['fp32'], 'scheme':['sym']}
-     }
-     }
+    'Gemm_174_MatMul': {
+      'activation': {'dtype': ['fp32']},
+      'weight': {'dtype': ['fp32']}
+    }
+  }
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
@@ -44,8 +46,9 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 32
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
+        ImagenetRaw:
+          data_path: /path/to/evaluation/dataset
+          image_list: /path/to/evaluation/label
       transform:
         ResizeCropImagenet:
           height: 224
@@ -60,10 +63,11 @@ evaluation:                                          # optional. required if use
     dataloader:
       batch_size: 1
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset/         # NOTE: modify to evaluation dataset location if needed
+        ImagenetRaw:
+          data_path: /path/to/evaluation/dataset
+          image_list: /path/to/evaluation/label
       transform:
-        ResizeCropImagenet: 
+        ResizeCropImagenet:
           height: 224
           width: 224
           mean_value: [0.485, 0.456, 0.406]

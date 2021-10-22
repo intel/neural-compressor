@@ -48,6 +48,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             def __init__(self, shape: Shape):
                 """Initialize object."""
                 self.input_shape = shape
+                self.shape_elements_order = ["height", "width", "channels"]
 
         def mocked_get_model(path: str) -> MockedModelWithShapeOnly:
             """Fake getting model based on path."""
@@ -63,7 +64,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
         """Test getting shape from transforms."""
         transforms: List[Transform] = []
         with self.assertRaisesRegex(NotFoundException, "Unable to detect shape for Dummy dataset"):
-            get_shape_from_transforms(transforms)
+            get_shape_from_transforms(transforms, ["height", "width", "channels"])
 
     def test_get_shape_from_transforms_for_list_of_unknown_transforms(self) -> None:
         """Test getting shape from transforms."""
@@ -73,7 +74,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             Transform("baz"),
         ]
         with self.assertRaisesRegex(NotFoundException, "Unable to detect shape for Dummy dataset"):
-            get_shape_from_transforms(transforms)
+            get_shape_from_transforms(transforms, ["height", "width", "channels"])
 
     def test_get_shape_from_transforms_with_size_parameter(self) -> None:
         """Test getting shape from transforms."""
@@ -90,7 +91,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
                 Transform("baz"),
             ]
             expected = [10, 20, 3]
-            actual = get_shape_from_transforms(transforms)
+            actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
             self.assertEqual(expected, actual, f"Incorrect shape for {transform_name}")
 
     def test_get_shape_from_transforms_with_height_and_width_parameters(self) -> None:
@@ -105,7 +106,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
                 Transform("baz"),
             ]
             expected = [10, 20, 3]
-            actual = get_shape_from_transforms(transforms)
+            actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
             self.assertEqual(expected, actual, f"Incorrect shape for {transform_name}")
 
     def test_get_shape_from_CropToBoundingBox(self) -> None:
@@ -116,7 +117,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             Transform("baz"),
         ]
         expected = [10, 20, 3]
-        actual = get_shape_from_transforms(transforms)
+        actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual)
 
     def test_get_shape_from_transforms_with_transposing(self) -> None:
@@ -127,7 +128,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             Transform("baz"),
         ]
         expected = [10, 20, 3]
-        actual = get_shape_from_transforms(transforms)
+        actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect initial shape before transposing")
 
         rotate_right_transpose = Transform("Transpose", {"perm": [2, 0, 1]})
@@ -135,19 +136,19 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
         # add first transpose
         transforms.append(rotate_right_transpose)
         expected = [3, 10, 20]
-        actual = get_shape_from_transforms(transforms)
+        actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect shape after first transpose")
 
         # add second transpose
         transforms.append(rotate_right_transpose)
         expected = [20, 3, 10]
-        actual = get_shape_from_transforms(transforms)
+        actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect shape after second transpose")
 
         # add third transpose
         transforms.append(rotate_right_transpose)
         expected = [10, 20, 3]
-        actual = get_shape_from_transforms(transforms)
+        actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect shape after third transpose")
 
     def test_get_shape_fails_on_incorrect_transpose(self) -> None:
@@ -158,7 +159,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             Transform("baz"),
         ]
         with self.assertRaisesRegex(ValueError, "Unknown value of 'perm' argument in Transpose"):
-            get_shape_from_transforms(transforms)
+            get_shape_from_transforms(transforms, ["height", "width", "channels"])
 
     def test_get_shape_from_different_resize_params(self) -> None:
         """Test getting shape from transforms."""
@@ -350,8 +351,8 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             },
         )
         self.assertEqual(
-            expected_dataset,
-            config.evaluation.performance.dataloader.dataset,  # type: ignore
+            expected_dataset.serialize(),
+            config.evaluation.performance.dataloader.dataset.serialize(),  # type: ignore
         )
 
     def test_change_performance_dataloader_to_dummy_when_trusted_shape_detected(self) -> None:
@@ -374,8 +375,8 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             },
         )
         self.assertEqual(
-            expected_dataset,
-            config.evaluation.performance.dataloader.dataset,  # type: ignore
+            expected_dataset.serialize(),
+            config.evaluation.performance.dataloader.dataset.serialize(),  # type: ignore
         )
 
     def get_eligible_config(self) -> Config:

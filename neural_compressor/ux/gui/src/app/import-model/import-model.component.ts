@@ -72,7 +72,7 @@ export class ImportModelComponent implements OnInit {
   };
 
   frameworkWarning: string;
-  trustedShape: boolean;
+  showShapeWarning: boolean;
   firstFormGroup: FormGroup;
   secondFormGroup: FormGroup;
 
@@ -166,7 +166,7 @@ export class ImportModelComponent implements OnInit {
           } else {
             this.firstFormGroup.get('domainFlavour').setValue(result['data']['domain_flavour']);
             this.secondFormGroup.get('shape').setValue(result['data']['shape']);
-            this.trustedShape = result['data']['trusted'];
+            this.showShapeWarning = result['data']['shape'] ? true : false;
             if (result['data']['domain'].length) {
               this.firstFormGroup.get('modelDomain').setValue(result['data']['domain']);
               this.getConfig();

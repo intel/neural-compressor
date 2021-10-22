@@ -153,7 +153,7 @@
                 <mat-label>shape <a class="mat-form-field-required-marker">*</a></mat-label>
                 <input formControlName="shape" matInput>
               </mat-form-field>
-              <a class="shape-warning" *ngIf="secondFormGroup.get('shape').value">
+              <a class="shape-warning" *ngIf="showShapeWarning">
                 <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
                 Input shape was detected automatically, it may be incorrect
               </a>

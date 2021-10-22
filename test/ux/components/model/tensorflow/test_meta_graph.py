@@ -100,6 +100,11 @@ class TestMetaGraphModel(unittest.TestCase):
             model = MetaGraphModel("/path/to/meta_graph/")
             model.get_model_graph()
 
+    def test_shape_elements_order(self) -> None:
+        """Test getting shape elements order."""
+        model = MetaGraphModel("/path/to/meta_graph/")
+        self.assertListEqual(model.shape_elements_order, ["height", "width", "channels"])
+
 
 if __name__ == "__main__":
     unittest.main()
