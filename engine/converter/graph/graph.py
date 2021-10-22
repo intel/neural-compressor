@@ -401,9 +401,9 @@ class Graph(object):
                         bin_file.seek(tensor_location[0], 0)
                         tensor_data = copy.deepcopy(bin_file.read(tensor_location[1]))
                         DTYPES_DICT = { "fp32": np.float32,
-                                        "int8": np.int8,
-                                        "int32": np.int32,
-                                        "uint8": np.uint8,
+                                        "s8": np.int8,
+                                        "s32": np.int32,
+                                        "u8": np.uint8,
                                        }
                         tensor_data = np.frombuffer(tensor_data, dtype=DTYPES_DICT[tensor_dtype])
                     tensorclass = Tensor()

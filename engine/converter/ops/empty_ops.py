@@ -332,3 +332,7 @@ class Matmul(Operator):
     def __init__(self):
         super().__init__()
 
+@operator_registry(operator_type='Quantize')
+class Quantize(Operator):
+    def __init__(self):
+        super().__init__()
