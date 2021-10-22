@@ -53,7 +53,8 @@ def change_performance_dataloader_to_dummy_if_possible(
     config: Config,
 ) -> None:
     """Change config.evaluation.performance.dataloader.dataset to Dummy_v2."""
-    detected_shape = ModelRepository().get_model(config.model_path).input_shape
+    model = ModelRepository().get_model(config.model_path)
+    detected_shape = model.input_shape
     if (
         detected_shape.trusted
         and detected_shape.shape
@@ -88,21 +89,22 @@ def change_performance_dataloader_to_dummy_if_possible(
         transforms = [
             value for _, value in config.quantization.calibration.dataloader.transform.items()
         ]
-        shape = get_shape_from_transforms(transforms)
+        shape = get_shape_from_transforms(transforms, model.shape_elements_order)
         set_dataloader_to_dummy(config.evaluation.performance.dataloader, shape)
     except (NotFoundException, ValueError):
         pass
 
 
-def get_shape_from_transforms(transforms: List[Transform]) -> list:
+def get_shape_from_transforms(
+    transforms: List[Transform],
+    shape_elements_order: List[str],
+) -> list:
     """Detect dataset sizes based on configured transforms."""
     shapes = {
         "channels": 3,
         "height": None,
         "width": None,
     }
-
-    shape_elements_order = ["height", "width", "channels"]
 
     for transform in transforms:
         name = transform.name

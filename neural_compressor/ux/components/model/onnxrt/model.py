@@ -14,12 +14,19 @@
 # limitations under the License.
 """Onnxrt model class."""
 
+from typing import List
+
 from neural_compressor.ux.components.model.model import Model
 from neural_compressor.ux.utils.utils import check_module, get_file_extension
 
 
 class OnnxrtModel(Model):
     """Onnxrt Model class."""
+
+    @property
+    def shape_elements_order(self) -> List[str]:
+        """Get order of input shape channels."""
+        return ["channels", "height", "width"]
 
     @staticmethod
     def get_framework_name() -> str:

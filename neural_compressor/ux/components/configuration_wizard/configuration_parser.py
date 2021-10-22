@@ -43,7 +43,7 @@ class ConfigurationParser:
                 "label_shift",
             ],
             "float": ["scale", "central_fraction"],
-            "list<float>": ["mean", "std", "mean_value", "ratio"],
+            "list<float>": ["mean", "std", "mean_value", "std_value", "ratio"],
             "list<int>": ["perm", "size"],
             "bool": ["random_crop", "random_flip_left_right"],
         }

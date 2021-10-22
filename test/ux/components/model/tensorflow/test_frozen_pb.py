@@ -175,6 +175,11 @@ class TestFrozenPbModel(unittest.TestCase):
         self.assertEqual(expected, model.domain)
         mocked_tensorflow_graph_reader.assert_called_once_with(model)
 
+    def test_shape_elements_order(self) -> None:
+        """Test getting shape elements order."""
+        model = FrozenPbModel("/path/to/frozen_pb.pb")
+        self.assertListEqual(model.shape_elements_order, ["height", "width", "channels"])
+
     @patch(
         "neural_compressor.ux.components.model.tensorflow.model.TensorflowReader",
         autospec=True,

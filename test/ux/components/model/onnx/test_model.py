@@ -81,6 +81,11 @@ class TestOnnxrtModel(unittest.TestCase):
             model = OnnxrtModel("/path/to/model.onnx")
             model.get_model_graph()
 
+    def test_shape_elements_order(self) -> None:
+        """Test getting shape elements order."""
+        model = OnnxrtModel("/path/to/model.onnx")
+        self.assertListEqual(model.shape_elements_order, ["channels", "height", "width"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -93,6 +93,11 @@ class TensorflowModel(Model):
 
         return Shape(shape=", ".join(map(str, input_shape)), trusted=is_trusted)
 
+    @property
+    def shape_elements_order(self) -> List[str]:
+        """Get order of input shape channels."""
+        return ["height", "width", "channels"]
+
     @staticmethod
     def get_framework_name() -> str:
         """Get the name of framework."""

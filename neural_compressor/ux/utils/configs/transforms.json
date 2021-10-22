@@ -500,19 +500,14 @@
                         "value": 256
                     },
                     {
-                        "name": "random_flip_left_right",
-                        "help": "Whether to random flip left and right",
-                        "value": "False"
-                    },
-                    {
                         "name": "mean_value",
                         "help": "Means for each channel",
                         "value": "[0.0, 0.0, 0.0]"
                     },
                     {
-                        "name": "scale",
-                        "help": "Std value",
-                        "value": 1.0
+                        "name": "std_value",
+                        "help": "Stds for each channel",
+                        "value": "[0.229, 0.224, 0.225]"
                     }
                 ]
             },
