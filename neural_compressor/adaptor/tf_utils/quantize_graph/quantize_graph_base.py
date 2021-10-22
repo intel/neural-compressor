@@ -192,8 +192,6 @@ class QuantizeNodeBase():
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
-        elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
-            return True
         elif (node.op.find("QuantizedConv") != -1
               or node.op.find("QuantizedDepthwiseConv") != -1 or
               node.op.find("QuantizedMatMul") != -1
@@ -584,10 +582,9 @@ class QuantizeNodeBase():
     def _intel_cpu_quantize_weight_eightbit(self,
                                             parent,
                                             input_node,
-                                            per_channel,
-                                            quantization_mode=b"SCALED"):
+                                            per_channel):
         qint8_const_node, min_node, max_node = helper.generate_quantized_weight_node(
-            parent, input_node, per_channel, quantization_mode, self.weight_bit, self.device)
+            parent, input_node, per_channel, self.weight_bit, self.device)
         self.add_output_graph_node(qint8_const_node)
         self.add_output_graph_node(min_node)
         self.add_output_graph_node(max_node)

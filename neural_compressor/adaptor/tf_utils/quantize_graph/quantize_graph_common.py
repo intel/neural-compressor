@@ -17,14 +17,12 @@
 
 import re
 import numpy as np
-import tensorflow as tf
 
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from tensorflow.python.ops import array_ops
 
 class QuantizeGraphHelper():
     """
@@ -327,7 +325,6 @@ class QuantizeGraphHelper():
     def generate_quantized_weight_node(host_op_type,
                                             input_node,
                                             per_channel,
-                                            quantization_mode=b"SCALED",
                                             weight_bit=7.0,
                                             device='cpu'):
         base_name = input_node.name + "_"
