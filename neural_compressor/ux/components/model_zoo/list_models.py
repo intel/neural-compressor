@@ -97,5 +97,6 @@ def validate_model_list(model_list: List[dict]) -> None:
     if not model_list:
         raise ClientErrorException(
             "Examples require installed TensorFlow in specific version. "
-            "Please install TensorFlow in one of following versions: 2.0.x, 2.3.x or 2.4.x.",
+            "Please install TensorFlow in one of following versions: "
+            "2.0.x, 2.3.x or 2.4.x, 2.5.x or 2.6.x.",
         )
