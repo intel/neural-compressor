@@ -38,7 +38,7 @@
       <br>
       <div class="float-right">
         <button id="finish-basic-btn" mat-raised-button color="accent" queryParamsHandling="preserve"
-          (click)="saveWorkload()" [disabled]="!model.dataset_path">
+          (click)="saveWorkload()" [disabled]="!(model.dataset_path && model.domain && model.model)">
           <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
           Finish
         </button>
