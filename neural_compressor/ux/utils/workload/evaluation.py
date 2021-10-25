@@ -95,8 +95,8 @@ class PostprocessSchema(JsonSerializer):
         """Initialize Configuration PostprocessSchema class."""
         super().__init__()
         self.LabelShift = data.get("LabelShift", None)  # [Optional] >0
-        self.SquadV1 = data.get("SquadV1", None)
         self.Collect = data.get("Collect", None)
+        self.SquadV1 = data.get("SquadV1", None)
 
 
 class Postprocess(JsonSerializer):

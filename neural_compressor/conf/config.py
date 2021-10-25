@@ -351,12 +351,12 @@ transform_schema = Schema({
 
 postprocess_schema = Schema({
     Optional('LabelShift'):  int,
+    Optional('Collect'): {
+        'length': int
+    },
     Optional('SquadV1'): {
         'label_file': str,
         'vocab_file': str
-    },
-    Optional('Collect'): {
-        'length': int
     },
 })
 
