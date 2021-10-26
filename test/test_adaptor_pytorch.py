@@ -100,7 +100,7 @@ fake_ptq_yaml = '''
         metric:
           topk: 1
       performance:
-        warmup: 5
+        warmup: 1
         iteration: 10
 
     tuning:
@@ -306,11 +306,29 @@ def build_dump_tensors_yaml():
         f.write(fake_yaml)
 
 
+class M(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.quant = QuantStub()
+        self.conv = nn.Conv2d(3, 1, 1)
+        self.linear = nn.Linear(224 * 224, 1)
+        self.dequant = DeQuantStub()
+
+    def forward(self, x):
+        dim = x.size()
+        x = self.quant(x)
+        x = self.conv(x)
+        x = x.view(1, -1)
+        x = self.linear(x)
+        x = self.dequant(x)
+        return x
+
+
 def eval_func(model):
     # switch to evaluate mode
     model.eval()
     with torch.no_grad():
-        input = torch.randn(10, 3, 224, 224)
+        input = torch.randn(1, 3, 224, 224)
         # compute output
         output = model(input)
     return 0.0
@@ -374,7 +392,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         model = MODELS['pytorch'](torchvision.models.quantization.resnet18())
         model.model.eval().fuse_model()
         model.register_forward_pre_hook()
-        rand_input = torch.rand(100, 3, 256, 256).float()
+        rand_input = torch.rand(100, 3, 224, 224).float()
         model.model(rand_input)
         assert torch.equal(model.get_inputs('x'), rand_input)
         model.remove_hooks()
@@ -393,7 +411,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 break
         assert torch.equal(self.nc_model.get_gradient('fc.bias'), torch.zeros_like(tensor))
 
-        rand_input = torch.rand(100, 3, 256, 256).float()
+        rand_input = torch.rand(100, 3, 224, 224).float()
         rand_input.grad = torch.ones_like(rand_input)
         assert torch.equal(self.nc_model.get_gradient(rand_input),
                            torch.ones_like(rand_input))
@@ -405,14 +423,9 @@ class TestPytorchAdaptor(unittest.TestCase):
 
     def test_quantization_saved(self):
         for fake_yaml in ['dynamic_yaml.yaml', 'qat_yaml.yaml', 'ptq_yaml.yaml']:
-            if fake_yaml == 'dynamic_yaml.yaml':
-                model = torchvision.models.resnet18()
-            else:
-                model = copy.deepcopy(self.model)
-            if fake_yaml == 'ptq_yaml.yaml':
-                model.eval().fuse_model()
+            model = M()
             quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+            dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
             quantizer.model = common.Model(model)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -443,7 +456,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 model.eval().fuse_model()
             conf = Quantization_Conf(fake_yaml)
             quantizer = Quantization(conf)
-            dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+            dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
             quantizer.model = common.Model(model)
             if fake_yaml == 'qat_yaml.yaml':
                 quantizer.q_func = q_func
@@ -467,7 +480,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         model = copy.deepcopy(self.nc_model)
         model.model.eval().fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         quantizer.model = common.Model(model.model)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_func = eval_func
@@ -482,7 +495,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         model = copy.deepcopy(self.nc_model)
         model.model.eval().fuse_model()
         quantizer = Quantization('ptq_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = common.DataLoader(dataset)
         dataloader = common._generate_common_dataloader(dataloader, 'pytorch')
         quantizer.eval_dataloader = dataloader
@@ -527,7 +540,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             def forward(self,input=None):
                 return self._model(input)
 
-        data = [[{'input': torch.rand(3,256,256)}, torch.ones(1,1)], ]
+        data = [[{'input': torch.rand(3,224,224)}, torch.ones(1,1)], ]
         # dataloader.batch_size=100
         dataloader = common.DataLoader(data, batch_size=1)
 
@@ -603,9 +616,9 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
 
     def test_tuning_ipex(self):
         from neural_compressor.experimental import Quantization
-        model = torchvision.models.resnet18()
+        model = M()
         quantizer = Quantization('ipex_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
@@ -666,7 +679,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             shutil.rmtree('./saved', ignore_errors=True)
 
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
-            model_origin = torchvision.models.resnet18()
+            model_origin = M()
             # run fx_quant in neural_compressor and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)

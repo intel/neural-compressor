@@ -38,6 +38,7 @@ class BaseDataLoader(object):
         self._batch_size = batch_size
         self.shuffle = shuffle
         self.distributed = distributed
+        self.last_batch = last_batch
         self.drop_last = False if last_batch == 'rollover' else True
 
         self.dataloader = self._generate_dataloader(
@@ -52,12 +53,14 @@ class BaseDataLoader(object):
             shuffle=shuffle,
             distributed=distributed)
 
-    def batch(self, batch_size, last_batch='rollover'):
+    def batch(self, batch_size, last_batch=None):
         self._batch_size = batch_size
+        if last_batch is not None:
+            self.last_batch = last_batch
         self.dataloader = self._generate_dataloader(
             self.dataset,
             batch_size,
-            last_batch,
+            self.last_batch,
             self.collate_fn,
             self.sampler,
             self.batch_sampler,

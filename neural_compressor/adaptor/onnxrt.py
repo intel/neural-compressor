@@ -26,8 +26,11 @@ import numpy as np
 from distutils.version import StrictVersion
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
-from neural_compressor.utils.utility import LazyImport, dump_elapsed_time
+from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
+                                            CpuInfo, GLOBAL_STATE, MODE
 from ..utils.utility import OpPrecisionStatistics
+from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+import math
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
@@ -49,6 +52,7 @@ class ONNXRTAdaptor(Adaptor):
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
+        self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
         self.quantizable_op_types = self._query_quantizable_op_types()
@@ -58,6 +62,7 @@ class ONNXRTAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.quantize_config = {} # adaptor should know current configs at any time
         self.quantize_params = {} # adaptor should know current params at any time
+        self.num_cores_per_sock = CpuInfo().cores_per_socket
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -89,11 +94,28 @@ class ONNXRTAdaptor(Adaptor):
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         tmp_model = copy.deepcopy(model)
- 
+
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
         if self.static:
-            quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+            if isinstance(data_loader, BaseDataLoader):
+                batch_size = data_loader.batch_size
+                try:
+                    calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+                    for i in range(self.num_cores_per_sock):
+                        if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
+                            calib_batch_size = self.num_cores_per_sock - i
+                            break
+                    tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                    data_loader.batch(calib_batch_size)
+                    quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                                                                quantize_config, tmp_iterations)
+                except Exception:  # pragma: no cover
+                    data_loader.batch(batch_size)
+                    quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                                                                quantize_config, iterations)
+            else:  # pragma: no cover
+                quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
                                                             quantize_config, iterations)
         else:
             quantize_params = None
@@ -108,7 +130,7 @@ class ONNXRTAdaptor(Adaptor):
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
         self.quantize_config = quantize_config # update so other methods can know current configs
- 
+
         self._dump_model_op_stastics(tmp_model)
         return tmp_model
 
@@ -132,7 +154,7 @@ class ONNXRTAdaptor(Adaptor):
         fwk_info['workspace_path'] = self.work_space
         tune_cfg['framework_specific_info'] = fwk_info
         return tune_cfg
- 
+
     @dump_elapsed_time("Pass recover model")
     def recover(self, model, q_config):
         """Execute the recover process on the specified model.
@@ -157,7 +179,7 @@ class ONNXRTAdaptor(Adaptor):
         from onnxruntime.quantization.quant_utils import QuantizationMode
         backend = QuantizationMode.QLinearOps if self.backend == \
             "qlinearops" else QuantizationMode.IntegerOps
- 
+
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
@@ -171,7 +193,7 @@ class ONNXRTAdaptor(Adaptor):
         quantizer.quantize_model()
         model.model = quantizer.model.model
         return model
- 
+
     def _parse_qconfig(self, q_config):
         quantize_params = {}
         tune_cfg = {}
@@ -196,7 +218,7 @@ class ONNXRTAdaptor(Adaptor):
     def _dump_model_op_stastics(self, model):
         fp32_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
             precision='int8')
- 
+
         if self.backend == "qlinearops":
             int8_op_list = ["QLinearConv", "QLinearMatMul", "QAttention",
                             "QLinearMul", "QLinearRelu", "QLinearClip",
@@ -229,7 +251,7 @@ class ONNXRTAdaptor(Adaptor):
                         origin_op_type = possible_int8_res[0].split('QLinear')[-1]
                 else:
                     origin_op_type = possible_int8_res[0].split('Integer')[0]
-                
+
                 if node.op_type == "Pad" or node.op_type == "Split" \
                         or node.op_type == "Gather":
                     if any([output.endswith('_quantized') for output in node.output]):
@@ -238,11 +260,11 @@ class ONNXRTAdaptor(Adaptor):
                         if node.op_type in res:
                             res[node.op_type]['FP32'] += 1
                         continue
- 
+
                 if origin_op_type == "QAttention":
                     origin_op_type = "Attention"
                 res[origin_op_type]['INT8'] += 1
-            
+
             elif node.op_type in fp32_op_list:
                 res[node.op_type]['FP32'] += 1
 
@@ -560,39 +582,52 @@ class ONNXRTAdaptor(Adaptor):
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
-        for idx, (inputs, labels) in enumerate(dataloader):
-            if not isinstance(labels, list):
-                labels = [labels]
-            if len_inputs == 1:
-                ort_inputs.update({inputs_names[0]: inputs})
-            else:
-                assert len_inputs == len(inputs), \
-                    'number of input tensors must align with graph inputs'  
-            
-                for i in range(len_inputs):
-                    # in case dataloader contains non-array input
-                    if not isinstance(inputs[i], np.ndarray):
-                        ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                    else:
-                        ort_inputs.update({inputs_names[i]: inputs[i]})   
 
-            if measurer is not None:
-                measurer.start()
-                predictions = session.run(None, ort_inputs)
-                measurer.end()
-            else:
-                predictions = session.run(None, ort_inputs)
+        def eval_func(dataloader):
+            for idx, (inputs, labels) in enumerate(dataloader):
+                if not isinstance(labels, list):
+                    labels = [labels]
+                if len_inputs == 1:
+                    ort_inputs.update({inputs_names[0]: inputs})
+                else:
+                    assert len_inputs == len(inputs), \
+                        'number of input tensors must align with graph inputs'  
 
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(predictions) if fp32_baseline else \
-                    results.append(predictions)
+                    for i in range(len_inputs):
+                        # in case dataloader contains non-array input
+                        if not isinstance(inputs[i], np.ndarray):
+                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                        else:
+                            ort_inputs.update({inputs_names[i]: inputs[i]})   
 
-            if postprocess is not None:
-                predictions, labels = postprocess((predictions, labels))
-            if metric is not None and not self.fp32_preds_as_label:
-                metric.update(predictions, labels)
-            if idx + 1 == iteration:
-                break
+                if measurer is not None:
+                    measurer.start()
+                    predictions = session.run(None, ort_inputs)
+                    measurer.end()
+                else:
+                    predictions = session.run(None, ort_inputs)
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(predictions) if fp32_baseline else \
+                        results.append(predictions)
+
+                if postprocess is not None:
+                    predictions, labels = postprocess((predictions, labels))
+                if metric is not None and not self.fp32_preds_as_label:
+                    metric.update(predictions, labels)
+                if idx + 1 == iteration:
+                    break
+
+        if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
+            batch_size = dataloader.batch_size
+            try:
+                dataloader.batch(self.num_cores_per_sock)
+                eval_func(dataloader)
+            except Exception:  # pragma: no cover
+                dataloader.batch(batch_size)
+                eval_func(dataloader)
+        else:  # pragma: no cover
+            eval_func(dataloader)
 
         if self.fp32_preds_as_label:
             from neural_compressor.adaptor.ox_utils.util import collate_preds

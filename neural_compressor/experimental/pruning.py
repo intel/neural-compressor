@@ -18,7 +18,7 @@
 from .component import Component
 from ..pruners import PRUNERS
 from ..utils import logger
-from ..utils.utility import singleton, time_limit, set_backend
+from ..utils.utility import singleton, time_limit, set_backend, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from ..model import BaseModel
 from .common import Model
@@ -100,6 +100,7 @@ class Pruning(Component):
     def pre_process(self):
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
 
+        GLOBAL_STATE.STATE = MODE.PRUNING
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,

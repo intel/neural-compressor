@@ -86,7 +86,9 @@ class RandomTuneStrategy(TuneStrategy):
 
         while True:
             op_cfgs = {}
-            op_cfgs['calib_iteration'] = int(np.random.choice(self.calib_iter))
+            index = np.random.choice(len(self.calib_iter))
+            op_cfgs['calib_iteration'] = int(self.calib_iter[index])
+            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[index])
             op_cfgs['op'] = {}
             for op, configs in self.opwise_quant_cfgs.items():
                 cfgs_len = len(configs)

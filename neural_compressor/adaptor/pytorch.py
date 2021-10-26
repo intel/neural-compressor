@@ -24,10 +24,12 @@ import yaml
 from functools import partial
 from neural_compressor.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
-from ..utils.utility import LazyImport, CpuInfo
+from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
 from ..utils.utility import OpPrecisionStatistics
 from ..utils import logger
 from .query import QueryBackendCapability
+from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+import math
 
 torch = LazyImport('torch')
 ipex = LazyImport('intel_pytorch_extension')
@@ -55,7 +57,7 @@ def get_torch_version():
     return version
 
 
-def pytorch_forward_wrapper(model, input, device='cpu', conf=None):
+def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
     if isinstance(input, dict) or isinstance(input, UserDict):
         if device=='cpu':
             output = model(**input)
@@ -65,7 +67,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None):
             for inp in input.keys():
                 input[inp] = input[inp].to(ipex.DEVICE) \
                     if isinstance(input[inp], torch.Tensor) else input[inp]
-            with ipex.AutoMixPrecision(conf, running_mode='inference'):
+            with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                 output = model(**input)
         else:   # pragma: no cover
             for inp in input.keys():
@@ -79,7 +81,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None):
             input = [inp.to(ipex.DEVICE) \
                      if isinstance(inp, torch.Tensor) else inp
                      for inp in input]
-            with ipex.AutoMixPrecision(conf, running_mode='inference'):
+            with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                 output = model(*input)
         else:   # pragma: no cover
             tmp_device = "dpcpp" if device=="gpu" else device
@@ -92,7 +94,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None):
             output = model(input)
         elif device=='ipex':
             input = input.to(ipex.DEVICE)
-            with ipex.AutoMixPrecision(conf, running_mode='inference'):
+            with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                 output = model(input)
         else:   # pragma: no cover
             input = input.to("dpcpp" if device=="gpu" else device) # pylint: disable=no-member
@@ -627,10 +629,9 @@ class TemplateAdaptor(Adaptor):
 
         self.device = framework_specific_info['device']
         self.q_dataloader = framework_specific_info['q_dataloader']
-        self.benchmark = framework_specific_info['benchmark'] \
-            if 'benchmark' in framework_specific_info else False
+        self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.workspace_path = framework_specific_info['workspace_path']
-        self.is_baseline = True if not self.benchmark else False
+        self.is_baseline = False if GLOBAL_STATE.STATE == MODE.BENCHMARK else True
         self.query_handler = None
         self.approach = ''
         self.pre_optimized_model = None
@@ -672,6 +673,99 @@ class TemplateAdaptor(Adaptor):
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
+        self.num_cores_per_sock = CpuInfo().cores_per_socket
+
+    def calib_func(self, model, dataloader, tmp_iterations, conf=None):
+        for idx, (input, label) in enumerate(dataloader):
+            output = pytorch_forward_wrapper(
+                model, input, device=self.device, conf=conf, running_mode='calibration')
+            if idx >= tmp_iterations - 1:
+                break
+
+    def model_calibration(self, q_model, dataloader, iterations=1, conf=None,
+                          calib_sampling_size=1):
+        assert iterations > 0
+
+        batch_size = dataloader.batch_size
+        with torch.no_grad():
+            if isinstance(dataloader, BaseDataLoader):
+                try:
+                    for i in range(self.num_cores_per_sock):
+                        if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
+                            calib_batch_size = self.num_cores_per_sock - i
+                            break
+                    tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                    dataloader.batch(calib_batch_size)
+                    self.calib_func(q_model, dataloader, tmp_iterations, conf)
+                except Exception:  # pragma: no cover
+                    logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(dataloader.batch_size, batch_size))
+                    dataloader.batch(batch_size)
+                    self.calib_func(q_model, dataloader, iterations, conf)
+            else:  # pragma: no cover
+                self.calib_func(q_model, dataloader, iterations, conf)
+
+    def eval_func(self, model, dataloader, postprocess, metric, measurer, iteration, conf=None):
+        results = []
+        for idx, (input, label) in enumerate(dataloader):
+            if measurer is not None:
+                measurer.start()
+
+            output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+            if self.device != "cpu":                         # pragma: no cover
+                output = output.to("cpu")
+                label = label.to("cpu")
+            if measurer is not None:
+                measurer.end()
+            if postprocess is not None:
+                output, label = postprocess((output, label))
+            if metric is not None and not self.fp32_preds_as_label:
+                # If distributed dataloader, gather all outputs to update metric
+                if getattr(dataloader, 'distributed', False) or \
+                        isinstance(dataloader.sampler, \
+                        torch.utils.data.distributed.DistributedSampler):
+                    hvd.init()
+                    output = hvd.allgather(output)
+                    label = hvd.allgather(label)
+                metric.update(output, label)
+            if self.fp32_preds_as_label:
+                self.fp32_results.append(output) if self.is_baseline else \
+                    results.append(output)
+            if idx + 1 == iteration:
+                break
+        return results
+
+    def model_eval(self, model, dataloader, postprocess=None,
+                   metric=None, measurer=None, iteration=-1, conf=None):
+        batch_size = dataloader.batch_size
+        with torch.no_grad():
+            if metric:
+                metric.reset()
+            if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
+                try:
+                    dataloader.batch(self.num_cores_per_sock)
+                    results = self.eval_func(
+                        model, dataloader, postprocess, metric, measurer, iteration, conf)
+                except Exception:  # pragma: no cover
+                    dataloader.batch(batch_size)
+                    results = self.eval_func(
+                        model, dataloader, postprocess, metric, measurer, iteration, conf)
+            else:  # pragma: no cover
+                results = self.eval_func(
+                        model, dataloader, postprocess, metric, measurer, iteration, conf)
+
+        if self.fp32_preds_as_label:
+            from .torch_utils.util import collate_torch_preds
+            if self.is_baseline:
+                results = collate_torch_preds(self.fp32_results)
+                metric.update(results, results)
+            else:
+                reference = collate_torch_preds(self.fp32_results)
+                results = collate_torch_preds(results)
+                metric.update(results, reference)
+
+        return metric.result() if metric is not None else 0
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
@@ -831,29 +925,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                          'nni.LinearReLU']
         self.fused_dict = {}
 
-    def model_calibration(self, q_model, dataloader, iterations=1):
-        assert iterations > 0
-        with torch.no_grad():
-            for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict) or isinstance(input, UserDict):
-                    if self.device == "gpu":
-                        for inp in input.keys():
-                            input[inp] = input[inp].to("dpcpp") \
-                                if isinstance(input[inp], torch.Tensor) else input[inp]
-                    output = q_model(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    if self.device == "gpu":
-                        input = [inp.to("dpcpp")
-                                 if isinstance(inp, torch.Tensor) else inp
-                                 for inp in input]
-                    output = q_model(*input)
-                else:
-                    if self.device == "gpu" and isinstance(input, torch.Tensor):# pragma: no cover
-                        input = input.to("dpcpp")
-                    output = q_model(input)
-                if idx >= iterations - 1:
-                    break
-
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -900,7 +971,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         if self.approach == 'post_training_static_quant':
             torch.quantization.add_observer_(q_model.model)
             iterations = tune_cfg.get('calib_iteration', 1)
-            self.model_calibration(q_model.model, dataloader, iterations)
+            self.model_calibration(
+                q_model.model, dataloader, iterations,
+                calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         elif self.approach == 'quant_aware_training':
             if self.version >= PyTorchVersionMode.PT17.value:
                 _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True,
@@ -930,8 +1003,6 @@ class PyTorchAdaptor(TemplateAdaptor):
         q_model.is_quantized = True
 
         self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
-        if self.is_baseline:
-            self.is_baseline = False
 
         return q_model
 
@@ -953,6 +1024,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             (object): accuracy
         """
+        self.is_baseline = fp32_baseline
         if tensorboard:
             model = self._pre_eval_hook(model)
 
@@ -968,50 +1040,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         if metric and hasattr(metric, "compare_label") and not metric.compare_label:
             self.fp32_preds_as_label = True
-            results = []
-
-        cnt = 0
-        with torch.no_grad():
-            if metric:
-                metric.reset()
-            for idx, (input, label) in enumerate(dataloader):
-                cnt += 1
-                if measurer is not None:
-                    measurer.start()
-
-                output = pytorch_forward_wrapper(model_, input, device=self.device)
-                if self.device == "gpu":   # pragma: no cover
-                    output = output.to("cpu")
-                if measurer is not None:
-                    measurer.end()
-                if postprocess is not None:
-                    output, label = postprocess((output, label))
-                if metric is not None and not self.fp32_preds_as_label:
-                    # If distributed dataloader, gather all outputs to update metric
-                    if getattr(dataloader, 'distributed', False) or \
-                            isinstance(dataloader.sampler, \
-                            torch.utils.data.distributed.DistributedSampler):
-                        hvd.init()
-                        output = hvd.allgather(output)
-                        label = hvd.allgather(label)
-                    metric.update(output, label)
-                if self.fp32_preds_as_label:
-                    self.fp32_results.append(output) if fp32_baseline else \
-                        results.append(output)
-                if idx + 1 == iteration:
-                    break
-
-        if self.fp32_preds_as_label:
-            from .torch_utils.util import collate_torch_preds
-            if fp32_baseline:
-                results = collate_torch_preds(self.fp32_results)
-                metric.update(results, results)
-            else:
-                reference = collate_torch_preds(self.fp32_results)
-                results = collate_torch_preds(results)
-                metric.update(results, reference)
-
-        acc = metric.result() if metric is not None else 0
+        acc = self.model_eval(model_, dataloader, postprocess, metric, measurer, iteration)
 
         if tensorboard:
             self._post_eval_hook(model, accuracy=acc)
@@ -1426,7 +1455,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         else:
             white_list = torch.quantization.get_default_compare_output_module_list()
 
-        model = copy.deepcopy(model) if self.is_baseline else model
+        model = model if model.is_quantized else copy.deepcopy(model)
         model.model.qconfig = torch.quantization.QConfig(
             weight=torch.quantization.default_debug_observer,
             activation=_RecordingObserver.with_args(iteration_list=iteration_list))
@@ -1805,29 +1834,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             os.remove(self.ipex_config_path)
         except:
             logger.warning('Fail to remove {}.'.format(self.ipex_config_path))
-
-    def model_calibration(self, q_model, dataloader, iterations=1, conf=None):
-        assert iterations > 0
-        with torch.no_grad():
-            for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict) or isinstance(input, UserDict):
-                    for inp in input.keys():
-                        input[inp] = input[inp].to(ipex.DEVICE) \
-                            if isinstance(input[inp], torch.Tensor) else input[inp]
-                    with ipex.AutoMixPrecision(conf, running_mode='calibration'):
-                        output = q_model(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    input = [inp.to(ipex.DEVICE)
-                             if isinstance(inp, torch.Tensor) else inp for inp in input]
-                    with ipex.AutoMixPrecision(conf, running_mode='calibration'):
-                        output = q_model(*input)
-                else:
-                    if isinstance(input, torch.Tensor):
-                        input = input.to(ipex.DEVICE)  # pylint: disable=no-member
-                    with ipex.AutoMixPrecision(conf, running_mode='calibration'):
-                        output = q_model(input)
-                if idx >= iterations - 1:
-                    break
+        self.device = 'ipex'
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
@@ -1865,7 +1872,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         if self.approach == 'post_training_static_quant':
             iterations = tune_cfg.get('calib_iteration', 1)
             ipex_conf = ipex.AmpConf(torch.int8, configure_file=self.ipex_config_path)
-            self.model_calibration(q_model, dataloader, iterations, conf=ipex_conf)
+            self.model_calibration(q_model, dataloader, iterations,
+                                   ipex_conf, tune_cfg.get('calib_sampling_size', 1))
             ipex_conf.save(self.ipex_config_path)
 
         assert self.approach != 'quant_aware_training', \
@@ -1873,8 +1881,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         model_.model = q_model
         model_.tune_cfg = copy.deepcopy(self.cfgs)
 
-        if self.is_baseline:
-            self.is_baseline = False
         return model_
 
     def _cfg_to_qconfig(self, tune_cfg):
@@ -1950,36 +1956,22 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             (dict): quantized model
         """
         assert not tensorboard, "Intel PyTorch Extension didn't tensor dump"
+        self.is_baseline = fp32_baseline
 
         model_ = model.model
         model_.eval()
         if self.is_baseline:
             model_.to(ipex.DEVICE)
 
+        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
+            self.fp32_preds_as_label = True
+
         ipex_config = self.ipex_config_path if not self.benchmark else \
                       os.path.join(self.workspace_path, 'best_configure.json')
         conf = ipex.AmpConf(torch.int8, configure_file=ipex_config) \
             if not self.is_baseline else ipex.AmpConf(None)
 
-        with torch.no_grad():
-            for idx, (input, label) in enumerate(dataloader):
-                if measurer is not None:
-                    measurer.start()
-
-                output = pytorch_forward_wrapper(model_, input, device='ipex', conf=conf)
-                label = label.to("cpu")
-                output = output.to("cpu")
-                if measurer is not None:
-                    measurer.end()
-                if postprocess is not None:
-                    output, label = postprocess((output, label))
-                if metric is not None:
-                    metric.update(output, label)
-                if idx + 1 == iteration:
-                    break
-        acc = metric.result() if metric is not None else 0
-
-        return acc
+        return self.model_eval(model_, dataloader, postprocess, metric, measurer, iteration, conf)
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
@@ -2101,19 +2093,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             if self.approach == 'post_training_dynamic_quant' else \
             tq.quantization_mappings.get_default_qconfig_propagation_list()
 
-    def model_calibration(self, q_model, dataloader, iterations=1):
-        assert iterations > 0
-        with torch.no_grad():
-            for idx, (input, label) in enumerate(dataloader):
-                if isinstance(input, dict) or isinstance(input, UserDict):
-                    output = q_model(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
-                    output = q_model(*input)
-                else:
-                    output = q_model(input)
-                if idx >= iterations - 1:
-                    break
-
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -2169,7 +2148,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
               q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
             if self.approach == 'post_training_static_quant':
                 iterations = tune_cfg.get('calib_iteration', 1)
-                self.model_calibration(q_model.model, dataloader, iterations)
+                self.model_calibration(q_model.model, dataloader, iterations,
+                                       calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         q_model.model = convert_fx(q_model.model,
           convert_custom_config_dict=q_model.kwargs['convert_custom_config_dict']
           if q_model.kwargs is not None and
@@ -2180,8 +2160,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         q_model.q_config = copy.deepcopy(self.tune_cfg)
 
         self._dump_model_op_stastics(q_model.model, q_model.tune_cfg, self.approach)
-        if self.is_baseline:
-            self.is_baseline = False
         return q_model
 
 
@@ -2205,6 +2183,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         if tensorboard:
             assert False, "PyTorch FX mode didn't support tensorboard flag now!"
+        self.is_baseline = fp32_baseline
 
         model_ = model.model
         assert isinstance(
@@ -2214,41 +2193,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         if metric and hasattr(metric, "compare_label") and not metric.compare_label:
             self.fp32_preds_as_label = True
-            results = []
 
-        with torch.no_grad():
-            if metric:
-                metric.reset()
-            for idx, (input, label) in enumerate(dataloader):
-                if measurer is not None:
-                    measurer.start()
-
-                output = pytorch_forward_wrapper(model_, input, device=self.device)
-                if measurer is not None:
-                    measurer.end()
-                if postprocess is not None:
-                    output, label = postprocess((output, label))
-                if metric is not None and not self.fp32_preds_as_label:
-                    metric.update(output, label)
-                if self.fp32_preds_as_label:
-                    self.fp32_results.append(output) if fp32_baseline else \
-                        results.append(output)
-                if idx + 1 == iteration:
-                    break
-
-        if self.fp32_preds_as_label:
-            from .torch_utils.util import collate_torch_preds
-            if fp32_baseline:
-                results = collate_torch_preds(self.fp32_results)
-                metric.update(results, results)
-            else:
-                reference = collate_torch_preds(self.fp32_results)
-                results = collate_torch_preds(results)
-                metric.update(results, reference)
-
-        acc = metric.result() if metric is not None else 0
-
-        return acc
+        return self.model_eval(model_, dataloader, postprocess, metric, measurer, iteration)
 
     def _pre_hook_for_qat(self):   # pragma: no cover
         from torch.quantization.quantize_fx import prepare_qat_fx

@@ -23,9 +23,11 @@ import numpy as np
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
-from ..utils.utility import OpPrecisionStatistics
+from ..utils.utility import OpPrecisionStatistics, GLOBAL_STATE, MODE
 from ..utils import logger
 from ..conf.dotdict import deep_get
+from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+import math
 tensorflow = LazyImport('tensorflow')
 
 @adaptor_registry
@@ -66,6 +68,8 @@ class TensorFlowAdaptor(Adaptor):
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
+        self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
+        self.num_cores_per_sock = CpuInfo().cores_per_socket
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -269,7 +273,6 @@ class TensorFlowAdaptor(Adaptor):
             metric.reset()
             if hasattr(metric, "compare_label") and not metric.compare_label:
                 self.fp32_preds_as_label = True
-                results = []
 
         origin_output_tensor_names = model.output_tensor_names
         model.output_tensor_names = outputs
@@ -277,49 +280,64 @@ class TensorFlowAdaptor(Adaptor):
         output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                             model.output_tensor[0]
         logger.info("Start to evaluate the TensorFlow model.")
-        for idx, (inputs, labels) in enumerate(dataloader):
-            # dataloader should keep the order and len of inputs same with input_tensor
-            if len(input_tensor) == 1:
-                feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:
-                assert len(input_tensor) == len(inputs), \
-                    'inputs len must equal with input_tensor'
-                feed_dict = dict(zip(input_tensor, inputs))
 
-            if model.iter_op:
-                predictions = iterator_sess_run(model.sess, model.iter_op, \
-                    feed_dict, output_tensor, iteration, measurer)
-            elif measurer is not None:
-                measurer.start()
-                predictions = model.sess.run(output_tensor, feed_dict)
-                measurer.end()
-            else:
-                predictions = model.sess.run(output_tensor, feed_dict)
+        def eval_func(dataloader):
+            results = []
+            for idx, (inputs, labels) in enumerate(dataloader):
+                # dataloader should keep the order and len of inputs same with input_tensor
+                if len(input_tensor) == 1:
+                    feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
+                else:
+                    assert len(input_tensor) == len(inputs), \
+                        'inputs len must equal with input_tensor'
+                    feed_dict = dict(zip(input_tensor, inputs))
 
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(predictions) if fp32_baseline else \
-                    results.append(predictions)
+                if model.iter_op:
+                    predictions = iterator_sess_run(model.sess, model.iter_op, \
+                        feed_dict, output_tensor, iteration, measurer)
+                elif measurer is not None:
+                    measurer.start()
+                    predictions = model.sess.run(output_tensor, feed_dict)
+                    measurer.end()
+                else:
+                    predictions = model.sess.run(output_tensor, feed_dict)
 
-            # Inspect node output, just get 1st iteration output tensors for now
-            if idx == 0 and tensorboard:
-                for index, node_name in enumerate(outputs):
-                    tensor = predictions[index]
-                    if node_name in int8_inspect_node_name:
-                        tensor = Dequantize(predictions[index], q_node_scale[node_name])
-                    self.log_histogram(writer, node_name + output_postfix, tensor.astype(
-                                       np.float32), idx)
-                writer.close()
-            if isinstance(predictions, list):
-                if len(origin_output_tensor_names) == 1:
-                    predictions = predictions[0]
-                elif len(origin_output_tensor_names) > 1:
-                    predictions = predictions[:len(origin_output_tensor_names)]
-            if postprocess is not None:
-                predictions, labels = postprocess((predictions, labels))
-            if metric is not None and not self.fp32_preds_as_label:
-                metric.update(predictions, labels)
-            if idx + 1 == iteration:
-                break
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(predictions) if fp32_baseline else \
+                        results.append(predictions)
+
+                # Inspect node output, just get 1st iteration output tensors for now
+                if idx == 0 and tensorboard:
+                    for index, node_name in enumerate(outputs):
+                        tensor = predictions[index]
+                        if node_name in int8_inspect_node_name:
+                            tensor = Dequantize(predictions[index], q_node_scale[node_name])
+                        self.log_histogram(writer, node_name + output_postfix, tensor.astype(
+                                           np.float32), idx)
+                    writer.close()
+                if isinstance(predictions, list):
+                    if len(origin_output_tensor_names) == 1:
+                        predictions = predictions[0]
+                    elif len(origin_output_tensor_names) > 1:
+                        predictions = predictions[:len(origin_output_tensor_names)]
+                if postprocess is not None:
+                    predictions, labels = postprocess((predictions, labels))
+                if metric is not None and not self.fp32_preds_as_label:
+                    metric.update(predictions, labels)
+                if idx + 1 == iteration:
+                    break
+            return results
+
+        if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
+            try:
+                batch_size = dataloader.batch_size
+                dataloader.batch(self.num_cores_per_sock)
+                results = eval_func(dataloader)
+            except Exception:  # pragma: no cover
+                dataloader.batch(batch_size)
+                results = eval_func(dataloader)
+        else:  # pragma: no cover
+            results = eval_func(dataloader)
 
         if self.fp32_preds_as_label:
             from .tf_utils.util import collate_tf_preds
@@ -423,7 +441,40 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
-        converted_model = GraphConverter(model,
+        if isinstance(data_loader, BaseDataLoader):
+            try:
+                batch_size = data_loader.batch_size
+                iter = self.quantize_config['calib_iteration']
+                calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+                for i in range(self.num_cores_per_sock):
+                    if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
+                        calib_batch_size = self.num_cores_per_sock - i
+                        break
+                tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                data_loader.batch(calib_batch_size)
+                self.quantize_config['calib_iteration'] = tmp_iterations
+                converted_model = GraphConverter(model,
+                                        qt_config=self.quantize_config,
+                                        recipes=self.recipes,
+                                        int8_sequences=self.op_wise_sequences,
+                                        fp32_ops=self.fp32_ops,
+                                        bf16_ops=self.bf16_ops,
+                                        data_loader=data_loader).convert()
+            except Exception: # pragma: no cover
+                logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(data_loader.batch_size, batch_size))
+                data_loader.batch(batch_size)
+                self.quantize_config['calib_iteration'] = iter
+                converted_model = GraphConverter(model,
+                                        qt_config=self.quantize_config,
+                                        recipes=self.recipes,
+                                        int8_sequences=self.op_wise_sequences,
+                                        fp32_ops=self.fp32_ops,
+                                        bf16_ops=self.bf16_ops,
+                                        data_loader=data_loader).convert()
+        else: # pragma: no cover
+            converted_model = GraphConverter(model,
                                 qt_config=self.quantize_config,
                                 recipes=self.recipes,
                                 int8_sequences=self.op_wise_sequences,
@@ -948,7 +999,42 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
-        converted_model = GraphConverter(model,
+        if isinstance(data_loader, BaseDataLoader):
+            try:
+                batch_size = data_loader.batch_size
+                iter = self.quantize_config['calib_iteration']
+                calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+                for i in range(self.num_cores_per_sock):
+                    if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
+                        calib_batch_size = self.num_cores_per_sock - i
+                        break
+                tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                data_loader.batch(calib_batch_size)
+                self.quantize_config['calib_iteration'] = tmp_iterations
+                converted_model = GraphConverter(model,
+                                    qt_config=self.quantize_config,
+                                    recipes=self.recipes,
+                                    int8_sequences=self.op_wise_sequences,
+                                    fp32_ops=self.fp32_ops,
+                                    bf16_ops=self.bf16_ops,
+                                    data_loader=data_loader,
+                                    itex_mode=True).convert()
+            except Exception: # pragma: no cover
+                logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(data_loader.batch_size, batch_size))
+                data_loader.batch(batch_size)
+                self.quantize_config['calib_iteration'] = iter
+                converted_model = GraphConverter(model,
+                                qt_config=self.quantize_config,
+                                recipes=self.recipes,
+                                int8_sequences=self.op_wise_sequences,
+                                fp32_ops=self.fp32_ops,
+                                bf16_ops=self.bf16_ops,
+                                data_loader=data_loader,
+                                itex_mode=True).convert()
+        else: # pragma: no cover
+            converted_model = GraphConverter(model,
                                    qt_config=self.quantize_config,
                                    recipes=self.recipes,
                                    int8_sequences=self.op_wise_sequences,

@@ -78,7 +78,6 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
 
 
 def create_dataloader(framework, dataloader_cfg):
-
     batch_size = int(dataloader_cfg['batch_size']) \
         if dataloader_cfg.get('batch_size') is not None else 1
     last_batch = dataloader_cfg['last_batch'] \

@@ -26,7 +26,7 @@ import yaml
 import numpy as np
 from ..adaptor import FRAMEWORKS
 from ..objective import OBJECTIVES
-from ..utils.utility import fault_tolerant_file, equal_dicts
+from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
 from ..version import __version__
@@ -132,6 +132,7 @@ class TuneStrategy(object):
         self.q_func = q_func
         self.q_hooks = q_hooks
         self.eval_func = eval_func
+        GLOBAL_STATE.STATE = MODE.QUANTIZATION
 
         framework_specific_info = {'device': self.cfg.device,
                                    'approach': self.cfg.quantization.approach,
@@ -196,6 +197,7 @@ class TuneStrategy(object):
             if expanded_cfg:
                 self.opwise_tune_cfgs[key] = expanded_cfg
 
+        self.calib_sampling_size = self.cfg.quantization.calibration.sampling_size
         if self.calib_dataloader:
             self.calib_iter = [math.ceil(int(x) / self.calib_dataloader.batch_size) \
                                for x in self.cfg.quantization.calibration.sampling_size]

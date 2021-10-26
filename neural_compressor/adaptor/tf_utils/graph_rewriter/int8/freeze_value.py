@@ -29,7 +29,7 @@ import numpy as np
 import re
 
 class FreezeValueTransformer(GraphRewriterBase):
-    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=0.95, device='gpu'):
+    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device='gpu'):
         """Free Max/Min value into QuantizeV2 op.
 
         Args:
@@ -106,7 +106,10 @@ class FreezeValueTransformer(GraphRewriterBase):
             target_index = int(len(temp[key]) * self.threshold)
             if target_index > len(temp[key]) - 1:
                 target_index = len(temp[key]) - 1
-            res[key] = sorted(temp[key])[target_index]
+            if self.postfix == '__min:':
+                res[key] = sorted(temp[key], reverse=True)[target_index]
+            else:
+                res[key] = sorted(temp[key])[target_index]
         return res
 
     def _parse_requantization_ranges(self):

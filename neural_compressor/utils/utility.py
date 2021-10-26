@@ -37,6 +37,9 @@ import cpuinfo
 import numpy as np
 from neural_compressor.utils import logger
 import prettytable as pt
+import psutil
+import subprocess
+from enum import Enum
 
 def singleton(cls):
     instances = {}
@@ -189,6 +192,9 @@ class CpuInfo(object):
                 b"\xC3"                  # ret
             )
             self._bf16 = bool(eax & (1 << 5))
+        self._sockets = self.get_number_of_sockets()
+        self._cores = psutil.cpu_count(logical=False)
+        self._cores_per_socket = int(self._cores / self._sockets)
 
     @property
     def bf16(self):
@@ -197,6 +203,29 @@ class CpuInfo(object):
     @property
     def vnni(self):
         return self._vnni
+
+    @property
+    def cores_per_socket(self):
+        return self._cores_per_socket
+
+    def get_number_of_sockets(self) -> int:
+        """Get number of sockets in platform."""
+        cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
+        if psutil.WINDOWS:
+            cmd = 'wmic cpu get DeviceID | find /c "CPU"'
+
+        with subprocess.Popen(
+            args=cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=False,
+        ) as proc:
+            proc.wait()
+            if proc.stdout:
+                for line in proc.stdout:
+                    return int(line.decode("utf-8", errors="ignore").strip())
+        return 0
 
 
 def dump_elapsed_time(customized_msg=""):
@@ -383,3 +412,12 @@ class OpPrecisionStatistics():
         for i in lines:
             self.output_handle(i)
 
+
+class MODE(Enum):
+    QUANTIZATION = 1
+    BENCHMARK = 2
+    PRUNING = 3
+
+
+class GLOBAL_STATE():
+    STATE = MODE.QUANTIZATION

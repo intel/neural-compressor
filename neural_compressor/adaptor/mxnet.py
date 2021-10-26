@@ -21,10 +21,14 @@ import logging
 
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
-from neural_compressor.utils.utility import dump_elapsed_time, LazyImport, singleton
+from neural_compressor.utils.utility import dump_elapsed_time, LazyImport, singleton, \
+                                            CpuInfo, GLOBAL_STATE, MODE
 from collections import OrderedDict
 from neural_compressor.adaptor.mxnet_utils.util import *
+from collections import OrderedDict
+from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 from copy import deepcopy
+import math
 
 mx = LazyImport("mxnet")
 logger = logging.getLogger()
@@ -52,6 +56,8 @@ class MxNetAdaptor(Adaptor):
             os.path.dirname(__file__), "mxnet.yaml"))
 
         self.ctx = mx.cpu() if framework_specific_info['device'] == 'cpu' else None
+        self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
+        self.num_cores_per_sock = CpuInfo().cores_per_socket
         assert self.ctx is not None, 'Unsupported device'
 
     @dump_elapsed_time("Pass quantize model")
@@ -71,30 +77,49 @@ class MxNetAdaptor(Adaptor):
         """
         assert q_func is None, "quantization aware training mode is not supported on mxnet"
 
-        quant_cfg, calib_cfg = parse_tune_config(tune_cfg, self.quantizable_nodes)
-        logger.debug("Dump quantization configurations:")
-        logger.debug(quant_cfg)
 
         calib_cache = nc_model.calib_cache
 
-        sym_model, calib_data = prepare_model_data(nc_model, self.ctx, dataloader)
-        qsym_model, calib_tensors = quantize_sym_model(sym_model, self.ctx, quant_cfg)
-        collector = self._collect_thresholds(sym_model, calib_data, calib_tensors, calib_cfg,
-                                             calib_cache)
-        qsym_model = calib_model(qsym_model, collector, calib_cfg, logger)
-        qsym_model = fuse(qsym_model, self.ctx)  # post-quantization fusion
+        def calib_func(tmp_tune_cfg, dataloader):
+            quant_cfg, calib_cfg = parse_tune_config(tmp_tune_cfg, self.quantizable_nodes)
+            logger.debug("Dump quantization configurations:")
+            logger.debug(quant_cfg)
+            sym_model, calib_data = prepare_model_data(nc_model, self.ctx, dataloader)
+            qsym_model, calib_tensors = quantize_sym_model(sym_model, self.ctx, quant_cfg)
+            collector = self._collect_thresholds(sym_model, calib_data, calib_tensors, calib_cfg,
+                                                 calib_cache)
+            qsym_model = calib_model(qsym_model, collector, calib_cfg, logger)
+            qsym_model = fuse(qsym_model, self.ctx)  # post-quantization fusion
 
-        q_nc_model = make_nc_model(nc_model, qsym_model, self.ctx, calib_data.input_desc)
-        q_nc_model.calib_cache['last'] = collector.th_dict
-        q_nc_model.q_config = {
-            'mxnet_version': mx.__version__,
-            'quant_cfg': quant_cfg,
-            'calib_cfg': calib_cfg,
-            'th_dict': collector.th_dict,
-            'input_desc': calib_data.input_desc,
-            'framework_specific_info': {'device': self.ctx.device_type}}
+            q_nc_model = make_nc_model(nc_model, qsym_model, self.ctx, calib_data.input_desc)
+            q_nc_model.calib_cache['last'] = collector.th_dict
+            q_nc_model.q_config = {
+                'mxnet_version': mx.__version__,
+                'quant_cfg': quant_cfg,
+                'calib_cfg': calib_cfg,
+                'th_dict': collector.th_dict,
+                'input_desc': calib_data.input_desc,
+                'framework_specific_info': {'device': self.ctx.device_type}}
+            return q_nc_model
 
-        return q_nc_model
+        if isinstance(dataloader, BaseDataLoader):
+            batch_size = dataloader.batch_size
+            try:
+                calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+                for i in range(self.num_cores_per_sock):
+                    if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
+                        calib_batch_size = self.num_cores_per_sock - i
+                        break
+                tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                tmp_tune_cfg = deepcopy(tune_cfg)
+                tmp_tune_cfg['calib_iteration'] = tmp_iterations
+                dataloader.batch(calib_batch_size)
+                return calib_func(tmp_tune_cfg, dataloader)
+            except Exception:  # pragma: no cover
+                dataloader.batch(batch_size)
+                return calib_func(tune_cfg, dataloader)
+        else:  # pragma: no cover
+            return calib_func(tune_cfg, dataloader)
 
     def _collect_thresholds(self, sym_model, calib_data, calib_tensors, calib_cfg, calib_cache):
         """Calculate thresholds for each tensor. The calibration method can be min/max
@@ -190,9 +215,22 @@ class MxNetAdaptor(Adaptor):
             if metric is not None:
                 metric.update(out, label)
 
-        sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
-        run_forward(sym_model, self.ctx, dataloader, b_filter(),
-                    pre_batch=pre_batch, post_batch=post_batch)
+        if isinstance(data_x, BaseDataLoader) and not self.benchmark:
+            batch_size = data_x.batch_size
+            try:
+                data_x.batch(self.num_cores_per_sock)
+                sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
+                run_forward(sym_model, self.ctx, dataloader, b_filter(),
+                            pre_batch=pre_batch, post_batch=post_batch)
+            except Exception:  # pragma: no cover
+                data_x.batch(batch_size)
+                sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
+                run_forward(sym_model, self.ctx, dataloader, b_filter(),
+                            pre_batch=pre_batch, post_batch=post_batch)
+        else:  # pragma: no cover
+            sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
+            run_forward(sym_model, self.ctx, dataloader, b_filter(),
+                        pre_batch=pre_batch, post_batch=post_batch)
         return metric.result() if metric is not None else 0
 
     @dump_elapsed_time('Query quantizable operators')

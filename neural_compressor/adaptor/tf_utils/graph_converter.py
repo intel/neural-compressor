@@ -569,15 +569,20 @@ class GraphConverter:
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
+        except ValueError as e:
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
+            self._tmp_model = None
+            raise
         except Exception as e:
             import traceback
             traceback.print_exc()
             self._tmp_model = None
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
+            return self._tmp_model
         finally:
             if not debug:
                 self._post_clean()
-            return self._tmp_model
+        return self._tmp_model
 
     def bf16_convert(self):
         """Convert fp32 nodes in bf16_node to bf16 dtype based on

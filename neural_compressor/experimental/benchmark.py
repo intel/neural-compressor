@@ -26,7 +26,7 @@ from ..objective import OBJECTIVES
 from ..conf.config import Benchmark_Conf
 from ..conf.dotdict import DotDict
 from ..utils import logger
-from ..utils.utility import set_backend
+from ..utils.utility import set_backend, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
@@ -159,6 +159,7 @@ class Benchmark(object):
 
     def run_instance(self, mode):
         cfg = self.conf.usr_cfg
+        GLOBAL_STATE.STATE = MODE.BENCHMARK
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
                                    'random_seed': cfg.tuning.random_seed}
@@ -175,8 +176,7 @@ class Benchmark(object):
                                             'workspace_path': cfg.tuning.workspace.path})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
-                                            "q_dataloader": None,
-                                            "benchmark": True})
+                                            "q_dataloader": None})
         if framework == 'engine':
             framework_specific_info.update(
                  {"workspace_path": cfg.tuning.workspace.path, \

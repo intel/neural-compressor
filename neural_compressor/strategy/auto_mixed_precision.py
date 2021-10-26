@@ -85,8 +85,9 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         best_acc = 0
 
         logger.debug("Start AutoMixedPrecision strategy by model-wise tuning")
-        for iterations in self.calib_iter:
+        for i, iterations in enumerate(self.calib_iter):
             op_cfgs['calib_iteration'] = int(iterations)
+            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[i])
 
             for combined_cfg in self.combined_model_wise_quant_cfgs:
                 op_cfgs['op'] = OrderedDict()

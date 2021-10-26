@@ -108,8 +108,10 @@ class BayesianTuneStrategy(TuneStrategy):
             if value == len(self.calib_iter):
                 value = len(configs) - 1
             op_cfgs['calib_iteration'] = int(self.calib_iter[value])
+            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[value])
         else:
             op_cfgs['calib_iteration'] = int(self.calib_iter[0])
+            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[0])
         return op_cfgs
 
     def next_tune_cfg(self):

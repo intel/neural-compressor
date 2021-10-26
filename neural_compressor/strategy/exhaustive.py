@@ -84,8 +84,9 @@ class ExhaustiveTuneStrategy(TuneStrategy):
 
         op_cfgs = {}
         op_cfgs['op'] = OrderedDict()
-        for iterations in self.calib_iter:
+        for i, iterations in enumerate(self.calib_iter):
             op_cfgs['calib_iteration'] = int(iterations)
+            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[i])
             op_lists = []
             op_cfg_lists = []
             for op, configs in self.opwise_quant_cfgs.items():
