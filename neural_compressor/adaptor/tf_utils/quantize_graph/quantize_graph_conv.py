@@ -48,6 +48,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             self.apply_conv_biasadd_relu_fusion,
             'DepthwiseConv2dNativeBiasAddRelu':
             self.apply_conv_biasadd_relu_fusion,
+            'DepthwiseConv2dNativeBiasAdd': self.apply_conv_biasadd_fusion,
             'DepthwiseConv2dNativeBiasAddRelu6':
             self.apply_conv_biasadd_relu_fusion,
             'Conv2D': self.apply_conv_single_fusion,
@@ -218,6 +219,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
+                if node.op == "DepthwiseConv2dNative":
+                    quantized_node_name = node.name + "_eightbit_quantized_depthwise_conv"
+
                 bias_node_name = self.node_name_mapping[
                     match_node_name[1]].node.input[1]
                 quantized_node_input_names = all_input_names[:2] + [
@@ -225,26 +229,22 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ] + all_input_names[2:] + control_inputs
 
                 quantized_conv_node = helper.create_node(
-                    "QuantizedConv2DWithBias", quantized_node_name,
+                    "QuantizedConv2DWithBias" if node.op == 'Conv2D' \
+                        else 'QuantizedDepthwiseConv2DWithBias',
+                    quantized_node_name,
                     quantized_node_input_names)
-                helper.copy_attr(quantized_conv_node, "strides",
-                                 node.attr["strides"])
-                helper.copy_attr(quantized_conv_node, "padding",
-                                 node.attr["padding"])
-                if "padding_list" in node.attr:
-                    helper.copy_attr(quantized_conv_node, "padding_list",
-                                     node.attr["padding_list"])
-                helper.copy_attr(quantized_conv_node, "dilations",
-                                 node.attr["dilations"])
 
-                input_data_type = dtypes.quint8 if self._find_relu_node(
-                    node) else dtypes.qint8
-                helper.set_attr_dtype(quantized_conv_node, "Tinput",
-                                      input_data_type)
-                helper.set_attr_dtype(quantized_conv_node, "Tfilter",
-                                      dtypes.qint8)
-                helper.set_attr_dtype(quantized_conv_node, "out_type",
-                                      dtypes.qint32)
+                helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
+                helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                if "padding_list" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "padding_list", node.attr["padding_list"])
+                helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
+
+                input_data_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
+
+                helper.set_attr_dtype(quantized_conv_node, "Tinput", input_data_type)
+                helper.set_attr_dtype(quantized_conv_node, "Tfilter", dtypes.qint8)
+                helper.set_attr_dtype(quantized_conv_node, "out_type", dtypes.qint32)
                 self.add_output_graph_node(quantized_conv_node)
                 requantize_type = dtypes.qint8
 
