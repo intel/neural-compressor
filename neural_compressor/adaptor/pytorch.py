@@ -726,8 +726,7 @@ class TemplateAdaptor(Adaptor):
                         isinstance(dataloader.sampler, \
                         torch.utils.data.distributed.DistributedSampler):
                     hvd.init()
-                    output = hvd.allgather(output)
-                    label = hvd.allgather(label)
+                    metric.hvd = hvd
                 metric.update(output, label)
             if self.fp32_preds_as_label:
                 self.fp32_results.append(output) if self.is_baseline else \

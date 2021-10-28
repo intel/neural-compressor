@@ -207,6 +207,12 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.util import iterator_sess_run
         outputs = model.output_tensor_names
 
+        if getattr(dataloader, 'distributed', False):
+            import horovod.tensorflow as hvd
+            hvd.init()
+            # If metric.hvd is not None then run distributed inference
+            metric.hvd = hvd
+
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
             from tensorflow.python.framework import tensor_util

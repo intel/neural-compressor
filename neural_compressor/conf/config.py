@@ -478,8 +478,8 @@ dataloader_schema = Schema({
     'dataset': dataset_schema,
     Optional('filter'): filter_schema,
     Optional('transform'): transform_schema,
-    Optional('shuffle'): bool,
-    Optional('distributed'): bool,
+    Optional('shuffle', default = False): And(bool, lambda s: s in [True, False]),
+    Optional('distributed', default = False): And(bool, lambda s: s in [True, False]),
 })
 
 configs_schema = Schema({

@@ -412,6 +412,10 @@ class TuneStrategy(object):
 
         return result
 
+    @property
+    def evaluation_result(self):
+        return self._evaluate(self.model)
+
     def _evaluate(self, model):
         """The interface of evaluating model.
 
@@ -444,7 +448,6 @@ class TuneStrategy(object):
                                          self.cfg.evaluation.accuracy.iteration, \
                                          tensorboard = self.cfg.tuning.tensorboard, \
                                          fp32_baseline = self.baseline == None)
-
             val = self.objective.evaluate(eval_func, model)
         assert np.isscalar(val[0]), \
             "The eval_func should return a scalar, but not {}!".format(str(type(val[0])))

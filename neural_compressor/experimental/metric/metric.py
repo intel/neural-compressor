@@ -148,9 +148,10 @@ def metric_registry(metric_type, framework):
 
 
 class BaseMetric(object):
-    def __init__(self, metric, single_output=False):
+    def __init__(self, metric, single_output = False, hvd = None):
         self._metric_cls = metric
         self._single_output = single_output
+        self._hvd = hvd
 
     def __call__(self, *args, **kwargs):
         self._metric = self._metric_cls(*args, **kwargs)
@@ -171,6 +172,14 @@ class BaseMetric(object):
     @property
     def metric(self):
         return self._metric
+
+    @property
+    def hvd(self):
+        return self._hvd
+
+    @hvd.setter
+    def hvd(self, hvd):
+        self._hvd = hvd
 
 class WrapPyTorchMetric(BaseMetric):
 
@@ -297,6 +306,15 @@ class F1(BaseMetric):
     def update(self, preds, labels):
         """add preds and labels to storage"""
         from .f1 import f1_score
+        if getattr(self, '_hvd', None) is not None:
+            gathered_preds_list = self._hvd.allgather_object(preds)
+            gathered_labels_list = self._hvd.allgather_object(labels)
+            temp_preds_list, temp_labels_list = [], []
+            for i in range(0, self._hvd.size()):
+                temp_preds_list += gathered_preds_list[i]
+                temp_labels_list += gathered_labels_list[i]
+            preds = temp_preds_list
+            labels = temp_labels_list
         result = f1_score(preds, labels)
         self._score_list.append(result)
 
@@ -383,6 +401,10 @@ class Accuracy(BaseMetric):
         """calculate metric"""
         correct_num = np.sum(
             np.array(self.pred_list) == np.array(self.label_list))
+        if getattr(self, '_hvd', None) is not None:
+            allghter_correct_num = sum(self._hvd.allgather_object(correct_num))
+            allgather_sample = sum(self._hvd.allgather_object(self.sample))
+            return allghter_correct_num / allgather_sample
         return correct_num / self.sample
 
 class PyTorchLoss():
@@ -435,6 +457,10 @@ class Loss(BaseMetric):
 
     def result(self):
         """calculate metric"""
+        if getattr(self, '_hvd', None) is not None:
+            allgather_sum = sum(self._hvd.allgather_object(self.sum))
+            allgather_sample = sum(self._hvd.allgather_object(self.sample))
+            return allgather_sum / allgather_sample
         return self.sum / self.sample
 
 @metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
@@ -467,6 +493,9 @@ class MAE(BaseMetric):
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
         assert aes_size, "predictions shouldn't be none"
+        if getattr(self, '_hvd', None) is not None:
+            aes_sum = sum(self._hvd.allgather_object(aes_sum))
+            aes_size = sum(self._hvd.allgather_object(aes_size))       
         return aes_sum / aes_size
 
 @metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, \
@@ -491,6 +520,8 @@ class RMSE(BaseMetric):
 
     def result(self):
         """calculate metric"""
+        if getattr(self, '_hvd', None) is not None:
+            self.mse._hvd = self._hvd
         return np.sqrt(self.mse.result())
 
 @metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
@@ -523,6 +554,9 @@ class MSE(BaseMetric):
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
         assert squares_size, "predictions should't be None"
+        if getattr(self, '_hvd', None) is not None:
+            squares_sum = sum(self._hvd.allgather_object(squares_sum))
+            squares_size = sum(self._hvd.allgather_object(squares_size))       
         return squares_sum / squares_size
 
 @metric_registry('topk', 'tensorflow')
@@ -564,8 +598,11 @@ class TensorflowTopK(BaseMetric):
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
-        else:
-            return self.num_correct / self.num_sample
+        elif getattr(self, '_hvd', None) is not None:
+            allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
+            allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
+            return allgather_num_correct / allgather_num_sample 
+        return self.num_correct / self.num_sample
 
 @metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops, engine')
 class GeneralTopK(BaseMetric):
@@ -607,8 +644,11 @@ class GeneralTopK(BaseMetric):
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
-        else:
-            return self.num_correct / self.num_sample
+        elif getattr(self, '_hvd', None) is not None:
+            allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
+            allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
+            return allgather_num_correct / allgather_num_sample
+        return self.num_correct / self.num_sample
 
 @metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowMAP(BaseMetric):
@@ -650,6 +690,9 @@ class TensorflowMAP(BaseMetric):
 
     def update(self, predicts, labels, sample_weight=None):
         """add preds and labels to storage"""
+        if getattr(self, '_hvd', None) is not None:
+            raise NotImplementedError("Metric TensorflowMAP currently do not support distribued inference.")
+
         from .coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
         detections = []
@@ -799,6 +842,15 @@ class SquadF1(BaseMetric):
         """add preds and labels to storage"""
         if preds:
             from .evaluate_squad import evaluate
+            if getattr(self, '_hvd', None) is not None:
+                gathered_preds_list = self._hvd.allgather_object(preds)
+                gathered_labels_list = self._hvd.allgather_object(labels)
+                temp_preds_list, temp_labels_list = [], []
+                for i in range(0, self._hvd.size()):
+                    temp_preds_list += gathered_preds_list[i]
+                    temp_labels_list += gathered_labels_list[i]
+                preds = temp_preds_list
+                labels = temp_labels_list
             result = evaluate(labels, preds)
             self._score_list.append(result['f1'])
 
@@ -823,6 +875,16 @@ class mIOU(BaseMetric):
         """add preds and labels to storage"""
         preds = preds.flatten()
         labels = labels.flatten()
+        p_dtype = preds.dtype
+        l_dtype = labels.dtype
+        if getattr(self, '_hvd', None) is not None:
+            preds = self._hvd.allgather_object(preds)
+            labels = self._hvd.allgather_object(labels)
+            preds_list, labels_list = np.array([], dtype = p_dtype), np.array([], dtype = l_dtype)
+            for i in range(self._hvd.size()):
+                preds_list = np.append(preds_list, preds[i])
+                labels_list = np.append(labels_list, labels[i])
+            preds, labels = preds_list, labels_list
         mask = (labels >= 0) & (labels < self.num_classes)
         self.hist += np.bincount(
             self.num_classes * labels[mask].astype(int) +
@@ -869,6 +931,8 @@ class ONNXRTGLUE(BaseMetric):
 
     def update(self, preds, labels):
         """add preds and labels to storage"""
+        if getattr(self, '_hvd', None) is not None:
+            raise NotImplementedError("Metric ONNXRTGLUE currently do not support distribued inference.")
         if isinstance(preds, list) and len(preds) == 1:
             preds = preds[0]
         if isinstance(labels, list) and len(labels) == 1:
