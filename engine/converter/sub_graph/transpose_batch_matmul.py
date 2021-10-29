@@ -54,7 +54,7 @@ class TransposeBatchMatMul(Pattern):
                     }], [[0], 1]]
                 },
                 'returns': [0, 1, 2, 3]
-            }, 
+            },
 
             # distil_bert_base
             {
@@ -82,7 +82,35 @@ class TransposeBatchMatMul(Pattern):
                     }], [[0], 1]]
                 },
                 'returns': [0, 2, 3, 1]
-            }, 
+            },
+
+            # bert_base_sparse
+            {
+                'patterns': {
+                    'in': [[(0, 'Transpose'), (2, 'MatMul'), (3, 'Div'), (4, ['AddV2', 'Add'])],
+                           [(), (1, 'Transpose'), (2, 'MatMul')]],
+                    'out': [[(0, 'TransposeBatchMatMul')]]
+                },
+                'search_mode': 'op_type',
+                'node_names': {
+                    0: 4
+                },
+                'input_tensors': {
+                    0: [[{
+                        0: [0]
+                    }, {
+                        1: [0]
+                    }, {
+                        4: [0, 1]
+                    }], [[0, 1, 2], 3]]
+                },
+                'output_tensors': {
+                    0: [[{
+                        4: [0]
+                    }], [[0], 1]]
+                },
+                'returns': [0, 1, 2, 3]
+            },
 
             # geminet
             {
@@ -110,8 +138,8 @@ class TransposeBatchMatMul(Pattern):
                     }], [[0], 1]]
                 },
                 'returns': [0, 1, 2]
-            }, 
-            
+            },
+
             {
                 'patterns': {
                     'in': [[(0, 'Transpose'), (1, ['BatchMatMul', 'BatchMatMulV2', 'MatMul']),
@@ -136,7 +164,7 @@ class TransposeBatchMatMul(Pattern):
                 },
                 'returns': [0, 1, 2]
             },
-            
+
             ]
         }
 
@@ -145,10 +173,11 @@ class TransposeBatchMatMul(Pattern):
             _x = perm[-2:]
             ret = perm[:-2] + _x[::-1]
             return ret
-        
+
         for i in range(0, len(pattern_mapping_config['TransposeBatchMatMul'])-1):
             pattern_dict = pattern_mapping_config['TransposeBatchMatMul'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("TransposeBatchMatMul", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     transpose_list = []
@@ -177,9 +206,10 @@ class TransposeBatchMatMul(Pattern):
                     attr['append_op'] = 'binary_add'
                     tb_node_idx = model.get_node_id(new_node_names[j][0])
                     model.nodes[tb_node_idx].attr = attr
-        
+
         pattern_dict = pattern_mapping_config['TransposeBatchMatMul'][-1]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("TransposeBatchMatMul",
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 transpose_list = []
@@ -201,6 +231,6 @@ class TransposeBatchMatMul(Pattern):
 
                 tb_node_idx = model.get_node_id(new_node_names[i][0])
                 model.nodes[tb_node_idx].attr = attr
-        
-        
+
+
         return model

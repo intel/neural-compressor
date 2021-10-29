@@ -65,7 +65,8 @@ class MatMulWithBiasRelu(Pattern):
                 model.nodes[mat_node_idx].attr = attr
 
         pattern_dict = pattern_mapping_config['MatMulWithBiasRelu'][0]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("MatMulWithBiasRelu", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             _set_attr(new_node_names, ret_old_nodes, model)
 

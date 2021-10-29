@@ -47,7 +47,32 @@ class InputData(Pattern):
                             2: [0]
                         }], [[0, 1, 2], 3]]
                     },
-                    'returns': []
+                    'returns': [0, 1, 2]
+                },
+                
+                # onnx model from huggingface
+                {
+                    'patterns': {
+                        'in': [[(0, 'input_ids'), (1, 'token_type_ids'), (2, 'attention_mask')]],
+                        'out': [[(0, 'Input')]]
+                    },
+                    'search_mode': 'node_name',
+                    'node_names': {
+                        0: 'input_data'
+                    },
+                    'input_tensors': {
+                        0: [[], [[], 0]]
+                    },
+                    'output_tensors': {
+                        0: [[{
+                            0: [0]
+                        }, {
+                            1: [0]
+                        }, {
+                            2: [0]
+                        }], [[0, 1, 2], 3]]
+                    },
+                    'returns': [0, 1, 2]
                 },
 
                 # bert_base
@@ -74,7 +99,7 @@ class InputData(Pattern):
                     },
                     'returns': []
                 },
-                
+
                 # distil_bert_base
                 {
                     'patterns': {
@@ -98,18 +123,19 @@ class InputData(Pattern):
                     },
                     'returns': []
                 },
-                
+
             ]
         }
-        
+
         for i in range(len(pattern_mapping_config['InputData'])):
             pattern_dict = pattern_mapping_config['InputData'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("InputData",
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 model.nodes[0].attr = None
                 for j in range(len(model.nodes[0].output_tensors)):
                     model.nodes[0].output_tensors[j].shape = [-1, -1]
-                
+
                 return model
-        
+
         return model

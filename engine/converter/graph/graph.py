@@ -81,7 +81,7 @@ class Graph(object):
         for i in range(len(self._nodes[index].input_tensors)):
             self._nodes[index].input_tensors[i].dest_op = [new_name]
             for pre_node_name in self._nodes[index].input_tensors[i].source_op:
-                tensor_idx = self.get_tensor_idx(pre_node_name, 
+                tensor_idx = self.get_tensor_idx(pre_node_name,
                                             self._nodes[index].input_tensors[i].name)
                 pre_node_idx = self._node_id[pre_node_name]
                 self._nodes[pre_node_idx].output_tensors[tensor_idx].dest_op.remove(old_name)
@@ -89,7 +89,7 @@ class Graph(object):
         for i in range(len(self._nodes[index].output_tensors)):
             self._nodes[index].output_tensors[i].source_op = [new_name]
             for next_node_name in self._nodes[index].output_tensors[i].dest_op:
-                tensor_idx = self.get_tensor_idx(next_node_name, 
+                tensor_idx = self.get_tensor_idx(next_node_name,
                                 self._nodes[index].output_tensors[i].name, from_output=False)
                 next_node_idx = self._node_id[next_node_name]
                 self._nodes[next_node_idx].input_tensors[tensor_idx].source_op = [new_name]
@@ -313,7 +313,7 @@ class Graph(object):
                         tensor_strides = attrs["strides"]
                     tensor_shape = []
                     if "shape" in attrs.keys():
-                        tensor_shape = attrs["shape"]  
+                        tensor_shape = attrs["shape"]
                     tensor_dtype = 'fp32'
                     if "dtype" in attrs.keys():
                         tensor_dtype = attrs["dtype"]

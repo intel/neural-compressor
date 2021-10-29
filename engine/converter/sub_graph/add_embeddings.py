@@ -30,7 +30,7 @@ class AddEmbeddings(Pattern):
                     'patterns': {
                         'in': [[(0, ['AddV2', 'Add']), (1, ['AddV2', 'Add']), (2, 'LayerNorm'),
                                 (3, 'Reshape')]],
-                        'out': [[(0, 'BinaryAdd'), (1, 'Reshape'), (2, 'Reshape'), 
+                        'out': [[(0, 'BinaryAdd'), (1, 'Reshape'), (2, 'Reshape'),
                                 (3, 'LayerNorm')]]
                     },
                     'search_mode': 'op_type',
@@ -65,12 +65,12 @@ class AddEmbeddings(Pattern):
                     },
                     'returns': [0, 2]
                 },
-                
+
                 # geminet
                 {
                     'patterns': {
                         'in': [[(0, ['AddV2', 'Add']), (1, ['AddV2', 'Add']), (2, 'LayerNorm')]],
-                        'out': [[(0, 'BinaryAdd'), (1, 'Reshape'), (2, 'Reshape'), 
+                        'out': [[(0, 'BinaryAdd'), (1, 'Reshape'), (2, 'Reshape'),
                                 (3, 'LayerNorm')]]
                     },
                     'search_mode': 'op_type',
@@ -92,7 +92,7 @@ class AddEmbeddings(Pattern):
                             'input_data': [0]
                         }], [[1], 2]],
                         2: [[], [[], 1]],
-                        3: [[{2: [1]}, {2: [2]}], 
+                        3: [[{2: [1]}, {2: [2]}],
                             [[1, 2], 3]]
                     },
                     'output_tensors': {
@@ -111,7 +111,7 @@ class AddEmbeddings(Pattern):
                 {
                     'patterns': {
                         'in': [[(0, ['AddV2', 'Add']), (1, 'LayerNorm')]],
-                        'out': [[(0, 'BinaryAdd'), (1, 'Reshape'), (2, 'Reshape'), 
+                        'out': [[(0, 'BinaryAdd'), (1, 'Reshape'), (2, 'Reshape'),
                                 (3, 'LayerNorm')]]
                     },
                     'search_mode': 'op_type',
@@ -124,7 +124,7 @@ class AddEmbeddings(Pattern):
                     'input_tensors': {
                         0: [[{
                             0: [1]
-                        }, 
+                        },
                         {
                             0: [0]
                         }], [[0, 1], 2]],
@@ -132,7 +132,7 @@ class AddEmbeddings(Pattern):
                             'input_data': [0]
                         }], [[1], 2]],
                         2: [[], [[], 1]],
-                        3: [[{1: [1]}, {1: [2]}], 
+                        3: [[{1: [1]}, {1: [2]}],
                             [[1, 2], 3]]
                     },
                     'output_tensors': {
@@ -170,10 +170,11 @@ class AddEmbeddings(Pattern):
 
             ln_node_idx = model.get_node_id(node_names[3])
             model.nodes[ln_node_idx].attr = attr4
-        
+
         for i in range(len(pattern_mapping_config['AddEmbeddings'])):
             pattern_dict = pattern_mapping_config['AddEmbeddings'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("AddEmbeddings", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     add_node = ret_old_nodes[j][0]
@@ -185,7 +186,7 @@ class AddEmbeddings(Pattern):
                     if len(pattern_dict['patterns']['in'][0]) == 2:
                         binary_add_node_idx = model.get_node_id(new_node_names[j][0])
                         model.nodes[binary_add_node_idx].attr = OrderedDict()
-                       
+
                 return model
-        
+
         return model

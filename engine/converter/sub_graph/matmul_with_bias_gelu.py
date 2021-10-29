@@ -67,10 +67,11 @@ class MatMulWithBiasGelu(Pattern):
                 model.nodes[mat_node_idx].attr = attr
 
         pattern_dict = pattern_mapping_config['MatMulWithBiasGelu'][0]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("MatMulWithBiasGelu", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             _set_attr(new_node_names, ret_old_nodes, model)
-            
+
             return model
-        
+
         return model

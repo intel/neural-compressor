@@ -228,4 +228,5 @@ def onnx_extract_operator(node, model, nodes_dict):
 
 ONNX_DTYPE_ID = {1: 'float32',
                 7: 'int32',
-                9: 'bool',}
+                9: 'bool',
+                6: 'int32',}

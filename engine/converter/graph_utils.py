@@ -78,12 +78,12 @@ def get_data_dtype(data):
 
 def search_straight_pattern(input_pattern, graph):
     """search user specified patterns on internal grpah structure.
-    Attention: the input computation chain in the graph which can be called pattern, there must be 
-                straight (or sequence). It means it has not any subgraph nodes. Otherwise this 
+    Attention: the input computation chain in the graph which can be called pattern, there must be
+                straight (or sequence). It means it has not any subgraph nodes. Otherwise this
                 function returns []
     Args:
-        input_pattern (list): Contains the op_type of the nodes in pattern. The element of the 
-        list could be string/list/tuple, string or list means the specified op_type are mandatory 
+        input_pattern (list): Contains the op_type of the nodes in pattern. The element of the
+        list could be string/list/tuple, string or list means the specified op_type are mandatory
         while tuple stands for optional.
         For example, a input pattern mybe like this:
         ['Mul', 'Mul', ['Add', 'AddV2']] it equals to below patterns:
@@ -91,16 +91,16 @@ def search_straight_pattern(input_pattern, graph):
         'Mul' + 'Mul' + 'AddV2'
         graph: Graph Class, the new graph generated from extractor.
     Returns: [string list]. The length is the matched pattern results in the graph, for example,
-            the graph has 24 layers and each layer has a 'LayerNorm' pattern, then the length is 
+            the graph has 24 layers and each layer has a 'LayerNorm' pattern, then the length is
             24. Each match pattern result is still a list contains the node names, and the last
-            element is the op_type list corresponding to the former node names. 
+            element is the op_type list corresponding to the former node names.
             For example, the return result maybe like this:
             [
                 ['Mul' node name,
                 'Mul' node name,
                 'Add' node name,
                 ['Mul', 'Mul', 'Add']],
-                    
+
                 ['Mul' node name,
                 'Mul' node name,
                 'AddV2' node name,
@@ -243,15 +243,15 @@ def search_pattern(pattern_list, graph):
     """Search the complete pattern in the graph.
     Args:
         pattern_list: a list contains  pattern representation. The pattern representation is also
-                      a list and each node in the list is a tuple, its form is like "(op_idx, 
-                      op_type)". However, due to a few complicated patterns, they have sub-graph 
+                      a list and each node in the list is a tuple, its form is like "(op_idx,
+                      op_type)". However, due to a few complicated patterns, they have sub-graph
                       computation flow. Therefore in a pattern representation, using the fist list
                       represents the main top-down computation flow (from pattern head op to tail
                       op), the left lists represent sub-graphs (their tail nodes must in the main
                       computation flow).
                       e.g:  LayerNorm pattern from bert_large_squad.pb
-                      [ [(0, 'Mean'), (1, 'SquaredDifference'), (2, 'Mean'), (3, 'AddV2'), 
-                        (4, 'Rsqrt'), (5, 'Mul'), (7 ,'Mul'), (8, 'Sub'), (9, 'AddV2')], 
+                      [ [(0, 'Mean'), (1, 'SquaredDifference'), (2, 'Mean'), (3, 'AddV2'),
+                        (4, 'Rsqrt'), (5, 'Mul'), (7 ,'Mul'), (8, 'Sub'), (9, 'AddV2')],
                         [(5, 'Mul'), (6, 'Mul'), (9, 'AddV2')] ]
 
         graph: Graph Class, the new graph generated from extractor
@@ -259,35 +259,36 @@ def search_pattern(pattern_list, graph):
     Returns: [string list], as same as search_straight_pattern func.
 
     NOTE:
-        1. The op_idx follows the order in the original frozen model, which means you had better 
+        1. The op_idx follows the order in the original frozen model, which means you had better
            not identify them on your own casually.
-        2. the main top-down computation flow follows the "tf control flow". It's a straight chain 
-           from start to end in the pattern. Mostly, it has the longest path. Sometimes, this main 
-           flow may have sub connection. But you don't need to represent them. A sub-graph must 
-           have one op at least that doesn't exist in the main chain. For example, in the above 
-           LayerNorm pattern, (0, 'Mean') has a connection with (7 ,'Mul'). But you don't need to 
+        2. the main top-down computation flow follows the "tf control flow". It's a straight chain
+           from start to end in the pattern. Mostly, it has the longest path. Sometimes, this main
+           flow may have sub connection. But you don't need to represent them. A sub-graph must
+           have one op at least that doesn't exist in the main chain. For example, in the above
+           LayerNorm pattern, (0, 'Mean') has a connection with (7 ,'Mul'). But you don't need to
            represent this relationship.
-        3. If a node in sub-graph has several input /output paths, you should split them, each 
+        3. If a node in sub-graph has several input /output paths, you should split them, each
            sub-graph has one input /output op. (these ops must be in the pattern).
            For example, the below representtaion should be two sub-graphs:
            Add --- Mul --- Sub
            Add ---^
            [..., [(idx, 'Add'),(idx, 'Mul'),(idx, 'Sub')], [(idx, 'Add'),(id, 'Mul'),
             (idx, 'Sub')], ...]
-        4. If a node in sub-graph has several input ops, some of them are from outside. Then you 
+        4. If a node in sub-graph has several input ops, some of them are from outside. Then you
            don't need to give the sub-graphs with the outside op.
            For example, the below representtaion should be one sub-graph:
            Add     ---   Mul --- Sub
            outside op ---^
            [..., [(idx, 'Add'),(idx, 'Mul'),(idx, 'Sub')], ...]
-        5. If a node in sub-graph just has one input op and this op is from outside, you should 
-           use empty tuple () to represents a input op. However, the algorithm doesn't support 
-           this kind of pattern. Beause the match result can't make sure the whole connection.
-        6. For the symmetric pattern, the sub-graph has consecutive same op type as the main chain 
-           (Y or O shape). So these two search results by DFS are duplicated. The algorithm would 
-           perform checking before splicing and de-duplication. The sub-graph length <= the main 
+        5. If a node in sub-graph just has one input op and this op is from outside, you should
+           use empty tuple () to represents a input op. However, the algorithm doesn't support
+           this kind of pattern completely. Beause the match result can't make sure the whole 
+           connection. So you had better check the results.
+        6. For the symmetric pattern, the sub-graph has consecutive same op type as the main chain
+           (Y or O shape). So these two search results by DFS are duplicated. The algorithm would
+           perform checking before splicing and de-duplication. The sub-graph length <= the main
            chain length.
-        7. Some pattern has several same sub-graphs, these sub-graphs have same tail node and op 
+        7. Some pattern has several same sub-graphs, these sub-graphs have same tail node and op
            types are totally same.
            For example:
             a -- b -- c --d -- e --f
@@ -298,10 +299,10 @@ def search_pattern(pattern_list, graph):
                 |             |
                 c3 -- d3 -----
             So the splicing step need to check the node name
-        For now, the algorithm just support the sub-graph's input /output ops are all in pattern. 
-        You can set the sub-graph input as (), but the results need you to check. Mostly, this 
+        For now, the algorithm just support the sub-graph's input /output ops are all in pattern.
+        You can set the sub-graph input as (), but the results need you to check. Mostly, this
         sub-graph is a part of the pattern.
-        As for pattern match / search, apply dfs to every graph list, then check the sub-graph's 
+        As for pattern match / search, apply dfs to every graph list, then check the sub-graph's
         connection with the main computation flow. The idx would make the returned string list
         with right order.
     """
@@ -563,66 +564,63 @@ def insert_pattern(target_node_names, new_nodes, graph):
     return graph
 
 
-def pattern_mapping(mapping_dict, graph):
+def pattern_mapping(pattern_name, mapping_dict, graph):
     """
     Args:
+        pattern_name:  the name of the customized pattern representation, for example, 'LayerNorm'
         mapping_dict: a element in mapping_config[pattern_name], config for pattern mapping.
         graph: Graph class.
     Returns:
-        tuple, the first element is the new nodes insert start idx, the second element is a new 
-        node list, the third is a list contains required old nodes need to be returned from origin 
+        tuple, the first element is the new nodes insert start idx, the second element is a new
+        node list, the third is a list contains required old nodes need to be returned from origin
         pattern.
 
-    A example of mapping_config:
-    mapping_config: {'pattern_name':[
+    A example of mapping_dict:
+    mapping_dict: 
                    {'patterns': {'in': [(0, 'Reshape), ...], 'out':[(0, 'PaddingSequence')]},
                     'search_mode': op_type
                     'node_names': {0: 'embeddings/reshape', 1: 0, ...},
-                    'input_tensors': {0:[{0:[0]}, [[0], 1]], 1:[{1:[0], 2:[1,2]},[[0,1], 3]], 
+                    'input_tensors': {0:[{0:[0]}, [[0], 1]], 1:[{1:[0], 2:[1,2]},[[0,1], 3]],
                                       2:[{},[[],1]], ..., m:[{'input_data':[1]}, [[0],1]},
                     'output_tensors': {2:[{0:[0]}, [[0],1]], ...},
                     'returns': [0, 1, 2],
-                   },                         # one representation of this pattern
-                   {...},                     # another representation of this pattern
-                    ...
-    ]}
+                    }                        # one representation of this pattern
 
-    'pattern_name': the name of the customized pattern representation, for example, 'LayerNorm'.
-    'patterns': give the pattern representations before ('in') and after ('out') fusion. See the 
+    'patterns': give the pattern representations before ('in') and after ('out') fusion. See the
                 search_pattern() function for more details about pattern representation.
-    'search_mode': 'op_type' or 'node_name'. If set it as op_type, the algorithm will search 
-                in_pattern in graph. If set node_name, means in_pattern is just representing the 
+    'search_mode': 'op_type' or 'node_name'. If set it as op_type, the algorithm will search
+                in_pattern in graph. If set node_name, means in_pattern is just representing the
                 search result. For example:
                 in_pattern is [[(0, 'input_ids'), (1, 'segment_ids'), (2, 'input_mask')]]
                 out_pattern is [[(0, 'Input')]]
-    'node_names': set node name for each node in pattern after fusion. Key means the node idx, 
-                the value must be string or int (idx). If the value is the string, just use it as 
-                the node's name. If the value is the idx, use the name of idx-th node in the 
-                pattern berfore fusion. If the in_pattern has n match_results in the graph, it 
-                will add "_n" after the name, for example, the new node name should be 
+    'node_names': set node name for each node in pattern after fusion. Key means the node idx,
+                the value must be string or int (idx). If the value is the string, just use it as
+                the node's name. If the value is the idx, use the name of idx-th node in the
+                pattern berfore fusion. If the in_pattern has n match_results in the graph, it
+                will add "_n" after the name, for example, the new node name should be
                 "embeddings/reshape_0" after mapping of the first match_result.
-    'input_tensors': the input_tensors of patterns before or after fusion should be same. The key 
-                in the dict is the idx of the new node, and the first dict in the value list means 
-                where this tensor get from the pattern before fusion, and the second means where 
-                this tensor go to the pattern after fusion. For example, in '0:[{0:[0]}, 
+    'input_tensors': the input_tensors of patterns before or after fusion should be same. The key
+                in the dict is the idx of the new node, and the first dict in the value list means
+                where this tensor get from the pattern before fusion, and the second means where
+                this tensor go to the pattern after fusion. For example, in '0:[{0:[0]},
                 [[0], 1]]', '0' in the key means it's the first new node in out_pattern, '{0:[0]}'
-                means the tensor is the first tensor of the first node in in_pattern, '[[0], 1]' 
-                means the first new node's first input_tensor is the tensor and this node has 
-                total 1 input_tensor. So the first element in the value gives the source info of 
-                input_tensors, the second gives the dest info of the input_tensors.However, 
-                sometimes source info has the form like '{1:[0], 2:[1,2]}', the '[1,2]' means the 
-                idx of tensor is not sure, maybe 1 or 2. It will happens to some sepcial op, like 
+                means the tensor is the first tensor of the first node in in_pattern, '[[0], 1]'
+                means the first new node's first input_tensor is the tensor and this node has
+                total 1 input_tensor. So the first element in the value gives the source info of
+                input_tensors, the second gives the dest info of the input_tensors.However,
+                sometimes source info has the form like '{1:[0], 2:[1,2]}', the '[1,2]' means the
+                idx of tensor is not sure, maybe 1 or 2. It will happens to some sepcial op, like
                 'BiasAdd', its 'bias' tensor maybe in unfixed location. If some input_tensors only
-                can get from other node outside the pattern, you can just specify it by give the 
+                can get from other node outside the pattern, you can just specify it by give the
                 node name in graph.
-    'output_tensors': the output_tensors of patterns before or after fusion should be same. The 
+    'output_tensors': the output_tensors of patterns before or after fusion should be same. The
                 representtaion is same meaning of 'input_tensors'.
-    'returns': set the node idx, and return the idx-th node of pattern before fusion. Sometimes 
-                need these nodes for writing node attributes in pattern after fusion. If don't 
+    'returns': set the node idx, and return the idx-th node of pattern before fusion. Sometimes
+                need these nodes for writing node attributes in pattern after fusion. If don't
                 need return, set the value as [].
 
-    Note that the pattern after fusion (n->n / n->1)is must be sequence pattern or just separated 
-    from each other, like [a->b->c->d->e], or [a] / [a,b,c,d,e]. That means if one pattern is too 
+    Note that the pattern after fusion (n->n / n->1)is must be sequence pattern or just separated
+    from each other, like [a->b->c->d->e], or [a] / [a,b,c,d,e]. That means if one pattern is too
     complicated, or the pattern after fusion is too complicated, you had better decompose it.
 
     """
@@ -635,6 +633,18 @@ def pattern_mapping(mapping_dict, graph):
         in_match_result = []
         if search_mode == 'op_type':
             in_match_result = search_pattern(in_pattern, graph)
+            num_match = len(in_match_result)
+
+            # WordEmbeddings and TokenTypeEmbeddings is same in some models. 
+            # Distinguish them by data size
+            if num_match==2 and pattern_name=="WordEmbeddings":
+                if len(in_match_result[0])==5 and in_match_result[0][-1][1]=="Gather":
+                    gather0=graph.get_node_by_name(in_match_result[0][1])
+                    gather1=graph.get_node_by_name(in_match_result[1][1])
+                    if gather0.input_tensors[0].data.size>gather1.input_tensors[0].data.size:
+                        in_match_result=[in_match_result[0]]
+                    else:
+                        in_match_result=[in_match_result[1]]
         else:
             # check whether the nodes exit or not
             nodes_exist = True
@@ -744,7 +754,6 @@ def pattern_mapping(mapping_dict, graph):
         return (in_match_result, new_node_names, input_tensors, output_tensors, ret_old_nodes)
 
     # created the new nodes in out_pattern
-
     def _create_out_pattern(new_node_names, input_tensors_list, output_tensors_list):
         from .ops.tensor import Tensor
         out_pattern = mapping_dict['patterns']['out']
@@ -821,7 +830,7 @@ def pattern_mapping(mapping_dict, graph):
 
         return graph
 
-    # 1. check the format of mapping_dict 
+    # 1. check the format of mapping_dict
     mapping_dict = pattern_mapping_conf_validation(mapping_dict)
     # 2. get the necessary info for out_pattern construction
     in_match_result, new_node_names, input_tensors_list, output_tensors_list, \
@@ -867,7 +876,7 @@ def pattern_mapping_conf_validation(conf_dict):
             error='The in pattern must supply the node index and op_type, and only the head node'\
             'in sub-chain can be empty.'
         ),
-        'out': Schema([[(int, str)]], error='The out pattern must be straight chain.') 
+        'out': Schema([[(int, str)]], error='The out pattern must be straight chain.')
     }),
 
     'search_mode': Or('op_type', 'node_name', error='Only support op_type or node_name these '\

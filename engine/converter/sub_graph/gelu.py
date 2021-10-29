@@ -29,7 +29,7 @@ class Gelu(Pattern):
             'Gelu': [
                 {
                     'patterns': {
-                        'in': [[(0,'Pow'), (1, 'Mul'), (2, 'AddV2'), (3, 'Mul'), (4, 'Tanh'), 
+                        'in': [[(0,'Pow'), (1, 'Mul'), (2, 'AddV2'), (3, 'Mul'), (4, 'Tanh'),
                                 (5, 'AddV2'), (6, 'Mul'), (7, 'Mul')]],
                         'out': [[(0, 'Gelu')]]
                     },
@@ -49,7 +49,7 @@ class Gelu(Pattern):
                     },
                     'returns': []
                 },
-                
+
                 # distilbert_base
                 {
                     'patterns': {
@@ -77,8 +77,9 @@ class Gelu(Pattern):
 
         for i in range(len(pattern_mapping_config['Gelu'])):
             pattern_dict = pattern_mapping_config['Gelu'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("Gelu", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 return model
-       
+
         return model

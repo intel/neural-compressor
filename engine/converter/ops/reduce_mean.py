@@ -17,6 +17,7 @@
 
 from .op import Operator, operator_registry
 from .tensor import Tensor
+from ..graph_utils import list2str
 
 
 # tf.math.reduce_mean(input_tensor, axis=None, keepdims=False, name=None)
@@ -39,3 +40,5 @@ class ReduceMean(Operator):
 
             if len(axis) == 1:
                 self._attr['axis'] = axis[0]
+            else:
+                self._attr['axis'] = list2str(axis)

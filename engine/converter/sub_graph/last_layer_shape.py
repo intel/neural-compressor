@@ -134,7 +134,8 @@ class LastLayerShape(Pattern):
 
         # bert_mlperf
         pattern_dict = pattern_mapping_config['LastLayerShape'][0]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("LastLayerShape", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 mat_node = ret_old_nodes[i][0]
@@ -155,7 +156,8 @@ class LastLayerShape(Pattern):
 
         # bert_base_mrpc
         pattern_dict = pattern_mapping_config['LastLayerShape'][1]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("LastLayerShape", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 pack_node = ret_old_nodes[i][0]
@@ -178,16 +180,17 @@ class LastLayerShape(Pattern):
                 model.nodes[reshape_1_node_idx].attr = attr3
 
             return model
-        
+
         # roberta_base / distil_bert
         pattern_dict = pattern_mapping_config['LastLayerShape'][2]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("LastLayerShape", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 ln_node = ret_old_nodes[i][0]
                 mat_node = ret_old_nodes[i][1]
                 hidden_size = int(ln_node.input_tensors[-1].shape[-1])
-                
+
                 ln_node_idx = model.get_node_id(new_node_names[i][0])
                 model.nodes[ln_node_idx].attr = ln_node.attr
                 reshape_0_node_idx = model.get_node_id(new_node_names[i][1])
@@ -204,5 +207,5 @@ class LastLayerShape(Pattern):
                 model.nodes[mat_node_idx].attr = mat_node.attr
 
             return model
-        
+
         return model

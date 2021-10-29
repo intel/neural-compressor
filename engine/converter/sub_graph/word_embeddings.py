@@ -104,12 +104,12 @@ class WordEmbeddings(Pattern):
                     },
                     'returns': [2]
                 },
-                
-                # geminet
+
+                # geminet / bert_base_sparse
                 {
                     'patterns': {
                         'in': [[(0, 'Input'), (1, 'Gather'), (2, 'Add'), (3, 'Add')]],
-                        'out': [[(0, 'Reshape'), (1, 'Gather'), (2, 'Reshape'), 
+                        'out': [[(0, 'Reshape'), (1, 'Gather'), (2, 'Reshape'),
                                 (3, 'Reshape'), (4, 'Add'), (5, 'Add')]]
                     },
                     'search_mode': 'op_type',
@@ -138,7 +138,7 @@ class WordEmbeddings(Pattern):
                             {2: [0, 1]}],
                         [[1], 2]],
                         5: [[
-                            {3: [0,1]}],
+                            {3: [0, 1]}],
                         [[1], 2]],
                     },
                     'output_tensors': {
@@ -155,12 +155,12 @@ class WordEmbeddings(Pattern):
                     },
                     'returns': [1, 0]
                 },
-                  
+
                 # distil_bert_base
                 {
                     'patterns': {
                         'in': [[(0, 'Input'), (1, 'Gather')]],
-                        'out': [[(0, 'Reshape'), (1, 'Gather'), (2, 'Reshape'), 
+                        'out': [[(0, 'Reshape'), (1, 'Gather'), (2, 'Reshape'),
                                 (3, 'Reshape')]]
                     },
                     'search_mode': 'op_type',
@@ -194,7 +194,7 @@ class WordEmbeddings(Pattern):
                     },
                     'returns': [1, 0]
                 },
-               
+
             ]
         }
 
@@ -226,7 +226,8 @@ class WordEmbeddings(Pattern):
 
         for i in range(len(pattern_mapping_config['WordEmbeddings'])):
             pattern_dict = pattern_mapping_config['WordEmbeddings'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("WordEmbeddings", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     gatherv2_node = ret_old_nodes[j][0]
@@ -237,7 +238,7 @@ class WordEmbeddings(Pattern):
                     if len(ret_old_nodes[j]) == 2:
                         assert ret_old_nodes[j][1].op_type == 'Input'
                         model.insert_nodes(0, [ret_old_nodes[j][1]])
-                
+
                 return model
-        
+
         return model

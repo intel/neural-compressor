@@ -914,7 +914,7 @@ class ONNXRTGLUE(BaseMetric):
     """
     def __init__(self, task='mrpc'):
         assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
-            'mnli', 'wnli'], 'Unsupported task type'
+            'mnli', 'wnli', 'sst-2'], 'Unsupported task type'
         self.pred_list = None
         self.label_list = None
         self.task = task
@@ -926,7 +926,8 @@ class ONNXRTGLUE(BaseMetric):
             "mnli": "mnli/acc",
             "qnli": "acc",
             "rte": "acc",
-            "wnli": "acc"
+            "wnli": "acc",
+            "sst-2": "acc"
         }
 
     def update(self, preds, labels):

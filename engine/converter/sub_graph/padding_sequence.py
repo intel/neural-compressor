@@ -109,7 +109,7 @@ class PaddingSequence(Pattern):
                     },
                     'returns': []
                 },
-                
+
                 # distil_bert_base
                 {
                     'patterns': {
@@ -165,7 +165,8 @@ class PaddingSequence(Pattern):
 
         pattern_dict = pattern_mapping_config['PaddingSequence'][0]
         model = _make_padding_sequence_node(2, 1024, model)
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("PaddingSequence",
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             return model
         else:
@@ -173,23 +174,26 @@ class PaddingSequence(Pattern):
 
         pattern_dict = pattern_mapping_config['PaddingSequence'][1]
         model = _make_padding_sequence_node(2, 768, model)
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("PaddingSequence", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             return model
         else:
             model.remove_nodes(['padding_sequence'])
-        
+
         pattern_dict = pattern_mapping_config['PaddingSequence'][2]
         model = _make_padding_sequence_node(2, 768, model)
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("PaddingSequence", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             return model
         else:
             model.remove_nodes(['padding_sequence'])
-        
+
         pattern_dict = pattern_mapping_config['PaddingSequence'][3]
         model = _make_padding_sequence_node(1, 768, model)
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("PaddingSequence", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             # remove shape+gather in distil_bert_base
             for i in range(len(ret_old_nodes)):
@@ -200,5 +204,5 @@ class PaddingSequence(Pattern):
             return model
         else:
             model.remove_nodes(['padding_sequence'])
-        
+
         return model

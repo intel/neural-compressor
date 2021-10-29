@@ -77,6 +77,37 @@ class QKVReshape(Pattern):
                     'returns': [2]
                 },
 
+                # bert_base_sparse
+                {
+                    'patterns': {
+                        'in': [[(0, 'MatMulWithBias'), (1, 'Shape'), (2, 'Gather'),
+                                (3, 'Unsqueeze'), (7, 'Concat'), (8, 'Reshape')],
+                                [(), (4, 'Shape'), (5, 'Gather'), (6, 'Unsqueeze'),
+                                (7, 'Concat')]],
+                        'out': [[(0, 'MatMulWithBias'), (1, 'Reshape')]]
+                    },
+                    'search_mode': 'op_type',
+                    'node_names': {
+                        0: 0,
+                        1: 8
+                    },
+                    'input_tensors': {
+                        0: [[
+                            {0: [0]}, {0: [1]}, {0: [2]}
+                        ], [[0, 1, 2], 3]],
+                        1: [[
+                            {'input_data': [0]}
+                        ], [[1], 2]],
+                    },
+                    'output_tensors': {
+                        0: [[], [[], 1]],
+                        1: [[{
+                            8: [0]
+                        }], [[0], 1]]
+                    },
+                    'returns': [7, 0]
+                },
+
                 # distil_bert_base
                 {
                     'patterns': {
@@ -139,24 +170,32 @@ class QKVReshape(Pattern):
             attr = OrderedDict()
             attr['dst_shape'] = '-1,-1,' + str(head_num) + ',64'
             attr['dims'] = '0,1'
-            
+
             reshape_node_idx = model.get_node_id(node_names[0])
             model.nodes[reshape_node_idx].attr = attr
 
         for i in range(len(pattern_mapping_config['QKVReshape'])-1):
             pattern_dict = pattern_mapping_config['QKVReshape'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("QKVReshape", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     pack_node = ret_old_nodes[j][0]
                     head_num = int(pack_node.input_tensors[-2].data)
                     _set_attr(head_num, new_node_names[j], model)
-                
+                    if len(ret_old_nodes[j]) == 2:
+                        assert ret_old_nodes[j][1].op_type == 'MatMulWithBias'
+                        mat_node_idx = model.get_node_id(new_node_names[j][0])
+                        model.nodes[mat_node_idx].attr = ret_old_nodes[j][1].attr
+                        reshape_node_idx = model.get_node_id(new_node_names[j][1])
+                        model.nodes[reshape_node_idx].attr = OrderedDict({
+                            'dst_shape': '-1,-1,' + str(head_num) + ',64', 'dims': '0,1'})
                 return model
-        
+
         # special reshape node, like has '0,0,12,64' dst_shape attr
         pattern_dict = pattern_mapping_config['QKVReshape'][-1]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("QKVReshape", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for j in range(len(new_node_names)):
                 reshape_node = ret_old_nodes[j][1]
@@ -171,7 +210,7 @@ class QKVReshape(Pattern):
                         'dst_shape': '-1,-1,'+str(head_num)+',64', 'dims': '0,1'})
                 mat_node_idx = model.get_node_id(new_node_names[j][0])
                 model.nodes[mat_node_idx].attr = ret_old_nodes[j][0].attr
-            
+
             return model
 
         return model

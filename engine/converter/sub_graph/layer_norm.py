@@ -128,11 +128,11 @@ class LayerNorm(Pattern):
                     },
                     'returns': [3]
                 },
-                
+
                 # distil_bert_base
                 {
                     'patterns': {
-                        'in': [[(0, 'ReduceMean'), (1, 'Sub'), (2, 'Pow'), (3, 'ReduceMean'), 
+                        'in': [[(0, 'ReduceMean'), (1, 'Sub'), (2, 'Pow'), (3, 'ReduceMean'),
                                 (4, 'Add'), (5, 'Sqrt'), (6, 'Div'), (7,'Mul'), (8, 'Add')]],
                         'out': [[(0, 'LayerNorm')]]
                     },
@@ -168,28 +168,31 @@ class LayerNorm(Pattern):
 
         # bert_base layer_norm patterns
         pattern_dict = pattern_mapping_config['LayerNorm'][0]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("LayerNorm", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 epsilon = ret_old_nodes[i][0].attr['epsilon']
                 _set_attr(epsilon, new_node_names[i], model)
             pattern_dict = pattern_mapping_config['LayerNorm'][1]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("LayerNorm", 
+                                                                        pattern_dict, model)
             assert len(new_node_names) != 0
             for i in range(len(new_node_names)):
                 epsilon = ret_old_nodes[i][0].attr['epsilon']
                 _set_attr(epsilon, new_node_names[i], model)
 
             return model
-        
+
         for i in range(2, len(pattern_mapping_config['LayerNorm'])):
             pattern_dict = pattern_mapping_config['LayerNorm'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("LayerNorm", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     epsilon = ret_old_nodes[j][0].input_tensors[1].data
                     _set_attr(epsilon, new_node_names[j], model)
-               
+
                 return model
-        
+
         return model

@@ -54,11 +54,11 @@ class PositionEmbeddings(Pattern):
                     },
                     'returns': [3]
                 },
-                
+
                 # distil_bert_base
                 {
                     'patterns': {
-                        'in': [[(0, 'Shape'), (1, 'Gather'), (2, 'Cast'), (3, 'Range'), 
+                        'in': [[(0, 'Shape'), (1, 'Gather'), (2, 'Cast'), (3, 'Range'),
                                 (4, 'Unsqueeze'), (6, 'Expand'), (7, 'Gather')],
                                 [(), (5, 'Shape'), (6, 'Expand')]],
                         'out': [[(0, 'Reshape'), (1, 'Reshape')]]
@@ -89,10 +89,10 @@ class PositionEmbeddings(Pattern):
                 {
                     'patterns': {
                         'in': [[(0, 'Shape'), (1, 'Gather'), (2, 'Unsqueeze'),
-                                (9, 'ConstantOfShape'), (10, 'NonZero'), (11, 'Transpose'), 
-                                (12, 'Squeeze'), (13, 'Unsqueeze'), (14, 'Expand'), 
-                                (15, 'Gather')], 
-                                [(0, 'Shape'), (3, 'Gather'), (4, 'Unsqueeze'), (5, 'Concat'), 
+                                (9, 'ConstantOfShape'), (10, 'NonZero'), (11, 'Transpose'),
+                                (12, 'Squeeze'), (13, 'Unsqueeze'), (14, 'Expand'),
+                                (15, 'Gather')],
+                                [(0, 'Shape'), (3, 'Gather'), (4, 'Unsqueeze'), (5, 'Concat'),
                                 (6, 'Reshape'), (7, 'Equal'), (8, 'Where'), (14, 'Expand')]],
                         'out': [[(0, 'Reshape'), (1, 'Reshape')]]
                     },
@@ -116,6 +116,35 @@ class PositionEmbeddings(Pattern):
                         }], [[0], 1]]
                     },
                     'returns': [15]
+                },
+
+                # bert_base_sparse
+                {
+                    'patterns': {
+                        'in': [[(0, 'Shape'), (1, 'Gather'), (2, 'Add'), (3, 'Unsqueeze'),
+                                (4, 'Slice'), (5, 'Gather')]],
+                        'out': [[(0, 'Reshape'), (1, 'Reshape')]]
+                    },
+                    'search_mode': 'op_type',
+                    'node_names': {
+                        0: 'position_embeddings/after/reshape',
+                        1: 5
+                    },
+                    'input_tensors': {
+                        0: [[{
+                            5: [0]
+                        }, {
+                            'input_data': [0]
+                        }], [[0, 1], 2]],
+                        1: [[], [[], 1]]
+                    },
+                    'output_tensors': {
+                        0: [[], [[], 1]],
+                        1: [[{
+                            5: [0]
+                        }], [[0], 1]]
+                    },
+                    'returns': [5]
                 },
 
                 # bert_base_mrpc
@@ -154,7 +183,7 @@ class PositionEmbeddings(Pattern):
             attr1['dims'] = 1
             attr2 = OrderedDict()
             attr2['dst_shape'] = '1,-1'
-           
+
             reshape_0_node_idx = model.get_node_id(node_names[0])
             model.nodes[reshape_0_node_idx].attr = attr1
 
@@ -166,21 +195,23 @@ class PositionEmbeddings(Pattern):
             for ret in rm_rets:
                 model.remove_nodes(ret[:-1])
             return model
-        
+
         for i in range(0, len(pattern_mapping_config['PositionEmbeddings'])-1):
             pattern_dict = pattern_mapping_config['PositionEmbeddings'][i]
-            model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+            model, new_node_names, ret_old_nodes = util.pattern_mapping("PositionEmbeddings", 
+                                                                        pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     slice_node = ret_old_nodes[j][0]
                     hidden_size = int(slice_node.input_tensors[0].shape[-1])
                     _set_attr(hidden_size, new_node_names[j], model)
-                
+
                 return model
-        
+
         # bert_base_mrpc
         pattern_dict = pattern_mapping_config['PositionEmbeddings'][-1]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("PositionEmbeddings", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 slice_node = ret_old_nodes[i][0]
@@ -190,5 +221,5 @@ class PositionEmbeddings(Pattern):
             model = _remove_assert(p, model)
 
             return model
-        
+
         return model

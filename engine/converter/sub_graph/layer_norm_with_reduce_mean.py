@@ -74,7 +74,7 @@ class LayerNormWithReduceMean(Pattern):
             attr2['dims'] = '0,1'
             attr3 = reduce_mean_attr
             attr4 = OrderedDict()
-            attr4['dst_shape'] = '-1,' + str(hidden_size) 
+            attr4['dst_shape'] = '-1,' + str(hidden_size)
 
             ln_node_idx = model.get_node_id(node_names[0])
             model.nodes[ln_node_idx].attr = attr1
@@ -90,7 +90,8 @@ class LayerNormWithReduceMean(Pattern):
 
 
         pattern_dict = pattern_mapping_config['LayerNormWithReduceMean'][0]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("LayerNormWithReduceMean", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for j in range(len(new_node_names)):
                 ln_node = ret_old_nodes[j][0]
@@ -98,7 +99,7 @@ class LayerNormWithReduceMean(Pattern):
                 hidden_size = int(ln_node.input_tensors[-1].shape[-1])
                 epsilon = ln_node.attr['epsilon']
                 _set_attr(hidden_size, epsilon, reduce_mean_node.attr, new_node_names[j], model)
-            
+
             return model
-    
+
         return model

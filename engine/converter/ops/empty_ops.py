@@ -336,3 +336,18 @@ class Matmul(Operator):
 class Quantize(Operator):
     def __init__(self):
         super().__init__()
+
+@operator_registry(operator_type='Not')
+class Not(Operator):
+    def __init__(self):
+        super().__init__()
+
+@operator_registry(operator_type='CumSum')
+class CumSum(Operator):
+    def __init__(self):
+        super().__init__()
+
+@operator_registry(operator_type='Onehot')
+class Onehot(Operator):
+    def __init__(self):
+        super().__init__()

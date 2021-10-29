@@ -158,6 +158,57 @@ class TokenTypeEmbeddings(Pattern):
                     },
                     'returns': [0, 1, 3]
                 },
+
+                # bert_base_sparse
+                {
+                    'patterns': {
+                        'in': [[(0, 'Input'), (1, 'Gather'), (2, 'Add'), (3, 'Add')]],
+                        'out': [[(0, 'Reshape'), (1, 'Gather'), (2, 'Reshape'),
+                                (3, 'Reshape'), (4, 'Add'), (5, 'Add')]]
+                    },
+                    'search_mode': 'op_type',
+                    'node_names': {
+                        0: 'token_type_embeddings/reshape',
+                        1: 1,
+                        2: 'token_type_embeddings/after/reshape',
+                        3: 'token_type_embeddings/add_reshape',
+                        4: 2,
+                        5: 3,
+                    },
+                    'input_tensors': {
+                        0: [[{
+                            'input_data': [1]
+                        }], [[0], 1]],
+                        1: [[{
+                            1: [0]
+                        }], [[1], 2]],
+                        2: [[{
+                            'input_data': [1]
+                        }], [[1], 2]],
+                        3: [[{
+                            'input_data': [1]
+                        }], [[1], 2]],
+                        4: [[
+                            {2: [0, 1]}],
+                        [[0], 2]],
+                        5: [[
+                            {3: [0, 1]}],
+                        [[1], 2]],
+                    },
+                    'output_tensors': {
+                        0: [[], [[], 1]],
+                        1: [[], [[], 1]],
+                        2: [[], [[], 1]],
+                        3: [[], [[], 1]],
+                        4: [[{
+                            2: [0]
+                        }], [[0], 1]],
+                        5: [[{
+                            3: [0]
+                        }], [[0], 1]],
+                    },
+                    'returns': [1, 0]
+                },
             ]
         }
 
@@ -174,7 +225,7 @@ class TokenTypeEmbeddings(Pattern):
             attr4['dst_shape'] = '-1,-1,' + str(hidden_size)
             attr4['dims'] = '0,1'
             attr4['mul'] = '1,2'
-            
+
             reshape_0_node_idx = model.get_node_id(node_names[0])
             model.nodes[reshape_0_node_idx].attr = attr1
 
@@ -188,7 +239,8 @@ class TokenTypeEmbeddings(Pattern):
             model.nodes[reshape_2_node_idx].attr = attr4
 
         pattern_dict = pattern_mapping_config['TokenTypeEmbeddings'][0]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("TokenTypeEmbeddings", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 gatherv2_node = ret_old_nodes[i][0]
@@ -229,7 +281,8 @@ class TokenTypeEmbeddings(Pattern):
 
         # bert_base onehot+matmul embeddings
         pattern_dict = pattern_mapping_config['TokenTypeEmbeddings'][1]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("TokenTypeEmbeddings", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 onehot_node = ret_old_nodes[i][0]
@@ -249,10 +302,11 @@ class TokenTypeEmbeddings(Pattern):
                                       model)
 
             return model
-        
+
         # geminet
         pattern_dict = pattern_mapping_config['TokenTypeEmbeddings'][2]
-        model, new_node_names, ret_old_nodes = util.pattern_mapping(pattern_dict, model)
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("TokenTypeEmbeddings", 
+                                                                    pattern_dict, model)
         if len(new_node_names) != 0:
             for i in range(len(new_node_names)):
                 gatherv2_node = ret_old_nodes[i][1]
@@ -265,7 +319,23 @@ class TokenTypeEmbeddings(Pattern):
                 ln_1_node_idx = model.get_node_id(new_node_names[i][5])
                 model.nodes[ln_1_node_idx].attr = ln_node.attr
                 model.insert_nodes(0, [ret_old_nodes[i][0]])
-                                
+
             return model
-        
+
+        # bert_base_sparse
+        pattern_dict = pattern_mapping_config['TokenTypeEmbeddings'][3]
+        model, new_node_names, ret_old_nodes = util.pattern_mapping("TokenTypeEmbeddings",
+                                                                    pattern_dict, model)
+        if len(new_node_names) != 0:
+            for i in range(len(new_node_names)):
+                gatherv2_node = ret_old_nodes[i][0]
+                hidden_size = int(gatherv2_node.input_tensors[0].shape[-1])
+                axis = gatherv2_node.attr['axis']
+                batch_dims = gatherv2_node.attr['batch_dims']
+                _set_attr_with_gather(hidden_size, axis, batch_dims, new_node_names[i], model)
+                if len(ret_old_nodes[i]) == 2:
+                    assert ret_old_nodes[i][1].op_type == 'Input'
+                    model.insert_nodes(0, [ret_old_nodes[i][1]])
+            return model
+
         return model
