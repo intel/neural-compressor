@@ -24,6 +24,7 @@ from flask import Request as WebRequest
 from flask import jsonify, request
 from flask_cors import CORS
 from flask_socketio import SocketIO
+from werkzeug.serving import make_ssl_devcert
 from werkzeug.wrappers import Response as WebResponse
 
 from neural_compressor.ux.utils.exceptions import InternalException
@@ -60,8 +61,31 @@ def run_server(configuration: Configuration) -> None:
         cors_allowed_origins=cors_allowed_origins,
         max_http_buffer_size=2000,
     )
+    tls_args = get_tls_args(configuration)
 
-    socketio.run(app, host=addr, port=server_port)
+    socketio.run(app, host=addr, port=server_port, **tls_args)
+
+
+def get_tls_args(configuration: Configuration) -> dict:
+    """Get TLS configuration."""
+    if configuration.allow_insecure_connections:
+        return {}
+
+    if configuration.tls_certificate and configuration.tls_key:
+        certfile = configuration.tls_certificate
+        keyfile = configuration.tls_key
+    else:
+        base_path = os.path.join(configuration.global_config_directory, "certificate")
+        certfile = f"{base_path}.crt"
+        keyfile = f"{base_path}.key"
+        if not os.path.isfile(certfile) or not os.path.isfile(keyfile):
+            certfile, keyfile = make_ssl_devcert(base_path)
+
+    return {
+        "certfile": certfile,
+        "keyfile": keyfile,
+        "do_handshake_on_connect": False,
+    }
 
 
 @app.after_request

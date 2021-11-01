@@ -20,5 +20,5 @@ import gevent.monkey
 gevent.monkey.patch_all()
 
 if __name__ == '__main__':
-    from neural_compressor.ux.neural_compressor_bench import main
+    from neural_compressor.ux.inc_bench import main
     main()

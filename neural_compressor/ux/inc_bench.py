@@ -42,13 +42,16 @@ def main() -> None:
     prepare_environment()
 
     change_log_level(configuration.log_level)
-    print(
-        "Intel(r) Neural Compressor Bench Server started.\n"
-        "Setup port forwarding from "
-        f"your local port {configuration.gui_port} to "
-        f"{configuration.server_port} on this machine.\n"
-        f"Then open address {configuration.get_url()}",
-    )
+
+    print("Intel(r) Neural Compressor Bench Server started.\n")
+
+    if configuration.allow_insecure_connections:
+        print(
+            "Running in insecure mode.\n"
+            "Everyone in your network may attempt to access this server.\n",
+        )
+
+    print(f"Open address {configuration.get_url()}")
 
     run_server(configuration)
 

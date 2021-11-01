@@ -9,7 +9,7 @@ build:
   number: {{buildnumber}}
   script: pip install --no-deps {{NC_WHL}}
   entry_points:
-    - neural_compressor_bench = neural_compressor.ux.neural_compressor_bench:main
+    - inc_bench = neural_compressor.ux.inc_bench:main
 requirements:
   build:
     - python
@@ -36,6 +36,7 @@ requirements:
     - requests
     - sigopt
     - prettytable
+    - cryptography
 test:
   imports:
     - neural_compressor

@@ -27,6 +27,7 @@ from numpy.random import randint
 
 from neural_compressor.utils.utility import singleton
 from neural_compressor.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.utils.utils import determine_ip
 
 
 @singleton
@@ -45,6 +46,9 @@ class Configuration:
         self.token = ""
         self.scheme = ""
         self.workdir = ""
+        self.allow_insecure_connections = False
+        self.tls_certificate = ""
+        self.tls_key = ""
         self.set_up()
 
     def set_up(self) -> None:
@@ -54,20 +58,30 @@ class Configuration:
 
     def determine_values_from_environment(self) -> None:
         """Set variables based on environment values."""
-        self.server_address = "localhost"
         args = self.get_command_line_args()
+        self.server_address = determine_ip()
         self.server_port = self.determine_server_port(args)
         self.gui_port = self.determine_gui_port(args)
         self.log_level = self.determine_log_level(args)
         self.token = secrets.token_hex(16)
-        self.scheme = "http"
+        self.allow_insecure_connections = args.get("allow_insecure_connections", False)
+        self.tls_certificate = args.get("cert", "")
+        self.tls_key = args.get("key", "")
+        self.scheme = "http" if self.allow_insecure_connections else "https"
         self.workdir = os.path.join(os.environ.get("HOME", ""), "workdir")
+
+    @property
+    def global_config_directory(self) -> str:
+        """Get the directory for global config files."""
+        return os.path.join(
+            os.environ.get("HOME", ""),
+            ".neural_compressor",
+        )
 
     def determine_values_from_existing_config(self) -> None:
         """Set variables based on existing files."""
         workloads_list_filepath = os.path.join(
-            os.environ.get("HOME", ""),
-            ".neural_compressor",
+            self.global_config_directory,
             "workloads_list.json",
         )
         if os.path.isfile(workloads_list_filepath):
@@ -88,9 +102,26 @@ class Configuration:
         )
         parser.add_argument(
             "-P",
-            "--gui_port",
+            "--gui-port",
             type=int,
             help="port number for GUI",
+        )
+        parser.add_argument(
+            "--allow-insecure-connections",
+            action="store_true",
+            help="run server without encryption",
+        )
+        parser.add_argument(
+            "--cert",
+            type=str,
+            default="",
+            help="TLS Certificate to use",
+        )
+        parser.add_argument(
+            "--key",
+            type=str,
+            default="",
+            help="TLS private key to use",
         )
         parser.add_argument(
             "--verbose",

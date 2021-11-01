@@ -6,27 +6,50 @@ Intel® Neural Compressor Bench is a web application for easier use of Intel® N
 # Introduction
 ## Start the Intel® Neural Compressor Bench
 
-1. Start the Intel® Neural Compressor Bench server:
+To start the Intel® Neural Compressor Bench server execute `inc_bench` command:
 
-   ```shell
-   neural_compressor_bench
-   ```
-   > **Note**: TF 2.5.0 requires setting environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 for INT8 quantization:
+```shell
+inc_bench
+```
+The server generates a self-signed TLS certificate and prints instruction how to access the Web UI.
+
+```text
+Intel(r) Neural Compressor Bench Server started.
+
+Open address https://10.11.12.13:5000/?token=338174d13706855fc6924cec7b3a8ae8
+```
+
+Server generated certificate is not trusted by your web browser, you will need to accept usage of such certificate.
+
+
+You might also use additional parameters and settings:
+* Intel® Neural Compressor Bench listens on port 5000.
+Make sure that port 5000 is accessible to your browser (you might need to open it in your firewall),
+or specify different port that is already opened, for example 8080:
     ```shell
-    TF_ENABLE_MKL_NATIVE_FORMAT=0 neural_compressor_bench
+    inc_bench -p 8080
     ```
 
-2. The server prints information on how to access the Web UI.
+* When using TF 2.5.0, set environment variable `TF_ENABLE_MKL_NATIVE_FORMAT=0` for INT8 tuning:
+    ```shell
+    TF_ENABLE_MKL_NATIVE_FORMAT=0 inc_bench
+    ```
 
-   An example message looks like this: 
+* To start the Intel® Neural Compressor Bench server with your own TLS certificate add `--cert` and `--key` parameters:
 
-   ```text
-   Intel(r) Neural Compressor Bench Server started.
-   Setup port forwarding from your local port 5000 to 5000 on this machine.
-   Then open address http://localhost:5000/?token=338174d13706855fc6924cec7b3a8ae8
-   ```
+    ```shell
+    inc_bench --cert path_to_cert.crt --key path_to_private_key.key
+    ```
 
-   Make certain that requested port forwarding is set up (depending on your OS) and then open the address in your web browser.
+* To start the Intel® Neural Compressor Bench server without TLS encryption use `--allow-insecure-connections` parameter:
+
+    ```shell
+    inc_bench --allow-insecure-connections
+    ```
+
+    This enables access to the server from any machine in your local network (or the whole Internet if your server is exposed to it).
+
+    You are forfeiting security, confidentiality and integrity of all client-server communication. Your server is exposed to external threats.
 
 ## Home
 This view shows introduction to Intel® Neural Compressor Bench and 2 buttons for creating new configurations in 2 different ways. First one links to **Quantize from presets** where you can find examples of models to chose from, the second one to **Quantize using wizard** where you can your custom models with many configurable parameters.
@@ -56,7 +79,7 @@ Follow [instructions](../examples/tensorflow/object_detection/README.md) to get 
 ## Description
 ### Basic parameters
 
-1. Enter information in all required fields (marked by a *) in the Wizard: 
+1. Enter information in all required fields (marked by a *) in the Wizard:
 
 ![Wizard1](imgs/bench/wizard1.png "Wizard1")
 ![Wizard2](imgs/bench/wizard2.png "Wizard2")
@@ -68,7 +91,7 @@ Follow [instructions](../examples/tensorflow/object_detection/README.md) to get 
 ### ResNet50 v1.5
 * Follow [instructions](../examples/tensorflow/image_recognition/README.md) to:
    * install Intel Tensorflow 1.15 up2
-   * prepare dataset and a frozen pb model 
+   * prepare dataset and a frozen pb model
 * In the **Create low precision model** in first step:
    * select created frozen model
    * inputs, outputs and model domain will be selected automatically
@@ -83,7 +106,7 @@ Follow [instructions](../examples/tensorflow/object_detection/README.md) to get 
 ### SSD-ResNet34
 * Follow [instructions](../examples/tensorflow/object_detection/README.md) to:
    * install Intel Tensorflow 1.15 up2
-   * prepare dataset and a frozen pb model 
+   * prepare dataset and a frozen pb model
 * In the **Create low precision model** in first step:
    * select created frozen model
    * inputs, outputs and model domain will be selected automatically
@@ -98,7 +121,7 @@ Follow [instructions](../examples/tensorflow/object_detection/README.md) to get 
 ### BERT
 * Follow [instructions](../examples/tensorflow/nlp/bert_large_squad/README.md) to:
    * install Intel Tensorflow 1.15 up2
-   * prepare dataset and a frozen pb model 
+   * prepare dataset and a frozen pb model
 * In the **Create low precision model** in first step:
    * select created frozen model
    * select `input_file`, `batch_size` in inputs (in that order)
@@ -116,7 +139,7 @@ Follow [instructions](../examples/tensorflow/object_detection/README.md) to get 
 
 ### Advanced parameters
 
-From the advanced parameters page, you can configure more features such as tuning, quantization, and benchmarking. 
+From the advanced parameters page, you can configure more features such as tuning, quantization, and benchmarking.
 
 ![Wizard advanced](imgs/bench/wizard_advanced.png "Wizard advanced")
 
@@ -133,13 +156,13 @@ On the left hand side there is a panel with list of configurations.
 
 One can see system information by clicking ![System info](imgs/bench/system_info.png "System info") button. The result is details dialog:
 
-![System info table](imgs/bench/system_info_table.png "System info table") 
+![System info table](imgs/bench/system_info_table.png "System info table")
 
 By clicking ![See models](imgs/bench/see_models.png "See models")  button you can navigate to **My models list**.
 
 ## My Models list
 
-This view lists all Model Configurations defined on a given server. 
+This view lists all Model Configurations defined on a given server.
 
 You can create a new model using pre-defined models by using a New Model Wizard or **Examples**:
 
@@ -163,7 +186,7 @@ Now that you have created a Model Configuration, you can do the following:
   * When the tuning is finished, you will see accuracy results in the **My Models** list:
       - The **Accuracy** section displays comparisons in accuracy metrics between the original and tuned models.
       - **Model size** compares the sizes of both models.
-      - When automatic benchmarking is finished, **Throughput** shows the performance gain from tuning. 
+      - When automatic benchmarking is finished, **Throughput** shows the performance gain from tuning.
 
 ### Tuning history
 
@@ -175,3 +198,15 @@ For Tensorflow frozen pb models there will be a new button available ![Show grap
 Click it to display graph of selected model:
 
 ![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
+
+## Security
+Intel® Neural Compressor Bench uses encrypted connections to ensure security, confidentiality and integrity of all client-server communication.
+
+You can use automatically generated self-signed certificate or provide your own trusted certificate.
+
+You can also choose to start the server without encryption exposing it to threats from network.
+
+Intel® Neural Compressor Bench uses external packages to run the web-server and provide encryption. Please report any security issues to correct organizations:
+- [Cryptography module](https://cryptography.io/en/latest/security/)
+- [Flask](https://flask.palletsprojects.com/en/2.0.x/contributing/#reporting-issues)
+- [Flask-SocketIO](https://github.com/miguelgrinberg/Flask-SocketIO/blob/main/SECURITY.md)

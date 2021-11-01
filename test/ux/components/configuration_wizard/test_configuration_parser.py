@@ -25,7 +25,7 @@ from neural_compressor.ux.components.configuration_wizard.configuration_parser i
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 
 
-@patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
+@patch("sys.argv", ["inc_bench.py", "-p5000"])
 class TestParser(unittest.TestCase):
     """Main test class for parser."""
 

@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 from neural_compressor.ux.components.model_zoo.download_config import download_config
 
 
-@patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
+@patch("sys.argv", ["inc_bench.py", "-p5000"])
 class TestDownloadConfig(unittest.TestCase):
     """DownloadConfig tests."""
 

@@ -45,7 +45,7 @@ class Workdir:
         """Initialize workdir class."""
         configuration = Configuration()
         workspace_path = configuration.workdir
-        self.workdir_path = os.path.join(os.environ.get("HOME", ""), ".neural_compressor")
+        self.workdir_path = configuration.global_config_directory
         self.ensure_working_path_exists()
         self.workloads_json = os.path.join(self.workdir_path, "workloads_list.json")
         self.request_id = request_id

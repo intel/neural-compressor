@@ -21,7 +21,7 @@ from neural_compressor.ux.components.optimization.tuning_history import tuning_h
 from neural_compressor.ux.utils.exceptions import NotFoundException
 
 
-@patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
+@patch("sys.argv", ["inc_bench.py", "-p5000"])
 class TestTuningHistory(unittest.TestCase):
     """Test Tuning History."""
 

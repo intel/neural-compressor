@@ -23,7 +23,7 @@ from neural_compressor.ux.utils.exceptions import ClientErrorException
 
 
 @patch.dict(os.environ, {"HOME": "/foo/bar"})
-@patch("sys.argv", ["neural_compressor_bench.py", "-p5000"])
+@patch("sys.argv", ["inc_bench.py", "-p5000"])
 class TestParamsFeeder(unittest.TestCase):
     """Main test class for params feeder."""
 
