@@ -18,8 +18,7 @@
 import copy
 from .component import Component
 from ..utils import logger
-from ..utils.create_obj_from_config import create_dataloader, \
-    create_train_func_for_distillation, create_eval_func
+from ..utils.create_obj_from_config import create_dataloader, create_eval_func, create_train_func
 from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
@@ -51,6 +50,7 @@ class Distillation(Component):
         self.eval_frequency = 1
         self.best_score = 0
         self.best_model = None
+        self._train_cfg = None
 
     def _pre_epoch_begin(self):
         """ called before training """
@@ -122,15 +122,15 @@ class Distillation(Component):
 
         if self._train_func is None:
             # train section of distillation section in yaml file should be configured.
-            train_cfg = self.cfg.distillation.train
-            assert train_cfg, "train field of distillation section in yaml file must " \
+            self._train_cfg = self.cfg.distillation.train
+            assert self._train_cfg, "train field of distillation section in yaml file must " \
                               "be configured for distillation if train_func is NOT set."
                 
             if self.criterion is None:
-                assert 'criterion' in train_cfg.keys(), \
+                assert 'criterion' in self._train_cfg.keys(), \
                     "criterion part in train field of distillation section in yaml file " \
                     "must be configured for distillation if criterion is NOT set."
-                criterion_cfg = train_cfg.criterion
+                criterion_cfg = self._train_cfg.criterion
                 assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
                     "criterion part, instead got {} loss.".format(len(criterion_cfg))
                 loss = list(criterion_cfg.keys())[0]
@@ -143,10 +143,10 @@ class Distillation(Component):
                                "ignoring the criterion setting in yaml file.")
 
             if self.optimizer is None:
-                assert 'optimizer' in train_cfg.keys(), \
+                assert 'optimizer' in self._train_cfg.keys(), \
                     "optimizer part in train field of distillation section in yaml file " \
                     "must be configured for distillation if optimizer is NOT set."
-                optimizer_cfg = train_cfg.optimizer
+                optimizer_cfg = self._train_cfg.optimizer
                 assert len(optimizer_cfg) == 1, "There must be exactly one optimizer in " \
                     "optimizer part, instead got {} optimizer.".format(len(optimizer_cfg))
                 optimizer_name = list(optimizer_cfg.keys())[0]
@@ -161,13 +161,13 @@ class Distillation(Component):
 
             assert self.teacher_model, "teacher_model must be set."
             self.criterion.teacher_model = self.teacher_model.model
-            train_cfg.criterion = self.criterion
-            train_cfg.optimizer = self.optimizer
+            self._train_cfg.criterion = self.criterion
+            self._train_cfg.optimizer = self.optimizer
 
-            self._train_func = create_train_func_for_distillation(self.framework, \
+            self._train_func = create_train_func(self.framework, \
                                                                   self.train_dataloader, \
                                                                   self.adaptor, \
-                                                                  train_cfg, \
+                                                                  self._train_cfg, \
                                                                   hooks=self.hooks)
         if self._eval_func is None:
             # eval section in yaml file should be configured.
@@ -311,6 +311,11 @@ class Distillation(Component):
             self._model = Model(user_model)
         else:
             self._model = user_model
+
+    @property
+    def train_cfg(self):
+        """ Getter of model in neural_compressor.model  """
+        return self._train_cfg
 
     def __repr__(self):
         return 'Distillation'

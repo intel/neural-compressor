@@ -27,6 +27,7 @@ from ..strategy import STRATEGIES
 
 from .quantization import Quantization
 from .pruning import Pruning
+from .distillation import Distillation
 from .model_conversion import ModelConversion
 from .graph_optimization import Graph_Optimization
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
@@ -175,7 +176,7 @@ class Scheduler(object):
         return new_component
 
     def _combination_sanity_check(self, *args):
-        TEMP_SUPPORTED_COMPONENTS = ['Quantization', 'Pruning']
+        TEMP_SUPPORTED_COMPONENTS = ['Quantization', 'Pruning', 'Distillation']
         checked_components = []
         for component in args:
             component_class = component.__class__.__name__
@@ -203,6 +204,11 @@ class Scheduler(object):
         eval_cfg = DotDict()
         tuning_cfg = DotDict()
         model_cfg = DotDict()
+        has_distillation = False
+        for combine_component in args:
+            if isinstance(combine_component, Distillation):
+                has_distillation = True
+
         for combine_component in args:
             # check if config is valid
             assert combine_component.framework == framework, "Combined components should have " \
@@ -219,18 +225,16 @@ class Scheduler(object):
                                     None)
             assert combine_component is not None, "Please ensure field {} is configured " \
                     "in input yaml".format(component_name)
+
             # in case of key train/evaluation not exist, return an empty DotDict
             component_train_cfg = component_cfg.get('train', DotDict())
+
             # TODO: Assumption here: train phase is defined inside component yaml field.
             # But eval is defined at root yaml field.
             component_eval_cfg = combine_component.cfg.get('evaluation', DotDict())
             component_tuning_cfg = combine_component.cfg.get('tuning', DotDict())
             component_model_cfg = combine_component.cfg.get('model', DotDict())
 
-            self._sync_config(train_cfg, component_train_cfg)
-            self._sync_config(eval_cfg, component_eval_cfg)
-            self._sync_config(tuning_cfg, component_tuning_cfg)
-            self._sync_config(model_cfg, component_model_cfg)
             combine_component._model = self._model
             if component_eval_cfg and component_train_cfg:
                 # create attributes if eval and train are defined in component config
@@ -239,6 +243,21 @@ class Scheduler(object):
                 # if no eval/train configuration. Make minimal initialization
                 combine_component.generate_hooks()
                 combine_component.generate_pruners()
+
+            # If distillation is combined, set training configs
+            if has_distillation:
+                if isinstance(combine_component, Distillation):  
+                    component_train_cfg.criterion = combine_component.train_cfg.criterion
+                    component_train_cfg.optimizer = combine_component.train_cfg.optimizer
+                    self._sync_config(train_cfg, component_train_cfg) 
+                # Only sync train_cfg of distillation because criterion should include only one element
+                else:
+                    component_train_cfg = DotDict()
+
+            self._sync_config(train_cfg, component_train_cfg)
+            self._sync_config(eval_cfg, component_eval_cfg)
+            self._sync_config(tuning_cfg, component_tuning_cfg)
+            self._sync_config(model_cfg, component_model_cfg)
 
             # sync hooks
             if combine_component.hooks is None:

@@ -81,7 +81,7 @@ class TestDistillation(unittest.TestCase):
     def test_pruning_external(self):
         import tensorflow as tf
         from neural_compressor.experimental import Distillation
-        from neural_compressor.utils.create_obj_from_config import create_train_func_for_distillation
+        from neural_compressor.utils.create_obj_from_config import create_train_func
         from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss, \
             TensorflowKnowledgeDistillationLoss
         distiller = Distillation('fake.yaml')
@@ -129,7 +129,7 @@ class TestDistillation(unittest.TestCase):
         distiller.eval_dataloader = dummy_dataloader
         distiller.train_dataloader = dummy_dataloader
         _ = distiller()
-        distiller.train_func = create_train_func_for_distillation(
+        distiller.train_func = create_train_func(
                                                 distiller.framework, \
                                                 distiller.train_dataloader, \
                                                 distiller.adaptor, \

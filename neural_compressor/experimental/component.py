@@ -363,3 +363,4 @@ class Component(object):
             self._model.output_tensor_names = self.cfg.model.outputs
             self._model.input_tensor_names = self.cfg.model.inputs
             self._model.workspace_path = self.cfg.tuning.workspace.path
+            

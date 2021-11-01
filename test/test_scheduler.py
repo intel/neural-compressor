@@ -247,10 +247,54 @@ def build_fake_yaml5():
     with open('fake5.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_fake_yaml6():
+    fake_yaml = """
+    model:
+        name: imagenet_distillation
+        framework: pytorch
+
+    distillation:
+        train:
+            start_epoch: 0
+            end_epoch: 4
+            iteration: 10
+            frequency: 1
+            optimizer:
+                SGD:
+                    learning_rate: 0.001
+                    momentum: 0.1
+                    nesterov: True
+                    weight_decay: 0.001
+            criterion:
+                KnowledgeDistillationLoss:
+                    temperature: 1.0
+                    loss_types: ['CE', 'KL']
+                    loss_weights: [0.5, 0.5]
+            dataloader:
+                batch_size: 30
+                dataset:
+                    dummy:
+                        shape: [128, 3, 224, 224]
+                        label: True
+    evaluation:
+        accuracy:
+            metric:
+                topk: 1
+            dataloader:
+                batch_size: 30
+                dataset:
+                    dummy:
+                        shape: [128, 3, 224, 224]
+                        label: True
+    """
+    with open('fake6.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
+
 class TestPruning(unittest.TestCase):
 
     model = torchvision.models.resnet18()
     q_model = torchvision.models.quantization.resnet18()
+    q_model_teacher = torchvision.models.quantization.resnet50()
 
     @classmethod
     def setUpClass(cls):
@@ -259,6 +303,7 @@ class TestPruning(unittest.TestCase):
         build_fake_yaml3()
         build_fake_yaml4()
         build_fake_yaml5()
+        build_fake_yaml6()
 
     @classmethod
     def tearDownClass(cls):
@@ -267,6 +312,7 @@ class TestPruning(unittest.TestCase):
         os.remove('fake3.yaml')
         os.remove('fake4.yaml')
         os.remove('fake5.yaml')
+        os.remove('fake6.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
@@ -316,8 +362,22 @@ class TestPruning(unittest.TestCase):
         scheduler.append(prune)
         opt_model = scheduler()
 
-    def test_combine(self):
+    def test_scheduler_qat_distillation(self):
+        from neural_compressor.experimental import Quantization, common, Distillation
+        self.q_model = torchvision.models.quantization.resnet18()
+        self.q_model.fuse_model()
+        quantizer = Quantization('./fake3.yaml')
+        distiller = Distillation('./fake6.yaml')
+        scheduler = Scheduler()
+        scheduler.model = common.Model(self.q_model)
+        distiller.teacher_model = common.Model(self.q_model_teacher)
+        scheduler.append(distiller)
+        scheduler.append(quantizer)
+        opt_model = scheduler()
+
+    def test_combine_qat_pruning(self):
         from neural_compressor.experimental import Pruning, common, Quantization
+        self.q_model = torchvision.models.quantization.resnet18()
         self.q_model.fuse_model()
         quantizer = Quantization('./fake3.yaml')
         prune = Pruning('./fake2.yaml')
@@ -331,6 +391,19 @@ class TestPruning(unittest.TestCase):
                                0.97,
                                delta=0.01)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
+
+    def test_combine_qat_distillation(self):
+        from neural_compressor.experimental import Quantization, common, Distillation
+        self.q_model.fuse_model()
+        quantizer = Quantization('./fake3.yaml')
+        distiller = Distillation('./fake6.yaml')
+        scheduler = Scheduler()
+        scheduler.model = common.Model(self.q_model)
+        distiller.teacher_model = common.Model(self.q_model_teacher)
+        combination = scheduler.combine(distiller, quantizer)
+        scheduler.append(combination)
+        opt_model = scheduler()
+        self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
 
     def test_combine_fx(self):
         from neural_compressor.experimental import Pruning, common, Quantization

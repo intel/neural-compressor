@@ -156,45 +156,7 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
     # in config yaml file
     assert dataloader, "dataloader should NOT be empty when train_func is None"
     assert adaptor, "adaptor should NOT be empty"
-
-    assert train_cfg.optimizer and len(train_cfg.optimizer) == 1, "optimizer should only set once"
-    key, value = next(iter(train_cfg.optimizer.items()))
-    optimizer = Optimizers(framework)[key](value)
-    assert train_cfg.criterion and len(train_cfg.criterion) == 1, "criterion should only set once"
-    key, value = next(iter(train_cfg.criterion.items()))
-    criterion = Criterions(framework)[next(iter(train_cfg.criterion))](value)
-
-    default_dict = {k: train_cfg[k] for k in train_cfg.keys() - {'optimizer', 'criterion',
-                                                                 'dataloader'}}
-
-    def train_func(model):
-        return adaptor.train(model, dataloader, optimizer_tuple=optimizer(),
-                             criterion_tuple=criterion(), hooks=hooks, kwargs=default_dict)
-    # TODO: to find a better way
-    train_func.builtin = True
-
-    return train_func
-
-def create_train_func_for_distillation(framework, dataloader, adaptor, train_cfg, hooks=None):
-    """The interface to create train function from config.
-
-    Args:
-        framework (str): The string of framework.
-        dataloader (common.DataLoader): The object of common.DataLoader.
-        adaptor (obj): The object of adaptor.
-        train_cfg (dict): The dict of training related config.
-        hooks (dict): The dict of training hooks, supported keys are:
-                      on_epoch_begin, on_epoch_end, on_batch_begin, on_batch_end.
-                      Their values are functions to be executed in adaptor layer.
-
-    Returns:
-        The constructed train function
-    """
-    # train_func being None means user will provide training related info
-    # in config yaml file
-    assert dataloader, "dataloader should NOT be empty when train_func is None"
-    assert adaptor, "adaptor should NOT be empty"
-
+    
     if isinstance(train_cfg.optimizer, dict):
         assert train_cfg.optimizer and len(train_cfg.optimizer) == 1, \
             "optimizer should only set once"
