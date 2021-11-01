@@ -15,19 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .op import Operator, operator_registry
-from .tensor import Tensor
+import os
+import argparse
+import transformers
+from datasets import load_dataset
 
 
-# get the matmul op scale, in bert_mlperf_int8.pb model, this op has several outputs
-# but the other output tensors has empty shape except the first one, and don't be used by other ops
-# so just keep the first one as the output_tensor
-@operator_registry(operator_type='QuantizeV2')
-class QuantizeV2(Operator):
-    def __init__(self):
-        super().__init__()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output_dir', help='directory to save data to', type=str, default='data')
+    args = parser.parse_args()
 
-    def set_attr(self, framework, node):
-        self._op_type = 'Quantize'
-        if framework == 'tensorflow':
-            self._attr['output_dtype'] = 'u8'
+    if not os.path.isdir(args.output_dir):
+        os.mkdir(args.output_dir)
+
+    dataset = load_dataset('glue', 'mrpc', cache_dir=args.output_dir)

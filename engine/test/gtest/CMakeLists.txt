@@ -49,6 +49,9 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/inner_product.cpp
     ${HOST_SRC_DIR}/src/operators/reorder.cpp
     ${HOST_SRC_DIR}/src/operators/reduce_mean.cpp
+    ${HOST_SRC_DIR}/src/operators/gelu.cpp
+    ${HOST_SRC_DIR}/src/operators/position_ids.cpp
+    ${HOST_SRC_DIR}/src/operators/token_type_ids.cpp
 )
 
 # Header file include path
@@ -84,6 +87,9 @@ file(GLOB OPS_TEST_CASES_SRC
     test_inner_product_op.cpp
     test_reorder_op.cpp
     test_reduce_mean_op.cpp
+    test_gelu_op.cpp
+    test_position_ids_op.cpp
+    test_token_type_ids_op.cpp
 )
 
 function(register_gtest_func exe src)

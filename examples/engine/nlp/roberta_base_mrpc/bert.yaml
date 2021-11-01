@@ -19,24 +19,19 @@ model:
   name: bert
   framework: engine
   inputs: input_file, batch_size
-  outputs: IteratorGetNext:3, unstack:0, unstack:1
+  outputs: loss/Softmax:0, IteratorGetNext:3
 
 evaluation:
   accuracy:
     metric:
-      SquadF1:
-    postprocess:
-      transform:
-        Collect:
-          length: 10833
-        SquadV1:
-          label_file: /path/to/dev-v1.1.json
-          vocab_file: /path/to/vocab.txt
+      GLUE:
+        task: mrpc
   performance:
+    warmup: 5
     iteration: 10
     configs:
-        num_of_instance: 1
-        cores_per_instance: 28
+      num_of_instance: 1
+      cores_per_instance: 28
 
 quantization:
   calibration:
@@ -44,7 +39,7 @@ quantization:
 
 tuning:
   accuracy_criterion:
-    relative:  0.01
+    relative: 0.01
   exit_policy:
     timeout: 0
   random_seed: 9527

@@ -351,3 +351,13 @@ class CumSum(Operator):
 class Onehot(Operator):
     def __init__(self):
         super().__init__()
+
+@operator_registry(operator_type='TokenTypeIds')
+class TokenTypeIds(Operator):
+    def __init__(self):
+        super().__init__()
+
+@operator_registry(operator_type='PositionIds')
+class PositionIds(Operator):
+    def __init__(self):
+        super().__init__()

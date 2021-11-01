@@ -48,7 +48,7 @@ class EngineModel(BaseModel):
                     logger.error("Please Input yaml and bin for engine.")
             graph = Graph()
             graph.graph_init(yaml_path, bin_path)
-            logger.warn("When input yaml and bin, it can not use func in converter.")
+            # logger.warn("When input yaml and bin, it can not use func in converter.")
         else:
             from engine.converter.loaders.loader import Loader
             from engine.converter.extractors.extractor import Extractor

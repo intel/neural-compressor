@@ -66,6 +66,9 @@ add_library(engine SHARED
     src/operators/quantize.cpp
     src/operators/reduce_mean.cpp
     # src/operators/transpose.cpp
+    src/operators/gelu.cpp
+    src/operators/position_ids.cpp
+    src/operators/token_type_ids.cpp
 )
 
 # Header file include path
