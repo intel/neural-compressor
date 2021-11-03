@@ -96,6 +96,30 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizable_op_types = ['Reshape', 'Conv', 'Concat', 'AveragePool']
         self.static_test(model, q_config, quantize_params, quantizable_op_types)
 
+        q_config = {'Reshape':self.q_config, 'conv1':'fp32', 'conv2':self.q_config, \
+                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        self.static_test(model, q_config, quantize_params, quantizable_op_types)
+
+        q_config = {'Reshape':self.q_config, 'conv1':'fp32', 'conv2':'fp32', \
+                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        self.static_test(model, q_config, quantize_params, quantizable_op_types)
+
+        q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
+                    'Concat':self.q_config, 'AveragePool':'fp32'}
+        self.static_test(model, q_config, quantize_params, quantizable_op_types)
+ 
+        quantize_params = {'input': [np.float32(10.), np.uint8(0)],
+                           'conv1_weight': [np.float32(10.), np.uint8(0)],
+                           'conv1_output': [np.float32(10.), np.uint8(0)],
+                           'conv2_weight': [np.float32(10.), np.uint8(0)],
+                           'conv2_output': [np.float32(10.), np.uint8(0)],
+                           'concat_output': [np.float32(10.), np.uint8(0)],
+                           'shape': [np.float32(10.), np.uint8(0)],
+                           'reshape_output': [np.float32(10.), np.uint8(0)]}
+        q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
+                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        self.static_test(model, q_config, quantize_params, quantizable_op_types)
+ 
     def test_conv(self):
         for op in ['Conv', 'FusedConv']:
             A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])

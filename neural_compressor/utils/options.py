@@ -15,12 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .quantization import Quantization
-from .pruning import Pruning
-from .benchmark import Benchmark
-from .version import __version__
-from .contrib import *
-# we need to set a global 'NA' backend, or Model can't be used
-from .utils.utility import set_backend
-from .utils import options
-set_backend('NA')
+from ..conf.dotdict import DotDict
+
+class onnxrt:
+    graph_optimization = DotDict({'level': None, 'gemm2matmul': True})
+
+OPTIONS = {'tensorflow': None,
+           'tensorflow_itex': None,
+           'pytorch': None,
+           'pytorch_fx': None,
+           'pytorch_ipex': None,
+           'mxnet': None,
+           'onnxrt_integerops': onnxrt,
+           'onnxrt_qlinearops': onnxrt,
+           'engine': None}
+
+

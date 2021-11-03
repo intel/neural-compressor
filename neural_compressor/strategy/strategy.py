@@ -29,6 +29,7 @@ from ..objective import OBJECTIVES
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
+from ..utils import OPTIONS
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
 from ..algorithm import AlgorithmScheduler
@@ -150,6 +151,8 @@ class TuneStrategy(object):
             framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
+            framework_specific_info.update(
+                                {'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update(

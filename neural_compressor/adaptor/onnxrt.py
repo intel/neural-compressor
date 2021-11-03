@@ -38,6 +38,11 @@ ONNXRT152_VERSION = StrictVersion("1.5.2")
 
 logger = logging.getLogger()
 
+optimization_levels = {'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+                       'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+                       'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+                       'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
+ 
 class ONNXRTAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
@@ -52,6 +57,7 @@ class ONNXRTAdaptor(Adaptor):
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
+        self.graph_optimization = framework_specific_info["graph_optimization"]
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
@@ -152,6 +158,7 @@ class ONNXRTAdaptor(Adaptor):
         fwk_info['approach'] = self.static
         fwk_info['backend'] = self.backend
         fwk_info['workspace_path'] = self.work_space
+        fwk_info['graph_optimization'] = self.graph_optimization
         tune_cfg['framework_specific_info'] = fwk_info
         return tune_cfg
 
@@ -373,12 +380,18 @@ class ONNXRTAdaptor(Adaptor):
         model = split_shared_input(model)
         sess_options = ort.SessionOptions()
         level = self.query_handler.get_graph_optimization() # pylint: disable=no-member
+        if self.graph_optimization.level:
+            assert self.graph_optimization.level in optimization_levels, "the optimization \
+                                      choices are {}".format(optimization_levels.keys())
+ 
+            level = optimization_levels[self.graph_optimization.level]
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
         _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
-        model.model = self._replace_gemm_with_matmul(tmp_model).model
+        model.model = self._replace_gemm_with_matmul(tmp_model).model \
+            if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
         self.pre_optimized_model = model
 
@@ -771,10 +784,6 @@ class ONNXRTQuery(QueryBackendCapability):
 
     def get_graph_optimization(self):
         """ Get onnxruntime graph optimization level"""
-        optimization_levels = {'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
-                               'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
-                               'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
-                               'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
         level = self.cur_config['graph_optimization']['level']
         assert level in optimization_levels, "the optimization choices \
                                               are {}".format(optimization_levels.keys())

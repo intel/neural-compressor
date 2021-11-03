@@ -14,6 +14,7 @@ from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.data import DATASETS, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
+from neural_compressor import options
 
 def build_static_yaml():
     fake_yaml = """
@@ -367,6 +368,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                "random_seed": 1234,
                                "q_dataloader": None,
                                "backend": "qlinearops",
+                               "graph_optimization": options.onnxrt.graph_optimization,
                                "workspace_path": './nc_workspace/{}/{}/'.format(
                                                        'onnxrt',
                                                        'imagenet')}
@@ -382,6 +384,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, op_list.keys(), inspect_type='activation')
 
     def test_set_tensor(self):
+        options.onnxrt.graph_optimization.level = 'ENABLE_EXTENDED'
+        options.onnxrt.graph_optimization.gemm2matmul = False
         quantizer = Quantization("static.yaml")
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.eval_dataloader = self.cv_dataloader
@@ -392,6 +396,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      "random_seed": 1234,
                      "q_dataloader": None,
                      "backend": "qlinearops",
+                     "graph_optimization": options.onnxrt.graph_optimization,
                      "workspace_path": './nc_workspace/{}/{}/'.format(
                                              'onnxrt',
                                              'imagenet')}
@@ -445,6 +450,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      "random_seed": 1234,
                      "q_dataloader": None,
                      "backend": "qlinearops",
+                     "graph_optimization": options.onnxrt.graph_optimization,
                      "workspace_path": './nc_workspace/{}/{}/'.format(
                                              'onnxrt',
                                              'imagenet')}
@@ -476,6 +482,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.model = common.Model(self.matmul_model)
             q_model = quantizer()
 
+        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         for fake_yaml in ["non_MSE.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader

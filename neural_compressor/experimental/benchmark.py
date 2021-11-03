@@ -26,6 +26,7 @@ from ..objective import OBJECTIVES
 from ..conf.config import Benchmark_Conf
 from ..conf.dotdict import DotDict
 from ..utils import logger
+from ..utils import OPTIONS
 from ..utils.utility import set_backend, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
@@ -172,8 +173,10 @@ class Benchmark(object):
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
         if 'onnxrt' in framework.lower():
-            framework_specific_info.update({"backend": framework.lower().split('_')[-1], \
-                                            'workspace_path': cfg.tuning.workspace.path})
+            framework_specific_info.update(
+                                {"backend": framework.lower().split('_')[-1], \
+                                 'workspace_path': cfg.tuning.workspace.path, \
+                                 'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None})
