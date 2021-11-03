@@ -614,6 +614,33 @@ class TensorFlowAdaptor(Adaptor):
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
         return self.quantizable_op_details
 
+    def filter_unquantizable_concat(self, matched_nodes):
+        target_concat_nodes = [i[0] for i in matched_nodes if i[-1][0] == 'ConcatV2']
+        from neural_compressor.adaptor.tf_utils.util import GraphAnalyzer
+        from .tf_utils.graph_rewriter.graph_util import GraphRewriterHelper
+
+        g = GraphAnalyzer()
+        g.graph = self.pre_optimized_model.graph_def
+        graph_info = g.parse_graph()
+        concat_nodes = g.query_fusion_pattern_nodes([['ConcatV2']])
+        for i in concat_nodes:
+            concat_node_name = i[0]
+            if concat_node_name not in target_concat_nodes:
+                continue
+            input_positive_status = []
+            for index in range(graph_info[concat_node_name].node.attr['N'].i):
+                each_input_name = GraphRewriterHelper.node_name_from_input(
+                    graph_info[concat_node_name].node.input[index])
+                each_input_node = graph_info[each_input_name].node
+                positive_input = False
+                if each_input_node.op in ('Relu', 'Relu6'):
+                    positive_input = True
+                else:
+                    positive_input = g.has_positive_input(each_input_node.name)
+                input_positive_status.append(positive_input)
+            if not any(input_positive_status):
+                matched_nodes.remove(i)
+
     def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
@@ -642,6 +669,8 @@ class TensorFlowAdaptor(Adaptor):
                 if input_pattern == [i for i in i.replace('+', ' ').strip().split(' ') if i]:
                     return True
             return False
+
+        self.filter_unquantizable_concat(matched_nodes)
 
         copied_matched_nodes = copy.deepcopy(matched_nodes)
         for i in copied_matched_nodes:
