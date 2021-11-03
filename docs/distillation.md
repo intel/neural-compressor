@@ -246,9 +246,10 @@ model = distiller()
 ### Examples in Neural Compressor
 Following examples are supported in Neural Compressor:
 
-- CNN Examples:
+- Image Classification Examples:
+  - [MobileNetV2 example](../examples/pytorch/eager/image_recognition/cifar10/README.md): distillation of WideResNet40-2 to MobileNetV2-0.35 on CIFAR-10 dataset.
   - [ResNet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/distillation/README.md): distillation of ResNet50 to ResNet18 on ImageNet dataset.
-- NLP Examples:
+- Natural Language Processing Examples:
   - [BlendCnn example](../examples/pytorch/eager/blendcnn/distillation/README.md): distillation of BERT-Base to BlendCnn on MRPC of GLUE dataset.
   - [BiLSTM example](../examples/pytorch/eager/huggingface_models/README.md): distillation of RoBERTa-Base to BiLSTM on SST-2 of GLUE dataset.
 
@@ -257,6 +258,7 @@ Below are results of examples shown above:
 
 |  Example Name    | Dataset  | Student<br>(Accuracy) | Teacher<br>(Accuracy)    | Student With Distillation<br>(Accuracy Improvement) |
 |------------------|----------|-----------------------|--------------------------|-----------------------------------------------------|
+| MobileNet example | CIFAR-10 | MobileNetV2-0.35<br>(0.7965) | WideResNet40-2<br>(0.9522)     |   0.8178<br>(0.0213)                                |
 | ResNet example   | ImageNet | ResNet18<br>(0.6739)  | ResNet50<br>(0.7399)     |   0.6845<br>(0.0106)                                |
 | BlendCnn example |   MRPC   | BlendCnn<br>(0.7034)  | BERT-Base<br>(0.8382)    |   0.7034<br>(0)                                     |
 | BiLSTM example   |  SST-2   | BiLSTM<br>(0.7913)    | RoBERTa-Base<br>(0.9404) |   0.8085<br>(0.0172)                                |

@@ -372,11 +372,13 @@ The distillation configuration is specified in yaml file i.e. distillation.yaml.
 ## SST-2 task
 
 ```bash
+wget -P examples/text-classification/ http://nlp.stanford.edu/data/glove.6B.zip
+unzip examples/text-classification/glove.6B.zip glove.6B.50d.txt -d examples/text-classification/
 python examples/text-classification/run_glue_no_trainer_distillation.py \
---task_name sst2 --max_seq_length 128 \
+--task_name sst2 --max_seq_length 64 \
 --model_name_or_path textattack/roberta-base-SST-2 \
 --do_distillation --per_device_train_batch_size 32 \
---learning_rate 2e-5 --num_train_epochs 200 \
+--learning_rate 0.02 --num_train_epochs 20 \
 --output_dir /path/to/output_dir --config distillation.yaml --seed 5143
 ```
 
