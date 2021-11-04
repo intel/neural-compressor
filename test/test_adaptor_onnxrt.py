@@ -15,6 +15,7 @@ from neural_compressor.data import DATASETS, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor import options
+from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
 
 def build_static_yaml():
     fake_yaml = """
@@ -197,12 +198,6 @@ def build_non_MSE_yaml():
 def eval_func(model):
     return 1.0
 
-def get_torch_version():
-    try:
-        torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
-    return torch_version
 
 def export_onnx_model(model, path, opset=12):
     x = torch.randn(100, 3, 224, 224, requires_grad=True)
@@ -406,7 +401,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.quantize_config = q_config
         version = get_torch_version()
         q_model.save('./best_model.onnx')
-        if version >= '1.7':
+        if version >= PyTorchVersionMode.PT17.value:
             adaptor.set_tensor(onnx.load("best_model.onnx"), 
                 {self.mb_v2_model.graph.node[0].input[1]: np.random.random([32, 3, 3, 3])})
             adaptor.set_tensor(q_model,

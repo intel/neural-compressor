@@ -37,12 +37,12 @@ class Encoder(object):
         self.dboxes = self.dboxes.to(bboxes_in)
         self.dboxes_xywh = self.dboxes_xywh.to(bboxes_in)
         bboxes, probs = scale_back_batch(bboxes_in, scores_in,self.scale_xy,self.scale_wh,self.dboxes_xywh)
-        result = bboex_labels_scores(bboxes, probs)
+        result = bboxes_labels_scores(bboxes, probs)
         return result
 
 
 @torch.fx.wrap
-def bboex_labels_scores(bboxes, probs, criteria = 0.45, max_output=200):
+def bboxes_labels_scores(bboxes, probs, criteria = 0.45, max_output=200):
     boxes = []; labels=[]; scores=[]
     for bbox, prob in zip(bboxes.split(1, 0), probs.split(1, 0)):
         bbox = bbox.squeeze(0)

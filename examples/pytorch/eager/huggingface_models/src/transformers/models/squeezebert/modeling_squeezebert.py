@@ -37,6 +37,7 @@ from ...utils import logging
 from .configuration_squeezebert import SqueezeBertConfig
 from torch.quantization import \
     QuantWrapper, QuantStub, DeQuantStub, default_qconfig, default_per_channel_qconfig
+from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
 
 logger = logging.get_logger(__name__)
 
@@ -48,14 +49,6 @@ SQUEEZEBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
     "squeezebert/squeezebert-mnli",
     "squeezebert/squeezebert-mnli-headless",
 ]
-
-
-def get_torch_version():
-    try:
-        torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
-    return torch_version
 
 
 class SqueezeBertEmbeddings(nn.Module):
@@ -148,16 +141,16 @@ class ConvDropoutLayerNorm(nn.Module):
         self.layernorm = SqueezeBertLayerNorm(cout)
         self.dropout = nn.Dropout(dropout_prob)
         self.torch_version = get_torch_version()
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             self.quant = QuantStub()
             self.dequant = DeQuantStub()
 
     def forward(self, hidden_states, input_tensor):
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             hidden_states = self.quant(hidden_states)
         x = self.conv1d(hidden_states)
         x = self.dropout(x)
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             x = self.dequant(x)
         x = x + input_tensor
         x = self.layernorm(x)
@@ -174,15 +167,15 @@ class ConvActivation(nn.Module):
         self.conv1d = nn.Conv1d(in_channels=cin, out_channels=cout, kernel_size=1, groups=groups)
         self.act = ACT2FN[act]
         self.torch_version = get_torch_version()
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             self.quant = QuantStub()
             self.dequant = DeQuantStub()
 
     def forward(self, x):
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             x = self.quant(x)
         output = self.conv1d(x)
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             output = self.dequant(output)
         return self.act(output)
 
@@ -214,7 +207,7 @@ class SqueezeBertSelfAttention(nn.Module):
         self.matmul_qkv = MatMulWrapper()
 
         self.torch_version = get_torch_version()
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             self.quant = QuantStub()
             self.dequant = DeQuantStub()
 
@@ -253,7 +246,7 @@ class SqueezeBertSelfAttention(nn.Module):
 
         The attention_mask data layout is [N, W], and it does not need to be transposed.
         """
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             hidden_states = self.quant(hidden_states)
         mixed_query_layer = self.query(hidden_states)
         mixed_key_layer = self.key(hidden_states)
@@ -264,7 +257,7 @@ class SqueezeBertSelfAttention(nn.Module):
         value_layer = self.transpose_for_scores(mixed_value_layer)
 
         # Take the dot product between "query" and "key" to get the raw attention scores.
-        if self.torch_version >= '1.6':
+        if self.torch_version >= PyTorchVersionMode.PT16.value:
             query_layer = self.dequant(query_layer)
             key_layer = self.dequant(key_layer)
             value_layer = self.dequant(value_layer)

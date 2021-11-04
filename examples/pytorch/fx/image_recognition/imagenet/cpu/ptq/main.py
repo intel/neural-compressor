@@ -21,6 +21,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from neural_compressor.adaptor.pytorch import get_torch_version
 
 import subprocess
 
@@ -309,13 +310,6 @@ def main_worker(gpu, ngpus_per_node, args):
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
             }, is_best)
-
-def get_torch_version():
-    try:
-        torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
-    return torch_version
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')

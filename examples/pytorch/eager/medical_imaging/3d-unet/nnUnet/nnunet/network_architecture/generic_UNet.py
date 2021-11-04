@@ -23,13 +23,7 @@ from nnunet.network_architecture.initialization import InitWeights_He
 from nnunet.network_architecture.neural_network import SegmentationNetwork
 import torch.nn.functional
 from torch.quantization import QuantStub, DeQuantStub
-
-def get_torch_version():
-    try:
-        torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
-        assert False, 'Got an unknow version of torch: {}'.format(e)
-    return torch_version
+from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
 
 class ConvDropoutNormNonlin(nn.Module):
     """
@@ -76,7 +70,7 @@ class ConvDropoutNormNonlin(nn.Module):
         if self.dropout is not None:
             x = self.dropout(x)
         version = get_torch_version()
-        if version >= '1.7':
+        if version >= PyTorchVersionMode.PT17.value:
             return self.lrelu(self.quant(self.instnorm(self.dequant(x))))
         else:
             return self.quant(self.lrelu(self.instnorm(self.dequant(x))))
