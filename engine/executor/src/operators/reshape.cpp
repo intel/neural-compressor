@@ -70,9 +70,9 @@ void ReshapeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*
     int64_t mul_size = 1;
     for (int i = 0; i < mul_.size(); ++i) mul_size *= pre_dst_shape[mul_[i]];
     for (int i = 0; i < pre_dst_shape.size(); ++i) {
-      if (i == mul_[j]) {
+      if (j < mul_.size() && i == mul_[j]) {
         if (j == 0) dst_shape.push_back(mul_size);
-        if (j < mul_.size()) j++;
+        j++;
       } else {
         dst_shape.push_back(pre_dst_shape[i]);
       }

@@ -391,6 +391,7 @@ void InnerProductOperator::Forward(const vector<Tensor*>& input, const vector<Te
     gelu_memory_args_[DNNL_ARG_DST] = gelu_m_;
     gelu_p_.execute(gelu_eng_stream_, gelu_memory_args_);
   }
+  eng_stream_.wait();
 
   // // 6. unref tensors
   this->unref_tensors(input);

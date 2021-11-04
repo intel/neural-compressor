@@ -246,7 +246,7 @@ void Quantize_avx512(const int size, const string& dtype, const void* src_data,
   const float* range_mins, const vector<float>& scales, void* dst_data) {
     const float* src_data_ = static_cast<const float*>(src_data);
     __m512 _min_with_scale_u8 = _mm512_set1_ps(range_mins[0] * scales[0]);
-    __m512 _min_with_scale_s8 = _mm512_set1_ps(range_mins[0] * scales[0] + 128);
+    __m512 _min_with_scale_s8 = _mm512_set1_ps(0);
     __m512 _scale = _mm512_set1_ps(scales[0]);
     __m512i zero = _mm512_setzero_epi32();
 
@@ -285,7 +285,7 @@ void Quantize_avx512(const int size, const string& dtype, const void* src_data,
       }
       #pragma omp parallel for
       for (int i = (avx512_loop_len << 4); i < size; i++) {
-        int32_t data = nearbyint((src_data_[i] - range_mins[0]) * scales[0] - 128);
+        int32_t data = nearbyint(src_data_[i] * scales[0]);
         data = data < -128 ? -128 : data;
         data = data > 127 ? 127 : data;
         dst_data_[i] = static_cast<char>(data);
@@ -313,7 +313,7 @@ void Quantize(const int size, const string& dtype, const void* src_data,
     char* dst_data_ = static_cast<char*>(dst_data);
     #pragma omp parallel for
     for (int i = 0; i < size; i++) {
-      int32_t data = nearbyint((src_data_[i] - range_mins[0]) * scales[0] - 128);
+      int32_t data = nearbyint(src_data_[i] * scales[0]);
       data = data < -128 ? -128 : data;
       data = data > 127 ? 127 : data;
       dst_data_[i] = static_cast<char>(data);

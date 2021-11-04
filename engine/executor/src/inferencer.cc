@@ -24,21 +24,31 @@ DEFINE_string(weight, "", "init model weight");
 DEFINE_int32(w, 2, "warm up times");
 
 void run_net() {
-  vector<string> input_dtype(3, "int32");
-  vector<vector<float>> input_range(3, vector<float>({1, 300}));
-  vector<vector<int64_t>> input_shape(3, {FLAGS_batch_size, FLAGS_seq_len});
-  executor::DataLoader* dataloader;
-  // dataloader = new executor::ConstDataLoader(input_shape, input_dtype, input_range);
-  dataloader = new executor::DummyDataLoader(input_shape, input_dtype, input_range);
   executor::Model bert_model(FLAGS_config, FLAGS_weight);
-
   LOG(INFO) << "normal multibatch test begin";
   // 1. inialize input tensors
   vector<executor::Tensor> input_tensors;
+  vector<string> input_dtype;
+  vector<vector<float>> input_range;
+  vector<vector<int64_t>> input_shape;
   auto input_configs = bert_model.input_configs();
   for (int i = 0; i < bert_model.num_inputs(); ++i) {
     input_tensors.push_back(executor::Tensor(*(input_configs[i])));
+    input_dtype.push_back(input_tensors[i].dtype());
+    input_range.push_back(vector<float>({1, 100}));
+    input_shape.push_back(input_tensors[i].shape());
+    if (input_shape[i][0] == -1 && input_shape[i][1] == -1){
+      input_shape[i][0] = FLAGS_batch_size;
+      input_shape[i][1] = FLAGS_seq_len;
+    }
+    else if(input_shape[i][0] == -1) {
+      input_shape[i][0] = FLAGS_seq_len;
+    }
   }
+  executor::DataLoader* dataloader;
+  // dataloader = new executor::ConstDataLoader(input_shape, input_dtype, input_range);
+  dataloader = new executor::DummyDataLoader(input_shape, input_dtype, input_range);
+
 
   // 2. forward the model
   float duration = 0;

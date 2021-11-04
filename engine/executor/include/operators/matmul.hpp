@@ -52,6 +52,8 @@ class MatmulOperator : public Operator {
   bool gelu_erf_;
   bool gelu_tanh_;
   bool tanh_;
+  bool append_eltwise_;
+  bool cache_weight_;
   bool binary_add_;
   float output_scale_ = 1.f;
   string output_dtype_ = "fp32";

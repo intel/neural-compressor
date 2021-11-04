@@ -33,7 +33,8 @@ class DataLoader {
   virtual void* load_sample(size_t* index_list, size_t size) {
     return NULL;
   }
-  virtual vector<void*>& prepare_batch(const int index) = 0;
+  virtual vector<void*>& prepare_batch(const int index, const int seq_len=-1) = 0;
+  virtual vector<vector<int64_t> > prepare_shape() = 0;
 
  private:
   vector<vector<void*>> dataset_;
@@ -147,7 +148,11 @@ class ConstDataLoader : public DataLoader {
       }
     }
 
-    virtual vector<void*>& prepare_batch(const int index) {
+    virtual vector<vector<int64_t>> prepare_shape(){
+      return shape_;
+    }
+
+    virtual vector<void*>& prepare_batch(const int index, const int seq_len=-1) {
       for (int i = 0; i < shape_.size(); ++i) {
         std::uniform_real_distribution<float> u(value_range_[i][0], value_range_[i][1]);
         if (dtype_[i] == "fp32") {
@@ -220,7 +225,10 @@ class DummyDataLoader : public DataLoader {
       }
     }
 
-    virtual vector<void*>& prepare_batch(const int index) {
+    virtual vector<vector<int64_t>> prepare_shape(){
+      return shape_;
+    }
+    virtual vector<void*>& prepare_batch(const int index, const int seq_len=-1) {
       for (int i = 0; i < shape_.size(); ++i) {
         std::uniform_real_distribution<float> u(value_range_[i][0], value_range_[i][1]);
         if (dtype_[i] == "fp32") {
