@@ -3,3 +3,4 @@ sphinx-rtd-theme
 recommonmark
 sphinx-markdown-tables
 sphinx-md
+sphinx-book-theme

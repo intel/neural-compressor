@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     branches:
-      - master
+      - bookthemedemo
 
 jobs:
   build:
