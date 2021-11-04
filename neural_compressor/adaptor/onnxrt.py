@@ -38,11 +38,6 @@ ONNXRT152_VERSION = StrictVersion("1.5.2")
 
 logger = logging.getLogger()
 
-optimization_levels = {'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
-                       'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
-                       'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
-                       'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
- 
 class ONNXRTAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
@@ -381,6 +376,11 @@ class ONNXRTAdaptor(Adaptor):
         sess_options = ort.SessionOptions()
         level = self.query_handler.get_graph_optimization() # pylint: disable=no-member
         if self.graph_optimization.level:
+            optimization_levels = {
+                    'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+                    'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+                    'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+                    'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
             assert self.graph_optimization.level in optimization_levels, "the optimization \
                                       choices are {}".format(optimization_levels.keys())
  
@@ -784,6 +784,11 @@ class ONNXRTQuery(QueryBackendCapability):
 
     def get_graph_optimization(self):
         """ Get onnxruntime graph optimization level"""
+        optimization_levels = {'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+                               'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+                               'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+                               'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
+ 
         level = self.cur_config['graph_optimization']['level']
         assert level in optimization_levels, "the optimization choices \
                                               are {}".format(optimization_levels.keys())
