@@ -42,7 +42,7 @@ Supported deep learning frameworks are:
 * [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
 * [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0), [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0)
-* [Engine](./docs/engine.md), which is a built-in bare metal [inference engine](./engine) in Intel® Neural Compressor.
+* [Engine](./docs/engine.md), which is a built-in bare metal [acceleration library](./engine) for domain-specific NLP models.
 
 ## Installation
 
@@ -54,6 +54,26 @@ Select the installation based on your operating system.
 You can install Neural Compressor using one of three options: Install just the library
 from binary or source, or get the Intel-optimized framework together with the
 library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+
+**Prerequisites**
+
+The following prerequisites and requirements must be satisfied for a successful installation:
+
+- Python version: 3.6 or 3.7 or 3.8 or 3.9
+
+- C++ compiler: 7.2.1 or above
+
+- CMake: 3.12 or above
+
+> **common build issues**
+>
+> `Issue 1`: ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject
+>
+> Solution: reinstall pycocotools by "pip install pycocotools --no-cache-dir"
+>    
+> `Issue 2`: ImportError: libGL.so.1: cannot open shared object file: No such file or directory 
+>
+> Solution: apt install or yum install opencv
 
 #### Option 1 Install from binary
 
@@ -73,6 +93,8 @@ library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software
   ```Shell
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
+  git submodule sync
+  git submodule update --init --recursive
   pip install -r requirements.txt
   python setup.py install
   ```
@@ -131,24 +153,26 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 #### Option 2 Install from source
 
-```shell
-git clone https://github.com/intel/neural-compressor.git
-cd neural-compressor
-pip install -r requirements.txt
-python setup.py install
-```
+  ```shell
+  git clone https://github.com/intel/neural-compressor.git
+  cd neural-compressor
+  git submodule sync
+  git submodule update --init --recursive
+  pip install -r requirements.txt
+  python setup.py install
+  ```
 
 ## Documentation
 
 **Get Started**
 
 * [APIs](docs/api-introduction.md) explains Intel® Neural Compressor's API.
+* [GUI](docs/bench.md) provides web-based UI service to make quantization easier.
 * [Transform](docs/transform.md) introduces how to utilize Neural Compressor's built-in data processing and how to develop a custom data processing method. 
 * [Dataset](docs/dataset.md) introduces how to utilize Neural Compressor's built-in dataset and how to develop a custom dataset.
 * [Metric](docs/metric.md) introduces how to utilize Neural Compressor's built-in metrics and how to develop a custom metric.
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Neural Compressor's features with examples. 
 * [Examples](/examples) are provided to demonstrate the usage of Neural Compressor in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime.
-* [Intel® Neural Compressor Bench](docs/bench.md) is a web-based system used to simplify Intel® Neural Compressor usage.
 * [Intel oneAPI AI Analytics Toolkit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) explains the AI Kit components, installation and configuration guides, and instructions for building and running sample apps.
 * [AI and Analytics Samples](https://github.com/oneapi-src/oneAPI-samples/tree/master/AI-and-Analytics) includes code samples for Intel oneAPI libraries.
 
@@ -958,3 +982,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 * [Legal](legal_information.md)
 * [Security Policy](security_policy.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
+
+## Hiring
+
+We are hiring. Please send your resume to [INC Jobs](lpot.maintainers@intel.com) if you have interests in model compression techniques.

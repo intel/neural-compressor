@@ -35,7 +35,10 @@ pip install neural-compressor
 ### 2. install C++ binary by deploy bare metal engine
 
 ```
-cd <nc_folder>/engine/executor
+cd <nc_folder>
+git submodule sync
+git submodule update --init --recursive
+cd engine/executor
 mkdir build
 cd build
 cmake ..

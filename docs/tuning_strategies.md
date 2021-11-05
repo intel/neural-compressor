@@ -8,7 +8,7 @@ the low-precision inference solution on popular Deep Learning frameworks
 such as TensorFlow, PyTorch, and MxNet. Using built-in strategies, it
 automatically optimizes low-precision recipes for deep learning models to
 achieve optimal product objectives, such as inference performance and memory
-usage, with expected accuracy criteria. Currently, it supports `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random`, and `TPE` strategies. `Basic` is
+usage, with expected accuracy criteria. Currently, it supports `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random`, `SigOpt` and `TPE` strategies. `Basic` is
 the default strategy.
 
 ## Strategy Design
