@@ -5,6 +5,8 @@ import os
 import re
 import sys
 import shutil
+from distutils.version import LooseVersion
+from subprocess import check_output
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 
@@ -14,6 +16,49 @@ try:
         __version__ ,= re.findall( '__version__ = "(.*)"', version_file.read() )
 except Exception as error:
     assert False,  "Error: Could not open '%s' due %s\n" % (filepath, error)
+
+def which(thefile):
+    path = os.environ.get("PATH", os.defpath).split(os.pathsep)
+    for d in path:
+        fname = os.path.join(d, thefile)
+        fnames = [fname]
+        if sys.platform == 'win32':
+            exts = os.environ.get('PATHEXT', '').split(os.pathsep)
+            fnames += [fname + ext for ext in exts]
+        for name in fnames:
+            if os.access(name, os.F_OK | os.X_OK) and not os.path.isdir(name):
+                return name
+    return None
+
+def get_version(cmd):
+    "Returns cmake version."
+    try:
+        for line in check_output([cmd, '--version']).decode('utf-8').split('\n'):
+            if 'version' in line:
+                print(line.strip().split(' ')[2])
+                return LooseVersion(line.strip().split(' ')[2])
+    except Exception as error:
+        return LooseVersion('0.0.0')
+
+def get_cmake_command():
+    "Returns cmake command."
+
+    cmake_command = 'cmake'
+    if sys.platform == 'win32':
+        return cmake_command
+    cmake3 = which('cmake3')
+    cmake = which('cmake')
+    if cmake3 is not None:
+        if cmake is not None:
+            bare_version = get_version('cmake')
+            if (bare_version < LooseVersion("3.12.0") and
+                    get_version('cmake3') > bare_version):
+                cmake_command = 'cmake3'
+        else:
+            cmake_command = 'cmake3'
+    elif cmake is None:
+        raise RuntimeError('no cmake or cmake3 found')
+    return cmake_command
 
 class build_ext(build_ext):
     def build_extension(self, ext):
@@ -33,9 +78,9 @@ class build_ext(build_ext):
             build_args = [
                 '-j'
             ]
-    
+            cmake_command = get_cmake_command() 
             os.chdir(str(build_temp))
-            self.spawn(['cmake3', ext.sourcedir] + cmake_args)
+            self.spawn([cmake_command, ext.sourcedir] + cmake_args)
             self.spawn(['make'] + build_args)
             if os.path.exists('inferencer'):
                 shutil.copy('inferencer', executable_path)
