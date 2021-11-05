@@ -34,7 +34,6 @@ from neural_compressor.ux.utils.utils import (
     get_predefined_config_path,
 )
 from neural_compressor.ux.utils.workload.config import Config
-from neural_compressor.ux.web.configuration import Configuration
 
 
 class Workload(JsonSerializer):
@@ -74,8 +73,7 @@ class Workload(JsonSerializer):
             get_framework_from_path(self.model_path),
         )
 
-        configuration = Configuration()
-        self.workspace_path = configuration.workdir
+        self.workspace_path = os.path.join(os.environ.get("HOME", ""), "workdir")
         self.workload_path = data.get(
             "workload_path",
             os.path.join(

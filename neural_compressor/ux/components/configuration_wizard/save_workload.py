@@ -62,7 +62,7 @@ def change_performance_dataloader_to_dummy_if_possible(
         and config.evaluation.performance
         and config.evaluation.performance.dataloader
     ):
-        shape = ConfigurationParser.parse_value(detected_shape.shape, [int])
+        shape = ConfigurationParser.parse_value(detected_shape.shape, [[int]])  # type: ignore
         set_dataloader_to_dummy(config.evaluation.performance.dataloader, shape)
         return
 
@@ -135,7 +135,7 @@ def get_shape_from_transforms(
     if not shapes["height"] or not shapes["width"]:
         raise NotFoundException("Unable to detect shape for Dummy dataset")
 
-    return [shapes.get(dimension) for dimension in shape_elements_order]
+    return [[shapes.get(dimension) for dimension in shape_elements_order]]
 
 
 def get_height_width_from_size(size: Any) -> Tuple[Optional[int], Optional[int]]:
@@ -166,7 +166,7 @@ def change_config_to_performance_mode(
 ) -> None:
     """Change config values to performance mode."""
     shape_definition = data.get("shape", "")
-    shape = ConfigurationParser.parse_value(shape_definition, [int])
+    shape = ConfigurationParser.parse_value(shape_definition, [[int]])  # type: ignore
     if (
         config.quantization
         and config.quantization.calibration

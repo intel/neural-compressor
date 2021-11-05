@@ -58,6 +58,14 @@ export class MenuComponent implements OnInit {
           this.getAllModels();
         }
       });
+    this.socketService.profilingStart$
+      .subscribe(result => {
+        this.getAllModels();
+      });
+    this.socketService.profilingFinish$
+      .subscribe(result => {
+        this.getAllModels();
+      });
     this.getAllModels();
   }
 

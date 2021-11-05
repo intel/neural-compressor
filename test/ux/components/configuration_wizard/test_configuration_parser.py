@@ -401,10 +401,10 @@ class TestDataloaderParser(TestParser):
             },
             {
                 "dtype": "float32",
-                "high": [127],
+                "high": [127.0],
                 "label": False,
-                "low": [-128],
-                "shape": [224, 224],
+                "low": [-128.0],
+                "shape": [[224, 224]],
             },
         )
 
@@ -421,10 +421,10 @@ class TestDataloaderParser(TestParser):
             },
             {
                 "dtype": "float32",
-                "high": [127],
+                "high": [127.0],
                 "label": False,
-                "low": [-128],
-                "shape": [224, 224],
+                "low": [-128.0],
+                "shape": [[224, 224]],
             },
         )
 

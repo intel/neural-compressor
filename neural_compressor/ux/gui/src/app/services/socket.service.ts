@@ -13,7 +13,7 @@
 // limitations under the License.
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { io } from 'socket.io-client';
 import { environment } from 'src/environments/environment';
 import { NewModel } from './model.service';
@@ -25,16 +25,18 @@ export class SocketService {
 
   baseUrl = environment.baseUrl;
   socket;
-  public optimizationStart$ = new BehaviorSubject({});
-  public optimizationFinish$ = new BehaviorSubject({});
-  public boundaryNodesStart$ = new BehaviorSubject({});
-  public boundaryNodesFinish$ = new BehaviorSubject({});
-  public modelDownloadFinish$ = new BehaviorSubject({});
-  public modelDownloadProgress$ = new BehaviorSubject({});
-  public benchmarkStart$ = new BehaviorSubject({});
-  public benchmarkFinish$ = new BehaviorSubject({});
-  public tuningHistory$ = new BehaviorSubject({});
-  public exampleWorkloadSaved$ = new BehaviorSubject({});
+  public optimizationStart$ = new Subject();
+  public optimizationFinish$ = new Subject();
+  public boundaryNodesStart$ = new Subject();
+  public boundaryNodesFinish$ = new Subject();
+  public modelDownloadFinish$ = new Subject();
+  public modelDownloadProgress$ = new Subject();
+  public benchmarkStart$ = new Subject();
+  public benchmarkFinish$ = new Subject();
+  public profilingStart$ = new Subject();
+  public profilingFinish$ = new Subject();
+  public tuningHistory$ = new Subject();
+  public exampleWorkloadSaved$ = new Subject();
 
   constructor(
     private http: HttpClient
@@ -46,6 +48,7 @@ export class SocketService {
     this.setupBenchmark();
     this.setupTuningHistory();
     this.setupExampleWorkloadSaved();
+    this.setupProfiling();
   }
 
   setupOptimizationConnection() {
@@ -81,6 +84,15 @@ export class SocketService {
     });
     this.socket.on('benchmark_finish', (data) => {
       this.benchmarkFinish$.next(data);
+    });
+  }
+
+  setupProfiling() {
+    this.socket.on('profiling_start', (data) => {
+      this.profilingStart$.next(data);
+    });
+    this.socket.on('profiling_finish', (data) => {
+      this.profilingFinish$.next(data);
     });
   }
 

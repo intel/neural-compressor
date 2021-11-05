@@ -41,6 +41,7 @@ from neural_compressor.ux.components.model_zoo.save_workload import (
     save_workload as save_example_workload,
 )
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
+from neural_compressor.ux.components.profiling.execute_profiling import execute_profiling
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.web.communication import Request, Response, create_simple_response
@@ -80,6 +81,7 @@ class Router:
             "configuration": RealtimeRoutingDefinition(get_predefined_configuration),
             "optimize": DeferredRoutingDefinition(_execute_optimization_benchmark),
             "benchmark": DeferredRoutingDefinition(execute_benchmark),
+            "profile": DeferredRoutingDefinition(execute_profiling),
             "get_default_path": RealtimeRoutingDefinition(get_default_path),
             "set_workspace": RealtimeRoutingDefinition(set_workspace),
             "get_workloads_list": RealtimeRoutingDefinition(get_workloads_list),

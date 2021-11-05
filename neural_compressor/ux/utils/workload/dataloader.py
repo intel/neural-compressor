@@ -40,6 +40,10 @@ class Dataset(JsonSerializer):
             self.name: self.params,
         }
 
+    def is_dummy(self) -> bool:
+        """Check if dummy dataloader is used."""
+        return self.name.lower() in ["dummy", "dummy_v2"]
+
 
 class LabelBalance(JsonSerializer):
     """Configuration LabelBalance class."""

@@ -31,32 +31,8 @@
   color: $dark-gray;
 }
 
-mat-card {
-  margin: 10px;
-}
-
 img {
   height: 30px;
-}
-
-.cards {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.grid>div {
-  display: flex;
-  flex-basis: calc(33.33% - 14px);
-  justify-content: center;
-  flex-direction: column;
-}
-
-.grid>div>div {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
 }
 
 button {
@@ -78,43 +54,10 @@ button {
   color: $energy-blue !important;
 }
 
-.execution-details {
-  height: 374px;
-  width: 167px;
-}
-
-.comparison {
-  width: 700px;
-}
-
-.first-row {
-  width: 920px;
-}
-
 p {
   margin: auto;
   padding: 0px !important;
   text-align: center !important;
-}
-
-@media all and (max-width:1500px) {
-  .comparison {
-    width: 600px;
-  }
-
-  .first-row {
-    width: 820px !important;
-  }
-}
-
-@media all and (min-width:2000px) {
-  .comparison {
-    width: 800px;
-  }
-
-  .first-row {
-    width: 1020px !important;
-  }
 }
 
 .inline {
@@ -154,9 +97,15 @@ p {
   top: 10px;
 }
 
-.down-5px {
+.down-3px {
   position: relative;
-  top: 5px;
+  top: 3px;
+  padding-right: 10px;
+}
+
+.down-6px {
+  position: relative;
+  top: 6px;
   padding-right: 10px;
 }
 
@@ -167,4 +116,90 @@ p {
 
 .demo-chart {
   height: 400px;
+}
+
+.blue {
+  background-color: $blue;
+  color: white;
+}
+
+.dark-blue {
+  background-color: $dark-blue;
+  color: white;
+}
+
+.header {
+  min-width: 100px;
+}
+
+.item {
+  background-color: white;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 16px;
+  box-shadow: 0px 2px 1px -1px rgb(0 0 0 / 20%),
+    0px 1px 1px 0px rgb(0 0 0 / 14%),
+    0px 1px 3px 0px rgb(0 0 0 / 12%);
+  transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+  position: relative;
+  border-radius: 4px;
+}
+
+.item-title {
+  grid-area: title;
+}
+
+.item-header {
+  grid-area: header;
+  padding: 26px;
+}
+
+.item-exec {
+  grid-area: exec;
+}
+
+.item-row1 {
+  grid-area: row1;
+}
+
+.item-row2 {
+  grid-area: row2;
+}
+
+.item-row3 {
+  grid-area: row3;
+}
+
+.item-charts1 {
+  grid-area: charts1;
+}
+
+.item-charts2 {
+  grid-area: charts2;
+}
+
+.item-charts3 {
+  grid-area: charts3;
+}
+
+.item-charts4 {
+  grid-area: charts4;
+}
+
+.container {
+  padding: 10px;
+  display: grid;
+  gap: 1rem;
+  grid-template-areas:
+    "title title title title"
+    "header header header header"
+    "exec row1 row1 row1"
+    "exec row2 row2 row2"
+    "exec row3 row3 row3"
+    "charts1 charts1 charts1 charts1"
+    "charts2 charts2 charts2 charts2"
+    "charts3 charts3 charts3 charts3"
+    "charts4 charts4 charts4 charts4";
+  justify-content: center;
 }

@@ -98,6 +98,17 @@ export class ModelService {
     );
   }
 
+  getProfile(newModel, modelType: 'optimized_model' | 'input_model') {
+    return this.http.post(
+      this.baseUrl + 'api/profile',
+      {
+        id: newModel.id,
+        model_path: newModel.model_path,
+        model_type: modelType
+      }
+    );
+  }
+
   getConfiguration(newModel: NewModel) {
     return this.http.post(
       this.baseUrl + 'api/configuration',

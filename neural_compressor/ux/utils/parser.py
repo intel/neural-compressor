@@ -189,3 +189,84 @@ class BenchmarkParserFactory:
         if parser is None:
             raise InternalException(f"Could not find optimization class for {benchmark_mode}")
         return parser(logs)
+
+
+class ProfilingParser(Parser):
+    """Parser class is responsible for parsing profiling log files."""
+
+    @staticmethod
+    def unify_time(string_value: str) -> float:
+        """
+        Unify time with unit to micro seconds float value.
+
+        :param string_value: time value with unit, e.g. 125.6ms
+        :type string_value: str
+        :return: time value in microseconds
+        :rtype: float
+        """
+        search = re.search(r"(\d+(\.\d+)?)\s*(\w+)", string_value)
+
+        if not search:
+            raise Exception(f"Coud not parse {string_value}")
+        value = float(search.group(1))
+        unit = search.group(3)
+
+        unit_map = {"s": 10e5, "ms": 10e2, "us": 1, "ns": 10e-4}
+
+        unit_modifier = unit_map.get(unit, None)
+        if unit_modifier is None:
+            raise Exception(f'Unit "{unit}" not recognized.')
+
+        return value * unit_modifier
+
+    def process(self) -> Dict[str, Any]:
+        """Process profiling logs."""
+        parsed_data: List[dict] = []
+
+        for log_file in self._logs:
+            log.debug(f"Read from {log_file}")
+
+            with open(log_file) as file:
+                lines = file.readlines()
+            for line in reversed(lines):
+                header_search: Any = re.search(self.patterns.get("profiling_header"), line)
+                if header_search:
+                    break
+                entry_search: Any = re.search(self.patterns.get("profiling_entry"), line)
+                if entry_search:
+                    node_name = str(entry_search.group(1))
+                    total_execution_time = str(entry_search.group(2))
+                    accelerator_execution_time = str(entry_search.group(8))
+                    cpu_execution_time = str(entry_search.group(14))
+                    op_occurence = {
+                        "run": int(entry_search.group(20)),
+                        "defined": int(entry_search.group(21)),
+                    }
+                    parsed_data.append(
+                        {
+                            "node_name": node_name,
+                            "total_execution_time": self.unify_time(total_execution_time),
+                            "accelerator_execution_time": self.unify_time(
+                                accelerator_execution_time,
+                            ),
+                            "cpu_execution_time": self.unify_time(cpu_execution_time),
+                            "op_occurence": op_occurence,
+                        },
+                    )
+            parsed_data.reverse()
+            self.metric.profiling_data = parsed_data
+        performance_data: Dict[str, Any] = self.metric.serialize()  # type: ignore
+
+        return performance_data
+
+    @property
+    def patterns(self) -> dict:
+        """Set patterns to get metrics from lines."""
+        return {
+            "profiling_entry": r"^(\S+)\s+(\d+(\.\d+)?\w+)\s\((\d+(\.\d+)?)%,"
+            r"\s(\d+(\.\d+)?)%\),\s+(\d+(\.\d+)?\w+)\s\((\d+(\.\d+)?)%,"
+            r"\s(\d+(\.\d+)?)%\),\s+(\d+(\.\d+)?\w+)\s\((\d+(\.\d+)?)%,"
+            r"\s(\d+(\.\d+)?)%\),\s+(\d+)\|(\d+)$",
+            "profiling_header": r"node name \| total execution time \| accelerator execution time "
+            r"\| cpu execution time \| op occurrence \(run\|defined\)",
+        }

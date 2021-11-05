@@ -14,7 +14,7 @@
 # limitations under the License.
 """Metric class."""
 
-from typing import Optional
+from typing import List, Optional
 
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 
@@ -39,6 +39,7 @@ class Metric(JsonSerializer):
         self._size_input_model: Optional[float] = None
         self._size_optimized_model: Optional[float] = None
         self._path_optimized_model: Optional[str] = None
+        self._profiling_data: Optional[List[dict]] = None
 
     @property
     def acc_input_model(self) -> Optional[float]:
@@ -167,3 +168,13 @@ class Metric(JsonSerializer):
     def optimization_time(self, value: str) -> None:
         """Set optimization_time value."""
         self.optimization_time = float(value)
+
+    @property
+    def profiling_data(self) -> Optional[List[dict]]:
+        """Get profiling data."""
+        return self._profiling_data
+
+    @profiling_data.setter
+    def profiling_data(self, value: List[dict]) -> None:
+        """Set profiling data."""
+        self._profiling_data = value

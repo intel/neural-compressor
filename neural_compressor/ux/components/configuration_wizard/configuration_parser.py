@@ -189,7 +189,7 @@ class ConfigurationParser:
         )
 
     @staticmethod
-    def parse_value(value: Any, required_type: Union[Type, List[Type]]) -> Any:
+    def parse_value(value: Any, required_type: Union[Type, List[Type], List[List[Type]]]) -> Any:
         """Parse value to required type."""
         try:
             if required_type == bool:
@@ -203,10 +203,13 @@ class ConfigurationParser:
         return value
 
 
-def parse_list_value(value: Any, required_type: Union[Type, List[Type]]) -> List[Any]:
+def parse_list_value(
+    value: Any,
+    required_type: Union[Type, List[Type], List[List[Type]]],
+) -> List[Any]:
     """Parse value to list."""
     if isinstance(required_type, list):
-        return parse_multidim_list(value, required_type[0])
+        return parse_multidim_list(value, required_type)  # type: ignore
     if isinstance(value, str):
         return [required_type(element.strip("")) for element in value.strip("[]").split(",")]
     elif isinstance(value, Iterable):
@@ -217,10 +220,10 @@ def parse_list_value(value: Any, required_type: Union[Type, List[Type]]) -> List
         return [value]
 
 
-def parse_multidim_list(value: Any, required_type: Type) -> List[Union[Any, List[Any]]]:
+def parse_multidim_list(value: Any, required_type: List[Type]) -> List[Union[Any, List[Any]]]:
     """Parse multi dimensional list."""
     if isinstance(value, str):
-        value = normalize_string_list(value)
+        value = normalize_string_list(value, required_type)
         parsed_list = json.loads(value)
     else:
         parsed_list = value
@@ -235,9 +238,15 @@ def parse_multidim_list(value: Any, required_type: Type) -> List[Union[Any, List
     return parsed_list
 
 
-def normalize_string_list(string_list: str) -> str:
+def normalize_string_list(string_list: str, required_type: Union[Type, List[Type]]) -> str:
     """Add wrap string list into brackets if missing."""
     if not isinstance(string_list, str):
+        return string_list
+    if isinstance(required_type, list):
+        while not string_list.startswith("[["):
+            string_list = "[" + string_list
+        while not string_list.endswith("]]"):
+            string_list += "]"
         return string_list
     if not string_list.startswith("["):
         string_list = "[" + string_list

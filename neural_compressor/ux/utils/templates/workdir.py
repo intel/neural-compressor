@@ -22,8 +22,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.ux.utils.templates.metric import Metric
+from neural_compressor.ux.utils.utils import _load_json_as_dict
+from neural_compressor.ux.utils.workload.workload import Workload
 from neural_compressor.ux.utils.workload.workloads_list import WorkloadInfo
-from neural_compressor.ux.web.configuration import Configuration
 
 
 class Workdir:
@@ -43,9 +44,8 @@ class Workdir:
         created_at: Optional[str] = None,
     ) -> None:
         """Initialize workdir class."""
-        configuration = Configuration()
-        workspace_path = configuration.workdir
-        self.workdir_path = configuration.global_config_directory
+        self.workspace_path = os.path.join(os.environ.get("HOME", ""), "workdir")
+        self.workdir_path = os.path.join(os.environ.get("HOME", ""), ".neural_compressor")
         self.ensure_working_path_exists()
         self.workloads_json = os.path.join(self.workdir_path, "workloads_list.json")
         self.request_id = request_id
@@ -57,7 +57,7 @@ class Workdir:
             self.workloads_data = self.load()
         else:
             self.workloads_data = {
-                "active_workspace_path": workspace_path,
+                "active_workspace_path": self.workspace_path,
                 "workloads": {},
                 "version": "3",
             }
@@ -65,7 +65,7 @@ class Workdir:
         workload_data = self.get_workload_data(request_id)
         if workload_data:
             self.workload_path = workload_data.get("workload_path", "")
-        elif workspace_path and request_id:
+        elif self.workspace_path and request_id:
             workload_name = request_id
             if model_path:
                 workload_name = "_".join(
@@ -75,7 +75,7 @@ class Workdir:
                     ],
                 )
             self.workload_path = os.path.join(
-                workspace_path,
+                self.workspace_path,
                 "workloads",
                 workload_name,
             )
@@ -197,8 +197,7 @@ class Workdir:
 
     def get_active_workspace(self) -> str:
         """Get active workspace."""
-        configuration = Configuration()
-        path = self.workloads_data.get("active_workspace_path", configuration.workdir)
+        path = self.workloads_data.get("active_workspace_path", self.workspace_path)
         return path
 
     def set_active_workspace(self, workspace_path: str) -> None:
@@ -261,3 +260,11 @@ class Workdir:
     def get_workload_data(self, request_id: Optional[str]) -> dict:
         """Return data of given Workload."""
         return self.workloads_data.get("workloads", {}).get(request_id, {})
+
+    def get_workload_object(self) -> Workload:
+        """Get workload object."""
+        workload_path = self.workload_path
+        workload_data = _load_json_as_dict(
+            os.path.join(workload_path, "workload.json"),
+        )
+        return Workload(workload_data)

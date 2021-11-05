@@ -129,6 +129,7 @@ class Config(JsonSerializer):
             and self.evaluation.accuracy
             and self.evaluation.accuracy.dataloader
             and self.evaluation.accuracy.dataloader.dataset
+            and not self.evaluation.accuracy.dataloader.dataset.is_dummy()
         ):
             self.evaluation.accuracy.dataloader.dataset.params.update(
                 {"root": dataset_path},
@@ -140,6 +141,7 @@ class Config(JsonSerializer):
             and self.evaluation.performance
             and self.evaluation.performance.dataloader
             and self.evaluation.performance.dataloader.dataset
+            and not self.evaluation.performance.dataloader.dataset.is_dummy()
         ):
             self.evaluation.performance.dataloader.dataset.params.update(
                 {"root": dataset_path},
@@ -216,6 +218,7 @@ class Config(JsonSerializer):
             and self.quantization.calibration
             and self.quantization.calibration.dataloader
             and self.quantization.calibration.dataloader.dataset
+            and not self.quantization.calibration.dataloader.dataset.is_dummy()
         ):
             self.quantization.calibration.dataloader.dataset.params.update(
                 {"root": dataset_path},

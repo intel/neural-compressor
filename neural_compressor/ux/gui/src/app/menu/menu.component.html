@@ -20,7 +20,8 @@
           color="accent">
         </mat-spinner>
         <span>
-          <span class="name">{{ getFileName(model['model_path']) }}</span>
+          <span class="name" [matTooltip]="getFileName(model['model_path'])">{{ getFileName(model['model_path']) |
+            longName }}</span>
           <br>
           <span class="time wip"> {{ getDate(model['created_at']) | timeAgo }}</span>
         </span>

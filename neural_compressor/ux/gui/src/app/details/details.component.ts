@@ -41,6 +41,8 @@ export class DetailsComponent implements OnInit, OnChanges {
   performanceData;
   sizeData;
   historyData = {};
+  profilingData = [];
+  profilingDataHeaders = [];
   accuracyReferenceLines = {};
   executionDetails = {};
   view: any[] = [307, 300];
@@ -147,6 +149,23 @@ export class DetailsComponent implements OnInit, OnChanges {
           }
         }
       });
+
+    this.socketService.profilingFinish$
+      .subscribe(result => {
+        if (result['status'] === 'success' && result['data'] && this.activatedRoute.snapshot.params.id === result['data']['id']) {
+          this.model['status'] = result['status'];
+          this.getProfilingData(result['data']);
+        } else if (result['status'] === 'error' && this.activatedRoute.snapshot.params.id === result['data']['id']) {
+          this.openErrorDialog(result['data']['message']);
+        }
+      });
+  }
+
+  getProfilingData(result) {
+    if (result['execution_details'] && result['execution_details']['optimized_model_profiling'] && result['execution_details']['optimized_model_profiling']['profiling_data']) {
+      this.profilingData = result['execution_details']['optimized_model_profiling']['profiling_data'];
+      this.profilingDataHeaders = Object.keys(this.profilingData[0]);
+    }
   }
 
   getHistoryData(result) {
@@ -214,6 +233,7 @@ export class DetailsComponent implements OnInit, OnChanges {
   startDetails(): void {
     if ((this.model && this.model.id === this.activatedRoute.snapshot.params.id) || (this.model && !this.activatedRoute.snapshot.params.id)) {
       this.getDataForChart();
+      this.getProfilingData(this.model);
       this.showSpinner = false;
     } else {
       this.modelService.getDefaultPath('workspace')
@@ -227,6 +247,7 @@ export class DetailsComponent implements OnInit, OnChanges {
 
                   if (this.model) {
                     this.getDataForChart();
+                    this.getProfilingData(this.model);
 
                     this.modelService.getModelGraph(this.model['model_path'])
                       .subscribe(
@@ -248,6 +269,18 @@ export class DetailsComponent implements OnInit, OnChanges {
             this.openErrorDialog(error);
           });
     }
+  }
+
+  getProfile() {
+    this.model['status'] = 'wip';
+    this.modelService.getProfile(this.model, 'optimized_model')
+      .subscribe(
+        profile => { },
+        error => {
+          this.openErrorDialog(error);
+          this.model['status'] = 'error';
+        }
+      );
   }
 
   openErrorDialog(error) {

@@ -90,7 +90,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
                 Transform(transform_name, {"size": [10, 20]}),
                 Transform("baz"),
             ]
-            expected = [10, 20, 3]
+            expected = [[10, 20, 3]]
             actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
             self.assertEqual(expected, actual, f"Incorrect shape for {transform_name}")
 
@@ -105,7 +105,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
                 Transform(transform_name, {"height": 10, "width": 20}),
                 Transform("baz"),
             ]
-            expected = [10, 20, 3]
+            expected = [[10, 20, 3]]
             actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
             self.assertEqual(expected, actual, f"Incorrect shape for {transform_name}")
 
@@ -116,7 +116,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             Transform("CropToBoundingBox", {"target_height": 10, "target_width": 20}),
             Transform("baz"),
         ]
-        expected = [10, 20, 3]
+        expected = [[10, 20, 3]]
         actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual)
 
@@ -127,7 +127,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
             Transform("Resize", {"size": [10, 20]}),
             Transform("baz"),
         ]
-        expected = [10, 20, 3]
+        expected = [[10, 20, 3]]
         actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect initial shape before transposing")
 
@@ -135,19 +135,19 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
 
         # add first transpose
         transforms.append(rotate_right_transpose)
-        expected = [3, 10, 20]
+        expected = [[3, 10, 20]]
         actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect shape after first transpose")
 
         # add second transpose
         transforms.append(rotate_right_transpose)
-        expected = [20, 3, 10]
+        expected = [[20, 3, 10]]
         actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect shape after second transpose")
 
         # add third transpose
         transforms.append(rotate_right_transpose)
-        expected = [10, 20, 3]
+        expected = [[10, 20, 3]]
         actual = get_shape_from_transforms(transforms, ["height", "width", "channels"])
         self.assertEqual(expected, actual, "Incorrect shape after third transpose")
 
@@ -346,7 +346,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
         expected_dataset = Dataset(
             "dummy_v2",
             {
-                "input_shape": [10, 20, 3],
+                "input_shape": [[10, 20, 3]],
                 "label_shape": [1],
             },
         )
@@ -370,7 +370,7 @@ class TestUpdateConfigWithDummy(unittest.TestCase):
         expected_dataset = Dataset(
             "dummy_v2",
             {
-                "input_shape": [1, 2, 3, 4, 5],
+                "input_shape": [[1, 2, 3, 4, 5]],
                 "label_shape": [1],
             },
         )

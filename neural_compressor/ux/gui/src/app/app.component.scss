@@ -61,10 +61,13 @@
 .footer {
   position: fixed;
   bottom: 0px;
-  width: 100%;
   text-align: center;
   color: $dark-gray;
-  background-color: #fafafa;
+}
+
+.footer-wrapper {
+  margin: auto;
+  width: 150px;
 }
 
 .menu-btn {
