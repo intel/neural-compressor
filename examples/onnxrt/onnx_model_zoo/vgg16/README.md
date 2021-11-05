@@ -23,10 +23,6 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
                    --output_model=path/to/save
 ```
 
-> Advanced usage
-> 
-> Replace the level of 'graph_optimization' in env_path/neural_compressor/adaptor/onnxrt_qlinear.yaml with 'ENABLE_BASIC' can get a lighter quantized model.
-
 ### Performance 
 Usually we need to bind the program to specific cores like 4 cores to get performance under real production environments.   
 **for linux**

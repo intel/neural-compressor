@@ -22,7 +22,6 @@ model:                                               # mandatory. used to specif
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.                          
   calibration:
-    sampling_size: 50, 100                           # optional. default value is 100. used to set how many samples should be used in calibration.
 evaluation:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in lpot.Quantization.
     metric:

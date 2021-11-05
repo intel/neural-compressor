@@ -112,6 +112,9 @@ if __name__ == "__main__":
     model = onnx.load(args.model_path)
     ds = dataset(args.data_path, args.label_path)
 
+    from neural_compressor import options
+    options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
+
     if args.benchmark:
         from neural_compressor.experimental import Benchmark, common
         evaluator = Benchmark(args.config)

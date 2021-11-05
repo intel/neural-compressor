@@ -22,7 +22,6 @@ import argparse
 
 import numpy as np
 import onnx
-import cv2
 import re
 import os
 from PIL import Image
@@ -51,8 +50,7 @@ class dataset:
     def __getitem__(self, index):
         image_path, label = self.image_list[index], self.label_list[index]
         with Image.open(image_path) as image:
-            image = np.array(image.convert('RGB')).astype(np.float32)
-            image = cv2.resize(image, (224,224))
+            image = np.array(image.convert('RGB').resize((224, 224))).astype(np.float32)
             image[:, :, 0] -= 123.68
             image[:, :, 1] -= 116.779
             image[:, :, 2] -= 103.939
@@ -112,6 +110,10 @@ if __name__ == "__main__":
 
     model = onnx.load(args.model_path)
     ds = dataset(args.data_path, args.label_path)
+
+    from neural_compressor import options
+    options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
+
     if args.benchmark:
         from neural_compressor.experimental import Benchmark, common
         evaluator = Benchmark(args.config)

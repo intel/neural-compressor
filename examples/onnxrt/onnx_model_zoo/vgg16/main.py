@@ -68,8 +68,11 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
     model = onnx.load(args.model_path)
+
+    from neural_compressor import options
+    options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
+
     if args.benchmark:
         from neural_compressor.experimental import Benchmark, common
         evaluator = Benchmark(args.config)
