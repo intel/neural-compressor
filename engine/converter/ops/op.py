@@ -18,13 +18,7 @@
 from abc import abstractmethod
 from collections import namedtuple, OrderedDict
 from .tensor import Tensor
-from ..tf_utils import tf_extract_operator
-from ..onnx_utils import onnx_extract_operator
 
-OP_EXTRACTORS = {
-    'tensorflow': tf_extract_operator,
-    'onnxruntime': onnx_extract_operator,
-}
 
 OPERATORS = {}
 
@@ -101,6 +95,14 @@ class Operator(object):
 
     # extract the op from framework
     def extract(self, framework, node, model, nodes_dict):
+        from ..tf_utils import tf_extract_operator
+        from ..onnx_utils import onnx_extract_operator
+
+        OP_EXTRACTORS = {
+            'tensorflow': tf_extract_operator,
+            'onnxruntime': onnx_extract_operator,
+        }
+        
         self._name = node.name
         self._op_type, self._input_tensors, self._output_tensors = OP_EXTRACTORS[framework](
             node, model, nodes_dict)

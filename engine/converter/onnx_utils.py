@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import onnx
-import onnxruntime
-from onnx.numpy_helper import to_array
+
 import numpy as np
 import re
 from collections import namedtuple, OrderedDict
@@ -160,6 +158,8 @@ def onnx_extract_operator(node, model, nodes_dict):
         input_tensors: Tensor list, contains the node input tensors info
         output_tensors: Tensor list, contains the node output tensor info
     """
+    from onnx.numpy_helper import to_array
+
     op_type = node.op_type
     input_tensors = []
     output_tensors = []

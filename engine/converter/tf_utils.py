@@ -15,10 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.framework import tensor_util
+
 import numpy as np
 import re
 from collections import namedtuple, OrderedDict
@@ -36,6 +33,8 @@ def create_tf_node(op, name, inputs):
     Returns:
         nodedef: the created nodedef object
     """
+    from tensorflow.core.framework import node_def_pb2
+
     new_node = node_def_pb2.NodeDef()
     new_node.op = op
     new_node.name = name
@@ -112,6 +111,8 @@ def tf_extract_operator(node, model, nodes_dict):
         input_tensors: Tensor list, contains the node input tensors info
         output_tensors: Tensor list, contains the node output tensor info
     """
+    from tensorflow.python.framework import tensor_util
+
     op_type = node.op
     input_tensors = []
     output_tensors = []

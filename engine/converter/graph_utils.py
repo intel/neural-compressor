@@ -558,7 +558,6 @@ def insert_pattern(target_node_names, new_nodes, graph):
                 else:
                     index += 1
     # insert new_nodes
-
     graph.insert_nodes(index, new_nodes)
 
     return graph
@@ -619,9 +618,9 @@ def pattern_mapping(pattern_name, mapping_dict, graph):
                 need these nodes for writing node attributes in pattern after fusion. If don't
                 need return, set the value as [].
 
-    Note that the pattern after fusion (n->n / n->1)is must be sequence pattern or just separated
-    from each other, like [a->b->c->d->e], or [a] / [a,b,c,d,e]. That means if one pattern is too
-    complicated, or the pattern after fusion is too complicated, you had better decompose it.
+    Note that the pattern after fusion (n->n / n->1)is must be sequence pattern like 
+    [a->b->c->d->e], or [a]. That means if one pattern is too complicated, or the pattern after 
+    fusion is too complicated, you had better decompose it.
 
     """
 

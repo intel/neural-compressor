@@ -15,10 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tensorflow.python.framework import tensor_util
-import tensorflow as tf
+
 from neural_compressor.utils import logger
-import numpy as np
 from ..graph.graph import Graph
 from ..ops.op import OPERATORS
 from ..tf_utils import graph_node_names_details

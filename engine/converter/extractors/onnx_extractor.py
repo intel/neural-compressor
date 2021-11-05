@@ -15,10 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import onnx
-from onnx.numpy_helper import to_array
+
 from neural_compressor.utils import logger
-import numpy as np
 from ..graph.graph import Graph
 from ..ops.op import OPERATORS
 from ..onnx_utils import graph_node_names_details
