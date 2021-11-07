@@ -6,7 +6,7 @@ import yaml
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import disable_random
-
+from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -63,6 +63,35 @@ class TestTensorflowRnn(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+
+    @unittest.skipUnless(bool(
+            tf.version.VERSION.find('1.15.0-up2') != -1), 'not supported the current tf version.')
+    @disable_random()
+    def test_tensorflow_dynamic_rnn(self):
+      X = np.random.randn(3, 6, 4)
+
+      X[1, 4:] = 0
+      X_lengths = [6, 4, 6]
+
+      rnn_hidden_size = 5
+      rnn_type= 'ltsm1'
+      if rnn_type == 'lstm':
+          cell = tf.contrib.rnn.BasicLSTMCell(num_units=rnn_hidden_size, state_is_tuple=True)
+      else:
+          cell = tf.contrib.rnn.GRUCell(num_units=rnn_hidden_size)
+
+      outputs, last_states = tf.nn.dynamic_rnn(
+          cell=cell,
+          dtype=tf.float64,
+          sequence_length=X_lengths,
+          inputs=X)
+
+      with tf.Session() as sess:
+          sess.run(tf.global_variables_initializer())
+          o1, s1 = sess.run([outputs, last_states])
+          rs = Helper.analysis_rnn_model(sess.graph.as_graph_def())
+          self.assertEqual(len(rs.keys()), 2)
+
 
     @unittest.skipUnless(bool(
             tf.version.VERSION.find('1.15.0-up2') != -1), 'not supported the current tf version.')

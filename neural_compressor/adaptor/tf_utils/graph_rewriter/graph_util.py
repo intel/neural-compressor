@@ -870,3 +870,24 @@ class GraphRewriterHelper():
             final_res.extend(gen_per_iter(valid_data[int(i*step): int(step*( i+ 1))]))
 
         return final_res
+
+    @staticmethod
+    def analysis_rnn_model(graph_def, bf16_ops=[], fp32_ops=[]):
+        g = GraphAnalyzer()
+        g.graph = graph_def
+        graph_info = g.parse_graph()
+        rnn_pattern = [['TensorArrayV3'], ['Enter'], ['TensorArrayReadV3'], \
+            ['MatMul'], ['BiasAdd']]
+        target_nodes = g.query_fusion_pattern_nodes(rnn_pattern)
+        res = {}
+        for i in target_nodes:
+            if i[-3] not in bf16_ops and i[-3] not in fp32_ops:
+                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr['frame_name'].s.decode()
+
+        dynamic_rnn_pattern = [['Enter'], ['MatMul'], ['BiasAdd']]
+        target_nodes = g.query_fusion_pattern_nodes(dynamic_rnn_pattern)
+        for i in target_nodes:
+            if i[-3] not in bf16_ops and i[-3] not in fp32_ops:
+                res[(i[1], i[2])] = graph_info[i[0]].node.attr['frame_name'].s.decode()
+
+        return res

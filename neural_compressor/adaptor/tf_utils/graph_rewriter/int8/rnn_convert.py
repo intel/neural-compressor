@@ -43,6 +43,16 @@ class QuantizedRNNConverter(GraphRewriterBase):
 
         for i in self.rnn_details.keys():         # pragma: no cover
             start_node_name = graph_info[i[0]].node.input[0]
+
+            matmul_b_node_name = graph_info[i[0]].node.input[1]
+            matmul_b_node = graph_info[Helper.node_name_from_input(matmul_b_node_name)].node
+            if matmul_b_node.op == 'Split':
+                enter_node_name = matmul_b_node.input[1]
+            elif matmul_b_node.op == 'Enter':
+                enter_node_name = graph_info[i[0]].node.input[1]
+            else:
+                continue
+
             min_str = i[0] + '_eightbit_min_' + \
                 start_node_name + '__print__;__min:'
             input_min_values = []
@@ -89,9 +99,6 @@ class QuantizedRNNConverter(GraphRewriterBase):
             Helper.set_attr_bool(q_enter_max_node, 'is_constant', True)
             Helper.set_attr_int(q_enter_max_node, 'parallel_iterations', 32)
 
-            split_node_name = graph_info[i[0]].node.input[1]
-            enter_node_name = graph_info[Helper.node_name_from_input(
-                split_node_name)].node.input[1]
             weight_node_name = graph_info[Helper.node_name_from_input(
                 enter_node_name)].node.input[0]
             weight_node = graph_info[Helper.node_name_from_input(
@@ -222,10 +229,9 @@ class QuantizedRNNConverter(GraphRewriterBase):
             if qint8_const_node.name not in graph_info:
                 g.add_node(qint8_const_node, None, [enter_node_name])
                 enter_node = graph_info[enter_node_name].node
-                split_node = graph_info[Helper.node_name_from_input(
-                    split_node_name)].node
+                if matmul_b_node.op == 'Split':
+                    Helper.set_attr_dtype(matmul_b_node, 'T', dtypes.qint8)
                 Helper.set_attr_dtype(enter_node, 'T', dtypes.qint8)
-                Helper.set_attr_dtype(split_node, 'T', dtypes.qint8)
                 graph_info[enter_node.name].node.input[0] = qint8_const_node.name
             elif qint8_const_node.name in graph_info:
                 pass

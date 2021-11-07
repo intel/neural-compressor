@@ -71,8 +71,9 @@ class QuantizeGraphHelper():
             self.node_name_mapping[node.name] = node
         self._get_op_list(output_node_names)
 
-        self.op_list.extend(
-            set(self.node_name_mapping.keys()) - set(self.op_list))
+        all_ops = [i for i in list(self.node_name_mapping.keys()) if i not in self.op_list]
+        self.op_list.extend(sorted(set(all_ops), key=all_ops.index))
+
         self.out_graph_def = graph_pb2.GraphDef()
         for i in self.op_list:
             new_node = node_def_pb2.NodeDef()

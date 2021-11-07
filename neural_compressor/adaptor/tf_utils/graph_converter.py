@@ -485,20 +485,6 @@ class GraphConverter:
 
         return final_result
 
-    def _analysis_rnn_model(self):
-        g = GraphAnalyzer()
-        g.graph = self._tmp_graph_def
-        graph_info = g.parse_graph()
-        rnn_pattern = [['TensorArrayV3'], ['Enter'], ['TensorArrayReadV3'], \
-            ['MatMul'], ['BiasAdd']]
-        target_nodes = g.query_fusion_pattern_nodes(rnn_pattern)
-        res = {}
-        for i in target_nodes:
-            if i[-3] not in self.bf16_ops and i[-3] not in self.fp32_ops:
-                res[(i[-3], i[-2])] = graph_info[i[1]].node.attr['frame_name'].s.decode()
-
-        return res
-
     def _search_y_pattern_for_itex(self):
         """Search the Y pattern for itex and return the op name.
         """
@@ -526,7 +512,9 @@ class GraphConverter:
         """
         try:
             self._quantize_graph()
-            self._rnn_details = self._analysis_rnn_model()
+            self._rnn_details = Helper.analysis_rnn_model(self._tmp_graph_def,
+                                                            bf16_ops=self.bf16_ops,
+                                                            fp32_ops=self.fp32_ops)
             self.quantized_node_info.extend(self._rnn_details.keys())
             self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
 
