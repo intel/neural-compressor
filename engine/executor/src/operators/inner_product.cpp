@@ -66,7 +66,10 @@ InnerProductOperator::InnerProductOperator(const OperatorConfig& conf) :
   gelu_erf_ = (iter != attrs_map.end() && iter->second == "gelu_erf") ? true : false;
   gelu_tanh_ = (iter != attrs_map.end() && iter->second == "gelu_tanh") ? true : false;
   tanh_ = (iter != attrs_map.end() && iter->second == "tanh") ? true : false;
-  append_eltwise_ = (gelu_erf_ && !gelu_split_) || (gelu_tanh_ && !gelu_split_) || tanh_;
+  sigmoid_ = (iter != attrs_map.end() && iter->second == "sigmoid") ? true : false;
+  relu_ = (iter != attrs_map.end() && iter->second == "relu") ? true : false;
+  append_eltwise_ = (gelu_erf_ && !gelu_split_) || (gelu_tanh_ && !gelu_split_) || tanh_ ||
+                     sigmoid_ || relu_;
 }
 
 InnerProductOperator::~InnerProductOperator() {
@@ -188,7 +191,18 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
     auto op_beta = 0.0;
     po.append_eltwise(op_scale, algorithm::eltwise_tanh, op_alpha, op_beta);
   }
-
+  if (sigmoid_) {
+    auto op_scale = 1.0;
+    auto op_alpha = 0.0;
+    auto op_beta = 0.0;
+    po.append_eltwise(op_scale, algorithm::eltwise_logistic, op_alpha, op_beta);
+  }
+  if (relu_) {
+    auto op_scale = 1.0;
+    auto op_alpha = 0.0;
+    auto op_beta = 0.0;
+    po.append_eltwise(op_scale, algorithm::eltwise_relu, op_alpha, op_beta);
+  }
   // this is to sub zero point in fp32 to make the output u8/s8
   if (append_eltwise_ && (dst_->dtype() == "u8" || dst_->dtype() == "s8")) {
     float zero_point = -1 * static_cast<const float*>(dst_min_->data())[0];

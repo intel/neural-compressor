@@ -63,7 +63,7 @@ class TestOps(unittest.TestCase):
         cast_node_test = OPERATORS['Cast']()
         cast_node_test.set_attr('onnxruntime', cast_node)
         dst_dtype = cast_node_test.attr['DstT']
-        self.assertEqual('float32', dst_dtype)
+        self.assertEqual('fp32', dst_dtype)
     
     def test_concat(self):
         concat_node = NodeProto()

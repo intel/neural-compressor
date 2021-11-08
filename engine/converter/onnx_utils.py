@@ -185,6 +185,8 @@ def onnx_extract_operator(node, model, nodes_dict):
             if (pre_node not in model.graph().input) and (pre_node.op_type == 'Constant'):
                 data = to_array(pre_node.attribute[0].t)
         if isinstance(data, np.ndarray):
+            if data.dtype == np.int64:
+                data = data.astype(np.int32)
             dtype = util.get_data_dtype(data)
             shape = list(data.shape) if data.shape != () else [1]
             input_tensor = Tensor(name=input_tensor_name,
@@ -226,7 +228,7 @@ def onnx_extract_operator(node, model, nodes_dict):
     return op_type, input_tensors, output_tensors
 
 
-ONNX_DTYPE_ID = {1: 'float32',
+ONNX_DTYPE_ID = {1: 'fp32',
                 7: 'int32',
                 9: 'bool',
                 6: 'int32',}

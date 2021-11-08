@@ -361,3 +361,23 @@ class TokenTypeIds(Operator):
 class PositionIds(Operator):
     def __init__(self):
         super().__init__()
+
+@operator_registry(operator_type='Loop')
+class Loop(Operator):
+    def __init__(self):
+        super().__init__()
+
+@operator_registry(operator_type='Sigmoid')
+class Sigmoid(Operator):
+    def __init__(self):
+        super().__init__()
+
+@operator_registry(operator_type='MatMulWithBiasSigmoid')
+class MatMulWithBiasSigmoid(Operator):
+    def __init__(self):
+        super().__init__()
+
+@operator_registry(operator_type='EmbeddingBag')
+class EmbeddingBag(Operator):
+    def __init__(self):
+        super().__init__()

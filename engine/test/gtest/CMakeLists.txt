@@ -52,6 +52,9 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/gelu.cpp
     ${HOST_SRC_DIR}/src/operators/position_ids.cpp
     ${HOST_SRC_DIR}/src/operators/token_type_ids.cpp
+    ${HOST_SRC_DIR}/src/operators/concat.cpp
+    ${HOST_SRC_DIR}/src/operators/embeddingbag.cpp
+    ${HOST_SRC_DIR}/src/operators/split.cpp
 )
 
 # Header file include path
@@ -90,6 +93,9 @@ file(GLOB OPS_TEST_CASES_SRC
     test_gelu_op.cpp
     test_position_ids_op.cpp
     test_token_type_ids_op.cpp
+    test_concat_op.cpp
+    test_split_op.cpp
+    test_embeddingbag_op.cpp
 )
 
 function(register_gtest_func exe src)

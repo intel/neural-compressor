@@ -55,6 +55,41 @@ class ONNXExtractor(object):
                     new_node = OPERATORS[op_type]()
                     new_node.extract('onnxruntime', node, model, graph_nodes_dict)
                     new_graph.insert_nodes(len(new_graph.nodes), [new_node])
+                    if op_type == 'Loop':
+                        for inner_node in node.attribute[0].g.node:
+                            op_type = inner_node.op_type
+                            if op_type == 'Constant':
+                                continue
+                            else:
+                                import engine.converter.graph_utils as util
+                                input_tensor_names = inner_node.input
+                                for input_tensor_name in input_tensor_names:
+                                    origin_tensor_name, input_tensor_name = \
+                                        util.names_from_input(input_tensor_name)
+                                    if origin_tensor_name in graph_nodes_dict and \
+                                        hasattr(graph_nodes_dict[origin_tensor_name], 'node'):
+                                        pre_node = graph_nodes_dict[origin_tensor_name].node
+                                        data = None
+                                        graph_node = new_graph.get_node_by_name(node.name)
+                                        has_tensor = True
+                                        for tensor in graph_node.input_tensors:
+                                            if origin_tensor_name + ':0' == tensor.name: 
+                                                has_tensor = False
+                                        if pre_node in model.initializer() and has_tensor:
+                                            data = to_array(pre_node)
+                                            from engine.converter.ops.tensor import Tensor
+                                            shape = list(data.shape) if data.shape != () else [1]
+                                            dtype = util.get_data_dtype(data)
+                                            loop_tensor = Tensor(name=origin_tensor_name,
+                                                                 source_op=[],
+                                                                 dest_op=[node.name],
+                                                                 shape=shape,
+                                                                 data=data,
+                                                                 dtype=dtype
+                                                                )
+                                            new_graph.change_node_input_tensors(node.name, 0, \
+                                                                     loop_tensor, mode='insert')    
+
                 else:
                     raise ValueError('the {} operation does not support now...'.format(op_type))
 

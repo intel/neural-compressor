@@ -24,6 +24,7 @@ EXECUTOR_TYPE = {
     "MatMulWithBiasGelu": "InnerProduct",
     "MatMulWithBiasTanh": "InnerProduct",
     "MatMulWithBiasRelu": "InnerProduct",
+    "MatMulWithBiasSigmoid": "InnerProduct",
     "MatMul": "InnerProduct",
     "QuantizedMatMulWithBiasAndDequantize": "InnerProduct",
     "TransposeBatchMatMul": "Matmul",

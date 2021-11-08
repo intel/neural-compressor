@@ -715,6 +715,9 @@ schema = Schema({
                 Optional('GLUE'): {
                     Optional('task'): str
                 },
+                Optional('ROC'): {
+                    Optional('task'): str
+                },
             },
             Optional('configs'): configs_schema,
             Optional('iteration', default=-1): int,

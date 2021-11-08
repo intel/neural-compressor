@@ -62,6 +62,9 @@ class InnerProductOperator : public Operator {
   bool gelu_tanh_;
   bool gelu_split_;
   bool tanh_;
+  bool sigmoid_;
+  bool relu_;
+
   bool append_eltwise_;
   float output_scale_ = 1.f;
   string output_dtype_ = "fp32";

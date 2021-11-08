@@ -267,8 +267,11 @@ class Graph(object):
         net_info = self.net_config
         if tensor_list == []:
             for node in net_info['model']['operator']:
-                if node != 'input_data' and 'output' in net_info['model']['operator'][node].keys():
+                if 'output' in net_info['model']['operator'][node].keys():
                     for tensor in net_info['model']['operator'][node]['output']:
+                        if 'location' in \
+                            net_info['model']['operator'][node]['output'][tensor].keys():
+                            continue 
                         net_info['model']['operator']['output_data']['input'][tensor] = {}
         else:
             for tensor in tensor_list:

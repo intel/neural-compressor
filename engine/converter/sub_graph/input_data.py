@@ -100,6 +100,32 @@ class InputData(Pattern):
                     'returns': []
                 },
 
+                # dlrm
+                {
+                    'patterns': {
+                        'in': [[(0, 'dense_x'), (1, 'offsets'), (2, 'indices')]],
+                        'out': [[(0, 'Input')]]
+                    },
+                    'search_mode': 'node_name',
+                    'node_names': {
+                        0: 'input_data'
+                    },
+                    'input_tensors': {
+                        0: [[], [[], 0]]
+                    },
+                    'output_tensors': {
+                        0: [[{
+                            0: [0]
+                        }, {
+                            1: [0]
+                        }, {
+                            2: [0]
+                        }], 
+                        [[0, 1, 2], 3]]
+                    },
+                    'returns': [0, 1, 2]
+                },
+
                 # distil_bert_base
                 {
                     'patterns': {
@@ -134,7 +160,8 @@ class InputData(Pattern):
             if len(new_node_names) != 0:
                 model.nodes[0].attr = None
                 for j in range(len(model.nodes[0].output_tensors)):
-                    model.nodes[0].output_tensors[j].shape = [-1, -1]
+                    if model.nodes[0].output_tensors[j].shape is None:
+                        model.nodes[0].output_tensors[j].shape = [-1, -1]
 
                 return model
 

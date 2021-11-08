@@ -159,16 +159,17 @@ class WordEmbeddings(Pattern):
                 # distil_bert_base
                 {
                     'patterns': {
-                        'in': [[(0, 'Input'), (1, 'Gather')]],
+                        'in': [[(0, 'Input'), (1, 'Gather'), (2, 'Add')]],
                         'out': [[(0, 'Reshape'), (1, 'Gather'), (2, 'Reshape'),
-                                (3, 'Reshape')]]
+                                (3, 'Reshape'), (4, 'Add')]]
                     },
                     'search_mode': 'op_type',
                     'node_names': {
                         0: 'word_embeddings/reshape',
                         1: 1,
                         2: 'word_embeddings/after/reshape',
-                        3: 'word_embeddings/add_reshape'
+                        3: 'word_embeddings/add_reshape',
+                        4: 2
                     },
                     'input_tensors': {
                         0: [[{
@@ -182,14 +183,18 @@ class WordEmbeddings(Pattern):
                         }], [[1], 2]],
                         3: [[{
                             'input_data': [0]
+                        }], [[1], 2]],
+                        4: [[{
+                            2: [0, 1]
                         }], [[1], 2]]
                     },
                     'output_tensors': {
                         0: [[], [[], 1]],
                         1: [[], [[], 1]],
                         2: [[], [[], 1]],
-                        3: [[{
-                            1: [0]
+                        3: [[], [[], 1]],
+                        4: [[{
+                            2: [0]
                         }], [[0], 1]],
                     },
                     'returns': [1, 0]

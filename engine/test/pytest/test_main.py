@@ -33,7 +33,7 @@ class TestMain(unittest.TestCase):
         net = model.dump_tensor()
         model.engine_init(net)
         out = model.inference([input_0, input_1, input_2])
-        self.assertEqual(377, len(out))
+        self.assertEqual(380, len(out))
 
         # test of dump_tensor
         net = model.dump_tensor(["iasA"])

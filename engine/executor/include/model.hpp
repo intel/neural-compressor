@@ -76,7 +76,8 @@ class Model {
       auto data_buffer = model_output_tensors_[i]->data();
       auto size = model_output_tensors_[i]->size();
       // copy the data from memory to an output buffer
-      if (size > output_tensors_[i].size()) {
+      if (size > output_tensors_[i].size() ||
+	      output_tensors_[i].size() < size * type2bytes[output_tensors_[i].dtype()]) {
         free(output_tensors_[i].mutable_data());
         void* out_buffer = malloc(size * type2bytes[output_tensors_[i].dtype()]);
         output_tensors_[i].set_data(out_buffer);

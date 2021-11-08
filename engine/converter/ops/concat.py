@@ -27,4 +27,7 @@ class Concat(Operator):
     def set_attr(self, framework, node):
 
         if framework == "onnxruntime":
-            self._attr['axis'] = node.attribute[0].ints
+            if node.attribute[0].type == 2:
+                self._attr['axis'] = node.attribute[0].i
+            elif node.attribute[0].type == 7:
+                self._attr['axis'] = node.attribute[0].ints

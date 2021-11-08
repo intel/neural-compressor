@@ -69,6 +69,9 @@ add_library(engine SHARED
     src/operators/gelu.cpp
     src/operators/position_ids.cpp
     src/operators/token_type_ids.cpp
+    src/operators/concat.cpp
+    src/operators/embeddingbag.cpp
+    src/operators/split.cpp
 )
 
 # Header file include path

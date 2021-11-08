@@ -961,3 +961,48 @@ class ONNXRTGLUE(BaseMetric):
         result = transformers.glue_compute_metrics(\
             self.task, processed_preds, self.label_list)
         return result[self.return_key[self.task]]
+@metric_registry('ROC', 'pytorch, engine')
+class ROC(BaseMetric):
+    """Computes ROC score.
+
+    Args:
+        task (str, default=dlrm): The name of the task.
+                                  Choices include dlrm, dien, wide_deep.
+
+    """
+    def __init__(self, task='dlrm'):
+        assert task in ['dlrm', 'dien', 'wide_deep'], 'Unsupported task type'
+        self.pred_list = None
+        self.label_list = None
+        self.task = task
+        self.return_key = {
+            "dlrm": "acc",
+            "dien": "acc",
+            "wide_deep": "acc",
+        }
+
+    def update(self, preds, labels):
+        """add preds and labels to storage"""
+        if isinstance(preds, list) and len(preds) == 1:
+            preds = preds[0]
+        if isinstance(labels, list) and len(labels) == 1:
+            labels = labels[0]
+        if self.pred_list is None:
+            self.pred_list = preds
+            self.label_list = labels
+        else:
+            self.pred_list = np.append(self.pred_list, preds, axis=0)
+            self.label_list = np.append(self.label_list, labels, axis=0)
+
+    def reset(self):
+        """clear preds and labels storage"""
+        self.pred_list = None
+        self.label_list = None
+
+    def result(self):
+        import sklearn.metrics
+        scores = np.squeeze(self.pred_list)
+        targets = np.squeeze(self.label_list)
+        roc_auc = sklearn.metrics.roc_auc_score(targets, scores)
+        acc = sklearn.metrics.accuracy_score(targets, np.round(scores))
+        return acc
