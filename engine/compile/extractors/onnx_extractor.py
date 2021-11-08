@@ -20,6 +20,7 @@ from neural_compressor.utils import logger
 from ..graph.graph import Graph
 from ..ops.op import OPERATORS
 from ..onnx_utils import graph_node_names_details
+from onnx.numpy_helper import to_array
 from ..graph_utils import names_from_input
 
 
@@ -61,7 +62,7 @@ class ONNXExtractor(object):
                             if op_type == 'Constant':
                                 continue
                             else:
-                                import engine.converter.graph_utils as util
+                                import engine.compile.graph_utils as util
                                 input_tensor_names = inner_node.input
                                 for input_tensor_name in input_tensor_names:
                                     origin_tensor_name, input_tensor_name = \
@@ -77,7 +78,7 @@ class ONNXExtractor(object):
                                                 has_tensor = False
                                         if pre_node in model.initializer() and has_tensor:
                                             data = to_array(pre_node)
-                                            from engine.converter.ops.tensor import Tensor
+                                            from engine.compile.ops.tensor import Tensor
                                             shape = list(data.shape) if data.shape != () else [1]
                                             dtype = util.get_data_dtype(data)
                                             loop_tensor = Tensor(name=origin_tensor_name,

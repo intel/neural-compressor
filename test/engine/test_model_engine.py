@@ -5,9 +5,9 @@ import numpy as np
 import shutil
 
 from neural_compressor.model.engine_model import EngineModel
-from engine.converter.ops.tensor import Tensor
-from engine.converter.graph.graph import Graph
-from engine.converter.ops.op import Operator
+from engine.compile.ops.tensor import Tensor
+from engine.compile.graph.graph import Graph
+from engine.compile.ops.op import Operator
 from neural_compressor.experimental import Quantization, Benchmark, common
 
 def build_yaml():

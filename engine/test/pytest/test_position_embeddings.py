@@ -1,9 +1,9 @@
 import unittest
 from collections import OrderedDict
-from engine.converter.ops.op import OPERATORS, Operator
-from engine.converter.ops.tensor import Tensor
-from engine.converter.graph import Graph
-from engine.converter.sub_graph.position_embeddings import PositionEmbeddings
+from engine.compile.ops.op import OPERATORS, Operator
+from engine.compile.ops.tensor import Tensor
+from engine.compile.graph import Graph
+from engine.compile.sub_graph.position_embeddings import PositionEmbeddings
 import numpy as np
 
 

@@ -2,7 +2,7 @@
 A deep learning inference engine for quantized and sparsified models.
 
 ## Architecture
-Engine support model converter, model executor and high performance kernel for multi device.
+Engine support model compile, model executor and high performance kernel for multi device.
 
 <a target="_blank" href="docs/imgs/infrastructure.png">
   <img src="imgs/engine_infrastructure.png" alt="Infrastructure" width=800 height=500>
@@ -50,7 +50,7 @@ Then in the build folder, you will get the `inferencer`, `engine_py.cpython-37m-
 ## Generate the bert model intermediate representations, that are yaml and bin files
 
 ```
-from engine.converter.converter import prepare_ir
+from engine.compile.compile import prepare_ir
 model = prepare_ir('/path/to/your/model')
 model.save('/ir/path')
 ```

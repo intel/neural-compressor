@@ -1,7 +1,7 @@
 # Quantize a ONNX model to engine low precision/int8 IR
 
 ## Design
-Quantizing a ONNX model to engine low precision/int8 IR has two steps: 1. Convert ONNX model to engine float IR; 2. Quantize float IR to low precision/int8 IR. The first step will be finished in engine converter. We focus on the sceond step how to quantize a float enigne IR to low precision IR in INC. The whole is in examlpes/engine/nlp/bert_base_mrpc.
+Quantizing a ONNX model to engine low precision/int8 IR has two steps: 1. Convert ONNX model to engine float IR; 2. Quantize float IR to low precision/int8 IR. The first step will be finished in engine compile. We focus on the sceond step how to quantize a float enigne IR to low precision IR in INC. The whole is in examlpes/engine/nlp/bert_base_mrpc.
 
 ## Prerequisite
 ### Install environment

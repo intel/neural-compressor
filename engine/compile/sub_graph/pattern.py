@@ -24,7 +24,7 @@ from abc import abstractmethod
 #             (5, 'Mul'),
 #             (7 ,'Mul'), (8, 'Sub'), (9, 'AddV2')], [(5, 'Mul'), (6, 'Mul'), (9, 'AddV2')] ]
 # the pattern has order, but need connections check cause of the staggered edges
-# for detailed info, please see search_pattern func in converter/graph_utils.py
+# for detailed info, please see search_pattern func in compile/graph_utils.py
 # supported patterns should have order
 supported_patterns = [
     'InputFile',

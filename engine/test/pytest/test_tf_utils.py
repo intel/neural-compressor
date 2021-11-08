@@ -1,6 +1,6 @@
 import unittest
 from tensorflow.core.framework import node_def_pb2 
-import engine.converter.tf_utils as util 
+import engine.compile.tf_utils as util 
 
 
 class TestTfUtils(unittest.TestCase):

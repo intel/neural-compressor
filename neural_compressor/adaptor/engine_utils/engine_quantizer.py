@@ -24,7 +24,7 @@ import os
 import pickle
 import struct
 from pathlib import Path
-from engine.converter.ops.op import OPERATORS, Tensor
+from engine.compile.ops.op import OPERATORS, Tensor
 import numpy as np
 from collections import namedtuple
 from collections import OrderedDict

@@ -34,7 +34,7 @@ class EngineModel(BaseModel):
     
     def _load_graph(self, model):
         if os.path.isdir(model):
-            from engine.converter.graph import Graph
+            from engine.compile.graph import Graph
             file_list = os.listdir(model)
             assert len(file_list) == 2
             for file_name in file_list:
@@ -48,11 +48,11 @@ class EngineModel(BaseModel):
                     logger.error("Please Input yaml and bin for engine.")
             graph = Graph()
             graph.graph_init(yaml_path, bin_path)
-            # logger.warn("When input yaml and bin, it can not use func in converter.")
+            # logger.warn("When input yaml and bin, it can not use func in compile.")
         else:
-            from engine.converter.loaders.loader import Loader
-            from engine.converter.extractors.extractor import Extractor
-            from engine.converter.sub_graph.subgraph_matcher import SubGraphMatcher
+            from engine.compile.loaders.loader import Loader
+            from engine.compile.extractors.extractor import Extractor
+            from engine.compile.sub_graph.subgraph_matcher import SubGraphMatcher
             loader = Loader()
             extractor = Extractor()
             sub_graph_matcher = SubGraphMatcher()

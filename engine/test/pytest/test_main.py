@@ -1,6 +1,6 @@
 import unittest
-from engine.converter import prepare_ir
-from engine.converter.ops.tensor import Tensor
+from engine.compile import prepare_ir
+from engine.compile.ops.tensor import Tensor
 import numpy as np
 import os
 import shutil

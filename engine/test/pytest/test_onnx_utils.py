@@ -1,8 +1,8 @@
 import unittest
-import engine.converter as converter
+import engine.compile as compile
 import numpy as np
-from engine.converter.ops.op import OPERATORS, Operator
-from engine.converter.ops.tensor import Tensor
+from engine.compile.ops.op import OPERATORS, Operator
+from engine.compile.ops.tensor import Tensor
 
 
 class TestOnnxUtils(unittest.TestCase):
@@ -15,11 +15,11 @@ class TestOnnxUtils(unittest.TestCase):
         pass
 
     def test_change_num_name(self):
-        out = converter.onnx_utils.change_num_name(1)
+        out = compile.onnx_utils.change_num_name(1)
         self.assertEqual(1, out)
         
     def test_change_num_namei_same(self):
-        out = converter.onnx_utils.change_num_name('1')
+        out = compile.onnx_utils.change_num_name('1')
         self.assertEqual('1_tensor', out)
     
     def test_bias_to_int32_if1(self):
@@ -34,7 +34,7 @@ class TestOnnxUtils(unittest.TestCase):
         fake_bias_node = OPERATORS['Add']()
         fake_bias_node.construct('bias_add', 'Add', 
                                     input_tensors=fake_input_tensors)
-        out = converter.onnx_utils.bias_to_int32(fake_bias_node, 0.3, 0.4)
+        out = compile.onnx_utils.bias_to_int32(fake_bias_node, 0.3, 0.4)
         golden_out = np.array([[1,2],[2,3]])
         self.assertSequenceEqual(golden_out.tolist(), out.tolist())
     
@@ -50,7 +50,7 @@ class TestOnnxUtils(unittest.TestCase):
         fake_bias_node = OPERATORS['Add']()
         fake_bias_node.construct('bias_add', 'Add', 
                                     input_tensors=fake_input_tensors)
-        out = converter.onnx_utils.bias_to_int32(fake_bias_node, 0.3, 0.4)
+        out = compile.onnx_utils.bias_to_int32(fake_bias_node, 0.3, 0.4)
         golden_out = np.array([[1,2],[2,3]])
         self.assertSequenceEqual(golden_out.tolist(), out.tolist())
     
@@ -66,7 +66,7 @@ class TestOnnxUtils(unittest.TestCase):
         fake_bias_node = OPERATORS['Add']()
         fake_bias_node.construct('bias_add', 'Add', 
                                     input_tensors=fake_input_tensors)
-        out = converter.onnx_utils.bias_to_int32(fake_bias_node, 0.3, 0.4)
+        out = compile.onnx_utils.bias_to_int32(fake_bias_node, 0.3, 0.4)
         self.assertEqual(None, out)
         
 

@@ -361,7 +361,7 @@ class Graph(object):
     def graph_init(self, config, weight_data=None):
         '''
         example:
-                from engine.converter.graph import Graph
+                from engine.compile.graph import Graph
                 newgraph = Graph()
                 newgraph.graph_init('./ir/conf.yaml', './ir/model.bin')
                 out = newgraph.inference([input_0, input_1, input_2])

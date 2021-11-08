@@ -35,7 +35,7 @@ from .extractors.extractor import Extractor
 from .sub_graph.subgraph_matcher import SubGraphMatcher
 
 
-CONVERTERS = OrderedDict({
+COMPILES = OrderedDict({
     'loader': Loader,
     'extractor': Extractor,
     'sub_graph': SubGraphMatcher,
@@ -43,14 +43,14 @@ CONVERTERS = OrderedDict({
 
 
 def start_pipeline(model, config=None):
-    converter_list = []
-    # initialize the converter
-    for converter_type in CONVERTERS.keys():
-        converter = CONVERTERS[converter_type]()
-        converter_list.append(converter)
+    compile_list = []
+    # initialize the compile
+    for compile_type in COMPILES.keys():
+        compile = COMPILES[compile_type]()
+        compile_list.append(compile)
     # convert the model
-    for converter in converter_list:
-        model = converter(model)
+    for compile in compile_list:
+        model = compile(model)
     return model
 
 
