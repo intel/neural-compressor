@@ -182,7 +182,7 @@ class PaddingSequence(Pattern):
             model.remove_nodes(['padding_sequence'])
 
         pattern_dict = pattern_mapping_config['PaddingSequence'][2]
-        if len(model.nodes[0].input_tensors) == 3:
+        if len(model.nodes[0].output_tensors) == 3:
             model = _make_padding_sequence_node(2, 768, model)
         else:
             model = _make_padding_sequence_node(1, 768, model)
