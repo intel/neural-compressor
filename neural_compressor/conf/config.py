@@ -357,7 +357,7 @@ postprocess_schema = Schema({
     Optional('SquadV1'): {
         'label_file': str,
         'vocab_file': str,
-        'do_lower_case': bool
+        Optional('do_lower_case', default='True'): bool
     },
 })
 
