@@ -60,6 +60,10 @@ def get_model_type(model):
         return 'estimator'
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
+        if (model.endswith('.h5') and os.path.isfile(model)):
+            model = tf.keras.models.load_model(model)
+            if isinstance(model, tf.keras.Model):
+                return 'keras'
         if (model.endswith('.pb') and os.path.isfile(model)):
             if is_saved_model_format(os.path.dirname(model)):
                 # Warning: TF compatibility issue to load saved model. TF 2.3 keras.load

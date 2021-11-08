@@ -201,7 +201,21 @@ class TestTensorflowModel(unittest.TestCase):
         factory.register('inceptionv1', model_func, input_shape, \
             arg_scope, num_classes=num_classes)
         os.system('rm -rf slim_ckpt')
-
+    
+    def test_keras_h5_model(self):
+        keras_model = build_keras()
+        self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
+        keras_model.save('./simple_model.h5')
+        #load from path
+        model = Model('./simple_model.h5')
+        self.assertGreaterEqual(len(model.output_node_names), 1)
+        self.assertGreaterEqual(len(model.input_node_names), 1)
+        os.makedirs('./keras_model', exist_ok=True)
+        model.save('./keras_model')
+        os.system('rm -rf simple_model.h5')
+        os.system('rm -rf keras_model') 
+        
+        
     def test_keras_saved_model(self):
         if tf.version.VERSION < '2.3.0':
             return
