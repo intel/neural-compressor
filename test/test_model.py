@@ -203,6 +203,8 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf slim_ckpt')
     
     def test_keras_h5_model(self):
+        if tf.version.VERSION < '2.3.0':
+            return
         keras_model = build_keras()
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
         keras_model.save('./simple_model.h5')

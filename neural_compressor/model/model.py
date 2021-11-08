@@ -61,6 +61,9 @@ def get_model_type(model):
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (model.endswith('.h5') and os.path.isfile(model)):
+            if tf.version.VERSION < '2.3.0':
+                logger.warn("keras model running on tensorflow 2.2.0 and"
+                            " lower may have problem.")
             model = tf.keras.models.load_model(model)
             if isinstance(model, tf.keras.Model):
                 return 'keras'
