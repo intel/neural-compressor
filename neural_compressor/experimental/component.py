@@ -83,6 +83,7 @@ class Component(object):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
+                                   'approach': self.cfg.quantization.approach,
                                    'q_dataloader': None}
 
         if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
@@ -90,6 +91,7 @@ class Component(object):
                 {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+        self.adaptor.model = self.model
 
         # create dataloaders
         if self._train_dataloader is None and self._train_func is None:

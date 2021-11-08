@@ -2196,20 +2196,31 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         return self.model_eval(model_, dataloader, postprocess, metric, measurer, iteration)
 
     def _pre_hook_for_qat(self):   # pragma: no cover
-        from torch.quantization.quantize_fx import prepare_qat_fx
-        qconfig = torch.quantization.QConfig(
+        q_cfgs = torch.quantization.QConfig(
                             activation=torch.quantization.FakeQuantize.with_args(
                                     dtype=torch.quint8,
                                     qscheme=torch.per_tensor_affine,
-                                    reduce_range=REDUCE_RANGE),
+                                    reduce_range=REDUCE_RANGE,
+                                    observer=torch.quantization.MovingAverageMinMaxObserver),
                             weight=torch.quantization.default_weight_fake_quant)
-        # prepare_qat_fx can not change inplaced. Use neural_compressor model to hold FWK model and manually
-        # change the model.
-        self.model.model = prepare_qat_fx(self.model.model, {"": qconfig})
+        quantizable_ops = []
+        self._get_quantizable_ops_recursively(self.model.model, '', quantizable_ops)
+        quantized_ops = {op[0]:q_cfgs for op in quantizable_ops}
+        quantized_ops["default_qconfig"] = None
+        from torch.quantization.quantize_fx import prepare_qat_fx
+        fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
+        self.model.model.train()
+        self.model.model = prepare_qat_fx(self.model.model, fx_op_cfgs,
+            prepare_custom_config_dict=self.model.kwargs['prepare_custom_config_dict']
+            if self.model.kwargs is not None and
+            self.model.kwargs.__contains__('prepare_custom_config_dict') else None)
 
     def _post_hook_for_qat(self):   # pragma: no cover
         from torch.quantization.quantize_fx import convert_fx
-        self.model.model = convert_fx(self.model.model)
+        self.model.model = convert_fx(self.model.model,
+          convert_custom_config_dict=self.model.kwargs['convert_custom_config_dict']
+          if self.model.kwargs is not None and
+          self.model.kwargs.__contains__('convert_custom_config_dict') else None)
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
@@ -2345,8 +2356,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         for name, child in model.named_children():
             op_name = prefix + '.' + name if prefix != '' else name
+            # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
+            # so remove it here
             if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
-                    type(child) != torch.quantization.stubs.DeQuantStub:
+                    type(child) != torch.quantization.stubs.DeQuantStub and not \
+                        isinstance(child, torch.nn.LayerNorm) and not \
+                        isinstance(child, torch.nn.InstanceNorm3d) and not \
+                        isinstance(child, torch.nn.Embedding):
                 quantizable_ops.append((
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else

@@ -204,6 +204,7 @@ class Scheduler(object):
         eval_cfg = DotDict()
         tuning_cfg = DotDict()
         model_cfg = DotDict()
+        quantization_cfg = DotDict()
         has_distillation = False
         for combine_component in args:
             if isinstance(combine_component, Distillation):
@@ -234,6 +235,8 @@ class Scheduler(object):
             component_eval_cfg = combine_component.cfg.get('evaluation', DotDict())
             component_tuning_cfg = combine_component.cfg.get('tuning', DotDict())
             component_model_cfg = combine_component.cfg.get('model', DotDict())
+            component_quantization_cfg = combine_component.cfg.get('quantization', DotDict()) \
+                if component_name == 'quantization' else DotDict()
 
             combine_component._model = self._model
             if component_eval_cfg and component_train_cfg:
@@ -258,6 +261,7 @@ class Scheduler(object):
             self._sync_config(eval_cfg, component_eval_cfg)
             self._sync_config(tuning_cfg, component_tuning_cfg)
             self._sync_config(model_cfg, component_model_cfg)
+            self._sync_config(quantization_cfg, component_quantization_cfg)
 
             # sync hooks
             if combine_component.hooks is None:
@@ -273,6 +277,7 @@ class Scheduler(object):
             deep_set(dist_component_cfg, 'tuning', tuning_cfg)
             deep_set(dist_component_cfg, 'device', device)
             deep_set(dist_component_cfg, 'model', model_cfg)
+            deep_set(dist_component_cfg, 'quantization', quantization_cfg)
             dist_component._model = self._model
             dist_component.framework = framework
             dist_component.cfg = dist_component_cfg
