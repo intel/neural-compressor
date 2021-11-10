@@ -44,7 +44,7 @@ void EmbeddingBagOperator::Forward(const vector<Tensor*>& input,
                                       const vector<Tensor*>& output) {
   // 0. Alias variables part
   const auto& indices_data = static_cast<const int32_t*>(input[0]->data());
-  const auto& offset_data = static_cast<const float*>(input[1]->data());
+  const auto& offset_data = static_cast<const int32_t*>(input[1]->data());
   const auto& weight_data = static_cast<const float*>(input[2]->data());
   // when change data value please use mutable_data
   auto dst_data = static_cast<float*>(output[0]->mutable_data());

@@ -87,73 +87,58 @@ void GatherOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
          << "DST ptr should not be equal to SRC ptr.";
 
   // 1. Execute the dst
-  const auto& dst_shape = output[0]->shape();
-  if (dst_shape.size() == 2) {
-    #pragma omp parallel for
-    for (int i = 0; i < dst_shape[0]; ++i) {
-      #pragma omp simd
-      for (int j = 0; j < dst_shape[1]; ++j) {
-        if (batch_dims_) {
-          dst_data[i * dst_shape[1] + j] = params_data[i * dst_shape[1] + indices_data[0]];
-        } else {
-          dst_data[i * dst_shape[1] + j] = params_data[indices_data[0] * dst_shape[1] + j];
-        }
-      }
-    }
-  } else {
-    const auto& batch_size = flat_dst_shape_[0];
-    const auto& outer_size = flat_dst_shape_[1];
-    const auto& coord_size = flat_dst_shape_[2];
-    const auto& inner_size = flat_dst_shape_[3];
+  const auto& batch_size = flat_dst_shape_[0];
+  const auto& outer_size = flat_dst_shape_[1];
+  const auto& coord_size = flat_dst_shape_[2];
+  const auto& inner_size = flat_dst_shape_[3];
 #if __AVX512F__
-    int avx512_loop_len = inner_size >> 4;
-    for (int i = 0; i < batch_size; ++i) {
-      int indices_batch = i * coord_size;
-      for (int j = 0; j < outer_size; ++j) {
-        #pragma omp parallel for
-        for (int k = 0; k < coord_size; ++k) {
-          int indices_val = indices_data[indices_batch + k];
-          // copy slices on inner_size dimension
-          for (int m = 0; m < avx512_loop_len; ++m) {
-            int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
-                          k * flat_dst_stride_[2] + (m << 4);
-            int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
-                              indices_val * flat_params_stride_[2] + (m << 4);
-            __m512 _src_data = _mm512_loadu_ps(params_data + params_idx);
-            _mm512_storeu_ps(dst_data + dst_idx, _src_data);
-          }
-          #pragma omp simd
-          for (int tail_idx = avx512_loop_len << 4; tail_idx < inner_size; ++tail_idx) {
-            int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
-                          k * flat_dst_stride_[2] + tail_idx;
-            int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
-                              indices_val * flat_params_stride_[2] + tail_idx;
-            dst_data[dst_idx] = params_data[params_idx];
-          }
+  int avx512_loop_len = inner_size >> 4;
+  for (int i = 0; i < batch_size; ++i) {
+    int indices_batch = i * coord_size;
+    for (int j = 0; j < outer_size; ++j) {
+      #pragma omp parallel for
+      for (int k = 0; k < coord_size; ++k) {
+        int indices_val = indices_data[indices_batch + k];
+        // copy slices on inner_size dimension
+        for (int m = 0; m < avx512_loop_len; ++m) {
+          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
+                        k * flat_dst_stride_[2] + (m << 4);
+          int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
+                            indices_val * flat_params_stride_[2] + (m << 4);
+          __m512i _src_data = _mm512_loadu_si512(params_data + params_idx);
+          _mm512_storeu_si512(dst_data + dst_idx, _src_data);
+        }
+        #pragma omp simd
+        for (int tail_idx = avx512_loop_len << 4; tail_idx < inner_size; ++tail_idx) {
+          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
+                        k * flat_dst_stride_[2] + tail_idx;
+          int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
+                            indices_val * flat_params_stride_[2] + tail_idx;
+          dst_data[dst_idx] = params_data[params_idx];
         }
       }
     }
-#else
-    for (int i = 0; i < batch_size; ++i) {
-      int indices_batch = i * coord_size;
-      for (int j = 0; j < outer_size; ++j) {
-        #pragma omp parallel for
-        for (int k = 0; k < coord_size; ++k) {
-          int indices_val = indices_data[indices_batch + k];
-          // copy slices on inner_size dimension
-          #pragma omp simd
-          for (int m = 0; m < inner_size; ++m) {
-            int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
-                          k * flat_dst_stride_[2] + m;
-            int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
-                              indices_val * flat_params_stride_[2] + m;
-            dst_data[dst_idx] = params_data[params_idx];
-          }
-        }
-      }
-    }
-#endif
   }
+#else
+  for (int i = 0; i < batch_size; ++i) {
+    int indices_batch = i * coord_size;
+    for (int j = 0; j < outer_size; ++j) {
+      #pragma omp parallel for
+      for (int k = 0; k < coord_size; ++k) {
+        int indices_val = indices_data[indices_batch + k];
+        // copy slices on inner_size dimension
+        #pragma omp simd
+        for (int m = 0; m < inner_size; ++m) {
+          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
+                        k * flat_dst_stride_[2] + m;
+          int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
+                            indices_val * flat_params_stride_[2] + m;
+          dst_data[dst_idx] = params_data[params_idx];
+        }
+      }
+    }
+  }
+#endif
   // 2. unref tensors
   this->unref_tensors(input);
 }
