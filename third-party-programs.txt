@@ -55,6 +55,12 @@ terms are listed below.
 
    tensorflow-yolo-v3
 
+   nvidia-bert
+
+   opencv-openbert
+
+   onnx/models
+
 
 
                                 Apache License
@@ -360,6 +366,19 @@ terms are listed below.
 	Copyright (c) Dan Revah
 
 	ngx-charts
+
+	ngx-slider
+	Copyright (c) 2013 Rafal Zajac <rzajac@gmail.com>
+	Copyright (c) 2018 Piotr Dziwinski <piotrdz@gmail.com>
+
+	example-pytorch-cifar10
+	Copyright (c) 2019 xternalz
+
+	example-pytorch-cifar100
+	Copyright (c) 2019 Iman Mirzadeh
+
+	haq/model/mobilenetv2
+	Copyright (c) 2019 MIT HAN Lab
 
     The MIT License (MIT)
 
