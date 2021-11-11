@@ -31,25 +31,6 @@ from ..graph_util import GraphRewriterHelper as Helper
 class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
     """Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
     """
-    fuse_patterns = {
-        "2.7.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                  ('Softmax',)],
-        "2.6.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                  ('Softmax',)],
-        "2.5.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                  ('Softmax',)],
-        "2.4.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                  ('Softmax',)],
-        "2.3.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                  ('Softmax',)],
-        "2.2.0": [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                   ('Softmax',)],
-        "1.15.0-up3":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                        ('Softmax',)],
-        "1.15.0-up2":  [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'],
-                        ('Softmax',)],
-        "default": []}
-
     def __init__(self, model, device='cpu'):
         super().__init__(model)
         self.device = device
@@ -57,15 +38,16 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         self.graph_analyzer.graph = self.model
 
         self.graph_info = self.graph_analyzer.parse_graph()
-        self.version = tf.version.VERSION if tf.version.VERSION in self.fuse_patterns \
-             else 'default'
+
         self.eps = 1e-5
 
     def do_transformation(self):
+        fuse_pattern = []
+        if tf.version.VERSION in ("1.15.0-up2", "1.15.0-up3") or tf.version.VERSION >= '2.2.0':
+            fuse_pattern = [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'], ('Softmax',)]
         float32_type = dtypes.float32.as_datatype_enum
         qint32_type = dtypes.qint32.as_datatype_enum
-        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-                self.fuse_patterns[self.version])
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
             # TODO Remove below checker once the TF's limitation removed.
             if len(i) == 5:
@@ -165,10 +147,6 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
 class FuseMatMulRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized MatMul Op with the successor Requantize Op.
     """
-    fuse_patterns = {"2.2.0": [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']],
-                     "2.1.0": [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']],
-                     "default": [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']]}
-
     def __init__(self, model, device='cpu'):
         super().__init__(model)
         self.device = device
@@ -188,7 +166,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
         while True:
             target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-                self.fuse_patterns['default'])
+                [["QuantizedMatMulWithBiasAndRelu"], ['Requantize']])
             if len(target_nodes) == 0:
                 break
 

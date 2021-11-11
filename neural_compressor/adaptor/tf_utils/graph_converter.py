@@ -62,7 +62,7 @@ from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node
 from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 
-TF_SUPPORTED_MAX_VERSION = '2.6.0'
+TF_SUPPORTED_MAX_VERSION = '2.6.2'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger()
@@ -177,8 +177,9 @@ class GraphConverter:
             if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
                 is_supported_version = True
 
-            if tf.version.VERSION == '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
+            if tf.version.VERSION.find("2.6.") != -1 and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
                 is_supported_version = True
+
         except Exception as e:
             raise ValueError(e)
         finally:
@@ -194,9 +195,9 @@ class GraphConverter:
                 logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
                              "when Tensorflow 2.5.0 installed.")
 
-            if tf.version.VERSION == '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+            if tf.version.VERSION.find('2.6.') != -1 and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
-                             "when Tensorflow 2.6.0 installed.")
+                             "when Tensorflow 2.6.x installed.")
 
             if not is_supported_version:
                 raise ValueError(
