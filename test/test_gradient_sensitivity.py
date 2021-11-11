@@ -6,9 +6,10 @@ import torch
 import torchvision
 import torch.nn as nn
 
+import tensorflow as tf
+
 from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from transformers import BertForSequenceClassification
 from neural_compressor.data import DATASETS
 
 def build_fake_yaml():
@@ -140,7 +141,6 @@ def build_fake_yaml_unstructured():
         f.write(fake_yaml_unstructured)
 
 class TestGradientSensitivity(unittest.TestCase):
-    model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
 
     @classmethod
     def setUpClass(cls):
@@ -152,9 +152,13 @@ class TestGradientSensitivity(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
+    @unittest.skipIf(tf.__version__<='2.2.0' and tf.__version__>='2.1.0', "tf 2.1 or 2.2 dont support module transformers")
     def test_gradient_sensitivity(self):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
+
+        from transformers import BertForSequenceClassification
+        model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
 
         def training_func_for_nc(model):
             inputs = {'input_ids': torch.rand([1,12]).long(),
@@ -176,11 +180,11 @@ class TestGradientSensitivity(unittest.TestCase):
         def eval_func_for_nc(model):
             pass
 
-        prune.model = common.Model(self.model)
+        prune.model = common.Model(model)
         prune.pruning_func = training_func_for_nc
         prune.eval_func = eval_func_for_nc
         _ = prune()
-        for bertlayer in self.model.bert.encoder.layer:
+        for bertlayer in model.bert.encoder.layer:
             self.assertEqual(bertlayer.attention.self.query.weight.shape, (512, 768))
             self.assertEqual(bertlayer.attention.self.key.weight.shape, (512, 768))
             self.assertEqual(bertlayer.attention.self.value.weight.shape, (512, 768))

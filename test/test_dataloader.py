@@ -3,6 +3,7 @@ import unittest
 import os
 import numpy as np
 import shutil
+import tensorflow as tf
 from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
 from neural_compressor.data.dataloaders.dataloader import DataLoader
 from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
@@ -1230,6 +1231,7 @@ class TestDataloader(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data.shape, (2, 256, 256, 3))
 
+    @unittest.skipIf(tf.__version__<='2.2.0' and tf.__version__>='2.1.0', "tf 2.1 or 2.2 dont support module transformers")
     def test_onnx_bert(self):
         import csv
         os.mkdir('./MRPC')
