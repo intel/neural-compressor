@@ -293,8 +293,10 @@ class QuantizedRNNConverter(GraphRewriterBase):
             g.add_node(requantize_max_node, None, [enter_req_max_node.name])
             g.add_node(dequantize_node, requantize_node.name, last_node_name)
             if last_node_name:
-                graph_info[last_node_name[0]
-                           ].node.input[0] = dequantize_node.name
+                replace_index = [Helper.node_name_from_input(
+                    i) for i in graph_info[last_node_name[0]].node.input].index(bias_node.name)
+
+                graph_info[last_node_name[0]].node.input[replace_index] = dequantize_node.name
             g.remove_node(bias_node.name)
             g.remove_node(i[0])
 
