@@ -22,10 +22,9 @@ import numpy as np
 
 class EmotionDataSet():
     
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, tokenizer_dir):
         dataset = load_dataset('emotion', cache_dir=data_dir, split='validation')
-        tokenizer = AutoTokenizer.from_pretrained(
-                                    'bhadresh-savani/distilbert-base-uncased-emotion')
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.dataset = dataset.map(lambda e: tokenizer(e['text'],
                     truncation=True, padding='max_length', max_length=128), batched=True)
     def __getitem__(self, idx):

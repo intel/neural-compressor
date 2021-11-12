@@ -39,10 +39,8 @@ def get_args():
     parser.add_argument("--input_model", default="finbert_financial_phrasebank.onnx",
                          type=str, help="input_model_path")
     parser.add_argument("--output_model", default="./ir/", type=str, help="output_model_path")
-    parser.add_argument("--vocab_file", default="./data/vocab.txt", 
-                            type=str, help="vocab_file_path")
-    parser.add_argument("--do_lower_case", type=bool, default=True,
-                        help="vocab whether all lower case")
+    parser.add_argument("--tokenizer_dir", default="ProsusAI/finbert", type=str,
+                        help="pre-trained model tokenizer name or path")
     parser.add_argument("--data_dir", default="./data", type=str,
                         help="The input data dir.")
     parser.add_argument("--config", default="./bert.yaml", type=str, help="yaml path")
@@ -58,7 +56,7 @@ def main():
     args = get_args()
     if args.benchmark:
         from neural_compressor.experimental import Benchmark, common
-        ds = FP_DataSet(args.data_dir)
+        ds = FP_DataSet(args.data_dir, args.tokenizer_dir)
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(args.input_model)
         evaluator.b_dataloader = common.DataLoader(ds, args.batch_size)
@@ -66,7 +64,7 @@ def main():
 
     if args.tune:
         from neural_compressor.experimental import Quantization, common
-        ds = FP_DataSet(args.data_dir)
+        ds = FP_DataSet(args.data_dir, args.tokenizer_dir)
         quantizer = Quantization(args.config)
         quantizer.model = common.Model(args.input_model)
         quantizer.eval_dataloader = common.DataLoader(ds, args.batch_size)

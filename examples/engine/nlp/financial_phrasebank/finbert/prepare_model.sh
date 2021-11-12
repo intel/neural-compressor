@@ -19,5 +19,3 @@ python run_glue.py \
 python finbert_export.py \
    --input_dir=./tmp/finbert/ \
    --output_model=finbert_financial_phrasebank.onnx
-
-cp ./tmp/finbert/vocab.txt ./data/.

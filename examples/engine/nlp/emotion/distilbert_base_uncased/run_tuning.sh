@@ -5,6 +5,7 @@ export GLOG_minloglevel=2
 
 #default batch_size
 batch_size=1
+tokenizer_dir=bhadresh-savani/distilbert-base-uncased-emotion
 
 function main {
 
@@ -32,6 +33,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
+      --tokenizer_dir=*)
+          tokenizer_dir=$(echo "$var" |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -43,6 +47,7 @@ function run_tuning {
       --input_model=${input_model} \
       --output_model=$output_model \
       --data_dir=${dataset_location} \
+      --tokenizer_dir=$tokenizer_dir \
       --config=$config \
       --tune \
 

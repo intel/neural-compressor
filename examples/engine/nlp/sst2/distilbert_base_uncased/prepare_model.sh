@@ -18,5 +18,3 @@ python distilbert_base_export.py \
    --input_dir=./tmp/sst2/distilbert_base_uncased/ \
    --task_name=SST-2 \
    --output_model=distilbert_base_uncased_sst2.onnx
-
-cp ./tmp/sst2/distilbert_base_uncased/vocab.txt ./data/.

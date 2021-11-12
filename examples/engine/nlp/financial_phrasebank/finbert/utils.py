@@ -22,10 +22,10 @@ import numpy as np
 
 class FP_DataSet():
     
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, tokenizer_dir):
         dataset = load_dataset('financial_phrasebank', 'sentences_50agree', cache_dir=data_dir,
                                 split='train[3102:]')
-        tokenizer = AutoTokenizer.from_pretrained('ProsusAI/finbert')
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.dataset = dataset.map(lambda e: tokenizer(e['sentence'], truncation=True, 
                                     padding='max_length', max_length=64), batched=True)    
     def __getitem__(self, idx):

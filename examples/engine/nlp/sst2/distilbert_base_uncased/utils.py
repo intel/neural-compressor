@@ -22,10 +22,9 @@ import numpy as np
 
 class SST2DataSet():
     
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, tokenizer_dir):
         dataset = load_dataset('glue', 'sst2', cache_dir=data_dir, split='validation')
-        tokenizer = AutoTokenizer.from_pretrained(
-                                            'distilbert-base-uncased-finetuned-sst-2-english')
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.dataset = dataset.map(lambda e: tokenizer(e['sentence'], 
                                 truncation=True, padding='max_length'), batched=True)    
     def __getitem__(self, idx):

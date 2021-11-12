@@ -22,10 +22,9 @@ import numpy as np
 
 class STSBDataSet():
     
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, tokenizer_dir):
         dataset = load_dataset('glue', 'stsb', cache_dir=data_dir, split='validation')
-        tokenizer = AutoTokenizer.from_pretrained(
-                                        'sentence-transformers/paraphrase-xlm-r-multilingual-v1')
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.dataset = dataset.map(lambda e: tokenizer(e['sentence1'], e['sentence2'],
                     truncation=True, padding='max_length', max_length=128), batched=True)
     def __getitem__(self, idx):
