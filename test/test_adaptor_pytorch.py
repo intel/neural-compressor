@@ -456,7 +456,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 model.eval().fuse_model()
             conf = Quantization_Conf(fake_yaml)
             quantizer = Quantization(conf)
-            dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+            dataset = quantizer.dataset('dummy', (100, 3, 224, 224))
             quantizer.model = common.Model(model)
             if fake_yaml == 'qat_yaml.yaml':
                 quantizer.q_func = q_func
@@ -660,21 +660,30 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             else:
                 quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = common.Model(model_origin,
-                                            **{'prepare_custom_config_dict': {'a': 1},
-                                              'convert_custom_config_dict': {'a': 1}})
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
             q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights with neural_compressor.utils
             model_fx = load('./saved', model_origin,
-                            **{'prepare_custom_config_dict': {'a': 1},
-                                'convert_custom_config_dict': {'a': 1}})
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
             # recover int8 model with only tune_cfg
             history_file = './saved/history.snapshot'
-            model_fx_recover = recover(model_origin, history_file, 0,\
-                            **{'prepare_custom_config_dict': {'a': 1},
-                                'convert_custom_config_dict': {'a': 1}})
+            model_fx_recover = recover(model_origin, history_file, 0,
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
             self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree('./saved', ignore_errors=True)
 
@@ -686,14 +695,20 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = common.Model(model_origin,
-                                           **{'prepare_custom_config_dict': {'a': 1},
-                                              'convert_custom_config_dict': {'a': 1}})
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
             q_model = quantizer()
             q_model.save('./saved')
             # Load configure and weights with neural_compressor.utils
             model_fx = load('./saved', model_origin,
-                            **{'prepare_custom_config_dict': {'a': 1},
-                                'convert_custom_config_dict': {'a': 1}})
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
@@ -737,21 +752,30 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         model.eval()
         quantizer = Quantization('fx_dynamic_yaml.yaml')
         quantizer.model = common.Model(model,
-                                        **{'prepare_custom_config_dict': {'a': 1},
-                                          'convert_custom_config_dict': {'a': 1}})
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
         q_model = quantizer()
         q_model.save('./saved')
 
         # Load configure and weights by neural_compressor.utils
         model_fx = load("./saved", model,
-                        **{'prepare_custom_config_dict': {'a': 1},
-                            'convert_custom_config_dict': {'a': 1}})
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
         self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
         # recover int8 model with only tune_cfg
         history_file = './saved/history.snapshot'
-        model_fx_recover = recover(model, history_file, 0,\
-                        **{'prepare_custom_config_dict': {'a': 1},
-                            'convert_custom_config_dict': {'a': 1}})
+        model_fx_recover = recover(model, history_file, 0,
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
         self.assertEqual(model_fx.code, model_fx_recover.code)
         shutil.rmtree('./saved', ignore_errors=True)
 

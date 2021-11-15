@@ -7,8 +7,12 @@ import torchvision
 import torch.nn as nn
 
 from neural_compressor.data import DATASETS
+from neural_compressor.adaptor.pytorch import PyTorchVersionMode
+import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
+
+PT_VERSION = nc_torch.get_torch_version()
 
 def build_fake_yaml():
     fake_yaml = """
@@ -405,6 +409,8 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
 
+    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+      "Please use PyTroch 1.9 or higher version for Quantization & Pruning with pytorch_fx backend")
     def test_combine_fx(self):
         from neural_compressor.experimental import Pruning, common, Quantization
         quantizer = Quantization('./fake5.yaml')

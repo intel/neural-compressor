@@ -8,6 +8,7 @@ import os
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.model import MODELS
 import neural_compressor.adaptor.pytorch as nc_torch
+from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 from neural_compressor.experimental import Quantization, common
 import shutil
 import copy
@@ -18,6 +19,12 @@ try:
     TEST_IPEX = True
 except:
     TEST_IPEX = False
+
+PT_VERSION = nc_torch.get_torch_version()
+if PT_VERSION >= PyTorchVersionMode.PT18.value:
+    FX_MODE = True
+else:
+    FX_MODE = False
 
 torch.manual_seed(1)
 
@@ -140,28 +147,23 @@ class TestPytorchAdaptor(unittest.TestCase):
     def setUpClass(self):
         build_ptq_yaml()
         build_dynamic_yaml()
-        build_fx_ptq_yaml()
-        build_fx_dynamic_yaml()
 
     @classmethod
     def tearDownClass(self):
         os.remove('ptq_yaml.yaml')
         os.remove('dynamic_yaml.yaml')
-        os.remove('fx_ptq_yaml.yaml')
-        os.remove('fx_dynamic_yaml.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_quantization_saved(self):
         from neural_compressor.utils.pytorch import load
 
-        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', \
-                          'fx_dynamic_yaml.yaml', 'fx_ptq_yaml.yaml']:
-            if fake_yaml in ['dynamic_yaml.yaml', 'fx_dynamic_yaml.yaml']:
+        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml']:
+            if fake_yaml in ['dynamic_yaml.yaml']:
                 model = torchvision.models.quantization.resnet18()
             else:
                 model = copy.deepcopy(self.model)
-            if fake_yaml in ['ptq_yaml.yaml', 'fx_ptq_yaml.yaml']:
+            if fake_yaml in ['ptq_yaml.yaml']:
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
@@ -170,6 +172,59 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
         self.assertTrue(bool(q_model))
+
+
+@unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
+class TestPytorchFXAdaptor(unittest.TestCase):
+    framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "workspace_path": './'}
+    framework = "pytorch_fx"
+    adaptor = FRAMEWORKS[framework](framework_specific_info)
+    model = torchvision.models.quantization.resnet18()
+    nc_model = MODELS['pytorch_fx'](model)
+
+    @classmethod
+    def setUpClass(self):
+        build_fx_ptq_yaml()
+        build_fx_dynamic_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fx_ptq_yaml.yaml')
+        os.remove('fx_dynamic_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
+
+    def test_fx_static_quantization_saved(self):
+        from neural_compressor.utils.pytorch import load
+        fake_yaml = 'fx_ptq_yaml.yaml'
+        model = copy.deepcopy(self.model)
+        model.eval().fuse_model()
+        quantizer = Quantization(fake_yaml)
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        quantizer.model = common.Model(model)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        q_model = quantizer()
+        self.assertTrue(bool(q_model))
+    
+    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+      "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
+    def test_fx_dynamic_quantization_saved(self):
+        from neural_compressor.utils.pytorch import load
+        fake_yaml = 'fx_dynamic_yaml.yaml'
+        model = torchvision.models.resnet18()
+        quantizer = Quantization(fake_yaml)
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
+        quantizer.model = common.Model(model)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        q_model = quantizer()
+        self.assertTrue(bool(q_model))
+
 
 @unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
 class TestPytorchIPEXAdaptor(unittest.TestCase):
