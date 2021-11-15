@@ -254,8 +254,7 @@ class ONNXRTAdaptor(Adaptor):
                 else:
                     origin_op_type = possible_int8_res[0].split('Integer')[0]
 
-                if node.op_type == "Pad" or node.op_type == "Split" \
-                        or node.op_type == "Gather":
+                if node.op_type in ["Pad", "Split", "Gather", "Concat", "Reshape"]:
                     if any([output.endswith('_quantized') for output in node.output]):
                         origin_op_type = node.op_type
                     else:

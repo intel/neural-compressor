@@ -103,6 +103,26 @@
 
   graph_optimization: &default_optimization  # from onnxruntime graph_optimization_level
       level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
+
+-
+  version:
+    name: '1.7.0'
+
+  precisions: 
+    <<: *common_precisions
+
+  ops:
+    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
+        'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
+    fp32: ['*'] # '*' means all op types
+
+  capabilities:
+    <<: *common_capabilities
+
+  graph_optimization: 
+    <<: *default_optimization
+
 -
   version:
     name: '1.8.0'
