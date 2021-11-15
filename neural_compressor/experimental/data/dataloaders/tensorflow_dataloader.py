@@ -82,18 +82,30 @@ class TFDataDataLoader(BaseDataLoader):
             else:
                 raise ValueError('not supported output format....')
 
-        try_single_batch = check_dynamic_shape(dataset.element_spec)
-        dataset = dataset.batch(1 if try_single_batch else batch_size, drop_last)
         if tf.executing_eagerly():
+            index = 0
+            outputs = []
             for iter_tensors in dataset:
-                outputs = []
-                for elem in iter_tensors:
-                    if isinstance(elem,tf.Tensor):
-                        outputs.append(elem.numpy())
-                    else:
-                        outputs.append([e.numpy() for e in elem])
+                samples = []
+                iter_inputs, iter_labels = iter_tensors[0],iter_tensors[1]
+                samples.append(iter_inputs.numpy())
+                if isinstance(iter_labels,tf.Tensor):
+                    samples.append(iter_labels.numpy())
+                else:
+                    samples.append([np.array(l) for l in iter_labels])
+                index += 1
+                outputs.append(samples)
+                if index == batch_size:
+                    outputs = default_collate(outputs)
+                    yield outputs
+                    outputs = []
+                    index = 0
+            if len(outputs) > 0:
+                outputs = default_collate(outputs)
                 yield outputs
         else:
+            try_single_batch = check_dynamic_shape(dataset.element_spec)
+            dataset = dataset.batch(1 if try_single_batch else batch_size, drop_last)
             ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
             iter_tensors = ds_iterator.get_next()
             data_config = tf.compat.v1.ConfigProto()
