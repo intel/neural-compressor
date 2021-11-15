@@ -312,10 +312,9 @@ class TuneStrategy(object):
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
-        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
-                                                                str(self.objective.measurer),
-                                                                self.baseline[1]) \
-                                                                if self.baseline else 'n/a'
+        baseline_msg = '[Accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
+                                str(self.objective.measurer).capitalize(), \
+                                self.baseline[1]) if self.baseline else 'n/a'
         logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0
@@ -490,14 +489,14 @@ class TuneStrategy(object):
         else:
             del self.last_qmodel
 
-        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0],
-                                                                str(self.objective.measurer),
-                                                                self.last_tune_result[1]) \
-                                                                if self.last_tune_result else 'n/a'
-        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0],
-                                                                str(self.objective.measurer),
-                                                                self.best_tune_result[1]) \
-                                                                if self.best_tune_result else 'n/a'
+        last_tune_msg = '[Accuracy (int8|fp32): {:.4f}|{:.4f}, {} (int8|fp32): {:.4f}|{:.4f}]'.format( \
+                                self.last_tune_result[0], self.baseline[0], \
+                                str(self.objective.measurer).capitalize(), \
+                                self.last_tune_result[1], self.baseline[1]) \
+                                if self.last_tune_result else 'n/a'
+        best_tune_msg = '[Accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0], \
+                                str(self.objective.measurer).capitalize(), \
+                                self.best_tune_result[1]) if self.best_tune_result else 'n/a'
         logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))

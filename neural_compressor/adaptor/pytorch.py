@@ -1153,6 +1153,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         res = {}
+        ignore_log = False
         modules = dict(model.named_modules())
         # fetch quantizable ops supported in Neural Compressor from tune_cfg
         for key in tune_cfg['op']:
@@ -1176,13 +1177,17 @@ class PyTorchAdaptor(TemplateAdaptor):
                 if op_type not in res.keys():
                     res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                 res[op_type]['INT8'] += 1
-            if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or op_type == 'Embedding':
-                logger.info("Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops" \
-                            " due to accuracy bug in PyTorch.")
-                if op_type not in res.keys():
-                    res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
-                res[op_type]['FP32'] += 1
+            if tune_cfg['approach'] != 'post_training_dynamic_quant':
+                if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or \
+                      op_type == 'Embedding':
+                    ignore_log = True
+                    if op_type not in res.keys():
+                        res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                    res[op_type]['FP32'] += 1
         # show results to users
+        if ignore_log:
+            logger.info("Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops" \
+                        " due to accuracy issue in PyTorch.")
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
         OpPrecisionStatistics(output_data).print_stat()
