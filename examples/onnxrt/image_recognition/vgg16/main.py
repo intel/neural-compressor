@@ -31,14 +31,13 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
     parser = argparse.ArgumentParser(
-        description="Resnet50 fine-tune examples for image classification tasks.",
+        description="VGG16 fine-tune examples for image classification tasks.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
         '--model_path',
         type=str,
-        # default="resnet50v2/resnet50v2.onnx",
-        help="Pre-trained resnet50 model on onnx file"
+        help="Pre-trained vgg16 model on onnx file"
     )
     parser.add_argument(
         '--benchmark',
@@ -84,9 +83,3 @@ if __name__ == "__main__":
         quantize.model = common.Model(model)
         q_model = quantize()
         q_model.save(args.output_model)
-        
-        if args.benchmark:
-            from neural_compressor.experimental import Benchmark
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(q_model)
-            evaluator(args.mode)

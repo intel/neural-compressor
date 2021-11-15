@@ -1,4 +1,4 @@
-# Evaluate performance of ONNX Runtime(MobileBERT) 
+# Evaluate performance of ONNX Runtime(BERT) 
 >ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
 
 This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
@@ -20,33 +20,8 @@ unzip uncased_L-12_H-768_A-12.zip
 
 Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/master/text/machine_comprehension/bert-squad).
 ```bash
-wget https://github.com/onnx/models/blob/master/text/machine_comprehension/bert-squad/model/bertsquad-10.onnx
+wget https://github.com/onnx/models/blob/master/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx
 ```
-
-Update BERT-Squad model opset version to 12 due to neural_compressor requirement.
-
-```python
-import onnx
-import numpy as np
-from onnx import shape_inference
-from onnx import AttributeProto, TensorProto, GraphProto
-from onnx import version_converter, helper, optimizer
-from onnx import numpy_helper
-import random
-
-model = onnx.load('/path/to/bertsquad-10.onnx')    
-onnx_domain = "ai.onnx"
-onnx_op_set_version = 12
-
-model.ir_version = 3
-opset_info = next((opset for opset in model.opset_import if opset.domain == '' or opset.domain == onnx_domain), None)
-if opset_info is not None:
-    model.opset_import.remove(opset_info)
-model.opset_import.extend([onnx.helper.make_opsetid("ai.onnx", onnx_op_set_version)])
-
-onnx.save(model, '/path/to/bert_SQuAD.onnx')        
-```
-
 
 ### Evaluating
 To evaluate the model, run `main.py` with the path to the model:
@@ -57,5 +32,4 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --dataset_location=/path/to/SQuAD/dataset \
                    --config=bert.yaml
 ```
-
 

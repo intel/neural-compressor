@@ -37,7 +37,6 @@ if __name__ == "__main__":
     parser.add_argument(
         '--model_path',
         type=str,
-        # default="resnet50v2/resnet50v2.onnx",
         help="Pre-trained resnet50 model on onnx file"
     )
     parser.add_argument(
@@ -68,8 +67,8 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
     model = onnx.load(args.model_path)
+
     if args.benchmark:
         from neural_compressor.experimental import Benchmark, common
         evaluator = Benchmark(args.config)
@@ -84,8 +83,3 @@ if __name__ == "__main__":
         q_model = quantize()
         q_model.save(args.output_model)
         
-        if args.benchmark:
-            from neural_compressor.experimental import Benchmark
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(q_model)
-            evaluator(args.mode)

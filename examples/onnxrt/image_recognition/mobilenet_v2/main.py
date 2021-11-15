@@ -83,9 +83,3 @@ if __name__ == "__main__":
         q_model = quantize()
         q_model.save(args.output_model)
         
-        if args.benchmark:
-            from neural_compressor.experimental import Benchmark
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(q_model)
-            evaluator(args.mode)
-

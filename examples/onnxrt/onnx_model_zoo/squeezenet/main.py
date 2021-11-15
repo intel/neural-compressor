@@ -111,6 +111,8 @@ if __name__ == "__main__":
         default='performance',
         help="benchmark mode of performance or accuracy"
     )
+    from neural_compressor import options
+    options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
 
     args = parser.parse_args()
 

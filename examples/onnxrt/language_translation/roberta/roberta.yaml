@@ -19,18 +19,6 @@ model:                                               # mandatory. used to specif
 
 quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant.                                   
-  calibration:
-    sampling_size: 8, 16, 32
-    dataloader:
-      batch_size: 8
-      dataset:
-        GLUE:
-          data_dir: /path/to/dataset
-          model_name_or_path: roberta-base
-          max_seq_length: 128
-          task: mrpc
-          model_type: roberta
-          dynamic_length: False    
   op_wise: {
      'Attention_9': {
      'activation':  {'dtype': ['fp32']},
