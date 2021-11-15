@@ -27,6 +27,8 @@ import logging
 import numpy as np
 import time
 from dlrm_data_pytorch import CriteoDataset, DLRM_DataLoader
+import torch
+from dlrm_data_pytorch import collate_wrapper_criteo
 logging.basicConfig(level=logging.INFO)
 
 
@@ -58,32 +60,31 @@ def main():
         from neural_compressor.experimental import Benchmark, common
         kaggle_ds = CriteoDataset(dataset = "kaggle", max_ind_range=-1, \
                                   sub_sample_rate=0.0, randomize="total", \
-                                  split="train",raw_path=raw_path, pro_data=pro_data)
+                                  split="test",raw_path=raw_path, pro_data=pro_data, \
+                                  batch_size=args.batch_size)
         ds = torch.utils.data.DataLoader(
                     kaggle_ds,
-                    batch_size=32,
+                    batch_size=args.batch_size,
                     shuffle=False,
                     num_workers=0,
-                    collate_fn=collate_wrapper_criteo_offset,
+                    collate_fn=collate_wrapper_criteo,
                     pin_memory=False,
                     drop_last=False,  # True
                 )
         evaluator = Benchmark(args.config)
         evaluator.model = common.Model(args.input_model)
-        evaluator.b_dataloader = common.DataLoader(ds, args.batch_size)
+        evaluator.b_dataloader = DLRM_DataLoader(ds)
         evaluator(args.mode)
 
 
     if args.tune:
         from neural_compressor.experimental import Quantization, common
         kaggle_ds = CriteoDataset(dataset = "kaggle", max_ind_range=-1, \
-              sub_sample_rate=0.0, randomize="total", split="train", \
-              raw_path=raw_path, pro_data=pro_data)
-        import torch
-        from dlrm_data_pytorch import collate_wrapper_criteo
+              sub_sample_rate=0.0, randomize="total", split="test", \
+              raw_path=raw_path, pro_data=pro_data, batch_size=args.batch_size)
         ds = torch.utils.data.DataLoader(
             kaggle_ds,
-            batch_size=32,
+            batch_size=args.batch_size,
             shuffle=False,
             num_workers=0,
             collate_fn=collate_wrapper_criteo,

@@ -1,6 +1,7 @@
 future
 numpy
 onnx
+onnxruntime
 pydot
 neural-compressor
 scikit-learn

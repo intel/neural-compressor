@@ -1871,7 +1871,7 @@ def run():
         # recover the model back
         dlrm_pytorch_onnx = onnx.load("dlrm_s_pytorch.onnx")
         # check the onnx model
-        onnx.checker.check_model(dlrm_pytorch_onnx)
+        #onnx.checker.check_model(dlrm_pytorch_onnx)
     total_time_end = time_wrap(use_gpu)
 
 

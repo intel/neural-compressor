@@ -53,10 +53,14 @@ void EmbeddingBagOperator::Forward(const vector<Tensor*>& input,
     #pragma omp parallel for
     for (int k = 0; k < weight_shape_[1]; ++k) {
       float sum = 0;
-      #pragma omp simd
       for (int j = offset_data[i]; j < end_index; ++j) {
-        int index = indices_data[j] * weight_shape_[1] + k;
-        sum += weight_data[index];
+        if (indices_data[j] < weight_shape_[0]) {
+          int index = indices_data[j] * weight_shape_[1] + k;
+          sum += weight_data[index];
+        } else {
+          sum = 0;
+          break;  
+        }
       }
       dst_data[i * weight_shape_[1] + k] = sum;
     }

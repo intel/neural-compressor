@@ -114,7 +114,8 @@ void GatherOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
                         k * flat_dst_stride_[2] + tail_idx;
           int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
                             indices_val * flat_params_stride_[2] + tail_idx;
-          dst_data[dst_idx] = params_data[params_idx];
+          // for the both fp32 and int32 type data
+          memcpy(dst_data + dst_idx, params_data + params_idx, 4);
         }
       }
     }
@@ -133,7 +134,8 @@ void GatherOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
                         k * flat_dst_stride_[2] + m;
           int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
                             indices_val * flat_params_stride_[2] + m;
-          dst_data[dst_idx] = params_data[params_idx];
+          // for the both fp32 and int32 type data
+          memcpy(dst_data + dst_idx, params_data + params_idx, 4);
         }
       }
     }

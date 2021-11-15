@@ -36,7 +36,7 @@ PyTorch 1.8 or higher version is needed.
   python dlrm_s_pytorch.py --arch-sparse-feature-size=16 --arch-mlp-bot="13-512-256-64-16" --arch-mlp-top="512-256-1" --data-generation=dataset --data-set=kaggle --raw-data-file=./input/train.txt --processed-data-file=./input/kaggleAdDisplayChallenge_processed.npz --loss-function=bce --round-targets=True --learning-rate=0.1 --mini-batch-size=32 --print-freq=1024 --test-freq=20480 --print-time --test-mini-batch-size=16384 --test-num-workers=16 --arch-interaction-op=cat --mlperf-acc-threshold=0.77 --save-onnx --mlperf-logging 
   ```
 
-Examples of enabling Intel® Neural Compressor with Engine
+Examples of enabling DLRM with Engine
 =========================
 
 This is a tutorial of how to enable DLRM model with Intel® Neural Compressor.
@@ -78,10 +78,29 @@ tuning:
 Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
 
 ### RUN
-After prepare step is done, we just need update run_engine.py like below
+After prepare step is done, we just run tune and benchmark
+
+Accuracy run by python
+
 ```python
-python run_engine.py --tune --input_model=dlrm_s_pytorch.onnx
+GLOG_minloglevel=2 python run_engine.py --tune --input_model=dlrm_s_pytorch.onnx --batch_size=32
 ```
 
+Or run shell
 
+```python
+./run_tuning.sh --input_model=./dlrm_s_pytorch.onnx  --dataset_location=./input --config=./conf.yaml
+```
+
+Benchmark run by python
+
+```python
+GLOG_minloglevel=2 python run_engine.py --benchmark --input_model=dlrm_s_pytorch.onnx --batch_size=32
+```
+
+Or run shell
+
+```python
+./run_benchmark.sh --input_model=./ir  --dataset_location=./input --config=./conf.yaml --batch_size=32
+```
 

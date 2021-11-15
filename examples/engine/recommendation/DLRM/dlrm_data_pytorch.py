@@ -55,7 +55,8 @@ class CriteoDataset(Dataset):
             split="train",
             raw_path="",
             pro_data="",
-            memory_map=False
+            memory_map=False,
+            batch_size=32
     ):
         # dataset
         # tar_fea = 1   # single target
@@ -73,7 +74,7 @@ class CriteoDataset(Dataset):
             raise(ValueError("Data set option is not supported"))
         self.max_ind_range = max_ind_range
         self.memory_map = memory_map
-        self.batch_size = 32
+        self.batch_size = batch_size
         # split the datafile into path and filename
         lstr = raw_path.split("/")
         self.d_path = "/".join(lstr[0:-1]) + "/"
