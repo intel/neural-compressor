@@ -45,9 +45,9 @@ class TestTuningParser(unittest.TestCase):
         """Test parsing of file."""
         mocked_open.return_value.__enter__.return_value = [
             "Foo bar baz",
-            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
-            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
-            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [Accuracy (int8|fp32): 0.1234|0.12344, Duration (seconds) (int8|fp32): 5.6789|5.6789], Best tune result is: None",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [Accuracy (int8|fp32): 0.99876|0.12344, Duration (seconds) (int8|fp32): 0.5432|5.6789], Best tune result is: [Accuracy: 0.99876, Duration (seconds): 0.5432]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [Accuracy: 0.12344, Duration (seconds): 5.6789]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] Save quantized model to /foo/bar/baz.pb.",
             "a b c d",
         ]
@@ -69,14 +69,14 @@ class TestTuningParser(unittest.TestCase):
         """Test parsing of files without any lines."""
         mocked_open.return_value.__enter__.return_value = [
             "Foo bar baz",
-            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
-            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.2345, duration (seconds): 0.6789], Best tune result is: [accuracy: 0.2345, duration (seconds): 0.6789]",  # noqa: E501
-            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [Accuracy (int8|fp32): 0.1234|0.12344, Duration (seconds) (int8|fp32): 5.6789|5.6789], Best tune result is: None",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [Accuracy (int8|fp32): 0.2345|0.12344, Duration (seconds) (int8|fp32): 0.6789|5.6789], Best tune result is: [Accuracy: 0.2345, Duration (seconds): 0.6789]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [Accuracy: 0.12344, Duration (seconds): 5.6789]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] Save quantized model to /a/b/c.pb.",
             "a b c d",
-            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [accuracy: 0.1234, duration (seconds): 5.6789], Best tune result is: None",  # noqa: E501
-            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [accuracy: 0.99876, duration (seconds): 0.5432], Best tune result is: [accuracy: 0.99876, duration (seconds): 0.5432]",  # noqa: E501
-            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [accuracy: 0.12344, duration (seconds): 5.6789]",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 1 result is: [Accuracy (int8|fp32): 0.1234|0.12344, Duration (seconds) (int8|fp32): 5.6789|5.6789], Best tune result is: None",  # noqa: E501
+            "2021-05-27 07:52:50 [INFO] Tune 2 result is: [Accuracy (int8|fp32): 0.99876|0.12344, Duration (seconds) (int8|fp32): 0.5432|5.6789], Best tune result is: [Accuracy: 0.99876, Duration (seconds): 0.5432]",  # noqa: E501
+            "2021-05-27 07:52:27 [INFO] FP32 baseline is: [Accuracy: 0.12344, Duration (seconds): 5.6789]",  # noqa: E501
             "2021-05-27 07:52:27 [INFO] Save quantized model to /foo/bar/baz.pb.",
         ]
 

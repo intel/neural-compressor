@@ -190,9 +190,12 @@ class Profiler(Parent):
         output_nodes: List[str] = []
         try:
             model = ModelRepository().get_model(self.model_path)
+            # pylint: disable=assignment-from-none
             input_nodes = model.get_input_nodes()  # type: ignore
+            # pylint: disable=assignment-from-none
             output_nodes = model.get_output_nodes()  # type: ignore
-            output_nodes.remove("custom")
+            if isinstance(output_nodes, list):
+                output_nodes.remove("custom")
         except NotFoundException:
             print("Could not read model's nodes.")
 

@@ -24,6 +24,8 @@ from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.templates.metric import Metric
 
 
+ROUND_PRECISION = 2
+
 class Parser(ABC):
     """Parser abstract class."""
 
@@ -66,14 +68,14 @@ class OptimizationParser(Parser):
         """Set patterns to get metrics from lines."""
         return {
             "acc_input_model": r".*FP32 baseline is:\s+\[("
-            r"(accuracy:\s+(?P<acc_input_model>(\d+(\.\d+)?)))?"
-            r"(duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
-            r"(memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
+            r"(Accuracy:\s+(?P<acc_input_model>(\d+(\.\d+)?)))?"
+            r"(Duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
+            r"(Memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
             r")*\]",
             "acc_optimized_model": r".*Best tune result is:\s+\[("
-            r"(accuracy:\s+(?P<acc_optimized_model>(\d+(\.\d+)?)))?"
-            r"(duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
-            r"(memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
+            r"(Accuracy:\s+(?P<acc_optimized_model>(\d+(\.\d+)?)))?"
+            r"(Duration\s+\(seconds\):\s+(?P<duration>(\d+(\.\d+)?)))?"
+            r"(Memory footprint\s+\(MB\):\s+(?P<mem_footprint>(\d+(\.\d+)?)))?(,\s+)?"
             r")*\]",
             "path_optimized_model": r".*Save quantized model to (?P<path_optimized_model>.*)\.",
         }
@@ -208,7 +210,7 @@ class ProfilingParser(Parser):
 
         if not search:
             raise Exception(f"Coud not parse {string_value}")
-        value = float(search.group(1))
+        value = round(float(search.group(1)), ROUND_PRECISION)
         unit = search.group(3)
 
         unit_map = {"s": 10e5, "sec": 10e5, "ms": 10e2, "us": 1, "ns": 10e-4}
