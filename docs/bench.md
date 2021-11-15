@@ -192,6 +192,11 @@ Now that you have created a Model Configuration, you can do the following:
 
 If the configuration was tuned several times, in the details view there will be a chart showing accuracy and duration of historical tunings.
 
+### Profiling
+
+You can also run profiling to check the performance of model layers. To do that you need to click ![Start profiling button](imgs/bench/profiling_start.png "Start profiling") button and when the profiling is finished, a table with profiling data will be shown:
+![Profiling table](imgs/bench/profiling_table.png "Profiling table")
+
 ## Model Graph Display
 For Tensorflow frozen pb models there will be a new button available ![Show graph](imgs/bench/show_graph_button.png "Show graph").
 
