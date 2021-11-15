@@ -7,7 +7,7 @@ scikit-image
 matplotlib
 schema
 py-cpuinfo
-hyperopt
+hyperopt <= 0.2.5
 contextlib2
 requests
 Flask
