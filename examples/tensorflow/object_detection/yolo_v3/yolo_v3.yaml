@@ -6,7 +6,7 @@ model:                                               # mandatory. neural_compres
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 100                  # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    sampling_size: 10                  # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 1
       dataset:

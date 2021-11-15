@@ -70,7 +70,8 @@ class GraphAnalyzer():
             return False
         elif op_type in ("Concat", "Add", "AddV2", "AddN"):
             for each_input in start_node.input:
-                has_relu = self._has_positive_input(self.node_name_details[each_input].node)
+                has_relu = self._has_positive_input(
+                    self.node_name_details[GraphRewriterHelper.node_name_from_input(each_input)].node)
                 if not has_relu:
                     return False
             return True
