@@ -156,6 +156,7 @@ export class DetailsComponent implements OnInit, OnChanges {
           this.model['status'] = result['status'];
           this.getProfilingData(result['data']);
         } else if (result['status'] === 'error' && this.activatedRoute.snapshot.params.id === result['data']['id']) {
+          this.model['status'] = result['status'];
           this.openErrorDialog(result['data']['message']);
         }
       });
@@ -435,6 +436,10 @@ export class DetailsComponent implements OnInit, OnChanges {
 
   getFileName(path: string): string {
     return path.replace(/^.*[\\\/]/, '');
+  }
+
+  typeOf(obj: any): string {
+    return typeof obj;
   }
 
 }

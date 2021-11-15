@@ -98,6 +98,11 @@ class Model(ABC):
     def supports_path(path: str) -> bool:
         """Check if given path is of supported model."""
 
+    @property
+    def supports_profiling(self) -> bool:
+        """Check if profiling is supported for the model."""
+        return False
+
     @abstractmethod
     def guard_requirements_installed(self) -> None:
         """Ensure all requirements are installed."""

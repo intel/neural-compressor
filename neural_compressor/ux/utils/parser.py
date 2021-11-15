@@ -211,7 +211,7 @@ class ProfilingParser(Parser):
         value = float(search.group(1))
         unit = search.group(3)
 
-        unit_map = {"s": 10e5, "ms": 10e2, "us": 1, "ns": 10e-4}
+        unit_map = {"s": 10e5, "sec": 10e5, "ms": 10e2, "us": 1, "ns": 10e-4}
 
         unit_modifier = unit_map.get(unit, None)
         if unit_modifier is None:

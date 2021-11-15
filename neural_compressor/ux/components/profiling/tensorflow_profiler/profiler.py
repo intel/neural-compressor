@@ -14,19 +14,21 @@
 # limitations under the License.
 """Tensorflow profiler."""
 
-from typing import Any, List
+from typing import Any, List, Tuple
 
 import tensorflow.compat.v1 as tf_v1
 from tensorflow.python.profiler import model_analyzer, option_builder
 from tensorflow.python.tools import optimize_for_inference_lib
 
-import neural_compressor.ux.components.profiling.tensorflow_profiler.utils as utils
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader import (
     TensorflowDataLoader,
 )
 from neural_compressor.utils.create_obj_from_config import create_dataloader
+from neural_compressor.ux.components.model.repository import ModelRepository
 from neural_compressor.ux.components.profiling.profiler import Profiler as Parent
+from neural_compressor.ux.components.profiling.tensorflow_profiler import utils
+from neural_compressor.ux.utils.exceptions import NotFoundException
 from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.workload.workload import Workload
 
@@ -40,9 +42,12 @@ class Profiler(Parent):
         self.workload: Workload = workdir.get_workload_object()
         self.model_name: str = self.workload.model_name
         self.model_path: str = model_path
-        self.input_nodes: List[str] = self.workload.input_nodes  # type: ignore
-        self.output_nodes: List[str] = self.workload.output_nodes  # type: ignore
+        self.input_nodes: List[str] = []
+        self.output_nodes: List[str] = []
         self.dataloader = self.build_dataloader()
+        self.input_datatype = tf_v1.dtypes.float32.as_datatype_enum
+
+        self.set_boundary_nodes()
 
     @property
     def num_threads(self) -> int:
@@ -66,11 +71,16 @@ class Profiler(Parent):
                 od_graph_def.ParseFromString(serialized_graph)
                 od_graph_def = utils.delete_assign(od_graph_def)
 
+            input_node_def = self.get_node_by_name(od_graph_def, self.input_nodes[0])
+
+            if "dtype" in input_node_def.attr:
+                self.input_datatype = input_node_def.attr["dtype"].type
+
             od_graph_def = optimize_for_inference_lib.optimize_for_inference(
                 od_graph_def,  # inputGraph,
                 self.input_nodes,  # an array of the input nodes
                 self.output_nodes,  # an array of output nodes
-                tf_v1.dtypes.float32.as_datatype_enum,
+                self.input_datatype,
             )
 
             tf_v1.import_graph_def(od_graph_def, name="")
@@ -133,6 +143,60 @@ class Profiler(Parent):
             profile_op_opt_builder.order_by("micros")
             profile_op_opt_builder.with_max_depth(50)
             profiler.profile_operations(profile_op_opt_builder.build())
+
+    @staticmethod
+    def get_node_by_name(graph_def: tf_v1.GraphDef, node_name: str) -> tf_v1.NodeDef:
+        """Get NodeDef from GraphDef by name."""
+        for node in graph_def.node:
+            if node.name == node_name:
+                return node
+        raise NotFoundException()
+
+    def set_boundary_nodes(self) -> None:
+        """Set boundary nodes values."""
+        self.set_boundary_nodes_from_workload()
+        if self.input_nodes is None:
+            self.input_nodes = self.workload.config.model.inputs
+        if self.output_nodes is None:
+            self.output_nodes = self.workload.config.model.outputs
+
+        detected_input_nodes, detected_output_nodes = self.detect_boundary_nodes_from_model()
+        if not self.input_nodes:
+            self.input_nodes = detected_input_nodes
+
+        if not self.output_nodes:
+            self.output_nodes = detected_output_nodes
+
+        # Make sure that input nodes are list
+        if isinstance(self.input_nodes, str):
+            self.input_nodes = [self.input_nodes]
+
+        # Make sure that output nodes are list
+        if isinstance(self.output_nodes, str):
+            self.output_nodes = [self.output_nodes]
+
+    def set_boundary_nodes_from_workload(self) -> None:
+        """Set boundary nodes using Workload input and output nodes."""
+        self.input_nodes = self.workload.input_nodes  # type: ignore
+        self.output_nodes = self.workload.output_nodes  # type: ignore
+
+    def detect_boundary_nodes_from_model(self) -> Tuple[List[str], List[str]]:
+        """
+        Detect input and output nodes from model.
+
+        Returns tuple with lists of input and output nodes in that order.
+        """
+        input_nodes: List[str] = []
+        output_nodes: List[str] = []
+        try:
+            model = ModelRepository().get_model(self.model_path)
+            input_nodes = model.get_input_nodes()  # type: ignore
+            output_nodes = model.get_output_nodes()  # type: ignore
+            output_nodes.remove("custom")
+        except NotFoundException:
+            print("Could not read model's nodes.")
+
+        return input_nodes, output_nodes
 
     def build_dataloader(self) -> TensorflowDataLoader:
         """Build dataloader based on config."""

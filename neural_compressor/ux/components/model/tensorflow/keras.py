@@ -35,3 +35,8 @@ class KerasModel(TFModel):
     def supports_path(path: str) -> bool:
         """Check if given path is of supported model."""
         return "keras" == get_model_type(path)
+
+    @property
+    def supports_profiling(self) -> bool:
+        """Check if profiling is supported for the model."""
+        return True

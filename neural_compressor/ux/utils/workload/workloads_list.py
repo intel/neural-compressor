@@ -46,6 +46,7 @@ class WorkloadInfo(JsonSerializer):
         status: Optional[str],
         code_template_path: Optional[str],
         created_at: Optional[str],
+        supports_profiling: Optional[bool],
         execution_details: Optional[Dict[str, dict]] = None,
     ) -> None:
         """Initialize configuration WorkloadInfo class."""
@@ -65,6 +66,7 @@ class WorkloadInfo(JsonSerializer):
         self._log_path: Optional[str] = None
         self._execution_details = execution_details
         self._created_at = created_at
+        self._supports_profiling = supports_profiling
         if self._workload_path:
             self._config_path = os.path.join(
                 self._workload_path,

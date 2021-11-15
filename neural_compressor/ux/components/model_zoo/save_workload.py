@@ -21,6 +21,10 @@ from typing import Any, Dict
 from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
     ConfigurationParser,
 )
+from neural_compressor.ux.components.configuration_wizard.save_workload import (
+    change_evaluation_accuracy_configs_to_machine_specs,
+    change_performance_dataloader_to_dummy_if_possible,
+)
 from neural_compressor.ux.components.model_zoo.download_config import download_config
 from neural_compressor.ux.components.model_zoo.download_model import download_model
 from neural_compressor.ux.utils.templates.workdir import Workdir
@@ -54,6 +58,12 @@ def save_workload(data: Dict[str, Any]) -> None:
     parsed_data = parser.parse(data)
 
     workload = Workload(parsed_data)
+    workload.config.model_path = workload.model_path
+
+    model_domain = data.get("domain", "")
+    change_performance_dataloader_to_dummy_if_possible(model_domain, workload.config)
+    change_evaluation_accuracy_configs_to_machine_specs(workload.config)
+
     workload.dump()
 
     workdir = Workdir(
@@ -64,6 +74,7 @@ def save_workload(data: Dict[str, Any]) -> None:
         output_precision=workload.output_precision,
         mode=workload.mode,
         created_at=workload.created_at,
+        supports_profiling=workload.supports_profiling,
     )
 
     workload.config.set_model_path(data["model_path"])

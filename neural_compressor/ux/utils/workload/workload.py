@@ -102,6 +102,10 @@ class Workload(JsonSerializer):
                 f'Could not found model in specified location: "{self.model_path}".',
             )
 
+        self.supports_profiling: bool = False
+        model = ModelRepository().get_model(self.model_path)
+        self.supports_profiling = model.supports_profiling
+
         self.accuracy_goal: float = data.get("accuracy_goal", 0.01)
 
         self.config_name = "config.yaml"

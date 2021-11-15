@@ -28,6 +28,7 @@ export class FileBrowserComponent implements OnInit {
   currentPath: string;
   chosenFile: string;
   filter: FileBrowserFilter;
+  showSpinner = false;
 
   constructor(
     private modelService: ModelService,
@@ -42,13 +43,16 @@ export class FileBrowserComponent implements OnInit {
   }
 
   getFileSystem(path: string) {
+    this.showSpinner = true;
     this.modelService.getFileSystem(path, this.filter)
       .subscribe(
         resp => {
+          this.showSpinner = false;
           this.contents = resp['contents'];
           this.currentPath = resp['path'];
         },
         error => {
+          this.showSpinner = false;
           this.openErrorDialog(error);
         }
       );

@@ -15,8 +15,9 @@
         {{ model['acc_input_model'] ? 'Rerun' : 'Run' }}
       </button>
 
-      <button id="show-graph-btn" mat-raised-button class="fixed-height action-btn blue"
-        [disabled]="model['status'] === 'wip' || !model['model_output_path']" (click)="getProfile()">
+      <button *ngIf="model['supports_profiling']" id="show-graph-btn" mat-raised-button
+        class="fixed-height action-btn blue" [disabled]="model['status'] === 'wip' || !model['model_output_path']"
+        (click)="getProfile()">
         <img src="./../../assets/174-gauge.svg">
         Run profiling
       </button>
@@ -217,17 +218,17 @@
       </tr>
       <tr *ngFor="let row of profilingData">
         <ng-container *ngFor="let header of profilingDataHeaders">
-          <ng-container *ngIf="row[header].run">
+          <ng-container *ngIf="typeOf(row[header].run) !== 'undefined'">
             <td class="cell">
               {{ row[header].run }}
             </td>
           </ng-container>
-          <ng-container *ngIf="row[header].defined">
+          <ng-container *ngIf="typeOf(row[header].defined) !== 'undefined'">
             <td class="cell">
               {{ row[header].defined }}
             </td>
           </ng-container>
-          <ng-container *ngIf="!row[header].run">
+          <ng-container *ngIf="typeOf(row[header].run) === 'undefined'">
             <td class="cell">
               {{ row[header] }}
             </td>
@@ -237,9 +238,9 @@
     </table>
   </div>
 
-  <div class="item item-charts2" *ngIf="model['acc_input_model'] && model['status'] !== 'wip'">
+  <div class="item item-charts2" *ngIf="model['acc_input_model']">
     <h2>Parameters comparison</h2>
-    <p *ngIf="model['acc_input_model'] && model['status'] !== 'wip'">
+    <p>
       <ngx-charts-bar-vertical-2d *ngIf="accuracyData && model['acc_input_model']" class="inline"
         (window:resize)="onResize()" [view]="view" [scheme]="colorScheme" [showXAxisLabel]="showXAxisLabel"
         [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis" [results]="accuracyData">

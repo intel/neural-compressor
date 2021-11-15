@@ -42,6 +42,7 @@ class Workdir:
         metric: Optional[Union[dict, Metric]] = None,
         overwrite: bool = True,
         created_at: Optional[str] = None,
+        supports_profiling: Optional[bool] = None,
     ) -> None:
         """Initialize workdir class."""
         self.workspace_path = os.path.join(os.environ.get("HOME", ""), "workdir")
@@ -91,6 +92,7 @@ class Workdir:
                 mode=mode,
                 metric=metric,
                 created_at=created_at,
+                supports_profiling=supports_profiling,
             )
 
     def load(self) -> dict:
@@ -134,6 +136,7 @@ class Workdir:
         status: Optional[str] = None,
         execution_details: Optional[Dict[str, Any]] = None,
         created_at: Optional[str] = None,
+        supports_profiling: Optional[bool] = None,
     ) -> None:
         """Update data in workloads.list_json."""
         self.load()
@@ -142,6 +145,8 @@ class Workdir:
             project_name = existing_data.get("project_name", None)
         if created_at is None:
             created_at = existing_data.get("created_at", None)
+        if supports_profiling is None:
+            supports_profiling = existing_data.get("supports_profiling", None)
         workload_info = WorkloadInfo(
             workload_path=self.workload_path,
             request_id=request_id,
@@ -156,6 +161,7 @@ class Workdir:
             code_template_path=self.template_path,
             execution_details=execution_details,
             created_at=created_at,
+            supports_profiling=supports_profiling,
         ).serialize()
         self.workloads_data["workloads"][request_id] = workload_info
         self.dump()

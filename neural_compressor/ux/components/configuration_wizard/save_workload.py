@@ -205,6 +205,7 @@ def save_workload(
         output_precision=workload.output_precision,
         mode=workload.mode,
         created_at=workload.created_at,
+        supports_profiling=workload.supports_profiling,
     )
 
     update_config(workload, parsed_data, workdir)
