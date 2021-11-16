@@ -169,11 +169,11 @@ class Profiler(Parent):
 
         # Make sure that input nodes are list
         if isinstance(self.input_nodes, str):
-            self.input_nodes = [self.input_nodes]
+            self.input_nodes = self.convert_nodes_to_list(self.input_nodes)
 
         # Make sure that output nodes are list
         if isinstance(self.output_nodes, str):
-            self.output_nodes = [self.output_nodes]
+            self.output_nodes = self.convert_nodes_to_list(self.output_nodes)
 
     def set_boundary_nodes_from_workload(self) -> None:
         """Set boundary nodes using Workload input and output nodes."""
@@ -200,6 +200,11 @@ class Profiler(Parent):
             print("Could not read model's nodes.")
 
         return input_nodes, output_nodes
+
+    @staticmethod
+    def convert_nodes_to_list(nodes: str) -> List[str]:
+        """Convert string node into list of nodes."""
+        return [node.strip() for node in nodes.split(",")]
 
     def build_dataloader(self) -> TensorflowDataLoader:
         """Build dataloader based on config."""
