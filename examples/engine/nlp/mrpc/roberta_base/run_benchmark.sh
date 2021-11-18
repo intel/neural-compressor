@@ -2,6 +2,7 @@
 # set -x
 
 export GLOG_minloglevel=2
+tokenizer_dir=textattack/roberta-base-MRPC
 
 batch_size=1
 function main {
@@ -32,6 +33,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
+      --tokenizer_dir=*)
+          tokenizer_dir=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -43,6 +47,7 @@ function run_benchmark {
     python run_engine.py \
       --input_model=${input_model} \
       --data_dir=${dataset_location} \
+      --tokenizer_dir=$tokenizer_dir \
       --batch_size=${batch_size} \
       --config=$config \
       --benchmark \
