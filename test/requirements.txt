@@ -10,7 +10,7 @@ neural-compressor
 pandas
 tf_slim
 pillow>=8.2.0
-transformers
+transformers<=4.12.3
 tensorflow_model_optimization
 sigopt
 horovod
