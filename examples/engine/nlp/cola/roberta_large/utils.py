@@ -22,9 +22,9 @@ import numpy as np
 
 class COLADataSet():
 
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, tokenizer_dir):
         dataset = load_dataset('glue', 'cola', cache_dir=data_dir, split='validation')
-        tokenizer = AutoTokenizer.from_pretrained('roberta-large')
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.dataset = dataset.map(lambda e: tokenizer(e['sentence'],
                                 truncation=True, padding='max_length'), batched=True)
     def __getitem__(self, idx):
