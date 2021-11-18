@@ -18,8 +18,6 @@ version: 1.0
 model:
   name: bert
   framework: engine
-  inputs: input_file, batch_size
-  outputs: loss/Softmax:0, IteratorGetNext:3
 
 evaluation:
   accuracy:
