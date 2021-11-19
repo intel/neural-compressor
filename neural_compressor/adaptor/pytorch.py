@@ -1896,7 +1896,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
         model_.model = q_model
-        model_.tune_cfg = copy.deepcopy(self.cfgs)
+        with open(self.ipex_config_path, 'r') as f:
+            model_.tune_cfg = json.load(f)
 
         return model_
 
