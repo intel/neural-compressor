@@ -378,19 +378,23 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -401,8 +405,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>74.24%</td>
     <td>74.27%</td>
     <td>-0.04%</td>
-    <td>7.56</td>
-    <td>21.24</td>
+    <td>925.93</td>
+    <td>329.57</td>
     <td>2.81x</td>
   </tr>
   <tr>
@@ -412,8 +416,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>76.94%</td>
     <td>76.46%</td>
     <td>0.63%</td>
-    <td>9.64</td>
-    <td>24.86</td>
+    <td>726.14</td>
+    <td>281.58</td>
     <td>2.58x</td>
   </tr>
   <tr>
@@ -423,8 +427,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>77.21%</td>
     <td>76.45%</td>
     <td>0.99%</td>
-    <td>12.73</td>
-    <td>30.80</td>
+    <td>549.88</td>
+    <td>227.27</td>
     <td>2.42x</td>
   </tr>
   <tr>
@@ -434,8 +438,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>70.30%</td>
     <td>69.74%</td>
     <td>0.80%</td>
-    <td>5.57</td>
-    <td>9.92</td>
+    <td>1256.73</td>
+    <td>705.65</td>
     <td>1.78x</td>
   </tr>
   <tr>
@@ -445,8 +449,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>74.27%</td>
     <td>73.97%</td>
     <td>0.41%</td>
-    <td>6.69</td>
-    <td>12.33</td>
+    <td>1046.34</td>
+    <td>567.72</td>
     <td>1.84x</td>
   </tr>
   <tr>
@@ -456,8 +460,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>77.29%</td>
     <td>76.75%</td>
     <td>0.70%</td>
-    <td>12.90</td>
-    <td>27.46</td>
+    <td>542.64</td>
+    <td>254.92</td>
     <td>2.13x</td>
   </tr>
   <tr>
@@ -467,8 +471,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>80.36%</td>
     <td>80.27%</td>
     <td>0.11%</td>
-    <td>20.88</td>
-    <td>54.13</td>
+    <td>335.25</td>
+    <td>129.32</td>
     <td>2.59x</td>
   </tr>
   <tr>
@@ -478,8 +482,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>80.42%</td>
     <td>80.40%</td>
     <td>0.02%</td>
-    <td>44.47</td>
-    <td>87.69</td>
+    <td>157.41</td>
+    <td>79.83</td>
     <td>1.97x</td>
   </tr>
   <tr>
@@ -489,8 +493,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>73.93%</td>
     <td>70.96%</td>
     <td>4.19%</td>
-    <td>2.95</td>
-    <td>10.12</td>
+    <td>2372.88</td>
+    <td>691.70</td>
     <td>3.43x</td>
   </tr>
   <tr>
@@ -500,8 +504,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>71.96%</td>
     <td>71.76%</td>
     <td>0.28%</td>
-    <td>4.97</td>
-    <td>10.39</td>
+    <td>1408.45</td>
+    <td>673.72</td>
     <td>2.09x</td>
   </tr>
   <tr>
@@ -511,8 +515,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>37.91%</td>
     <td>38.00%</td>
     <td>-0.24%</td>
-    <td>140.46</td>
-    <td>411.03</td>
+    <td>49.84</td>
+    <td>17.03</td>
     <td>2.93x</td>
   </tr>
   <tr>
@@ -522,8 +526,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>23.02%</td>
     <td>23.13%</td>
     <td>-0.48%</td>
-    <td>12.25</td>
-    <td>26.90</td>
+    <td>571.43</td>
+    <td>260.22</td>
     <td>2.20x</td>
   </tr>
   <tr>
@@ -533,30 +537,34 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>21.97%</td>
     <td>22.16%</td>
     <td>-0.86%</td>
-    <td>264.26</td>
-    <td>960.48</td>
+    <td>26.49</td>
+    <td>7.29</td>
     <td>3.63x</td>
   </tr>
-</tbody>
+</tbody>  
 </table>
 
 
 <table class="docutils">
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -567,8 +575,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>69.58%</td>
     <td>69.76%</td>
     <td>-0.26%</td>
-    <td>14.21</td>
-    <td>26.55</td>
+    <td>492.61</td>
+    <td>263.65</td>
     <td>1.87x</td>
   </tr>
   <tr>
@@ -578,8 +586,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>75.87%</td>
     <td>76.13%</td>
     <td>-0.34%</td>
-    <td>24.89</td>
-    <td>53.84</td>
+    <td>281.24</td>
+    <td>130.01</td>
     <td>2.16x</td>
   </tr>
   <tr>
@@ -589,8 +597,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>79.09%</td>
     <td>79.31%</td>
     <td>-0.28%</td>
-    <td>64.03</td>
-    <td>147.51</td>
+    <td>109.32</td>
+    <td>47.45</td>
     <td>2.30x</td>
   </tr>
   <tr>
@@ -600,8 +608,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>88.16%</td>
     <td>88.73%</td>
     <td>-0.64%</td>
-    <td>41.15</td>
-    <td>81.56</td>
+    <td>170.11</td>
+    <td>85.83</td>
     <td>1.98x</td>
   </tr>
   <tr>
@@ -611,8 +619,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>58.29%</td>
     <td>58.84%</td>
     <td>-0.93%</td>
-    <td>39.17</td>
-    <td>83.42</td>
+    <td>178.71</td>
+    <td>83.91</td>
     <td>2.13x</td>
   </tr>
   <tr>
@@ -622,8 +630,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>88.65%</td>
     <td>89.27%</td>
     <td>-0.70%</td>
-    <td>39.59</td>
-    <td>83.07</td>
+    <td>176.81</td>
+    <td>84.27</td>
     <td>2.10x</td>
   </tr>
   <tr>
@@ -633,8 +641,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>91.63%</td>
     <td>91.86%</td>
     <td>-0.25%</td>
-    <td>39.39</td>
-    <td>83.17</td>
+    <td>177.71</td>
+    <td>84.16</td>
     <td>2.11x</td>
   </tr>
   <tr>
@@ -644,8 +652,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>69.31%</td>
     <td>69.68%</td>
     <td>-0.52%</td>
-    <td>39.51</td>
-    <td>81.84</td>
+    <td>177.17</td>
+    <td>85.53</td>
     <td>2.07x</td>
   </tr>
   <tr>
@@ -655,8 +663,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>87.48%</td>
     <td>88.33%</td>
     <td>-0.95%</td>
-    <td>112.80</td>
-    <td>281.91</td>
+    <td>62.06</td>
+    <td>24.83</td>
     <td>2.50x</td>
   </tr>
   <tr>
@@ -666,8 +674,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>92.78988</td>
     <td>93.04683</td>
     <td>-0.28%</td>
-    <td>503.92</td>
-    <td>934.01</td>
+    <td>13.89</td>
+    <td>7.49</td>
     <td>1.85x</td>
   </tr>
   <tr>
@@ -677,8 +685,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>91.12%</td>
     <td>91.82%</td>
     <td>-0.76%</td>
-    <td>111.08</td>
-    <td>289.13</td>
+    <td>63.02</td>
+    <td>24.21</td>
     <td>2.60x</td>
   </tr>
   <tr>
@@ -688,8 +696,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>72.92%</td>
     <td>72.56%</td>
     <td>0.50%</td>
-    <td>151.93</td>
-    <td>298.53</td>
+    <td>46.07</td>
+    <td>23.45</td>
     <td>1.96x</td>
   </tr>
   <tr>
@@ -699,8 +707,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>62.85%</td>
     <td>62.57%</td>
     <td>0.45%</td>
-    <td>113.04</td>
-    <td>285.43</td>
+    <td>61.92</td>
+    <td>24.52</td>
     <td>2.52x</td>
   </tr>
 </tbody>
@@ -931,17 +939,21 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -950,8 +962,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>0.8235</td>
     <td>83.09%</td>
     <td>-0.89%</td>
-    <td>21.91</td>
-    <td>71.53</td>
+    <td>319.49</td>
+    <td>97.86</td>
     <td>3.26x</td>
   </tr>
   <tr>
@@ -959,8 +971,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>90.6648</td>
     <td>90.87</td>
     <td>-0.23%</td>
-    <td>232.38</td>
-    <td>954.96</td>
+    <td>30.12</td>
+    <td>7.33</td>
     <td>4.11x</td>
   </tr>
   <tr>
@@ -968,8 +980,8 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>0.8407</td>
     <td>84.31%</td>
     <td>-0.28%</td>
-    <td>10.41</td>
-    <td>36.42</td>
+    <td>672.43</td>
+    <td>192.20</td>
     <td>3.50x</td>
   </tr>
 </tbody>
