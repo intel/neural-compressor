@@ -200,61 +200,7 @@ subtract_pixel_mean = True
 # ResNet1001| (111)| -----     | 92.39     | -----     | 95.08+-.14| ---(---)
 # ---------------------------------------------------------------------------
 n = 3
-
 depth = n * 9 + 2
-
-def train():
-    # Load the CIFAR10 data.
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-
-    # Input image dimensions.
-    input_shape = x_train.shape[1:]
-    # Normalize data.
-    x_train = x_train.astype('float32') / 255
-    x_test = x_test.astype('float32') / 255
-
-    x_train_mean = np.mean(x_train, axis=0)
-    x_train -= x_train_mean
-    x_test -= x_train_mean
-
-    print('x_train shape:', x_train.shape)
-    print(x_train.shape[0], 'train samples')
-    print(x_test.shape[0], 'test samples')
-    print('y_train shape:', y_train.shape)
-
-    # Convert class vectors to binary class matrices.
-    y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
-    y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
-
-    model = resnet_v2(input_shape=input_shape, depth=depth)
-
-    model.compile(loss='categorical_crossentropy',
-                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.01),
-                metrics=['accuracy'])
-    model.summary()
-
-    lr_scheduler = LearningRateScheduler(lr_schedule)
-
-    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
-                                cooldown=0,
-                                patience=5,
-                                min_lr=0.5e-6)
-
-    callbacks = [lr_reducer, lr_scheduler]
-
-    # Run training, with or without data augmentation.
-    model.fit(x_train, y_train,
-                batch_size=batch_size,
-                epochs=epochs,
-                validation_data=(x_test, y_test),
-                shuffle=True,
-                callbacks=callbacks)
-
-    # Score trained model.
-    scores = model.evaluate(x_test, y_test, verbose=1)
-    print('Test loss:', scores[0])
-    print('Test accuracy:', scores[1])
-    model.save("baseline_model")
 
 class EvalDataset(object):
     def __init__(self, batch_size=100):
@@ -317,14 +263,16 @@ class TrainDataset(object):
         return self.train_images[idx], self.train_labels[idx]
 
 if __name__ == '__main__':
-    train()
     from neural_compressor.experimental import Pruning, common
     from neural_compressor.utils import logger
     prune = Pruning("./prune.yaml")
-    prune.eval_dataloader = common.DataLoader(EvalDataset())
-    prune.train_dataloader = common.DataLoader(TrainDataset())
+    # prune.train_distributed = True
+    # prune.evaluation_distributed = True
+    prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
+    prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
     prune.model = common.Model('./baseline_model')
     model = prune()
     stats, sparsity = model.report_sparsity()
     logger.info(stats)
     logger.info(sparsity)
+

@@ -36,6 +36,8 @@ class Component(object):
         self._train_dataloader = None
         self._eval_func = None
         self._eval_dataloader = None
+        self._train_distributed = False
+        self._evaluation_distributed = False
         self.adaptor = None
         self.hooks = {
             'pre_epoch_begin': self.pre_epoch_begin,
@@ -290,7 +292,7 @@ class Component(object):
         """
         from .common import _generate_common_dataloader
         self._train_dataloader = _generate_common_dataloader(
-            dataloader, self.framework)
+            dataloader, self.framework, self._train_distributed)
 
     @property
     def eval_dataloader(self):
@@ -324,7 +326,7 @@ class Component(object):
         """
         from .common import _generate_common_dataloader
         self._eval_dataloader = _generate_common_dataloader(
-            dataloader, self.framework)
+            dataloader, self.framework, self._evaluation_distributed)
 
     @property
     def model(self):

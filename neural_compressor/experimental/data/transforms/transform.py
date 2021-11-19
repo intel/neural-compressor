@@ -1201,9 +1201,10 @@ class NormalizeTFTransform(BaseTransform):
         tuple of processed image and label
     """
 
-    def __init__(self, mean=[0.0], std=[1.0]):
+    def __init__(self, mean=[0.0], std=[1.0], rescale=None):
         self.mean = mean
         self.std = std
+        self.rescale = rescale
         for item in self.std:
             if item < 10**-6:
                 raise ValueError("Std should be greater than 0")
@@ -1221,6 +1222,9 @@ class NormalizeTFTransform(BaseTransform):
         else:
             transform = NormalizeTransform(self.mean, self.std)
             image, label = transform(sample)
+        if self.rescale:
+            image /= self.rescale[0]
+            image -= self.rescale[1]            
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \

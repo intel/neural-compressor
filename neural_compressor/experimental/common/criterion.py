@@ -18,6 +18,7 @@
 from abc import abstractmethod
 from collections import UserDict
 from neural_compressor.utils.utility import LazyImport, singleton
+from neural_compressor.utils import logger
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -178,6 +179,7 @@ class KnowledgeDistillationLoss(object):
         if self.loss_weights[1] > 0:
             assert self.teacher_outputs is not None, 'Output of teacher model is required, ' \
                 'please run teacher_model_forward to get output of teacher model first.'
+
             student_out_ = student_outputs / self.temperature
             teacher_out_ = self.teacher_outputs / self.temperature
             distillation_loss = self.teacher_student_loss_cal(student_out_, teacher_out_)
@@ -190,6 +192,8 @@ class KnowledgeDistillationLoss(object):
         return self.loss
 
     def __call__(self, student_outputs, targets):
+        if isinstance(self, TensorflowKnowledgeDistillationLoss):
+            student_outputs, targets = targets, student_outputs
         return self.loss_cal(student_outputs, targets)
 
 class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
@@ -204,7 +208,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             else:
                 raise NotImplementedError('Now we only support CrossEntropyLoss '
                  'for loss of student model output with respect to targets.')
-            print('student_targets_loss: {}, {}'.format(self.loss_types[0], \
+            logger.info('student_targets_loss: {}, {}'.format(self.loss_types[0], \
                                                         self.loss_weights[0]))
         if self.teacher_student_loss is None:
             if self.loss_types[1] == 'CE':
@@ -214,7 +218,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             else:
                 raise NotImplementedError('Now we only support CrossEntropyLoss'
                 ' for loss of student model output with respect to teacher model ouput.')
-            print('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
+            logger.info('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
                                                         self.loss_weights[1]))
 
     def SoftCrossEntropy(self, logits, targets):
@@ -281,7 +285,6 @@ class PyTorchKnowledgeDistillationLossWrapper(object):
     def __call__(self, **kwargs):
         return PyTorchKnowledgeDistillationLoss, self._param_check()
 
-@criterion_registry('KnowledgeDistillationLoss', 'tensorflow')
 class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
                  loss_weights=[0.5, 0.5]):
@@ -290,25 +293,103 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                                                                   loss_weights=loss_weights)
         if self.student_targets_loss is None:
             if self.loss_types[0] == 'CE':
+                self.student_targets_loss = tf.nn.sparse_softmax_cross_entropy_with_logits
+            else:
+                raise NotImplementedError('Now we only support CrossEntropyLoss '
+                 'for loss of student model output with respect to targets.')
+            logger.info('student_targets_loss: {}, {}'.format(self.loss_types[0], \
+                                                        self.loss_weights[0]))            
+        if self.teacher_student_loss is None:
+            if self.loss_types[1] == 'CE':
+                self.teacher_student_loss = tf.keras.losses.CategoricalCrossentropy()
+            elif self.loss_types[1] == 'KL':
+                self.teacher_student_loss = tf.keras.losses.KLDivergence()
+            else:
+                raise NotImplementedError('Now we only support CrossEntropyLoss'
+                ' for loss of student model output with respect to teacher model ouput.')
+            logger.info('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
+                                                        self.loss_weights[1]))
+
+    def teacher_model_forward(self, input, teacher_model=None):
+        if self.loss_weights[1] > 0 and input is not None:
+            model = self.teacher_model if teacher_model is None else teacher_model
+            outputs = model.predict(input)
+            self.teacher_outputs = outputs
+
+    def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
+        assert self.teacher_student_loss, 'teacher_student_loss not specified.'
+        return self.teacher_student_loss(teacher_outputs, student_outputs)
+
+    def student_targets_loss_cal(self, student_outputs, targets):
+        assert self.student_targets_loss, 'student_targets_loss not specified.'
+        return self.student_targets_loss(targets, student_outputs)
+
+@criterion_registry('KnowledgeDistillationLoss', 'tensorflow')
+class TensorflowKnowledgeDistillationLossWrapper(object):
+    def __init__(self, param_dict):
+        self.param_dict = param_dict
+
+    def _param_check(self):
+        param_dict = self.param_dict
+        _params = ['temperature', 'loss_types', 'loss_weights']
+        assert all(key in param_dict for key in _params),\
+            'Keys {} must be in input parameters.'.format(_params)
+        assert param_dict['temperature'] > 0.0,\
+            'Value of temperature must be positive.'
+        assert len(param_dict['loss_types']) == len(param_dict['loss_weights']),\
+            'Length of loss_types and loss_weights must be positive.'
+        assert all(type(param_dict[k]) in [list, tuple] \
+            for k in ['loss_types', 'loss_weights']),\
+            'Type of loss_types and loss_weights must be list or tuple.'
+        assert all(any(isinstance(e, t) for t in [str, tf.keras]) \
+            for e in param_dict['loss_types']), \
+            'Type of loss_types element must be str or torch Module.'
+        assert all(0. <= e <= 1. for e in param_dict['loss_weights']) and \
+            sum(param_dict['loss_weights']) == 1.0, \
+            'Element of loss_weights must be in interval [0, 1] and summed to 1.0.'
+        new_dict = {}
+        for k in _params:
+            new_dict[k] = param_dict[k]
+        return new_dict
+    
+    def __call__(self, **kwargs):
+        return TensorflowKnowledgeDistillationLoss, self._param_check()
+
+class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
+    def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
+                 loss_weights=[0.5, 0.5]):
+        super(TensorflowKnowledgeDistillationLossExternal, self).__init__(temperature=temperature, 
+                                                                  loss_types=loss_types,
+                                                                  loss_weights=loss_weights)
+        if self.student_targets_loss is None:
+            if self.loss_types[0] == 'CE':
                 self.student_targets_loss = tf.keras.losses.CategoricalCrossentropy()
             else:
                 raise NotImplementedError('Now we only support CrossEntropyLoss '
                  'for loss of student model output with respect to targets.')
+            logger.info('student_targets_loss: {}, {}'.format(self.loss_types[0], \
+                                                        self.loss_weights[0]))            
         if self.teacher_student_loss is None:
             if self.loss_types[1] == 'CE':
                 self.teacher_student_loss = tf.keras.losses.CategoricalCrossentropy()
+            elif self.loss_types[1] == 'KL':
+                self.teacher_student_loss = tf.keras.losses.KLDivergence()
             else:
                 raise NotImplementedError('Now we only support CrossEntropyLoss'
                 ' for loss of student model output with respect to teacher model ouput.')
-    
+            logger.info('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
+                                                        self.loss_weights[1]))
+
     def teacher_model_forward(self, input, teacher_model=None):
-        pass
-    
+        if self.loss_weights[1] > 0 and input is not None:
+            model = self.teacher_model if teacher_model is None else teacher_model
+            outputs = model.predict(input)
+            self.teacher_outputs = outputs
+
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
-        return self.teacher_student_loss(student_outputs, teacher_outputs)
-    
+        return self.teacher_student_loss(teacher_outputs, student_outputs)
+
     def student_targets_loss_cal(self, student_outputs, targets):
         assert self.student_targets_loss, 'student_targets_loss not specified.'
-        return self.teacher_student_loss(student_outputs, targets)           
-   
+        return self.student_targets_loss(targets, student_outputs)

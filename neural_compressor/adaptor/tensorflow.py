@@ -30,6 +30,7 @@ from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 import math
 tensorflow = LazyImport('tensorflow')
 
+
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -70,6 +71,7 @@ class TensorFlowAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.num_cores_per_sock = CpuInfo().cores_per_socket
+        self.callbacks = []
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -99,91 +101,97 @@ class TensorFlowAdaptor(Adaptor):
         writer.add_summary(summary, step)
         writer.flush()
 
+    def _pre_hook_for_hvd(self):
+        import horovod.tensorflow as hvd
+        self.hvd = hvd
+        self.hvd.init()
+    
+    @dump_elapsed_time(customized_msg="Model training")
     def train(self, model, dataloader, optimizer_tuple,
                 criterion_tuple, hooks, **kwargs):
         # check model is savedmodel or not
         import tensorflow as tf
-        from tensorflow import keras
         from neural_compressor.model.model import get_model_type
-
-        assert get_model_type(model._model) == 'keras', "Support SavedModel only"
-        input_model = tf.keras.models.load_model(model._model)
-
+        self.model_type = get_model_type(model._model)
         optimizer = optimizer_tuple[0](**optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
-        class TfPruningCallback(keras.callbacks.Callback):
-            def __init__(self, nc_model, hooks):
-                self.hooks = hooks
-                self.nc_model = nc_model
+        start_epochs = kwargs['kwargs'].get('start_epoch', None)
+        end_epochs = kwargs['kwargs'].get('end_epoch', None)
+        epochs = kwargs['kwargs'].get('epoch', None)
+        iters = kwargs['kwargs'].get('iteration', None)
+        callbacks = kwargs['kwargs'].get('callbacks', None)
+        distributed = getattr(dataloader, 'distributed', False)
 
-            def _set_weights(self):
-                res = {}
-                for index, layer in enumerate(self.model.layers):
-                    if len(layer.weights):
-                        res[index] = layer.get_weights()[0]
-                self.nc_model.weights = res
+        from neural_compressor.experimental.common.criterion import TensorflowKnowledgeDistillationLoss
+        if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
+            input_model = model._model      
+        else:
+            input_model = tf.keras.models.load_model(model._model)
+            hooks = callbacks['tf_pruning'](model, input_model, hooks)
+        hooks['pre_epoch_begin']()                 # pre_epoch_begin hook
+        train_loss_results = []
+        if distributed:
+            try:
+                len_dataloader = len(dataloader)
+            except:
+                logger.info("The length of the distributed training dataloader is unknown."
+                            "When the iteration of training dataloader in each process is "
+                            "inconsistent, an error may occur.")
+            else:
+                list_len_dataloader = self.hvd.allgather_object(len_dataloader)
+                if self.hvd.rank() == 0:
+                    for i in range(len(list_len_dataloader)-1):
+                        if list_len_dataloader[i] != list_len_dataloader[i+1]:
+                            raise AttributeError("The traning dataloader's iteration is"
+                                                "different between processes, please reset dataloader's batch_size.") 
 
-            def on_train_begin(self, logs=None):
-                self.hooks['pre_epoch_begin']()
+        @tf.function
+        def training_step(first_batch):
+            with tf.GradientTape() as tape:
+                tape.watch(input_model.trainable_variables)
+                y_ = input_model(x, training=True)
+                loss_value = criterion(y, y_)
+            tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
+            # Get gradient
+            grads = tape.gradient(loss_value, input_model.trainable_variables)
+            # Optimize the model
+            optimizer.apply_gradients(zip(grads, input_model.trainable_variables))
+            if distributed and first_batch:
+                self.hvd.broadcast_variables(input_model.variables, root_rank=0)
+                self.hvd.broadcast_variables(optimizer.variables(), root_rank=0)
+            return loss_value
 
-            def on_train_end(self, logs=None):
-                self.hooks['post_epoch_end']()
+        if start_epochs is not None and end_epochs is not None:
+            epochs = end_epochs - start_epochs
+        for epoch in range(epochs):
+            cnt = 0
+            epoch_loss_avg = tf.keras.metrics.Mean()
+            hooks['on_epoch_begin'](epoch)         # on_epoch_begin hook
+            # Training loop
+            for iter, (x, y) in enumerate(dataloader):
+                hooks['on_batch_begin'](iter)      # on_batch_begin hook
+                cnt += 1
+                if hasattr(criterion, "teacher_model_forward"):
+                    criterion.teacher_model_forward(x)
+                loss_value = training_step(iter == 0)
+                # Track progress
+                epoch_loss_avg.update_state(loss_value)  # Add current batch loss
+                hooks['on_batch_end']()            # on_batch_end hook
+                if iters is not None and cnt >= iters:
+                    break
+            hooks['on_epoch_end']()                # on_epoch_end hook
+            # End epoch
+            train_loss_results.append(epoch_loss_avg.result())
+            if not distributed or self.hvd.local_rank() == 0:
+                logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch+1, epoch_loss_avg.result()))
+        hooks['post_epoch_end']()                  # post_epoch_end hook
+        model._sess = None
+        if not isinstance(criterion, TensorflowKnowledgeDistillationLoss):
+            if not distributed or self.hvd.rank() == 0:
+                # Update the input model with pruned weights manually due to keras API limitation.
+                input_model.save(model._model)
 
-            def on_epoch_begin(self, epoch, logs=None):
-                self._set_weights()
-                self.hooks['on_epoch_begin'](epoch)
-
-            def on_epoch_end(self, epoch, logs=None):
-                self._set_weights()
-
-                res = self.hooks['on_epoch_end']()
-                for layer_index, weights in res[0][0].items():
-                    self.model.layers[layer_index].set_weights(
-                        [weights, self.model.layers[layer_index].get_weights()[1]])
-
-            def on_train_batch_begin(self, batch, logs=None):
-                self._set_weights()
-
-                res = self.hooks['on_batch_begin'](batch)
-                for layer_index, weights in res[0][0].items():
-                    self.model.layers[layer_index].set_weights(
-                        [weights, self.model.layers[layer_index].get_weights()[1]])
-
-            def on_train_batch_end(self, batch, logs=None):
-                self._set_weights()
-                res = self.hooks['on_batch_end']()
-                for layer_index, weights in res[0][0].items():
-                    self.model.layers[layer_index].set_weights(
-                        [weights, self.model.layers[layer_index].get_weights()[1]])
-
-        start_epochs = kwargs['kwargs']['start_epoch']
-        end_epochs = kwargs['kwargs']['end_epoch']
-        iters = kwargs['kwargs']['iteration']
-        data_list = []
-        labels_list = []
-        for idx, (inputs, labels) in enumerate(dataloader):
-            if idx > iters *(end_epochs - start_epochs):
-                break
-            data_list.append(inputs)
-            labels_list.append(labels)
-        bs = inputs[0].shape[0]
-
-        concated_data = np.concatenate(data_list)
-        concated_labels = np.concatenate(labels_list)
-
-        input_model.compile(optimizer=optimizer,
-              loss=criterion)
-
-        input_model.fit(
-            concated_data,
-            concated_labels,
-            batch_size=bs,
-            epochs=end_epochs - start_epochs,
-            callbacks=[TfPruningCallback(model, hooks)],
-        )
-
-        input_model.save(model._model)
-
+    @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(self, model, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
@@ -212,7 +220,19 @@ class TensorFlowAdaptor(Adaptor):
             hvd.init()
             # If metric.hvd is not None then run distributed inference
             metric.hvd = hvd
-
+            try:
+                len_dataloader = len(dataloader)
+            except:
+                logger.info("The length of the distributed evaluation dataloader is unknown."
+                            "When the iteration of evaluation dataloader in each process is "
+                            "inconsistent, an error may occur.")
+            else:
+                list_len_dataloader = hvd.allgather_object(len_dataloader)
+                if hvd.rank() == 0:
+                    for i in range(len(list_len_dataloader)-1):
+                        if list_len_dataloader[i] != list_len_dataloader[i+1]:
+                            raise AttributeError("The evaluation dataloader's iteration is"
+                                                "different between processes, please reset dataloader's batch_size.") 
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
             from tensorflow.python.framework import tensor_util

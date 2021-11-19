@@ -50,6 +50,7 @@ class Pruning(Component):
 
         self._pruning_func = None
         self.pruners = []
+        self.callbacks = dict(tf_pruning=TfPruningCallback)
 
     def _pre_epoch_begin(self):
         """ called before training """
@@ -66,7 +67,6 @@ class Pruning(Component):
         res = []
         for pruner in self.pruners:
             res.append(pruner.on_batch_begin(batch_id))
-
         return res
 
     def _on_post_grad(self):
@@ -138,7 +138,10 @@ class Pruning(Component):
                               "be configured for pruning if pruning_func is NOT set."
             self._pruning_func = create_train_func(self.framework, \
                                                    self.train_dataloader, \
-                                                   self.adaptor, train_cfg, hooks=self.hooks)
+                                                   self.adaptor, \
+                                                   train_cfg, \
+                                                   hooks=self.hooks, \
+                                                   callbacks=self.callbacks)
         if self._eval_func is None:
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation
@@ -154,13 +157,17 @@ class Pruning(Component):
             self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
+        logger.info("Start to get the baseline model's score before pruning.")
+        self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
+                        else self._model.model)
+        logger.info("Baseline model's score is {}.".format(str(self.baseline_score)))
+        logger.info("Model pruning begins.")
         self._pruning_func(self._model if getattr(self._pruning_func, 'builtin', None) \
                         else self._model.model)
         logger.info("Model pruning is done. Start to evaluate the pruned model.")
-        score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
+        self.last_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
                         else self._model.model)
-        logger.info("Pruned model score is {}.".format(str(score)))
-
+        logger.info("Pruned model score is {}.".format(str(self.last_score)))
         return self._model
 
     def generate_hooks(self):
@@ -252,5 +259,70 @@ class Pruning(Component):
         """
         self._pruning_func = user_pruning_func
 
+    @property
+    def evaluation_distributed(self):
+        """ Getter to know whether need distributed evaluation dataloader"""
+        return self._evaluation_distributed
+
+    @evaluation_distributed.setter
+    def evaluation_distributed(self, distributed):
+        self._evaluation_distributed = distributed
+    
+    @property
+    def train_distributed(self):
+        """ Getter to know whether need distributed training dataloader"""
+        return self._train_distributed
+
+    @train_distributed.setter
+    def train_distributed(self, distributed):
+        self._train_distributed = distributed
+
     def __repr__(self):
         return 'Pruning'
+
+class TfPruningCallback(object):
+    def __init__(self, nc_model, input_model, hooks):
+        self.hooks = hooks
+        self.nc_model = nc_model
+        self.model = input_model
+        
+    def __getitem__(self, func):
+        return getattr(self, func)
+
+    def _set_weights(self):
+        res = {}
+        for index, layer in enumerate(self.model.layers):
+            if len(layer.weights):
+                res[index] = layer.get_weights()[0]
+        self.nc_model.weights = res
+
+    def pre_epoch_begin(self, logs=None):
+        self.hooks['pre_epoch_begin']()
+
+    def post_epoch_end(self, logs=None):
+        self.hooks['post_epoch_end']()
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self._set_weights()
+        self.hooks['on_epoch_begin'](epoch)
+
+    def on_epoch_end(self, logs=None):
+        self._set_weights()
+        res = self.hooks['on_epoch_end']()
+        for layer_index, weights in res[0][0].items():
+            self.model.layers[layer_index].set_weights(
+                [weights, self.model.layers[layer_index].get_weights()[1]])
+
+    def on_batch_begin(self, batch, logs=None):
+        self._set_weights()
+        res = self.hooks['on_batch_begin'](batch)
+        for layer_index, weights in res[0][0].items():
+            self.model.layers[layer_index].set_weights(
+                [weights, self.model.layers[layer_index].get_weights()[1]])
+
+    def on_batch_end(self, logs=None):
+        self._set_weights()
+        res = self.hooks['on_batch_end']()
+        for layer_index, weights in res[0][0].items():
+            self.model.layers[layer_index].set_weights(
+                [weights, self.model.layers[layer_index].get_weights()[1]]) 

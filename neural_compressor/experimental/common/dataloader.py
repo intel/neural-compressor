@@ -44,11 +44,13 @@ class DataLoader(object):
         self.shuffle = shuffle
         self.distributed = distributed
 
-def _generate_common_dataloader(dataloader, framework):
+def _generate_common_dataloader(dataloader, framework, distributed=False):
     if not isinstance(dataloader, DataLoader):
         assert hasattr(dataloader, '__iter__') and \
             hasattr(dataloader, 'batch_size'), \
             'dataloader must implement __iter__ method and batch_size attribute'
+        assert not distributed, "Please use \
+            neural_compressor.experimental.common.DataLoader to support distributed computing"
         return dataloader
     else:
         return DATALOADERS[framework](
@@ -61,5 +63,5 @@ def _generate_common_dataloader(dataloader, framework):
             num_workers=dataloader.num_workers,
             pin_memory=dataloader.pin_memory,
             shuffle=dataloader.shuffle,
-            distributed=dataloader.distributed)
+            distributed=bool(dataloader.distributed or distributed))
 

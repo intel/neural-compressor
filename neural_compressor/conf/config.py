@@ -282,7 +282,8 @@ transform_schema = Schema({
     Optional('ToPILImage'): Or({}, None),
     Optional('Normalize'): {
         Optional('mean'): And(list, lambda s: all(isinstance(i, float) for i in s)),
-        Optional('std'): And(list, lambda s: all(isinstance(i, float) for i in s))
+        Optional('std'): And(list, lambda s: all(isinstance(i, float) for i in s)),
+        Optional('rescale'): list
     },
     Optional('Resize'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
@@ -516,6 +517,7 @@ train_schema = Schema({
     'optimizer': optimizer_schema,
     'criterion': criterion_schema,
     Optional('dataloader'): dataloader_schema,
+    Optional('epoch', default=1): int,
     Optional('start_epoch', default=0): int,
     Optional('end_epoch'): int,
     Optional('iteration'): int,

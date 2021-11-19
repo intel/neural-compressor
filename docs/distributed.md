@@ -14,7 +14,7 @@ pip install horovod
 
 ## Distributed training and inference (evaluation)
 
-Distributed training and inference is supported in PyTorch currently. Only distributed inference is supported in TensorFlow now, distributed training is under development (i.e. PyTorch currently supports distributed QAT and PTQ. TensorFlow currently only supports distributed PTQ). To enable distributed training or inference, the steps are:
+Distributed training and inference are supported in PyTorch and TensorFlow currently. (i.e. PyTorch currently supports distributed QAT and PTQ. TensorFlow currently supports distributed PTQ and Keras-backend Pruning). To enable distributed training or inference, the steps are:
 
 1. Setting up distributed training or inference scripts. We have 2 options here:
     - Option 1: Enable distributed training or inference with pure yaml configuration. In this case, Neural Compressor builtin training function is used.
@@ -140,10 +140,10 @@ horovodrun requires user set up SSH on all hosts without any prompts. To do dist
 ## Following examples are supported
 PyTorch:
 - PyTorch example-1: MNIST
-Please follow this README.md exactly：[MNIST](../examples/pytorch/eager/image_recognition/mnist/README.md)
+  - Please follow this README.md exactly：[MNIST](../examples/pytorch/eager/image_recognition/mnist)
 
-- PyTorch example-2: QAT(Quantization Aware Training)
-Please follow this README.md exactly：[QAT](../examples/pytorch/eager/image_recognition/imagenet/cpu/distributed/README.md)
+- PyTorch example-2: QAT (Quantization Aware Training)
+  - Please follow this README.md exactly：[QAT](../examples/pytorch/eager/image_recognition/imagenet/cpu/distributed)
 
 TensorFlow:
 - TensorFlow example-1: 'ResNet50 V1.0' PTQ (Post Training Quantization) with distributed inference    
@@ -174,3 +174,5 @@ TensorFlow:
     ```
     horovodrun -np 2 -H your_node1_name:1,your_node2_name:1 python main.py --tune --config=resnet50_v1.yaml --input-graph=/PATH/TO/resnet50_fp32_pretrained_model.pb --output-graph=./nc_resnet50_v1.pb
     ```
+- TensorFlow example-2: 'resnet_v2' pruning on Keras backend with distributed training and inference
+   - Please follow this README.md exactly：[Pruning](../examples/tensorflow/pruning/resnet_v2)

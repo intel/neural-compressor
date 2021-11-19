@@ -1,3 +1,4 @@
+"""Tests for the TensorFlow pruning."""
 from __future__ import print_function
 import tensorflow
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
@@ -17,13 +18,9 @@ def build_fake_yaml():
     model:
       name: resnet_v2_prune
       framework: tensorflow
-
     pruning:
       train:
-        start_epoch: 0
-        end_epoch: 4
-        iteration: 10
-
+        epoch: 4
         optimizer:
           SGD:
             learning_rate: 0.001
@@ -44,7 +41,6 @@ def build_fake_yaml():
                 start_epoch: 1
                 end_epoch: 3
                 prune_type: basic_magnitude
-
     evaluation:
       accuracy:
         metric:
@@ -55,13 +51,10 @@ def build_fake_yaml():
 
 def lr_schedule(epoch):
     """Learning Rate Schedule
-
     Learning rate is scheduled to be reduced after 80, 120, 160, 180 epochs.
     Called automatically every epoch as part of callbacks during training.
-
     # Arguments
         epoch (int): The number of epochs
-
     # Returns
         lr (float32): learning rate
     """
@@ -85,7 +78,6 @@ def resnet_layer(inputs,
                  batch_normalization=True,
                  conv_first=True):
     """2D Convolution-Batch Normalization-Activation stack builder
-
     # Arguments
         inputs (tensor): input tensor from input image or previous layer
         num_filters (int): Conv2D number of filters
@@ -95,7 +87,6 @@ def resnet_layer(inputs,
         batch_normalization (bool): whether to include batch normalization
         conv_first (bool): conv-bn-activation (True) or
             bn-activation-conv (False)
-
     # Returns
         x (tensor): tensor as input to the next layer
     """
@@ -124,7 +115,6 @@ def resnet_layer(inputs,
 
 def resnet_v2(input_shape, depth, num_classes=10):
     """ResNet Version 2 Model builder [b]
-
     Stacks of (1 x 1)-(3 x 3)-(1 x 1) BN-ReLU-Conv2D or also known as
     bottleneck layer
     First shortcut connection per layer is 1 x 1 Conv2D.
@@ -138,12 +128,10 @@ def resnet_v2(input_shape, depth, num_classes=10):
     stage 0: 32x32,  64
     stage 1: 16x16, 128
     stage 2:  8x8,  256
-
     # Arguments
         input_shape (tensor): shape of input image tensor
         depth (int): number of core convolutional layers
         num_classes (int): number of classes (CIFAR10 has 10)
-
     # Returns
         model (Model): Keras model instance
     """
@@ -227,7 +215,6 @@ num_classes = 10
 subtract_pixel_mean = True
 
 n = 1
-
 depth = n * 9 + 2
 
 def train():
@@ -243,11 +230,6 @@ def train():
     x_train_mean = np.mean(x_train, axis=0)
     x_train -= x_train_mean
     x_test -= x_train_mean
-
-    print('x_train shape:', x_train.shape)
-    print(x_train.shape[0], 'train samples')
-    print(x_test.shape[0], 'test samples')
-    print('y_train shape:', y_train.shape)
 
     # Convert class vectors to binary class matrices.
     y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
@@ -283,8 +265,34 @@ def train():
     print('Test accuracy:', scores[1])
     model.save("baseline_model")
 
-class Dataset(object):
-    def __init__(self, batch_size=100):
+class TrainDataset(object):
+    def __init__(self):
+        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        x_train, y_train = x_train[:100], y_train[:100]
+        x_train = x_train.astype('float32') / 255
+        x_test = x_test.astype('float32') / 255
+
+        # If subtract pixel mean is enabled
+        x_train_mean = np.mean(x_train, axis=0)
+        x_train -= x_train_mean
+        x_test -= x_train_mean
+
+        # Convert class vectors to binary class matrices.
+        y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+        y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+        self.test_images = x_test
+        self.test_labels = y_test
+        self.train_images = x_train
+        self.train_labels = y_train
+
+    def __len__(self):
+        return len(self.train_images)
+
+    def __getitem__(self, idx):
+        return self.train_images[idx], self.train_labels[idx]
+
+class EvalDataset(object):
+    def __init__(self):
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
         x_train = x_train.astype('float32') / 255
@@ -295,11 +303,6 @@ class Dataset(object):
         x_train -= x_train_mean
         x_test -= x_train_mean
 
-        print('x_train shape:', x_train.shape)
-        print(x_train.shape[0], 'train samples')
-        print(x_test.shape[0], 'test samples')
-        print('y_train shape:', y_train.shape)
-
         # Convert class vectors to binary class matrices.
         y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
         y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
@@ -307,8 +310,7 @@ class Dataset(object):
         self.test_labels = y_test
 
     def __len__(self):
-        # return len(self.test_images)
-        return 1000
+        return len(self.test_images)
 
     def __getitem__(self, idx):
         return self.test_images[idx], self.test_labels[idx]
@@ -317,27 +319,31 @@ class TestTensorflowPruning(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-        train()
+        cmd = 'cp -r ../examples/tensorflow/pruning/resnet_v2/baseline_model ./'
+        os.popen(cmd).readlines()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         shutil.rmtree('baseline_model',ignore_errors=True)
+        shutil.rmtree('nc_workspace',ignore_errors=True)
 
     @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_tensorflow_pruning(self):
         from neural_compressor.experimental import Pruning, common
         from neural_compressor.utils import logger
-
         prune = Pruning("./fake_yaml.yaml")
-        prune.eval_dataloader = common.DataLoader(Dataset())
-        prune.train_dataloader = common.DataLoader(Dataset())
+        prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
+        prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
         prune.model = common.Model('./baseline_model')
         pruned_model = prune()
         stats, sparsity = pruned_model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
         self.assertGreater(sparsity, 20)
+        self.assertGreater(prune.baseline_score, 0.72)
+        self.assertGreater(prune.last_score, 0.74)
+
 
 if __name__ == '__main__':
     unittest.main()

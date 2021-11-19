@@ -137,7 +137,7 @@ def create_eval_func(framework, dataloader, adaptor,
     return eval_func
 
 
-def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
+def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, callbacks=None):
     """The interface to create train function from config.
 
     Args:
@@ -164,8 +164,11 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
         optimizer = Optimizers(framework)[key](value)
         optimizer = optimizer()
     else:
-        optimizer = (lambda mp, p: train_cfg.optimizer, {'p':0})
-    
+        if framework == "pytorch":
+            optimizer = (lambda mp, p: train_cfg.optimizer, {'p':0})
+        elif framework == 'tensorflow':
+            optimizer = (lambda p: train_cfg.optimizer, {'p':0})
+
     if isinstance(train_cfg.criterion, dict):
         assert train_cfg.criterion and len(train_cfg.criterion) == 1, \
             "criterion should only set once"
@@ -177,6 +180,7 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None):
 
     default_dict = {k: train_cfg[k] for k in train_cfg.keys() - {'optimizer', 'criterion',
                                                                  'dataloader'}}
+    default_dict['callbacks'] = callbacks
 
     def train_func(model):
         return adaptor.train(model, dataloader, optimizer_tuple=optimizer,

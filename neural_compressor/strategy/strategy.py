@@ -139,6 +139,7 @@ class TuneStrategy(object):
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
+
         if framework == 'tensorflow' or framework == 'tensorflow_itex':
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
@@ -450,6 +451,30 @@ class TuneStrategy(object):
                                          self.cfg.evaluation.accuracy.iteration, \
                                          tensorboard = self.cfg.tuning.tensorboard, \
                                          fp32_baseline = self.baseline == None)
+
+            if getattr(self.eval_dataloader, 'distributed', False):
+                if self.framework in ['tensorflow','tensorflow_itex']:
+                    import horovod.tensorflow as hvd
+                elif self.framework in ['pytorch_ipex','pytorch','pytorch_fx']:
+                    import horovod.torch as hvd
+                else:
+                    raise NotImplementedError("Currently only TensorFlow and PyTorch "
+                                              "support distributed inference in PTQ.")
+                hvd.init()
+                try:
+                    len_dataloader = len(self.eval_dataloader)
+                except:
+                    logger.info("The length of the distributed dataloader is unknown."
+                                "When the iteration of evaluation dataloader in each "
+                                "process is inconsistent, an error may occur.")
+                else:
+                    list_len_dataloader = hvd.allgather_object(len_dataloader)
+                    if hvd.rank() == 0:
+                        for i in range(len(list_len_dataloader)-1):
+                            if list_len_dataloader[i] != list_len_dataloader[i+1]:
+                                raise AttributeError("The evaluation dataloader's iteration is"
+                                                     "different between processes, please reset "
+                                                     "dataloader's batch_size.")
             val = self.objective.evaluate(eval_func, model)
         assert np.isscalar(val[0]), \
             "The eval_func should return a scalar, but not {}!".format(str(type(val[0])))

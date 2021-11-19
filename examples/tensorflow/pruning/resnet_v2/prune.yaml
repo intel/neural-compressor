@@ -21,10 +21,7 @@ model:
 
 pruning:
   train:
-    start_epoch: 0
-    end_epoch: 8
-    iteration: 10
-
+    epoch: 8
     optimizer:
       SGD:
         learning_rate: 0.001

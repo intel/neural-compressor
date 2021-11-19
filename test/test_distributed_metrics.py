@@ -1,5 +1,6 @@
 """Tests for the distributed metrics."""
 import os
+import signal
 import shutil
 import subprocess
 import unittest

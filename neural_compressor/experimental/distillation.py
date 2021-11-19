@@ -54,6 +54,7 @@ class Distillation(Component):
 
     def _pre_epoch_begin(self):
         """ called before training """
+
         assert self.teacher_model, 'teacher_model must be set.'
         score = self._eval_func(self.teacher_model \
                 if getattr(self._eval_func, 'builtin', None) else self.teacher_model.model)
@@ -63,10 +64,9 @@ class Distillation(Component):
         score = self._eval_func(self._model \
                 if getattr(self._eval_func, 'builtin', None) else self._model.model)
         logger.info("initial model score is {}.".format(str(score)))
-
         if self.eval_frequency > 0:
             self.best_score = score
-            self.best_model = copy.deepcopy(self._model)
+            self.best_model = self._model
 
     def on_post_forward(self, input, teacher_output=None):
         """ called after model forward """
@@ -86,8 +86,8 @@ class Distillation(Component):
                     if getattr(self._eval_func, 'builtin', None) else self._model.model)
             logger.info("model score of epoch {} is {}.".format(self._epoch_runned, str(score)))
             if score > self.best_score:
-                self.best_model = copy.deepcopy(self._model)
                 self.best_score = score
+                self.best_model = self._model
 
     def pre_process(self):
         framework_specific_info = {'device': self.cfg.device,
@@ -125,7 +125,6 @@ class Distillation(Component):
             self._train_cfg = self.cfg.distillation.train
             assert self._train_cfg, "train field of distillation section in yaml file must " \
                               "be configured for distillation if train_func is NOT set."
-                
             if self.criterion is None:
                 assert 'criterion' in self._train_cfg.keys(), \
                     "criterion part in train field of distillation section in yaml file " \
@@ -153,14 +152,20 @@ class Distillation(Component):
                 optimizer_cfg_ = optimizer_cfg[optimizer_name]
                 optimizer_builder = Optimizers(self.framework)[optimizer_name](optimizer_cfg_)
                 optimizer_tuple = optimizer_builder()
-                self.optimizer = optimizer_tuple[0](self.model.model.parameters(), \
+                if self.framework == 'tensorflow':
+                    self.optimizer = optimizer_tuple[0](**optimizer_tuple[1])
+                elif self.framework == 'pytorch':
+                    self.optimizer = optimizer_tuple[0](self.model.model.parameters(), \
                                                     **optimizer_tuple[1])
             else:
                 logger.warning("Use user defined optimizer, " \
                                "ignoring the optimizer setting in yaml file.")
 
             assert self.teacher_model, "teacher_model must be set."
-            self.criterion.teacher_model = self.teacher_model.model
+            if self.framework == 'pytorch':
+                self.criterion.teacher_model = self.teacher_model.model#for pytorch
+            elif self.framework == 'tensorflow':
+                self.criterion.teacher_model = self.teacher_model._model#new, for tf
             self._train_cfg.criterion = self.criterion
             self._train_cfg.optimizer = self.optimizer
 
@@ -316,6 +321,24 @@ class Distillation(Component):
     def train_cfg(self):
         """ Getter of model in neural_compressor.model  """
         return self._train_cfg
+
+    @property
+    def evaluation_distributed(self):
+        """ Getter to know whether need distributed evaluation dataloader"""
+        return self._evaluation_distributed
+
+    @evaluation_distributed.setter
+    def evaluation_distributed(self, distributed):
+        self._evaluation_distributed = distributed
+    
+    @property
+    def train_distributed(self):
+        """ Getter to know whether need distributed training dataloader"""
+        return self._train_distributed
+
+    @train_distributed.setter
+    def train_distributed(self, distributed):
+        self._train_distributed = distributed
 
     def __repr__(self):
         return 'Distillation'

@@ -32,6 +32,6 @@ class EvalDataset(object):
 
 from neural_compressor.experimental import Benchmark, common
 evaluator = Benchmark('benchmark.yaml')
-evaluator.model = common.Model('./pruned_model')
+evaluator.model = common.Model('./baseline_model')
 evaluator.b_dataloader = common.DataLoader(EvalDataset())
 evaluator('performance')
