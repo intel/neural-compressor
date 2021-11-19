@@ -70,7 +70,7 @@ parser.add_argument('--num-per-node', default=1, type=int,
                     help='number per node for distributed training')
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
-parser.add_argument('--keep-batch-size', dest='keep-batch-size',i
+parser.add_argument('--keep-batch-size', dest='keep_batch_size',
                     action='store_true',
                     help='keep the batch size rather than scale lr')
 
@@ -98,6 +98,7 @@ def main_worker(args):
 
     if args.distributed:
         hvd.init()
+        print(hvd.size(), args.world_size, args.num_per_node)
         assert(hvd.size() == args.world_size * args.num_per_node)
     
     # create model
@@ -278,7 +279,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args, op):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if i % args.print_freq == 0 and hvd.rank() == 0:
+
+        if (i % args.print_freq == 0 
+            and (not args.distributed 
+                or (args.distributed and hvd.rank() == 0
+            ))):
             progress.print(i)
         
         if args.iteration > 0 and i > args.iteration:
@@ -315,10 +320,13 @@ def validate(val_loader, model, criterion, args):
             top1.update(acc1[0], input.size(0))
             top5.update(acc5[0], input.size(0))
 
-            if i % args.print_freq == 0 and hvd.rank() == 0:
+            if (i % args.print_freq == 0 
+                and (not args.distributed 
+                    or (args.distributed and hvd.rank() == 0
+                ))):
                 progress.print(i)
 
-        if hvd.rank() == 0:
+        if not args.distributed or (args.distributed and hvd.rank() == 0):
             # TODO: this should also be done with the ProgressMeter
             print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
                   .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
