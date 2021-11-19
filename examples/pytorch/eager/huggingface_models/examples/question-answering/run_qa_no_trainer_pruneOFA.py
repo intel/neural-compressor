@@ -227,6 +227,8 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=None, help="A seed for reproducible training.")
     parser.add_argument("--resume", type=str, default=None, help="Where to resume from the provided model.")
     parser.add_argument("--output_dir", type=str, default=None, help="Where to store the final model.")
+    parser.add_argument('--do_train', action='store_true',
+                        help="fine-tune model")
     parser.add_argument('--do_prune', action='store_true',
                         help="prune model")
     parser.add_argument('--do_eval', action='store_true',
@@ -245,7 +247,6 @@ def parse_args():
         "--teacher_model_name_or_path",
         type=str,
         help="Path to pretrained teacher model or it's identifier from huggingface.co/models.",
-        required=True,
     )
 
     parser.add_argument("--temperature", default=1, type=float,
@@ -278,8 +279,6 @@ def parse_args():
             extension = args.test_file.split(".")[-1]
             assert extension in ["csv", "json"], "`test_file` should be a csv or a json file."
 
-    #TODO: delete
-    os.chdir('/home2/xinyuye/workspace/frameworks.ai.lpot.intel-lpot/examples/pytorch/eager/huggingface_models')
     if args.output_dir is not None:
         os.makedirs(args.output_dir, exist_ok=True)
 
@@ -299,45 +298,52 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
     completed_steps = 0
 
-    agent.pre_epoch_begin()
-    model = agent.model.model   
+    if agent:
+        agent.pre_epoch_begin()
+        model = agent.model.model   
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
-        agent.on_epoch_begin(epoch)
+        if agent:
+            agent.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
-            agent.on_batch_begin(step)
+            if agent:
+                agent.on_batch_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = torch.vstack(list(batch['teacher_logits']))
                 del batch['teacher_logits']
             outputs = model(**batch)
-            outputs = torch.vstack([torch.vstack([sx, ex]) \
+            outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
             labels = torch.hstack([torch.tensor([sx, ex]) \
                 for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
             if criterion is None:
-                loss = outputs.loss
+                loss = outputs['loss']
             else:
                 if teacher_logits is not None:
                     criterion.teacher_outputs = teacher_logits
                 else:
                     criterion.teacher_model_forward(batch)
-                loss = criterion(outputs, labels)
+                loss = criterion(outputs_for_kd, labels)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 optimizer.step()
-                agent.on_post_grad()
+                if agent:
+                    agent.on_post_grad()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            agent.on_batch_end()
+            if agent:
+                agent.on_batch_end()
             if completed_steps >= args.max_train_steps:
                 break
-        agent.on_epoch_end()
+        if agent:
+            agent.on_epoch_end()
         evaluation(args, model, accelerator, eval_dataloader, metric)
-    agent.post_epoch_end()
+    if agent:
+        agent.post_epoch_end()
 
 # Create and fill numpy array of size len_of_validation_data * max_length_of_output_tensor
 def create_and_fill_np_array(start_or_end_logits, dataset, max_len):
@@ -408,6 +414,11 @@ def evaluation(args, model, accelerator, eval_dataloader, metric):
     all_end_logits = []
     for step, batch in enumerate(tqdm(eval_dataloader)):
         with torch.no_grad():
+            # due to fx model must take 'start_positions' and 'end_positions' as input
+            fake_input = torch.zeros(batch['input_ids'].shape[0], dtype=torch.int64)
+            batch['start_positions'] = fake_input
+            batch['end_positions'] = fake_input
+
             outputs = model(**batch)
             if torch.is_tensor(outputs):
                 start_logits = torch.vstack([x for x in outputs[0::2]])
@@ -441,13 +452,6 @@ def evaluation(args, model, accelerator, eval_dataloader, metric):
 
 def main():
     args = parse_args()
-
-    logfile = os.path.join(args.output_dir, 'pruneOFA.log')
-    if os.path.exists(logfile):
-        os.remove(logfile)
-    fh = logging.FileHandler(logfile)
-    fh.setLevel(level=logging.DEBUG)
-    logger.addHandler(fh)
 
     # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
     accelerator = Accelerator()
@@ -652,7 +656,7 @@ def main():
     if args.max_train_samples is not None:
         # Number of samples might increase during Feature Creation, We select only specified max samples
         train_dataset = train_dataset.select(range(args.max_train_samples))
-
+     
     # Validation preprocessing
     def prepare_validation_features(examples):
         # Tokenize our examples with truncation and maybe padding, but keep the overflows using a stride. This results
@@ -702,6 +706,12 @@ def main():
     if args.max_eval_samples is not None:
         # We will select sample from whole data
         eval_examples = eval_examples.select(range(args.max_eval_samples))
+    
+    # fx model must take input with predefined shape, evaluation of QA model 
+    # need lengthes of dataset and dataloader be the same, 
+    # so here to make length of eval_examples to multiples of batch_size. 
+    eval_examples = eval_examples.select(range((len(eval_examples) // args.batch_size) * args.batch_size))
+
     # Validation Feature Creation
     eval_dataset = eval_examples.map(
         prepare_validation_features,
@@ -715,6 +725,10 @@ def main():
     if args.max_eval_samples is not None:
         # During Feature creation dataset samples might increase, we will select required samples again
         eval_dataset = eval_dataset.select(range(args.max_eval_samples))
+    # fx model must take input with predefined shape, evaluation of QA model 
+    # need lengthes of dataset and dataloader be the same, 
+    # so here to make length of eval_dataset to multiples of batch_size. 
+    eval_dataset = eval_dataset.select(range((len(eval_dataset) // args.batch_size) * args.batch_size))
 
     if args.do_predict:
         if "test" not in raw_datasets:
@@ -723,6 +737,12 @@ def main():
         if args.max_predict_samples is not None:
             # We will select sample from whole data
             predict_examples = predict_examples.select(range(args.max_predict_samples))
+
+        # fx model must take input with predefined shape, evaluation of QA model 
+        # need lengthes of dataset and dataloader be the same, 
+        # so here to make length of predict_examples to multiples of batch_size. 
+        predict_examples = predict_examples.select(range((len(predict_examples) // args.batch_size) * args.batch_size))
+
         # Predict Feature Creation
         predict_dataset = predict_examples.map(
             prepare_validation_features,
@@ -735,6 +755,11 @@ def main():
         if args.max_predict_samples is not None:
             # During Feature creation dataset samples might increase, we will select required samples again
             predict_dataset = predict_dataset.select(range(args.max_predict_samples))
+
+        # fx model must take input with predefined shape, evaluation of QA model 
+        # need lengthes of dataset and dataloader be the same, 
+        # so here to make length of predict_dataset to multiples of batch_size. 
+        predict_dataset = predict_dataset.select(range((len(predict_dataset) // args.batch_size) * args.batch_size))
 
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
@@ -809,18 +834,18 @@ def main():
                 train_dataset = get_logits(teacher_model, train_dataset)
 
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.batch_size
+        train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.batch_size, drop_last=True
     )
 
     eval_dataset_for_model = eval_dataset.remove_columns(["example_id", "offset_mapping"])
     eval_dataloader = DataLoader(
-        eval_dataset_for_model, collate_fn=data_collator, batch_size=args.batch_size
+        eval_dataset_for_model, collate_fn=data_collator, batch_size=args.batch_size, drop_last=True
     )
 
     if args.do_predict:
         predict_dataset_for_model = predict_dataset.remove_columns(["example_id", "offset_mapping"])
         predict_dataloader = DataLoader(
-            predict_dataset_for_model, collate_fn=data_collator, batch_size=args.batch_size
+            predict_dataset_for_model, collate_fn=data_collator, batch_size=args.batch_size, drop_last=True
         )
 
     metric = load_metric("squad_v2" if args.version_2_with_negative else "squad")
@@ -841,8 +866,8 @@ def main():
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
 
     # Prepare everything with our `accelerator`.
-    model, teacher_model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
-        model, teacher_model, optimizer, train_dataloader, eval_dataloader
+    model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
+        model, optimizer, train_dataloader, eval_dataloader
     )
 
     # Note -> the training dataloader needs to be prepared before we grab his length below (cause its length will be
@@ -918,6 +943,10 @@ def main():
         # change to framework model for further use
         model = model.model
 
+    if args.do_train:
+        train(args, model, train_dataloader, lr_scheduler, None, \
+              optimizer, None, accelerator, eval_dataloader, metric)
+        
     # Prediction
     if args.do_predict:
         logger.info("***** Running Prediction *****")
@@ -928,6 +957,11 @@ def main():
         all_end_logits = []
         for step, batch in enumerate(predict_dataloader):
             with torch.no_grad():
+                # due to fx model must take 'start_positions' and 'end_positions' as input
+                fake_input = torch.zeros(batch['input_ids'].shape[0], dtype=torch.int64)
+                batch['start_positions'] = fake_input
+                batch['end_positions'] = fake_input
+
                 outputs = model(**batch)
                 start_logits = outputs['start_logits']
                 end_logits = outputs['end_logits']
@@ -953,10 +987,10 @@ def main():
         predict_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
         logger.info(f"Predict metrics: {predict_metric}")
 
-    if args.output_dir is not None:
-        accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
+    # if args.output_dir is not None:
+    #     accelerator.wait_for_everyone()
+    #     unwrapped_model = accelerator.unwrap_model(model)
+    #     unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
 
 
 if __name__ == "__main__":
