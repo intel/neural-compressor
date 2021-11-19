@@ -155,7 +155,7 @@ if __name__ == '__main__':
             'build_ext': build_ext,
         },
         install_requires=[
-            'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt <= 0.2.5', 'pandas', 'pycocotools', 'opencv-python',
+            'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
             'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
             'prettytable', 'cryptography'],
         scripts=['neural_compressor/ux/bin/inc_bench', 'engine/bin/inferencer'],
