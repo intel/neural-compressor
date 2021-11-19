@@ -9,19 +9,23 @@ The below tables are models enabled by the Intel® Neural Compressor.
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br>CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br>CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -32,8 +36,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>74.24%</td>
     <td>74.27%</td>
     <td>-0.04%</td>
-    <td>7.56</td>
-    <td>21.24</td>
+    <td>925.93</td>
+    <td>329.57</td>
     <td>2.81x</td>
   </tr>
   <tr>
@@ -43,8 +47,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>76.94%</td>
     <td>76.46%</td>
     <td>0.63%</td>
-    <td>9.64</td>
-    <td>24.86</td>
+    <td>726.14</td>
+    <td>281.58</td>
     <td>2.58x</td>
   </tr>
   <tr>
@@ -54,8 +58,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>77.21%</td>
     <td>76.45%</td>
     <td>0.99%</td>
-    <td>12.73</td>
-    <td>30.80</td>
+    <td>549.88</td>
+    <td>227.27</td>
     <td>2.42x</td>
   </tr>
   <tr>
@@ -65,8 +69,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.30%</td>
     <td>69.74%</td>
     <td>0.80%</td>
-    <td>5.57</td>
-    <td>9.92</td>
+    <td>1256.73</td>
+    <td>705.65</td>
     <td>1.78x</td>
   </tr>
   <tr>
@@ -76,8 +80,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>74.27%</td>
     <td>73.97%</td>
     <td>0.41%</td>
-    <td>6.69</td>
-    <td>12.33</td>
+    <td>1046.34</td>
+    <td>567.72</td>
     <td>1.84x</td>
   </tr>
   <tr>
@@ -87,8 +91,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>77.29%</td>
     <td>76.75%</td>
     <td>0.70%</td>
-    <td>12.90</td>
-    <td>27.46</td>
+    <td>542.64</td>
+    <td>254.92</td>
     <td>2.13x</td>
   </tr>
   <tr>
@@ -98,8 +102,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>80.36%</td>
     <td>80.27%</td>
     <td>0.11%</td>
-    <td>20.88</td>
-    <td>54.13</td>
+    <td>335.25</td>
+    <td>129.32</td>
     <td>2.59x</td>
   </tr>
   <tr>
@@ -109,8 +113,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>80.42%</td>
     <td>80.40%</td>
     <td>0.02%</td>
-    <td>44.47</td>
-    <td>87.69</td>
+    <td>157.41</td>
+    <td>79.83</td>
     <td>1.97x</td>
   </tr>
   <tr>
@@ -120,8 +124,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>73.93%</td>
     <td>70.96%</td>
     <td>4.19%</td>
-    <td>2.95</td>
-    <td>10.12</td>
+    <td>2372.88</td>
+    <td>691.70</td>
     <td>3.43x</td>
   </tr>
   <tr>
@@ -131,8 +135,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>71.96%</td>
     <td>71.76%</td>
     <td>0.28%</td>
-    <td>4.97</td>
-    <td>10.39</td>
+    <td>1408.45</td>
+    <td>673.72</td>
     <td>2.09x</td>
   </tr>
   <tr>
@@ -142,8 +146,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>37.91%</td>
     <td>38.00%</td>
     <td>-0.24%</td>
-    <td>140.46</td>
-    <td>411.03</td>
+    <td>49.84</td>
+    <td>17.03</td>
     <td>2.93x</td>
   </tr>
   <tr>
@@ -153,8 +157,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>23.02%</td>
     <td>23.13%</td>
     <td>-0.48%</td>
-    <td>12.25</td>
-    <td>26.90</td>
+    <td>571.43</td>
+    <td>260.22</td>
     <td>2.20x</td>
   </tr>
   <tr>
@@ -164,8 +168,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>21.97%</td>
     <td>22.16%</td>
     <td>-0.86%</td>
-    <td>264.26</td>
-    <td>960.48</td>
+    <td>26.49</td>
+    <td>7.29</td>
     <td>3.63x</td>
   </tr>
   <tr>
@@ -175,8 +179,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>30.33%</td>
     <td>30.38%</td>
     <td>-0.16%</td>
-    <td>153.96</td>
-    <td>538.67</td>
+    <td>45.47</td>
+    <td>12.99</td>
     <td>3.50x</td>
   </tr>
   <tr>
@@ -186,8 +190,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>30.37%</td>
     <td>30.38%</td>
     <td>-0.03%</td>
-    <td>152.12</td>
-    <td>615.97</td>
+    <td>46.02</td>
+    <td>11.36</td>
     <td>4.05x</td>
   </tr>
   <tr>
@@ -197,8 +201,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>28.61%</td>
     <td>28.73%</td>
     <td>-0.42%</td>
-    <td>77.97</td>
-    <td>196.76</td>
+    <td>89.78</td>
+    <td>35.58</td>
     <td>2.52x</td>
   </tr>
   <tr>
@@ -208,8 +212,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>77.61%</td>
     <td>77.67%</td>
     <td>-0.08%</td>
-    <td>1.24</td>
-    <td>1.88</td>
+    <td>5645.16</td>
+    <td>3723.40</td>
     <td>1.52x</td>
   </tr>
   <tr>
@@ -219,8 +223,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.13%</td>
     <td>70.89%</td>
     <td>1.75%</td>
-    <td>17.20</td>
-    <td>61.26</td>
+    <td>406.98</td>
+    <td>114.27</td>
     <td>3.56x</td>
   </tr>
   <tr>
@@ -230,8 +234,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.35%</td>
     <td>71.01%</td>
     <td>1.89%</td>
-    <td>20.30</td>
-    <td>74.16</td>
+    <td>344.83</td>
+    <td>94.39</td>
     <td>3.65x</td>
   </tr>
   <tr>
@@ -241,8 +245,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.36%</td>
     <td>69.64%</td>
     <td>1.03%</td>
-    <td>15.60</td>
-    <td>18.49</td>
+    <td>448.72</td>
+    <td>378.58</td>
     <td>1.19x</td>
   </tr>
   <tr>
@@ -252,8 +256,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.58%</td>
     <td>71.87%</td>
     <td>0.99%</td>
-    <td>25.75</td>
-    <td>34.07</td>
+    <td>271.84</td>
+    <td>205.46</td>
     <td>1.32x</td>
   </tr>
   <tr>
@@ -263,8 +267,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.92%</td>
     <td>72.37%</td>
     <td>0.76%</td>
-    <td>37.08</td>
-    <td>50.42</td>
+    <td>188.78</td>
+    <td>138.83</td>
     <td>1.36x</td>
   </tr>
   <tr>
@@ -274,8 +278,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.31%</td>
     <td>72.89%</td>
     <td>-0.80%</td>
-    <td>32.78</td>
-    <td>48.23</td>
+    <td>213.54</td>
+    <td>145.14</td>
     <td>1.47x</td>
   </tr>
   <tr>
@@ -285,8 +289,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>76.36%</td>
     <td>76.29%</td>
     <td>0.09%</td>
-    <td>53.27</td>
-    <td>86.78</td>
+    <td>131.41</td>
+    <td>80.66</td>
     <td>1.63x</td>
   </tr>
   <tr>
@@ -296,8 +300,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>74.49%</td>
     <td>74.65%</td>
     <td>-0.21%</td>
-    <td>39.31</td>
-    <td>56.57</td>
+    <td>178.07</td>
+    <td>123.74</td>
     <td>1.44x</td>
   </tr>
   <tr>
@@ -307,8 +311,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>37.89%</td>
     <td>38.00%</td>
     <td>-0.29%</td>
-    <td>142.05</td>
-    <td>482.43</td>
+    <td>49.28</td>
+    <td>14.51</td>
     <td>3.40x</td>
   </tr>
   <tr>
@@ -318,8 +322,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>23.02%</td>
     <td>23.13%</td>
     <td>-0.48%</td>
-    <td>12.21</td>
-    <td>31.91</td>
+    <td>573.30</td>
+    <td>219.37</td>
     <td>2.61x</td>
   </tr>
   <tr>
@@ -329,8 +333,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>28.61%</td>
     <td>28.73%</td>
     <td>-0.42%</td>
-    <td>81.49</td>
-    <td>205.25</td>
+    <td>85.90</td>
+    <td>34.10</td>
     <td>2.52x</td>
   </tr>
   <tr>
@@ -340,8 +344,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>78.53%</td>
     <td>76.75%</td>
     <td>2.32%</td>
-    <td>25.46</td>
-    <td>27.48</td>
+    <td>274.94</td>
+    <td>254.73</td>
     <td>1.08x</td>
   </tr>
   <tr>
@@ -351,8 +355,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>78.05%</td>
     <td>78.12%</td>
     <td>-0.09%</td>
-    <td>3.14</td>
-    <td>7.46</td>
+    <td>2229.30</td>
+    <td>938.34</td>
     <td>2.37x</td>
   </tr>
 </tbody>
@@ -364,19 +368,23 @@ The below tables are models enabled by the Intel® Neural Compressor.
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -387,8 +395,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>92.4835</td>
     <td>92.9805</td>
     <td>-0.53%</td>
-    <td>441.44</td>
-    <td>1271.79</td>
+    <td>15.86</td>
+    <td>5.50</td>
     <td>2.88x</td>
   </tr>
   <tr>
@@ -398,8 +406,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>86.03%</td>
     <td>86.52%</td>
     <td>-0.57%</td>
-    <td>50.61</td>
-    <td>76.02</td>
+    <td>138.31</td>
+    <td>92.08</td>
     <td>1.50x</td>
   </tr>
   <tr>
@@ -409,8 +417,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>76.05%</td>
     <td>75.18%</td>
     <td>1.16%</td>
-    <td>9.30</td>
-    <td>26.32</td>
+    <td>752.69</td>
+    <td>265.96</td>
     <td>2.83x</td>
   </tr>
   <tr>
@@ -420,8 +428,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>77.15%</td>
     <td>76.40%</td>
     <td>0.98%</td>
-    <td>15.04</td>
-    <td>50.26</td>
+    <td>465.43</td>
+    <td>139.28</td>
     <td>3.34x</td>
   </tr>
   <tr>
@@ -431,8 +439,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>77.56%</td>
     <td>76.81%</td>
     <td>0.98%</td>
-    <td>20.40</td>
-    <td>74.22</td>
+    <td>343.14</td>
+    <td>94.31</td>
     <td>3.64x</td>
   </tr>
   <tr>
@@ -442,8 +450,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.41%</td>
     <td>69.77%</td>
     <td>0.92%</td>
-    <td>5.82</td>
-    <td>12.21</td>
+    <td>1202.75</td>
+    <td>573.30</td>
     <td>2.10x</td>
   </tr>
   <tr>
@@ -453,8 +461,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>74.38%</td>
     <td>73.98%</td>
     <td>0.54%</td>
-    <td>6.85</td>
-    <td>14.36</td>
+    <td>1021.90</td>
+    <td>487.47</td>
     <td>2.10x</td>
   </tr>
   <tr>
@@ -464,8 +472,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>78.32%</td>
     <td>77.99%</td>
     <td>0.42%</td>
-    <td>11.84</td>
-    <td>31.53</td>
+    <td>591.22</td>
+    <td>222.01</td>
     <td>2.66x</td>
   </tr>
   <tr>
@@ -475,8 +483,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>80.35%</td>
     <td>80.19%</td>
     <td>0.20%</td>
-    <td>21.76</td>
-    <td>61.29</td>
+    <td>321.69</td>
+    <td>114.21</td>
     <td>2.82x</td>
   </tr>
   <tr>
@@ -486,8 +494,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.16%</td>
     <td>70.89%</td>
     <td>1.79%</td>
-    <td>17.03</td>
-    <td>61.70</td>
+    <td>411.04</td>
+    <td>113.45</td>
     <td>3.62x</td>
   </tr>
   <tr>
@@ -497,8 +505,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.22%</td>
     <td>71.01%</td>
     <td>1.70%</td>
-    <td>20.22</td>
-    <td>73.62</td>
+    <td>346.19</td>
+    <td>95.08</td>
     <td>3.64x</td>
   </tr>
   <tr>
@@ -508,8 +516,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.39%</td>
     <td>69.72%</td>
     <td>0.96%</td>
-    <td>15.26</td>
-    <td>19.60</td>
+    <td>458.72</td>
+    <td>357.14</td>
     <td>1.28x</td>
   </tr>
   <tr>
@@ -519,8 +527,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.51%</td>
     <td>71.91%</td>
     <td>0.83%</td>
-    <td>25.26</td>
-    <td>36.47</td>
+    <td>277.12</td>
+    <td>191.94</td>
     <td>1.44x</td>
   </tr>
   <tr>
@@ -530,8 +538,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.98%</td>
     <td>72.40%</td>
     <td>0.80%</td>
-    <td>36.10</td>
-    <td>52.82</td>
+    <td>193.91</td>
+    <td>132.53</td>
     <td>1.46x</td>
   </tr>
 </tbody>
@@ -543,19 +551,23 @@ The below tables are models enabled by the Intel® Neural Compressor.
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -566,8 +578,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>69.58%</td>
     <td>69.76%</td>
     <td>-0.26%</td>
-    <td>14.21</td>
-    <td>26.55</td>
+    <td>492.61</td>
+    <td>263.65</td>
     <td>1.87x</td>
   </tr>
   <tr>
@@ -577,8 +589,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>75.87%</td>
     <td>76.13%</td>
     <td>-0.34%</td>
-    <td>24.89</td>
-    <td>53.84</td>
+    <td>281.24</td>
+    <td>130.01</td>
     <td>2.16x</td>
   </tr>
   <tr>
@@ -588,8 +600,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>79.09%</td>
     <td>79.31%</td>
     <td>-0.28%</td>
-    <td>64.03</td>
-    <td>147.51</td>
+    <td>109.32</td>
+    <td>47.45</td>
     <td>2.30x</td>
   </tr>
   <tr>
@@ -599,8 +611,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>88.16%</td>
     <td>88.73%</td>
     <td>-0.64%</td>
-    <td>41.15</td>
-    <td>81.56</td>
+    <td>170.11</td>
+    <td>85.83</td>
     <td>1.98x</td>
   </tr>
   <tr>
@@ -610,8 +622,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>58.29%</td>
     <td>58.84%</td>
     <td>-0.93%</td>
-    <td>39.17</td>
-    <td>83.42</td>
+    <td>178.71</td>
+    <td>83.91</td>
     <td>2.13x</td>
   </tr>
   <tr>
@@ -621,8 +633,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>88.65%</td>
     <td>89.27%</td>
     <td>-0.70%</td>
-    <td>39.59</td>
-    <td>83.07</td>
+    <td>176.81</td>
+    <td>84.27</td>
     <td>2.10x</td>
   </tr>
   <tr>
@@ -632,8 +644,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>91.63%</td>
     <td>91.86%</td>
     <td>-0.25%</td>
-    <td>39.39</td>
-    <td>83.17</td>
+    <td>177.71</td>
+    <td>84.16</td>
     <td>2.11x</td>
   </tr>
   <tr>
@@ -643,8 +655,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>69.31%</td>
     <td>69.68%</td>
     <td>-0.52%</td>
-    <td>39.51</td>
-    <td>81.84</td>
+    <td>177.17</td>
+    <td>85.53</td>
     <td>2.07x</td>
   </tr>
   <tr>
@@ -654,8 +666,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>87.48%</td>
     <td>88.33%</td>
     <td>-0.95%</td>
-    <td>112.80</td>
-    <td>281.91</td>
+    <td>62.06</td>
+    <td>24.83</td>
     <td>2.50x</td>
   </tr>
   <tr>
@@ -665,8 +677,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>92.78988</td>
     <td>93.04683</td>
     <td>-0.28%</td>
-    <td>503.92</td>
-    <td>934.01</td>
+    <td>13.89</td>
+    <td>7.49</td>
     <td>1.85x</td>
   </tr>
   <tr>
@@ -676,8 +688,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>91.12%</td>
     <td>91.82%</td>
     <td>-0.76%</td>
-    <td>111.08</td>
-    <td>289.13</td>
+    <td>63.02</td>
+    <td>24.21</td>
     <td>2.60x</td>
   </tr>
   <tr>
@@ -687,19 +699,19 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.92%</td>
     <td>72.56%</td>
     <td>0.50%</td>
-    <td>151.93</td>
-    <td>298.53</td>
+    <td>46.07</td>
+    <td>23.45</td>
     <td>1.96x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_large_cola</td>
-    <td>	62.85%</td>
+    <td>62.85%</td>
     <td>62.57%</td>
     <td>0.45%</td>
-    <td>113.04</td>
-    <td>285.43</td>
+    <td>61.92</td>
+    <td>24.52</td>
     <td>2.52x</td>
   </tr>
   <tr>
@@ -709,8 +721,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>69.39%</td>
     <td>69.54%</td>
     <td>-0.21%</td>
-    <td>30.39</td>
-    <td>53.35</td>
+    <td>230.34</td>
+    <td>131.21</td>
     <td>1.76x</td>
   </tr>
   <tr>
@@ -720,8 +732,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>71.54%</td>
     <td>72.08%</td>
     <td>-0.75%</td>
-    <td>25.80</td>
-    <td>34.32</td>
+    <td>271.32</td>
+    <td>203.96</td>
     <td>1.33x</td>
   </tr>
   <tr>
@@ -731,8 +743,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>24.50%</td>
     <td>24.54%</td>
     <td>-0.17%</td>
-    <td>118.46</td>
-    <td>245.69</td>
+    <td>59.09</td>
+    <td>28.49</td>
     <td>2.07x</td>
   </tr>
   <tr>
@@ -742,8 +754,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>79.02%</td>
     <td>79.08%</td>
     <td>-0.07%</td>
-    <td>34.31</td>
-    <td>64.15</td>
+    <td>204.02</td>
+    <td>109.12</td>
     <td>1.87x</td>
   </tr>
   <tr>
@@ -753,8 +765,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.73%</td>
     <td>71.86%</td>
     <td>-1.57%</td>
-    <td>15.73</td>
-    <td>21.26</td>
+    <td>445.01</td>
+    <td>329.26</td>
     <td>1.35x</td>
   </tr>
   <tr>
@@ -764,8 +776,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>68.40%</td>
     <td>68.40%</td>
     <td>0.00%</td>
-    <td>2.44</td>
-    <td>2.54</td>
+    <td>2868.85</td>
+    <td>2755.91</td>
     <td>1.04x</td>
   </tr>
   <tr>
@@ -775,8 +787,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>75.80%</td>
     <td>76.13%</td>
     <td>-0.44%</td>
-    <td>19.79</td>
-    <td>32.85</td>
+    <td>353.71</td>
+    <td>213.09</td>
     <td>1.66x</td>
   </tr>
   <tr>
@@ -786,8 +798,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>60.06256</td>
     <td>60.19923</td>
     <td>-0.23%</td>
-    <td>533.84</td>
-    <td>580.59</td>
+    <td>13.11</td>
+    <td>12.06</td>
     <td>1.09x</td>
   </tr>
   <tr>
@@ -797,8 +809,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>85.37%</td>
     <td>85.51%</td>
     <td>-0.17%</td>
-    <td>40.28</td>
-    <td>81.83</td>
+    <td>173.78</td>
+    <td>85.54</td>
     <td>2.03x</td>
   </tr>
   <tr>
@@ -808,8 +820,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>84.72%</td>
     <td>84.22%</td>
     <td>0.60%</td>
-    <td>44.26</td>
-    <td>82.71</td>
+    <td>158.16</td>
+    <td>84.63</td>
     <td>1.87x</td>
   </tr>
   <tr>
@@ -819,8 +831,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>81.17%</td>
     <td>80.99%</td>
     <td>0.21%</td>
-    <td>25.05</td>
-    <td>44.05</td>
+    <td>279.44</td>
+    <td>158.91</td>
     <td>1.76x</td>
   </tr>
   <tr>
@@ -830,8 +842,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>88.77%</td>
     <td>88.50%</td>
     <td>0.31%</td>
-    <td>305.94</td>
-    <td>382.89</td>
+    <td>22.88</td>
+    <td>18.28</td>
     <td>1.25x</td>
   </tr>
   <tr>
@@ -841,8 +853,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>91.72%</td>
     <td>92.26%</td>
     <td>-0.58%</td>
-    <td>88.12</td>
-    <td>89.73</td>
+    <td>79.44</td>
+    <td>78.01</td>
     <td>1.02x</td>
   </tr>
   <tr>
@@ -852,8 +864,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>49.30%</td>
     <td>52.11%</td>
     <td>-5.41%</td>
-    <td>322.04</td>
-    <td>351.34</td>
+    <td>21.74</td>
+    <td>19.92</td>
     <td>1.09x</td>
   </tr>
   <tr>
@@ -863,8 +875,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>56.34%</td>
     <td>56.34%</td>
     <td>0.00%</td>
-    <td>175.59</td>
-    <td>344.12</td>
+    <td>39.87</td>
+    <td>20.34</td>
     <td>1.96x</td>
   </tr>
   <tr>
@@ -874,8 +886,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>24.3855</td>
     <td>24.5213</td>
     <td>-0.55%</td>
-    <td>2536.71</td>
-    <td>2699.99</td>
+    <td>2.76</td>
+    <td>2.59</td>
     <td>1.06x</td>
   </tr>
   <tr>
@@ -885,8 +897,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>22.3857</td>
     <td>22.225</td>
     <td>0.72%</td>
-    <td>3599.60</td>
-    <td>3794.95</td>
+    <td>1.94</td>
+    <td>1.84</td>
     <td>1.05x</td>
   </tr>
   <tr>
@@ -896,8 +908,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>50.2328</td>
     <td>51.2135</td>
     <td>-1.91%</td>
-    <td>40000.00</td>
-    <td>62500.00</td>
+    <td>0.18</td>
+    <td>0.11</td>
     <td>1.56x</td>
   </tr>
   <tr>
@@ -907,8 +919,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>36.18182</td>
     <td>36.18182</td>
     <td>0.00%</td>
-    <td>1600.46</td>
-    <td>1607.39</td>
+    <td>4.37</td>
+    <td>4.35</td>
     <td>1.00x</td>
   </tr>
   <tr>
@@ -918,8 +930,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>87.93%</td>
     <td>88.62%</td>
     <td>-0.78%</td>
-    <td>87.97</td>
-    <td>90.37</td>
+    <td>79.57</td>
+    <td>77.46</td>
     <td>1.03x</td>
   </tr>
   <tr>
@@ -929,8 +941,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>79.81%</td>
     <td>80.19%</td>
     <td>-0.48%</td>
-    <td>19.38</td>
-    <td>23.72</td>
+    <td>361.20</td>
+    <td>295.11</td>
     <td>1.22x</td>
   </tr>
   <tr>
@@ -940,8 +952,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>83.25%</td>
     <td>83.81%</td>
     <td>-0.66%</td>
-    <td>62.10</td>
-    <td>104.48</td>
+    <td>112.72</td>
+    <td>67.00</td>
     <td>1.68x</td>
   </tr>
   <tr>
@@ -951,8 +963,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>90.97%</td>
     <td>91.46%</td>
     <td>-0.53%</td>
-    <td>539.64</td>
-    <td>638.29</td>
+    <td>12.97</td>
+    <td>10.97</td>
     <td>1.18x</td>
   </tr>
   <tr>
@@ -962,8 +974,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>81.22%</td>
     <td>78.01%</td>
     <td>4.12%</td>
-    <td>48.19</td>
-    <td>89.53</td>
+    <td>145.26</td>
+    <td>78.19</td>
     <td>1.86x</td>
   </tr>
   <tr>
@@ -973,8 +985,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>90.29%</td>
     <td>90.91%</td>
     <td>-0.68%</td>
-    <td>88.94</td>
-    <td>137.69</td>
+    <td>78.70</td>
+    <td>50.84</td>
     <td>1.55x</td>
   </tr>
   <tr>
@@ -984,20 +996,9 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>87.96%</td>
     <td>87.65%</td>
     <td>0.36%</td>
-    <td>48.09</td>
-    <td>55.24</td>
+    <td>145.56</td>
+    <td>126.72</td>
     <td>1.15x</td>
-  </tr>
-  <tr>
-    <td>pytorch</td>
-    <td>1.9.0+cpu</td>
-    <td>dlrm_fx</td>
-    <td>80.19%</td>
-    <td>80.27%</td>
-    <td>-0.10%</td>
-    <td>0.00</td>
-    <td>0.01</td>
-    <td>1.67x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -1006,8 +1007,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>69.61%</td>
     <td>69.76%</td>
     <td>-0.22%</td>
-    <td>13.89</td>
-    <td>27.16</td>
+    <td>503.96</td>
+    <td>257.73</td>
     <td>1.96x</td>
   </tr>
   <tr>
@@ -1017,8 +1018,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>89.43%</td>
     <td>89.47%</td>
     <td>-0.04%</td>
-    <td>103.04</td>
-    <td>133.18</td>
+    <td>67.93</td>
+    <td>52.56</td>
     <td>1.29x</td>
   </tr>
   <tr>
@@ -1028,8 +1029,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>82.09%</td>
     <td>81.20%</td>
     <td>1.09%</td>
-    <td>1054.85</td>
-    <td>1415.61</td>
+    <td>6.64</td>
+    <td>4.94</td>
     <td>1.34x</td>
   </tr>
   <tr>
@@ -1039,8 +1040,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>82.00%</td>
     <td>82.00%</td>
     <td>0.00%</td>
-    <td>456.33</td>
-    <td>1228.72</td>
+    <td>15.34</td>
+    <td>5.70</td>
     <td>2.69x</td>
   </tr>
   <tr>
@@ -1050,8 +1051,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>80.50%</td>
     <td>79.56%</td>
     <td>1.18%</td>
-    <td>179.22</td>
-    <td>542.68</td>
+    <td>39.06</td>
+    <td>12.90</td>
     <td>3.03x</td>
   </tr>
   <tr>
@@ -1061,8 +1062,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>37.70%</td>
     <td>37.80%</td>
     <td>-0.26%</td>
-    <td>117.49</td>
-    <td>181.06</td>
+    <td>59.58</td>
+    <td>38.66</td>
     <td>1.54x</td>
   </tr>
 </tbody>
@@ -1074,19 +1075,23 @@ The below tables are models enabled by the Intel® Neural Compressor.
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -1097,8 +1102,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>69.75%</td>
     <td>69.76%</td>
     <td>-0.02%</td>
-    <td>14.20</td>
-    <td>26.63</td>
+    <td>492.96</td>
+    <td>262.86</td>
     <td>1.87x</td>
   </tr>
   <tr>
@@ -1108,8 +1113,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>76.05%</td>
     <td>76.13%</td>
     <td>-0.11%</td>
-    <td>25.55</td>
-    <td>54.46</td>
+    <td>273.97</td>
+    <td>128.53</td>
     <td>2.13x</td>
   </tr>
   <tr>
@@ -1119,8 +1124,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>69.72%</td>
     <td>69.76%</td>
     <td>-0.05%</td>
-    <td>14.05</td>
-    <td>27.17</td>
+    <td>498.22</td>
+    <td>257.64</td>
     <td>1.93x</td>
   </tr>
   <tr>
@@ -1130,8 +1135,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>71.45%</td>
     <td>71.86%</td>
     <td>-0.56%</td>
-    <td>15.55</td>
-    <td>22.13</td>
+    <td>450.16</td>
+    <td>316.31</td>
     <td>1.42x</td>
   </tr>
 </tbody>
@@ -1143,19 +1148,23 @@ The below tables are models enabled by the Intel® Neural Compressor.
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -1166,8 +1175,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>76.08%</td>
     <td>76.33%</td>
     <td>-0.32%</td>
-    <td>6.22</td>
-    <td>20.86</td>
+    <td>1125.40</td>
+    <td>335.57</td>
     <td>3.35x</td>
   </tr>
   <tr>
@@ -1177,8 +1186,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>77.73%</td>
     <td>77.64%</td>
     <td>0.11%</td>
-    <td>11.23</td>
-    <td>30.37</td>
+    <td>623.33</td>
+    <td>230.49</td>
     <td>2.71x</td>
   </tr>
   <tr>
@@ -1188,8 +1197,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>71.69%</td>
     <td>72.22%</td>
     <td>-0.74%</td>
-    <td>1.60</td>
-    <td>4.02</td>
+    <td>4375.00</td>
+    <td>1741.29</td>
     <td>2.51x</td>
   </tr>
   <tr>
@@ -1199,8 +1208,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.78%</td>
     <td>70.87%</td>
     <td>-0.12%</td>
-    <td>2.00</td>
-    <td>5.45</td>
+    <td>3500.00</td>
+    <td>1284.40</td>
     <td>2.73x</td>
   </tr>
   <tr>
@@ -1210,8 +1219,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>70.02%</td>
     <td>70.14%</td>
     <td>-0.17%</td>
-    <td>3.01</td>
-    <td>9.57</td>
+    <td>2325.58</td>
+    <td>731.45</td>
     <td>3.18x</td>
   </tr>
   <tr>
@@ -1221,8 +1230,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>56.74%</td>
     <td>56.96%</td>
     <td>-0.38%</td>
-    <td>2.40</td>
-    <td>6.40</td>
+    <td>2916.67</td>
+    <td>1093.75</td>
     <td>2.67x</td>
   </tr>
   <tr>
@@ -1232,8 +1241,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>80.21%</td>
     <td>80.23%</td>
     <td>-0.03%</td>
-    <td>37.27</td>
-    <td>174.71</td>
+    <td>187.82</td>
+    <td>40.07</td>
     <td>4.69x</td>
   </tr>
   <tr>
@@ -1243,8 +1252,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>74.94%</td>
     <td>75.54%</td>
     <td>-0.79%</td>
-    <td>15.73</td>
-    <td>60.20</td>
+    <td>445.01</td>
+    <td>116.28</td>
     <td>3.83x</td>
   </tr>
   <tr>
@@ -1254,8 +1263,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>78.21%</td>
     <td>78.54%</td>
     <td>-0.42%</td>
-    <td>17.75</td>
-    <td>58.53</td>
+    <td>394.37</td>
+    <td>119.60</td>
     <td>3.30x</td>
   </tr>
 </tbody>
@@ -1267,19 +1276,23 @@ The below tables are models enabled by the Intel® Neural Compressor.
 <table>
 <thead>
   <tr>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Version</th>
-    <th rowspan="2">Model</th>
+    <th rowspan="3">Framework</th>
+    <th rowspan="3">Version</th>
+    <th rowspan="3">Model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance</th>
   </tr>
   <tr>
-    <th>INT8 Tuning Accuracy</th>
-    <th>FP32 Accuracy Baseline</th>
-    <th>Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>FP32 realtime(ms)<br> CLX8280 1s 4c per instance</th>
-    <th>Realtime Latency Ratio[FP32/INT8]</th>
+    <th rowspan="2">INT8 Tuning Accuracy</th>
+    <th rowspan="2">FP32 Accuracy Baseline</th>
+    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
+    <th>INT8 throughput</th>
+    <th>FP32 throughput</th>
+    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
+  </tr>
+  <tr>
+    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>CLX8280 1s 4c per instance bs1</th>
   </tr>
 </thead>
 <tbody>
@@ -1290,8 +1303,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.11%</td>
     <td>72.28%</td>
     <td>-0.24%</td>
-    <td>12.82</td>
-    <td>20.59</td>
+    <td>546.02</td>
+    <td>339.97</td>
     <td>1.61x</td>
   </tr>
   <tr>
@@ -1301,8 +1314,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>85.29%</td>
     <td>86.03%</td>
     <td>-0.86%</td>
-    <td>14.61</td>
-    <td>33.18</td>
+    <td>479.12</td>
+    <td>210.97</td>
     <td>2.27x</td>
   </tr>
   <tr>
@@ -1312,8 +1325,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>85.54%</td>
     <td>86.03%</td>
     <td>-0.57%</td>
-    <td>28.59</td>
-    <td>70.00</td>
+    <td>244.84</td>
+    <td>100.00</td>
     <td>2.45x</td>
   </tr>
   <tr>
@@ -1323,8 +1336,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>66.58%</td>
     <td>66.68%</td>
     <td>-0.15%</td>
-    <td>69.07</td>
-    <td>88.33</td>
+    <td>101.35</td>
+    <td>79.25</td>
     <td>1.28x</td>
   </tr>
   <tr>
@@ -1334,8 +1347,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>22.41%</td>
     <td>23.10%</td>
     <td>-2.99%</td>
-    <td>16.36</td>
-    <td>18.56</td>
+    <td>427.87</td>
+    <td>377.16</td>
     <td>1.13x</td>
   </tr>
   <tr>
@@ -1345,8 +1358,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>23.80%</td>
     <td>24.68%</td>
     <td>-3.57%</td>
-    <td>20.62</td>
-    <td>25.01</td>
+    <td>339.48</td>
+    <td>279.89</td>
     <td>1.21x</td>
   </tr>
   <tr>
@@ -1356,8 +1369,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>84.56%</td>
     <td>84.56%</td>
     <td>0.00%</td>
-    <td>6.47</td>
-    <td>18.11</td>
+    <td>1081.92</td>
+    <td>386.53</td>
     <td>2.80x</td>
   </tr>
   <tr>
@@ -1367,8 +1380,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>85.54%</td>
     <td>86.27%</td>
     <td>-0.85%</td>
-    <td>16.01</td>
-    <td>17.49</td>
+    <td>437.23</td>
+    <td>400.23</td>
     <td>1.09x</td>
   </tr>
   <tr>
@@ -1378,8 +1391,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>88.73%</td>
     <td>89.46%</td>
     <td>-0.82%</td>
-    <td>14.15</td>
-    <td>34.33</td>
+    <td>494.70</td>
+    <td>203.90</td>
     <td>2.43x</td>
   </tr>
   <tr>
@@ -1389,8 +1402,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>74.83%</td>
     <td>74.97%</td>
     <td>-0.19%</td>
-    <td>10.89</td>
-    <td>20.10</td>
+    <td>642.79</td>
+    <td>348.26</td>
     <td>1.85x</td>
   </tr>
   <tr>
@@ -1400,8 +1413,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>76.11%</td>
     <td>76.47%</td>
     <td>-0.47%</td>
-    <td>11.68</td>
-    <td>20.38</td>
+    <td>599.32</td>
+    <td>343.47</td>
     <td>1.74x</td>
   </tr>
   <tr>
@@ -1411,8 +1424,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>75.51%</td>
     <td>75.75%</td>
     <td>-0.32%</td>
-    <td>5.01</td>
-    <td>6.95</td>
+    <td>1397.21</td>
+    <td>1007.19</td>
     <td>1.39x</td>
   </tr>
   <tr>
@@ -1422,8 +1435,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>80.43519</td>
     <td>80.67171</td>
     <td>-0.29%</td>
-    <td>95.01</td>
-    <td>171.53</td>
+    <td>73.68</td>
+    <td>40.81</td>
     <td>1.81x</td>
   </tr>
   <tr>
@@ -1433,8 +1446,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>89.84479</td>
     <td>90.0265</td>
     <td>-0.20%</td>
-    <td>115.67</td>
-    <td>122.16</td>
+    <td>60.52</td>
+    <td>57.30</td>
     <td>1.06x</td>
   </tr>
   <tr>
@@ -1444,8 +1457,8 @@ The below tables are models enabled by the Intel® Neural Compressor.
     <td>72.37%</td>
     <td>72.38%</td>
     <td>-0.01%</td>
-    <td>56.98</td>
-    <td>87.97</td>
+    <td>122.85</td>
+    <td>79.57</td>
     <td>1.54x</td>
   </tr>
 </tbody>
