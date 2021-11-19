@@ -26,7 +26,7 @@ class COLADataSet():
         dataset = load_dataset('glue', 'cola', cache_dir=data_dir, split='validation')
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
         self.dataset = dataset.map(lambda e: tokenizer(e['sentence'],
-                                truncation=True, padding='max_length'), batched=True)
+                            truncation=True, padding='max_length', max_length=128), batched=True)
     def __getitem__(self, idx):
         input_ids_data = self.dataset[idx]['input_ids']
         input_mask_data = self.dataset[idx]['attention_mask']
