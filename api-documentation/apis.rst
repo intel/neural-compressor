@@ -6,8 +6,6 @@ benchmark
 .. automodule:: neural_compressor.benchmark
    :members:
 
-Benchmark
-
 .. autoclass:: neural_compressor.benchmark.Benchmark
    :members:
 
