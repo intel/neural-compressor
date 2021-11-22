@@ -30,6 +30,7 @@ class Benchmark(object):
 
     """
 
+    """
     def __init__(self, conf_fname_or_obj):
         self.exp_benchmarker = ExpBenchmark(conf_fname_or_obj)
 
@@ -64,3 +65,4 @@ class Benchmark(object):
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_benchmarker.postprocess = nc_postprocess
+    """
