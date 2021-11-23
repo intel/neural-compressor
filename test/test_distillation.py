@@ -185,7 +185,7 @@ class TestDistillation(unittest.TestCase):
                                                 distiller.cfg.distillation.train, \
                                                 hooks=distiller.hooks)
 
-    
+    @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras requires higher version than tf-2.3.0")
     def test_tf_distillation(self):
         from neural_compressor.experimental import Distillation, common
         from neural_compressor.conf.config import Distillation_Conf
