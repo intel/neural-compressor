@@ -133,8 +133,8 @@
   ops: &common_ops
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add',
-        'Reshape', 'Concat', 'AveragePool']
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add', 'Squeeze',
+        'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
     fp32: ['*'] # '*' means all op types
 
   capabilities:

@@ -40,7 +40,7 @@ class QSplit(QuantOperatorBase):
         # Output just derive the scale/zero from input
         quantized_output_names = []
         for output_name in node.output:
-            quantized_output_name = output_name + "quantized"
+            quantized_output_name = output_name + "_quantized"
             quantized_output_names.append(quantized_output_name)
             q_output = QuantizedValue(output_name, quantized_output_name, 
                                       scale_names[0], zero_point_names[0],

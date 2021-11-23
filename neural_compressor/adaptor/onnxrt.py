@@ -224,10 +224,11 @@ class ONNXRTAdaptor(Adaptor):
         if self.backend == "qlinearops":
             int8_op_list = ["QLinearConv", "QLinearMatMul", "QAttention",
                             "QLinearMul", "QLinearRelu", "QLinearClip",
-                            "QLinearLeakyRelu", "QLinearSigmoid", "MaxPool",
+                            "QLinearLeakyRelu", "QLinearSigmoid", "MaxPool","Squeeze",
                             "EmbedLayerNormalization", "QLinearGlobalAveragePool", 
                             "QLinearAdd", "Pad", "Split", "Gather", "Reshape", "Concat",
                             "QuantizeLinear", "DequantizeLinear", "QLinearAveragePool",
+                            "Unsqueeze", "Transpose"
             ]
         else:
             int8_op_list = ["ConvInteger", "MatMulInteger", "QAttention",
@@ -254,7 +255,8 @@ class ONNXRTAdaptor(Adaptor):
                 else:
                     origin_op_type = possible_int8_res[0].split('Integer')[0]
 
-                if node.op_type in ["Pad", "Split", "Gather", "Concat", "Reshape"]:
+                if node.op_type in ["Pad", "Split", "Gather", "Concat", "Reshape", "Unsqueeze", 
+                    "Squeeze", "Transpose"]:
                     if any([output.endswith('_quantized') for output in node.output]):
                         origin_op_type = node.op_type
                     else:
@@ -734,7 +736,7 @@ class ONNXRTQuery(QueryBackendCapability):
 
         return default_config
 
-    def get_version(self):
+    def get_version(self): # pragma: no cover
         """Get the current backend version infomation.
 
         Returns:
@@ -742,7 +744,7 @@ class ONNXRTQuery(QueryBackendCapability):
         """
         return self.cur_config['version']['name']
 
-    def get_precisions(self):
+    def get_precisions(self): # pragma: no cover
         """Get supported precisions for current backend.
 
         Returns:
@@ -750,7 +752,7 @@ class ONNXRTQuery(QueryBackendCapability):
         """
         return self.cur_config['precisions']['names']
 
-    def get_op_types(self):
+    def get_op_types(self): # pragma: no cover
         """Get the supported op types by all precisions.
 
         Returns:

@@ -455,7 +455,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
                     'op': {('gather', 'Gather'): {'activation':  {'dtype': ['uint8']},
                                                  'weight': {'dtype': ['uint8']}},
                            ('add', 'Add'): {'activation':  {'dtype': ['uint8']},
-                                           'weight': {'dtype': ['int8']}}}}
+                                           'weight': {'dtype': ['int8']}},
+                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': ['uint8']},
+                                                   'weight': {'dtype': ['int8']}}}}
         adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
         self.assertTrue(len(adaptor.quantizable_ops), 2)
  

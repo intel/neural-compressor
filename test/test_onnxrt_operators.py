@@ -154,6 +154,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizable_op_types = ["Matmul"]
         self.static_test(model, q_config, quantize_params, quantizable_op_types)
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
+        quantize_params = {"A": [np.float32(10.)],
+                           "B": [np.float32(10.)],
+                           "C": [np.float32(10.)]}
+        with self.assertRaises(ValueError):
+            self.static_test(model, q_config, quantize_params, quantizable_op_types)
         q_config = {"Matmul": {"weight":{'dtype': 3,
                                'algorithm': 'minmax',
                                'scheme':'sym',
@@ -323,23 +328,28 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                "C": [np.float32(10.), np.uint8(0)]}
             quantizable_op_types = [op]
             self.static_test(model, q_config, quantize_params, quantizable_op_types)
+            self.static_test(model, q_config, {}, quantizable_op_types)
     
     def test_relu(self):
         A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
         B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 3, 3])
         D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
+        E = helper.make_tensor_value_info('E', TensorProto.FLOAT, [1, 1, 5, 5])
+        F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [1, 1, 5, 5])
+  
         conv_node = onnx.helper.make_node('Conv', ['A', 'B'], ['C'], 
                                           name='Conv', 
                                           kernel_shape=[3, 3], 
                                           pads=[1, 1, 1, 1])
         relu_node = onnx.helper.make_node('Relu', ['C'], ['D'], name='Relu')
+        add_node = onnx.helper.make_node('Add', ['D', 'E'], ['F'], name='Add')
         graph = helper.make_graph([conv_node, relu_node], 'test_graph_1', [A, B], [D])
         model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = "./onnxrt_test/optimized_model.onnx"  
         session = ort.InferenceSession(model.SerializeToString(), sess_options)
-        model = onnx.load(sess_options.optimized_model_filepath)
+        tmp_model = onnx.load(sess_options.optimized_model_filepath)
  
         q_config = {"Conv": self.q_config, "Relu": self.q_config}
         quantize_params = {"A": [np.float32(10.), np.uint8(0)],
@@ -347,8 +357,20 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            "C": [np.float32(10.), np.uint8(0)],
                            "D": [np.float32(10.), np.uint8(0)]}
         quantizable_op_types = ["Conv", "Relu"]
-        self.static_test(model, q_config, quantize_params, quantizable_op_types)
+        self.static_test(tmp_model, q_config, quantize_params, quantizable_op_types)
         
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+        session = ort.InferenceSession(model.SerializeToString(), sess_options)
+        tmp_model = onnx.load(sess_options.optimized_model_filepath)
+        self.static_test(tmp_model, q_config, quantize_params, quantizable_op_types)
+ 
+        graph = helper.make_graph([conv_node, relu_node, add_node], 'test_graph_2', [A, B, E], [F])
+        model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
+        session = ort.InferenceSession(model.SerializeToString(), sess_options)
+        tmp_model = onnx.load(sess_options.optimized_model_filepath)
+        self.static_test(tmp_model, q_config, quantize_params, quantizable_op_types)
+ 
     def test_clip(self):
         A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
         B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 3, 3])
@@ -394,6 +416,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             graph = helper.make_graph([node], 'test_graph_1', [A], [B], [A_init])
             model = helper.make_model(graph)
             self.static_test(model, q_config, quantize_params, quantizable_op_types)
+            self.static_test(model, q_config, {}, quantizable_op_types)
 
     def test_pooling(self):
         for op in ["MaxPool", "GlobalAveragePool"]:

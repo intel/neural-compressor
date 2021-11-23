@@ -62,6 +62,9 @@ QLinearOpsRegistry = {
     "Pad": QPad,
     "Concat": QLinearConcat,
     "Reshape": Direct8BitOp,
+    "Squeeze": Direct8BitOp,
+    "Unsqueeze" : Direct8BitOp,
+    "Transpose" : Direct8BitOp,
     "AveragePool" : QLinearPool
 }
 QLinearOpsRegistry.update(CommonOpsRegistry)

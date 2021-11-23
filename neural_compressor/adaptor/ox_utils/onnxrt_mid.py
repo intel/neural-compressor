@@ -214,7 +214,7 @@ class ONNXRTAugment:
                 assert len_inputs == len(inputs), \
                     'number of input tensors must align with graph inputs'
                 for i in range(len_inputs):
-                    if not isinstance(inputs[i], np.ndarray):
+                    if not isinstance(inputs[i], np.ndarray): # pragma: no cover
                         ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
                     else:
                         ort_inputs.update({inputs_names[i]: inputs[i]})

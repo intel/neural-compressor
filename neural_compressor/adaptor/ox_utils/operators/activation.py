@@ -40,8 +40,13 @@ class QLinearActivation(QuantOperatorBase):
             self.quantizer.new_nodes += [node]
             return
 
-        quantized_value = self.quantizer.quantized_value_map[node.input[0]]
-        self.quantizer.quantized_value_map[node.output[0]] = quantized_value
+        if node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
+            super().quantize()
+            return
+
+        node_childs = self.quantizer.model.input_name_to_nodes[node.output[0]]
+        for child in node_childs:
+           child.input[list(child.input).index(node.output[0])] = node.input[0] 
 
     def quantize(self):
         node = self.node
