@@ -66,7 +66,10 @@ class Distillation(Component):
         logger.info("initial model score is {}.".format(str(score)))
         if self.eval_frequency > 0:
             self.best_score = score
-            self.best_model = self._model
+            if self.framework == "pytorch":
+                self.best_model = copy.deepcopy(self._model)
+            else:
+                self.best_model = self._model
 
     def on_post_forward(self, input, teacher_output=None):
         """ called after model forward """
@@ -87,7 +90,10 @@ class Distillation(Component):
             logger.info("model score of epoch {} is {}.".format(self._epoch_runned, str(score)))
             if score > self.best_score:
                 self.best_score = score
-                self.best_model = self._model
+                if self.framework == "pytorch":
+                    self.best_model = copy.deepcopy(self._model)
+                else:
+                    self.best_model = self._model
 
     def pre_process(self):
         framework_specific_info = {'device': self.cfg.device,
