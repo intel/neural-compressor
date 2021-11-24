@@ -166,9 +166,9 @@ class QKVReshape(Pattern):
             ]
         }
 
-        def _set_attr(head_num, node_names, model):
+        def _set_attr(head_num, head_size, node_names, model):
             attr = OrderedDict()
-            attr['dst_shape'] = '-1,-1,' + str(head_num) + ',64'
+            attr['dst_shape'] = '-1,-1,' + str(head_num) + ',' + str(head_size)
             attr['dims'] = '0,1'
 
             reshape_node_idx = model.get_node_id(node_names[0])
@@ -181,15 +181,16 @@ class QKVReshape(Pattern):
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
                     pack_node = ret_old_nodes[j][0]
+                    head_size = int(pack_node.input_tensors[-1].data)
                     head_num = int(pack_node.input_tensors[-2].data)
-                    _set_attr(head_num, new_node_names[j], model)
+                    _set_attr(head_num, head_size, new_node_names[j], model)
                     if len(ret_old_nodes[j]) == 2:
                         assert ret_old_nodes[j][1].op_type == 'MatMulWithBias'
                         mat_node_idx = model.get_node_id(new_node_names[j][0])
                         model.nodes[mat_node_idx].attr = ret_old_nodes[j][1].attr
                         reshape_node_idx = model.get_node_id(new_node_names[j][1])
                         model.nodes[reshape_node_idx].attr = OrderedDict({
-                            'dst_shape': '-1,-1,' + str(head_num) + ',64', 'dims': '0,1'})
+                    'dst_shape': '-1,-1,' + str(head_num) + ',' + str(head_size), 'dims': '0,1'})
                 return model
 
         # special reshape node, like has '0,0,12,64' dst_shape attr
