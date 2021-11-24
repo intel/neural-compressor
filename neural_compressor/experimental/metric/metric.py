@@ -650,6 +650,153 @@ class GeneralTopK(BaseMetric):
             return allgather_num_correct / allgather_num_sample
         return self.num_correct / self.num_sample
 
+@metric_registry('COCOmAPv2', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
+class COCOmAPv2(BaseMetric):
+    """Computes mean average precision.
+    Args:
+        anno_path (str): Annotation path.
+        iou_thrs (float or str): Minimal value for intersection over union that allows to
+                                 make decision that prediction bounding box is true positive.
+                                 You can specify one float value between 0 to 1 or
+                                 string "05:0.05:0.95" for standard COCO thresholds.
+        map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
+                          11-point interpolated AP, 0 for area under PR curve.
+    """
+    def __init__(self, anno_path=None, iou_thrs='0.5:0.05:0.95', map_points=101, \
+        map_key='DetectionBoxes_Precision/mAP', \
+        output_index_mapping={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}):
+        self.output_index_mapping = output_index_mapping
+        from .coco_label_map import category_map
+        if anno_path:
+            import os
+            import yaml
+            assert os.path.exists(anno_path), 'Annotation path does not exists!'
+            with open(anno_path, 'r') as f:
+                label_map = yaml.safe_load(f.read())
+            self.category_map_reverse = {k: v for k,v in label_map.items()}
+        else:
+            # label: index
+            self.category_map_reverse = {v: k for k, v in category_map.items()}
+        self.image_ids = []
+        self.ground_truth_list = []
+        self.detection_list = []
+        self.annotation_id = 1
+        self.category_map = category_map
+        self.category_id_set = set(
+            [cat for cat in self.category_map]) #index
+        self.iou_thrs = iou_thrs
+        self.map_points = map_points
+        self.map_key = map_key
+
+    def update(self, predicts, labels, sample_weight=None):
+        """add preds and labels to storage"""
+        from .coco_tools import ExportSingleImageGroundtruthToCoco,\
+            ExportSingleImageDetectionBoxesToCoco
+        detections = []
+        if 'num_detections' in self.output_index_mapping and \
+            self.output_index_mapping['num_detections'] > -1:
+            for item in zip(*predicts):
+                detection = {}
+                num = int(item[self.output_index_mapping['num_detections']])
+                detection['boxes'] = np.asarray(
+                    item[self.output_index_mapping['boxes']])[0:num]
+                detection['scores'] = np.asarray(
+                    item[self.output_index_mapping['scores']])[0:num]
+                detection['classes'] = np.asarray(
+                    item[self.output_index_mapping['classes']])[0:num]
+                detections.append(detection)
+        else:
+            for item in zip(*predicts):
+                detection = {}
+                detection['boxes'] = np.asarray(item[self.output_index_mapping['boxes']])
+                detection['scores'] = np.asarray(item[self.output_index_mapping['scores']])
+                detection['classes'] = np.asarray(item[self.output_index_mapping['classes']])
+                detections.append(detection)
+
+        bboxes, str_labels,int_labels, image_ids = labels
+        labels = []
+        if len(int_labels[0]) == 0:
+            for str_label in str_labels:
+                str_label = [
+                    x if type(x) == 'str' else x.decode('utf-8')
+                    for x in str_label
+                ]
+                labels.append([self.category_map_reverse[x] for x in str_label])
+        elif len(str_labels[0]) == 0:
+            for int_label in int_labels:
+                labels.append([x for x in int_label])
+
+        for idx, image_id in enumerate(image_ids):
+            image_id = image_id if type(
+                image_id) == 'str' else image_id.decode('utf-8')
+            if image_id in self.image_ids:
+                continue
+            self.image_ids.append(image_id)
+
+            ground_truth = {}
+            ground_truth['boxes'] = np.asarray(bboxes[idx])
+            ground_truth['classes'] = np.asarray(labels[idx])
+
+            self.ground_truth_list.extend(
+                ExportSingleImageGroundtruthToCoco(
+                    image_id=image_id,
+                    next_annotation_id=self.annotation_id,
+                    category_id_set=self.category_id_set,
+                    groundtruth_boxes=ground_truth['boxes'],
+                    groundtruth_classes=ground_truth['classes']))
+            self.annotation_id += ground_truth['boxes'].shape[0]
+
+            self.detection_list.extend(
+                ExportSingleImageDetectionBoxesToCoco(
+                    image_id=image_id,
+                    category_id_set=self.category_id_set,
+                    detection_boxes=detections[idx]['boxes'],
+                    detection_scores=detections[idx]['scores'],
+                    detection_classes=detections[idx]['classes']))
+
+    def reset(self):
+        """clear preds and labels storage"""
+        self.image_ids = []
+        self.ground_truth_list = []
+        self.detection_list = []
+        self.annotation_id = 1
+
+    def result(self):
+        """calculate metric"""
+        from .coco_tools import COCOWrapper, COCOEvalWrapper
+        if len(self.ground_truth_list) == 0:
+            logger.warning("Sample num during evaluation is 0.")
+            return 0
+        else:
+            groundtruth_dict = {
+                'annotations':
+                self.ground_truth_list,
+                'images': [{
+                    'id': image_id
+                } for image_id in self.image_ids],
+                'categories': [{
+                    'id': k,
+                    'name': v
+                } for k, v in self.category_map.items()]
+            }
+            coco_wrapped_groundtruth = COCOWrapper(groundtruth_dict)
+            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(
+                self.detection_list)
+            box_evaluator = COCOEvalWrapper(coco_wrapped_groundtruth,
+                                                 coco_wrapped_detections,
+                                                 agnostic_mode=False,
+                                                 iou_thrs = self.iou_thrs,
+                                                 map_points = self.map_points)
+            box_metrics, box_per_category_ap = box_evaluator.ComputeMetrics(
+                include_metrics_per_category=False, all_metrics_per_category=False)
+            box_metrics.update(box_per_category_ap)
+            box_metrics = {
+                'DetectionBoxes_' + key: value
+                for key, value in iter(box_metrics.items())
+            }
+
+            return box_metrics[self.map_key]
+
 @metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowMAP(BaseMetric):
     """Computes mean average precision.

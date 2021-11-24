@@ -587,12 +587,15 @@ class TestMetrics(unittest.TestCase):
 
     def test_tensorflow_COCOmAP(self):
         import os
+        output_index_mapping = {'num_detections':0, 'boxes':1, 'scores':2, 'classes':3}
         metrics = METRICS('tensorflow')
         fake_dict = 'dog: 1'
         with open('anno.yaml', 'w', encoding="utf-8") as f:
             f.write(fake_dict)
         mAP = metrics['COCOmAP']('anno.yaml')
+        mAP2 = metrics['COCOmAPv2']('anno.yaml', output_index_mapping=output_index_mapping)
         self.assertEqual(mAP.category_map_reverse['dog'], 1)
+        self.assertEqual(mAP2.category_map_reverse['dog'], 1)
         detection = [
             np.array([[5]]),
             np.array([[5]]),
@@ -616,6 +619,7 @@ class TestMetrics(unittest.TestCase):
         os.remove('anno.yaml')
 
         mAP = metrics['COCOmAP']()
+        mAP2 = metrics['COCOmAPv2']()
         detection = [
             np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
                         [0.5589304 , 0.        , 0.98301625, 0.520178  ],
@@ -685,6 +689,7 @@ class TestMetrics(unittest.TestCase):
         ]
         
         self.assertEqual(mAP.result(), 0)
+        self.assertEqual(mAP2.result(), 0)
 
         mAP.update(detection, ground_truth)
         
@@ -700,6 +705,24 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(format(mAP.result(), '.5f'),
                             '0.14149')
 
+        mAP2.update(detection, ground_truth)
+        
+        mAP2.update(detection, ground_truth)
+        self.assertEqual(format(mAP2.result(), '.5f'),
+                            '0.14149')
+
+        mAP2 = metrics['COCOmAPv2'](output_index_mapping=output_index_mapping)
+        
+        mAP2.update(detection_2, ground_truth_2)
+        self.assertEqual(format(mAP2.result(), '.5f'),
+                            '0.20520')
+        mAP2.reset()
+        mAP2.update(detection_2, ground_truth_2)
+        self.assertEqual(format(mAP2.result(), '.5f'),
+                            '0.20520')
+        
+        mAP2 = metrics['COCOmAPv2']()
+ 
         ground_truth_1 = [
             np.array([[[0.51508695, 0.2911648 , 0.5903478 , 0.31360796],
                         [0.872     , 0.6190057 , 0.9306522 , 0.6591761 ]]]),
@@ -708,6 +731,8 @@ class TestMetrics(unittest.TestCase):
             np.array([b'000000037777.jpg'])
         ]
         self.assertRaises(ValueError, mAP.update, detection, ground_truth_1)
+        self.assertRaises(ValueError, mAP2.update, detection, ground_truth_1)
+ 
         ground_truth_2 = [
             np.array([[[0.51508695, 0.2911648 , 0.5903478 , 0.31360796],
                         [0.872     , 0.6190057 , 0.9306522 , 0.6591761 ]]]),
@@ -716,6 +741,8 @@ class TestMetrics(unittest.TestCase):
             np.array([b'000000037700.jpg'])
         ]
         self.assertRaises(ValueError, mAP.update, detection, ground_truth_2)
+        self.assertRaises(ValueError, mAP2.update, detection, ground_truth_2)
+ 
         detection_1 = [
             np.array([[[0.16117382, 0.59801614, 0.81511605, 0.7858219 ],
                         [0.5589304 , 0.        , 0.98301625, 0.520178  ]]]),
@@ -730,6 +757,8 @@ class TestMetrics(unittest.TestCase):
             np.array([b'000000011.jpg'])
         ]
         self.assertRaises(ValueError, mAP.update, detection_1, ground_truth_1)
+        self.assertRaises(ValueError, mAP2.update, detection_1, ground_truth_1)
+ 
         ground_truth_2 = [
             np.array([[[0.51508695, 0.2911648 , 0.5903478 , 0.31360796],
                         [0.872     , 0.6190057 , 0.9306522 , 0.6591761 ]]]),
@@ -744,6 +773,7 @@ class TestMetrics(unittest.TestCase):
             np.array([[ 1., 67., 51., 79., 47.]])
         ]
         self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)
+        self.assertRaises(ValueError, mAP2.update, detection_2, ground_truth_2)
  
     def test__accuracy(self):
         predicts1 = [1, 0, 1, 1]

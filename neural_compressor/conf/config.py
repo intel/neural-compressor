@@ -542,6 +542,13 @@ approach_schema = Schema({
 default_workspace = './nc_workspace/{}/'.format(
                                            datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
+COCOmAP_input_order_schema = Schema({
+    Optional('num_detections'): int,
+    'boxes': int,
+    'scores': int,
+    'classes': int
+})
+
 schema = Schema({
     'model': {
         'name': str,
@@ -692,6 +699,14 @@ schema = Schema({
                 Optional('COCOmAP'): {
                     Optional('anno_path'): str,
                     Optional('map_key', default='DetectionBoxes_Precision/mAP'): str
+                },
+                Optional('COCOmAPv2'): {
+                    Optional('anno_path'): str,
+                    Optional('map_key', default='DetectionBoxes_Precision/mAP'): str,
+                    Optional('output_index_mapping', default={'num_detections': -1, 
+                                                      'boxes': 0, 
+                                                      'scores': 1, 
+                                                      'classes': 2}): COCOmAP_input_order_schema
                 },
                 Optional('VOCmAP'): {
                     Optional('anno_path'): str

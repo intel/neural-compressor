@@ -359,7 +359,7 @@ class COCOEvalWrapper(cocoeval.COCOeval):
 
     def ComputeMetrics(self,
                        include_metrics_per_category=False,
-                       all_metrics_per_category=False):
+                       all_metrics_per_category=False): # pragma: no cover
         """Computes detection metrics.
 
     Args:
