@@ -554,6 +554,7 @@ class TestOps(unittest.TestCase):
         op_type_list = ['IteratorGetNext', 'IteratorV2', 'OptimizeDataset', 'MapAndBatchDataset']
         for op_type in op_type_list:
             iterator_get_next_node_test = OPERATORS[op_type]()
+            iterator_get_next_node_test.output_tensors=[Tensor()]
             iterator_get_next_node_test.set_attr('tensorflow', fake_node)
             output_shapes = iterator_get_next_node_test.attr['output_shapes']
             output_types = iterator_get_next_node_test.attr['output_types']

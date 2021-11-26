@@ -40,3 +40,5 @@ class IteratorGetNext(Operator):
             output_types = node.attr['output_types'].list.type
             output_types = [TF_DTYPE_ID[i] for i in output_types]
             self._attr['output_types'] = output_types
+            for i in range(len(output_types)):
+                self._output_tensors[i].dtype = output_types[i]
