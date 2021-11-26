@@ -43,7 +43,7 @@ class EngineQuantizer:
         self._quantize_output_op = ["Softmax"]
         self._part_quantize_op = self._quantize_input_op + self._quantize_output_op
         self._no_quantize_op = ["Reshape", "Reorder"]
-        
+
     def quantize_model(self):
         # 0. get min/max of tensor
         self._get_tensors_min_max()
@@ -88,12 +88,14 @@ class EngineQuantizer:
                         for input_tensor in node.input_tensors:
                             if tensor_name == input_tensor.name:
                                 input_tensor.data = tensor_data
-                                input_tensor.dtype = 'fp32'
+                                if input_tensor.dtype == None:
+                                    input_tensor.dtype = 'fp32'
                         for output_tensor in node.output_tensors:
                             if tensor_name == output_tensor.name:
                                 output_tensor.data = tensor_data
-                                output_tensor.dtype = 'fp32'
-                
+                                if output_tensor.dtype == None:
+                                    output_tensor.dtype = 'fp32'
+
                 # get min/max of output tensors
                 for node in self.model.nodes:
                     for output_tensor in node.output_tensors:
@@ -145,7 +147,7 @@ class EngineQuantizer:
         pre_nodes_name = self.model.graph.get_pre_node_names(node.name)
         for pre_node_name in pre_nodes_name:
             pre_node_idx = self.model.get_node_id(pre_node_name)
-            pre_node = self.model.nodes[pre_node_idx] 
+            pre_node = self.model.nodes[pre_node_idx]
             if pre_node.name in self.config and self.config[pre_node.name] =='fp32':
                 return True
             elif pre_node.op_type in self._no_quantize_op:
@@ -165,7 +167,7 @@ class EngineQuantizer:
 
     def _insert_quantize_op(self):
         nodes = copy.deepcopy(self.model.nodes)
-        for ip_node in nodes: 
+        for ip_node in nodes:
             if ip_node.op_type == "InnerProduct" and self.config[ip_node.name] != 'fp32':
                 ip_node_name = ip_node.name
                 ip_node_idx = self.model.get_node_id(ip_node_name)
@@ -180,7 +182,7 @@ class EngineQuantizer:
                 # 1. insert quantize op before innerproduct
                 # change pre ip op's next op to quant op
                 quant_node_name = ip_node_name + "_quant"
-                # create quant output tensor 
+                # create quant output tensor
                 quant_output_tensor_name = ip_input_tensor.name + '_quant'
                 if self.config[ip_node.name]['activation']['scheme'] == 'asym':
                     quant_output_tensor = Tensor(
@@ -195,18 +197,18 @@ class EngineQuantizer:
                                             source_op = [quant_node_name],
                                             dest_op = [ip_node.name],
                                             dtype='s8'
-                                            )                    
+                                            )
                 self._tensors_min_max[quant_output_tensor_name] = \
                     self._tensors_min_max[ip_input_tensor.name]
                 # create quant op
                 quant_node = OPERATORS['QuantizeV2']()
                 if self.config[ip_node.name]['activation']['scheme'] == 'asym':
-                    quant_node.construct(name=quant_node_name, op_type='Quantize', 
+                    quant_node.construct(name=quant_node_name, op_type='Quantize',
                                         input_tensors=[ip_input_tensor],
                                         output_tensors=[quant_output_tensor],
                                         attr=OrderedDict({'output_dtype':'u8'}))
                 else:
-                    quant_node.construct(name=quant_node_name, op_type='Quantize', 
+                    quant_node.construct(name=quant_node_name, op_type='Quantize',
                                         input_tensors=[ip_input_tensor],
                                         output_tensors=[quant_output_tensor],
                                         attr=OrderedDict({'output_dtype':'s8'}))
@@ -225,8 +227,8 @@ class EngineQuantizer:
                 input_name = node.input_tensors[0].name
                 if input_name in visit_tensors:
                     self.model.remove_nodes([node.name])
-                else:    
-                    visit_tensors.append(input_name) 
+                else:
+                    visit_tensors.append(input_name)
 
     def _insert_quantize_info(self):
         for node in self.model.nodes:
@@ -309,8 +311,8 @@ class EngineQuantizer:
 
                 input_tensor = node.input_tensors[0]
                 weight_tensor = node.input_tensors[1]
-                weight_perm = node.attr['src1_perm'] 
-                
+                weight_perm = node.attr['src1_perm']
+
                 self._quant_weight(weight_tensor, weight_perm)
 
                 bias_tensor = node.input_tensors[2] if len(node.input_tensors) > 2 else None
@@ -392,7 +394,7 @@ class EngineQuantizer:
             if (node.op_type in self._quantize_op and \
                     self.config[node.name.split('_quant')[0]] != 'fp32') or \
                     node.op_type in self._quantize_output_op:
-                is_output_int8 = True 
+                is_output_int8 = True
                 is_output_int8 = self._is_output_int8(node, is_output_int8)
                 if is_output_int8:
                     if node.op_type == "Softmax":
