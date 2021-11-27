@@ -12,7 +12,7 @@
       <ng-template matStepLabel>Select domain</ng-template>
       <ng-container *ngFor="let availableDomain of domains">
         <button [ngClass]="{'chip domain-btn': true, 'active': model.domain === availableDomain}" mat-flat-button
-          (click)="model.domain = availableDomain">{{ availableDomain | modelList | titlecase }}</button>
+          (click)="onModelDomainChange(availableDomain)">{{ availableDomain | modelList | titlecase }}</button>
       </ng-container>
     </mat-step>
 

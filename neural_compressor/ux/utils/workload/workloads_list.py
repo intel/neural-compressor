@@ -137,6 +137,7 @@ class WorkloadsListMigrator:
         self.version_migrators: Dict[int, Any] = {
             2: self._migrate_to_v2,
             3: self._migrate_to_v3,
+            4: self._migrate_to_v4,
         }
 
     @property
@@ -328,5 +329,19 @@ class WorkloadsListMigrator:
         self.workloads_data.update(
             {
                 "version": 3,
+            },
+        )
+
+    def _migrate_to_v4(self) -> None:
+        """Migrate workloads list from v3 to v4."""
+        for workload_id, workload_data in self.workloads_data["workloads"].items():
+            workload_data.update(
+                {
+                    "supports_profiling": False,
+                },
+            )
+        self.workloads_data.update(
+            {
+                "version": 4,
             },
         )

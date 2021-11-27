@@ -42,55 +42,76 @@ class TestWorkloadsListMigrator(unittest.TestCase):
         """Test Workloads List Migration from v1."""
         self._assert_migrates(
             "workloads_list_v1.json",
-            "workloads_list_v3.json",
+            "workloads_list_v4.json",
         )
 
     def test_not_tuned_migration_from_v1(self) -> None:
         """Test Workloads List Migration from v1."""
         self._assert_migrates(
             "workloads_list_v1_not_tuned.json",
-            "workloads_list_v3_not_tuned.json",
+            "workloads_list_v4_not_tuned.json",
         )
 
     def test_empty_migration_from_v1(self) -> None:
         """Test Workloads List Migration from v1."""
         self._assert_migrates(
             "workloads_list_v1_empty.json",
-            "workloads_list_v3_empty.json",
+            "workloads_list_v4_empty.json",
         )
 
     def test_migration_from_v2(self) -> None:
         """Test Workloads List Migration from v2."""
         self._assert_migrates(
             "workloads_list_v2.json",
-            "workloads_list_v3.json",
+            "workloads_list_v4.json",
         )
 
     def test_not_tuned_migration_from_v2(self) -> None:
         """Test Workloads List Migration from v2."""
         self._assert_migrates(
             "workloads_list_v2_not_tuned.json",
-            "workloads_list_v3_not_tuned.json",
+            "workloads_list_v4_not_tuned.json",
         )
 
     def test_empty_migration_from_v2(self) -> None:
         """Test Workloads List Migration from v2."""
         self._assert_migrates(
             "workloads_list_v2_empty.json",
-            "workloads_list_v3_empty.json",
+            "workloads_list_v4_empty.json",
         )
 
     def test_migration_from_v3(self) -> None:
         """Test Workloads List Migration from v3."""
-        self._assert_doesnt_migrate("workloads_list_v3.json")
+        self._assert_migrates(
+            "workloads_list_v3.json",
+            "workloads_list_v4.json",
+        )
 
     def test_not_tuned_migration_from_v3(self) -> None:
         """Test Workloads List Migration from v3."""
-        self._assert_doesnt_migrate("workloads_list_v3_not_tuned.json")
+        self._assert_migrates(
+            "workloads_list_v3_not_tuned.json",
+            "workloads_list_v4_not_tuned.json",
+        )
 
     def test_empty_migration_from_v3(self) -> None:
         """Test Workloads List Migration from v3."""
-        self._assert_doesnt_migrate("workloads_list_v3_empty.json")
+        self._assert_migrates(
+            "workloads_list_v3_empty.json",
+            "workloads_list_v4_empty.json",
+        )
+
+    def test_migration_from_v4(self) -> None:
+        """Test Workloads List Migration from v4."""
+        self._assert_doesnt_migrate("workloads_list_v4.json")
+
+    def test_not_tuned_migration_from_v4(self) -> None:
+        """Test Workloads List Migration from v4."""
+        self._assert_doesnt_migrate("workloads_list_v4_not_tuned.json")
+
+    def test_empty_migration_from_v4(self) -> None:
+        """Test Workloads List Migration from v4."""
+        self._assert_doesnt_migrate("workloads_list_v4_empty.json")
 
     def _assert_migrates(self, initial_file: str, final_file: str) -> None:
         """Test Workloads List Migration from initial to final version."""

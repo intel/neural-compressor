@@ -23,8 +23,8 @@ from neural_compressor.ux.utils.exceptions import InternalException
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.templates.metric import Metric
 
-
 ROUND_PRECISION = 2
+
 
 class Parser(ABC):
     """Parser abstract class."""

@@ -32,21 +32,28 @@ class TestWorkloadsMigrator(unittest.TestCase):
         """Test Workload config migrator from v1."""
         self._assert_migrates(
             "workload_v1_tuned.json",
-            "workload_v3_tuned.json",
+            "workload_v4_tuned.json",
         )
 
     def test_workload_migration_from_v2(self) -> None:
         """Test Workload config migrator from v2."""
         self._assert_migrates(
             "workload_v2_tuned.json",
-            "workload_v3_tuned.json",
+            "workload_v4_tuned.json",
         )
 
     def test_workload_migration_from_v3(self) -> None:
-        """Test Workload config migrator from v2."""
+        """Test Workload config migrator from v3."""
         self._assert_migrates(
             "workload_v3_tuned.json",
-            "workload_v3_tuned.json",
+            "workload_v4_tuned.json",
+        )
+
+    def test_workload_migration_from_v4(self) -> None:
+        """Test Workload config migrator from v4."""
+        self._assert_migrates(
+            "workload_v4_tuned.json",
+            "workload_v4_tuned.json",
         )
 
     def _assert_migrates(

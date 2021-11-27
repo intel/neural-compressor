@@ -60,7 +60,7 @@ class Workdir:
             self.workloads_data = {
                 "active_workspace_path": self.workspace_path,
                 "workloads": {},
-                "version": "3",
+                "version": "4",
             }
 
         workload_data = self.get_workload_data(request_id)

@@ -97,7 +97,7 @@ export class MenuComponent implements OnInit {
   }
 
   getFileName(path: string): string {
-    return path.replace(/^.*[\\\/]/, '');
+    return path ? path.replace(/^.*[\\\/]/, '') : '';
   }
 
   getDate(date: string) {

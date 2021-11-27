@@ -108,7 +108,7 @@ export class DetailsComponent implements OnInit, OnChanges {
     this.token = this.modelService.getToken();
     this.socketService.optimizationFinish$
       .subscribe(result => {
-        if (result['data']) {
+        if (result['data'] && this.activatedRoute.snapshot.params.id === result['data']['id']) {
           if (result['status'] === 'success') {
             this.updateResult(result);
             this.executionDetails['optimization'] = result['data']['execution_details']['optimization'];
@@ -120,7 +120,7 @@ export class DetailsComponent implements OnInit, OnChanges {
       });
     this.socketService.benchmarkFinish$
       .subscribe(result => {
-        if (result['data'] && this.model) {
+        if (result['data'] && this.model && this.activatedRoute.snapshot.params.id === result['data']['id']) {
           if (result['status'] === 'success') {
             this.model['perf_throughput_input_model'] = result['data']['perf_throughput_input_model'];
             this.model['perf_throughput_optimized_model'] = result['data']['perf_throughput_optimized_model'];

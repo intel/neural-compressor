@@ -102,9 +102,7 @@ class Workload(JsonSerializer):
                 f'Could not found model in specified location: "{self.model_path}".',
             )
 
-        self.supports_profiling: bool = False
-        model = ModelRepository().get_model(self.model_path)
-        self.supports_profiling = model.supports_profiling
+        self.supports_profiling: bool = self.check_if_supports_profiling()
 
         self.accuracy_goal: float = data.get("accuracy_goal", 0.01)
 
@@ -139,7 +137,7 @@ class Workload(JsonSerializer):
             self.workload_path,
             self.model_output_name,
         )
-        self.version = "3.0"
+        self.version = "4.0"
 
     def initialize_config(self, data: dict) -> None:
         """Initialize config."""
@@ -185,6 +183,17 @@ class Workload(JsonSerializer):
                 f"Could not found optimization mode for {self.output_precision} precision.",
             )
         return mode
+
+    def check_if_supports_profiling(self) -> bool:
+        """
+        Check if supports profiling.
+
+        returns true if model supports profiling else returns false.
+        """
+        if self.domain.lower() in ["nlp", "recommendation"]:
+            return False
+        model = ModelRepository().get_model(self.model_path)
+        return model.supports_profiling
 
     def set_dataset_paths(self, data: dict) -> None:
         """Set calibration and evaluation dataset path."""
@@ -261,6 +270,7 @@ class WorkloadMigrator:
         self.version_migrators = {
             2: self._migrate_to_v2,
             3: self._migrate_to_v3,
+            4: self._migrate_to_v4,
         }
 
     @property
@@ -353,5 +363,15 @@ class WorkloadMigrator:
                 "project_name": os.path.basename(self.workload_data.get("model_path", "")),
                 "created_at": "2021-07-15T14:19:18.860579",
                 "version": 3,
+            },
+        )
+
+    def _migrate_to_v4(self) -> None:
+        """Parse workload from v3 to v4."""
+        print("Migrating workload.json to v4...")
+        self.workload_data.update(
+            {
+                "supports_profiling": False,
+                "version": 4,
             },
         )

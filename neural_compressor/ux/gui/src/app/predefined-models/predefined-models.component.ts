@@ -130,6 +130,11 @@ export class PredefinedModelsComponent implements OnInit {
     });
   }
 
+  onModelDomainChange(availableDomain) {
+    this.model.domain = availableDomain;
+    this.model.model = this.modelList.find(x => x['domain'] === availableDomain).model;
+  }
+
   configExists(framework: string, domain: string, model?: string) {
     let found;
     if (model) {
