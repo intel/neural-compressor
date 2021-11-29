@@ -5,6 +5,7 @@ This example is used to demonstrate how to quantize a TensorFlow checkpoint and 
 1. Download the FP32 model
     ```
     git clone https://github.com/openvinotoolkit/open_model_zoo.git
+    git checkout 2021.4
     python ./open_model_zoo/tools/downloader/downloader.py --name rfcn-resnet101-coco-tf --output_dir model 
     ```
 

@@ -3,7 +3,7 @@
 Enter the following commands to prepare a dataset and pretrained models for the included Hello World examples:
 
 ```shell
-pip install intel-tensorflow==2.3.0
+pip install intel-tensorflow==2.7.0
 python train.py
 
 ```
