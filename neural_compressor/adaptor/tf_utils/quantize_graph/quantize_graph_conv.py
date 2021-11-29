@@ -264,11 +264,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             matched_node.node.name)
         weight_name = normal_inputs[1]
 
-        if not self._find_relu_node(matched_node.node):
-            return self.apply_conv_biasadd_fusion(match_node_name[:2])
-
         third_node = self.node_name_mapping[match_node_name[2]].node
         forth_node = self.node_name_mapping[match_node_name[3]].node
+        if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
+            return self.apply_conv_biasadd_fusion(match_node_name[:2])
+
         is_leakyrelu_add_fusion = third_node.op == 'LeakyRelu' and forth_node.op.find('Add') != -1
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
