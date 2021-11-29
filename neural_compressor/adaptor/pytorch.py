@@ -675,7 +675,6 @@ class TemplateAdaptor(Adaptor):
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
-        self.num_cores_per_sock = CpuInfo().cores_per_socket
 
     def calib_func(self, model, dataloader, tmp_iterations, conf=None):
         try:
@@ -695,13 +694,18 @@ class TemplateAdaptor(Adaptor):
                           calib_sampling_size=1):
         assert iterations > 0
 
-        batch_size = dataloader.batch_size
         with torch.no_grad():
             if isinstance(dataloader, BaseDataLoader):
+                batch_size = dataloader.batch_size
                 try:
-                    for i in range(self.num_cores_per_sock):
-                        if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
-                            calib_batch_size = self.num_cores_per_sock - i
+                    for i in range(batch_size):
+                        if calib_sampling_size % (batch_size - i) == 0:
+                            calib_batch_size = batch_size - i
+                            if i != 0:
+                                logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                               "to {}".format(calib_batch_size) +
+                                               " to make sure the sampling_size is "
+                                               "divisible exactly by batch size")
                             break
                     tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                     dataloader.batch(calib_batch_size)
@@ -709,10 +713,19 @@ class TemplateAdaptor(Adaptor):
                 except Exception:  # pragma: no cover
                     logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(dataloader.batch_size, batch_size))
-                    dataloader.batch(batch_size)
-                    self.calib_func(q_model, dataloader, iterations, conf)
+                        format(batch_size, 1))
+                    dataloader.batch(1)
+                    self.calib_func(q_model, dataloader, calib_sampling_size, conf)
             else:  # pragma: no cover
+                if hasattr(dataloader, 'batch_size') and \
+                  calib_sampling_size % dataloader.batch_size != 0:
+                    logger.warning(
+                        "Please Note that calibration sampling size {} \
+                        isn't divisible exactly by batch size {}. \
+                        So the real sampling size is {}.".
+                        format(calib_sampling_size, dataloader.batch_size,
+                               dataloader.batch_size * iterations))
+
                 self.calib_func(q_model, dataloader, iterations, conf)
 
     def eval_func(self, model, dataloader, postprocess, metric, measurer, iteration, conf=None):
@@ -746,17 +759,18 @@ class TemplateAdaptor(Adaptor):
 
     def model_eval(self, model, dataloader, postprocess=None,
                    metric=None, measurer=None, iteration=-1, conf=None):
-        batch_size = dataloader.batch_size
         with torch.no_grad():
             if metric:
                 metric.reset()
             if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
                 try:
-                    dataloader.batch(self.num_cores_per_sock)
                     results = self.eval_func(
                         model, dataloader, postprocess, metric, measurer, iteration, conf)
                 except Exception:  # pragma: no cover
-                    dataloader.batch(batch_size)
+                    logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(dataloader.batch_size, 1))
+                    dataloader.batch(1)
                     results = self.eval_func(
                         model, dataloader, postprocess, metric, measurer, iteration, conf)
             else:  # pragma: no cover

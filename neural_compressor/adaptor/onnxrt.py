@@ -27,7 +27,7 @@ from distutils.version import StrictVersion
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
-                                            CpuInfo, GLOBAL_STATE, MODE
+                                            GLOBAL_STATE, MODE
 from ..utils.utility import OpPrecisionStatistics
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 import math
@@ -63,7 +63,6 @@ class ONNXRTAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.quantize_config = {} # adaptor should know current configs at any time
         self.quantize_params = {} # adaptor should know current params at any time
-        self.num_cores_per_sock = CpuInfo().cores_per_socket
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -98,24 +97,40 @@ class ONNXRTAdaptor(Adaptor):
 
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
+        calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if self.static:
             if isinstance(data_loader, BaseDataLoader):
                 batch_size = data_loader.batch_size
                 try:
-                    calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
-                    for i in range(self.num_cores_per_sock):
-                        if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
-                            calib_batch_size = self.num_cores_per_sock - i
+                    for i in range(batch_size):
+                        if calib_sampling_size % (batch_size - i) == 0:
+                            calib_batch_size = batch_size - i
+                            if i != 0:  # pragma: no cover
+                                logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                               "to {}".format(calib_batch_size) +
+                                               " to make sure the sampling_size is "
+                                               "divisible exactly by batch size")
                             break
                     tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                     data_loader.batch(calib_batch_size)
                     quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
                                                                 quantize_config, tmp_iterations)
                 except Exception:  # pragma: no cover
-                    data_loader.batch(batch_size)
+                    logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(batch_size, 1))
+                    data_loader.batch(1)
                     quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
-                                                                quantize_config, iterations)
+                                                                quantize_config, calib_sampling_size)
             else:  # pragma: no cover
+                if hasattr(data_loader, 'batch_size') and \
+                  calib_sampling_size % data_loader.batch_size != 0:
+                    logger.warning(
+                        "Please Note that calibration sampling size {} \
+                        isn't divisible exactly by batch size {}. \
+                        So the real sampling size is {}.".
+                        format(calib_sampling_size, data_loader.batch_size,
+                               data_loader.batch_size * iterations))
                 quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
                                                             quantize_config, iterations)
         else:
@@ -633,12 +648,13 @@ class ONNXRTAdaptor(Adaptor):
                     break
 
         if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
-            batch_size = dataloader.batch_size
             try:
-                dataloader.batch(self.num_cores_per_sock)
                 eval_func(dataloader)
             except Exception:  # pragma: no cover
-                dataloader.batch(batch_size)
+                logger.warning(
+                    "Fail to forward with batch size={}, set to {} now.".
+                    format(dataloader.batch_size, 1))
+                dataloader.batch(1)
                 eval_func(dataloader)
         else:  # pragma: no cover
             eval_func(dataloader)

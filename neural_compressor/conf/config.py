@@ -476,7 +476,7 @@ dataset_schema = Schema({
 
 dataloader_schema = Schema({
     Optional('last_batch', default='rollover'): And(str, lambda s: s in ['rollover', 'discard']),
-    Optional('batch_size', default=1): And(int, lambda s: s > 0),
+    Optional('batch_size', default=None): And(int, lambda s: s > 0),
     'dataset': dataset_schema,
     Optional('filter'): filter_schema,
     Optional('transform'): transform_schema,

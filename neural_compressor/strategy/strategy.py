@@ -165,7 +165,7 @@ class TuneStrategy(object):
         if framework == 'engine':
             framework_specific_info.update(
                  {'workspace_path': self.cfg.tuning.workspace.path})
- 
+
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
 

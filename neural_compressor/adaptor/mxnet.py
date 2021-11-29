@@ -22,7 +22,7 @@ import logging
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import dump_elapsed_time, LazyImport, singleton, \
-                                            CpuInfo, GLOBAL_STATE, MODE
+                                            GLOBAL_STATE, MODE
 from collections import OrderedDict
 from neural_compressor.adaptor.mxnet_utils.util import *
 from collections import OrderedDict
@@ -57,7 +57,6 @@ class MxNetAdaptor(Adaptor):
 
         self.ctx = mx.cpu() if framework_specific_info['device'] == 'cpu' else None
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
-        self.num_cores_per_sock = CpuInfo().cores_per_socket
         assert self.ctx is not None, 'Unsupported device'
 
     @dump_elapsed_time("Pass quantize model")
@@ -102,13 +101,18 @@ class MxNetAdaptor(Adaptor):
                 'framework_specific_info': {'device': self.ctx.device_type}}
             return q_nc_model
 
+        calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if isinstance(dataloader, BaseDataLoader):
             batch_size = dataloader.batch_size
             try:
-                calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
-                for i in range(self.num_cores_per_sock):
-                    if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
-                        calib_batch_size = self.num_cores_per_sock - i
+                for i in range(batch_size):
+                    if calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                           "to {}".format(calib_batch_size) +
+                                           " to make sure the sampling_size is "
+                                           "divisible exactly by batch size")
                         break
                 tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                 tmp_tune_cfg = deepcopy(tune_cfg)
@@ -116,9 +120,23 @@ class MxNetAdaptor(Adaptor):
                 dataloader.batch(calib_batch_size)
                 return calib_func(tmp_tune_cfg, dataloader)
             except Exception:  # pragma: no cover
-                dataloader.batch(batch_size)
-                return calib_func(tune_cfg, dataloader)
+                logger.warning(
+                    "Fail to forward with batch size={}, set to {} now.".
+                    format(batch_size, 1))
+                tmp_tune_cfg = deepcopy(tune_cfg)
+                tmp_tune_cfg['calib_iteration'] = calib_sampling_size
+                dataloader.batch(1)
+                return calib_func(tmp_tune_cfg, dataloader)
         else:  # pragma: no cover
+            if hasattr(dataloader, 'batch_size') and \
+              calib_sampling_size % dataloader.batch_size != 0:
+                    iter = tune_cfg['calib_iteration']
+                    logger.warning(
+                        "Please Note that calibration sampling size {} \
+                        isn't divisible exactly by batch size {}. \
+                        So the real sampling size is {}.".
+                        format(calib_sampling_size, dataloader.batch_size,
+                               dataloader.batch_size * iter))
             return calib_func(tune_cfg, dataloader)
 
     def _collect_thresholds(self, sym_model, calib_data, calib_tensors, calib_cfg, calib_cache):
@@ -216,14 +234,15 @@ class MxNetAdaptor(Adaptor):
                 metric.update(out, label)
 
         if isinstance(data_x, BaseDataLoader) and not self.benchmark:
-            batch_size = data_x.batch_size
             try:
-                data_x.batch(self.num_cores_per_sock)
                 sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
                 run_forward(sym_model, self.ctx, dataloader, b_filter(),
                             pre_batch=pre_batch, post_batch=post_batch)
             except Exception:  # pragma: no cover
-                data_x.batch(batch_size)
+                logger.warning(
+                    "Fail to forward with batch size={}, set to {} now.".
+                    format(data_x.batch_size, 1))
+                data_x.batch(1)
                 sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
                 run_forward(sym_model, self.ctx, dataloader, b_filter(),
                             pre_batch=pre_batch, post_batch=post_batch)

@@ -26,9 +26,10 @@ quantization:                                        # optional. tuning constrai
         ImageFolder:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
       transform:
-        RandomResizedCrop:
-            size: 224
-        RandomHorizontalFlip: {}
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
         ToTensor: {}
         Normalize:
             mean: [0.485, 0.456, 0.406]

@@ -21,6 +21,9 @@ from neural_compressor.experimental.common import Optimizers, Criterions
 from collections import OrderedDict
 import copy
 
+DEFAULT_BATCH_SIZE = 64
+
+
 def get_func_from_config(func_dict, cfg, compose=True):
     func_list = []
     for func_name, func_value in OrderedDict(cfg).items():
@@ -79,7 +82,7 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
 
 def create_dataloader(framework, dataloader_cfg):
     batch_size = int(dataloader_cfg['batch_size']) \
-        if dataloader_cfg.get('batch_size') is not None else 1
+        if dataloader_cfg.get('batch_size') is not None else DEFAULT_BATCH_SIZE
     last_batch = dataloader_cfg['last_batch'] \
         if dataloader_cfg.get('last_batch') is not None else 'rollover'
     shuffle = dataloader_cfg['shuffle'] \

@@ -70,7 +70,6 @@ class TensorFlowAdaptor(Adaptor):
         self.fp32_results = []
         self.fp32_preds_as_label = False
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
-        self.num_cores_per_sock = CpuInfo().cores_per_socket
         self.callbacks = []
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
@@ -356,11 +355,12 @@ class TensorFlowAdaptor(Adaptor):
 
         if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
             try:
-                batch_size = dataloader.batch_size
-                dataloader.batch(self.num_cores_per_sock)
                 results = eval_func(dataloader)
             except Exception:  # pragma: no cover
-                dataloader.batch(batch_size)
+                logger.warning(
+                    "Fail to forward with batch size={}, set to {} now.".
+                    format(dataloader.batch_size, 1))
+                dataloader.batch(1)
                 results = eval_func(dataloader)
         else:  # pragma: no cover
             results = eval_func(dataloader)
@@ -467,14 +467,18 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
+        calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if isinstance(data_loader, BaseDataLoader):
+            batch_size = data_loader.batch_size
             try:
-                batch_size = data_loader.batch_size
-                iter = self.quantize_config['calib_iteration']
-                calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
-                for i in range(self.num_cores_per_sock):
-                    if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
-                        calib_batch_size = self.num_cores_per_sock - i
+                for i in range(batch_size):
+                    if calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                           "to {}".format(calib_batch_size) +
+                                           " to make sure the sampling_size is "
+                                           "divisible exactly by batch size")
                         break
                 tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                 data_loader.batch(calib_batch_size)
@@ -489,9 +493,9 @@ class TensorFlowAdaptor(Adaptor):
             except Exception: # pragma: no cover
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(data_loader.batch_size, batch_size))
-                data_loader.batch(batch_size)
-                self.quantize_config['calib_iteration'] = iter
+                        format(batch_size, 1))
+                data_loader.batch(1)
+                self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
                                         qt_config=self.quantize_config,
                                         recipes=self.recipes,
@@ -500,6 +504,15 @@ class TensorFlowAdaptor(Adaptor):
                                         bf16_ops=self.bf16_ops,
                                         data_loader=data_loader).convert()
         else: # pragma: no cover
+            if hasattr(data_loader, 'batch_size') and \
+              calib_sampling_size % data_loader.batch_size != 0:
+                iter = self.quantize_config['calib_iteration']
+                logger.warning(
+                    "Please Note that calibration sampling size {} \
+                    isn't divisible exactly by batch size {}. \
+                    So the real sampling size is {}.".
+                    format(calib_sampling_size, data_loader.batch_size,
+                           data_loader.batch_size * iter))
             converted_model = GraphConverter(model,
                                 qt_config=self.quantize_config,
                                 recipes=self.recipes,
@@ -1054,14 +1067,18 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         logger.debug('Dump quantization configurations:')
         logger.debug(self.quantize_config)
         from .tf_utils.graph_converter import GraphConverter
+        calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if isinstance(data_loader, BaseDataLoader):
+            batch_size = data_loader.batch_size
             try:
-                batch_size = data_loader.batch_size
-                iter = self.quantize_config['calib_iteration']
-                calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
-                for i in range(self.num_cores_per_sock):
-                    if calib_sampling_size % (self.num_cores_per_sock - i) == 0:
-                        calib_batch_size = self.num_cores_per_sock - i
+                for i in range(batch_size):
+                    if calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                           "to {}".format(calib_batch_size) +
+                                           " to make sure the sampling_size is "
+                                           "divisible exactly by batch size")
                         break
                 tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                 data_loader.batch(calib_batch_size)
@@ -1077,9 +1094,9 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
             except Exception: # pragma: no cover
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(data_loader.batch_size, batch_size))
-                data_loader.batch(batch_size)
-                self.quantize_config['calib_iteration'] = iter
+                        format(batch_size, 1))
+                data_loader.batch(1)
+                self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
                                 qt_config=self.quantize_config,
                                 recipes=self.recipes,
@@ -1089,6 +1106,15 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                 data_loader=data_loader,
                                 itex_mode=True).convert()
         else: # pragma: no cover
+            if hasattr(data_loader, 'batch_size') and \
+              calib_sampling_size % data_loader.batch_size != 0:
+                iter = self.quantize_config['calib_iteration']
+                logger.warning(
+                    "Please Note that calibration sampling size {} \
+                    isn't divisible exactly by batch size {}. \
+                    So the real sampling size is {}.".
+                    format(calib_sampling_size, data_loader.batch_size,
+                           data_loader.batch_size * iter))
             converted_model = GraphConverter(model,
                                    qt_config=self.quantize_config,
                                    recipes=self.recipes,
