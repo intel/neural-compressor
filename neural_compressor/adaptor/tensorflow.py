@@ -120,10 +120,9 @@ class TensorFlowAdaptor(Adaptor):
         iters = kwargs['kwargs'].get('iteration', None)
         callbacks = kwargs['kwargs'].get('callbacks', None)
         distributed = getattr(dataloader, 'distributed', False)
-
         from neural_compressor.experimental.common.criterion import TensorflowKnowledgeDistillationLoss
         if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
-            input_model = model._model      
+            input_model = model._model
         else:
             input_model = tf.keras.models.load_model(model._model)
             hooks = callbacks['tf_pruning'](model, input_model, hooks)
@@ -148,7 +147,7 @@ class TensorFlowAdaptor(Adaptor):
         def training_step(first_batch):
             with tf.GradientTape() as tape:
                 tape.watch(input_model.trainable_variables)
-                y_ = input_model(x, training=True)
+                y_ = input_model(x)
                 loss_value = criterion(y, y_)
             tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
             # Get gradient
@@ -178,17 +177,21 @@ class TensorFlowAdaptor(Adaptor):
                 hooks['on_batch_end']()            # on_batch_end hook
                 if iters is not None and cnt >= iters:
                     break
+            model._sess = None
             hooks['on_epoch_end']()                # on_epoch_end hook
             # End epoch
             train_loss_results.append(epoch_loss_avg.result())
             if not distributed or self.hvd.local_rank() == 0:
                 logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch+1, epoch_loss_avg.result()))
+
         hooks['post_epoch_end']()                  # post_epoch_end hook
         model._sess = None
         if not isinstance(criterion, TensorflowKnowledgeDistillationLoss):
             if not distributed or self.hvd.rank() == 0:
                 # Update the input model with pruned weights manually due to keras API limitation.
                 input_model.save(model._model)
+        else:
+            input_model.save('distillation_model')
 
     @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(self, model, dataloader, postprocess=None,

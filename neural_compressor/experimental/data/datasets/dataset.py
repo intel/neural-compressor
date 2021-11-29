@@ -701,6 +701,8 @@ class TensorflowImageFolder(ImageFolder):
         sample = self.image_list[index]
         label = sample[1]
         with Image.open(sample[0]) as image:
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
             image = np.array(image)
             if self.transform is not None:
                 image, label = self.transform((image, label))

@@ -1,3 +1,20 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
 import os
 import logging
@@ -6,9 +23,9 @@ import shutil
 import warnings
 import tensorflow as tf
 from neural_compressor.utils import logger
-model_names = ['mobilenet','mobilenetv2']
+model_names = ['mobilenet','densenet201']
 
-parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+parser = argparse.ArgumentParser(description='Tensorflow ImageNet Training')
 parser.add_argument('-t', '--topology', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
@@ -51,11 +68,10 @@ def main_worker(args):
     global best_acc1
 
     print("=> using pre-trained model '{}'".format(args.topology))
-    model = tf.keras.applications.mobilenet.MobileNet(weights='imagenet')
-
+    model = tf.keras.applications.MobileNet(weights='imagenet')
+    
     print("=> using pre-trained teacher model '{}'".format(args.teacher))
-    teacher_model = tf.keras.applications.mobilenet_v2.MobileNetV2(weights='imagenet')
-    # optionally resume from a checkpoint
+    teacher_model = tf.keras.applications.DenseNet201(weights='imagenet')
 
     if args.distillation:
         from neural_compressor.experimental import Distillation, common

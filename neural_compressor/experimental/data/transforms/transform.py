@@ -1227,6 +1227,24 @@ class NormalizeTFTransform(BaseTransform):
             image -= self.rescale[1]            
         return (image, label)
 
+@transform_registry(transform_type='KerasRescale', process="preprocess", \
+                framework='tensorflow')
+class RescaleKerasPretrainTransform(BaseTransform):
+    """Scale the values of image to [0,1].
+
+    Returns:
+        tuple of processed image and label
+    """
+    def __init__(self, rescale=None):
+        self.rescale = rescale
+
+    def __call__(self, sample):
+        image, label = sample
+        if self.rescale:
+            image /= self.rescale[0]
+            image -= self.rescale[1] 
+        return (image, label)
+
 @transform_registry(transform_type='Rescale', process="preprocess", \
                 framework='tensorflow')
 class RescaleTFTransform(BaseTransform):

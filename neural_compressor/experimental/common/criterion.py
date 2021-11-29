@@ -20,6 +20,8 @@ from collections import UserDict
 from neural_compressor.utils.utility import LazyImport, singleton
 from neural_compressor.utils import logger
 
+import numpy as np
+
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
 
@@ -193,7 +195,9 @@ class KnowledgeDistillationLoss(object):
 
     def __call__(self, student_outputs, targets):
         if isinstance(self, TensorflowKnowledgeDistillationLoss):
-            student_outputs, targets = targets, student_outputs
+            tmp = student_outputs
+            student_outputs = targets
+            targets = tmp
         return self.loss_cal(student_outputs, targets)
 
 class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
@@ -293,7 +297,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                                                                   loss_weights=loss_weights)
         if self.student_targets_loss is None:
             if self.loss_types[0] == 'CE':
-                self.student_targets_loss = tf.nn.sparse_softmax_cross_entropy_with_logits
+                self.student_targets_loss = tf.keras.losses.SparseCategoricalCrossentropy()
             else:
                 raise NotImplementedError('Now we only support CrossEntropyLoss '
                  'for loss of student model output with respect to targets.')
@@ -301,7 +305,7 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                                                         self.loss_weights[0]))            
         if self.teacher_student_loss is None:
             if self.loss_types[1] == 'CE':
-                self.teacher_student_loss = tf.keras.losses.CategoricalCrossentropy()
+                self.teacher_student_loss = self.SoftCrossEntropy
             elif self.loss_types[1] == 'KL':
                 self.teacher_student_loss = tf.keras.losses.KLDivergence()
             else:
@@ -309,6 +313,10 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                 ' for loss of student model output with respect to teacher model ouput.')
             logger.info('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
                                                         self.loss_weights[1]))
+    def SoftCrossEntropy(self, targets, logits):
+        log_prob = tf.math.log(logits)
+        targets_prob = targets
+        return tf.math.reduce_mean(tf.math.reduce_sum(- targets_prob * log_prob, axis=-1), axis=-1)
 
     def teacher_model_forward(self, input, teacher_model=None):
         if self.loss_weights[1] > 0 and input is not None:

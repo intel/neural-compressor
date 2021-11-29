@@ -21,7 +21,7 @@ model:
 distillation:
   train:
     start_epoch: 0
-    end_epoch: 10
+    end_epoch: 90
     iteration: 1000
     frequency: 1
     dataloader:
@@ -30,23 +30,21 @@ distillation:
         ImageFolder:
           root: /path/to/dataset
       transform:
-        AlignImageChannel:
-          dim: 3
-        ResizeCropImagenet: 
-          height: 224
-          width: 224
-        Normalize:
+        Resize:
+          size: 224
+          interpolation: nearest
+        KerasRescale:
           rescale: [127.5, 1]
     optimizer:
       SGD:
-        learning_rate: 0.1
+        learning_rate: 0.001  
         momentum: 0.1
         nesterov: True
         weight_decay: 0.001
     criterion:
       KnowledgeDistillationLoss:
         temperature: 1.0
-        loss_types: ['CE', 'KL']
+        loss_types: ['CE', 'CE']
         loss_weights: [0.5, 0.5]
   
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
@@ -59,14 +57,11 @@ evaluation:                                          # optional. required if use
         ImageFolder:
           root: /path/to/dataset
       transform:
-        AlignImageChannel:
-          dim: 3
-        ResizeCropImagenet: 
-          height: 224
-          width: 224
-        Normalize:
+        Resize:
+          size: 224
+          interpolation: nearest
+        KerasRescale:   
           rescale: [127.5, 1]
-
 tuning:
   accuracy_criterion:
     relative: 0.01                             # the tuning target of accuracy loss percentage: 1%
