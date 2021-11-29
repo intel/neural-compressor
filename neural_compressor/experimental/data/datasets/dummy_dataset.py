@@ -49,7 +49,7 @@ class DummyDataset(Dataset):
                                                 if str, all tensors will use same dtype. dtype
                                                 support 'float32', 'float16', 'uint8', 'int8',
                                                 'int32', 'int64', 'bool'.
-          label (bool, default=False):whether to return 0 as label.
+          label (bool, default=True):whether to return 0 as label.
           transform (transform object, default=None): dummy dataset does not need transform.
                                                         If transform is not None, it will ignore
                                                         it.  
@@ -57,7 +57,7 @@ class DummyDataset(Dataset):
                                                 specific conditions
 
     """
-    def __init__(self, shape, low=-128., high=127., dtype='float32', label=False, \
+    def __init__(self, shape, low=-128., high=127., dtype='float32', label=True, \
         transform=None, filter=None):
 
         dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \

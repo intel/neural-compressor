@@ -1069,12 +1069,12 @@ class TestDataloader(unittest.TestCase):
         data_loader = DATALOADERS['tensorflow'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (1, 256, 256, 3))
+        self.assertEqual(data[0].shape, (1, 256, 256, 3))
         # dynamic batching
         data_loader.batch(batch_size=2, last_batch='rollover')
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (2, 256, 256, 3))
+        self.assertEqual(data[0].shape, (2, 256, 256, 3))
 
         with self.assertRaises(AssertionError):
             dataset = datasets['dummy'](shape=[(4, 256, 256, 3), (256, 256, 3)])
@@ -1177,12 +1177,12 @@ class TestDataloader(unittest.TestCase):
         data_loader = DATALOADERS['pytorch'](dataset)
         iterator = iter(data_loader)
         data, label = next(iterator)
-        self.assertEqual(data.shape, (1, 256, 256, 3))
+        self.assertEqual(data[0].shape, (1, 256, 256, 3))
         # dynamic batching
         data_loader.batch(batch_size=2, last_batch='rollover')
         iterator = iter(data_loader)
         data, label = next(iterator)
-        self.assertEqual(data.shape, (2, 256, 256, 3))
+        self.assertEqual(data[0].shape, (2, 256, 256, 3))
 
     def test_mxnet_dummy(self):
         datasets = DATASETS('mxnet')
@@ -1192,12 +1192,12 @@ class TestDataloader(unittest.TestCase):
         data_loader = DATALOADERS['mxnet'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (1, 256, 256, 3))
+        self.assertEqual(data[0].shape, (1, 256, 256, 3))
         # dynamic batching
         data_loader.batch(batch_size=2, last_batch='rollover')
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (2, 256, 256, 3))
+        self.assertEqual(data[0].shape, (2, 256, 256, 3))
 
         dataset = datasets['dummy'](shape=(4, 256, 256, 3), label=True)
         self.assertEqual(dataset[0][1], 0)
@@ -1210,12 +1210,22 @@ class TestDataloader(unittest.TestCase):
         data_loader = DATALOADERS['onnxrt_qlinearops'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (1, 256, 256, 3))
+        self.assertEqual(data[0].shape, (1, 256, 256, 3))
         # dynamic batching
         data_loader.batch(batch_size=2, last_batch='rollover')
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (2, 256, 256, 3))
+        self.assertEqual(data[0].shape, (2, 256, 256, 3))
+
+        dataset = datasets['dummy'](shape=(4, 256, 256, 3), label=False)
+        data_loader = DATALOADERS['onnxrt_qlinearops'](dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(len(data), 1)
+
+        with self.assertRaises(AssertionError):
+            dataset = datasets['dummy'](\
+                shape=[(4, 256, 256, 3), (4, 256, 256, 3)], dtype=['float32', 'int8', 'int8'])
 
     def test_onnx_integer_dummy(self):
         datasets = DATASETS('onnxrt_integerops')
@@ -1224,12 +1234,12 @@ class TestDataloader(unittest.TestCase):
         data_loader = DATALOADERS['onnxrt_integerops'](dataset)
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (1, 256, 256, 3))
+        self.assertEqual(data[0].shape, (1, 256, 256, 3))
         # dynamic batching
         data_loader.batch(batch_size=2, last_batch='rollover')
         iterator = iter(data_loader)
         data = next(iterator)
-        self.assertEqual(data.shape, (2, 256, 256, 3))
+        self.assertEqual(data[0].shape, (2, 256, 256, 3))
 
     @unittest.skipIf(tf.__version__<='2.2.0' and tf.__version__>='2.1.0', "tf 2.1 or 2.2 dont support module transformers")
     def test_onnx_bert(self):

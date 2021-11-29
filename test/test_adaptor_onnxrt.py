@@ -117,11 +117,20 @@ def build_gather_yaml():
         quantization:                                        
           approach: post_training_static_quant 
           calibration:
-              sampling_size: 1
+            sampling_size: 1
+            dataloader:
+              dataset:
+                dummy_v2:
+                  input_shape: [100, 4]
+
         evaluation:
           accuracy:
             metric:
               Accuracy: {}
+            dataloader:
+              dataset:
+                dummy_v2:
+                  input_shape: [100, 4]
 
         tuning:
           accuracy_criterion:
@@ -357,6 +366,19 @@ class TestAdaptorONNXRT(unittest.TestCase):
         shutil.rmtree("runs", ignore_errors=True)
         shutil.rmtree("./nc_workspace", ignore_errors=True)
 
+    def test_adaptor_register(self):
+        from neural_compressor.adaptor.adaptor import adaptor_registry
+        def test():
+            @adaptor_registry
+            class ONNXRT_QLinearOpsAdaptor:
+                def quantize(self):
+                    pass
+
+                def evaluate(self):
+                    pass
+        with self.assertRaises(ValueError):
+            test()
+
     def test_inspect_tensor(self):
         framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
@@ -463,8 +485,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
  
         for fake_yaml in ["gather.yaml"]:
             quantizer = Quantization(fake_yaml)
-            quantizer.calib_dataloader = self.gather_dataloader
-            quantizer.eval_dataloader = self.gather_dataloader
             quantizer.model = common.Model(self.gather_model)
             q_model = quantizer()
 

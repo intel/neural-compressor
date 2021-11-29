@@ -31,7 +31,7 @@ class QMaxPool(QuantOperatorBase):
         node = self.node
         assert (node.op_type == "MaxPool")
 
-        if self.quantizer.opset_version < 12:
+        if self.quantizer.opset_version < 12: # pragma: no cover
             super().quantize()
             return
 

@@ -394,7 +394,7 @@ dataset_schema = Schema({
     },
     Optional('dummy_v2'): {
         'input_shape': And(Or(str, list), Use(list_to_tuple)),
-        Optional('label_shape'): And(Or(str, list), Use(list_to_tuple)),
+        Optional('label_shape', default=[1]): And(Or(str, list), Use(list_to_tuple)),
         Optional('low'): Or(
             float,
             And(int, Use(input_int_to_float)),

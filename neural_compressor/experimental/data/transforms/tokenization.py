@@ -42,7 +42,7 @@ import unicodedata
 import six
 tf =  LazyImport('tensorflow') 
 
-def convert_to_unicode(text):
+def convert_to_unicode(text): # pragma: no cover
   """Converts `text` to Unicode (if it's not already), assuming utf-8 input."""
   if six.PY3:
     if isinstance(text, str):
@@ -187,7 +187,7 @@ class BasicTokenizer(object):
     output = []
     for char in text:
       cp = ord(char)
-      if self._is_chinese_char(cp):
+      if self._is_chinese_char(cp): # pragma: no cover
         output.append(" ")
         output.append(char)
         output.append(" ")
@@ -262,7 +262,7 @@ class WordpieceTokenizer(object):
     output_tokens = []
     for token in whitespace_tokenize(text):
       chars = list(token)
-      if len(chars) > self.max_input_chars_per_word:
+      if len(chars) > self.max_input_chars_per_word: # pragma: no cover
         output_tokens.append(self.unk_token)
         continue
 
@@ -300,12 +300,12 @@ def _is_whitespace(char):
   if char == " " or char == "\t" or char == "\n" or char == "\r":
     return True
   cat = unicodedata.category(char)
-  if cat == "Zs":
+  if cat == "Zs": # pragma: no cover
     return True
   return False
 
 
-def _is_control(char):
+def _is_control(char): # pragma: no cover
   """Checks whether `chars` is a control character."""
   # These are technically control characters but we count them as whitespace
   # characters.
@@ -317,7 +317,7 @@ def _is_control(char):
   return False
 
 
-def _is_punctuation(char):
+def _is_punctuation(char): # pragma: no cover
   """Checks whether `chars` is a punctuation character."""
   cp = ord(char)
   # We treat all non-letter/number ASCII as punctuation.
