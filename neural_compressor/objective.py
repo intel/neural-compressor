@@ -83,14 +83,11 @@ class Measurer(object):
         self._model = model
 
     def result(self, start=None, end=None):
-        """The interface to get benchmark measuring result
-           measurer may sart and end many times, result will
-           return the total mean of the result, can set the start
-           and end index of the result list to calculate
+        """The interface to get benchmark measuring result measurer may start and end many times, result will return the total mean of the result, can set the start and end index of the result list to calculate
 
         Args:
-            start (int): start point to calculate result from result list
-                         used to skip steps for warm up
+            start (int): start point to calculate result from result list used to skip steps for warm up 
+
             end (int): end point to calculate result from result list
         """
         start_idx = 0
@@ -102,9 +99,8 @@ class Measurer(object):
         return np.array(self._result_list[start_idx:end_idx]).mean()
 
     def result_list(self):
-        """The interface to get benchmark measuring result list
-           this interface will return a list of each start-end loop
-           measure value
+        """The interface to get benchmark measuring result list this interface will return a list of each start-end loop measure value
+        
         Args:
         """
         return self._result_list
@@ -143,8 +139,7 @@ class Objective(object):
     """The base class of objectives supported by neural_compressor.
 
     Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
+        accuracy_criterion (dict): The dict of supported accuracy criterion. {'relative': 0.01} or {'absolute': 0.01}
     """
 
     def __init__(self, accuracy_criterion, is_measure=False):
@@ -168,8 +163,7 @@ class Objective(object):
         self.measurer = None
 
     def compare(self, last, baseline):
-        """The interface of comparing if metric reaches
-           the goal with acceptable accuracy loss.
+        """The interface of comparing if metric reaches the goal with acceptable accuracy loss.
 
         Args:
             last (tuple): The tuple of last metric.
@@ -219,9 +213,9 @@ class Objective(object):
 @objective_registry
 class Performance(Objective):
     """The objective class of calculating performance when running quantize model.
+    
     Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
+        accuracy_criterion (dict): The dict of supported accuracy criterion. {'relative': 0.01} or {'absolute': 0.01}
     """
 
     def __init__(self, accuracy_criterion, is_measure=False):
@@ -230,12 +224,10 @@ class Performance(Objective):
 
 @objective_registry
 class Footprint(Objective):
-    """The objective class of calculating peak memory footprint
-       when running quantize model.
+    """The objective class of calculating peak memory footprint when running quantize model.
 
     Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
+        accuracy_criterion (dict): The dict of supported accuracy criterion. {'relative': 0.01} or {'absolute': 0.01}
     """
 
     def __init__(self, accuracy_criterion, is_measure=False):
@@ -247,8 +239,7 @@ class ModelSize(Objective):
     """The objective class of calculating model size when running quantize model.
 
     Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
+        accuracy_criterion (dict): The dict of supported accuracy criterion. {'relative': 0.01} or {'absolute': 0.01}
     """
 
     def __init__(self, accuracy_criterion, is_measure=False):

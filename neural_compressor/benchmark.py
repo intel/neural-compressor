@@ -20,17 +20,14 @@ from .data import DATALOADERS
 from .experimental import Benchmark as ExpBenchmark
 
 class Benchmark(object):
-    """Benchmark class can be used to evaluate the model performance, with the objective
-       setting, user can get the data of what they configured in yaml
+    """Benchmark class can be used to evaluate the model performance, with the objective setting, user can get the data of what the y configured in yaml
 
     Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
-            Benchmark_Conf class containing accuracy goal, tuning objective and preferred
-            calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or Benchmark_Conf class containing accuracy goal, tuning objective and preferred calibration & quantization tuning space etc.
 
     """
 
-    """
+
     def __init__(self, conf_fname_or_obj):
         self.exp_benchmarker = ExpBenchmark(conf_fname_or_obj)
 
@@ -65,4 +62,3 @@ class Benchmark(object):
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_benchmarker.postprocess = nc_postprocess
-    """

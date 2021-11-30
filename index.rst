@@ -13,6 +13,7 @@ Sections
    README.md
    docs/tutorial.md
    examples_readme.md
+   api-documentation/apis.rst
    docs/api-introduction.md
    docs/doclist.rst
    releases_info.md

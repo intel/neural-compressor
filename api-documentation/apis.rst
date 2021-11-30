@@ -1,26 +1,18 @@
-APIs
-####
+API Reference
+#############
 
-benchmark
+Read an `introduction to Intel Neural Compressor APIs </docs/api-introduction.md>`__
 
-.. automodule:: neural_compressor.benchmark
-   :members:
+The following APIs are available:
 
-.. autoclass:: neural_compressor.benchmark.Benchmark
-   :members:
+.. toctree::
+   :maxdepth: 1
 
-objective
+   benchmark-api
+   objective-api
+   pruning-api
+   quantization-api
 
-.. automodule:: neural_compressor.objective
-   :members:
 
-pruning 
-
-.. automodule:: neural_compressor.pruning
-   :members:
-
-quantization
-
-.. automodule:: neural_compressor.quantization
-   :members:
+   
 

@@ -21,23 +21,14 @@ from .data import DATALOADERS, DATASETS
 from .experimental import Quantization as ExpQuantization
 
 class Quantization(object):
-    """Quantization class automatically searches for optimal quantization recipes for low
-       precision model inference, achieving best tuning objectives like inference performance
-       within accuracy loss constraints.
+    """Quantization class automatically searches for optimal quantization recipes for low precision model inference, achieving best tuning objectives like inference performance within accuracy loss constraints.
 
-       Tuner abstracts out the differences of quantization APIs across various DL frameworks
-       and brings a unified API for automatic quantization that works on frameworks including
-       tensorflow, pytorch and mxnet.
+    Tuner abstracts out the differences of quantization APIs across various DL frameworks and brings a unified API for automatic quantization that works on frameworks including tensorflow, pytorch and mxnet.
 
-       Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
-       (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
-       Tuner class provides a flexible configuration interface via YAML for users to specify
-       these parameters.
+    Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.). Tuner class provides a flexible configuration interface via YAML for users to specify these parameters.
 
     Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
-            Quantization_Conf class containing accuracy goal, tuning objective and preferred
-            calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or Quantization_Conf class containing accuracy goal, tuning objective and preferred calibration & quantization tuning space etc.
 
     """
 

@@ -24,15 +24,10 @@ from .experimental import Pruning as ExpPruning
 class Pruning:
     """This is base class of pruning object.
 
-       Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
-       (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.).
-       Pruning class provides a flexible configuration interface via YAML for users to specify
-       these parameters.
+    Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.). Pruning class provides a flexible configuration interface via YAML for users to specify these parameters.
 
     Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
-            Pruning_Conf class containing accuracy goal, pruning objective and related
-            dataloaders etc.
+        conf_fname_or_obj (string or obj): The path to the YAML configuration file or Pruning_Conf class containing accuracy goal, pruning objective and related dataloaders etc.
 
     """
 
