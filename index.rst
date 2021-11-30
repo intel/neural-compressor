@@ -10,17 +10,17 @@ Sections
 .. toctree::
    :maxdepth: 1
 
-   README.md
+   Introduction <README.md>
    docs/tutorial.md
    examples_readme.md
-   api-documentation/apis.rst
-   docs/api-introduction.md
-   docs/doclist.rst
-   releases_info.md
-   contributions.md
-   legal_information.md
-   security_policy.md
-   Intel® Neural Compressor repository <https://github.com/intel/neural-compressor>
+   APIs <api-documentation/apis.rst>
+   # docs/api-introduction.md
+   Documentation <docs/doclist.rst>
+   Releases <releases_info.md>
+   Contributing <contributions.md>
+   Legal <legal_information.md>
+   Security <security_policy.md>
+   Github <https://github.com/intel/neural-compressor>
 
     
 
