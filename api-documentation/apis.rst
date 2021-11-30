@@ -1,7 +1,7 @@
 API Reference
 #############
 
-Read an `introduction to Intel Neural Compressor APIs </docs/api-introduction.md>`__
+Read an `introduction to Intel Neural Compressor APIs </docs/api-introduction.md>`__.
 
 The following APIs are available:
 
