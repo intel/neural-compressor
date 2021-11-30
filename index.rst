@@ -14,7 +14,7 @@ Sections
    docs/tutorial.md
    examples_readme.md
    APIs <api-documentation/apis.rst>
-
+   docs/api-introduction.md
    Documentation <docs/doclist.rst>
    Releases <releases_info.md>
    Contributing <contributions.md>
