@@ -11,3 +11,19 @@
 .rst-content tt.literal, .rst-content code.literal {
     color: #000000;
 }
+
+.navbar-light {
+background: #2980b9!important;
+}
+
+.navbar-light .navbar-nav li a.nav-link{
+color: white;
+}
+
+.navbar-brand p{
+color: white;
+}
+
+.navbar-light .navbar-nav>.active>.nav-link {
+color: white;
+}
