@@ -20,7 +20,6 @@ setup(name='nnunet',
             "sklearn",
             "SimpleITK",
             "pandas",
-            "pandas",
             "nibabel"
       ],
       entry_points={
