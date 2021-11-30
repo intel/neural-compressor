@@ -39,6 +39,7 @@ supported_patterns = [
     'PaddingSequence',
     'MatMulWithBias',
     'LastLayerShape',
+    'InteractFeatures',
     'AttentionReshape',
     'QKVReshape',
     'TransposeBatchMatMul',

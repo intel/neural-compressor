@@ -20,7 +20,6 @@ from neural_compressor.utils import logger
 from ..graph.graph import Graph
 from ..ops.op import OPERATORS
 from ..onnx_utils import graph_node_names_details
-from onnx.numpy_helper import to_array
 from ..graph_utils import names_from_input
 
 
@@ -77,6 +76,7 @@ class ONNXExtractor(object):
                                             if origin_tensor_name + ':0' == tensor.name: 
                                                 has_tensor = False
                                         if pre_node in model.initializer() and has_tensor:
+                                            from onnx.numpy_helper import to_array
                                             data = to_array(pre_node)
                                             from engine.compile.ops.tensor import Tensor
                                             shape = list(data.shape) if data.shape != () else [1]

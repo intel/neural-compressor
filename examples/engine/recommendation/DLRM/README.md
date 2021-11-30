@@ -10,7 +10,7 @@ This document is used to list steps of reproducing Engine DLRM tuning zoo result
 
 > **Note**
 >
-> 1. For engine support DLRM with "cat" interaction layer
+> 1. For engine support DLRM with "dot" and "cat" interaction layer
 > 2. Please  ensure your PC have >370G memory to run DLRM 
 
 # Prerequisite
@@ -43,7 +43,7 @@ This is a tutorial of how to enable DLRM model with Intel® Neural Compressor.
 
 # User Code Analysis
 
-Intel® Neural Compressor engine support DLRM ONNX model with "cat" interaction layer
+Example based on the DLRM ONNX model with "cat" interaction layer
 
 ### Write Yaml config file
 In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.

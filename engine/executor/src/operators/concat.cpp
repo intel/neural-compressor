@@ -43,13 +43,13 @@ void ConcatOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
 
   // 1.3 Get tensor's adjusted strides
   vector<int64_t> src_stride = GetStrides(src_shape_origin);
-  // memory::dims dst_stride = GetStrides(dst_shape);
 
   // 1.4 Prepare memory descriptors
   std::vector<memory::desc> src_mds;
   std::vector<memory> src_mems;
   for (int n = 0; n < num_src; ++n) {
-      auto md = memory::desc(src_shape_origin, type2mem[input[0]->dtype()], src_stride);
+      auto md = memory::desc(input[n]->shape(), type2mem[input[n]->dtype()],
+                             GetStrides(input[n]->shape()));
       auto mem = memory(md, eng_);
       src_mds.push_back(md);
       src_mems.push_back(mem);
@@ -61,7 +61,11 @@ void ConcatOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
     if (n != axis_) {
       dst_shape.emplace_back(src_shape_origin[n]);
     } else {
-      dst_shape.emplace_back(num_src * src_shape_origin[n]);
+      int32_t dim_sum = 0;
+      for (int i = 0; i < num_src; ++i) {
+        dim_sum += input[i]->shape()[n];
+      }
+      dst_shape.emplace_back(dim_sum);
     }
   }
   auto& dst_tensor_ptr = output[0];
