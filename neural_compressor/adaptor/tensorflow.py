@@ -153,7 +153,7 @@ class TensorFlowAdaptor(Adaptor):
             # Get gradient
             grads = tape.gradient(loss_value, input_model.trainable_variables) # pylint: disable=no-member
             # Optimize the model
-            optimizer.apply_gradients(zip(grads, input_model.trainable_variables))
+            optimizer.apply_gradients(zip(grads, input_model.trainable_variables)) # pylint: disable=no-member
             if distributed and first_batch:
                 self.hvd.broadcast_variables(input_model.variables, root_rank=0)
                 self.hvd.broadcast_variables(optimizer.variables(), root_rank=0)
