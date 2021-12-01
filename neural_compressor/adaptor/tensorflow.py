@@ -151,7 +151,7 @@ class TensorFlowAdaptor(Adaptor):
                 loss_value = criterion(y, y_)
             tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
             # Get gradient
-            grads = tape.gradient(loss_value, input_model.trainable_variables)
+            grads = tape.gradient(loss_value, input_model.trainable_variables) # pylint: disable=no-member
             # Optimize the model
             optimizer.apply_gradients(zip(grads, input_model.trainable_variables))
             if distributed and first_batch:
