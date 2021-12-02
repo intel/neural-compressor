@@ -841,6 +841,7 @@ class TemplateAdaptor(Adaptor):
         try:
             tmp_model = copy.deepcopy(model.model)
         except Exception as e:   # pragma: no cover
+            tmp_model = model.model
             logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
         from torch.fx import GraphModule
         from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
