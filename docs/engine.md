@@ -2,7 +2,7 @@
 A deep learning inference engine for quantized and sparsified models.
 
 ## Architecture
-Engine support model compile, model executor and high performance kernel for multi device.
+Engine support model compile, model executor and high performance kernel for CPU.
 
 <a target="_blank" href="docs/imgs/infrastructure.png">
   <img src="imgs/engine_infrastructure.png" alt="Infrastructure" width=800 height=500>
