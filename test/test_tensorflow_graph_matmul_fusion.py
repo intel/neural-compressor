@@ -300,7 +300,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     if i.op == 'MatMul':
                         found_quantized_matmul = False
                         break
-            self.assertEqual(found_quantized_matmul, False)
+            self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
     def test_matmul_with_reshape_transpose(self):

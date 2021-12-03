@@ -39,6 +39,7 @@ from .fuse_conv_with_math import FuseConvWithMathOptimizer
 from .fuse_biasadd_add import FuseBiasAddAndAddOptimizer
 from .switch_optimizer import SwitchOptimizer
 from .move_squeeze_after_relu import MoveSqueezeAfterReluOptimizer
+from .convert_nan_to_random import ConvertNanToRandom
 
 class PreOptimization():
     def __init__(self, model, optimization):
@@ -92,11 +93,9 @@ class PreOptimization():
         self._tmp_graph_def = ConvertLayoutOptimizer(
             self.model.graph_def, output_node_names).do_transformation()
 
-        self._tmp_graph_def = MoveSqueezeAfterReluOptimizer(
-            self.model.graph_def).do_transformation()
-        
         self._tmp_graph_def = GrapplerOptimizer(
             self._tmp_graph_def, output_node_names, self.optimization).do_transformation()
+
         self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
@@ -140,6 +139,12 @@ class PreOptimization():
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FuseBiasAddAndAddOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = MoveSqueezeAfterReluOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = ConvertNanToRandom(
             self._tmp_graph_def).do_transformation()
 
         self._excluded_node_names.extend(excluded_node_names)
