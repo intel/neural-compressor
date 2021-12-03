@@ -13,19 +13,18 @@
 //  limitations under the License.
 
 #include "concat.hpp"
+
 #include "common.hpp"
 
 namespace executor {
 
-static unordered_map<string, dnnl::memory::data_type> type2mem{
-                                                          {"fp32", dnnl::memory::data_type::f32},
-                                                          {"s32", dnnl::memory::data_type::s32},
-                                                          {"fp16", dnnl::memory::data_type::f16},
-                                                          {"u8", dnnl::memory::data_type::u8},
-                                                          {"s8", dnnl::memory::data_type::s8}};
+static unordered_map<string, dnnl::memory::data_type> type2mem{{"fp32", dnnl::memory::data_type::f32},
+                                                               {"s32", dnnl::memory::data_type::s32},
+                                                               {"fp16", dnnl::memory::data_type::f16},
+                                                               {"u8", dnnl::memory::data_type::u8},
+                                                               {"s8", dnnl::memory::data_type::s8}};
 
-ConcatOperator::ConcatOperator(const OperatorConfig& conf) :
-  Operator(conf) {
+ConcatOperator::ConcatOperator(const OperatorConfig& conf) : Operator(conf) {
   auto attrs_map = operator_conf_.attributes();
   auto iter = attrs_map.find("axis");
   if (iter != attrs_map.end()) {
@@ -48,11 +47,10 @@ void ConcatOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   std::vector<memory::desc> src_mds;
   std::vector<memory> src_mems;
   for (int n = 0; n < num_src; ++n) {
-      auto md = memory::desc(input[n]->shape(), type2mem[input[n]->dtype()],
-                             GetStrides(input[n]->shape()));
-      auto mem = memory(md, eng_);
-      src_mds.push_back(md);
-      src_mems.push_back(mem);
+    auto md = memory::desc(input[n]->shape(), type2mem[input[n]->dtype()], GetStrides(input[n]->shape()));
+    auto mem = memory(md, eng_);
+    src_mds.push_back(md);
+    src_mems.push_back(mem);
   }
 
   //// Part2: Derive operator's format_any memory::desc and memory.
@@ -85,7 +83,7 @@ void ConcatOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
 void ConcatOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   // 0. Alias variables part
   const int num_src = input.size();
-  
+
   void* dst_data = output[0]->mutable_data();
 
   // 1. Prepare memory objects with data_ptr
@@ -100,7 +98,7 @@ void ConcatOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   // 3. Insert memory args
   std::unordered_map<int, memory> concat_args;
   for (int n = 0; n < num_src; ++n) {
-      concat_args.insert({DNNL_ARG_MULTIPLE_SRC + n, src_m_[n]});
+    concat_args.insert({DNNL_ARG_MULTIPLE_SRC + n, src_m_[n]});
   }
   concat_args.insert({DNNL_ARG_DST, dst_m_});
 

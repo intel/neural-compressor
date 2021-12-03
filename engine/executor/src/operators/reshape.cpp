@@ -26,8 +26,7 @@ ReshapeOperator::ReshapeOperator(const OperatorConfig& conf) : Operator(conf) {
   if (iter != attrs_map.end()) StringSplit<int64_t>(&mul_, attrs_map["mul"], ",");
 }
 
-ReshapeOperator::~ReshapeOperator() {
-}
+ReshapeOperator::~ReshapeOperator() {}
 
 void ReshapeOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   output[0]->set_dtype(input[0]->dtype());
@@ -39,7 +38,7 @@ void ReshapeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*
   if (input.size() == 2) {
     auto shape_vec = input[1]->shape();
     int j = 0;
-    for (int i = 0 ; i < pre_dst_shape.size(); i++) {
+    for (int i = 0; i < pre_dst_shape.size(); i++) {
       if (pre_dst_shape[i] == -1) {
         pre_dst_shape[i] = shape_vec[dims_[j++]];
       }
@@ -53,12 +52,12 @@ void ReshapeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*
   int64_t src_size = src_ptr->size();
   int idx = -1;
   int64_t shape_acc = 1;
-  for (int i = 0 ; i < pre_dst_shape.size(); i++) {
-      if (pre_dst_shape[i] != -1) {
-          shape_acc *= pre_dst_shape[i];
-      } else {
-          idx = i;
-      }
+  for (int i = 0; i < pre_dst_shape.size(); i++) {
+    if (pre_dst_shape[i] != -1) {
+      shape_acc *= pre_dst_shape[i];
+    } else {
+      idx = i;
+    }
   }
   if (idx != -1) {
     pre_dst_shape[idx] = src_size / shape_acc;
@@ -96,7 +95,7 @@ void ReshapeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*
     dst_ptr->set_data(data);
     if (input.size() == 2) input[1]->unref_data();
   } else {
-    void* dst_data_ptr =  const_cast<void*>(dst_ptr->mutable_data());
+    void* dst_data_ptr = const_cast<void*>(dst_ptr->mutable_data());
     int data_size = dst_ptr->size();
     string data_type = src_ptr->dtype();
     memcpy(dst_data_ptr, data, data_size * type2bytes[data_type]);

@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "token_type_ids.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -31,7 +32,6 @@ void TokenTypeIdsOperator::Reshape(const vector<Tensor*>& input, const vector<Te
 }
 
 void TokenTypeIdsOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-
   Tensor* slice = input[1];
   Tensor* dst = output[0];
 
@@ -45,16 +45,15 @@ void TokenTypeIdsOperator::Forward(const vector<Tensor*>& input, const vector<Te
   int32_t* dst_data = static_cast<int32_t*>(dst->mutable_data());
 
   if (mode_ == "roberta") {
-    #pragma omp parallel for
-    for (int i = 0 ; i < batch_size; i++) {
-        #pragma omp simd
-        for (int j = 0 ; j < seq_len; j++) {
-            dst_data[i * seq_len + j] = slice_data[j];
-        }
+#pragma omp parallel for
+    for (int i = 0; i < batch_size; i++) {
+#pragma omp simd
+      for (int j = 0; j < seq_len; j++) {
+        dst_data[i * seq_len + j] = slice_data[j];
+      }
     }
-  } else{
-    LOG(ERROR) << "TokenTypeIds mode is: " << mode_
-               << ", not supported. Only roberta is supported.";
+  } else {
+    LOG(ERROR) << "TokenTypeIds mode is: " << mode_ << ", not supported. Only roberta is supported.";
   }
 
   // 2. unref tensors

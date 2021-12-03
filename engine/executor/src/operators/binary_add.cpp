@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "binary_add.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -85,14 +86,12 @@ void BinaryAddOperator::Forward(const vector<Tensor*>& input, const vector<Tenso
   // Inplace Op: 1. append_sum. 2. non-append_sum
   Tensor* dst_ptr = output[0];
   vector<Tensor*> inputs(input);
-  if (!append_sum_ && (input.size() == 2) && (input[0] != nullptr) &&
-      (input[0]->size() >= dst_ptr->size())) {
+  if (!append_sum_ && (input.size() == 2) && (input[0] != nullptr) && (input[0]->size() >= dst_ptr->size())) {
     void* input_ptr = input[0]->mutable_data();
     input[0]->unref_data(true);
     dst_ptr->set_data(input_ptr);
     inputs = {input[1]};
-  } else if (append_sum_ && (input.size() >= 3) && (input[2] != nullptr) &&
-              (input[2]->size() >= dst_ptr->size())) {
+  } else if (append_sum_ && (input.size() >= 3) && (input[2] != nullptr) && (input[2]->size() >= dst_ptr->size())) {
     void* input_ptr = input[2]->mutable_data();
     input[2]->unref_data(true);
     dst_ptr->set_data(input_ptr);

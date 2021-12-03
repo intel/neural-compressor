@@ -14,15 +14,16 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
+
 #include "../../include/common.hpp"
+#include "../../include/conf.hpp"
 #include "../../include/operators/binary_add.hpp"
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "gtest/gtest.h"
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -35,8 +36,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto src0_tensor_shape = input[0]->shape();
   auto src1_tensor_shape = input[1]->shape();
 
@@ -72,11 +72,10 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
     for (int64_t i = 0; i < dst_shape[0]; ++i) {
       for (int64_t j = 0; j < dst_shape[1]; ++j) {
         int64_t src0_idx = std::min(i, src0_tensor_shape[0] - 1) * src0_strides[0] +
-                            std::min(j, src0_tensor_shape[1] - 1) * src0_strides[1];
+                           std::min(j, src0_tensor_shape[1] - 1) * src0_strides[1];
         int64_t src1_idx = std::min(i, src1_tensor_shape[0] - 1) * src1_strides[0] +
-                            std::min(j, src1_tensor_shape[1] - 1) * src1_strides[1];
-        dst_data[i * dst_strides[0] + j * dst_strides[1]] += src0_tensor_data[src0_idx] +
-                                                              src1_tensor_data[src1_idx];
+                           std::min(j, src1_tensor_shape[1] - 1) * src1_strides[1];
+        dst_data[i * dst_strides[0] + j * dst_strides[1]] += src0_tensor_data[src0_idx] + src1_tensor_data[src1_idx];
       }
     }
   }
@@ -100,8 +99,8 @@ bool CheckResult(const TestParams& t) {
     GetTrueData(q.input, q.output, q.conf);
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size());
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size());
   }
   return false;
 }
@@ -120,7 +119,7 @@ TEST_P(BinaryAddOpTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string append_op = "") {
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src0_shape = input_shape[0];
   const auto& src1_shape = input_shape[1];
@@ -138,8 +137,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   std::map<std::string, std::string> attr_map;
   attr_map["append_op"] = append_op;
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("binary_add", "fp32", input_config_vec,
-                                            output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("binary_add", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {
@@ -154,8 +152,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
     Tensor* a_tensor_copy = new Tensor(*a_tensor_config);
     a_tensor_copy->add_tensor_life(life_num);
     auto tensor_data_copy = a_tensor_copy->mutable_data();
-    memcpy(tensor_data_copy, tensor_data,
-            a_tensor_copy->size() * sizeof(float));
+    memcpy(tensor_data_copy, tensor_data, a_tensor_copy->size() * sizeof(float));
     return std::pair<Tensor*, Tensor*>{a_tensor, a_tensor_copy};
   };
 
@@ -166,10 +163,8 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src0_tensors.first, src1_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src0_tensors.first, src1_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second}, {dst_tensor_copy}, op_config};
 
   if (append_op == "sum") {
     auto src2_tensors = make_tensor_obj(input_config_vec[2], 2);

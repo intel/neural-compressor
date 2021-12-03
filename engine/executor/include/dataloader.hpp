@@ -12,29 +12,29 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_DATALOADER_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_DATALOADER_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_DATALOADER_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_DATALOADER_HPP_
 #include <omp.h>
+
 #include <functional>
 #include <numeric>
 #include <random>
 #include <string>
 #include <thread>  // NOLINT
 #include <vector>
+
+#include "common.hpp"
 #include "gflags/gflags.h"
 #include "tensor.hpp"
-#include "common.hpp"
 
 namespace executor {
 
 class DataLoader {
  public:
   ~DataLoader() {}
-  virtual void* load_sample(size_t* index_list, size_t size) {
-    return NULL;
-  }
-  virtual vector<void*>& prepare_batch(const int index, const int seq_len=-1) = 0;
-  virtual vector<vector<int64_t> > prepare_shape() = 0;
+  virtual void* load_sample(size_t* index_list, size_t size) { return NULL; }
+  virtual vector<void*>& prepare_batch(const int index, const int seq_len = -1) = 0;
+  virtual vector<vector<int64_t>> prepare_shape() = 0;
 
  private:
   vector<vector<void*>> dataset_;
@@ -114,156 +114,144 @@ class DataLoader {
 
 class ConstDataLoader : public DataLoader {
  public:
-    ConstDataLoader(const vector<vector<int64_t>>& input_shape,
-                    const vector<string>& dtype,
-                    const vector<vector<float>>& value_range) :
-      DataLoader(),
-      shape_(input_shape),
-      dtype_(dtype),
-      value_range_(value_range) {
-      CHECK_EQ(input_shape.size(), dtype.size()) << "shape size should equal with dtype size.";
-      for (int i = 0; i < input_shape.size(); ++i) {
-        CHECK_EQ(value_range[i].size(), 2) << "value range size should be 2 from low to high";
-        int64_t size = std::accumulate(input_shape[i].begin(), input_shape[i].end(),
-                                        (int64_t)1, std::multiplies<int64_t>());
-        size_.push_back(size);
-        if (dtype_[i] == "fp32") {
-          float* data = new float[size];
-          batch_data_.push_back(data);
-        } else if (dtype_[i] == "int32") {
-          int32_t* data = new int32_t[size];
-          batch_data_.push_back(data);
-        } else if (dtype_[i] == "u8") {
-          unsigned char* data = new unsigned char[size];
-          batch_data_.push_back(data);
-        } else if (dtype_[i] == "int32") {
-          unsigned int* data = new unsigned int[size];
-          batch_data_.push_back(data);
+  ConstDataLoader(const vector<vector<int64_t>>& input_shape, const vector<string>& dtype,
+                  const vector<vector<float>>& value_range)
+      : DataLoader(), shape_(input_shape), dtype_(dtype), value_range_(value_range) {
+    CHECK_EQ(input_shape.size(), dtype.size()) << "shape size should equal with dtype size.";
+    for (int i = 0; i < input_shape.size(); ++i) {
+      CHECK_EQ(value_range[i].size(), 2) << "value range size should be 2 from low to high";
+      int64_t size =
+          std::accumulate(input_shape[i].begin(), input_shape[i].end(), (int64_t)1, std::multiplies<int64_t>());
+      size_.push_back(size);
+      if (dtype_[i] == "fp32") {
+        float* data = new float[size];
+        batch_data_.push_back(data);
+      } else if (dtype_[i] == "int32") {
+        int32_t* data = new int32_t[size];
+        batch_data_.push_back(data);
+      } else if (dtype_[i] == "u8") {
+        unsigned char* data = new unsigned char[size];
+        batch_data_.push_back(data);
+      } else if (dtype_[i] == "int32") {
+        unsigned int* data = new unsigned int[size];
+        batch_data_.push_back(data);
+      }
+    }
+  }
+  ~ConstDataLoader() {
+    for (int i = 0; i < batch_data_.size(); ++i) {
+      delete batch_data_[i];
+    }
+  }
+
+  virtual vector<vector<int64_t>> prepare_shape() { return shape_; }
+
+  virtual vector<void*>& prepare_batch(const int index, const int seq_len = -1) {
+    for (int i = 0; i < shape_.size(); ++i) {
+      std::uniform_real_distribution<float> u(value_range_[i][0], value_range_[i][1]);
+      if (dtype_[i] == "fp32") {
+        auto data = static_cast<float*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<float>(idx % static_cast<int>(value_range_[i][1]));
+        }
+      } else if (dtype_[i] == "int32") {
+        auto data = static_cast<int32_t*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<int32_t>(idx % static_cast<int>(value_range_[i][1]));
+        }
+      } else if (dtype_[i] == "u8") {
+        auto data = static_cast<unsigned char*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<unsigned char>(idx % static_cast<int>(value_range_[i][1]));
+        }
+      } else if (dtype_[i] == "int32") {
+        auto data = static_cast<int*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<int>(idx % static_cast<int>(value_range_[i][1]));
         }
       }
     }
-    ~ConstDataLoader() {
-      for (int i = 0; i < batch_data_.size(); ++i) {
-        delete batch_data_[i];
-      }
-    }
-
-    virtual vector<vector<int64_t>> prepare_shape(){
-      return shape_;
-    }
-
-    virtual vector<void*>& prepare_batch(const int index, const int seq_len=-1) {
-      for (int i = 0; i < shape_.size(); ++i) {
-        std::uniform_real_distribution<float> u(value_range_[i][0], value_range_[i][1]);
-        if (dtype_[i] == "fp32") {
-          auto data = static_cast<float*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<float>(idx % static_cast<int>(value_range_[i][1]));
-          }
-        } else if (dtype_[i] == "int32") {
-          auto data = static_cast<int32_t*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<int32_t>(idx % static_cast<int>(value_range_[i][1]));
-          }
-        } else if (dtype_[i] == "u8") {
-          auto data = static_cast<unsigned char*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<unsigned char>(idx % static_cast<int>(value_range_[i][1]));
-          }
-        } else if (dtype_[i] == "int32") {
-          auto data = static_cast<int*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<int>(idx % static_cast<int>(value_range_[i][1]));
-          }
-        }
-      }
-      return batch_data_;
-    }
+    return batch_data_;
+  }
 
  private:
-    vector<vector<int64_t>> shape_;
-    vector<string> dtype_;
-    vector<void*> batch_data_;
-    vector<vector<float>> value_range_;
-    std::mt19937 generator_;
-    vector<int64_t> size_;
+  vector<vector<int64_t>> shape_;
+  vector<string> dtype_;
+  vector<void*> batch_data_;
+  vector<vector<float>> value_range_;
+  std::mt19937 generator_;
+  vector<int64_t> size_;
 };
 
 class DummyDataLoader : public DataLoader {
  public:
-    DummyDataLoader(const vector<vector<int64_t>>& input_shape,
-                    const vector<string>& dtype,
-                    const vector<vector<float>>& value_range) :
-      DataLoader(),
-      shape_(input_shape),
-      dtype_(dtype),
-      value_range_(value_range) {
-      CHECK_EQ(input_shape.size(), dtype.size()) << "shape size should equal with dtype size.";
-      for (int i = 0; i < input_shape.size(); ++i) {
-        CHECK_EQ(value_range[i].size(), 2) << "value range size should be 2 from low to high";
-        int64_t size = std::accumulate(input_shape[i].begin(), input_shape[i].end(),
-                                        (int64_t)1, std::multiplies<int64_t>());
-        size_.push_back(size);
-        if (dtype_[i] == "fp32") {
-          float* data = new float[size];
-          batch_data_.push_back(data);
-        } else if (dtype_[i] == "int32") {
-          int32_t* data = new int32_t[size];
-          batch_data_.push_back(data);
-        } else if (dtype_[i] == "u8") {
-          unsigned char* data = new unsigned char[size];
-          batch_data_.push_back(data);
-        } else if (dtype_[i] == "int32") {
-          unsigned int* data = new unsigned int[size];
-          batch_data_.push_back(data);
-        }
+  DummyDataLoader(const vector<vector<int64_t>>& input_shape, const vector<string>& dtype,
+                  const vector<vector<float>>& value_range)
+      : DataLoader(), shape_(input_shape), dtype_(dtype), value_range_(value_range) {
+    CHECK_EQ(input_shape.size(), dtype.size()) << "shape size should equal with dtype size.";
+    for (int i = 0; i < input_shape.size(); ++i) {
+      CHECK_EQ(value_range[i].size(), 2) << "value range size should be 2 from low to high";
+      int64_t size =
+          std::accumulate(input_shape[i].begin(), input_shape[i].end(), (int64_t)1, std::multiplies<int64_t>());
+      size_.push_back(size);
+      if (dtype_[i] == "fp32") {
+        float* data = new float[size];
+        batch_data_.push_back(data);
+      } else if (dtype_[i] == "int32") {
+        int32_t* data = new int32_t[size];
+        batch_data_.push_back(data);
+      } else if (dtype_[i] == "u8") {
+        unsigned char* data = new unsigned char[size];
+        batch_data_.push_back(data);
+      } else if (dtype_[i] == "int32") {
+        unsigned int* data = new unsigned int[size];
+        batch_data_.push_back(data);
       }
     }
-    ~DummyDataLoader() {
-      for (int i = 0; i < batch_data_.size(); ++i) {
-        delete batch_data_[i];
-      }
+  }
+  ~DummyDataLoader() {
+    for (int i = 0; i < batch_data_.size(); ++i) {
+      delete batch_data_[i];
     }
+  }
 
-    virtual vector<vector<int64_t>> prepare_shape(){
-      return shape_;
-    }
-    virtual vector<void*>& prepare_batch(const int index, const int seq_len=-1) {
-      for (int i = 0; i < shape_.size(); ++i) {
-        std::uniform_real_distribution<float> u(value_range_[i][0], value_range_[i][1]);
-        if (dtype_[i] == "fp32") {
-          auto data = static_cast<float*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = u(generator_);
-          }
-        } else if (dtype_[i] == "int32") {
-          auto data = static_cast<int32_t*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<int32_t>(u(generator_));
-          }
-        } else if (dtype_[i] == "u8") {
-          auto data = static_cast<unsigned char*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<unsigned char>(u(generator_));
-          }
-        } else if (dtype_[i] == "int32") {
-          auto data = static_cast<int*>(batch_data_[i]);
-          for (int idx = 0; idx < size_[i]; ++idx) {
-            *(data++) = static_cast<int>(u(generator_));
-          }
+  virtual vector<vector<int64_t>> prepare_shape() { return shape_; }
+  virtual vector<void*>& prepare_batch(const int index, const int seq_len = -1) {
+    for (int i = 0; i < shape_.size(); ++i) {
+      std::uniform_real_distribution<float> u(value_range_[i][0], value_range_[i][1]);
+      if (dtype_[i] == "fp32") {
+        auto data = static_cast<float*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = u(generator_);
+        }
+      } else if (dtype_[i] == "int32") {
+        auto data = static_cast<int32_t*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<int32_t>(u(generator_));
+        }
+      } else if (dtype_[i] == "u8") {
+        auto data = static_cast<unsigned char*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<unsigned char>(u(generator_));
+        }
+      } else if (dtype_[i] == "int32") {
+        auto data = static_cast<int*>(batch_data_[i]);
+        for (int idx = 0; idx < size_[i]; ++idx) {
+          *(data++) = static_cast<int>(u(generator_));
         }
       }
-      return batch_data_;
     }
+    return batch_data_;
+  }
 
  private:
-    vector<vector<int64_t>> shape_;
-    vector<string> dtype_;
-    vector<void*> batch_data_;
-    vector<vector<float>> value_range_;
-    std::mt19937 generator_;
-    vector<int64_t> size_;
+  vector<vector<int64_t>> shape_;
+  vector<string> dtype_;
+  vector<void*> batch_data_;
+  vector<vector<float>> value_range_;
+  std::mt19937 generator_;
+  vector<int64_t> size_;
 };
 
-}  // using namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_DATALOADER_HPP_
+}  // namespace executor
+#endif  // ENGINE_EXECUTOR_INCLUDE_DATALOADER_HPP_

@@ -14,15 +14,16 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
+
 #include "../../include/common.hpp"
+#include "../../include/conf.hpp"
 #include "../../include/operators/matmul.hpp"
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "gtest/gtest.h"
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -35,8 +36,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                  const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto attrs_map = conf.attributes();
   vector<int64_t> src0_perm;
   executor::StringSplit<int64_t>(&src0_perm, attrs_map["src0_perm"], ",");
@@ -79,16 +79,15 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
 
   if (src0_dims == 2) {
     for (int i = 0; i < M; ++i) {
-      // #pragma omp simd
-      #pragma omp parallel for
+// #pragma omp simd
+#pragma omp parallel for
       for (int j = 0; j < N; ++j) {
         double value = 0;
-        #pragma omp simd
+#pragma omp simd
         for (int k = 0; k < K; ++k) {
           int src0_idx = i * src0_stride[0] + k * src0_stride[1];
           int src1_idx = k * src1_stride[0] + j * src1_stride[1];
-          value += static_cast<double>(src0_tensor_data[src0_idx]) *
-                  static_cast<double>(src1_tensor_data[src1_idx]);
+          value += static_cast<double>(src0_tensor_data[src0_idx]) * static_cast<double>(src1_tensor_data[src1_idx]);
         }
         int dst_idx = i * dst_stride_origin[0] + j * dst_stride_origin[1];
         dst_data[dst_idx] = value;
@@ -97,26 +96,24 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
     return;
   }
   if (src0_dims == 4) {
-    float* dst_buffer = dst_need_trans ? new float[output[0]->size()]: dst_data;
+    float* dst_buffer = dst_need_trans ? new float[output[0]->size()] : dst_data;
     // Dst without transpose
     for (int bs0 = 0; bs0 < BS0; ++bs0) {
       for (int bs1 = 0; bs1 < BS1; ++bs1) {
         for (int i = 0; i < M; ++i) {
-          // #pragma omp simd
-          #pragma omp parallel for
+// #pragma omp simd
+#pragma omp parallel for
           for (int j = 0; j < N; ++j) {
             double value = 0;
-            #pragma omp simd
+#pragma omp simd
             for (int k = 0; k < K; ++k) {
-              int src0_idx = bs0 * + src0_stride[0] + bs1 * src0_stride[1] +
-                              i * src0_stride[2] + k * src0_stride[3];
-              int src1_idx = bs0 * + src1_stride[0] + bs1 * src1_stride[1] +
-                              k * src1_stride[2] + j * src1_stride[3];
-              value += static_cast<double>(src0_tensor_data[src0_idx]) *
-                        static_cast<double>(src1_tensor_data[src1_idx]);
+              int src0_idx = bs0 * +src0_stride[0] + bs1 * src0_stride[1] + i * src0_stride[2] + k * src0_stride[3];
+              int src1_idx = bs0 * +src1_stride[0] + bs1 * src1_stride[1] + k * src1_stride[2] + j * src1_stride[3];
+              value +=
+                  static_cast<double>(src0_tensor_data[src0_idx]) * static_cast<double>(src1_tensor_data[src1_idx]);
             }
-            int dst_idx = bs0 * + dst_stride_origin[0] + bs1 * dst_stride_origin[1] +
-                          i * dst_stride_origin[2] + j * dst_stride_origin[3];
+            int dst_idx = bs0 * +dst_stride_origin[0] + bs1 * dst_stride_origin[1] + i * dst_stride_origin[2] +
+                          j * dst_stride_origin[3];
             dst_buffer[dst_idx] = value;
           }
         }
@@ -127,14 +124,13 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
       vector<int64_t> final_stride = executor::GetStrides(dst_shape_trans);
       for (int bs0 = 0; bs0 < dst_shape_trans[0]; ++bs0) {
         for (int bs1 = 0; bs1 < dst_shape_trans[1]; ++bs1) {
-          #pragma omp parallel for
+#pragma omp parallel for
           for (int i = 0; i < dst_shape_trans[2]; ++i) {
-            #pragma omp simd
+#pragma omp simd
             for (int j = 0; j < dst_shape_trans[3]; ++j) {
-              int src_idx = bs0 * + dst_stride_trans[0] + bs1 * dst_stride_trans[1] +
-                            i * dst_stride_trans[2] + j * dst_stride_trans[3];
-              int data_idx = bs0 * + final_stride[0] + bs1 * final_stride[1] +
-                             i * final_stride[2] + j * final_stride[3];
+              int src_idx = bs0 * +dst_stride_trans[0] + bs1 * dst_stride_trans[1] + i * dst_stride_trans[2] +
+                            j * dst_stride_trans[3];
+              int data_idx = bs0 * +final_stride[0] + bs1 * final_stride[1] + i * final_stride[2] + j * final_stride[3];
               dst_data[data_idx] = dst_buffer[src_idx];
             }
           }
@@ -164,8 +160,8 @@ bool CheckResult(const TestParams& t) {
     GetTrueData(q.input, q.output, q.conf);
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size(), 1e-3);
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size(), 1e-3);
   }
   return false;
 }
@@ -184,10 +180,9 @@ TEST_P(MatmulTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string src0_perm = "", std::string src1_perm = "",
-                                          std::string dst_perm = "",
-                                          std::string format_any = "false",
-                                          std::string append_op = "") {
+                                           std::string src0_perm = "", std::string src1_perm = "",
+                                           std::string dst_perm = "", std::string format_any = "false",
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src0_shape = input_shape[0];
   const auto& src1_shape = input_shape[1];
@@ -202,18 +197,11 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
 
   // Step 1.1: Construct Operator config obj
   std::map<std::string, std::string> attr_map;
-  attr_map = {
-    {"src0_perm", src0_perm},
-    {"src1_perm", src1_perm},
-    {"dst_perm", dst_perm},
-    {"format_any", format_any},
-    {"output_dtype", "fp32"},
-    {"append_op", append_op}
-    };
+  attr_map = {{"src0_perm", src0_perm},   {"src1_perm", src1_perm}, {"dst_perm", dst_perm},
+              {"format_any", format_any}, {"output_dtype", "fp32"}, {"append_op", append_op}};
 
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("matmul", "fp32", inputs_config,
-                                            {dst_config}, op_attr);
+  OperatorConfig op_config = OperatorConfig("matmul", "fp32", inputs_config, {dst_config}, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config) {
@@ -238,10 +226,8 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src0_tensors.first, src1_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src0_tensors.first, src1_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second}, {dst_tensor_copy}, op_config};
 
   if (append_op == "sum") {
     auto src2_tensors = make_tensor_obj(inputs_config[2]);
@@ -270,8 +256,7 @@ static auto CasesFp32 = []() {
   // case: format_tag::any
   src0_shape = {10, 5};
   src1_shape = {5, 8};
-  cases.push_back({GenerateFp32Case({src0_shape, src1_shape},
-                                    "0,1", "0,1", "0,1", "true"), false});
+  cases.push_back({GenerateFp32Case({src0_shape, src1_shape}, "0,1", "0,1", "0,1", "true"), false});
   // case: adj_y = true
   src0_shape = {10, 20};
   src1_shape = {32, 20};

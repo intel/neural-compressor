@@ -12,18 +12,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_
 #include <string>
-#include "oneapi/dnnl/dnnl.hpp"
-#include "../operator.hpp"
+#include <vector>
+
 #include "../common.hpp"
+#include "../operator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
+using dnnl::algorithm;
 using dnnl::memory;
 using dnnl::prop_kind;
-using dnnl::algorithm;
 
 /**
  * @brief A Quantize operator.
@@ -48,4 +49,4 @@ class QuantizeOperator : public Operator {
   Tensor* dst_ = nullptr;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_

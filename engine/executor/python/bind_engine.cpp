@@ -14,34 +14,33 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
 #include <vector>
-#include "tensor.hpp"
-#include "pybind_tensor.hpp"
+
 #include "executor.hpp"
+#include "pybind_tensor.hpp"
+#include "tensor.hpp"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(engine_py, m) {
   m.doc() = "pybind11 engine plugin";
   py::class_<executor::Model>(m, "Model")
-  .def(py::init<std::string, std::string>())
-  .def(py::init<executor::ModelConfig, std::string>())
-  .def("forward", &executor::Model::Forward, py::arg("input"));
+      .def(py::init<std::string, std::string>())
+      .def(py::init<executor::ModelConfig, std::string>())
+      .def("forward", &executor::Model::Forward, py::arg("input"));
 
   py::class_<executor::TensorConfig>(m, "tensor_config")
-  .def(py::init<std::string, const std::vector<int64_t> &,
-                std::string, const std::vector<int64_t> &,
-                const std::vector<int64_t> &>());
+      .def(py::init<std::string, const std::vector<int64_t>&, std::string, const std::vector<int64_t>&,
+                    const std::vector<int64_t>&>());
 
-  py::class_<executor::AttrConfig>(m, "attrs_config")
-  .def(py::init<const std::map<std::string, std::string> &>());
+  py::class_<executor::AttrConfig>(m, "attrs_config").def(py::init<const std::map<std::string, std::string>&>());
 
   py::class_<executor::OperatorConfig>(m, "op_config")
-  .def(py::init<std::string, std::string, const std::vector<executor::TensorConfig*>&,
-                const std::vector<executor::TensorConfig*>&, executor::AttrConfig*>());
+      .def(py::init<std::string, std::string, const std::vector<executor::TensorConfig*>&,
+                    const std::vector<executor::TensorConfig*>&, executor::AttrConfig*>());
 
   py::class_<executor::ModelConfig>(m, "model_config")
-  .def(py::init<std::string, const std::vector<executor::OperatorConfig*>&>())
-  .def(py::init<YAML::Node>());
+      .def(py::init<std::string, const std::vector<executor::OperatorConfig*>&>())
+      .def(py::init<YAML::Node>());
 }
-

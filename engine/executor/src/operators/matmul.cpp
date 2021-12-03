@@ -14,20 +14,22 @@
 
 #include "matmul.hpp"
 
+#include "operator_registry.hpp"
 namespace executor {
 
 static unordered_map<string, dnnl::memory::data_type> type2mem{
-                                                          {"fp32", dnnl::memory::data_type::f32},
-                                                          {"int32", dnnl::memory::data_type::s32},
-                                                          {"s32", dnnl::memory::data_type::s32},
-                                                          {"fp16", dnnl::memory::data_type::f16},
-                                                          {"u8", dnnl::memory::data_type::u8},
-                                                          {"s8", dnnl::memory::data_type::s8}};
+    {"fp32", dnnl::memory::data_type::f32}, {"int32", dnnl::memory::data_type::s32},
+    {"s32", dnnl::memory::data_type::s32},  {"fp16", dnnl::memory::data_type::f16},
+    {"u8", dnnl::memory::data_type::u8},    {"s8", dnnl::memory::data_type::s8}};
 
-
-MatmulOperator::MatmulOperator(const OperatorConfig& conf) :
-  Operator(conf), src0_perm_({}), src1_perm_({}), dst_perm_({}),
-  output_scale_(1.), format_any_(true) , cache_weight_(false){
+MatmulOperator::MatmulOperator(const OperatorConfig& conf)
+    : Operator(conf),
+      src0_perm_({}),
+      src1_perm_({}),
+      dst_perm_({}),
+      output_scale_(1.),
+      format_any_(true),
+      cache_weight_(false) {
   auto attrs_map = operator_conf_.attributes();
 
   auto iter = attrs_map.find("src0_perm");
@@ -48,11 +50,11 @@ MatmulOperator::MatmulOperator(const OperatorConfig& conf) :
   }
   iter = attrs_map.find("format_any");
   if (iter != attrs_map.end()) {
-    format_any_ = attrs_map["format_any"]  ==  "true";
+    format_any_ = attrs_map["format_any"] == "true";
   }
   iter = attrs_map.find("is_symm");
   if (iter != attrs_map.end()) {
-    is_asymm_ = attrs_map["is_symm"]  ==  "true";
+    is_asymm_ = attrs_map["is_symm"] == "true";
   }
   iter = attrs_map.find("output_dtype");
   if (iter != attrs_map.end()) {
@@ -63,16 +65,15 @@ MatmulOperator::MatmulOperator(const OperatorConfig& conf) :
     cache_weight_ = attrs_map["cache_weight"] == "true";
   }
   iter = attrs_map.find("append_op");
-  append_sum_ = (iter != attrs_map.end() && iter->second  ==  "sum") ? true : false;
-  binary_add_ = (iter != attrs_map.end() && iter->second  ==  "binary_add") ? true : false;
-  gelu_erf_ = (iter != attrs_map.end() && iter->second  ==  "gelu_erf") ? true : false;
-  gelu_tanh_ = (iter != attrs_map.end() && iter->second  ==  "gelu_tanh") ? true : false;
-  tanh_ = (iter != attrs_map.end() && iter->second  ==  "tanh") ? true : false;
+  append_sum_ = (iter != attrs_map.end() && iter->second == "sum") ? true : false;
+  binary_add_ = (iter != attrs_map.end() && iter->second == "binary_add") ? true : false;
+  gelu_erf_ = (iter != attrs_map.end() && iter->second == "gelu_erf") ? true : false;
+  gelu_tanh_ = (iter != attrs_map.end() && iter->second == "gelu_tanh") ? true : false;
+  tanh_ = (iter != attrs_map.end() && iter->second == "tanh") ? true : false;
   append_eltwise_ = gelu_erf_ || gelu_tanh_ || tanh_;
 }
 
-MatmulOperator::~MatmulOperator() {
-}
+MatmulOperator::~MatmulOperator() {}
 
 void MatmulOperator::MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   int input_size = input.size();
@@ -131,7 +132,7 @@ void MatmulOperator::MapTensors(const vector<Tensor*>& input, const vector<Tenso
     case 9: {
       src0_ = input[0];
       src1_ = input[1];
-      bias_ = (append_sum_ || binary_add_) ? nullptr: input[2];
+      bias_ = (append_sum_ || binary_add_) ? nullptr : input[2];
       post_ = (append_sum_ || binary_add_) ? input[2] : nullptr;
       src0_min_ = input[3];
       src0_max_ = input[4];
@@ -164,8 +165,11 @@ void MatmulOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>
 
 // 1. Create primitive
 void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  bool has_bias = (input.size() == 4 || input.size() == 10) ||
-      ((input.size() == 3 || input.size() == 7 || input.size() == 9) && !append_sum_ && !binary_add_) ? true: false;
+  bool has_bias =
+      (input.size() == 4 || input.size() == 10) ||
+              ((input.size() == 3 || input.size() == 7 || input.size() == 9) && !append_sum_ && !binary_add_)
+          ? true
+          : false;
 
   //// Part1: Derive operator's user proper shape and strides
   // 1.1 Transpose tensor shape and get it
@@ -202,16 +206,13 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   vector<int64_t> bias_stride = GetStrides(bias_shape, reverse_perm);
 
   // 1.4 Prepare memory descriptors
-  memory::desc any_src0_md = memory::desc(src0_shape,
-    type2mem[src0_->dtype()], memory::format_tag::any);
+  memory::desc any_src0_md = memory::desc(src0_shape, type2mem[src0_->dtype()], memory::format_tag::any);
   memory::desc src0_md = memory::desc(src0_shape, type2mem[src0_->dtype()], src0_stride);
 
-  memory::desc any_src1_md = memory::desc(
-    src1_shape, type2mem[src1_->dtype()], memory::format_tag::any);
+  memory::desc any_src1_md = memory::desc(src1_shape, type2mem[src1_->dtype()], memory::format_tag::any);
   memory::desc src1_md = memory::desc(src1_shape, type2mem[src1_->dtype()], src1_stride);
 
-  memory::desc any_dst_md = memory::desc(
-    dst_shape_origin, type2mem[dst_->dtype()], memory::format_tag::any);
+  memory::desc any_dst_md = memory::desc(dst_shape_origin, type2mem[dst_->dtype()], memory::format_tag::any);
   memory::desc dst_md = memory::desc(dst_shape_origin, type2mem[dst_->dtype()], dst_stride);
 
   memory::desc bias_md;
@@ -228,14 +229,12 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   }
 
   // 2.2 Prepare op descriptors
-  dnnl::matmul::desc matmul_d = has_bias ?
-    dnnl::matmul::desc(src0_md, src1_md, bias_md, dst_md) :
-    dnnl::matmul::desc(src0_md, src1_md, dst_md);
+  dnnl::matmul::desc matmul_d =
+      has_bias ? dnnl::matmul::desc(src0_md, src1_md, bias_md, dst_md) : dnnl::matmul::desc(src0_md, src1_md, dst_md);
 
   if (format_any_) {
-    matmul_d = has_bias ?
-      dnnl::matmul::desc(any_src0_md, any_src1_md, any_bias_md, any_dst_md) :
-      dnnl::matmul::desc(any_src0_md, any_src1_md, any_dst_md);
+    matmul_d = has_bias ? dnnl::matmul::desc(any_src0_md, any_src1_md, any_bias_md, any_dst_md)
+                        : dnnl::matmul::desc(any_src0_md, any_src1_md, any_dst_md);
   }
 
   // 2.3 Prepare primitive descriptors (cached)
@@ -248,19 +247,15 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   if (output_scale_ != 1.f || src0_min_ != nullptr || src1_min_ != nullptr) {
     if (src0_min_ != nullptr && src1_max_ != nullptr) {
       ic_dim = src1_min_->size() > 1 ? 0 | (1 << 1) : 0;
-      src0_scales = GetScales(src0_min_->data(), src0_max_->data(),
-                              src0_min_->size(), src0_->dtype());
-      src1_scales = GetScales(src1_min_->data(), src1_max_->data(),
-                              src1_min_->size(), src1_->dtype());
+      src0_scales = GetScales(src0_min_->data(), src0_max_->data(), src0_min_->size(), src0_->dtype());
+      src1_scales = GetScales(src1_min_->data(), src1_max_->data(), src1_min_->size(), src1_->dtype());
       if (dst_min_ != nullptr)
-        dst_scales = GetScales(dst_min_->data(), dst_max_->data(),
-                               dst_min_->size(), dst_->dtype());
-      rescales = GetRescales(src0_scales, src1_scales,
-                             dst_scales, dst_->dtype(),append_eltwise_);
+        dst_scales = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
+      rescales = GetRescales(src0_scales, src1_scales, dst_scales, dst_->dtype(), append_eltwise_);
     } else {
       rescales = vector<float>(1, 1.f);
     }
-    if (output_scale_!= 1.f) {
+    if (output_scale_ != 1.f) {
       for (int i = 0; i < rescales.size(); i++) {
         rescales[i] *= output_scale_;
       }
@@ -290,7 +285,7 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
     auto op_beta = 0.0;
     po.append_eltwise(op_scale, algorithm::eltwise_tanh, op_alpha, op_beta);
   }
-   if (dst_->dtype() == "u8") {
+  if (dst_->dtype() == "u8") {
     if (append_eltwise_) {
       float zero_point = -1 * static_cast<const float*>(dst_min_->data())[0];
       po.append_eltwise(dst_scales[0], algorithm::eltwise_linear, 1., zero_point);
@@ -303,8 +298,7 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   if (binary_add_) {
     vector<int64_t> post_shape = post_->shape();
     vector<int64_t> post_stride = GetStrides(post_shape);
-    memory::desc binary_md = memory::desc(
-      post_shape, type2mem[post_->dtype()], post_stride);
+    memory::desc binary_md = memory::desc(post_shape, type2mem[post_->dtype()], post_stride);
     po.append_binary(algorithm::binary_add, binary_md);
     binary_m_ = memory(binary_md, eng_);
   }

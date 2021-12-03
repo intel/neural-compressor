@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "padding_sequence.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -20,8 +21,7 @@ namespace executor {
 PaddingSequenceOperator::PaddingSequenceOperator(const OperatorConfig& conf) : Operator(conf) {
   auto attrs_map = operator_conf_.attributes();
   auto iter = attrs_map.find("padding_value");
-  padding_ = (iter != attrs_map.end() && iter->second != "") ?
-              StringToNum<float>(iter->second) : -10000;
+  padding_ = (iter != attrs_map.end() && iter->second != "") ? StringToNum<float>(iter->second) : -10000;
   StringSplit<int64_t>(&attr_dst_shape_, attrs_map["dst_shape"], ",");
   if (attr_dst_shape_.empty()) {
     LOG(ERROR) << "dst_shape attr is empty.";
@@ -29,8 +29,7 @@ PaddingSequenceOperator::PaddingSequenceOperator(const OperatorConfig& conf) : O
   StringSplit<int64_t>(&dims_, attrs_map["dims"], ",");
 }
 
-void PaddingSequenceOperator::Reshape(const vector<Tensor*>& input,
-                                      const vector<Tensor*>& output) {
+void PaddingSequenceOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   //// Part1: Derive operator's user proper shape and strides
   // 1.1: Prepare Tensor origin shape
   const auto& src0_shape = input[0]->shape();
@@ -64,8 +63,8 @@ void PaddingSequenceOperator::Reshape(const vector<Tensor*>& input,
   int64_t runtime_dims = 3;
   int64_t broadcast_nums = 1;
   if (dst_shape.size() >= runtime_dims) {
-    broadcast_nums = std::accumulate(dst_shape.begin() + 1, dst_shape.end() - 1,
-                                      static_cast<size_t>(1), std::multiplies<size_t>());
+    broadcast_nums =
+        std::accumulate(dst_shape.begin() + 1, dst_shape.end() - 1, static_cast<size_t>(1), std::multiplies<size_t>());
   }
   pad_dst_shape_.insert(pad_dst_shape_.begin() + 1, broadcast_nums);
   pad_dst_stride_ = GetStrides(pad_dst_shape_);
@@ -76,19 +75,17 @@ void PaddingSequenceOperator::Reshape(const vector<Tensor*>& input,
   dst_tensor_ptr->set_shape(dst_shape);
 }
 
-void PaddingSequenceOperator::Forward(const vector<Tensor*>& input,
-                                      const vector<Tensor*>& output) {
+void PaddingSequenceOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   // 0. Alias variables part
   const auto& mask_data = static_cast<const int32_t*>(input[0]->data());
   // when change data value please use mutable_data
   auto dst_data = static_cast<float*>(output[0]->mutable_data());
-  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == \
-         reinterpret_cast<void*>(const_cast<int32_t*>(mask_data))) \
-         << "DST ptr should not be equal to SRC ptr.";
+  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == reinterpret_cast<void*>(const_cast<int32_t*>(mask_data)))
+      << "DST ptr should not be equal to SRC ptr.";
 
   // Prepare actual sequence length whose element is 1
   std::vector<int> seqs_per_batch(src_shape_[0]);
-  #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < src_shape_[0]; ++i) {
     for (int j = src_shape_[1] - 1; j >= 0; --j) {
       auto idx = i * src_stride_[0] + j;
@@ -102,11 +99,11 @@ void PaddingSequenceOperator::Forward(const vector<Tensor*>& input,
 
   // 1. Execute the dst
   for (int i = 0; i < pad_dst_shape_[0]; ++i) {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int j = 0; j < pad_dst_shape_[1]; ++j) {
       int row_idx = i * pad_dst_stride_[0] + j * pad_dst_stride_[1];
       memset(dst_data + row_idx, 0, sizeof(float) * seqs_per_batch[i]);
-      #pragma omp simd
+#pragma omp simd
       for (int k = seqs_per_batch[i]; k < pad_dst_shape_[2]; ++k) {
         dst_data[row_idx + k] = padding_;
       }

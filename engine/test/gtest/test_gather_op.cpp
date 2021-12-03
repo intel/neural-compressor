@@ -14,15 +14,16 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
+
 #include "../../include/common.hpp"
+#include "../../include/conf.hpp"
 #include "../../include/operators/gather.hpp"
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "gtest/gtest.h"
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -45,8 +46,8 @@ bool CheckResult(const TestParams& t) {
 
   // Should compare buffer with different addresses
   EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                      q.output[0]->data(), q.output[0]->size());
+  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                      q.output[0]->size());
 }
 
 class GatherOpTest : public testing::TestWithParam<TestParams> {
@@ -63,7 +64,7 @@ TEST_P(GatherOpTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string append_op = "") {
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src0_shape = input_shape[0];
   const auto& src1_shape = input_shape[1];
@@ -79,8 +80,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   attr_map["axis"] = "0";
   attr_map["batch_dims"] = "0";
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("gather", "fp32", input_config_vec,
-                                            output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("gather", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {
@@ -118,21 +118,18 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   auto src1_data_copy = (const float*)src1_tensors.second->data();
   auto src0_shape_copy = src0_tensors.second->shape();
   auto src1_shape_copy = src1_tensors.second->shape();
-  #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < src0_shape_copy[0]; ++i) {
     int indices_val = src0_data_copy[i];
-    // copy slices
-    #pragma omp simd
+// copy slices
+#pragma omp simd
     for (int j = 0; j < src1_shape_copy[1]; ++j) {
-      dst_data_copy[i * src1_shape_copy[1] + j] =
-        src1_data_copy[indices_val * src1_shape_copy[1] + j];
+      dst_data_copy[i * src1_shape_copy[1] + j] = src1_data_copy[indices_val * src1_shape_copy[1] + j];
     }
   }
 
-  OpArgs op_args = {{src0_tensors.first, src1_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src0_tensors.first, src1_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second}, {dst_tensor_copy}, op_config};
 
   return {op_args, op_args_copy};
 }

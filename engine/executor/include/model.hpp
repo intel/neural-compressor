@@ -12,24 +12,25 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_MODEL_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_MODEL_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_MODEL_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_MODEL_HPP_
 
 #include <stdio.h>
+
 #include <algorithm>
-#include <memory>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "common.hpp"
 #include "glog/logging.h"
-#include "tensor.hpp"
+#include "memory_allocator.hpp"
 #include "operator.hpp"
 #include "operator_registry.hpp"
-#include "memory_allocator.hpp"
-#include "common.hpp"
+#include "tensor.hpp"
 
 namespace executor {
 
@@ -47,37 +48,31 @@ class Model {
   void Init(const ModelConfig& conf);
   vector<Tensor>& Forward(vector<Tensor>& input_data);  // NOLINT
 
-  void SetInput(const vector<OperatorConfig*>& conf, const int operator_id,
-    const int tensor_id, map<string, int>* tensor_name_to_idx);
+  void SetInput(const vector<OperatorConfig*>& conf, const int operator_id, const int tensor_id,
+                map<string, int>* tensor_name_to_idx);
 
-  void SetOutput(const vector<OperatorConfig*>& conf, const int operator_id,
-    const int tensor_id, map<string, int>* tensor_name_to_idx);
+  void SetOutput(const vector<OperatorConfig*>& conf, const int operator_id, const int tensor_id,
+                 map<string, int>* tensor_name_to_idx);
 
   inline const string& name() const { return name_; }
   inline const vector<string>& operator_names() const { return operator_names_; }
   inline const vector<string>& tensor_names() const { return tensor_names_; }
-  inline const vector<shared_ptr<Operator > >& operators() const {
-    return operators_;
-  }
-  inline const vector<Tensor*>& tensors() const {
-    return tensors_;
-  }
+  inline const vector<shared_ptr<Operator> >& operators() const { return operators_; }
+  inline const vector<Tensor*>& tensors() const { return tensors_; }
 
   inline int num_inputs() const { return model_input_tensors_.size(); }
   inline int num_outputs() const { return model_output_tensors_.size(); }
 
-  inline const vector<TensorConfig*>& input_configs() const {
-    return model_input_configs_;
-  }
+  inline const vector<TensorConfig*>& input_configs() const { return model_input_configs_; }
 
   inline vector<Tensor>& output_tensors() {
-    LOG(INFO) << "Output tensor size is "<< model_output_tensors_.size();
+    LOG(INFO) << "Output tensor size is " << model_output_tensors_.size();
     for (int i = 0; i < model_output_tensors_.size(); ++i) {
       auto data_buffer = model_output_tensors_[i]->data();
       auto size = model_output_tensors_[i]->size();
       // copy the data from memory to an output buffer
       if (size > output_tensors_[i].size() ||
-	      output_tensors_[i].size() < size * type2bytes[output_tensors_[i].dtype()]) {
+          output_tensors_[i].size() < size * type2bytes[output_tensors_[i].dtype()]) {
         free(output_tensors_[i].mutable_data());
         void* out_buffer = malloc(size * type2bytes[output_tensors_[i].dtype()]);
         output_tensors_[i].set_data(out_buffer);
@@ -90,7 +85,7 @@ class Model {
     }
 
     for (auto& tensor_ptr : model_output_tensors_) tensor_ptr->unref_data();
-    // MemoryAllocator::get().AliveBuffer(); 
+    // MemoryAllocator::get().AliveBuffer();
     return output_tensors_;
   }
 
@@ -116,4 +111,4 @@ class Model {
 
 }  // namespace executor
 
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_MODEL_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_MODEL_HPP_

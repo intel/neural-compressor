@@ -13,17 +13,19 @@
 //  limitations under the License.
 
 #include <math.h>
+
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
+
 #include "../../include/common.hpp"
+#include "../../include/conf.hpp"
 #include "../../include/operators/layer_norm.hpp"
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "gtest/gtest.h"
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -36,8 +38,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto src_tensor_shape = input[0]->shape();
   auto gamma_tensor_shape = input[1]->shape();
   auto beta_tensor_shape = input[2]->shape();
@@ -86,7 +87,7 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
       for (int64_t j = 0; j < src_tensor_shape[1]; ++j) {
         auto src_sub_mu = src_tensor_data[i * src_strides[0] + j * src_strides[1]] - mu[i];
         dst_data[i * dst_strides[0] + j * dst_strides[1]] =
-          (src_sub_mu / sqrt(sigma2[i] + epsilon)) * gamma_tensor_data[j] + beta_tensor_data[j];
+            (src_sub_mu / sqrt(sigma2[i] + epsilon)) * gamma_tensor_data[j] + beta_tensor_data[j];
       }
     }
   }
@@ -112,8 +113,8 @@ bool CheckResult(const TestParams& t) {
     GetTrueData(q.input, q.output, q.conf);
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size(), 4e-6);
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size(), 4e-6);
   }
   return false;
 }
@@ -148,8 +149,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   std::map<std::string, std::string> attr_map;
   attr_map["epsilon"] = "0.0010000000474974513";
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("layer_norm", "fp32", input_config_vec,
-                                            output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("layer_norm", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {
@@ -176,10 +176,8 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src_tensors.first, gamma_tensors.first, beta_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src_tensors.second, gamma_tensors.second, beta_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src_tensors.first, gamma_tensors.first, beta_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src_tensors.second, gamma_tensors.second, beta_tensors.second}, {dst_tensor_copy}, op_config};
 
   return {op_args, op_args_copy};
 }

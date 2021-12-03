@@ -12,18 +12,20 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_GELU_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_GELU_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_GELU_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_GELU_HPP_
+#include <string>
 #include <unordered_map>
-#include "oneapi/dnnl/dnnl.hpp"
+#include <vector>
+
 #include "../operator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
-using dnnl::memory;
-using dnnl::engine;
-using dnnl::prop_kind;
 using dnnl::algorithm;
+using dnnl::engine;
+using dnnl::memory;
+using dnnl::prop_kind;
 
 /**
  * @brief A Gelu operator.
@@ -46,4 +48,4 @@ class GeluOperator : public Operator {
   memory dst_m_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_GELU_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_GELU_HPP_

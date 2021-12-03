@@ -12,10 +12,13 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_TOKEN_TYPE_IDS_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_TOKEN_TYPE_IDS_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_TOKEN_TYPE_IDS_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_TOKEN_TYPE_IDS_HPP_
 #include <assert.h>
+
+#include <string>
+#include <vector>
+
 #include "../operator.hpp"
 
 namespace executor {
@@ -37,4 +40,4 @@ class TokenTypeIdsOperator : public Operator {
   string mode_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_TOKEN_TYPE_IDS_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_TOKEN_TYPE_IDS_HPP_

@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "layer_norm.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -53,7 +54,7 @@ void LayerNormOperator::Reshape(const vector<Tensor*>& input, const vector<Tenso
   // 2.1 Prepare format_any memory descriptors
   // 2.2 Prepare op descriptors
   dnnl::layer_normalization_forward::desc lnorm_d(prop_kind::forward_inference, src_md, epsilon_,
-                                            dnnl::normalization_flags::use_scale_shift);
+                                                  dnnl::normalization_flags::use_scale_shift);
 
   // 2.3 Prepare primitive descriptors
   dnnl::layer_normalization_forward::primitive_desc lnorm_pd(lnorm_d, eng_);
@@ -71,8 +72,7 @@ void LayerNormOperator::Reshape(const vector<Tensor*>& input, const vector<Tenso
   const auto& gamma_data = input[1]->data();
   const auto& beta_data = input[2]->data();
   std::memcpy(scale_shift_buf, gamma_data, sizeof(float) * scale_size);
-  std::memcpy(reinterpret_cast<float*>(scale_shift_buf) + scale_size,
-              beta_data, sizeof(float) * scale_size);
+  std::memcpy(reinterpret_cast<float*>(scale_shift_buf) + scale_size, beta_data, sizeof(float) * scale_size);
 
   // 2.6 Prepare memory args (cached)
   memory_args_[DNNL_ARG_MEAN] = mean_m;
@@ -87,8 +87,7 @@ void LayerNormOperator::Forward(const vector<Tensor*>& input, const vector<Tenso
   // Inplace Op
   Tensor* dst_ptr = output[0];
   vector<Tensor*> inputs(input);
-  if ((input.size() == 3) && (input[0] != nullptr) &&
-      (input[0]->size() >= dst_ptr->size())) {
+  if ((input.size() == 3) && (input[0] != nullptr) && (input[0]->size() >= dst_ptr->size())) {
     void* input_ptr = input[0]->mutable_data();
     input[0]->unref_data(true);
     dst_ptr->set_data(input_ptr);

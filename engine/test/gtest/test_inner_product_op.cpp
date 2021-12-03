@@ -14,15 +14,16 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
+
 #include "../../include/common.hpp"
+#include "../../include/conf.hpp"
 #include "../../include/operators/inner_product.hpp"
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "gtest/gtest.h"
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -35,8 +36,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                  const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto attrs_map = conf.attributes();
   vector<int64_t> src0_perm;
   executor::StringSplit<int64_t>(&src0_perm, attrs_map["src0_perm"], ",");
@@ -63,17 +63,16 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
   // dst shape
   output[0]->set_shape({M, N});
   float* dst_data = static_cast<float*>(output[0]->mutable_data());
-  #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < M; ++i) {
     // #pragma omp simd
     for (int j = 0; j < N; ++j) {
       double value = 0;
-      #pragma omp simd
+#pragma omp simd
       for (int k = 0; k < K; ++k) {
         int src_idx = i * src_stride[0] + k * src_stride[1];
         int wei_idx = j * wei_stride[0] + k * wei_stride[1];
-        value += static_cast<double>(src_tensor_data[src_idx]) *
-                  static_cast<double>(wei_tensor_data[wei_idx]);
+        value += static_cast<double>(src_tensor_data[src_idx]) * static_cast<double>(wei_tensor_data[wei_idx]);
       }
       dst_data[i * N + j] = value;
     }
@@ -99,8 +98,8 @@ bool CheckResult(const TestParams& t) {
     GetTrueData(q.input, q.output, q.conf);
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size(), 5e-3);
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size(), 5e-3);
   }
   return false;
 }
@@ -118,8 +117,8 @@ TEST_P(InnerProductTest, TestPostfix) {
   EXPECT_TRUE(CheckResult(t));
 }
 
-std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string src1_perm, std::string append_op = "") {
+std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape, std::string src1_perm,
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src0_shape = input_shape[0];
   const auto& src1_shape = input_shape[1];
@@ -134,16 +133,10 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
 
   // Step 1.1: Construct Operator config obj
   std::map<std::string, std::string> attr_map;
-  attr_map = {
-    {"src0_perm", ""},
-    {"src1_perm", src1_perm},
-    {"output_dtype", "fp32"},
-    {"append_op", append_op}
-    };
+  attr_map = {{"src0_perm", ""}, {"src1_perm", src1_perm}, {"output_dtype", "fp32"}, {"append_op", append_op}};
 
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("inner_product", "fp32", inputs_config,
-                                            {dst_config}, op_attr);
+  OperatorConfig op_config = OperatorConfig("inner_product", "fp32", inputs_config, {dst_config}, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config) {
@@ -168,10 +161,8 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src0_tensors.first, src1_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src0_tensors.first, src1_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src0_tensors.second, src1_tensors.second}, {dst_tensor_copy}, op_config};
 
   if (append_op == "sum") {
     auto src2_tensors = make_tensor_obj(inputs_config[2]);
@@ -206,7 +197,6 @@ static auto CasesFp32 = []() {
   src_shape = {128, 768};
   weight_shape = {768, 512};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape}, "1,0"), false});
-
 
   return ::testing::ValuesIn(cases);
 };

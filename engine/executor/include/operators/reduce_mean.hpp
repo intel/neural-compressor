@@ -12,18 +12,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_REDUCE_MEAN_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_REDUCE_MEAN_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_REDUCE_MEAN_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_REDUCE_MEAN_HPP_
 #include <unordered_map>
-#include "oneapi/dnnl/dnnl.hpp"
+#include <vector>
+
 #include "../operator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
-using dnnl::memory;
-using dnnl::engine;
-using dnnl::prop_kind;
 using dnnl::algorithm;
+using dnnl::engine;
+using dnnl::memory;
+using dnnl::prop_kind;
 
 /**
  * @brief A ReduceMean operator.
@@ -49,4 +50,4 @@ class ReduceMeanOperator : public Operator {
   unordered_map<int, memory> memory_args_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_REDUCE_MEAN_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_REDUCE_MEAN_HPP_

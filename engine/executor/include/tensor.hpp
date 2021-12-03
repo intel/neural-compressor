@@ -12,17 +12,17 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_
-#include <functional>
+#ifndef ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_
 #include <algorithm>
+#include <functional>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <numeric>
 
+#include "common.hpp"
 #include "conf.hpp"
 #include "memory_allocator.hpp"
-#include "common.hpp"
 
 namespace executor {
 
@@ -33,16 +33,14 @@ namespace executor {
  */
 class Tensor {
  public:
-  Tensor(void* data, const vector<int64_t>& shape, const string& dtype,
-    const vector<int64_t>& strides = {}, const vector<int64_t>& location = {},
-    const string& name = "")
-    : name_(name), data_(data), shape_(shape), dtype_(dtype), location_(location),
-      strides_(strides) {}
+  Tensor(void* data, const vector<int64_t>& shape, const string& dtype, const vector<int64_t>& strides = {},
+         const vector<int64_t>& location = {}, const string& name = "")
+      : name_(name), data_(data), shape_(shape), dtype_(dtype), location_(location), strides_(strides) {}
 
   // for pybind caster
-  Tensor(): data_(nullptr), shape_({}), dtype_("fp32"), name_("") {}
+  Tensor() : data_(nullptr), shape_({}), dtype_("fp32"), name_("") {}
 
-  explicit Tensor(const TensorConfig& tensor_config): data_(nullptr) {
+  explicit Tensor(const TensorConfig& tensor_config) : data_(nullptr) {
     name_ = tensor_config.name();
     shape_ = tensor_config.shape();
     location_ = tensor_config.location();
@@ -52,16 +50,14 @@ class Tensor {
   // use data after set_shape
   inline const void* data() {
     if (data_ == nullptr) {
-      data_ = MemoryAllocator::get().GetMemory(
-        this->size() * type2bytes[this->dtype()], this->life());
+      data_ = MemoryAllocator::get().GetMemory(this->size() * type2bytes[this->dtype()], this->life());
       // MemoryAllocator::get().SetName(data_, this->name());
     }
     return data_;
   }
   inline void* mutable_data() {
     if (data_ == nullptr) {
-      data_ = MemoryAllocator::get().GetMemory(
-        this->size() * type2bytes[this->dtype()], this->life());
+      data_ = MemoryAllocator::get().GetMemory(this->size() * type2bytes[this->dtype()], this->life());
       // MemoryAllocator::get().SetName(data_, this->name());
     }
     return data_;
@@ -87,16 +83,11 @@ class Tensor {
   void set_dtype(const string& dtype) { dtype_ = dtype; }
   void add_tensor_life(const int count) { life_count_ += count; }
 
-  inline size_t size() {
-    return std::accumulate(
-      shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>());
-  }
+  inline size_t size() { return std::accumulate(shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>()); }
 
   inline const string& name() const { return name_; }
   inline const int life() const { return life_count_; }
-  inline const int left_life() const {
-    return MemoryAllocator::get().CheckMemory(data_);
-  }
+  inline const int left_life() const { return MemoryAllocator::get().CheckMemory(data_); }
   inline const void* raw_data() const { return data_; }
   inline const vector<int64_t>& shape() const { return shape_; }
   inline const vector<int64_t>& location() const { return location_; }
@@ -117,4 +108,4 @@ class Tensor {
 
 }  // namespace executor
 
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_

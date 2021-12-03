@@ -12,28 +12,29 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
 
-#include <limits.h>
 #include <float.h>
-#include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
+#include <limits.h>
+
+#include <chrono>  // NOLINT
 #include <climits>
 #include <cmath>
-#include <chrono>  // NOLINT
 #include <fstream>  // NOLINT(readability/streams)
+#include <functional>
 #include <iostream>  // NOLINT(readability/streams)
 #include <map>
+#include <numeric>
+#include <random>
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>  // pair
 #include <vector>
-#include <random>
-#include <functional>
-#include <numeric>
-#include <unordered_map>
 
 #include "memory_allocator.hpp"
 
@@ -43,19 +44,19 @@
 
 namespace executor {
 
-using std::vector;
-using std::unordered_map;
-using std::set;
 using std::max;
 using std::min;
+using std::set;
+using std::unordered_map;
+using std::vector;
 
 void GlobalInit(int* pargc, char*** pargv);
 
 extern unordered_map<string, int> type2bytes;
 
 // read weight file to data
-void* read_file_to_type(const string& root, const string& type,
-                        const vector<int64_t>& shape, const vector<int64_t>& location);
+void* read_file_to_type(const string& root, const string& type, const vector<int64_t>& shape,
+                        const vector<int64_t>& location);
 
 void InitVector(float* v, int buffer_size);
 
@@ -63,52 +64,48 @@ int64_t Product(const vector<int64_t>& shape);
 
 // Get the shapes vector with the absolute perm. Default or empty perm is (0, 1, 2, 3, ...).
 // e.g.: shape_before = (64, 384, 16, 64), perm = (0, 2, 1, 3), return (64, 16, 384, 64)
-vector<int64_t> GetShapes(const vector<int64_t>& origin_shape,
-                          const vector<int64_t>& absolute_perm = {});
+vector<int64_t> GetShapes(const vector<int64_t>& origin_shape, const vector<int64_t>& absolute_perm = {});
 
 // Get the strides vector with the absolute perm. Default or empty perm is (0, 1, 2, 3, ...).
 // Tensor stride is a product of its higher dimensions, Stride[0] = Shape[1]*Shape[2]*...*Shape[n].
 // e.g.: axis = (0, 1, 2, 3), shape = (64, 16, 384, 64), return stride = (16*384*64, 384*64, 64, 1)
-vector<int64_t> GetStrides(const vector<int64_t>& origin_shape,
-                           const vector<int64_t>& absolute_perm = {});
+vector<int64_t> GetStrides(const vector<int64_t>& origin_shape, const vector<int64_t>& absolute_perm = {});
 
 template <typename T>
 T StringToNum(const string& str);
 
 // Compare two buffer
 template <typename T>
-bool CompareData(const void* buf1, int64_t elem_num1,
-                const void* buf2, int64_t elem_num2, float eps = 1e-6);
+bool CompareData(const void* buf1, int64_t elem_num1, const void* buf2, int64_t elem_num2, float eps = 1e-6);
 
-vector<float> GetScales(const void* mins, const void* maxs,
-                        const int64_t size, const string& dtype);
+vector<float> GetScales(const void* mins, const void* maxs, const int64_t size, const string& dtype);
 
 vector<float> GetRescales(const vector<float>& src0_scales, const vector<float>& src1_scales,
-  const vector<float>& dst_scales, const string& dst_dtype, const bool append_eltwise = false);
+                          const vector<float>& dst_scales, const string& dst_dtype, const bool append_eltwise = false);
 
 vector<int> GetZeroPoints(const void* mins, const vector<float>& scales, const string& dtype);
 
-void AddZeroPoints(const int size, const string& dtype, const float* src_data,
-  const float* range_mins, const vector<float>& scales, float* dst_data);
+void AddZeroPoints(const int size, const string& dtype, const float* src_data, const float* range_mins,
+                   const vector<float>& scales, float* dst_data);
 
 #if __AVX512F__
-void Quantize_avx512(const int size, const string& dtype, const void* src_data,
-  const float* range_mins, const vector<float>& scales, void* dst_data);
+void Quantize_avx512(const int size, const string& dtype, const void* src_data, const float* range_mins,
+                     const vector<float>& scales, void* dst_data);
 #else
-void Quantize(const int size, const string& dtype, const void* src_data,
-  const float* range_mins, const vector<float>& scales, void* dst_data);
+void Quantize(const int size, const string& dtype, const void* src_data, const float* range_mins,
+              const vector<float>& scales, void* dst_data);
 #endif
 
 vector<int64_t> ReversePerm(const vector<int64_t>& perm_to);
 
 float Time(string state);
 
-template<typename T>
+template <typename T>
 void PrintToFile(const T* data, const std::string& name, size_t size = 1000);
 
-template<typename T>
+template <typename T>
 void StringSplit(vector<T>* split_list, const string& str_list, const string& split_op);
 
 }  // namespace executor
 
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_

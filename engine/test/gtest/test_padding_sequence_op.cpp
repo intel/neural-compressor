@@ -14,16 +14,17 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
-#include "../../include/common.hpp"
-#include "../../include/operators/padding_sequence.hpp"
 
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "../../include/common.hpp"
+#include "../../include/conf.hpp"
+#include "../../include/operators/padding_sequence.hpp"
+#include "gtest/gtest.h"
+
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -36,8 +37,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto src_tensor_shape = input[0]->shape();
 
   // attrs map
@@ -72,8 +72,8 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
   int64_t runtime_dims = 3;
   int64_t broadcast_nums = 1;
   if (dst_shape.size() >= runtime_dims) {
-    broadcast_nums = std::accumulate(dst_shape.begin() + 1, dst_shape.end() - 1,
-                                      static_cast<size_t>(1), std::multiplies<size_t>());
+    broadcast_nums =
+        std::accumulate(dst_shape.begin() + 1, dst_shape.end() - 1, static_cast<size_t>(1), std::multiplies<size_t>());
   }
   pad_dst_shape.insert(pad_dst_shape.begin() + 1, broadcast_nums);
 
@@ -100,8 +100,8 @@ bool CheckResult(const TestParams& t) {
   GetTrueData(q.input, q.output, q.conf);
   // Should compare buffer with different addresses
   EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                      q.output[0]->data(), q.output[0]->size());
+  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                      q.output[0]->size());
 }
 
 class PaddingSequenceOpTest : public testing::TestWithParam<TestParams> {
@@ -117,9 +117,8 @@ TEST_P(PaddingSequenceOpTest, TestPostfix) {
   EXPECT_TRUE(CheckResult(t));
 }
 
-std::pair<OpArgs, OpArgs> GenerateFp32Case(
-            const std::vector<std::vector<int64_t> >& input_shape,
-            std::string attr_dst_shape = "-1,-1", std::string attr_dims = "") {
+std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
+                                           std::string attr_dst_shape = "-1,-1", std::string attr_dims = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("input_mask", src_shape);
@@ -133,8 +132,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(
   attr_map["dst_shape"] = attr_dst_shape;
   attr_map["dims"] = attr_dims;
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("padding_sequence", "fp32",
-                      input_config_vec, output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("padding_sequence", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {
@@ -155,8 +153,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(
     Tensor* a_tensor_copy = new Tensor(*a_tensor_config);
     a_tensor_copy->add_tensor_life(life_num);
     auto tensor_data_copy = a_tensor_copy->mutable_data();
-    memcpy(tensor_data_copy, tensor_data,
-           a_tensor_copy->size() * sizeof(float));
+    memcpy(tensor_data_copy, tensor_data, a_tensor_copy->size() * sizeof(float));
     return std::pair<Tensor*, Tensor*>{a_tensor, a_tensor_copy};
   };
 

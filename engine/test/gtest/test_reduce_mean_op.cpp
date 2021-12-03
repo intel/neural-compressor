@@ -14,16 +14,17 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
-#include "../../include/common.hpp"
-#include "../../include/operators/reduce_mean.hpp"
 
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "../../include/common.hpp"
+#include "../../include/conf.hpp"
+#include "../../include/operators/reduce_mean.hpp"
+#include "gtest/gtest.h"
+
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -36,8 +37,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                  const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto attrs_map = conf.attributes();
   vector<int64_t> axes;
   executor::StringSplit<int64_t>(&axes, attrs_map["axis"], ",");
@@ -118,8 +118,8 @@ bool CheckResult(const TestParams& t) {
     GetTrueData(q.input, q.output, q.conf);
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size());
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size());
   }
   return false;
 }
@@ -137,8 +137,8 @@ TEST_P(ReduceMeanTest, TestPostfix) {
   EXPECT_TRUE(CheckResult(t));
 }
 
-std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t>>& input_shape,
-                                           std::string axis, std::string keep_dims = "") {
+std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t>>& input_shape, std::string axis,
+                                           std::string keep_dims = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("src", src_shape);
@@ -149,14 +149,10 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
 
   // Step 1.1: Construct Operator config obj
   std::map<std::string, std::string> attr_map;
-  attr_map = {
-    {"axis", axis},
-    {"keep_dims", keep_dims}
-    };
+  attr_map = {{"axis", axis}, {"keep_dims", keep_dims}};
 
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("reduce_mean", "fp32",
-                             input_config, output_config, op_attr);
+  OperatorConfig op_config = OperatorConfig("reduce_mean", "fp32", input_config, output_config, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config) {
@@ -171,8 +167,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
     Tensor* a_tensor_copy = new Tensor(*a_tensor_config);
     a_tensor_copy->add_tensor_life(1);
     auto tensor_data_copy = a_tensor_copy->mutable_data();
-    memcpy(reinterpret_cast<void*>(tensor_data_copy), tensor_data,
-           a_tensor_copy->size() * sizeof(float));
+    memcpy(reinterpret_cast<void*>(tensor_data_copy), tensor_data, a_tensor_copy->size() * sizeof(float));
     return std::pair<Tensor*, Tensor*>{a_tensor, a_tensor_copy};
   };
 
@@ -182,17 +177,14 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src_tensors.second}, {dst_tensor_copy}, op_config};
 
   return {op_args, op_args_copy};
 }
 
 static auto CasesFp32 = []() {
-  std::string memory_strategy = getenv("DIRECT_BUFFER") == NULL \
-                                ? "cycle_buffer" : "direct_buffer";
+  std::string memory_strategy = getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer";
   MemoryAllocator::SetStrategy(memory_strategy);
   std::vector<TestParams> cases;
 

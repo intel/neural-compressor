@@ -1,3 +1,17 @@
+//  Copyright (c) 2021 Intel Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
@@ -17,14 +31,12 @@ static bool HasOverlap(const std::unordered_map<int, void*>& allocate_addrs) {
     addresses.push_back(std::make_pair(it.second, it.first));
   }
   std::sort(addresses.begin(), addresses.end(),
-            [](std::pair<void*, int>& a, std::pair<void*, int>& b) {
-              return a.first < b.first;
-            });
+            [](std::pair<void*, int>& a, std::pair<void*, int>& b) { return a.first < b.first; });
 
   std::pair<void*, int> pre = addresses[0];
   for (size_t i = 1; i < addresses.size(); ++i) {
     // Start address should > previous end address
-    if ((char*)addresses[i].first <= (char*)pre.first + pre.second) {
+    if (reinterpret_cast<char*>(addresses[i].first) <= reinterpret_cast<char*>(pre.first) + pre.second) {
       return true;
     }
     pre = addresses[i];
@@ -96,8 +108,7 @@ static std::vector<int> GenerateAllocFreeSeqs(int alloc_num) {
 
     // Size between 10k and 100k, make sure it is different
     int size = 10 * 1024 + random() % (90 * 1024);
-    while (std::find(allocate_sizes.begin(), allocate_sizes.end(), size) !=
-           allocate_sizes.end()) {
+    while (std::find(allocate_sizes.begin(), allocate_sizes.end(), size) != allocate_sizes.end()) {
       size = 10 * 1024 + random() % (90 * 1024);
     }
 

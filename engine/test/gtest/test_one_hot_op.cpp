@@ -14,15 +14,16 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
+
 #include "../../include/common.hpp"
+#include "../../include/conf.hpp"
 #include "../../include/operators/one_hot.hpp"
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "gtest/gtest.h"
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -45,8 +46,8 @@ bool CheckResult(const TestParams& t) {
 
   // Should compare buffer with different addresses
   EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                      q.output[0]->data(), q.output[0]->size());
+  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                      q.output[0]->size());
 }
 
 class OnehotOpTest : public testing::TestWithParam<TestParams> {
@@ -63,7 +64,7 @@ TEST_P(OnehotOpTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string append_op = "") {
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("indices_tensor", src_shape, "int32");
@@ -82,8 +83,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   attr_map["on_value"] = std::to_string(on_value);
   attr_map["off_value"] = std::to_string(off_value);
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("one_hot", "fp32", input_config_vec,
-                                            output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("one_hot", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {

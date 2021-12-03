@@ -15,14 +15,14 @@
 // executor.hpp is the header file that you need to include in your code. It wraps
 // all the internal executor header files into one for simpler inclusion.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_EXECUTOR_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_EXECUTOR_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_EXECUTOR_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_EXECUTOR_HPP_
 
-#include "tensor.hpp"
-#include "operator.hpp"
-#include "operator_registry.hpp"
-#include "model.hpp"
 #include "common.hpp"
 #include "dataloader.hpp"
+#include "model.hpp"
+#include "operator.hpp"
+#include "operator_registry.hpp"
+#include "tensor.hpp"
 
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_EXECUTOR_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_EXECUTOR_HPP_

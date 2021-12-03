@@ -22,7 +22,7 @@ Engine graph could be saved as yaml and weight bin.
 model.inference([input_ids, segment_ids, input_mask])  # input should be numpy array data
 ```
 
-The `input_ids`, `segment_ids` and `input_mask` are the input numpy array data of a bert model, which have size (batch_size, seq_len). Note that the `out` is a dict contains the output tensor name and value(numpy array). 
+The `input_ids`, `segment_ids` and `input_mask` are the input numpy array data of a bert model, which have size (batch_size, seq_len). Note that the `out` is a dict contains the output tensor name and value(numpy array).
 
 ### 2. Manual customized yaml and weight binary to use Engine inference
 
@@ -35,8 +35,8 @@ model:
   name: bert_model
   operator:
     input_data:
-      type: Input                # defind the input and weight shape/dtype/location
-      output:                
+      type: Input                # define the input and weight shape/dtype/location
+      output:
         input_ids:0:
           dtype: int32
           shape: [-1, -1]
@@ -51,7 +51,7 @@ model:
           shape: [30522, 1024]
           location: [0, 125018112]
           ....
-    padding_sequence:                   # defind the operators type/input/output/attr
+    padding_sequence:                   # define the operators type/input/output/attr
       type: PaddingSequence
       input:
         input_mask:0: {}
@@ -69,17 +69,17 @@ model:
       attr:
         dst_shape: -1
     ....
-    output_data:                       # defind the output tensor
+    output_data:                       # define the output tensor
       type: Output
       input:
         logits:0: {}
 
 ```
-All input tensors are in an operator typed Input. But slightly difference is some tensors have location while others not. A tensor with location means that is a frozen tensor or weight, it's read from the bin file. A tensor without location means it's activation, that should feed to the model during inference. 
+All input tensors are in an operator typed Input. But slightly difference is some tensors have location while others not. A tensor with location means that is a frozen tensor or weight, it's read from the bin file. A tensor without location means it's activation, that should feed to the model during inference.
 
 ### Run the inference by Engine
 
-Parse the yaml and weight bin to Engine Graph 
+Parse the yaml and weight bin to Engine Graph
 
 ```
 from engine.compile.graph import Graph

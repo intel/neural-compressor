@@ -33,8 +33,7 @@ TransposeOperator::TransposeOperator(const OperatorConfig& conf) : Operator(conf
   }
 }
 
-TransposeOperator::~TransposeOperator() {
-}
+TransposeOperator::~TransposeOperator() {}
 
 void TransposeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   //// Part1: Derive operator's user proper shape and strides
@@ -63,16 +62,12 @@ void TransposeOperator::Forward(const vector<Tensor*>& input, const vector<Tenso
   auto dst_data = output[0]->mutable_data();
   string dtype = output[0]->dtype();
   if (dtype == "fp32") {
-    auto input = Eigen::TensorMap<Eigen::Tensor<const float, 4>>(
-      reinterpret_cast<const float*>(src_data), src_shape_);
-    auto output = Eigen::TensorMap<Eigen::Tensor<float, 4>>(
-      reinterpret_cast<float*>(dst_data), dst_shape_);
+    auto input = Eigen::TensorMap<Eigen::Tensor<const float, 4>>(reinterpret_cast<const float*>(src_data), src_shape_);
+    auto output = Eigen::TensorMap<Eigen::Tensor<float, 4>>(reinterpret_cast<float*>(dst_data), dst_shape_);
     output = input.shuffle(perm_);
   } else if (dtype == "s8") {
-    auto input = Eigen::TensorMap<Eigen::Tensor<const char, 4>>(
-      reinterpret_cast<const char*>(src_data), src_shape_);
-    auto output = Eigen::TensorMap<Eigen::Tensor<char, 4>>(
-      reinterpret_cast<char*>(dst_data), dst_shape_);
+    auto input = Eigen::TensorMap<Eigen::Tensor<const char, 4>>(reinterpret_cast<const char*>(src_data), src_shape_);
+    auto output = Eigen::TensorMap<Eigen::Tensor<char, 4>>(reinterpret_cast<char*>(dst_data), dst_shape_);
     output = input.shuffle(perm_);
   }
 

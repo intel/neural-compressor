@@ -12,19 +12,20 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_
 #include <string>
 #include <unordered_map>
-#include "oneapi/dnnl/dnnl.hpp"
+#include <vector>
+
 #include "../operator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
-using dnnl::memory;
-using dnnl::engine;
-using dnnl::prop_kind;
 using dnnl::algorithm;
+using dnnl::engine;
+using dnnl::memory;
+using dnnl::prop_kind;
 
 /**
  * @brief A Softmax operator.
@@ -64,4 +65,4 @@ class SoftmaxOperator : public Operator {
   void Forward_f32(const vector<Tensor*>& input, const vector<Tensor*>& output);
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_

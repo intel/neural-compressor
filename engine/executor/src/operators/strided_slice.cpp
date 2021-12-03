@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "strided_slice.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -81,8 +82,7 @@ int StridedSliceOperator::StartForAxis(const vector<int64_t>& input_shape, int a
 // element. ie. So if you were iterating through all elements of a 1D array of
 // size 4, this function would return 4 as the stop, because it is one past the
 // "real" indices of 0, 1, 2 & 3.
-int StridedSliceOperator::StopForAxis(const vector<int64_t>& input_shape, int axis,
-                                      int start_for_axis) {
+int StridedSliceOperator::StopForAxis(const vector<int64_t>& input_shape, int axis, int start_for_axis) {
   const int axis_size = input_shape[axis];
   if (axis_size == 0) {
     return 0;
@@ -160,7 +160,7 @@ void StridedSliceOperator::Reshape(const vector<Tensor*>& input, const vector<Te
   dst_stride_ = GetStrides(dst_shape_);
   auto src_stride = GetStrides(src_shape);
   slice_stride_.resize(src_dims);
-  #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < src_dims; ++i) {
     slice_stride_[i] = src_stride[i] * strides_data_[i];
   }
@@ -176,19 +176,17 @@ void StridedSliceOperator::Forward(const vector<Tensor*>& input, const vector<Te
   const auto& src_data = static_cast<const float*>(input[0]->data());
   // when change data value please use mutable_data
   auto dst_data = static_cast<float*>(output[0]->mutable_data());
-  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == \
-         reinterpret_cast<void*>(const_cast<float*>(src_data))) \
-        << "DST ptr should not be equal to SRC ptr.";
+  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == reinterpret_cast<void*>(const_cast<float*>(src_data)))
+      << "DST ptr should not be equal to SRC ptr.";
 
   // 1. Execute the dst
   for (int i = 0; i < dst_shape_[0]; ++i) {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int j = 0; j < dst_shape_[1]; ++j) {
-      #pragma omp simd
+#pragma omp simd
       for (int k = 0; k < dst_shape_[2]; ++k) {
         int dst_idx = i * dst_stride_[0] + j * dst_stride_[1] + k;
-        int src_idx = slice_begin_[0] + i * slice_stride_[0] +
-                      slice_begin_[1] + j * slice_stride_[1] +
+        int src_idx = slice_begin_[0] + i * slice_stride_[0] + slice_begin_[1] + j * slice_stride_[1] +
                       slice_begin_[2] + k * slice_stride_[2];
         dst_data[dst_idx] = src_data[src_idx];
       }

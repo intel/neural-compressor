@@ -82,9 +82,8 @@ void GatherOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   const auto& params_data = static_cast<const int32_t*>(input[1]->data());  // frozen data
   // when change data value please use mutable_data
   auto dst_data = static_cast<float*>(output[0]->mutable_data());
-  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == \
-         reinterpret_cast<void*>(const_cast<int32_t*>(indices_data))) \
-         << "DST ptr should not be equal to SRC ptr.";
+  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == reinterpret_cast<void*>(const_cast<int32_t*>(indices_data)))
+      << "DST ptr should not be equal to SRC ptr.";
 
   // 1. Execute the dst
   const auto& batch_size = flat_dst_shape_[0];
@@ -96,24 +95,22 @@ void GatherOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   for (int i = 0; i < batch_size; ++i) {
     int indices_batch = i * coord_size;
     for (int j = 0; j < outer_size; ++j) {
-      #pragma omp parallel for
+#pragma omp parallel for
       for (int k = 0; k < coord_size; ++k) {
         int indices_val = indices_data[indices_batch + k];
         // copy slices on inner_size dimension
         for (int m = 0; m < avx512_loop_len; ++m) {
-          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
-                        k * flat_dst_stride_[2] + (m << 4);
-          int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
-                            indices_val * flat_params_stride_[2] + (m << 4);
+          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] + k * flat_dst_stride_[2] + (m << 4);
+          int params_idx =
+              i * flat_params_stride_[0] + j * flat_params_stride_[1] + indices_val * flat_params_stride_[2] + (m << 4);
           __m512i _src_data = _mm512_loadu_si512(params_data + params_idx);
           _mm512_storeu_si512(dst_data + dst_idx, _src_data);
         }
-        #pragma omp simd
+#pragma omp simd
         for (int tail_idx = avx512_loop_len << 4; tail_idx < inner_size; ++tail_idx) {
-          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
-                        k * flat_dst_stride_[2] + tail_idx;
-          int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
-                            indices_val * flat_params_stride_[2] + tail_idx;
+          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] + k * flat_dst_stride_[2] + tail_idx;
+          int params_idx =
+              i * flat_params_stride_[0] + j * flat_params_stride_[1] + indices_val * flat_params_stride_[2] + tail_idx;
           // for the both fp32 and int32 type data
           memcpy(dst_data + dst_idx, params_data + params_idx, 4);
         }
@@ -124,16 +121,15 @@ void GatherOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   for (int i = 0; i < batch_size; ++i) {
     int indices_batch = i * coord_size;
     for (int j = 0; j < outer_size; ++j) {
-      #pragma omp parallel for
+#pragma omp parallel for
       for (int k = 0; k < coord_size; ++k) {
         int indices_val = indices_data[indices_batch + k];
-        // copy slices on inner_size dimension
-        #pragma omp simd
+// copy slices on inner_size dimension
+#pragma omp simd
         for (int m = 0; m < inner_size; ++m) {
-          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] +
-                        k * flat_dst_stride_[2] + m;
-          int params_idx = i * flat_params_stride_[0] + j * flat_params_stride_[1] +
-                            indices_val * flat_params_stride_[2] + m;
+          int dst_idx = i * flat_dst_stride_[0] + j * flat_dst_stride_[1] + k * flat_dst_stride_[2] + m;
+          int params_idx =
+              i * flat_params_stride_[0] + j * flat_params_stride_[1] + indices_val * flat_params_stride_[2] + m;
           // for the both fp32 and int32 type data
           memcpy(dst_data + dst_idx, params_data + params_idx, 4);
         }

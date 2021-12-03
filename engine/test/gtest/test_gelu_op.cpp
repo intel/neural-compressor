@@ -14,16 +14,17 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
-#include "../../include/common.hpp"
-#include "../../include/operators/gelu.hpp"
 
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "../../include/common.hpp"
+#include "../../include/conf.hpp"
+#include "../../include/operators/gelu.hpp"
+#include "gtest/gtest.h"
+
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -36,8 +37,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                  const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto attrs_map = conf.attributes();
   auto iter = attrs_map.find("algorithm");
   string algorithm;
@@ -53,20 +53,19 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
   float* dst_data = static_cast<float*>(output[0]->mutable_data());
   if (algorithm == "gelu_erf") {
     const float sqrt_2_over_2 = 0.707106;
-    for (int i =0; i < size; ++i){
-        float v = src_data[i] * sqrt_2_over_2;
-        dst_data[i] = (sqrt_2_over_2 * v * (1.f + ::erff(v)));
+    for (int i = 0; i < size; ++i) {
+      float v = src_data[i] * sqrt_2_over_2;
+      dst_data[i] = (sqrt_2_over_2 * v * (1.f + ::erff(v)));
     }
   } else if (algorithm == "gelu_tanh") {
     const float a = 0.797884;
     const float b = 0.044715;
-    for (int i =0; i < size; ++i){
-        const float g = a * src_data[i] * (1 + b * src_data[i] * src_data[i]);
-        dst_data[i] = 0.5 * src_data[i] * (1 + ::tanhf(g));
+    for (int i = 0; i < size; ++i) {
+      const float g = a * src_data[i] * (1 + b * src_data[i] * src_data[i]);
+      dst_data[i] = 0.5 * src_data[i] * (1 + ::tanhf(g));
     }
   } else {
-    LOG(ERROR) << "Gelu algorithm is: " << algorithm
-               << ", not supported. Only gelu_erf or gelu_tanh is supported.";
+    LOG(ERROR) << "Gelu algorithm is: " << algorithm << ", not supported. Only gelu_erf or gelu_tanh is supported.";
   }
 }
 
@@ -76,7 +75,7 @@ bool CheckResult(const TestParams& t) {
   try {
     executor::GeluOperator gelu(p.conf);
     gelu.Reshape(p.input, p.output);
-    gelu.Forward(p.input, p.output);   
+    gelu.Forward(p.input, p.output);
   } catch (const dnnl::error& e) {
     if (e.status != dnnl_status_t::dnnl_success && t.expect_to_fail) {
       return true;
@@ -89,8 +88,8 @@ bool CheckResult(const TestParams& t) {
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
     float eps = 1e-4;
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size(), eps);
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size(), eps);
   }
   return false;
 }
@@ -110,7 +109,6 @@ TEST_P(GeluTest, TestPostfix) {
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t>>& input_shape,
                                            std::string algorithm) {
-
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("src", src_shape);
@@ -121,14 +119,11 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
 
   // Step 1.1: Construct Operator config obj
   std::map<std::string, std::string> attr_map;
-  attr_map = {
-    {"algorithm", algorithm}
-    };
+  attr_map = {{"algorithm", algorithm}};
 
   AttrConfig* op_attr = new AttrConfig(attr_map);
 
-  OperatorConfig op_config = OperatorConfig("gelu", "fp32",
-                             input_config, output_config, op_attr);
+  OperatorConfig op_config = OperatorConfig("gelu", "fp32", input_config, output_config, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config) {
@@ -143,8 +138,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
     Tensor* a_tensor_copy = new Tensor(*a_tensor_config);
     a_tensor_copy->add_tensor_life(1);
     auto tensor_data_copy = a_tensor_copy->mutable_data();
-    memcpy(reinterpret_cast<void*>(tensor_data_copy), tensor_data,
-           a_tensor_copy->size() * sizeof(float));
+    memcpy(reinterpret_cast<void*>(tensor_data_copy), tensor_data, a_tensor_copy->size() * sizeof(float));
     return std::pair<Tensor*, Tensor*>{a_tensor, a_tensor_copy};
   };
 
@@ -154,17 +148,14 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src_tensors.second}, {dst_tensor_copy}, op_config};
 
   return {op_args, op_args_copy};
 }
 
 static auto CasesFp32 = []() {
-  std::string memory_strategy = getenv("DIRECT_BUFFER") == NULL \
-                                ? "cycle_buffer" : "direct_buffer";
+  std::string memory_strategy = getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer";
   MemoryAllocator::SetStrategy(memory_strategy);
   std::vector<TestParams> cases;
 

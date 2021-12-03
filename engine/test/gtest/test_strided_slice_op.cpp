@@ -14,16 +14,17 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
-#include "../../include/common.hpp"
-#include "../../include/operators/strided_slice.hpp"
 
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "../../include/common.hpp"
+#include "../../include/conf.hpp"
+#include "../../include/operators/strided_slice.hpp"
+#include "gtest/gtest.h"
+
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -46,8 +47,8 @@ bool CheckResult(const TestParams& t) {
 
   // Should compare buffer with different addresses
   EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                      q.output[0]->data(), q.output[0]->size());
+  return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                      q.output[0]->size());
 }
 
 class StridedSliceOpTest : public testing::TestWithParam<TestParams> {
@@ -64,7 +65,7 @@ TEST_P(StridedSliceOpTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string append_op = "") {
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("src", src_shape);
@@ -84,8 +85,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   attr_map["end"] = "0,1,0";
   attr_map["strides"] = "1,1,1";
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("strided_slice", "fp32",
-  input_config_vec, output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("strided_slice", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {
@@ -112,12 +112,12 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   auto dst_data_copy = static_cast<float*>(dst_tensor_copy->mutable_data());
   auto src_data_copy = static_cast<const float*>(src_tensors.second->data());
   for (int i = 0; i < dst_shape[0]; ++i) {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int j = 0; j < dst_shape[1]; ++j) {
-    #pragma omp simd
+#pragma omp simd
       for (int k = 0; k < dst_shape[2]; ++k) {
         dst_data_copy[i * dst_shape[1] * dst_shape[2] + j * dst_shape[2] + k] =
-          src_data_copy[i * src_shape[1] * src_shape[2] + j * src_shape[2] + k];
+            src_data_copy[i * src_shape[1] * src_shape[2] + j * src_shape[2] + k];
       }
     }
   }

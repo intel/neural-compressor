@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "embeddingbag.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -23,8 +24,7 @@ EmbeddingBagOperator::EmbeddingBagOperator(const OperatorConfig& conf) : Operato
   embedding_sum_ = (iter != attrs_map.end() && iter->second == "sum") ? true : false;
 }
 
-void EmbeddingBagOperator::Reshape(const vector<Tensor*>& input,
-                                      const vector<Tensor*>& output) {
+void EmbeddingBagOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   //// Part1: Derive operator's user proper shape and strides
   // 1.1: Prepare Tensor origin shape
   indices_shape_ = input[0]->shape();
@@ -40,8 +40,7 @@ void EmbeddingBagOperator::Reshape(const vector<Tensor*>& input,
   dst_tensor_ptr->set_shape(dst_shape);
 }
 
-void EmbeddingBagOperator::Forward(const vector<Tensor*>& input,
-                                      const vector<Tensor*>& output) {
+void EmbeddingBagOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   // 0. Alias variables part
   const auto& indices_data = static_cast<const int32_t*>(input[0]->data());
   const auto& offset_data = static_cast<const int32_t*>(input[1]->data());
@@ -50,7 +49,7 @@ void EmbeddingBagOperator::Forward(const vector<Tensor*>& input,
   auto dst_data = static_cast<float*>(output[0]->mutable_data());
   for (int i = 0; i < offset_shape_[0]; ++i) {
     int end_index = (i + 1 >= offset_shape_[0]) ? indices_shape_[0] : offset_data[i + 1];
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int k = 0; k < weight_shape_[1]; ++k) {
       float sum = 0;
       for (int j = offset_data[i]; j < end_index; ++j) {
@@ -59,7 +58,7 @@ void EmbeddingBagOperator::Forward(const vector<Tensor*>& input,
           sum += weight_data[index];
         } else {
           sum = 0;
-          break;  
+          break;
         }
       }
       dst_data[i * weight_shape_[1] + k] = sum;

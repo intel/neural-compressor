@@ -12,16 +12,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_TRANSPOSE_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_TRANSPOSE_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_TRANSPOSE_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_TRANSPOSE_HPP_
 #include <string>
-#include "../operator.hpp"
+#include <vector>
+
 #include "../common.hpp"
+#include "../operator.hpp"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace executor {
-
 
 /**
  * @brief A Transpose operator.
@@ -47,4 +47,4 @@ class TransposeOperator : public Operator {
   Eigen::DSizes<Eigen::DenseIndex, 4> dst_shape_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_TRANSPOSE_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_TRANSPOSE_HPP_

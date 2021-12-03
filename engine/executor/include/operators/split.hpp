@@ -12,9 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_SPLIT_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_SPLIT_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_SPLIT_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_SPLIT_HPP_
 #include <vector>
+
 #include "../operator.hpp"
 
 namespace executor {
@@ -39,4 +40,4 @@ class SplitOperator : public Operator {
   std::vector<int64_t> src_shape_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_SPLIT_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_SPLIT_HPP_

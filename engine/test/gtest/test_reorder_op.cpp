@@ -13,18 +13,20 @@
 //  limitations under the License.
 
 #include <math.h>
+
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
-#include "../../include/common.hpp"
-#include "../../include/operators/reorder.hpp"
 
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "../../include/common.hpp"
+#include "../../include/conf.hpp"
+#include "../../include/operators/reorder.hpp"
+#include "gtest/gtest.h"
+
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -37,8 +39,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto src_tensor_shape = input[0]->shape();
   int64_t dsize = src_tensor_shape.size();
   auto src_strides = executor::GetStrides(src_tensor_shape);
@@ -59,9 +60,9 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
   int w = src_tensor_shape[1];
 
   for (int i = 0; i < w; i++) {
-      for (int j = 0; j < h; j++) {
-          dst_data[i * h + j] = src_tensor_data[j * w + i];
-      }
+    for (int j = 0; j < h; j++) {
+      dst_data[i * h + j] = src_tensor_data[j * w + i];
+    }
   }
 }
 
@@ -83,8 +84,8 @@ bool CheckResult(const TestParams& t) {
   }
   if (!t.expect_to_fail) {
     GetTrueData(q.input, q.output, q.conf);
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size());
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size());
   }
   return false;
 }
@@ -115,8 +116,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   attr_map["src_perm"] = "0,1";
   attr_map["dst_perm"] = "1,0";
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("reorder", "fp32",
-                        inputs_config, {dst_config}, op_attr);
+  OperatorConfig op_config = OperatorConfig("reorder", "fp32", inputs_config, {dst_config}, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config) {
@@ -141,10 +141,8 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src_tensors.first},
-                    {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src_tensors.second},
-                         {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src_tensors.second}, {dst_tensor_copy}, op_config};
 
   return {op_args, op_args_copy};
 }

@@ -12,21 +12,22 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_
-#include <vector>
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_
 #include <string>
 #include <unordered_map>
-#include "oneapi/dnnl/dnnl.hpp"
-#include "../operator.hpp"
+#include <vector>
+
 #include "../common.hpp"
+#include "../operator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
 
-using dnnl::memory;
-using dnnl::engine;
-using dnnl::prop_kind;
 using dnnl::algorithm;
+using dnnl::engine;
+using dnnl::memory;
+using dnnl::prop_kind;
 
 // \brief Matmul or Batchmatmul operators
 class MatmulOperator : public Operator {
@@ -89,4 +90,4 @@ class MatmulOperator : public Operator {
   Tensor* dst_max_ = nullptr;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_

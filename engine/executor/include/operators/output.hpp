@@ -12,10 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_OUTPUT_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_OUTPUT_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_OUTPUT_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_OUTPUT_HPP_
 
 #include <vector>
+
 #include "operator.hpp"
 
 namespace executor {
@@ -28,18 +29,15 @@ namespace executor {
 
 class OutputOperator : public Operator {
  public:
-  explicit OutputOperator(const OperatorConfig& config)
-      : Operator(config) {}
+  explicit OutputOperator(const OperatorConfig& config) : Operator(config) {}
 
   // Output operator only have no output, do nothing with Reshape .
-  virtual void Reshape(const vector<Tensor*>& input,
-                       const vector<Tensor*>& output) {}
+  virtual void Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {}
 
   // Output operator's output is assigned outside, Forward do nothing.
-  virtual void Forward(const vector<Tensor*>& input,
-                       const vector<Tensor*>& output) {}
+  virtual void Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {}
 };
 
 }  // namespace executor
 
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_OUTPUT_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_OUTPUT_HPP_

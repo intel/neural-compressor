@@ -16,13 +16,9 @@
 
 namespace executor {
 
-Model::Model(const ModelConfig& conf, const string& weight_root):
-  weight_root_(weight_root) {
-  Init(conf);
-}
+Model::Model(const ModelConfig& conf, const string& weight_root) : weight_root_(weight_root) { Init(conf); }
 
-Model::Model(const string& conf_file, const string& weight_root):
-  weight_root_(weight_root) {
+Model::Model(const string& conf_file, const string& weight_root) : weight_root_(weight_root) {
   ModelConfig conf = ModelConfig(conf_file);
   CHECK_EQ(conf.CheckConfig(), true) << "model config not right....";
   Init(conf);
@@ -45,10 +41,11 @@ void Model::Init(const ModelConfig& conf) {
     // handle the input/output tensors to the model
     // we will have an input operator only have output data
     // in a graph the input tensors must come from output tensors
-    // so we create output tensors and input tensors all take from output tensors
-    // besides, we have two operators, one is Input and the other is Output
-    // Input only have output tensors and Output only have input tensors
-    // we treat weight tensors as output from Input operator and other operators' input
+    // so we create output tensors and input tensors all take from output
+    // tensors besides, we have two operators, one is Input and the other is
+    // Output Input only have output tensors and Output only have input tensors
+    // we treat weight tensors as output from Input operator and other
+    // operators' input
     auto op_type = op_conf->type();
 
     int output_size = op_conf->output_tensor_size();
@@ -62,8 +59,7 @@ void Model::Init(const ModelConfig& conf) {
   }
   // for debug tensor life
   for (size_t i = 0; i < tensors_.size(); ++i) {
-    LOG(INFO) << "tensor name is " << tensors_[i]->name() <<
-      " tensor life is  " << tensors_[i]->life();
+    LOG(INFO) << "tensor name is " << tensors_[i]->name() << " tensor life is  " << tensors_[i]->life();
   }
   // prepare the operator like cache weight
   for (int i = 0; i < operators_.size(); ++i) {
@@ -71,21 +67,21 @@ void Model::Init(const ModelConfig& conf) {
   }
 }
 
-void Model::SetInput(const vector<OperatorConfig*>& conf, const int operator_id,
-  const int tensor_id, map<string, int>* tensor_name_index_) {
+void Model::SetInput(const vector<OperatorConfig*>& conf, const int operator_id, const int tensor_id,
+                     map<string, int>* tensor_name_index_) {
   // model input tensor not in output tensors
   const OperatorConfig* op_conf = conf[operator_id];
   const string& tensor_name = op_conf->input_tensors(tensor_id)->name();
   if (!tensor_name_index_->count(tensor_name)) {
-    LOG(FATAL) << "Unknown input tensor " << tensor_name << ", operator " << op_conf->name()
-    << ", input index " << tensor_id;
+    LOG(FATAL) << "Unknown input tensor " << tensor_name << ", operator " << op_conf->name() << ", input index "
+               << tensor_id;
   }
   const int id = (*tensor_name_index_)[tensor_name];
   // add tensor life count for memory handling
   tensors_[id]->add_tensor_life(1);
   input_vecs_[operator_id].push_back(tensors_[id]);
-  // set model output tensors, it maybe a little strange as Output operator only have input
-  // and the input is MODEL's output
+  // set model output tensors, it maybe a little strange as Output operator only
+  // have input and the input is MODEL's output
   const string& op_type = op_conf->type();
   if (op_type == "Output") {
     model_output_tensors_.push_back(tensors_[id]);
@@ -93,8 +89,8 @@ void Model::SetInput(const vector<OperatorConfig*>& conf, const int operator_id,
   }
 }
 
-void Model::SetOutput(const vector<OperatorConfig*>& conf, const int operator_id,
-  const int tensor_id, map<string, int>* tensor_name_index_) {
+void Model::SetOutput(const vector<OperatorConfig*>& conf, const int operator_id, const int tensor_id,
+                      map<string, int>* tensor_name_index_) {
   const OperatorConfig* op_conf = conf[operator_id];
   const string& tensor_name = op_conf->output_tensors(tensor_id)->name();
   if (tensor_name_index_->count(tensor_name)) {
@@ -108,17 +104,14 @@ void Model::SetOutput(const vector<OperatorConfig*>& conf, const int operator_id
   tensor_names_.push_back(tensor_name);
   output_vecs_[operator_id].push_back(tensor_ptr);
   (*tensor_name_index_)[tensor_name] = id;
-  // set model input tensors, it maybe a little strange as Input operator only have output
-  // and the output is MODEL's input
+  // set model input tensors, it maybe a little strange as Input operator only
+  // have output and the output is MODEL's input
   const string& op_type = op_conf->type();
   if (op_type == "Input") {
     // parse weight here
     if (tensor_config->location().size() != 0) {
-      void* weight_ptr = read_file_to_type(
-        weight_root_,
-        tensor_config->dtype(),
-        tensor_config->shape(),
-        tensor_config->location());
+      void* weight_ptr =
+          read_file_to_type(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
       tensor_ptr->set_data(weight_ptr);
       return;
     }
@@ -129,26 +122,27 @@ void Model::SetOutput(const vector<OperatorConfig*>& conf, const int operator_id
 }
 
 vector<Tensor>& Model::Forward(vector<Tensor>& input_data) {
-  CHECK_EQ(input_data.size(), model_input_tensors_.size()) <<
-    "input data size not equal with model input tensor size....";
-  // if we want use dynamic input data shape at run time, we should check the input data shape
-  // and get the output shape, this should be necessary in each Operator's Forward function
+  CHECK_EQ(input_data.size(), model_input_tensors_.size())
+      << "input data size not equal with model input tensor size....";
+  // if we want use dynamic input data shape at run time, we should check the
+  // input data shape and get the output shape, this should be necessary in each
+  // Operator's Forward function
   bool reshape_model = false;
   for (int i = 0; i < input_data.size(); ++i) {
     vector<int64_t> data_shape = input_data[i].shape();
     // here we use model input configs to get the configured shape
     vector<int64_t> model_input_shape = model_input_configs_[i]->shape();
     vector<int64_t> origin_model_input = model_input_tensors_[i]->shape();
-    LOG(INFO) << "data shape is " << data_shape[0] << " model config is "
-      << model_input_shape[0] << " origin shape is " << origin_model_input[0];
+    LOG(INFO) << "data shape is " << data_shape[0] << " model config is " << model_input_shape[0] << " origin shape is "
+              << origin_model_input[0];
     CHECK_EQ(data_shape.size(), model_input_shape.size()) << "input data should have same "
-      << "dimensions with configured model shape....";
+                                                          << "dimensions with configured model shape....";
     for (int axis = 0; axis < data_shape.size(); ++axis) {
       if (data_shape[axis] != origin_model_input[axis]) {
-        // not equal case only happen when model input axis support dynamic in config
-        // which axis value should be -1
-        CHECK_EQ(model_input_shape[axis], -1) << "data shape mismatch " << data_shape[axis] <<
-          " while model input shape need " << model_input_shape[axis];
+        // not equal case only happen when model input axis support dynamic in
+        // config which axis value should be -1
+        CHECK_EQ(model_input_shape[axis], -1) << "data shape mismatch " << data_shape[axis]
+                                              << " while model input shape need " << model_input_shape[axis];
         reshape_model = true;
       }
     }
@@ -161,14 +155,12 @@ vector<Tensor>& Model::Forward(vector<Tensor>& input_data) {
 
   if (reshape_model) {
     for (int i = 0; i < operators_.size(); ++i) {
-      LOG(INFO) << "operator " << operators_[i]->name()
-        << " gonna reshape with type " << operators_[i]->type();
+      LOG(INFO) << "operator " << operators_[i]->name() << " gonna reshape with type " << operators_[i]->type();
       operators_[i]->Reshape(input_vecs_[i], output_vecs_[i]);
     }
   }
   for (int i = 0; i < operators_.size(); ++i) {
-    LOG(INFO) << "operator " << operators_[i]->name()
-      << " gonna forward with type " << operators_[i]->type();
+    LOG(INFO) << "operator " << operators_[i]->name() << " gonna forward with type " << operators_[i]->type();
     operators_[i]->Forward(input_vecs_[i], output_vecs_[i]);
   }
 

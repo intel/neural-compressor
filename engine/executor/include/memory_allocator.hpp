@@ -12,23 +12,24 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_MEMORY_ALLOCATOR_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_MEMORY_ALLOCATOR_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_MEMORY_ALLOCATOR_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_MEMORY_ALLOCATOR_HPP_
 
-#include <thread>  // NOLINT
-#include <vector>
-#include <string>
+#include <cstdlib>
 #include <map>
 #include <memory>
 #include <mutex>  // NOLINT
-#include <cstdlib>
+#include <string>
+#include <thread>  // NOLINT
+#include <vector>
+
 #include "i_malloc.hpp"
 
 namespace executor {
-using std::vector;
-using std::string;
 using std::map;
 using std::shared_ptr;
+using std::string;
+using std::vector;
 class MemoryAllocator {
  public:
   // vector will contain the used counts and size of a memory
@@ -75,7 +76,7 @@ class MemoryAllocator {
     int alive = 0;
     for (auto iter = memory_buffer.begin(); iter != memory_buffer.end(); ++iter) {
       auto buffer_count = iter->second[0];
-      if (buffer_count !=0) {
+      if (buffer_count != 0) {
         alive++;
         LOG(WARNING) << "have alive buffer name " << name_buffer[iter->first];
       }
@@ -88,7 +89,7 @@ class MemoryAllocator {
     MemoryBuffer& memory_buffer = Buffer();
     for (auto iter = memory_buffer.begin(); iter != memory_buffer.end(); ++iter) {
       auto buffer_count = iter->second[0];
-      if (buffer_count !=0) {
+      if (buffer_count != 0) {
         LOG(WARNING) << "buffer still have life, force release...";
         iter->second[0] = 0;
       }
@@ -96,21 +97,21 @@ class MemoryAllocator {
   }
 
   static StrategyList& Strategy() {
-    static StrategyList* m_strategy_ = new StrategyList({{"cycle_buffer", false},
-                                                         {"direct_buffer", false},
-                                                         {"unified_buffer", false}});
+    static StrategyList* m_strategy_ =
+        new StrategyList({{"cycle_buffer", false}, {"direct_buffer", false}, {"unified_buffer", false}});
     return *m_strategy_;
   }
 
   static void InitStrategy() {
-    string memory_strategy = getenv("UNIFIED_BUFFER") != NULL ? "unified_buffer" : 
-                             (getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer");
+    string memory_strategy = getenv("UNIFIED_BUFFER") != NULL
+                                 ? "unified_buffer"
+                                 : (getenv("DIRECT_BUFFER") == NULL ? "cycle_buffer" : "direct_buffer");
     SetStrategy(memory_strategy);
   }
 
   static void SetStrategy(const string strategy) {
-    CHECK(strategy == "cycle_buffer" || strategy == "direct_buffer" || strategy == "unified_buffer") <<
-      "only support memory strategy cycle buffer, direct buffer and unified buffer";
+    CHECK(strategy == "cycle_buffer" || strategy == "direct_buffer" || strategy == "unified_buffer")
+        << "only support memory strategy cycle buffer, direct buffer and unified buffer";
     StrategyList& strategy_list = Strategy();
     strategy_list[strategy] = true;
     LOG(INFO) << "strategy list set success " << strategy;
@@ -209,8 +210,7 @@ class MemoryAllocator {
           memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
           return buf;
         } else {
-          memory_buffer[iter->first] = vector<size_t>(
-            {static_cast<size_t>(life_count), buffer_size});
+          memory_buffer[iter->first] = vector<size_t>({static_cast<size_t>(life_count), buffer_size});
           return iter->first;
         }
       }
@@ -230,9 +230,9 @@ class MemoryAllocator {
   }
 
   static void* UnifiedBufferGetMemory(size_t size, const int life_count) {
-    MemoryBuffer& memory_buffer = Buffer(); 
+    MemoryBuffer& memory_buffer = Buffer();
     LOG(INFO) << "unified buffer tensor size is " << memory_buffer.size();
-    void* buf = (void*) i_malloc(size);
+    void* buf = reinterpret_cast<void*>(i_malloc(size));
     memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
     return buf;
   }
@@ -251,4 +251,4 @@ class MemoryAllocator {
 };
 
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_MEMORY_ALLOCATOR_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_MEMORY_ALLOCATOR_HPP_

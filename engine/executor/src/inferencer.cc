@@ -37,18 +37,16 @@ void run_net() {
     input_dtype.push_back(input_tensors[i].dtype());
     input_range.push_back(vector<float>({1, 100}));
     input_shape.push_back(input_tensors[i].shape());
-    if (input_shape[i][0] == -1 && input_shape[i][1] == -1){
+    if (input_shape[i][0] == -1 && input_shape[i][1] == -1) {
       input_shape[i][0] = FLAGS_batch_size;
       input_shape[i][1] = FLAGS_seq_len;
-    }
-    else if(input_shape[i][0] == -1) {
+    } else if (input_shape[i][0] == -1) {
       input_shape[i][0] = FLAGS_seq_len;
     }
   }
   executor::DataLoader* dataloader;
   // dataloader = new executor::ConstDataLoader(input_shape, input_dtype, input_range);
   dataloader = new executor::DummyDataLoader(input_shape, input_dtype, input_range);
-
 
   // 2. forward the model
   float duration = 0;
@@ -87,10 +85,10 @@ void run_net() {
   // LOG(INFO) << " Throughput is " << 1000./ latency;
   std::cout << " Batch Size is " << FLAGS_batch_size << std::endl;
   std::cout << " Latency is " << latency << " ms" << std::endl;
-  std::cout << " Throughput is " << 1000./ latency << std::endl;
+  std::cout << " Throughput is " << 1000. / latency << std::endl;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   executor::GlobalInit(&argc, &argv);
   run_net();
 

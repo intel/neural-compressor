@@ -13,12 +13,12 @@
 //  limitations under the License.
 
 #include "gelu.hpp"
+
 #include "common.hpp"
 
 namespace executor {
 
-GeluOperator::GeluOperator(const OperatorConfig& conf) :
-  Operator(conf) {
+GeluOperator::GeluOperator(const OperatorConfig& conf) : Operator(conf) {
   auto attrs_map = operator_conf_.attributes();
   auto iter = attrs_map.find("algorithm");
   if (iter != attrs_map.end()) {
@@ -43,7 +43,7 @@ void GeluOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& 
   // 1.4 Prepare memory descriptors
   memory::desc src_md(src_shape, memory::data_type::f32, src_stride);
   memory::desc dst_md(dst_shape, memory::data_type::f32, dst_stride);
-  
+
   // 1.5 Prepare memory objects (cached)
   src_m_ = memory(src_md, eng_);
   dst_m_ = memory(dst_md, eng_);
@@ -56,11 +56,9 @@ void GeluOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& 
   } else if (algorithm_ == "gelu_tanh") {
     gelu_algorithm = algorithm::eltwise_gelu_tanh;
   } else {
-    LOG(ERROR) << "Gelu algorithm is: " << algorithm_
-               << ", not supported. Only gelu_erf or gelu_tanh is supported.";
+    LOG(ERROR) << "Gelu algorithm is: " << algorithm_ << ", not supported. Only gelu_erf or gelu_tanh is supported.";
   }
-  auto gelu_d = dnnl::eltwise_forward::desc(prop_kind::forward_inference,
-                gelu_algorithm, src_md, 0.f, 0.f);
+  auto gelu_d = dnnl::eltwise_forward::desc(prop_kind::forward_inference, gelu_algorithm, src_md, 0.f, 0.f);
 
   // 2.2 Prepare primitive descriptors
   dnnl::eltwise_forward::primitive_desc gelu_pd(gelu_d, eng_);

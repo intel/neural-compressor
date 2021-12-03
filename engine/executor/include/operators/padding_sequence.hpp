@@ -12,9 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_PADDING_SEQUENCE_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_PADDING_SEQUENCE_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_PADDING_SEQUENCE_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_PADDING_SEQUENCE_HPP_
 #include <vector>
+
 #include "../operator.hpp"
 
 namespace executor {
@@ -42,4 +43,4 @@ class PaddingSequenceOperator : public Operator {
   std::vector<int64_t> dims_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_PADDING_SEQUENCE_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_PADDING_SEQUENCE_HPP_

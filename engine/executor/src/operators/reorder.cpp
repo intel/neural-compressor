@@ -16,12 +16,11 @@
 
 namespace executor {
 
-static unordered_map<string, dnnl::memory::data_type> type2mem{
-                                                          {"fp32", dnnl::memory::data_type::f32},
-                                                          {"s32", dnnl::memory::data_type::s32},
-                                                          {"fp16", dnnl::memory::data_type::f16},
-                                                          {"u8", dnnl::memory::data_type::u8},
-                                                          {"s8", dnnl::memory::data_type::s8}};
+static unordered_map<string, dnnl::memory::data_type> type2mem{{"fp32", dnnl::memory::data_type::f32},
+                                                               {"s32", dnnl::memory::data_type::s32},
+                                                               {"fp16", dnnl::memory::data_type::f16},
+                                                               {"u8", dnnl::memory::data_type::u8},
+                                                               {"s8", dnnl::memory::data_type::s8}};
 
 ReorderOperator::ReorderOperator(const OperatorConfig& conf) : Operator(conf) {
   auto attrs_map = operator_conf_.attributes();
@@ -42,8 +41,7 @@ ReorderOperator::ReorderOperator(const OperatorConfig& conf) : Operator(conf) {
   append_sum_ = (iter != attrs_map.end() && iter->second == "sum") ? true : false;
 }
 
-ReorderOperator::~ReorderOperator() {
-}
+ReorderOperator::~ReorderOperator() {}
 
 void ReorderOperator::MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   int input_size = input.size();
@@ -79,10 +77,9 @@ void ReorderOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*
   dst_->set_dtype(output_dtype_);
 
   dnnl::primitive_attr attr;
-  if (src_min_!= nullptr && src_max_ != nullptr) {
+  if (src_min_ != nullptr && src_max_ != nullptr) {
     const int ic_dim = src_min_->size() > 1 ? 0 | (1 << 1) : 0;
-    vector<float> src_scales = GetScales(
-      src_min_->data(), src_max_->data(), src_min_->size(), dst_->dtype());
+    vector<float> src_scales = GetScales(src_min_->data(), src_max_->data(), src_min_->size(), dst_->dtype());
     vector<int> zero_point = GetZeroPoints(src_min_->data(), src_scales, dst_->dtype());
     attr.set_output_scales(ic_dim, src_scales);
     attr.set_zero_points(DNNL_ARG_DST, ic_dim, zero_point);

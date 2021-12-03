@@ -14,16 +14,17 @@
 
 #include <map>
 #include <string>
-#include "gtest/gtest.h"
-#include "../../include/conf.hpp"
-#include "../../include/common.hpp"
-#include "../../include/operators/softmax.hpp"
 
-using executor::Tensor;
-using executor::OperatorConfig;
-using executor::TensorConfig;
+#include "../../include/common.hpp"
+#include "../../include/conf.hpp"
+#include "../../include/operators/softmax.hpp"
+#include "gtest/gtest.h"
+
 using executor::AttrConfig;
 using executor::MemoryAllocator;
+using executor::OperatorConfig;
+using executor::Tensor;
+using executor::TensorConfig;
 
 struct OpArgs {
   std::vector<Tensor*> input;
@@ -36,8 +37,7 @@ struct TestParams {
   bool expect_to_fail;
 };
 
-void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output,
-                const OperatorConfig& conf) {
+void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& output, const OperatorConfig& conf) {
   auto src_tensor_shape = input[0]->shape();
 
   // dst shape
@@ -73,8 +73,8 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
     for (int64_t i = 0; i < dst_shape[0]; ++i) {
       for (int64_t j = 0; j < dst_shape[1]; ++j) {
         int64_t src_idx = i * src_strides[0] + j * src_strides[1];
-        int64_t reduce_idx = std::min(i, reduce_shape[0] - 1) * reduce_strides[0] +
-                              std::min(j, reduce_shape[1] - 1) * reduce_strides[1];
+        int64_t reduce_idx =
+            std::min(i, reduce_shape[0] - 1) * reduce_strides[0] + std::min(j, reduce_shape[1] - 1) * reduce_strides[1];
         maxsrc[reduce_idx] = std::max(src_tensor_data[src_idx], maxsrc[reduce_idx]);
       }
     }
@@ -82,8 +82,8 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
     for (int64_t i = 0; i < dst_shape[0]; ++i) {
       for (int64_t j = 0; j < dst_shape[1]; ++j) {
         int64_t src_idx = i * src_strides[0] + j * src_strides[1];
-        int64_t reduce_idx = std::min(i, reduce_shape[0] - 1) * reduce_strides[0] +
-                              std::min(j, reduce_shape[1] - 1) * reduce_strides[1];
+        int64_t reduce_idx =
+            std::min(i, reduce_shape[0] - 1) * reduce_strides[0] + std::min(j, reduce_shape[1] - 1) * reduce_strides[1];
         sumexp[reduce_idx] += exp(src_tensor_data[src_idx] - maxsrc[reduce_idx]);
       }
     }
@@ -91,10 +91,10 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
     for (int64_t i = 0; i < dst_shape[0]; ++i) {
       for (int64_t j = 0; j < dst_shape[1]; ++j) {
         int64_t src_idx = i * src_strides[0] + j * src_strides[1];
-        int64_t reduce_idx = std::min(i, reduce_shape[0] - 1) * reduce_strides[0] +
-                              std::min(j, reduce_shape[1] - 1) * reduce_strides[1];
+        int64_t reduce_idx =
+            std::min(i, reduce_shape[0] - 1) * reduce_strides[0] + std::min(j, reduce_shape[1] - 1) * reduce_strides[1];
         dst_data[i * dst_strides[0] + j * dst_strides[1]] =
-          exp(src_tensor_data[src_idx] - maxsrc[reduce_idx]) / sumexp[reduce_idx];
+            exp(src_tensor_data[src_idx] - maxsrc[reduce_idx]) / sumexp[reduce_idx];
       }
     }
   }
@@ -120,8 +120,8 @@ bool CheckResult(const TestParams& t) {
     GetTrueData(q.input, q.output, q.conf);
     // Should compare buffer with different addresses
     EXPECT_NE(p.output[0]->data(), q.output[0]->data());
-    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(),
-                                        q.output[0]->data(), q.output[0]->size());
+    return executor::CompareData<float>(p.output[0]->data(), p.output[0]->size(), q.output[0]->data(),
+                                        q.output[0]->size());
   }
   return false;
 }
@@ -140,7 +140,7 @@ TEST_P(SoftmaxOpTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                          std::string append_op = "") {
+                                           std::string append_op = "") {
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("src", src_shape);
@@ -152,8 +152,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   // Step 1.1: Construct Operator config obj
   std::map<std::string, std::string> attr_map;
   AttrConfig* op_attr = new AttrConfig(attr_map);
-  OperatorConfig op_config = OperatorConfig("softmax", "fp32",
-                            input_config_vec, output_config_vec, op_attr);
+  OperatorConfig op_config = OperatorConfig("softmax", "fp32", input_config_vec, output_config_vec, op_attr);
 
   // Step 2: Construct Tensor ptr
   auto make_tensor_obj = [&](const TensorConfig* a_tensor_config, int life_num = 1) {
@@ -168,8 +167,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
     Tensor* a_tensor_copy = new Tensor(*a_tensor_config);
     a_tensor_copy->add_tensor_life(life_num);
     auto tensor_data_copy = a_tensor_copy->mutable_data();
-    memcpy(reinterpret_cast<void*>(tensor_data_copy), tensor_data,
-            a_tensor_copy->size() * sizeof(float));
+    memcpy(reinterpret_cast<void*>(tensor_data_copy), tensor_data, a_tensor_copy->size() * sizeof(float));
     return std::pair<Tensor*, Tensor*>{a_tensor, a_tensor_copy};
   };
 

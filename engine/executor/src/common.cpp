@@ -11,17 +11,14 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
-
 #include "common.hpp"
+
+#include "cmath"
 
 namespace executor {
 
-unordered_map<string, int> type2bytes = {{"fp32", sizeof(float)},
-                                          {"int8", sizeof(char)},
-                                          {"int32", sizeof(int)},
-                                          {"u8", sizeof(unsigned char)},
-                                          {"s8", sizeof(char)},
-                                          {"s32", sizeof(int)}};
+unordered_map<string, int> type2bytes = {{"fp32", sizeof(float)},       {"int8", sizeof(char)}, {"int32", sizeof(int)},
+                                         {"u8", sizeof(unsigned char)}, {"s8", sizeof(char)},   {"s32", sizeof(int)}};
 
 void GlobalInit(int* pargc, char*** pargv) {
   // Google flags.
@@ -44,8 +41,8 @@ Args:
 Return:
     void* ptr, points a consecutive memory that sotres the data
 */
-void* read_file_to_type(const string& root, const string& type,
-                        const vector<int64_t>& shape, const vector<int64_t>& location) {
+void* read_file_to_type(const string& root, const string& type, const vector<int64_t>& shape,
+                        const vector<int64_t>& location) {
   int b = type2bytes[type];
   if (b == 0) {
     LOG(INFO) << type << " not implemented yet...";
@@ -72,10 +69,13 @@ void* read_file_to_type(const string& root, const string& type,
 
 void InitVector(float* v, int buffer_size) {
   std::mt19937 gen;
+  static int seed = 0;
+  gen.seed(seed);
   std::uniform_real_distribution<float> u(-10, 10);
   for (int i = 0; i < buffer_size; ++i) {
     v[i] = u(gen);
   }
+  seed++;
 }
 
 float Time(string state) {
@@ -95,20 +95,19 @@ float Time(string state) {
 }
 
 int64_t Product(const vector<int64_t>& shape) {
-  return std::accumulate(shape.begin(), shape.end(), (int64_t)1,
-                        std::multiplies<int64_t>());
+  return std::accumulate(shape.begin(), shape.end(), (int64_t)1, std::multiplies<int64_t>());
 }
 
-// Get the shapes vector with the absolute perm. Default or empty perm is (0, 1, 2, 3, ...).
-// e.g.: shape_before = (64, 384, 16, 64), perm = (0, 2, 1, 3), return (64, 16, 384, 64)
-vector<int64_t> GetShapes(const vector<int64_t>& origin_shape,
-                          const vector<int64_t>& absolute_perm) {
+// Get the shapes vector with the absolute perm. Default or empty perm is (0, 1,
+// 2, 3, ...). e.g.: shape_before = (64, 384, 16, 64), perm = (0, 2, 1, 3),
+// return (64, 16, 384, 64)
+vector<int64_t> GetShapes(const vector<int64_t>& origin_shape, const vector<int64_t>& absolute_perm) {
   if (absolute_perm.empty()) {
     return origin_shape;
   }
   int shape_size = origin_shape.size();
   vector<int64_t> transed_shape(shape_size, 0);
-  #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < shape_size; ++i) {
     int trans_axis_id = absolute_perm[i];
     transed_shape[i] = origin_shape[trans_axis_id];
@@ -116,12 +115,12 @@ vector<int64_t> GetShapes(const vector<int64_t>& origin_shape,
   return transed_shape;
 }
 
-// Get the strides vector with the absolute perm. Default or empty perm is (0, 1, 2, 3, ...).
-// Tensor's each stride is the product of all higher dimensions
+// Get the strides vector with the absolute perm. Default or empty perm is (0,
+// 1, 2, 3, ...). Tensor's each stride is the product of all higher dimensions
 // Stride[0] = Shape(1)*Shape(2)*...*Shape(n).
-// e.g.: axis = (0, 1, 2, 3), shape = (64, 16, 384, 64), return stride = (16*384*64, 384*64, 64, 1)
-vector<int64_t> GetStrides(const vector<int64_t>& origin_shape,
-                           const vector<int64_t>& absolute_perm) {
+// e.g.: axis = (0, 1, 2, 3), shape = (64, 16, 384, 64), return stride =
+// (16*384*64, 384*64, 64, 1)
+vector<int64_t> GetStrides(const vector<int64_t>& origin_shape, const vector<int64_t>& absolute_perm) {
   int shape_size = origin_shape.size();
   vector<int64_t> origin_strides(shape_size, 1);
   if (shape_size >= 2) {
@@ -133,8 +132,7 @@ vector<int64_t> GetStrides(const vector<int64_t>& origin_shape,
 }
 
 template <typename T>
-bool CompareData(const void* buf1, int64_t elem_num1,
-                const void* buf2, int64_t elem_num2, float eps) {
+bool CompareData(const void* buf1, int64_t elem_num1, const void* buf2, int64_t elem_num2, float eps) {
   if (buf1 == buf2) {
     return false;
   }
@@ -151,20 +149,18 @@ bool CompareData(const void* buf1, int64_t elem_num1,
   }
   return true;
 }
-template bool CompareData<float>(const void* buf1, int64_t elem_num1,
-                                const void* buf2, int64_t elem_num2, float eps);
+template bool CompareData<float>(const void* buf1, int64_t elem_num1, const void* buf2, int64_t elem_num2, float eps);
 
-vector<float> GetScales(const void* mins, const void* maxs,
-                        const int64_t size, const string& dtype) {
+vector<float> GetScales(const void* mins, const void* maxs, const int64_t size, const string& dtype) {
   const float* mins_p = static_cast<const float*>(mins);
   const float* maxs_p = static_cast<const float*>(maxs);
 
   vector<float> scales;
   if (dtype == "u8") {
     for (int i = 0; i < size; i++) {
-      float max_sub_min = maxs_p[i]-mins_p[i];
+      float max_sub_min = maxs_p[i] - mins_p[i];
       max_sub_min = max_sub_min == 0.f ? FLT_MIN : max_sub_min;
-      scales.emplace_back(255.f/max_sub_min);
+      scales.emplace_back(255.f / max_sub_min);
     }
   } else if (dtype == "s8") {
     for (int i = 0; i < size; i++) {
@@ -182,9 +178,8 @@ vector<float> GetScales(const void* mins, const void* maxs,
   return scales;
 }
 
-vector<float> GetRescales(const vector<float>& src0_scales,
-  const vector<float>& src1_scales, const vector<float>& dst_scales,
-  const string& dst_dtype, const bool append_eltwise) {
+vector<float> GetRescales(const vector<float>& src0_scales, const vector<float>& src1_scales,
+                          const vector<float>& dst_scales, const string& dst_dtype, const bool append_eltwise) {
   vector<float> rescales;
   if (dst_dtype == "fp32") {
     for (int i = 0; i < src1_scales.size(); i++) {
@@ -192,14 +187,14 @@ vector<float> GetRescales(const vector<float>& src0_scales,
     }
   } else if (dst_dtype == "s8" && !dst_scales.empty()) {
     for (int i = 0; i < src1_scales.size(); i++) {
-      auto rescale = append_eltwise ? 1. / (src0_scales[0] * src1_scales[i]) :
-                                      dst_scales[0] / (src0_scales[0] * src1_scales[i]);
+      auto rescale =
+          append_eltwise ? 1. / (src0_scales[0] * src1_scales[i]) : dst_scales[0] / (src0_scales[0] * src1_scales[i]);
       rescales.emplace_back(rescale);
     }
   } else if (dst_dtype == "u8" && !dst_scales.empty()) {
     for (int i = 0; i < src1_scales.size(); i++) {
-      auto rescale = append_eltwise ? 1. / (src0_scales[0] * src1_scales[i]) :
-                                      dst_scales[0] / (src0_scales[0] * src1_scales[i]);
+      auto rescale =
+          append_eltwise ? 1. / (src0_scales[0] * src1_scales[i]) : dst_scales[0] / (src0_scales[0] * src1_scales[i]);
       rescales.emplace_back(rescale);
     }
   } else {
@@ -212,28 +207,26 @@ vector<int> GetZeroPoints(const void* mins, const vector<float>& scales, const s
   const float* mins_p = static_cast<const float*>(mins);
   vector<int> zerops;
   if (dtype == "u8") {
-    for (int i = 0; i < scales.size(); i++)
-        zerops.emplace_back(nearbyint(-mins_p[i] * scales[i]));
+    for (int i = 0; i < scales.size(); i++) zerops.emplace_back(nearbyint(-mins_p[i] * scales[i]));
   } else if (dtype == "s8") {
-    for (int i = 0; i < scales.size(); i++)
-      zerops.emplace_back(nearbyint(-128 - mins_p[i] * scales[i]));
+    for (int i = 0; i < scales.size(); i++) zerops.emplace_back(nearbyint(-128 - mins_p[i] * scales[i]));
   } else {
     LOG(ERROR) << "Can't suppport dtype: " << dtype << " now!";
   }
   return zerops;
 }
 
-void AddZeroPoints(const int size, const string& dtype, const float* src_data,
-                   const float* range_mins, const vector<float>& scales, float* dst_data) {
+void AddZeroPoints(const int size, const string& dtype, const float* src_data, const float* range_mins,
+                   const vector<float>& scales, float* dst_data) {
   if (dtype == "u8") {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
       dst_data[i] = src_data[i] - range_mins[0];
     }
   } else if (dtype == "s8") {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
-      dst_data[i] = src_data[i] -128/scales[0] - range_mins[0];
+      dst_data[i] = src_data[i] - 128 / scales[0] - range_mins[0];
     }
   } else {
     LOG(ERROR) << "Can't suppport dst_dtype: " << dtype << " now!";
@@ -242,67 +235,63 @@ void AddZeroPoints(const int size, const string& dtype, const float* src_data,
 }
 
 #if __AVX512F__
-void Quantize_avx512(const int size, const string& dtype, const void* src_data,
-  const float* range_mins, const vector<float>& scales, void* dst_data) {
-    const float* src_data_ = static_cast<const float*>(src_data);
-    __m512 _min_with_scale_u8 = _mm512_set1_ps(range_mins[0] * scales[0]);
-    __m512 _min_with_scale_s8 = _mm512_set1_ps(0);
-    __m512 _scale = _mm512_set1_ps(scales[0]);
-    __m512i zero = _mm512_setzero_epi32();
+void Quantize_avx512(const int size, const string& dtype, const void* src_data, const float* range_mins,
+                     const vector<float>& scales, void* dst_data) {
+  const float* src_data_ = static_cast<const float*>(src_data);
+  __m512 _min_with_scale_u8 = _mm512_set1_ps(range_mins[0] * scales[0]);
+  __m512 _min_with_scale_s8 = _mm512_set1_ps(0);
+  __m512 _scale = _mm512_set1_ps(scales[0]);
+  __m512i zero = _mm512_setzero_epi32();
 
-    int avx512_loop_len = size >> 4;
+  int avx512_loop_len = size >> 4;
 
-    if (dtype == "u8") {
-      unsigned char* dst_data_ = static_cast<unsigned char*>(dst_data);
-      #pragma omp parallel for
-      for (int i = 0; i < avx512_loop_len; ++i) {
-        __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
-        __m512 data = _mm512_fmsub_ps(_src_data, _scale, _min_with_scale_u8);
-        __m512i data_x32 = _mm512_cvt_roundps_epi32(
-          data, (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        data_x32 = _mm512_max_epi32(data_x32, zero);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(
-          dst_data_ + (i << 4)), _mm512_cvtusepi32_epi8(data_x32));
-      }
-
-      #pragma omp parallel for
-      for (int i = (avx512_loop_len << 4); i < size; i++) {
-        int32_t data = nearbyint((src_data_[i] - range_mins[0]) * scales[0]);
-        data = data < 0 ? 0 : data;
-        data = data > 255 ? 255 : data;
-        dst_data_[i] = static_cast<unsigned char>(data);
-      }
-    } else if (dtype == "s8") {
-      char* dst_data_ = static_cast<char*>(dst_data);
-      #pragma omp parallel for
-      for (int i = 0; i < avx512_loop_len; ++i) {
-        __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
-        __m512 data = _mm512_fmsub_ps(_src_data, _scale, _min_with_scale_s8);
-        __m512i data_x32 = _mm512_cvt_roundps_epi32(
-          data, (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(
-          dst_data_ + (i << 4)), _mm512_cvtsepi32_epi8(data_x32));
-      }
-      #pragma omp parallel for
-      for (int i = (avx512_loop_len << 4); i < size; i++) {
-        int32_t data = nearbyint(src_data_[i] * scales[0]);
-        data = data < -128 ? -128 : data;
-        data = data > 127 ? 127 : data;
-        dst_data_[i] = static_cast<char>(data);
-      }
-    } else {
-      LOG(ERROR) << "Can't suppport dst_dtype: " << dtype << " now!";
+  if (dtype == "u8") {
+    unsigned char* dst_data_ = static_cast<unsigned char*>(dst_data);
+#pragma omp parallel for
+    for (int i = 0; i < avx512_loop_len; ++i) {
+      __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
+      __m512 data = _mm512_fmsub_ps(_src_data, _scale, _min_with_scale_u8);
+      __m512i data_x32 = _mm512_cvt_roundps_epi32(data, (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+      data_x32 = _mm512_max_epi32(data_x32, zero);
+      _mm_storeu_si128(reinterpret_cast<__m128i*>(dst_data_ + (i << 4)), _mm512_cvtusepi32_epi8(data_x32));
     }
-    return;
+
+#pragma omp parallel for
+    for (int i = (avx512_loop_len << 4); i < size; i++) {
+      int32_t data = nearbyint((src_data_[i] - range_mins[0]) * scales[0]);
+      data = data < 0 ? 0 : data;
+      data = data > 255 ? 255 : data;
+      dst_data_[i] = static_cast<unsigned char>(data);
+    }
+  } else if (dtype == "s8") {
+    char* dst_data_ = static_cast<char*>(dst_data);
+#pragma omp parallel for
+    for (int i = 0; i < avx512_loop_len; ++i) {
+      __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
+      __m512 data = _mm512_fmsub_ps(_src_data, _scale, _min_with_scale_s8);
+      __m512i data_x32 = _mm512_cvt_roundps_epi32(data, (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+      _mm_storeu_si128(reinterpret_cast<__m128i*>(dst_data_ + (i << 4)), _mm512_cvtsepi32_epi8(data_x32));
+    }
+#pragma omp parallel for
+    for (int i = (avx512_loop_len << 4); i < size; i++) {
+      int32_t data = nearbyint(src_data_[i] * scales[0]);
+      data = data < -128 ? -128 : data;
+      data = data > 127 ? 127 : data;
+      dst_data_[i] = static_cast<char>(data);
+    }
+  } else {
+    LOG(ERROR) << "Can't suppport dst_dtype: " << dtype << " now!";
   }
+  return;
+}
 
 #else
-void Quantize(const int size, const string& dtype, const void* src_data,
-  const float* range_mins, const vector<float>& scales, void* dst_data) {
+void Quantize(const int size, const string& dtype, const void* src_data, const float* range_mins,
+              const vector<float>& scales, void* dst_data) {
   const float* src_data_ = static_cast<const float*>(src_data);
   if (dtype == "u8") {
     unsigned char* dst_data_ = static_cast<unsigned char*>(dst_data);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
       int32_t data = nearbyint((src_data_[i] - range_mins[0]) * scales[0]);
       data = data < 0 ? 0 : data;
@@ -311,7 +300,7 @@ void Quantize(const int size, const string& dtype, const void* src_data,
     }
   } else if (dtype == "s8") {
     char* dst_data_ = static_cast<char*>(dst_data);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
       int32_t data = nearbyint(src_data_[i] * scales[0]);
       data = data < -128 ? -128 : data;
@@ -335,7 +324,7 @@ vector<int64_t> ReversePerm(const vector<int64_t>& perm_to) {
   if (perm_to.empty()) {
     return perm_from;
   }
-  #pragma omp parallel for
+#pragma omp parallel for
   for (int i = 0; i < dsize; ++i) {
     int index = perm_to[i];
     perm_from[index] = i;
@@ -354,7 +343,7 @@ T StringToNum(const string& str) {
 template float StringToNum<float>(const string& str);
 template int64_t StringToNum<int64_t>(const string& str);
 
-template<typename T>
+template <typename T>
 void PrintToFile(const T* data, const std::string& name, size_t size) {
   // print output file
   auto pos = name.rfind("/");
@@ -366,8 +355,7 @@ void PrintToFile(const T* data, const std::string& name, size_t size) {
   output_data.close();
 }
 template void PrintToFile<float>(const float* data, const std::string& name, size_t size);
-template void PrintToFile<unsigned char>(
-  const unsigned char* data, const std::string& name, size_t size);
+template void PrintToFile<unsigned char>(const unsigned char* data, const std::string& name, size_t size);
 template void PrintToFile<char>(const char* data, const std::string& name, size_t size);
 template void PrintToFile<int32_t>(const int32_t* data, const std::string& name, size_t size);
 template void PrintToFile<int64_t>(const int64_t* data, const std::string& name, size_t size);
@@ -383,18 +371,14 @@ void StringSplit(vector<T>* split_list, const string& str_list, const string& sp
     pos2 = str_list.find(split_op, pos1);
   }
   if (pos1 != str_list.size()) {
-      T element = StringToNum<T>(str_list.substr(pos1));
-      split_list->push_back(element);
+    T element = StringToNum<T>(str_list.substr(pos1));
+    split_list->push_back(element);
   }
 }
-template void StringSplit<float>(vector<float>* split_list, const string& string_list,
-                                 const string& split_op);
-template void StringSplit<int64_t>(vector<int64_t>* split_list, const string& string_list,
-                                   const string& split_op);
-template void StringSplit<char>(vector<char>* split_list, const string& string_list,
-                                const string& split_op);
-template void StringSplit<unsigned char>(vector<unsigned char>* split_list,
-                                         const string& string_list,
+template void StringSplit<float>(vector<float>* split_list, const string& string_list, const string& split_op);
+template void StringSplit<int64_t>(vector<int64_t>* split_list, const string& string_list, const string& split_op);
+template void StringSplit<char>(vector<char>* split_list, const string& string_list, const string& split_op);
+template void StringSplit<unsigned char>(vector<unsigned char>* split_list, const string& string_list,
                                          const string& split_op);
 
 }  // namespace executor

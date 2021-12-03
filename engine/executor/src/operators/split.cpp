@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "split.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -29,8 +30,7 @@ SplitOperator::SplitOperator(const OperatorConfig& conf) : Operator(conf) {
   }
 }
 
-void SplitOperator::Reshape(const vector<Tensor*>& input,
-                            const vector<Tensor*>& output) {
+void SplitOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   //// Part1: Derive operator's user proper shape and strides
   // 1.1: Prepare Tensor origin shape
   src_shape_ = input[0]->shape();
@@ -47,8 +47,7 @@ void SplitOperator::Reshape(const vector<Tensor*>& input,
   }
 }
 
-void SplitOperator::Forward(const vector<Tensor*>& input,
-                                      const vector<Tensor*>& output) {
+void SplitOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   // 0. Alias variables part
   const auto& src_data = static_cast<const int32_t*>(input[0]->data());
   // when change data value please use mutable_data
@@ -56,8 +55,8 @@ void SplitOperator::Forward(const vector<Tensor*>& input,
     auto dst_data = static_cast<int32_t*>(output[output_index]->mutable_data());
     vector<int64_t> dst_shape = src_shape_;
     dst_shape[axis_] = split_[output_index];
-    #pragma omp parallel for
-    for (int j = 0; j < dst_shape[1]; j ++) {
+#pragma omp parallel for
+    for (int j = 0; j < dst_shape[1]; j++) {
       dst_data[j] = src_data[output_index * dst_shape[1] + j];
     }
   }

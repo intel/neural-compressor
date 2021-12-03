@@ -12,15 +12,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATOR_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATOR_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATOR_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATOR_HPP_
 
 #include <algorithm>
 #include <string>
 #include <vector>
 
-#include "tensor.hpp"
+#include "common.hpp"
 #include "operator_registry.hpp"
+#include "tensor.hpp"
 
 namespace executor {
 
@@ -33,8 +34,7 @@ namespace executor {
  */
 class Operator {
  public:
-  explicit Operator(const OperatorConfig& conf)
-    : operator_conf_(conf) {
+  explicit Operator(const OperatorConfig& conf) : operator_conf_(conf) {
     name_ = operator_conf_.name();
     type_ = operator_conf_.type();
   }
@@ -42,8 +42,7 @@ class Operator {
   virtual ~Operator() {}
 
   // use Reshape to calculate the output shape from input tensor
-  virtual void Reshape(const vector<Tensor*>& input,
-                       const vector<Tensor*>& output) = 0;
+  virtual void Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) = 0;
 
   inline const string& name() const { return name_; }
   inline const string& type() const { return type_; }
@@ -55,11 +54,9 @@ class Operator {
     }
   }
 
-  virtual void Forward(const vector<Tensor*>& input,
-                       const vector<Tensor*>& output) = 0;
+  virtual void Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) = 0;
 
-  virtual void Prepare(const vector<Tensor*>& input,
-                       const vector<Tensor*>& output) {}
+  virtual void Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {}
 
   const OperatorConfig& operator_conf() const { return operator_conf_; }
 
@@ -70,7 +67,6 @@ class Operator {
   OperatorConfig operator_conf_;
 };  // class Operator
 
-
 }  // namespace executor
 
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATOR_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATOR_HPP_

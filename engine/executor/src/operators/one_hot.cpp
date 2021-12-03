@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "one_hot.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -79,33 +80,27 @@ void OnehotOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   const auto& indices_data = static_cast<const int32_t*>(input[0]->data());
   // when change data value please use mutable_data
   auto dst_data = static_cast<float*>(output[0]->mutable_data());
-  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == \
-        reinterpret_cast<void*>(const_cast<int32_t*>(indices_data))) \
-        << "DST ptr should not be equal to SRC ptr.";
+  LOG_IF(ERROR, reinterpret_cast<void*>(dst_data) == reinterpret_cast<void*>(const_cast<int32_t*>(indices_data)))
+      << "DST ptr should not be equal to SRC ptr.";
 
   // 1. Execute the dst
-  auto do_onehot_2d = [&](const vector<int64_t>& dst_shape,
-                          const vector<int64_t>& dst_stride,
-                          const vector<int64_t>& reduce_shape,
-                          const vector<int64_t>& reduce_stride,
-                          int64_t dep, float*& dst_data) {
+  auto do_onehot_2d = [&](const vector<int64_t>& dst_shape, const vector<int64_t>& dst_stride,
+                          const vector<int64_t>& reduce_shape, const vector<int64_t>& reduce_stride, int64_t dep,
+                          float*& dst_data) {
     vector<int64_t> i(2);
     // #pragma omp parallel for
     for (i[0] = 0; i[0] < dst_shape[0]; ++i[0]) {
       // #pragma omp simd
       for (i[1] = 0; i[1] < dst_shape[1]; ++i[1]) {
         auto dst_idx = i[0] * dst_stride[0] + i[1];
-        auto src_idx = min(i[0], reduce_shape[0] - 1) * reduce_stride[0] +
-                        min(i[1], reduce_shape[1] - 1);
+        auto src_idx = min(i[0], reduce_shape[0] - 1) * reduce_stride[0] + min(i[1], reduce_shape[1] - 1);
         dst_data[dst_idx] = (i[dep] == indices_data[src_idx]) ? on_value_ : off_value_;
       }
     }
   };
-  auto do_onehot_3d = [&](const vector<int64_t>& dst_shape,
-                          const vector<int64_t>& dst_stride,
-                          const vector<int64_t>& reduce_shape,
-                          const vector<int64_t>& reduce_stride,
-                          int64_t dep, float*& dst_data) {
+  auto do_onehot_3d = [&](const vector<int64_t>& dst_shape, const vector<int64_t>& dst_stride,
+                          const vector<int64_t>& reduce_shape, const vector<int64_t>& reduce_stride, int64_t dep,
+                          float*& dst_data) {
     vector<int64_t> i(3);
     // #pragma omp parallel for
     for (i[0] = 0; i[0] < dst_shape[0]; ++i[0]) {
@@ -115,8 +110,7 @@ void OnehotOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
         for (i[2] = 0; i[2] < dst_shape[2]; ++i[2]) {
           auto dst_idx = i[0] * dst_stride[0] + i[1] * dst_stride[1] + i[2];
           auto src_idx = min(i[0], reduce_shape[0] - 1) * reduce_stride[0] +
-                          min(i[1], reduce_shape[1] - 1) * reduce_stride[1] +
-                          min(i[2], reduce_shape[2] - 1);
+                         min(i[1], reduce_shape[1] - 1) * reduce_stride[1] + min(i[2], reduce_shape[2] - 1);
           dst_data[dst_idx] = (i[dep] == indices_data[src_idx]) ? on_value_ : off_value_;
         }
       }
@@ -124,7 +118,7 @@ void OnehotOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   };
 
   int64_t dep;
-  switch  (input[0]->shape().size()) {
+  switch (input[0]->shape().size()) {
     case 0:  // scalar
       for (int d = 0; d < depth_; ++d) {
         auto dst_idx = d;
@@ -134,13 +128,11 @@ void OnehotOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
       break;
     case 1:  // vector
       dep = (axis_ == -1) ? 1 : axis_;
-      do_onehot_2d(dst_shape_, dst_stride_, reduce_shape_, reduce_stride_,
-                    dep, dst_data);
+      do_onehot_2d(dst_shape_, dst_stride_, reduce_shape_, reduce_stride_, dep, dst_data);
       break;
     case 2:  // matrix
       dep = (axis_ == -1) ? 2 : axis_;
-      do_onehot_3d(dst_shape_, dst_stride_, reduce_shape_, reduce_stride_,
-                    dep, dst_data);
+      do_onehot_3d(dst_shape_, dst_stride_, reduce_shape_, reduce_stride_, dep, dst_data);
       break;
   }
 

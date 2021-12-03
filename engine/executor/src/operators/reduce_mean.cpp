@@ -13,12 +13,13 @@
 //  limitations under the License.
 
 #include "reduce_mean.hpp"
+
 #include "common.hpp"
 
 namespace executor {
 
-ReduceMeanOperator::ReduceMeanOperator(const OperatorConfig& conf) :
-  Operator(conf), axis_({}), dst_shape_({}), keep_dims_(true) {
+ReduceMeanOperator::ReduceMeanOperator(const OperatorConfig& conf)
+    : Operator(conf), axis_({}), dst_shape_({}), keep_dims_(true) {
   auto attrs_map = operator_conf_.attributes();
   auto iter = attrs_map.find("axis");
   if (iter != attrs_map.end()) {

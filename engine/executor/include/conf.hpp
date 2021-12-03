@@ -12,24 +12,25 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_CONF_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_CONF_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_CONF_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_CONF_HPP_
 
 #include <iomanip>
 #include <iostream>  // NOLINT(readability/streams)
-#include <vector>
-#include <string>
 #include <map>
-#include "yaml-cpp/yaml.h"
+#include <string>
+#include <vector>
+
 #include "glog/logging.h"
-using std::vector;
-using std::string;
+#include "yaml-cpp/yaml.h"
 using std::map;
+using std::string;
+using std::vector;
 
 namespace executor {
 
 /**
- * @brief we can construct the config instance from yaml file or just from 
+ * @brief we can construct the config instance from yaml file or just from
  *        the element needed.
  */
 
@@ -51,8 +52,7 @@ class AttrConfig {
 
 class TensorConfig {
  public:
-  TensorConfig(const string& name, const YAML::Node& node):
-    name_(name), dtype_("fp32"), strides_({}), location_({}) {
+  TensorConfig(const string& name, const YAML::Node& node) : name_(name), dtype_("fp32"), strides_({}), location_({}) {
     for (auto it = node.begin(); it != node.end(); ++it) {
       YAML::Node key = it->first;
       YAML::Node value = it->second;
@@ -71,11 +71,9 @@ class TensorConfig {
     }
   }
 
-  TensorConfig(const string& name, const vector<int64_t>& shape = {},
-                const string& dtype = "fp32", const vector<int64_t>& strides = {},
-                const vector<int64_t>& location = {}):
-    name_(name), shape_(shape), dtype_(dtype),
-    strides_(strides), count_(0), location_(location) {}
+  TensorConfig(const string& name, const vector<int64_t>& shape = {}, const string& dtype = "fp32",
+               const vector<int64_t>& strides = {}, const vector<int64_t>& location = {})
+      : name_(name), shape_(shape), dtype_(dtype), strides_(strides), count_(0), location_(location) {}
 
   inline const string& name() const { return name_; }
   inline const vector<int64_t>& shape() const { return shape_; }
@@ -97,7 +95,7 @@ class TensorConfig {
 class OperatorConfig {
  public:
   OperatorConfig(const string name, const YAML::Node& node)
-    : name_(name), attrs_(new AttrConfig(std::map<string, string>({}))) {
+      : name_(name), attrs_(new AttrConfig(std::map<string, string>({}))) {
     for (auto v = node.begin(); v != node.end(); ++v) {
       YAML::Node key = v->first;
       YAML::Node value = v->second;
@@ -117,8 +115,8 @@ class OperatorConfig {
     }
   }
   OperatorConfig(const string& name, const string& type, const vector<TensorConfig*>& inputs,
-                  const vector<TensorConfig*>& outputs, AttrConfig* attrs): name_(name),
-    type_(type), inputs_(inputs), outputs_(outputs), attrs_(attrs) {}
+                 const vector<TensorConfig*>& outputs, AttrConfig* attrs)
+      : name_(name), type_(type), inputs_(inputs), outputs_(outputs), attrs_(attrs) {}
 
   void ParseTensor(const YAML::Node& node, vector<TensorConfig*>* tensors) {
     for (auto it = node.begin(); it != node.end(); ++it) {
@@ -146,47 +144,44 @@ class OperatorConfig {
 
 class ModelConfig {
  public:
-    explicit ModelConfig(const YAML::Node& node) {
-      YAML::Node model_config = node["model"];
-      // iter out all the config and initialize
-      for (auto it = model_config.begin(); it != model_config.end(); ++it) {
-        YAML::Node key = it->first;
-        YAML::Node value = it->second;
-        if (key.as<std::string>() == "name") {
-          name_ = value.as<std::string>();
-        }
-        if (key.as<std::string>() == "operator") {
-          auto operator_config = model_config["operator"];
-          ParseOperator(operator_config, operators_);
-        }
+  explicit ModelConfig(const YAML::Node& node) {
+    YAML::Node model_config = node["model"];
+    // iter out all the config and initialize
+    for (auto it = model_config.begin(); it != model_config.end(); ++it) {
+      YAML::Node key = it->first;
+      YAML::Node value = it->second;
+      if (key.as<std::string>() == "name") {
+        name_ = value.as<std::string>();
+      }
+      if (key.as<std::string>() == "operator") {
+        auto operator_config = model_config["operator"];
+        ParseOperator(operator_config, operators_);
       }
     }
-    explicit ModelConfig(const string& conf_file) : ModelConfig(ParseConfig(conf_file)) {}
+  }
+  explicit ModelConfig(const string& conf_file) : ModelConfig(ParseConfig(conf_file)) {}
 
-    ModelConfig(const string& name, const vector<OperatorConfig*>& operators)
-     : name_(name), operators_(operators) {}
+  ModelConfig(const string& name, const vector<OperatorConfig*>& operators) : name_(name), operators_(operators) {}
 
  public:
-    void ParseOperator(const YAML::Node& node, vector<OperatorConfig*>& operators) {
-      for (auto it = node.begin(); it != node.end(); ++it) {
-        auto name = it->first.as<std::string>();
-        operators.push_back(new OperatorConfig(name, it->second));
-      }
+  void ParseOperator(const YAML::Node& node, vector<OperatorConfig*>& operators) {
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      auto name = it->first.as<std::string>();
+      operators.push_back(new OperatorConfig(name, it->second));
     }
+  }
 
-    YAML::Node ParseConfig(const string& conf_file) {
-      return YAML::LoadFile(conf_file);
-    }
-    bool CheckConfig() { return true; }
+  YAML::Node ParseConfig(const string& conf_file) { return YAML::LoadFile(conf_file); }
+  bool CheckConfig() { return true; }
 
-    inline const string& name() const { return name_; }
-    inline const vector<OperatorConfig*>& operators() const { return operators_; }
+  inline const string& name() const { return name_; }
+  inline const vector<OperatorConfig*>& operators() const { return operators_; }
 
  protected:
-    string name_;
-    vector<OperatorConfig*> operators_;
+  string name_;
+  vector<OperatorConfig*> operators_;
 };
 
 }  // namespace executor
 
-#endif   // DEEP_ENGINE_EXECUTOR_INCLUDE_CONF_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_CONF_HPP_

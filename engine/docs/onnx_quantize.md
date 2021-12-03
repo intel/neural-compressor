@@ -1,7 +1,7 @@
 # Quantize a ONNX model to engine low precision/int8 IR
 
 ## Design
-Quantizing a ONNX model to engine low precision/int8 IR has two steps: 1. Convert ONNX model to engine float IR; 2. Quantize float IR to low precision/int8 IR. The first step will be finished in engine compile. We focus on the sceond step how to quantize a float enigne IR to low precision IR in INC. The whole is in examlpes/engine/nlp/bert_base_mrpc.
+Quantizing a ONNX model to engine low precision/int8 IR has two steps: 1. Convert ONNX model to engine float IR; 2. Quantize float IR to low precision/int8 IR. The first step will be finished in engine compile. We focus on the second step how to quantize a float engine IR to low precision IR in INC. The whole is in examples/engine/nlp/bert_base_mrpc.
 
 ## Prerequisite
 ### Install environment
@@ -21,8 +21,8 @@ bash prepare_model.sh
 ```
 
 ## Tuning and benchmark
-### Tune the low precison model 
-The process of converting a float model to a low precision model in INC is called tunning.
+### Tune the low precision model
+The process of converting a float model to a low precision model in INC is called tuning.
 The whole workflow is as follow: ![avatar](imgs/engine_adaptor_workflow.png) Now the const tensor has symmetric quantization mode, and it also can be quantized by per channel or per tensor two. Activation tensor has asymmetric and symmetric two modes.
 And there is a simple example to show how float model tuned to low precision model, like this ![avatar](imgs/engine_adaptor_example.png)
 It quantizes the all int8 operators by calibration dataset. In order to meet the accuracy requirements, it will run low precision models and determine whether the relative accuracy between low precision model with float model is within the limited range. If not, it will recall some int8 operators to float. So the object quantizer need dataset, model and metric.
@@ -56,7 +56,7 @@ evaluator.b_dataloader = common.DataLoader(ds, args.batch_size)
 evaluator(args.mode)
 ```
 
-### Config for tunning and benchmark:
+### Config for tuning and benchmark:
 The yaml can config sampling size of calibration dataset for quantization. And the accuracy criterion is generally 1% relative error. Or if you only want to quantize but no callback, you can set timeout to 1 for tuning exit policy.
 ```shell
 quantization:
@@ -90,7 +90,7 @@ evaluation:
         task: mrpc
 ```
 
-## Run tuning and benckmark
+## Run tuning and benchmark
 Users can run shell to tune model and get its accuracy and performance.
 ### 1. To get the tuned model and its accuracy:
 ```shell

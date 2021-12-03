@@ -14,6 +14,8 @@
 
 #include "output.hpp"
 
+#include "operator_registry.hpp"
+
 namespace executor {
 
 REGISTER_OPERATOR_CLASS(Output);

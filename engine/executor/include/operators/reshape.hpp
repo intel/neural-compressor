@@ -12,12 +12,13 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_RESHAPE_HPP_
-#define DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_RESHAPE_HPP_
+#ifndef ENGINE_EXECUTOR_INCLUDE_OPERATORS_RESHAPE_HPP_
+#define ENGINE_EXECUTOR_INCLUDE_OPERATORS_RESHAPE_HPP_
 #include <vector>
-#include "oneapi/dnnl/dnnl.hpp"
-#include "../operator.hpp"
+
 #include "../common.hpp"
+#include "../operator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
 
@@ -40,4 +41,4 @@ class ReshapeOperator : public Operator {
   vector<int64_t> mul_;
 };
 }  // namespace executor
-#endif  // DEEP_ENGINE_EXECUTOR_INCLUDE_OPERATORS_RESHAPE_HPP_
+#endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_RESHAPE_HPP_

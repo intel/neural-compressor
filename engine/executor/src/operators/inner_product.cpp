@@ -16,17 +16,22 @@
 
 namespace executor {
 
-static unordered_map<string, dnnl::memory::data_type> type2mem{
-                                                          {"fp32", dnnl::memory::data_type::f32},
-                                                          {"s32", dnnl::memory::data_type::s32},
-                                                          {"fp16", dnnl::memory::data_type::f16},
-                                                          {"u8", dnnl::memory::data_type::u8},
-                                                          {"s8", dnnl::memory::data_type::s8}};
+static unordered_map<string, dnnl::memory::data_type> type2mem{{"fp32", dnnl::memory::data_type::f32},
+                                                               {"s32", dnnl::memory::data_type::s32},
+                                                               {"fp16", dnnl::memory::data_type::f16},
+                                                               {"u8", dnnl::memory::data_type::u8},
+                                                               {"s8", dnnl::memory::data_type::s8}};
 
-InnerProductOperator::InnerProductOperator(const OperatorConfig& conf) :
-  Operator(conf), src0_perm_({}), src1_perm_({}), dst_perm_({}),
-  output_scale_(1.), format_any_(true), gelu_split_(false),
-  weight_cached_(false), has_bias_(false) {
+InnerProductOperator::InnerProductOperator(const OperatorConfig& conf)
+    : Operator(conf),
+      src0_perm_({}),
+      src1_perm_({}),
+      dst_perm_({}),
+      output_scale_(1.),
+      format_any_(true),
+      gelu_split_(false),
+      weight_cached_(false),
+      has_bias_(false) {
   auto attrs_map = operator_conf_.attributes();
   auto iter = attrs_map.find("src0_perm");
   if (iter != attrs_map.end()) {
@@ -68,15 +73,12 @@ InnerProductOperator::InnerProductOperator(const OperatorConfig& conf) :
   tanh_ = (iter != attrs_map.end() && iter->second == "tanh") ? true : false;
   sigmoid_ = (iter != attrs_map.end() && iter->second == "sigmoid") ? true : false;
   relu_ = (iter != attrs_map.end() && iter->second == "relu") ? true : false;
-  append_eltwise_ = (gelu_erf_ && !gelu_split_) || (gelu_tanh_ && !gelu_split_) || tanh_ ||
-                     sigmoid_ || relu_;
+  append_eltwise_ = (gelu_erf_ && !gelu_split_) || (gelu_tanh_ && !gelu_split_) || tanh_ || sigmoid_ || relu_;
 }
 
-InnerProductOperator::~InnerProductOperator() {
-}
+InnerProductOperator::~InnerProductOperator() {}
 
-void InnerProductOperator::MapTensors(const vector<Tensor*>& input,
-                                      const vector<Tensor*>& output) {
+void InnerProductOperator::MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   int input_size = input.size();
   dst_ = output[0];
   switch (input_size) {
@@ -88,8 +90,8 @@ void InnerProductOperator::MapTensors(const vector<Tensor*>& input,
     case 3: {
       src0_ = input[0];
       src1_ = input[1];
-      bias_ = (append_sum_ || binary_add_)? nullptr : input[2];
-      post_ = (append_sum_ || binary_add_)? input[2] : nullptr;
+      bias_ = (append_sum_ || binary_add_) ? nullptr : input[2];
+      post_ = (append_sum_ || binary_add_) ? input[2] : nullptr;
       break;
     }
     case 4: {
@@ -113,7 +115,7 @@ void InnerProductOperator::MapTensors(const vector<Tensor*>& input,
     case 9: {
       src0_ = input[0];
       src1_ = input[1];
-      bias_ = (append_sum_ || binary_add_) ? nullptr: input[2];
+      bias_ = (append_sum_ || binary_add_) ? nullptr : input[2];
       post_ = (append_sum_ || binary_add_) ? input[2] : nullptr;
       src0_min_ = input[3];
       src0_max_ = input[4];
@@ -142,7 +144,9 @@ void InnerProductOperator::MapTensors(const vector<Tensor*>& input,
 void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   MapTensors(input, output);
   has_bias_ = (input.size() == 4 || input.size() == 10) ||
-    ((input.size() == 3 || input.size() == 9) && !append_sum_ && !binary_add_) ? true: false;
+                      ((input.size() == 3 || input.size() == 9) && !append_sum_ && !binary_add_)
+                  ? true
+                  : false;
   LOG(INFO) << "inner product has bias add " << has_bias_;
 
   dst_->set_dtype(output_dtype_);
@@ -152,18 +156,14 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
   vector<float> src1_scales;
   vector<float> dst_scales;
   vector<float> rescales;
-  if (output_scale_ != 1.f)  {
+  if (output_scale_ != 1.f) {
     attr.set_output_scales(0, {output_scale_});
   } else if (src1_min_ != nullptr) {
     const int ic_dim = src1_min_->size() > 1 ? 0 | (1 << 1) : 0;
-    src0_scales = GetScales(src0_min_->data(), src0_max_->data(),
-                            src0_min_->size(), src0_->dtype());
-    src1_scales = GetScales(src1_min_->data(), src1_max_->data(),
-                            src1_min_->size(), src1_->dtype());
-    dst_scales = GetScales(dst_min_->data(), dst_max_->data(),
-                           dst_min_->size(), dst_->dtype());
-    rescales = GetRescales(src0_scales, src1_scales, dst_scales,
-                           dst_->dtype(), append_eltwise_);
+    src0_scales = GetScales(src0_min_->data(), src0_max_->data(), src0_min_->size(), src0_->dtype());
+    src1_scales = GetScales(src1_min_->data(), src1_max_->data(), src1_min_->size(), src1_->dtype());
+    dst_scales = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
+    rescales = GetRescales(src0_scales, src1_scales, dst_scales, dst_->dtype(), append_eltwise_);
     attr.set_output_scales(ic_dim, rescales);
   }
 
@@ -216,8 +216,7 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
   vector<int64_t> src1_shape = GetShapes(src1_shape_origin, src1_perm_);
   vector<int64_t> src1_stride = GetStrides(src1_shape_origin, src1_perm_);
   src1_->set_shape(src1_shape);
-  any_src1_md_ = memory::desc(
-    src1_shape, type2mem[src1_->dtype()], memory::format_tag::any);
+  any_src1_md_ = memory::desc(src1_shape, type2mem[src1_->dtype()], memory::format_tag::any);
   src1_md_ = memory::desc(src1_shape, type2mem[src1_->dtype()], src1_stride);
   src1_m_ = memory(src1_md_, eng_, src1_->mutable_data());
 
@@ -225,8 +224,7 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
     vector<int64_t> bias_shape = {src1_shape[0]};
     vector<int64_t> bias_stride = GetStrides(bias_shape);
     bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
-    any_bias_md_ = memory::desc(
-      bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
+    any_bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
     bias_m_ = memory(bias_md_, eng_, bias_->mutable_data());
   }
 }
@@ -255,46 +253,39 @@ void InnerProductOperator::Reshape(const vector<Tensor*>& input, const vector<Te
   vector<int64_t> dst_stride = GetStrides(dst_shape, reverse_perm);
 
   // 1.4 Prepare memory descriptors
-  memory::desc any_src0_md = memory::desc(src0_shape,
-    type2mem[src0_->dtype()], memory::format_tag::any);
+  memory::desc any_src0_md = memory::desc(src0_shape, type2mem[src0_->dtype()], memory::format_tag::any);
   memory::desc src0_md = memory::desc(src0_shape, type2mem[src0_->dtype()], src0_stride);
 
-  memory::desc any_dst_md = memory::desc(
-    dst_shape_origin, type2mem[dst_->dtype()], memory::format_tag::any);
+  memory::desc any_dst_md = memory::desc(dst_shape_origin, type2mem[dst_->dtype()], memory::format_tag::any);
   memory::desc dst_md = memory::desc(dst_shape_origin, type2mem[dst_->dtype()], dst_stride);
 
   // 1.5 Set dst shape and strides
   dst_->set_shape(dst_shape);
 
   // 2.2 Prepare op descriptors
-  dnnl::inner_product_forward::desc inner_product_d = has_bias_ ?
-    dnnl::inner_product_forward::desc(
-      prop_kind::forward_inference, src0_md, src1_md_, bias_md_, dst_md):
-    dnnl::inner_product_forward::desc(
-      prop_kind::forward_inference, src0_md, src1_md_, dst_md);
+  dnnl::inner_product_forward::desc inner_product_d =
+      has_bias_ ? dnnl::inner_product_forward::desc(prop_kind::forward_inference, src0_md, src1_md_, bias_md_, dst_md)
+                : dnnl::inner_product_forward::desc(prop_kind::forward_inference, src0_md, src1_md_, dst_md);
 
   if (format_any_) {
-    inner_product_d = has_bias_ ?
-      dnnl::inner_product_forward::desc(prop_kind::forward_inference, any_src0_md,
-        any_src1_md_, any_bias_md_, any_dst_md):
-      dnnl::inner_product_forward::desc(prop_kind::forward_inference, any_src0_md,
-        any_src1_md_, any_dst_md);
+    inner_product_d = has_bias_ ? dnnl::inner_product_forward::desc(prop_kind::forward_inference, any_src0_md,
+                                                                    any_src1_md_, any_bias_md_, any_dst_md)
+                                : dnnl::inner_product_forward::desc(prop_kind::forward_inference, any_src0_md,
+                                                                    any_src1_md_, any_dst_md);
   }
 
   if (gelu_erf_ && gelu_split_) {
-    memory::desc gelu_md = memory::desc(
-      dst_shape_origin, type2mem[dst_->dtype()], dst_stride);
-    auto gelu_d = dnnl::eltwise_forward::desc(prop_kind::forward_inference,
-      algorithm::eltwise_gelu_erf, gelu_md, 0.f, 0.f);
+    memory::desc gelu_md = memory::desc(dst_shape_origin, type2mem[dst_->dtype()], dst_stride);
+    auto gelu_d =
+        dnnl::eltwise_forward::desc(prop_kind::forward_inference, algorithm::eltwise_gelu_erf, gelu_md, 0.f, 0.f);
     gelu_pd_ = dnnl::eltwise_forward::primitive_desc(gelu_d, gelu_eng_);
     gelu_p_ = dnnl::eltwise_forward(gelu_pd_);
     gelu_m_ = memory(gelu_md, gelu_eng_);
   }
   if (gelu_tanh_ && gelu_split_) {
-    memory::desc gelu_md = memory::desc(
-      dst_shape_origin, type2mem[dst_->dtype()], dst_stride);
-    auto gelu_d = dnnl::eltwise_forward::desc(prop_kind::forward_inference,
-      algorithm::eltwise_gelu_tanh, gelu_md, 0.f, 0.f);
+    memory::desc gelu_md = memory::desc(dst_shape_origin, type2mem[dst_->dtype()], dst_stride);
+    auto gelu_d =
+        dnnl::eltwise_forward::desc(prop_kind::forward_inference, algorithm::eltwise_gelu_tanh, gelu_md, 0.f, 0.f);
     gelu_pd_ = dnnl::eltwise_forward::primitive_desc(gelu_d, gelu_eng_);
     gelu_p_ = dnnl::eltwise_forward(gelu_pd_);
     gelu_m_ = memory(gelu_md, gelu_eng_);
@@ -304,8 +295,7 @@ void InnerProductOperator::Reshape(const vector<Tensor*>& input, const vector<Te
     dnnl::post_ops po;
     vector<int64_t> post_shape = post_->shape();
     vector<int64_t> post_stride = GetStrides(post_shape);
-    memory::desc binary_md = memory::desc(
-      post_shape, type2mem[post_->dtype()], post_stride);
+    memory::desc binary_md = memory::desc(post_shape, type2mem[post_->dtype()], post_stride);
     po.append_binary(algorithm::binary_add, binary_md);
     attr.set_post_ops(po);
     binary_m_ = memory(binary_md, eng_);
@@ -343,14 +333,14 @@ void InnerProductOperator::Reshape(const vector<Tensor*>& input, const vector<Te
 void InnerProductOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   if (post_ != nullptr && !binary_add_) {
     LOG(INFO) << "inner product has post op " << post_->name();
-    void* post_data_ptr =  const_cast<void*>(post_->data());
+    void* post_data_ptr = const_cast<void*>(post_->data());
     auto life_count = MemoryAllocator::get().CheckMemory(post_data_ptr);
     // MemoryAllocate::check_tensor_life
     if (life_count == 1) {
       post_->unref_data(true);
       dst_->set_data(post_data_ptr);
     } else {
-      void* dst_data_ptr =  dst_->mutable_data();
+      void* dst_data_ptr = dst_->mutable_data();
       int data_size = post_->size();
       string data_type = post_->dtype();
       memcpy(dst_data_ptr, post_data_ptr, data_size * type2bytes[data_type]);
@@ -384,7 +374,7 @@ void InnerProductOperator::Forward(const vector<Tensor*>& input, const vector<Te
   memory_args_[DNNL_ARG_SRC_0] = any_src0_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
   if (binary_add_) {
-    void* post_ptr =  post_->mutable_data();
+    void* post_ptr = post_->mutable_data();
     binary_m_.set_data_handle(post_ptr, eng_stream_);
     memory_args_[DNNL_ARG_ATTR_MULTIPLE_POST_OP(0) | DNNL_ARG_SRC_1] = binary_m_;
   }

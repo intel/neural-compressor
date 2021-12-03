@@ -1,3 +1,17 @@
+//  Copyright (c) 2021 Intel Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 #include "i_malloc.hpp"
 
 #include <fcntl.h>
@@ -20,12 +34,12 @@
 static struct malloc_mempool g_mempool;
 
 void mempool_dump() {
-  struct malloc_elem *elem = g_mempool.free_head;
+  struct malloc_elem* elem = g_mempool.free_head;
   printf("Free list:\n");
   while (elem) {
-    char *end = (char *)elem + sizeof(struct malloc_elem) + elem->size;
+    char* end = reinterpret_cast<char*>(elem) + sizeof(struct malloc_elem) + elem->size;
     printf("\t%p-%p:%lu\n", elem, end, elem->size);
-    struct malloc_elem *p = elem;
+    struct malloc_elem* p = elem;
     elem = elem->next_free;
     if (elem != NULL && elem->prev_free != p) {
       printf("ERROR: the free element list is not correct.\n");
@@ -35,17 +49,16 @@ void mempool_dump() {
 }
 
 // Memory pool initialization
-static void mempool_init(struct malloc_mempool *pool, size_t pool_size) {
+static void mempool_init(struct malloc_mempool* pool, size_t pool_size) {
   int memsize = pool_size;
 #ifdef DEBUG
   printf("before mmap, size=%lu\n", pool_size);
 #endif
-  void *ptr = mmap(0, memsize, PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  void* ptr = mmap(0, memsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 #ifdef DEBUG
   printf("after mmap, ptr=%p, errno=%d\n", ptr, errno);
 #endif
-  if (ptr == (void *)-1) {
+  if (ptr == reinterpret_cast<void*>(-1)) {
     printf("ERROR: Cannot allocate the memory pool, will fall back to glibc.\n");
     pool->start_addr = NULL;
     pool->free_head = NULL;
@@ -56,7 +69,7 @@ static void mempool_init(struct malloc_mempool *pool, size_t pool_size) {
     return;
   }
 
-  struct malloc_elem *elem = (struct malloc_elem *)ptr;
+  struct malloc_elem* elem = (struct malloc_elem*)ptr;
 
   elem->next_free = NULL;
   elem->prev_free = NULL;
@@ -75,7 +88,7 @@ static void mempool_init(struct malloc_mempool *pool, size_t pool_size) {
   pool->max_unstsfd_size = 0;
 }
 
-static void mempool_enlarge(struct malloc_mempool *pool, size_t increase_size) {
+static void mempool_enlarge(struct malloc_mempool* pool, size_t increase_size) {
   if (pool->start_addr != NULL) {
     int ret = munmap(pool->start_addr, pool->total_size);
     if (ret != 0) {
@@ -87,9 +100,8 @@ static void mempool_enlarge(struct malloc_mempool *pool, size_t increase_size) {
 
 // Find the available element by status
 // Return the first free one, which is freed most recently
-static struct malloc_elem *mempool_find_element(struct malloc_mempool *pool,
-                                                size_t size) {
-  struct malloc_elem *elem = pool->free_head;
+static struct malloc_elem* mempool_find_element(struct malloc_mempool* pool, size_t size) {
+  struct malloc_elem* elem = pool->free_head;
 
   while (elem) {
     // Return the first one once the size is big enough
@@ -103,12 +115,11 @@ static struct malloc_elem *mempool_find_element(struct malloc_mempool *pool,
   return NULL;
 }
 
-static struct malloc_elem *mempool_do_alloc(struct malloc_elem *elem,
-                                            size_t size) {
+static struct malloc_elem* mempool_do_alloc(struct malloc_elem* elem, size_t size) {
   // Wasted is acceptable
   if (elem->size - size < MAX_WASTED_SIZE) {
-    struct malloc_elem *prev = elem->prev_free;
-    struct malloc_elem *next = elem->next_free;
+    struct malloc_elem* prev = elem->prev_free;
+    struct malloc_elem* next = elem->next_free;
     if (prev != NULL) {
       prev->next_free = elem->next_free;
     } else {
@@ -124,9 +135,8 @@ static struct malloc_elem *mempool_do_alloc(struct malloc_elem *elem,
   // Need to split the element
   size_t alloc_size = (size + ALIGNMENT - 1) / ALIGNMENT * ALIGNMENT;
 
-  struct malloc_elem *new_elem =
-      (struct malloc_elem *)((char *)elem + sizeof(struct malloc_elem) +
-                             alloc_size);
+  struct malloc_elem* new_elem =
+      (struct malloc_elem*)(reinterpret_cast<char*>(elem) + sizeof(struct malloc_elem) + alloc_size);
   new_elem->next_free = elem->next_free;
   new_elem->prev_free = elem->prev_free;
   new_elem->prev = elem;
@@ -158,15 +168,14 @@ static struct malloc_elem *mempool_do_alloc(struct malloc_elem *elem,
 }
 
 // Return 1 if it is inside our memory pool, otherwise -1
-static int check_addr(void *addr) {
-  if (addr > g_mempool.start_addr &&
-      addr < g_mempool.start_addr + g_mempool.total_size) {
+static int check_addr(void* addr) {
+  if (addr > g_mempool.start_addr && addr < g_mempool.start_addr + g_mempool.total_size) {
     return 1;
   }
   return -1;
 }
 
-inline static void *mempool_malloc(size_t size) {
+inline static void* mempool_malloc(size_t size) {
   if (unlikely(g_mempool.initialized == 0)) {
     mempool_init(&g_mempool, MEMPOOL_INIT_SIZE);
     g_mempool.initialized = 1;
@@ -176,26 +185,26 @@ inline static void *mempool_malloc(size_t size) {
     return NULL;
   }
 
-  struct malloc_elem *elem = mempool_find_element(&g_mempool, size);
+  struct malloc_elem* elem = mempool_find_element(&g_mempool, size);
   if (likely(elem != NULL)) {
     elem = mempool_do_alloc(elem, size);
     g_mempool.alloc_count++;
   }
 
   if (likely(elem != NULL)) {
-    void *addr = (void *)((char *)elem + sizeof(struct malloc_elem));
+    void* addr = reinterpret_cast<void*>(reinterpret_cast<char*>(elem) + sizeof(struct malloc_elem));
     return addr;
   }
 
   return NULL;
 }
 
-void *i_malloc(size_t size) {
+void* i_malloc(size_t size) {
 #ifdef DEBUG
   printf("MALLOC: size=%lu\n", size);
 #endif
 
-  void *addr = mempool_malloc(size);
+  void* addr = mempool_malloc(size);
 
   if (unlikely(addr == NULL)) {
     addr = malloc(size);
@@ -214,12 +223,11 @@ void *i_malloc(size_t size) {
   return addr;
 }
 
-static void dlist_move_to_head(struct malloc_mempool *pool,
-                               struct malloc_elem *e) {
-  struct malloc_elem *n = e->next_free;
-  struct malloc_elem *p = e->prev_free;
-  if (p != NULL)  // as e is not the head, p is always not NULL
-  {
+static void dlist_move_to_head(struct malloc_mempool* pool, struct malloc_elem* e) {
+  struct malloc_elem* n = e->next_free;
+  struct malloc_elem* p = e->prev_free;
+  // as e is not the head, p is always not NULL
+  if (p != NULL) {
     p->next_free = n;
   }
   if (n != NULL) {
@@ -231,10 +239,9 @@ static void dlist_move_to_head(struct malloc_mempool *pool,
   pool->free_head = e;
 }
 
-static void dlist_remove_node(struct malloc_mempool *pool,
-                              struct malloc_elem *e) {
-  struct malloc_elem *n = e->next_free;
-  struct malloc_elem *p = e->prev_free;
+static void dlist_remove_node(struct malloc_mempool* pool, struct malloc_elem* e) {
+  struct malloc_elem* n = e->next_free;
+  struct malloc_elem* p = e->prev_free;
 
   if (p != NULL) {  // p is always not NULL
     p->next_free = n;
@@ -248,13 +255,13 @@ static void dlist_remove_node(struct malloc_mempool *pool,
   }
 }
 
-void i_free(void *ptr) {
+void i_free(void* ptr) {
   if (unlikely(ptr == NULL)) {
     return;
   }
 
 #ifdef DEBUG
-  printf("FREE: %p\n", (char *)ptr - sizeof(struct malloc_elem));
+  printf("FREE: %p\n", reinterpret_cast<char*>(ptr) - sizeof(struct malloc_elem));
 #endif
 
   int ret = check_addr(ptr);
@@ -262,11 +269,10 @@ void i_free(void *ptr) {
 
   // Inside our memory pool
   if (ret == 1) {
-    struct malloc_elem *elem =
-        (struct malloc_elem *)((char *)ptr - sizeof(struct malloc_elem));
+    struct malloc_elem* elem = (struct malloc_elem*)(reinterpret_cast<char*>(ptr) - sizeof(struct malloc_elem));
 
-    struct malloc_elem *elem_prev = elem->prev;
-    struct malloc_elem *elem_next = elem->next;
+    struct malloc_elem* elem_prev = elem->prev;
+    struct malloc_elem* elem_next = elem->next;
     if (elem_prev != NULL && elem_prev->state == ELEM_FREE) {
       // Both previous and next element should be merged
       if (elem_next != NULL && elem_next->state == ELEM_FREE) {
@@ -279,15 +285,12 @@ void i_free(void *ptr) {
         }
         elem_prev->free_time = now;
         elem_prev->hot = HOT_NONE;
-        elem_prev->size +=
-            2 * sizeof(struct malloc_elem) + elem->size + elem_next->size;
+        elem_prev->size += 2 * sizeof(struct malloc_elem) + elem->size + elem_next->size;
         dlist_remove_node(&g_mempool, elem_next);
         if (g_mempool.free_head != elem_prev) {
           dlist_move_to_head(&g_mempool, elem_prev);
         }
-      }
-      // Only need to merge with the previous element
-      else {
+      } else {  // Only need to merge with the previous element
 #ifdef DEBUG
         printf("Merge with previous free node\n");
 #endif
@@ -334,9 +337,7 @@ void i_free(void *ptr) {
         } else {
           g_mempool.free_head = elem;
         }
-      }
-      // No element need to be merged
-      else {
+      } else {  // No element need to be merged
 #ifdef DEBUG
         printf("Do not need to merge\n");
 #endif
@@ -352,21 +353,16 @@ void i_free(void *ptr) {
         g_mempool.free_head = elem;
       }
     }
-  }
-  // Free the buffer allocated by malloc
-  else {
+  } else {  // Free the buffer allocated by malloc
     free(ptr);
   }
 
   // Need extra space to satisfy the memory requirement
   // and all allocated memory in memory pool got freed
   if (g_mempool.max_unstsfd_size > 0 && g_mempool.free_head != NULL &&
-      g_mempool.free_head->size + sizeof(struct malloc_elem) ==
-          g_mempool.total_size) {
+      g_mempool.free_head->size + sizeof(struct malloc_elem) == g_mempool.total_size) {
     const size_t page_size = 4 * 1024;
-    size_t extra_size =
-        (g_mempool.max_unstsfd_size + MAX_WASTED_SIZE + page_size - 1) /
-        page_size * page_size;
+    size_t extra_size = (g_mempool.max_unstsfd_size + MAX_WASTED_SIZE + page_size - 1) / page_size * page_size;
 #ifdef DEBUG
     printf("Enlarge the memory pool, extra_size=%lu\n", extra_size);
 #endif
