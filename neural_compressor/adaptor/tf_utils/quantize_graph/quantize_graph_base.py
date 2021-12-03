@@ -188,14 +188,16 @@ class QuantizeNodeBase():
 
     def _find_relu_node(self, node):
         if node.op in ("Relu", "Relu6") or \
-            (node.op.find("AndRelu") != -1 and 'alpha' not in node.attr):
+            (node.op.find("AndRelu") != -1 and \
+            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0))):
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
         elif (node.op.find("QuantizedConv") != -1
               or node.op.find("QuantizedDepthwiseConv") != -1 or
               node.op.find("QuantizedMatMul") != -1
-              ) and (node.op.find("Relu") == -1 or 'alpha' in node.attr):
+              ) and (node.op.find("Relu") == -1 or \
+              ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
         elif self._need_to_check(node.op):
             input_node = self.node_name_mapping[helper.node_name_from_input(

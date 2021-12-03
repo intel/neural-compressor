@@ -143,10 +143,9 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
-
             if quantized_node.op == "QuantizedConv2D" or \
                     quantized_node.op == "QuantizedConv2DWithBias" or \
-                    'alpha' in quantized_node.attr:
+                    ('alpha' in quantized_node.attr and quantized_node.attr['alpha'].f > 0):
                 new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=int8_type))
             else:
                 new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
@@ -202,7 +201,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
-            if "alpha" in quantized_node.attr:
+
+            if "alpha" in quantized_node.attr and quantized_node.attr['alpha'].f > 0:
                 new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=int8_type))
             else:
                 new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
