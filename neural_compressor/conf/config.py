@@ -504,7 +504,8 @@ optimizer_schema = Schema({
 
 criterion_schema = Schema({
     Optional('CrossEntropyLoss'): {
-        Optional('reduction', default='mean'): And(str, lambda s: s in ['none', 'sum', 'mean'])
+        Optional('reduction', default='mean'): \
+            And(str, lambda s: s in ['none', 'sum', 'mean', 'auto', 'sum_over_batch_size'])
     },
     Optional('KnowledgeDistillationLoss'): {
         Optional('temperature'): And(float, lambda s: s > 0),
@@ -522,7 +523,7 @@ train_schema = Schema({
     Optional('end_epoch'): int,
     Optional('iteration'): int,
     Optional('frequency'): int,
-    # TODO reserve for multinode training support
+    Optional('execution_mode', default='eager'): And(str, lambda s: s in ['eager', 'graph']),
     Optional('hostfile'): str
 })
 

@@ -104,8 +104,8 @@ class TensorFlowCrossEntropyLoss(object):
         for key in self._param_dict:
             if key in _param_map:
                 if key == 'reduction':
-                    assert self._param_dict[key] in ['none', 'mean', 'sum'], \
-                        'Supported reduction value is none, mean, sum'
+                    assert self._param_dict[key] in ['none', 'sum', 'mean', 'auto', 'sum_over_batch_size'], \
+                        'Supported reduction value is none, mean, sum, auto, sum_over_batch_size'
                 _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 

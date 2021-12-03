@@ -111,6 +111,7 @@ class TensorFlowAdaptor(Adaptor):
         # check model is savedmodel or not
         import tensorflow as tf
         from neural_compressor.model.model import get_model_type
+        tf.random.set_seed(1)
         self.model_type = get_model_type(model._model)
         optimizer = optimizer_tuple[0](**optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
@@ -119,6 +120,7 @@ class TensorFlowAdaptor(Adaptor):
         epochs = kwargs['kwargs'].get('epoch', None)
         iters = kwargs['kwargs'].get('iteration', None)
         callbacks = kwargs['kwargs'].get('callbacks', None)
+        execution_mode = kwargs['kwargs'].get('execution_mode', None)
         distributed = getattr(dataloader, 'distributed', False)
         from neural_compressor.experimental.common.criterion import TensorflowKnowledgeDistillationLoss
         if isinstance(criterion, TensorflowKnowledgeDistillationLoss):
@@ -143,11 +145,10 @@ class TensorFlowAdaptor(Adaptor):
                             raise AttributeError("The traning dataloader's iteration is"
                                                 "different between processes, please reset dataloader's batch_size.") 
 
-        @tf.function
-        def training_step(first_batch):
+        def training_step(x, y, first_batch):
             with tf.GradientTape() as tape:
                 tape.watch(input_model.trainable_variables)
-                y_ = input_model(x)
+                y_ = input_model(x, training=True)
                 loss_value = criterion(y, y_)
             tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
             # Get gradient
@@ -158,7 +159,8 @@ class TensorFlowAdaptor(Adaptor):
                 self.hvd.broadcast_variables(input_model.variables, root_rank=0)
                 self.hvd.broadcast_variables(optimizer.variables(), root_rank=0)
             return loss_value
-
+        
+        training_step = training_step if execution_mode=='eager' else tf.function(training_step)
         if start_epochs is not None and end_epochs is not None:
             epochs = end_epochs - start_epochs
         for epoch in range(epochs):
@@ -171,7 +173,7 @@ class TensorFlowAdaptor(Adaptor):
                 cnt += 1
                 if hasattr(criterion, "teacher_model_forward"):
                     criterion.teacher_model_forward(x)
-                loss_value = training_step(iter == 0)
+                loss_value = training_step(x, y, iter==0)
                 # Track progress
                 epoch_loss_avg.update_state(loss_value)  # Add current batch loss
                 hooks['on_batch_end']()            # on_batch_end hook
