@@ -331,7 +331,7 @@ class LayerNorm(Pattern):
         return model
 ```
 
-After finishing these three steps in `engine.compile`, reinstall `Neural_Compressor` and then use `prepare_ir` function would compile your model with the customized pattern.
+After finishing these three steps in `engine.compile`, reinstall `Neural_Compressor` and then use `compile` function would compile your model with the customized pattern.
 
 >**NOTE**:
 >

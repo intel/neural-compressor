@@ -9,8 +9,8 @@ In this tutorial, we will deploy a TF/ONNX model using Engine inference OR throu
 Only support TensorFlow and ONNX model for now.
 
 ```
-from engine.compile.compile import prepare_ir
-model = prepare_ir('/path/to/your/model')
+from engine.compile import compile
+model = compile('/path/to/your/model')
 model.save('/ir/path')   # Engine graph could be saved to path
 ```
 

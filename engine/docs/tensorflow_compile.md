@@ -41,10 +41,10 @@ Here is one example show that how to use `Engine` to compile `TensorFlow` model 
 ## Compile the bert_base model to Engine IR
 
 ```python
-# import prepare_ir api form engine
-from engine.compile import prepare_ir
+# import compile api form engine
+from engine.compile import compile
 # get the engine intermediate graph
-graph = prepare_ir("./model/bert_base_mrpc.pb")
+graph = compile("./model/bert_base_mrpc.pb")
 # save the graph and get the final ir
 # the yaml and bin file will stored in '<ir>' folder
 graph.save()

@@ -50,8 +50,8 @@ Then in the build folder, you will get the `inferencer`, `engine_py.cpython-37m-
 ## Generate the bert model intermediate representations, that are yaml and bin files
 
 ```
-from engine.compile.compile import prepare_ir
-model = prepare_ir('/path/to/your/model')
+from engine.compile import compile
+model = compile('/path/to/your/model')
 model.save('/ir/path')
 ```
 Now engine support tensorflow and onnx model conversion.

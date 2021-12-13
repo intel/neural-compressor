@@ -14,13 +14,13 @@ Pattern recognition function utilizes a general rules to represent and search th
 ln_pattern = [[(0, 'Mean'), (1, 'SquaredDifference'), (2, 'Mean'), (3, ['Add', 'AddV2']), (4, 'Rsqrt'), (5, 'Mul'), (7, 'Mul'), (8, 'Sub'), (9, ['Add', 'AddV2'])], [(5, 'Mul'), (6, 'Mul'), (9, ['Add', 'AddV2'])]]
 ```
 
-First, due to computation order, we set index for each node in the `LayerNorm` pattern. These indexes also supply the locations for splicing sub-chains with main chain. You can set the index number by yourself as long as calculation order is correct (We recommend the number starts from 0 and grows recursively for conciseness and intuition).   
+First, due to computation order, we set index for each node in the `LayerNorm` pattern. These indexes also supply the locations for splicing sub-chains with main chain. You can set the index number by yourself as long as calculation order is correct (We recommend the number starts from 0 and grows recursively for conciseness and intuition).
 
 Second, define a main chain by choosing a longest one containing head and tail nodes of pattern, and the rest are the sub-chains whose tail node must be in main chain for splicing successfully. In the `LayerNorm` pattern, we choose the chain with index  `[0,1,2,3,4,5,7,8,9]`(see the image below) as the main chain. And the rest chain with index `[5,6,9]` is a sub-chain attached to the main chain.  Of course you can choose the chain with index `[0,1,2,3,4,5,6,9]` as the main chain, but generally we recommend and prefer longer ones.
 
-Finally, write the index and op_type of each node into list and form the pattern representation. 
+Finally, write the index and op_type of each node into list and form the pattern representation.
 
->  **NOTE**: 
+>  **NOTE**:
 >
 > 1. The main chain representation should always be the first one in the list, while the rest sub-chains have not order requirements.
 >
@@ -55,10 +55,10 @@ The `graph` is the intermediate graph of `engine.compile`. This API returns matc
 ret = [[A_node_name_1, B_node_name_1, C_node_name_1, [A, B, C]], [A_node_name_2, B_node_name_2, C_node_name_2, [A, B, C]], ..., [A_node_name_n, B_node_name_n, C_node_name_n, [A, B, C]], ...]
 ```
 
-Assume you want to find the match results of pattern `['MatMul', 'BiasAdd', ['Add', 'AddV2']]` in bert_large TensorFlow model (you can get this model from this [link](https://github.com/intel/neural-compressor/tree/master/examples/engine/nlp/squad/bert_large#2-prepare-dataset-and-model) and make sure the tf version is `intel-tensorflow-1.15-up2`). 
+Assume you want to find the match results of pattern `['MatMul', 'BiasAdd', ['Add', 'AddV2']]` in bert_large TensorFlow model (you can get this model from this [link](https://github.com/intel/neural-compressor/tree/master/examples/engine/nlp/squad/bert_large#2-prepare-dataset-and-model) and make sure the tf version is `intel-tensorflow-1.15-up2`).
 
 ```python
-from engine.compile.compile import COMPILES
+from engine.compile import COMPILES
 from engine.compile.graph_utils import search_straight_pattern
 graph = COMPILES['loader']()(bert_large_model_path)
 graph = COMPILES['extractor']()(graph)
@@ -82,7 +82,7 @@ Each sub-chain pattern matched results would find their attached main chain by c
 In the end, here is the example shows how to get the `LayerNorm`  pattern matched results in bert_large TensorFlow model.
 
 ```python
-from engine.compile.compile import COMPILES
+from engine.compile import COMPILES
 from engine.compile.graph_utils import search_pattern
 graph = COMPILES['loader']()(bert_large_model_path)
 graph = COMPILES['extractor']()(graph)

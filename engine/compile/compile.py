@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 1. First use model loader to get the computation graph with corresponding framework.
    The graph contains nodes and edges, the node is op and the edge is the tensor.
@@ -33,7 +32,6 @@ from collections import OrderedDict
 from .loaders.loader import Loader
 from .extractors.extractor import Extractor
 from .sub_graph.subgraph_matcher import SubGraphMatcher
-
 
 COMPILES = OrderedDict({
     'loader': Loader,
@@ -54,6 +52,6 @@ def start_pipeline(model, config=None):
     return model
 
 
-def prepare_ir(model, config=None):
+def compile(model, config=None):
     model = start_pipeline(model, config=None)
     return model
