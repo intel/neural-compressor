@@ -30,7 +30,7 @@ yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
                                  lambda loader, node: tuple(loader.construct_sequence(node)))
 
 
-def set_activation_scale_zeropoint(q_model, tune_cfg):
+def _set_activation_scale_zeropoint(q_model, tune_cfg):
     """set activation scale and zero_point for converted model.
 
     Args:
@@ -114,25 +114,6 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             q_mapping = \
                 tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
 
-    if version < PyTorchVersionMode.PT17.value:   # pragma: no cover
-        white_list = \
-            tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
-            if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
-            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif version < PyTorchVersionMode.PT18.value:   # pragma: no cover
-        white_list = \
-            tq.quantization_mappings.get_dynamic_quant_module_mappings() \
-            if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            tq.quantization_mappings.get_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    else:
-        white_list = \
-            tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
-            if tune_cfg['approach'] == 'post_training_dynamic_quant' else \
-            tq.quantization_mappings.get_default_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-
     if tune_cfg['approach'] == "post_training_dynamic_quant":
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
     else:
@@ -151,27 +132,32 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         assert version >= PyTorchVersionMode.PT18.value, \
                       "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
+        if kwargs is None:
+            kwargs = {}
+        prepare_custom_config_dict = kwargs.get(
+                                        'prepare_custom_config_dict', None)
+        convert_custom_config_dict = kwargs.get(
+                                        'convert_custom_config_dict', None)
+
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
         if tune_cfg['approach'] == "quant_aware_training":
             q_model.train()
             q_model = prepare_qat_fx(q_model, fx_op_cfgs,
-              prepare_custom_config_dict=kwargs['prepare_custom_config_dict']
-              if kwargs and kwargs.__contains__('prepare_custom_config_dict') else None)
+              prepare_custom_config_dict=prepare_custom_config_dict)
         else:
             q_model = prepare_fx(q_model, fx_op_cfgs,
-              prepare_custom_config_dict=kwargs['prepare_custom_config_dict']
-              if kwargs and kwargs.__contains__('prepare_custom_config_dict') else None)
+              prepare_custom_config_dict=prepare_custom_config_dict)
         q_model = convert_fx(q_model,
-          convert_custom_config_dict=kwargs['convert_custom_config_dict']
-          if kwargs and kwargs.__contains__('convert_custom_config_dict') else None)
+          convert_custom_config_dict=convert_custom_config_dict)
+
         if checkpoint_dir is None and history_cfg is not None:
-            set_activation_scale_zeropoint(q_model, history_cfg)
+            _set_activation_scale_zeropoint(q_model, history_cfg)
         else:
             weights = torch.load(weights_file)
             q_model.load_state_dict(weights)
         return q_model
 
-    _propagate_qconfig(q_model, op_cfgs, white_list=white_list, approach=tune_cfg['approach'])
+    _propagate_qconfig(q_model, op_cfgs, approach=tune_cfg['approach'])
     # sanity check common API misusage
     if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
         logger.warn("None of the submodule got qconfig applied. Make sure you "
@@ -181,7 +167,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         add_observer_(q_model)
     q_model = convert(q_model, mapping=q_mapping, inplace=True)
     if checkpoint_dir is None and history_cfg is not None:
-        set_activation_scale_zeropoint(q_model, history_cfg)
+        _set_activation_scale_zeropoint(q_model, history_cfg)
     else:
         weights = torch.load(weights_file)
         q_model.load_state_dict(weights)

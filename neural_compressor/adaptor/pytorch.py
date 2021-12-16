@@ -59,6 +59,27 @@ def get_torch_version():
     return version
 
 
+def get_torch_white_list(approach):
+    version = get_torch_version()
+    import torch.quantization as tq
+    if version < PyTorchVersionMode.PT17.value:   # pragma: no cover
+        white_list = \
+            set(tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING.keys()) \
+            if approach == 'post_training_dynamic_quant' else \
+            tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST
+    elif version < PyTorchVersionMode.PT18.value:   # pragma: no cover
+        white_list = \
+            set(tq.quantization_mappings.get_dynamic_quant_module_mappings().keys()) \
+            if approach == 'post_training_dynamic_quant' else \
+            tq.quantization_mappings.get_qconfig_propagation_list()
+    else:
+        white_list = \
+            set(tq.quantization_mappings.get_default_dynamic_quant_module_mappings().keys()) \
+            if approach == 'post_training_dynamic_quant' else \
+            tq.quantization_mappings.get_default_qconfig_propagation_list()
+    return white_list
+
+
 def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
     if isinstance(input, dict) or isinstance(input, UserDict):
         if device=='cpu':
@@ -400,7 +421,7 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
                                 reduce_range=(REDUCE_RANGE and scheme == 'asym'))
 
 
-def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
+def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False,
                        approach='post_training_static_quant'):
     """Propagate qconfig through the module hierarchy and assign `qconfig`
        attribute on each leaf module
@@ -413,34 +434,12 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
                          the submodule already has qconfig attribute)
         is_qat_convert (bool): flag that specified this function is used to QAT prepare
                                for pytorch 1.7 or above.
-        white_list (list): list of quantizable op types in pytorch
+        approach (str): quantization approach
     Return:
         None, module is modified inplace with qconfig attached
     """
     fallback_ops = []
-    version = get_torch_version()
-    # there is accuracy issue in quantized LayerNorm op and embedding op in pytorch <1.8.1,
-    # so remove it here
-    if version < PyTorchVersionMode.PT17.value and white_list is None:   # pragma: no cover
-        white_list = \
-            torch.quantization.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
-            if approach == 'post_training_dynamic_quant' else \
-            torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
-            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif version < PyTorchVersionMode.PT18.value and white_list is None:   # pragma: no cover
-        white_list = \
-            torch.quantization.quantization_mappings.get_dynamic_quant_module_mappings() \
-            if approach == 'post_training_dynamic_quant' else \
-            torch.quantization.quantization_mappings.get_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-    elif white_list is None:
-        white_list = \
-            torch.quantization.quantization_mappings.get_default_dynamic_quant_module_mappings() \
-            if approach == 'post_training_dynamic_quant' else \
-            torch.quantization.quantization_mappings.get_default_qconfig_propagation_list() - \
-            {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-
-    _propagate_qconfig_recursively(model, '', op_qcfgs, white_list=white_list)
+    _propagate_qconfig_recursively(model, '', op_qcfgs)
 
     if approach != 'post_training_dynamic_quant':
         for k, v in op_qcfgs.items():
@@ -448,10 +447,10 @@ def _propagate_qconfig(model, op_qcfgs, is_qat_convert=False, white_list=None,
                 fallback_ops.append(k)
 
         if fallback_ops and not is_qat_convert:
-            _fallback_quantizable_ops_recursively(model, '', fallback_ops, white_list=white_list)
+            _fallback_quantizable_ops_recursively(model, '', fallback_ops, op_qcfgs)
 
 
-def _propagate_qconfig_recursively(model, prefix, op_qcfgs, white_list, qconfig_parent=None):
+def _propagate_qconfig_recursively(model, prefix, op_qcfgs, qconfig_parent=None):
     """This is a helper function for `propagate_qconfig`
 
     Args:
@@ -459,60 +458,61 @@ def _propagate_qconfig_recursively(model, prefix, op_qcfgs, white_list, qconfig_
         prefix (string): prefix of op name
         op_qcfgs (dict): dictionary that maps from name or type of submodule to
                         quantization configuration
-        white_list (list): list of quantizable op types in pytorch
         qconfig_parent (object, optional): qconfig of parent module
 
     Returns:
         None
     """
     for name, child in model.named_children():
-        model_qconfig = qconfig_parent
         op_name = prefix + name
+        child.qconfig = qconfig_parent
+        qconfig_son = None
         if op_name in op_qcfgs:
             child.qconfig = op_qcfgs[op_name]
-            model_qconfig = op_qcfgs[op_name]
-        elif type(child) in white_list and type(child) != torch.nn.Sequential:
-            if model_qconfig is None:
-                model_qconfig = torch.quantization.QConfig(
+            # for submodules of fused module, like nn.ConvBnRelu2d.
+            qconfig_son = child.qconfig
+        elif type(child) == torch.quantization.DeQuantStub:
+            version = get_torch_version()
+            if version >= PyTorchVersionMode.PT18.value:
+                child.qconfig = torch.quantization.QConfig(
                         activation=torch.quantization.MinMaxObserver.with_args(
                                 reduce_range=REDUCE_RANGE),
                         weight=torch.quantization.default_per_channel_weight_observer)
-            child.qconfig = model_qconfig
         _propagate_qconfig_recursively(
-            child, op_name + '.', op_qcfgs, white_list, model_qconfig)
+            child, op_name + '.', op_qcfgs, qconfig_son)
 
 
-def _find_quantized_op_num(model, white_list, op_count=0):
+def _find_quantized_op_num(module, op_qcfgs, prefix='', op_count=0):
     """This is a helper function for `_fallback_quantizable_ops_recursively`
 
     Args:
         model (object): input model
-        white_list (list): list of quantizable op types in pytorch
+        op_cfgs (dict): dictionary of quantization configure for each op
+        prefix (str): prefix of op name
         op_count (int, optional): count the quantizable op quantity in this module
 
     Returns:
         the quantizable op quantity in this module
     """
-    quantize_op_num = op_count
-    for name_tmp, child_tmp in model.named_children():
-        if type(child_tmp) in white_list \
-            and not (isinstance(child_tmp, torch.quantization.QuantStub)
-                     or isinstance(child_tmp, torch.quantization.DeQuantStub)):
-            quantize_op_num += 1
+    for name_tmp, child_tmp in module.named_children():
+        op_name = prefix + '.' + name_tmp if prefix != '' else name_tmp
+        if op_name in op_qcfgs.keys() and \
+          type(child_tmp) != torch.quantization.QuantStub:
+            op_count += 1
         else:
-            quantize_op_num = _find_quantized_op_num(
-                child_tmp, white_list, quantize_op_num)
-    return quantize_op_num
+            op_count = _find_quantized_op_num(
+                child_tmp, op_qcfgs, op_name, op_count)
+    return op_count
 
 
-def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_list=None):
+def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, op_qcfgs):
     """Handle all fallback ops(fp32 ops)
 
     Args:
         model (object): input model
         prefix (string): the prefix of op name
         fallback_ops (list): list of fallback ops(fp32 ops)
-        white_list (list): list of quantizable op types in pytorch
+        op_cfgs (dict): dictionary of quantization configure for each op
 
     Returns:
         None
@@ -591,10 +591,10 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_lis
             return self.quant(r)
 
     for name, child in model.named_children():
-        op_name = prefix + name
+        op_name = prefix + '.' + name if prefix != '' else name
         if op_name in fallback_ops:
             child.qconfig = None
-            quantize_op_num = _find_quantized_op_num(model, white_list=white_list)
+            quantize_op_num = _find_quantized_op_num(model, op_qcfgs, prefix=prefix)
             if quantize_op_num == 1:
                 found = False
                 for name_tmp, child_tmp in model.named_children():
@@ -611,7 +611,7 @@ def _fallback_quantizable_ops_recursively(model, prefix, fallback_ops, white_lis
                     child, observer=_observer)
         else:
             _fallback_quantizable_ops_recursively(
-                child, op_name + '.', fallback_ops, white_list=white_list)
+                child, op_name, fallback_ops, op_qcfgs)
 
 
 @adaptor_registry
@@ -745,8 +745,8 @@ class TemplateAdaptor(Adaptor):
             if metric is not None and not self.fp32_preds_as_label:
                 # If distributed dataloader, gather all outputs to update metric
                 if getattr(dataloader, 'distributed', False) or \
-                        isinstance(dataloader.sampler, \
-                        torch.utils.data.distributed.DistributedSampler):
+                  isinstance(dataloader.sampler, \
+                  torch.utils.data.distributed.DistributedSampler):
                     hvd.init()
                     metric.hvd = hvd
                 metric.update(output, label)
@@ -819,6 +819,7 @@ class TemplateAdaptor(Adaptor):
         if isinstance(self, PyTorch_FXAdaptor):
             tmp_model = self.fuse_fx_model(model)
         quantizable_ops = []
+        self.non_quant_dict = self.get_non_quant_modules(model.kwargs)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
             if self.approach == "post_training_dynamic_quant" else \
@@ -838,6 +839,14 @@ class TemplateAdaptor(Adaptor):
         return q_capability
 
     def fuse_fx_model(self, model):
+        """This is a helper function to get fused fx model for PyTorch_FXAdaptor.
+
+        Args:
+            model (object): input model which is Neural Compressor model
+
+        Returns:
+            fused_model (GraphModule): fused GraphModule model from torch.fx.
+        """
         try:
             tmp_model = copy.deepcopy(model.model)
         except Exception as e:   # pragma: no cover
@@ -845,20 +854,41 @@ class TemplateAdaptor(Adaptor):
             logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
         from torch.fx import GraphModule
         from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
-        if model.kwargs is not None and \
-                model.kwargs.__contains__('prepare_custom_config_dict'):
-            prepare_custom_config_dict = model.kwargs['prepare_custom_config_dict']
+        if model.kwargs is not None:
+            prepare_custom_config_dict = model.kwargs.get(
+                                            'prepare_custom_config_dict', {})
         else:
             prepare_custom_config_dict = {}
         skipped_module_names = prepare_custom_config_dict.get(\
-                                            "non_traceable_module_name", [])
+                                            'non_traceable_module_name', [])
         skipped_module_classes = prepare_custom_config_dict.get(\
-                                            "non_traceable_module_class", [])
+                                            'non_traceable_module_class', [])
         tracer = QuantizationTracer(
             skipped_module_names, skipped_module_classes)
         graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
         fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
         return fused_model
+
+    def get_non_quant_modules(self, model_kwargs):
+        """This is a helper function to get all non_quant_modules from customer and default.
+
+        Args:
+            model_kwargs (dictionary): keyword args from Neural Compressor model
+
+        Returns:
+            custom_non_quant_dict (dictionary): non_quant_modules for model.
+        """
+        if model_kwargs is None:
+            model_kwargs = {}
+        skipped_module_names = model_kwargs.get("non_quant_module_name", [])
+        skipped_module_classes = model_kwargs.get("non_quant_module_class", [])
+        custom_non_quant_dict = {'skipped_module_names': skipped_module_names,
+                                 'skipped_module_classes': skipped_module_classes}
+        # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops, 
+        # due to huge accuracy regression in PyTorch.
+        custom_non_quant_dict['skipped_module_classes'] += \
+                                    ['LayerNorm', 'InstanceNorm3d', 'Embedding']
+        return custom_non_quant_dict
 
 
 unify_op_type_mapping = {
@@ -917,26 +947,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
 
-        # there is accuracy issue in quantized LayerNorm op and embedding op in pytorch <1.8.1,
-        # so remove it here
-        if self.version < PyTorchVersionMode.PT17.value:   # pragma: no cover
-            self.white_list = \
-                tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING \
-                if self.approach == 'post_training_dynamic_quant' else \
-                tq.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST - \
-                    {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-        elif self.version < PyTorchVersionMode.PT18.value:   # pragma: no cover
-            self.white_list = \
-                tq.quantization_mappings.get_dynamic_quant_module_mappings() \
-                if self.approach == 'post_training_dynamic_quant' else \
-                tq.quantization_mappings.get_qconfig_propagation_list() - \
-                    {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
-        else:
-            self.white_list = \
-                tq.quantization_mappings.get_default_dynamic_quant_module_mappings() \
-                if self.approach == 'post_training_dynamic_quant' else \
-                tq.quantization_mappings.get_default_qconfig_propagation_list() - \
-                    {torch.nn.LayerNorm, torch.nn.InstanceNorm3d, torch.nn.Embedding}
+        self.white_list = get_torch_white_list(self.approach)
 
         # for tensorboard
         self.dump_times = 0
@@ -981,14 +992,14 @@ class PyTorchAdaptor(TemplateAdaptor):
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
                            format(repr(e)))
             q_model = model
+
         if self.approach == 'quant_aware_training':
             q_model.model.train()
         else:
             q_model.model.eval()
         if self.version < PyTorchVersionMode.PT17.value or \
                     self.approach != 'quant_aware_training':
-            _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list,
-                               approach=self.approach)
+            _propagate_qconfig(q_model.model, op_cfgs, approach=self.approach)
             # sanity check common API misusage
             if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
                 logger.warn("None of the submodule got qconfig applied. Make sure you "
@@ -1003,11 +1014,10 @@ class PyTorchAdaptor(TemplateAdaptor):
                 calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         elif self.approach == 'quant_aware_training':
             if self.version >= PyTorchVersionMode.PT17.value:
-                _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True,
-                                   white_list=self.white_list)
+                _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True)
                 torch.quantization.convert(q_model.model, mapping=self.q_mapping,
                                            inplace=True, remove_qconfig=False)
-                _propagate_qconfig(q_model.model, op_cfgs, white_list=self.white_list)
+                _propagate_qconfig(q_model.model, op_cfgs)
                 torch.quantization.add_observer_(q_model.model, self.white_list,
                                                  set(self.q_mapping.values()))
             else:   # pragma: no cover
@@ -1242,11 +1252,12 @@ class PyTorchAdaptor(TemplateAdaptor):
             op_name = prefix + '.' + name if prefix != '' else name
             # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
             # so remove it here
+            if op_name in self.non_quant_dict['skipped_module_names'] or \
+              str(child.__class__.__name__) in \
+              self.non_quant_dict['skipped_module_classes']:
+                continue
             if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
-                    type(child) != torch.quantization.stubs.DeQuantStub and not \
-                        isinstance(child, torch.nn.LayerNorm) and not \
-                        isinstance(child, torch.nn.InstanceNorm3d) and not \
-                        isinstance(child, torch.nn.Embedding):
+              type(child) != torch.quantization.stubs.DeQuantStub:
                 quantizable_ops.append((
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
@@ -1427,7 +1438,6 @@ class PyTorchAdaptor(TemplateAdaptor):
             Return:
                 None, module is modified inplace with qconfig attached
             """
-            # TODO: Add test
             if white_list is None:
                 white_list = \
                    torch.quantization.default_mappings.DEFAULT_QCONFIG_PROPAGATE_WHITE_LIST \
@@ -2162,13 +2172,18 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                            format(repr(e)))
             q_model = model
         q_model.model.eval()
+        if q_model.kwargs is not None:
+            prepare_custom_config_dict = q_model.kwargs.get(
+                                            'prepare_custom_config_dict', None)
+            convert_custom_config_dict = q_model.kwargs.get(
+                                            'convert_custom_config_dict', None)
+        else:
+            prepare_custom_config_dict, convert_custom_config_dict = None, None
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
         if self.approach == 'quant_aware_training':
             q_model.model.train()
             q_model.model = prepare_qat_fx(q_model.model, fx_op_cfgs,
-              prepare_custom_config_dict=q_model.kwargs['prepare_custom_config_dict']
-              if q_model.kwargs is not None and
-              q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
+              prepare_custom_config_dict=prepare_custom_config_dict)
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept neural_compressor
             # model and user defined func should accept framework model.
@@ -2176,17 +2191,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             q_model.model.eval()
         else:
             q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
-              prepare_custom_config_dict=q_model.kwargs['prepare_custom_config_dict']
-              if q_model.kwargs is not None and
-              q_model.kwargs.__contains__('prepare_custom_config_dict') else None)
+              prepare_custom_config_dict=prepare_custom_config_dict)
             if self.approach == 'post_training_static_quant':
                 iterations = tune_cfg.get('calib_iteration', 1)
                 self.model_calibration(q_model.model, dataloader, iterations,
                                        calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         q_model.model = convert_fx(q_model.model,
-          convert_custom_config_dict=q_model.kwargs['convert_custom_config_dict']
-          if q_model.kwargs is not None and
-          q_model.kwargs.__contains__('convert_custom_config_dict') else None)
+          convert_custom_config_dict=convert_custom_config_dict)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model.model, self.tune_cfg)
@@ -2247,16 +2258,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         self.model.model.train()
         self.model.model = prepare_qat_fx(self.model.model, fx_op_cfgs,
-            prepare_custom_config_dict=self.model.kwargs['prepare_custom_config_dict']
-            if self.model.kwargs is not None and
-            self.model.kwargs.__contains__('prepare_custom_config_dict') else None)
+            prepare_custom_config_dict=self.model.kwargs.get('prepare_custom_config_dict', None)
+            if self.model.kwargs is not None else None)
 
     def _post_hook_for_qat(self):   # pragma: no cover
         from torch.quantization.quantize_fx import convert_fx
         self.model.model = convert_fx(self.model.model,
-          convert_custom_config_dict=self.model.kwargs['convert_custom_config_dict']
-          if self.model.kwargs is not None and
-          self.model.kwargs.__contains__('convert_custom_config_dict') else None)
+          convert_custom_config_dict=self.model.kwargs.get('convert_custom_config_dict', None)
+          if self.model.kwargs is not None else None)
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
@@ -2395,10 +2404,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
             # so remove it here
             if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
-                    type(child) != torch.quantization.stubs.DeQuantStub and not \
-                        isinstance(child, torch.nn.LayerNorm) and not \
-                        isinstance(child, torch.nn.InstanceNorm3d) and not \
-                        isinstance(child, torch.nn.Embedding):
+                    type(child) != torch.quantization.stubs.DeQuantStub:
                 quantizable_ops.append((
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
@@ -2444,8 +2450,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 class PyTorchQuery(QueryBackendCapability):
 
     def __init__(self, local_config_file=None):
-        import torch
-
         super().__init__()
         self.version = get_torch_version()
         self.cfg = local_config_file
