@@ -254,15 +254,24 @@ Following examples are supported in Neural Compressor:
 - Natural Language Processing Examples:
   - [BlendCnn example](../examples/pytorch/eager/blendcnn/distillation/README.md): distillation of BERT-Base to BlendCnn on MRPC of GLUE dataset.
   - [BiLSTM example](../examples/pytorch/eager/huggingface_models/README.md): distillation of RoBERTa-Base to BiLSTM on SST-2 of GLUE dataset.
+  - [DistilBERT example](../examples/pytorch/eager/huggingface_models/README.md): distillation of BERT-Base to DistilBERT on SQuAD dataset.
+  - [TinyBERT example](../examples/pytorch/eager/huggingface_models/README.md): distillation of BERT-Base to TinyBERT on MNLI of GLUE dataset.
+  - [BERT-3 example](../examples/pytorch/eager/huggingface_models/README.md): distillation of BERT-Base to BERT-3 on QQP of GLUE dataset.
+  - [DistilRoBERTa example](../examples/pytorch/eager/huggingface_models/README.md): distillation of RoBERTa-Large to DistilRoBERTa on COLA of GLUE dataset.
+
 
 ### Results of distillation examples
 Below are results of examples shown above:
 
-|  Example Name     | Dataset   | Student<br>(Accuracy)        | Teacher<br>(Accuracy)       | Student With Distillation<br>(Accuracy Improvement) |
-|-------------------|-----------|------------------------------|-----------------------------|-----------------------------------------------------|
-| MobileNet example | CIFAR-10  | MobileNetV2-0.35<br>(0.7965) | WideResNet40-2<br>(0.9522)  |   0.8178<br>(0.0213)                                |
-| CNN example       | CIFAR-100 | CNN-2<br>(0.5494)            | CNN-10<br>(0.7153)          |   0.5540<br>(0.0046)                                |
-| VGG example       | CIFAR-100 | VGG-8-BN<br>(0.7022)         | VGG-13-BN<br>(0.7415)       |   0.7025<br>(0.0003)                                |
-| ResNet example    | ImageNet  | ResNet18<br>(0.6739)         | ResNet50<br>(0.7399)        |   0.6845<br>(0.0106)                                |
-| BlendCnn example  |   MRPC    | BlendCnn<br>(0.7034)         | BERT-Base<br>(0.8382)       |   0.7034<br>(0)                                     |
-| BiLSTM example    |  SST-2    | BiLSTM<br>(0.8303)           | RoBERTa-Base<br>(0.9403)    |   0.9023<br>(0.072)                                 |
+|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  |
+|---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|
+| MobileNet example   | CIFAR-10  | MobileNetV2-0.35<br>(0.7965 Acc)     | WideResNet40-2<br>(0.9522 Acc)     |   0.8178 Acc<br>(0.0213 Acc)                        |
+| CNN example         | CIFAR-100 | CNN-2<br>(0.5494 Acc)                | CNN-10<br>(0.7153 Acc)             |   0.5540 Acc<br>(0.0046 Acc)                        |
+| VGG example         | CIFAR-100 | VGG-8-BN<br>(0.7022 Acc)             | VGG-13-BN<br>(0.7415 Acc)          |   0.7025 Acc<br>(0.0003 Acc)                        |
+| ResNet example      | ImageNet  | ResNet18<br>(0.6739 Acc)             | ResNet50<br>(0.7399 Acc)           |   0.6845 Acc<br>(0.0106 Acc)                        |
+| BlendCnn example    |   MRPC    | BlendCnn<br>(0.7034 Acc)             | BERT-Base<br>(0.8382 Acc)          |   0.7034 Acc<br>(0 Acc)                             |
+| BiLSTM example      |  SST-2    | BiLSTM<br>(0.8314 Acc)               | RoBERTa-Base<br>(0.9403 Acc)       |   0.9048 Acc<br>(0.0734 Acc)                        |
+|DistilBERT example   |  SQuAD    | DistilBERT<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |
+|TinyBERT example     |  MNLI     | TinyBERT<br>(0.8018/0.8044 m/mm)     | BERT-Base<br>(0.8363/0.8411 m/mm)  |   0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)        |
+|BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |
+|DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |

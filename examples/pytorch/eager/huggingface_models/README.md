@@ -375,11 +375,52 @@ The distillation configuration is specified in yaml file i.e. distillation.yaml.
 wget -P examples/text-classification/ http://nlp.stanford.edu/data/glove.6B.zip
 unzip examples/text-classification/glove.6B.zip glove.6B.50d.txt -d examples/text-classification/
 python examples/text-classification/run_glue_no_trainer_distillation.py \
---task_name sst2 --max_seq_length 64 \
---model_name_or_path textattack/roberta-base-SST-2 \
---do_distillation --per_device_train_batch_size 32 \
---learning_rate 0.02 --num_train_epochs 20 \
---output_dir /path/to/output_dir --config distillation.yaml --seed 5143
+      --task_name sst2 --max_seq_length 128 --model_name_or_path BiLSTM \
+      --teacher_model_name_or_path textattack/roberta-base-SST-2 --do_distillation \
+      --per_device_train_batch_size 32 --learning_rate 1e-4 --num_train_epochs 20 \
+      --output_dir /path/to/output_dir --config distillation.yaml \
+      --augmented_sst2_data --seed 5143
+```
+
+## MNLI task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_distillation.py \
+      --task_name mnli --model_name_or_path huawei-noah/TinyBERT_General_4L_312D \
+      --teacher_model_name_or_path blackbird/bert-base-uncased-MNLI-v1 --do_distillation \
+      --learning_rate 2e-5 --num_train_epochs 4 --per_device_train_batch_size 32 \
+      --output_dir /path/to/output_dir --loss_weights 0 1 --temperature 4 --seed 5143
+```
+
+## QQP task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_distillation.py \
+      --task_name qqp --max_seq_length 128 --model_name_or_path nreimers/MiniLM-L3-H384-uncased \
+      --teacher_model_name_or_path textattack/bert-base-uncased-QQP --do_distillation \
+      --per_device_train_batch_size 32 --learning_rate 1e-5 --num_train_epochs 10 --output_dir /path/to/output_dir \
+      --config distillation.yaml --loss_weights 0 1 --temperature 2 --seed 5143
+```
+
+## COLA task
+
+```bash
+python examples/text-classification/run_glue_no_trainer_distillation.py \
+      --task_name cola --max_seq_length 128 --model_name_or_path distilroberta-base \
+      --teacher_model_name_or_path howey/roberta-large-cola --do_distillation \
+      --per_device_train_batch_size 32 --learning_rate 1e-5 --num_train_epochs 10 \
+      --output_dir /path/to/output_dir --config distillation.yaml --temperature 2 --seed 5143
+```
+
+## SQuAD task
+
+```bash
+python examples/question-answering/run_qa_no_trainer_distillation.py \
+      --dataset_name squad --model_name_or_path distilbert-base-uncased \
+      --teacher_model_name_or_path csarron/bert-base-uncased-squad-v1 --do_distillation \
+      --learning_rate 1e-5 --num_train_epochs 4 --output_dir /path/to/output_dir \
+      --loss_weights 0 1 --temperature 2 --run_teacher_logits \
+      --pad_to_max_length --seed 5143
 ```
 
 Examples of enabling Intel® Neural Compressor

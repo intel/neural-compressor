@@ -19,16 +19,16 @@ from neural_compressor.utils.logger import log
 import math
 import os
 import random
-import copy
+import functools
 import datasets
 from datasets import load_dataset, load_metric
 import torch
 from torch.utils.data import TensorDataset, DataLoader
+import torch.distributed as dist
 from tqdm.auto import tqdm
 
 import numpy as np
 
-import transformers
 from transformers import (
     AdamW,
     AutoConfig,
@@ -75,7 +75,7 @@ def parse_args():
     parser.add_argument(
         "--max_seq_length",
         type=int,
-        default=64,
+        default=128,
         help=(
             "The maximum total input sequence length after tokenization. Sequences longer than this will be truncated,"
             " sequences shorter will be padded if `--pad_to_max_lengh` is passed."
@@ -100,7 +100,7 @@ def parse_args():
     parser.add_argument(
         "--per_device_train_batch_size",
         type=int,
-        default=8,
+        default=32,
         help="Batch size (per device) for the training dataloader.",
     )
     parser.add_argument(
@@ -146,10 +146,16 @@ def parse_args():
     parser.add_argument('--do_eval', action='store_true',
                         help="evaluate model")
     parser.add_argument('--do_distillation', action='store_true',
-                        help="do distillation with pre-trained model on Bi-LSTM.")
+                        help="do distillation with teacher model on student model.")
+    parser.add_argument('--augmented_sst2_data', action='store_true',
+                        help="use augmented sst2 training data for sst2 task.")
     parser.add_argument("--config", default='distillation.yaml', help="pruning config")
     parser.add_argument("--core_per_instance", type=int, default=-1, help="cores per instance.")
-    
+    parser.add_argument(
+        "--teacher_model_name_or_path",
+        default=None, type=str,
+        help="Path to pretrained teacher model or it's identifier from huggingface.co/models.",
+    )
     parser.add_argument("--temperature", default=1, type=float,
                         help='temperature parameter of distillation')
     parser.add_argument("--loss_types", default=['CE', 'KL'], type=str, nargs='+',
@@ -177,7 +183,17 @@ def parse_args():
 
     return args
 
-def take_eval_steps(model, eval_dataloader, metric):
+def gather_results(predictions, gt):
+    if rank != -1:
+        pred_list = [predictions.clone() for _ in range(world)] if rank == 0 else []
+        gt_list = [gt.clone() for _ in range(world)] if rank == 0 else []
+        dist.gather(predictions, gather_list=pred_list)
+        dist.gather(gt, gather_list=gt_list)
+        return pred_list[0], gt_list[0]
+    else:
+        return predictions, gt
+    
+def evaluation(model, eval_dataloader, metric):
     logger.info("***** Running eval *****")
     logger.info(f"  Num examples = {len(eval_dataloader) }")
     model.eval()
@@ -192,9 +208,9 @@ def take_eval_steps(model, eval_dataloader, metric):
 
     eval_metric = metric.compute()
     logger.info(f"eval_metric : {eval_metric}")
-    return eval_metric['accuracy']
+    return max(eval_metric.values())
 
-def take_train_steps(args, model, train_dataloader, lr_scheduler, distiller):
+def train(args, model, train_dataloader, lr_scheduler, distiller):
     # Train!
     total_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps
 
@@ -297,11 +313,16 @@ def main():
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    config = AutoConfig.from_pretrained(args.model_name_or_path, num_labels=num_labels, finetuning_task=args.task_name)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
+    if args.model_name_or_path == 'BiLSTM':
+        assert args.teacher_model_name_or_path, 'For BiLSTM model, must provide a teacher model for tokenizer.'
+        model_name_or_path = args.teacher_model_name_or_path
+    else:
+        model_name_or_path = args.model_name_or_path
+    config = AutoConfig.from_pretrained(model_name_or_path, num_labels=num_labels, finetuning_task=args.task_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, use_fast=not args.use_slow_tokenizer)
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.model_name_or_path,
-        from_tf=bool(".ckpt" in args.model_name_or_path),
+        model_name_or_path,
+        from_tf=bool(".ckpt" in model_name_or_path),
         config=config,
     )
 
@@ -345,7 +366,7 @@ def main():
 
     padding = "max_length" if args.pad_to_max_length else False
 
-    def preprocess_function(examples):
+    def preprocess_function(examples, tokenizer=tokenizer):
         # Tokenize the texts
         texts = (
             (examples[sentence1_key],) if sentence2_key is None else (examples[sentence1_key], examples[sentence2_key])
@@ -360,8 +381,11 @@ def main():
                 # In all cases, rename the column to labels because the model will expect that.
                 result["labels"] = examples["label"]
         return result
-
-    if args.loss_weights[1] > 0:
+    
+    use_augmented_sst2_data = args.augmented_sst2_data and args.task_name == 'sst2' \
+                            and args.do_distillation and args.loss_weights[1] > 0
+    if use_augmented_sst2_data:
+        logger.info("Add augmented sst2 training data.")
         augmented_sst2_dataset = load_dataset("jmamou/augmented-glue-sst2")
         index_start = len(raw_datasets['train'])
         augmented_sst2_dataset = augmented_sst2_dataset['train'].add_column('idx', \
@@ -389,80 +413,54 @@ def main():
         # of 8s, which will enable the use of Tensor Cores on NVIDIA hardware with compute capability >= 7.5 (Volta).
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=None)
 
+    teacher_model = None
     if args.do_distillation:
-        embedding_dim = 50
-        def load_glove_embeddings(vocab, embedding_dim=embedding_dim):
-            # load Glove 
-            # define dict to hold a word and its vector
-            glove = {}
-            # read the word embeddings file ~820MB
-            with open(os.path.join(os.path.dirname(__file__), 'glove.6B.50d.txt'), \
-                      encoding='utf-8') as f:
-                for line in f:
-                    values = line.split()
-                    word = values[0]
-                    coefs = np.asarray(values[1:], dtype='float32')
-                    glove[word] = coefs
-            embedding_matrix = np.zeros((len(vocab), embedding_dim), dtype=np.float32)
-            for word, i in vocab.items():
-                embedding_vector = glove.get(word)
-                if embedding_vector is not None:
-                    # words not found in embedding index will be all-zeros.
-                    embedding_matrix[i] = embedding_vector
-            return torch.tensor(embedding_matrix)
-        class BidirectionalLSTM(torch.nn.Module):
-            def __init__(self, vocab, hidden_dim, num_layers, \
-                         output_dim, dropout=0.2, embedding_dim=embedding_dim):
-                super(BidirectionalLSTM, self).__init__()
-                self.embedding = torch.nn.Embedding.from_pretrained(
-                                     load_glove_embeddings(vocab, embedding_dim), freeze=False)
-                self.lstm = torch.nn.LSTM(input_size=embedding_dim,
-                                          hidden_size=hidden_dim,
-                                          num_layers=num_layers,
-                                          dropout=dropout,
-                                          bidirectional=True,
-                                          batch_first=True)
-                self.fc = torch.nn.Linear(hidden_dim * 2, output_dim)
-        
-            def forward(self, attention_mask, input_ids, labels):
-                embedding_output = self.embedding(input_ids)
-                lstm_output, states = self.lstm(embedding_output)
-                hidden_states, cell_states = states
-                output = torch.reshape(hidden_states[-2:,].permute(1, 0, 2), 
-                                       [input_ids.shape[0], -1])
-                output = self.fc(output)
-                return output
-
-        class BertModelforLogitsOutputOnly(torch.nn.Module):
+        class GLUEModelwithLogitsOutputOnly(torch.nn.Module):
             def __init__(self, model):
-                super(BertModelforLogitsOutputOnly, self).__init__()
+                super(GLUEModelwithLogitsOutputOnly, self).__init__()
                 self.model = model
             def forward(self, *args, **kwargs):
                 output = self.model(*args, **kwargs)
                 return output.logits
-
-        para_counter = lambda model:sum(p.numel() for p in model.parameters())
-        teacher_model = BertModelforLogitsOutputOnly(model)
-        logger.info("***** Number of teacher model parameters: {:.2f}M *****".format(\
-                    para_counter(model)/10**6))
-        model = BidirectionalLSTM(vocab=tokenizer.vocab, hidden_dim=64, \
-                                  num_layers=2, output_dim=num_labels)
-        logger.info("***** Number of student model parameters: {:.2f}M *****".format(\
-                    para_counter(model)/10**6))
-
+        
+        # download model & vocab.
+        teacher_config = AutoConfig.from_pretrained(args.teacher_model_name_or_path, num_labels=num_labels, finetuning_task=args.task_name)
+        teacher_tokenizer = AutoTokenizer.from_pretrained(args.teacher_model_name_or_path, use_fast=not args.use_slow_tokenizer)
+        teacher_model = AutoModelForSequenceClassification.from_pretrained(
+            args.teacher_model_name_or_path,
+            from_tf=bool(".ckpt" in args.teacher_model_name_or_path),
+            config=teacher_config,
+        )
+        teacher_model = GLUEModelwithLogitsOutputOnly(teacher_model)
+        
+        # prepare datasets for teacher model
+        teacher_processed_datasets = raw_datasets.map(
+            functools.partial(preprocess_function, tokenizer=teacher_tokenizer), 
+            batched=True, remove_columns=raw_datasets["train"].column_names
+        )
+        teacher_train_dataset = teacher_processed_datasets["train"]
+        teacher_eval_dataset = teacher_processed_datasets["validation_matched" \
+                                    if args.task_name == "mnli" else "validation"]
+        assert train_dataset.num_rows == teacher_train_dataset.num_rows and \
+            eval_dataset.num_rows == teacher_eval_dataset.num_rows, \
+            "Length of train or evaluation dataset of teacher doesnot match that of student."
+        
         # get logits of teacher model
         if args.loss_weights[1] > 0:
-            def get_logits(teacher_model, train_dataset):
+            def get_logits(teacher_model, train_dataset, teacher_train_dataset):
                 logger.info("***** Getting logits of teacher model *****")
                 logger.info(f"  Num examples = {len(train_dataset) }")
                 teacher_model.eval()
                 npy_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                    '{}+augmented-glue-sst2.{}.npy'.format(args.task_name, args.model_name_or_path.replace('/', '.')))
+                    '{}{}.{}.npy'.format(args.task_name, \
+                        ('+augmented-glue-sst2' if use_augmented_sst2_data else ''), \
+                        args.teacher_model_name_or_path.replace('/', '.')))
                 if os.path.exists(npy_file):
                     teacher_logits = [x for x in np.load(npy_file)]
                 else:
-                    train_dataloader = DataLoader(train_dataset, collate_fn=data_collator, \
-                                           batch_size=args.per_device_eval_batch_size)
+                    train_dataloader = DataLoader(teacher_train_dataset, 
+                                                  collate_fn=data_collator,
+                                                  batch_size=args.per_device_eval_batch_size)
                     train_dataloader = tqdm(train_dataloader, desc="Evaluating")
                     teacher_logits = []
                     for step, batch in enumerate(train_dataloader):
@@ -471,7 +469,79 @@ def main():
                     np.save(npy_file, np.array(teacher_logits))
                 return train_dataset.add_column('teacher_logits', teacher_logits)
             with torch.no_grad():
-                train_dataset = get_logits(teacher_model, train_dataset)
+                train_dataset = get_logits(teacher_model, train_dataset, teacher_train_dataset)
+        
+        if args.model_name_or_path == 'BiLSTM':
+            MAX_NUM_WORDS = 10000 # restrain the vocabulary size of BiLSTM tokenizer to 10000
+            embedding_dim = 50
+            def load_glove_embeddings(vocab, embedding_dim=embedding_dim):
+                # load Glove 
+                # define dict to hold a word and its vector
+                glove = {}
+                # read the word embeddings file ~820MB
+                with open(os.path.join(os.path.dirname(__file__), 'glove.6B.50d.txt'), \
+                        encoding='utf-8') as f:
+                    for line in f:
+                        values = line.split()
+                        word = values[0]
+                        coefs = np.asarray(values[1:], dtype='float32')
+                        glove[word] = coefs
+                embedding_matrix = np.zeros((min(MAX_NUM_WORDS, len(vocab)+1), embedding_dim), dtype=np.float32)
+                for word, i in vocab.items():
+                    if i >= len(embedding_matrix):
+                        continue
+                    embedding_vector = glove.get(word)
+                    if embedding_vector is not None:
+                        # words not found in embedding index will be all-zeros.
+                        embedding_matrix[i] = embedding_vector
+                return torch.tensor(embedding_matrix)
+            class BidirectionalLSTM(torch.nn.Module):
+                def __init__(self, vocab, hidden_dim, num_layers, \
+                            output_dim, dropout=0.2, embedding_dim=embedding_dim):
+                    super(BidirectionalLSTM, self).__init__()
+                    self.embedding = torch.nn.Embedding.from_pretrained(
+                                        load_glove_embeddings(vocab, embedding_dim), freeze=False)
+                    self.lstm = torch.nn.LSTM(input_size=embedding_dim,
+                                            hidden_size=hidden_dim,
+                                            num_layers=num_layers,
+                                            dropout=dropout,
+                                            bidirectional=True,
+                                            batch_first=True)
+                    self.fc = torch.nn.Linear(hidden_dim * 2, output_dim)
+            
+                def forward(self, attention_mask, input_ids, labels):
+                    embedding_output = self.embedding(input_ids)
+                    lstm_output, states = self.lstm(embedding_output)
+                    hidden_states, cell_states = states
+                    output = torch.reshape(hidden_states[-2:,].permute(1, 0, 2), 
+                                        [input_ids.shape[0], -1])
+                    output = self.fc(output)
+                    return output
+
+            from keras.preprocessing.text import Tokenizer
+            tokenizer = Tokenizer(num_words=MAX_NUM_WORDS)
+            tokenizer.fit_on_texts(raw_datasets['train']['sentence'])
+            for dataset_name, dataset in zip(['train', "validation_matched" \
+                        if args.task_name == "mnli" else "validation"], \
+                                             [train_dataset, eval_dataset]):
+                features = tokenizer.texts_to_sequences(raw_datasets[dataset_name]['sentence'])
+                attention_mask = [[1]*len(feature) for feature in features]
+                dataset = dataset.remove_columns('input_ids').add_column('input_ids', features)
+                dataset = dataset.remove_columns('attention_mask').add_column('attention_mask', attention_mask)
+                if 'train' in dataset_name:
+                    train_dataset = dataset
+                else:
+                    eval_dataset = dataset
+            
+            model = BidirectionalLSTM(vocab=tokenizer.word_index, hidden_dim=64, \
+                                      num_layers=2, output_dim=num_labels)
+        else:
+            model = GLUEModelwithLogitsOutputOnly(model)
+        para_counter = lambda model:sum(p.numel() for p in model.parameters())
+        logger.info("***** Number of teacher model parameters: {:.2f}M *****".format(\
+                    para_counter(teacher_model)/10**6))
+        logger.info("***** Number of student model parameters: {:.2f}M *****".format(\
+                    para_counter(model)/10**6))
 
     # Dataloader
     train_dataloader = DataLoader(
@@ -520,10 +590,15 @@ def main():
         from neural_compressor.experimental import Distillation, common
         from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
         def train_func(model):
-            return take_train_steps(args, model, train_dataloader, lr_scheduler, distiller)
+            return train(args, model, train_dataloader, lr_scheduler, distiller)
 
         def eval_func(model):
-            return take_eval_steps(model, eval_dataloader, metric)
+            if model == teacher_model:
+                teacher_eval_dataloader = DataLoader(teacher_eval_dataset, 
+                                                    collate_fn=data_collator, 
+                                                    batch_size=args.per_device_eval_batch_size)
+                return evaluation(model, teacher_eval_dataloader, metric)
+            return evaluation(model, eval_dataloader, metric)
 
         # eval datasets.
         distiller = Distillation(args.config)
@@ -590,5 +665,35 @@ def main():
         eval_metric = metric.compute()
         logger.info(f"eval_metric: {eval_metric}")
 
+    if args.task_name == "mnli":
+        # Final evaluation on mismatched validation set
+        eval_dataset = processed_datasets["validation_mismatched"]
+        eval_dataloader = DataLoader(
+            eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size
+        )
+        def eval_mnli_mm(model, eval_dataloader):
+            model.eval()
+            eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
+            for step, batch in enumerate(eval_dataloader):
+                outputs = model(**batch)
+                predictions = outputs.argmax(dim=-1)
+                pred, gt = gather_results(predictions, batch["labels"])
+                metric.add_batch(predictions=pred, references=gt)
+
+            eval_metric = metric.compute()
+            logger.info(f"mnli-mm: {eval_metric}")
+        eval_mnli_mm(model, eval_dataloader)
+        if teacher_model:
+            logger.info("Teacher model on mnli-mm")
+            teacher_eval_dataset = teacher_processed_datasets["validation_mismatched"]
+            teacher_eval_dataloader = DataLoader(
+                teacher_eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size
+            )
+            eval_mnli_mm(teacher_model, teacher_eval_dataloader)
+        
 if __name__ == "__main__":
+    rank, world = int(os.environ.get('PMI_RANK', -1)), int(os.environ.get('PMI_SIZE', 1))
+    if rank != -1:
+        logger.warning('start distributed training...')
+        dist.init_process_group(backend='mpi')
     main()
