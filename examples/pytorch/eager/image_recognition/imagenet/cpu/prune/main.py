@@ -228,6 +228,7 @@ def main_worker(args):
                         'best_acc1': best_acc1,
                         'optimizer': optimizer.state_dict(),
                     }, is_best)
+            return model
 
         prune.model = common.Model(model)
         prune._train_dataloader = train_loader

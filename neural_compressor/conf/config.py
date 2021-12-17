@@ -173,8 +173,8 @@ ops_schema = Schema({
             lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
         Optional('scheme', default=None): And(
             list,
-            # asym_float and placeholder is only for PyTorch framework
-            lambda s: all(i in ['asym', 'sym', 'asym_float', 'placeholder'] for i in s)),
+            # asym_float are only for PyTorch framework
+            lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype', default=None): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
@@ -196,9 +196,14 @@ ops_schema = Schema({
         Optional('dtype', default=None): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+        # compute_dtypeis only for PyTorch framework
+        Optional('compute_dtype', default=['uint8']): And(
+            list,
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
+        # placeholder are only for PyTorch framework
         Optional('algorithm', default=None): And(
             list,
-            lambda s: all(i in ['minmax', 'kl'] for i in s))
+            lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))
     }
 })
 
@@ -607,10 +612,11 @@ schema = Schema({
                     Or(str, list),
                     Use(input_to_list),
                     lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
+                # asym_float are only for PyTorch framework
                 Optional('scheme', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['asym', 'sym'] for i in s)),
+                    lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -638,10 +644,16 @@ schema = Schema({
                     Or(str, list),
                     Use(input_to_list),
                     lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                # compute_dtypeis only for PyTorch framework
+                Optional('compute_dtype', default=['uint8']): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
+                # placeholder are only for PyTorch framework
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['minmax', 'kl'] for i in s)),
+                    lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s)),
             }
         },
         Optional('op_wise', default=None): {
@@ -1107,7 +1119,7 @@ class Quantization_Conf(Conf):
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
 
-    def expand_tune_cfgs(self, tune_space):
+    def expand_tune_cfgs(self, tune_space, framework):
         """generate all possible tuning combinations for each op or model wise tuning.
 
         Args:
@@ -1126,7 +1138,7 @@ class Quantization_Conf(Conf):
             cfg = DotDict(cfg)
             dtype = cfg.activation.dtype
 
-            if dtype not in quant_dtype:
+            if dtype not in quant_dtype and "pytorch" not in framework:
                 cfg.activation.clear()
                 cfg.activation.dtype = dtype
 
@@ -1138,11 +1150,14 @@ class Quantization_Conf(Conf):
                 if (cfg.weight.dtype != cfg.activation.dtype and
                     cfg.weight.dtype not in quant_dtype and
                     cfg.activation.dtype not in quant_dtype) or \
-                    (cfg.weight.dtype != cfg.activation.dtype and
-                     cfg.weight.dtype in quant_dtype and
-                     cfg.activation.dtype not in quant_dtype) or \
-                    (cfg.weight.dtype != cfg.activation.dtype and
-                     cfg.weight.dtype not in quant_dtype and cfg.activation.dtype in quant_dtype):
+                   (cfg.weight.dtype != cfg.activation.dtype and
+                    cfg.weight.dtype in quant_dtype and
+                    cfg.activation.dtype not in quant_dtype and
+                    ("pytorch" not in framework or
+                     len(tune_space['activation']['dtype']) > 1)) or \
+                   (cfg.weight.dtype != cfg.activation.dtype and
+                    cfg.weight.dtype not in quant_dtype and
+                    cfg.activation.dtype in quant_dtype):
                     continue
 
             valid_cfgs.append(cfg)

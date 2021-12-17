@@ -379,7 +379,7 @@ def train300_mlperf_coco(args):
                         print('No improvement times: ', loss_increase_times)
                     if loss_increase_times >= patience:
                         print("Early stopping at iteration ", iter_num)
-                        return 
+                        return model
 
                     prev_loss = loss
                         
@@ -392,7 +392,7 @@ def train300_mlperf_coco(args):
                         print("Iteration: {:6d}, Loss function: {:5.3f}, Average Loss: {:.3f}"\
                             .format(iter_num, loss.item(), avg_loss))
                     iter_num += 1
-            return
+            return model
 
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")

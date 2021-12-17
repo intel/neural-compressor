@@ -132,13 +132,14 @@ class BasicTuneStrategy(TuneStrategy):
                 for op, configs in reversed(self.opwise_tune_cfgs.items()):
                     op_cfgs = copy.deepcopy(best_cfg)
                     for cfg in configs:
-                        if fallback_dtype == cfg['activation']['dtype']:
+                        if ('weight' in cfg and fallback_dtype == cfg['weight']['dtype']) \
+                           or ('weight' not in cfg
+                               and fallback_dtype == cfg['activation']['dtype']):
+                            op_cfgs['op'][op]['weight'].clear()
+                            op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                            assert cfg['activation']['dtype'] == fallback_dtype
                             op_cfgs['op'][op]['activation'].clear()
                             op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                            if 'weight' in cfg:
-                                assert cfg['weight']['dtype'] == fallback_dtype
-                                op_cfgs['op'][op]['weight'].clear()
-                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                     yield op_cfgs
                     acc, _ = self.last_tune_result
                     ops_acc[op] = acc
@@ -150,13 +151,14 @@ class BasicTuneStrategy(TuneStrategy):
                     for op in ordered_ops:
                         old_cfg = copy.deepcopy(op_cfgs['op'][op])
                         for cfg in self.opwise_tune_cfgs[op]:
-                            if fallback_dtype == cfg['activation']['dtype']:
+                            if ('weight' in cfg and fallback_dtype == cfg['weight']['dtype']) \
+                               or ('weight' not in cfg
+                                   and fallback_dtype == cfg['activation']['dtype']):
+                                op_cfgs['op'][op]['weight'].clear()
+                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                                assert cfg['activation']['dtype'] == fallback_dtype
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if 'weight' in cfg:
-                                    assert cfg['weight']['dtype'] == fallback_dtype
-                                    op_cfgs['op'][op]['weight'].clear()
-                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
                         acc, _ = self.last_tune_result
                         if acc <= best_acc:
@@ -167,12 +169,14 @@ class BasicTuneStrategy(TuneStrategy):
                     op_cfgs = copy.deepcopy(best_cfg)
                     for op in ordered_ops:
                         for cfg in self.opwise_tune_cfgs[op]:
-                            if fallback_dtype == cfg['activation']['dtype']:
+                            if ('weight' in cfg and fallback_dtype == cfg['weight']['dtype']) \
+                               or ('weight' not in cfg
+                                   and fallback_dtype == cfg['activation']['dtype']):
+                                op_cfgs['op'][op]['weight'].clear()
+                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                                assert cfg['activation']['dtype'] == fallback_dtype
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if 'weight' in op_cfgs['op'][op]:
-                                    op_cfgs['op'][op]['weight'].clear()
-                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
         else:
             logger.debug(self.opwise_tune_cfgs)

@@ -123,7 +123,7 @@ def training_func_for_nc(model):
         if nepoch > 2:
             # Freeze batch norm mean and variance estimates
             model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
-    return
+    return model
 model.module.fuse_model()
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")

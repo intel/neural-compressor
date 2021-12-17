@@ -483,12 +483,6 @@ def main():
         data_collator=data_collator,
     )
 
-    training_args.eval_steps = 100
-    trainer.args.metric_for_best_model = "f1"
-    trainer.args.greater_is_better = True
-    trainer.args.load_best_model_at_end = True
-    trainer.args.evaluation_strategy = IntervalStrategy.STEPS
-
     early_stopping_patience = 2
     early_stopping_threshold = 0.001 # optional
     trainer.add_callback(transformers.EarlyStoppingCallback(early_stopping_patience, \
@@ -508,15 +502,15 @@ def main():
         trainer.model_wrapped = model
         trainer.model = model
         trainer.train()
-        return
+        return trainer.model
 
     def eval_func(model):
         trainer.model = model
         result = trainer.evaluate(eval_dataset=eval_dataset)
         accu = result['eval_f1']
-        print('Accuracy: %.3f ' % (accu))
+        print('Accuracy: %.3f ' % (accu), flush=True)
         return accu
-    
+
     def benchmark(model):
         print(model)
         trainer.model = model

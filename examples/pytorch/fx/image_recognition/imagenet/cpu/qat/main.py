@@ -274,7 +274,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     # Freeze batch norm mean and variance estimates
                     model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
 
-            return
+            return model
 
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(args.config)

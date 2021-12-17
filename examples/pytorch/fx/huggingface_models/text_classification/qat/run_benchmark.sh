@@ -78,6 +78,7 @@ function run_benchmark {
         --learning_rate 2e-5 \
         --num_train_epochs 3 \
         --dataloader_drop_last \
+        --metric_for_best_model f1 \
         --output_dir ${tuned_checkpoint} --overwrite_output_dir \
         ${mode_cmd}
 }

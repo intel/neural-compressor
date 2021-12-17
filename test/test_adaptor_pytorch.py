@@ -401,7 +401,7 @@ def q_func(model):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    return
+    return model
 
 
 class TestPytorchAdaptor(unittest.TestCase):

@@ -291,7 +291,7 @@ def main_worker(gpu, ngpus_per_node, args):
                                 print('No improvement times: ', loss_increase_times)
                             if loss_increase_times >= patience:
                                 print("Early stopping")
-                                return 
+                                return model
 
                             prev_loss = curr_loss
 
@@ -302,7 +302,8 @@ def main_worker(gpu, ngpus_per_node, args):
                     # Freeze batch norm mean and variance estimates
                     model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
 
-            return
+            return model
+
         model.module.fuse_model()
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(args.config)

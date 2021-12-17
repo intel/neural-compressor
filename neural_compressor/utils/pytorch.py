@@ -114,11 +114,6 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             q_mapping = \
                 tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
 
-    if tune_cfg['approach'] == "post_training_dynamic_quant":
-        op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
-    else:
-        op_cfgs = _cfg_to_qconfig(tune_cfg)
-
     model.eval()
     try:
         q_model = copy.deepcopy(model)
@@ -139,6 +134,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         convert_custom_config_dict = kwargs.get(
                                         'convert_custom_config_dict', None)
 
+        op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
         if tune_cfg['approach'] == "quant_aware_training":
             q_model.train()
@@ -156,6 +152,11 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             weights = torch.load(weights_file)
             q_model.load_state_dict(weights)
         return q_model
+
+    if tune_cfg['approach'] == "post_training_dynamic_quant":
+        op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
+    else:
+        op_cfgs = _cfg_to_qconfig(tune_cfg)
 
     _propagate_qconfig(q_model, op_cfgs, approach=tune_cfg['approach'])
     # sanity check common API misusage

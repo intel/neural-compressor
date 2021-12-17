@@ -195,10 +195,10 @@ class TuneStrategy(object):
         self.opwise_tune_space = conf.opwise_tune_space(self.capability['opwise'])
         self.model_wise_tune_cfgs = OrderedDict()
         for optype, optype_cfgs in self.modelwise_tune_space.items():
-            self.model_wise_tune_cfgs[optype] = conf.expand_tune_cfgs(optype_cfgs)
+            self.model_wise_tune_cfgs[optype] = conf.expand_tune_cfgs(optype_cfgs, self.framework)
         self.opwise_tune_cfgs = OrderedDict()
         for key in self.opwise_tune_space:
-            expanded_cfg = conf.expand_tune_cfgs(self.opwise_tune_space[key])
+            expanded_cfg = conf.expand_tune_cfgs(self.opwise_tune_space[key], self.framework)
             if expanded_cfg:
                 self.opwise_tune_cfgs[key] = expanded_cfg
 
@@ -214,7 +214,9 @@ class TuneStrategy(object):
         for optype in self.model_wise_tune_cfgs.keys():
             self.model_wise_quant_cfgs[optype] = []
             for cfg in self.model_wise_tune_cfgs[optype]:
-                if cfg['activation']['dtype'] not in fallback_precision_list:
+                if ('weight' in cfg and cfg['weight']['dtype'] not in fallback_precision_list) \
+                   or ('weight' not in cfg
+                       and cfg['activation']['dtype'] not in fallback_precision_list):
                     self.model_wise_quant_cfgs[optype].append(cfg)
         self.combined_model_wise_quant_cfgs = conf._combine_optype_quant_cfgs(
                                          self.model_wise_quant_cfgs)
@@ -230,7 +232,10 @@ class TuneStrategy(object):
                     if cfg['activation']['dtype'] in self.cfg.graph_optimization.precisions:
                         new_list.append(cfg)
                 else:
-                    if cfg['activation']['dtype'] not in fallback_precision_list:
+                    if ('weight' in cfg
+                        and cfg['weight']['dtype'] not in fallback_precision_list) \
+                       or ('weight' not in cfg
+                           and cfg['activation']['dtype'] not in fallback_precision_list):
                         new_list.append(cfg)
             self.opwise_quant_cfgs[key] = new_list
 

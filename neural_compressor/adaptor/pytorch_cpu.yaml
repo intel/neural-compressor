@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: '1.7'
+    name: '1.10'
 
   precisions: &default_precisions
     names: int8, uint8, fp32
@@ -31,9 +31,9 @@
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
     fp32: ['*'] # '*' means all op types
   
-  capabilities: &1_7_capabilities
-    int8: &cap_s8_1_7 {
-          'Conv1d': &cap_s8_1_7_Conv1d {
+  capabilities: &1_10_capabilities
+    int8: &cap_s8_1_10 {
+          'Conv1d': &cap_s8_1_10_Conv1d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -47,10 +47,10 @@
                         'algorithm': ['kl', 'minmax']
                         },
                     },
-          'Linear': *cap_s8_1_7_Conv1d,
-          'Conv2d': *cap_s8_1_7_Conv1d,
-          'Conv3d': *cap_s8_1_7_Conv1d,
-          'EmbeddingBag': &cap_static_s8_1_7_EmbeddingBag {
+          'Linear': *cap_s8_1_10_Conv1d,
+          'Conv2d': *cap_s8_1_10_Conv1d,
+          'Conv3d': *cap_s8_1_10_Conv1d,
+          'EmbeddingBag': &cap_static_s8_1_10_EmbeddingBag {
             'weight': {
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym_float'],
@@ -58,15 +58,17 @@
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['placeholder'],
+                        'dtype': ['fp32'],
+                        'compute_dtype': ['None'],
+                        'scheme': ['asym_float'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
+                        'algorithm': ['placeholder']
                         },
                     },
-          # Embedding, LayerNorm, InstanceNorm3d have accuracy issue now,
+          'Embedding': *cap_static_s8_1_10_EmbeddingBag,
+          # LayerNorm, InstanceNorm3d have accuracy issue now,
           # So fallback to fp32, will remove when PyTorch fixed this issue.
-          'Embedding': &cap_static_s8_1_7_Embedding {
+          'LayerNorm': &cap_static_s8_1_10_LayerNorm {
             'activation': {
                         'dtype': ['fp32'],
                         },
@@ -74,9 +76,8 @@
                         'dtype': ['fp32'],
                         },
                     },
-          'LayerNorm': *cap_static_s8_1_7_Embedding,
-          'InstanceNorm3d': *cap_static_s8_1_7_Embedding,
-          'QuantStub': &cap_static_s8_1_7_QuantStub {
+          'InstanceNorm3d': *cap_static_s8_1_10_LayerNorm,
+          'QuantStub': &cap_static_s8_1_10_QuantStub {
             'activation': {
                         'dtype': ['uint8'],
                         'scheme': ['asym'],
@@ -84,7 +85,7 @@
                         'algorithm': ['minmax']
                         }
                     },
-          'ConvTranspose1d': &cap_static_s8_1_7_ConvTranspose1d {
+          'ConvTranspose1d': &cap_static_s8_1_10_ConvTranspose1d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -98,8 +99,8 @@
                         'algorithm': ['kl', 'minmax']
                         },
                     },
-          'ConvTranspose2d': *cap_static_s8_1_7_ConvTranspose1d,
-          'default': &cap_static_s8_1_7_default {
+          'ConvTranspose2d': *cap_static_s8_1_10_ConvTranspose1d,
+          'default': &cap_static_s8_1_10_default {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym'],
@@ -114,9 +115,76 @@
                         },
                      },
           }
-    uint8: *cap_s8_1_7
-    dynamic: &cap_dynamic_s8_1_7 {
-          'Linear': &cap_dynamic_s8_1_7_Linear {
+    uint8: *cap_s8_1_10
+    quant_aware: &cap_qat_1_10 {
+          'Conv1d': &cap_qa_1_10_Conv1d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Linear': *cap_qa_1_10_Conv1d,
+          'Conv2d': *cap_qa_1_10_Conv1d,
+          'Conv3d': *cap_qa_1_10_Conv1d,
+          'EmbeddingBag': &cap_qat_s8_1_10_EmbeddingBag {
+            'weight': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym_float'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp32'],
+                        'compute_dtype': ['None'],
+                        'scheme': ['asym_float'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['placeholder']
+                        },
+                    },
+          'Embedding': *cap_qat_s8_1_10_EmbeddingBag,
+          'LayerNorm': *cap_static_s8_1_10_LayerNorm,
+          'InstanceNorm3d': *cap_static_s8_1_10_LayerNorm,
+          'QuantStub': *cap_static_s8_1_10_QuantStub,
+          'ConvTranspose1d': &cap_qa_s8_1_10_ConvTranspose1d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'ConvTranspose2d': *cap_qa_s8_1_10_ConvTranspose1d,
+          'default': &cap_qa_s8_1_10_default {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+                     },
+          }
+    dynamic: &cap_dynamic_s8_1_10 {
+          'Linear': &cap_dynamic_s8_1_10_Linear {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -130,7 +198,7 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'LSTM': &cap_dynamic_s8_1_7_LSTM {
+          'LSTM': &cap_dynamic_s8_1_10_LSTM {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -144,7 +212,7 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'EmbeddingBag': &cap_dynamic_s8_1_7_EmbeddingBag {
+          'EmbeddingBag': &cap_dynamic_s8_1_10_EmbeddingBag {
             'weight': {
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym_float'],
@@ -152,17 +220,18 @@
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
+                        'dtype': ['fp32'],
+                        'compute_dtype': ['None'],
+                        'scheme': ['asym_float'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
+                        'algorithm': ['placeholder']
                         },
                     },
-          'GRU': *cap_dynamic_s8_1_7_LSTM,
-          'LSTMCell': *cap_dynamic_s8_1_7_LSTM,
-          'RNNCell': *cap_dynamic_s8_1_7_LSTM,
-          'GRUCell': *cap_dynamic_s8_1_7_LSTM,
-          'Embedding': *cap_dynamic_s8_1_7_EmbeddingBag,
+          'GRU': *cap_dynamic_s8_1_10_LSTM,
+          'LSTMCell': *cap_dynamic_s8_1_10_LSTM,
+          'RNNCell': *cap_dynamic_s8_1_10_LSTM,
+          'GRUCell': *cap_dynamic_s8_1_10_LSTM,
+          'Embedding': *cap_dynamic_s8_1_10_EmbeddingBag,
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -180,12 +249,12 @@
           }
 
   patterns:
-    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+    fp32: &ref_1_10_fp32 [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
         'Conv1d + BN1d',
         'Conv2d + BN2d',
         'Conv3d + BN3d',
         ]
-    int8: &ref_1_7_s8 [
+    int8: &ref_1_10_s8 [
         'Conv1d + BN1d',
         'Conv2d + BN2d',
         'Conv3d + BN3d',
@@ -199,7 +268,34 @@
         'BN2d + Relu',
         'BN3d + Relu',
         ]
-    uint8: *ref_1_7_s8
+    uint8: *ref_1_10_s8
+
+-
+  version:
+    name: '1.7'
+
+  precisions:
+    << : *default_precisions
+
+  ops:
+    # For PyTorch, quantizable op list is provided by torch/quantization/quantization_mappings.py
+    int8: ['BatchNorm2d', 'BatchNorm3d', 'ReLU', 'ReLU6', 'QuantStub', 'FloatFunctional',
+           'BNReLU2d', 'BNReLU3d']
+    uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
+            'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
+            'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &1_7_capabilities
+    int8: *cap_s8_1_10
+    uint8: *cap_s8_1_10
+    quant_aware: *cap_qat_1_10
+    dynamic: *cap_dynamic_s8_1_10
+
+  patterns:
+    fp32: *ref_1_10_fp32
+    int8: *ref_1_10_s8
+    uint8: *ref_1_10_s8
 
 -
   version:
@@ -254,6 +350,7 @@
                     },
           }
     uint8: *cap_s8_1_6
+    quant_aware: *cap_s8_1_6
     dynamic: &cap_dynamic_s8_1_6 {
           'Linear': &cap_dynamic_s8_1_6_Linear {
             'weight': {
@@ -336,6 +433,7 @@
   capabilities: &1_3_capabilities
     int8: *cap_s8_1_6
     uint8: *cap_s8_1_6
+    quant_aware: *cap_s8_1_6
     dynamic: &cap_dynamic_s8_1_3 {
           'Linear': *cap_dynamic_s8_1_6_Linear,
           'LSTM': *cap_dynamic_s8_1_6_LSTM,

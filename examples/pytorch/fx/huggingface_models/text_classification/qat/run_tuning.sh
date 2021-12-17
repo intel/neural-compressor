@@ -53,6 +53,14 @@ function run_tuning {
         --num_train_epochs 3 \
         --dataloader_drop_last \
         --output_dir ${output_model} --overwrite_output_dir \
+        --eval_steps 100 \
+        --save_steps 100 \
+        --greater_is_better True \
+        --load_best_model_at_end True \
+        --evaluation_strategy steps \
+        --save_strategy steps \
+        --metric_for_best_model f1 \
+        --save_total_limit 1 \
         --tune
 }
 

@@ -53,7 +53,7 @@ class PyTorchVersionMode(Enum):
 def get_torch_version():
     try:
         torch_version = torch.__version__.split('+')[0]
-    except ValueError as e:
+    except ValueError as e:  # pragma: no cover
         assert False, 'Got an unknown version of torch: {}'.format(e)
     version = LooseVersion(torch_version)
     return version
@@ -206,9 +206,8 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
         value = tune_cfg['op'][key]
         assert isinstance(value, dict)
         assert 'activation' in value
-        if value['activation']['dtype'] == 'fp32':
-            if 'weight' in value:
-                assert (value['weight']['dtype'] == 'fp32')
+        if ('weight' in value and value['weight']['dtype'] == 'fp32') or \
+           ('weight' not in value and value['activation']['dtype'] == 'fp32'):
             op_qcfgs[key[0]] = None
         else:
             if 'weight' in value:
@@ -232,11 +231,16 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
             granularity = activation['granularity']
             algorithm = activation['algorithm']
             dtype = activation['dtype']
+            compute_dtype = activation['compute_dtype'] \
+                            if 'compute_dtype' in activation \
+                                and activation['compute_dtype'] is not None \
+                            else 'uint8'
             if observer_type == 'quant_aware_training':
-                activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
+                activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity,
+                                                          dtype, compute_dtype)
             else:
                 activation_observer = \
-                    _observer(algorithm, scheme, granularity, dtype, observer_type)
+                    _observer(algorithm, scheme, granularity, dtype, observer_type, compute_dtype)
 
             if observer_type == 'quant_aware_training':
                 qconfig = torch.quantization.QConfig(
@@ -276,6 +280,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     example: fx_op_cfgs = {"": default_qconfig,
                            "module_name": [("layer4.1.conv2", per_channel_weight_qconfig)]}
     """
+    version = get_torch_version()
     if observer_type == 'post_training_dynamic_quant':
         model_qconfig = torch.quantization.default_dynamic_qconfig
     elif observer_type == 'quant_aware_training':
@@ -284,7 +289,14 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
                                     dtype=torch.quint8,
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE),
-                            weight=torch.quantization.default_weight_fake_quant)
+                            weight=torch.quantization.default_weight_fake_quant) \
+                        if version < PyTorchVersionMode.PT110.value else \
+                          torch.quantization.QConfig(
+                            activation=torch.quantization.FusedMovingAvgObsFakeQuantize.with_args(
+                                       dtype=torch.quint8,
+                                       qscheme=torch.per_tensor_affine,
+                                       reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_fused_per_channel_wt_fake_quant)
     else:
         model_qconfig = torch.quantization.QConfig(
                             activation=torch.quantization.MinMaxObserver.with_args(
@@ -305,7 +317,8 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     return fx_op_cfgs
 
 
-def _observer(algorithm, scheme, granularity, dtype, observer_type='post_training_static_quant'):
+def _observer(algorithm, scheme, granularity, dtype,
+              observer_type='post_training_static_quant', compute_dtype='uint8'):
     """Construct an observer module, In forward, observer will update the statistics of
        the observed Tensor. And they should provide a `calculate_qparams` function
        that computes the quantization parameters given the collected statistics.
@@ -324,8 +337,24 @@ def _observer(algorithm, scheme, granularity, dtype, observer_type='post_trainin
     if observer_type == 'post_training_dynamic_quant' and \
                 get_torch_version() >= PyTorchVersionMode.PT16.value:
         return torch.quantization.default_dynamic_quant_observer
-    if scheme == 'placeholder':   # pragma: no cover
-        return torch.quantization.PlaceholderObserver
+
+    compute_dtype_dict = {'int8': torch.qint8, 'uint8': torch.quint8, 'None': None}
+    if compute_dtype in compute_dtype_dict:
+        compute_dtype = compute_dtype_dict[compute_dtype]
+    else:  # pragma: no cover
+        assert False, "Unsupport compute_dtype with {}".format(compute_dtype)
+
+    dtype_dict = {'int8': torch.qint8, 'uint8': torch.quint8, 'fp32': torch.float}
+    if dtype in dtype_dict:
+        dtype = dtype_dict[dtype]
+    else:  # pragma: no cover
+        assert False, "Unsupport dtype with {}".format(dtype)
+
+    if algorithm == 'placeholder' or dtype == torch.float:   # pragma: no cover
+        return torch.quantization.PlaceholderObserver \
+            if get_torch_version() <= PyTorchVersionMode.PT17.value \
+                else torch.quantization.PlaceholderObserver.with_args(dtype=dtype,
+                                                                      compute_dtype=compute_dtype)
     if algorithm == 'minmax':
         if granularity == 'per_channel':
             observer = torch.quantization.PerChannelMinMaxObserver
@@ -353,17 +382,11 @@ def _observer(algorithm, scheme, granularity, dtype, observer_type='post_trainin
             assert scheme == 'asym'
             qscheme = torch.per_tensor_affine
 
-    if dtype == 'int8':
-        dtype = torch.qint8
-    else:
-        assert dtype == 'uint8'
-        dtype = torch.quint8
-
     return observer.with_args(qscheme=qscheme, dtype=dtype,
                               reduce_range=(REDUCE_RANGE and scheme == 'asym'))
 
 
-def _fake_quantize(algorithm, scheme, granularity, dtype):
+def _fake_quantize(algorithm, scheme, granularity, dtype, compute_dtype='uint8'):
     """Construct a fake quantize module, In forward, fake quantize module will update
        the statistics of the observed Tensor and fake quantize the input.
        They should also provide a `calculate_qparams` function
@@ -379,7 +402,15 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
     Return:
         fake quantization (object)
     """
-    fake_quant = torch.quantization.FakeQuantize
+    if scheme == 'asym_float' \
+                 and get_torch_version() >= PyTorchVersionMode.PT17.value:
+        return torch.quantization.default_float_qparams_observer
+    if algorithm == 'placeholder' or dtype == 'fp32':   # pragma: no cover
+        return _observer(algorithm, scheme, granularity, dtype, compute_dtype=compute_dtype)
+    version = get_torch_version()
+    fake_quant = torch.quantization.FakeQuantize \
+                 if version < PyTorchVersionMode.PT110.value else \
+                     torch.quantization.FusedMovingAvgObsFakeQuantize
     if algorithm == 'minmax':
         if granularity == 'per_channel':
             observer = torch.quantization.MovingAveragePerChannelMinMaxObserver
@@ -397,6 +428,7 @@ def _fake_quantize(algorithm, scheme, granularity, dtype):
                 assert scheme == 'asym'
                 qscheme = torch.per_tensor_affine
     else:
+        # Histogram observer is too slow for quantization aware training
         assert algorithm == 'kl'
         observer = torch.quantization.HistogramObserver
         assert granularity == 'per_tensor'
@@ -823,6 +855,8 @@ class TemplateAdaptor(Adaptor):
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
             if self.approach == "post_training_dynamic_quant" else \
+            self.query_handler.get_quantization_capability()['quant_aware'] \
+            if self.approach == "quant_aware_training" else \
             self.query_handler.get_quantization_capability()['int8']
 
         q_capability = {}
@@ -942,7 +976,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             query_config_file = "pytorch_cpu.yaml"
         elif self.device == "gpu":
             query_config_file = "pytorch_gpu.yaml"
-        else:
+        else:  # pragma: no cover
             assert False, "Unsupport this device {}".format(self.device)
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
@@ -1026,7 +1060,8 @@ class PyTorchAdaptor(TemplateAdaptor):
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept neural_compressor
             # model and user defined func should accept framework model.
-            q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
+            q_model.model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
+            assert q_model.model is not None, "Please return a trained model in train function!"
             q_model.model.eval()
 
         if self.approach == 'quant_aware_training':
@@ -1168,6 +1203,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                 on_epoch_end()
         if hooks is not None:
             post_epoch_end()
+
+        return model_
 
     def _dump_model_op_stastics(self, model, tune_cfg):
         """This is a function to dump quantizable ops of model to user.
@@ -2126,7 +2163,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.tune_cfg = None
         if self.device == "cpu":
             query_config_file = "pytorch_cpu.yaml"
-        else:
+        else:  # pragma: no cover
             assert False, "Unsupport this device {}".format(self.device)
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
@@ -2162,7 +2199,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 self.default_qconfig['activation']['dtype'][0]
             default_qconfig['weight']['dtype'] = self.default_qconfig['weight']['dtype'][0]
             self.tune_cfg["op"][("default_qconfig", "")] = default_qconfig
-        op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
+        op_cfgs = _cfg_to_qconfig(self.tune_cfg, self.approach)
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         try:
@@ -2187,7 +2224,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept neural_compressor
             # model and user defined func should accept framework model.
-            q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
+            q_model.model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
+            assert q_model.model is not None, "Please return a trained model in train function!"
             q_model.model.eval()
         else:
             q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
@@ -2225,7 +2263,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             (object): accuracy
         """
-        if tensorboard:
+        if tensorboard:  # pragma: no cover
             assert False, "PyTorch FX mode didn't support tensorboard flag now!"
         self.is_baseline = fp32_baseline
 
@@ -2323,6 +2361,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if hooks is not None:
             post_epoch_end()
 
+        return model.model
+
     def _dump_model_op_stastics(self, model, tune_cfg, approach):
         """This is a function to dump quantizable ops of model to user.
         Args:
@@ -2401,10 +2441,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         for name, child in model.named_children():
             op_name = prefix + '.' + name if prefix != '' else name
-            # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
-            # so remove it here
-            if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
-                    type(child) != torch.quantization.stubs.DeQuantStub:
+            if type(child) in self.white_list \
+               and type(child) != torch.nn.Sequential \
+               and type(child) != torch.quantization.stubs.DeQuantStub:
                 quantizable_ops.append((
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
