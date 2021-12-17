@@ -81,16 +81,16 @@ def _valid_accuracy_field(key, scope, error):
         'absolute' in scope['accuracy_criterion'])
 
 def _valid_prune_epoch(key, scope, error):
-    if "start_epoch" in scope and "end_epoch" in scope:
-        assert scope["start_epoch"] <= scope["end_epoch"]
+    if "start_epoch" in scope[key] and "end_epoch" in scope[key]:
+        assert scope[key]["start_epoch"] <= scope[key]["end_epoch"]
 
 def _valid_prune_sparsity(key, scope, error):
-    if "initial_sparsity" in scope and "target_sparsity" in scope:
-        assert scope["initial_sparsity"] <= scope["target_sparsity"]
-    elif "initial_sparsity" in scope:
-        assert scope["initial_sparsity"] >= 0
-    else:
-        assert scope["target_sparsity"] < 1
+    if "initial_sparsity" in scope[key] and "target_sparsity" in scope[key]:
+        assert scope[key]["initial_sparsity"] <= scope[key]["target_sparsity"]
+    elif "initial_sparsity" in scope[key]:
+        assert scope[key]["initial_sparsity"] >= 0
+    elif "target_sparsity" in scope[key]:
+        assert scope[key]["target_sparsity"] < 1
 
 # used for '123.68 116.78 103.94' style to float list
 def input_to_list_float(data):
@@ -537,6 +537,7 @@ weight_compression_schema = Schema({
 })
 
 approach_schema = Schema({
+    Hook('weight_compression', handler=_valid_prune_sparsity): object,
     Optional('weight_compression'): weight_compression_schema,
 })
 
@@ -553,7 +554,7 @@ COCOmAP_input_order_schema = Schema({
 schema = Schema({
     'model': {
         'name': str,
-        'framework': And(str, lambda s: s in FRAMEWORKS),
+        'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
     },
@@ -756,6 +757,7 @@ schema = Schema({
         },
     },
     Optional('pruning'): {
+        Hook('train', handler=_valid_prune_epoch): object,
         Optional("train"): train_schema,
         Optional("approach"): approach_schema
     },
@@ -777,7 +779,7 @@ quantization_default_schema = Schema({
     Optional('device', default='cpu'): str,
 
     Optional('quantization', default={'approach': 'post_training_static_quant', \
-                                      'calibration': {'sampling_size': [100]}, \
+                                      'calibration': {'sampling_size': [100]},
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True},
@@ -792,7 +794,7 @@ quantization_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
 })
 
 pruning_default_schema = Schema({
@@ -808,9 +810,11 @@ pruning_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('pruning', default={'approach': {'weight_compression':{'initial_sparsity': 0, \
+    Optional('pruning', default={'approach': {'weight_compression':{'initial_sparsity': 0.0, \
                                             'target_sparsity': 0.97, 'start_epoch': 0, \
-                                            'end_epoch': 4}}}): dict
+                                            'end_epoch': 4}}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
 })
 
 graph_optimization_default_schema = Schema({
@@ -822,8 +826,8 @@ graph_optimization_default_schema = Schema({
 
     Optional('device', default='cpu'): str,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', \
-                                    'calibration': {'sampling_size': [100]}, \
+    Optional('quantization', default={'approach': 'post_training_static_quant', 
+                                    'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
                                                     'first_conv_or_matmul_quantization': True},
@@ -838,9 +842,9 @@ graph_optimization_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict,
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
-    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict
+    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict 
 })
 
 benchmark_default_schema = Schema({
@@ -852,8 +856,8 @@ benchmark_default_schema = Schema({
 
     Optional('device', default='cpu'): str,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', \
-                                    'calibration': {'sampling_size': [100]}, \
+    Optional('quantization', default={'approach': 'post_training_static_quant', 
+                                    'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
                                                     'first_conv_or_matmul_quantization': True},
@@ -868,7 +872,7 @@ benchmark_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
 })
 
 distillation_default_schema = Schema({
@@ -885,15 +889,16 @@ distillation_default_schema = Schema({
         'workspace': {'path': default_workspace}}): dict,
 
     Optional('distillation', default={
-        'train': {'start_epoch': 0, 'end_epoch': 10, \
-                  'iteration': 1000, 'frequency': 1, \
-                  'optimizer': {'SGD': {'learning_rate': 0.001}}, \
-                  'criterion': {'KnowledgeDistillationLoss': \
-                                 {'temperature': 1.0, \
-                                  'loss_types': ['CE', 'KL'], \
+        'train': {'start_epoch': 0, 'end_epoch': 10, 
+                  'iteration': 1000, 'frequency': 1, 
+                  'optimizer': {'SGD': {'learning_rate': 0.001}}, 
+                  'criterion': {'KnowledgeDistillationLoss': 
+                                 {'temperature': 1.0, 
+                                  'loss_types': ['CE', 'KL'], 
                                   'loss_weights': [0.5, 0.5]}}}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}  }): dict
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}):dict
+ 
 })
 
 class Conf(object):
@@ -941,17 +946,56 @@ class Conf(object):
                 "The yaml file format is not correct. Please refer to document."
             )
 
+    def _convert_cfg(self, src, dst):
+        """Helper function to merge user defined dict into default dict.
+
+           If the key in src doesn't exist in dst, then add this key and value
+           pair to dst.
+           If the key in src is in dst, then override the value in dst with the
+           value in src.
+
+        Args:
+            src (dict): The source dict merged from
+            dst (dict): The source dict merged to
+
+        Returns:
+            dict: The merged dict from src to dst
+        """
+        for key in src:
+            if key in dst:
+                if isinstance(dst[key], dict) and isinstance(src[key], dict):
+                    if key in ['accuracy_criterion', 'metric', 'dataset', 
+                        'criterion', 'optimizer']:
+                        # accuracy_criterion can only have one of absolute and relative
+                        # others can only have one item
+                        inter_key = src[key].keys() & dst[key].keys() - 'higher_is_better'
+                        if len(inter_key) == 0:
+                            dst[key] = {}
+                    self._convert_cfg(src[key], dst[key])
+                elif dst[key] == src[key]:
+                    pass  # same leaf value
+                else:
+                    dst[key] = src[key]
+            elif isinstance(src[key], dict):
+                dst[key] = DotDict(self._convert_cfg(src[key], {}))
+            else:
+                dst[key] = src[key]
+        return dst
+
 class Quantization_Conf(Conf):
     """config parser.
 
     Args:
-        cfg_fname (string): The path to the configuration file.
+        cfg: The path to the configuration file or DotDict object or None.
 
     """
 
-    def __init__(self, cfg_fname):
-        if cfg_fname:
-            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
+                cfg, quantization_default_schema.validate(dict()))))
         else:
             self.usr_cfg = DotDict(quantization_default_schema.validate(dict()))
         self._model_wise_tune_space = None
@@ -1135,13 +1179,16 @@ class Pruning_Conf(Conf):
     """config parser.
 
     Args:
-        cfg_fname (string): The path to the configuration file.
+        cfg: The path to the configuration file or DotDict object or None.
 
     """
 
-    def __init__(self, cfg_fname):
-        if cfg_fname:
-            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
+                cfg, pruning_default_schema.validate(dict()))))
         else:
             self.usr_cfg = DotDict(pruning_default_schema.validate(dict()))
 
@@ -1149,13 +1196,16 @@ class Graph_Optimization_Conf(Quantization_Conf):
     """config parser.
 
     Args:
-        cfg_fname (string): The path to the configuration file.
+        cfg: The path to the configuration file or DotDict object or None.
 
     """
 
-    def __init__(self, cfg_fname):
-        if cfg_fname:
-            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
+                cfg, graph_optimization_default_schema.validate(dict()))))
         else:
             self.usr_cfg = DotDict(graph_optimization_default_schema.validate(dict()))
 
@@ -1163,13 +1213,16 @@ class Benchmark_Conf(Conf):
     """config parser.
 
     Args:
-        cfg_fname (string): The path to the configuration file.
+        cfg: The path to the configuration file or DotDict object or None.
 
     """
 
-    def __init__(self, cfg_fname):
-        if cfg_fname:
-            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
+                cfg, benchmark_default_schema.validate(dict()))))
         else:
             self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))
 
@@ -1177,12 +1230,26 @@ class Distillation_Conf(Conf):
     """config parser.
 
     Args:
-        cfg_fname (string): The path to the configuration file.
+        cfg: The path to the configuration file or DotDict object or None.
 
     """
 
-    def __init__(self, cfg_fname):
-        if cfg_fname:
-            self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
+                cfg, distillation_default_schema.validate(dict()))))
         else:
             self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
+
+class DefaultConf(DotDict):
+    def __getitem__(self, key):
+        if key not in self:
+            self[key] = DefaultConf({})
+        value = self.get(key, None)
+        return value
+
+    __getattr__ = __getitem__
+
+conf = DefaultConf({})

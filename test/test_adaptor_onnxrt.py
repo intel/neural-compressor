@@ -16,6 +16,7 @@ from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor import options
 from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
+from neural_compressor import conf
 
 def build_static_yaml():
     fake_yaml = """
@@ -435,12 +436,16 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
 
     def test_adaptor(self):
-        for fake_yaml in ["rename.yaml"]:
-            quantizer = Quantization(fake_yaml)
-            quantizer.calib_dataloader = self.rename_dataloader
-            quantizer.eval_dataloader = self.rename_dataloader
-            quantizer.model = common.Model(self.rename_model)
-            q_model = quantizer()
+        conf.model.framework = 'onnxrt_integerops'
+        conf.quantization.approach = 'post_training_dynamic_quant'
+        conf.quantization.calibration.sampling_size = 1
+        conf.evaluation.accuracy.metric = {'Accuracy': {}}
+        quantizer = Quantization()
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.rename_dataloader
+        quantizer.eval_dataloader = self.rename_dataloader
+        quantizer.model = common.Model(self.rename_model)
+        q_model = quantizer()
 
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)

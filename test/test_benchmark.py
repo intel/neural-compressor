@@ -202,5 +202,13 @@ class TestObjective(unittest.TestCase):
                     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
             self.assertIsNotNone(throughput)
 
+    def test_benchmark_with_conf(self):
+        from neural_compressor import conf
+        from neural_compressor.experimental import Benchmark, common
+        conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': [100,256,256,1], 'label':True}}
+        benchmarker = Benchmark(conf)
+        benchmarker.model = self.graph_path
+        benchmarker()
+ 
 if __name__ == "__main__":
     unittest.main()

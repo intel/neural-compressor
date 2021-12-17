@@ -23,4 +23,6 @@ from .contrib import *
 # we need to set a global 'NA' backend, or Model can't be used
 from .utils.utility import set_backend
 from .utils import options
+from .conf.config import conf
+
 set_backend('NA')

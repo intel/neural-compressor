@@ -208,6 +208,23 @@ class TestGraphOptimization(unittest.TestCase):
         except SystemExit:
             pass
 
+    def test_not_supported_model_with_conf(self):
+        from neural_compressor.experimental import Graph_Optimization
+        from neural_compressor import conf
+        import torchvision
+        model = torchvision.models.resnet18()
+ 
+        conf.model.inputs = 'input'
+        conf.model.outputs = 'op_to_store'
+        conf.graph_optimization.precisions = 'bf16'
+        graph_optimizer = Graph_Optimization(conf)
+        try:
+            graph_optimizer.model = model
+        except SystemExit:
+            pass
+
+
+ 
     @disable_random()
     def test_graph_optimization_with_evaluation(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 300, 300, 16], name="input")

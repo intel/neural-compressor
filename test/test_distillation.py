@@ -121,7 +121,19 @@ class TestDistillation(unittest.TestCase):
         from neural_compressor.conf.config import Distillation_Conf
         conf = Distillation_Conf('fake.yaml')
         distiller = Distillation(conf)
-        distiller = Distillation('fake.yaml')
+        distiller = Distillation()
+
+        from neural_compressor import conf
+        conf.model.framework = 'pytorch'
+        conf.distillation.train.end_epoch = 3
+        conf.distillation.train.iteration = 10
+        conf.distillation.train.optimizer = {
+            'SGD': {'learning_rate': 0.001, 'momentum': 0.1, 'nesterov': True, 'weight_decay': 0.001}}
+        conf.distillation.train.dataloader.batch_size = 30
+        conf.distillation.train.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
+        conf.evaluation.accuracy.dataloader.batch_size = 30
+        conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
+        distiller = Distillation(conf)
         distiller.student_model = common.Model(self.student_model)
         distiller.teacher_model = common.Model(self.teacher_model)
         print('student model: {}'.format(distiller.student_model))

@@ -96,7 +96,13 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.experimental import common
         from neural_compressor import Pruning
         from neural_compressor.conf.config import Pruning_Conf
-        conf = Pruning_Conf('fake.yaml')
+        conf = Pruning_Conf()
+
+        from neural_compressor import conf
+        from neural_compressor.conf.config import Pruner
+        conf.model.framework = 'pytorch'
+        conf.pruning.approach.weight_compression.pruners = [Pruner(1,3,names=['layer1.0.conv1.weight']),
+            Pruner(target_sparsity=0.6,update_frequency=2,names=['layer1.0.conv2.weight'])]
         prune = Pruning(conf)
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)

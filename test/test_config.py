@@ -2,12 +2,64 @@
 import unittest
 import os
 from neural_compressor.conf import config as conf
-
+from neural_compressor.utils.constant import *
 
 def helper(content):
     with open('fake_conf.yaml', 'w', encoding="utf-8") as f:
         f.write(content)
 
+class TestPyConf(unittest.TestCase):
+    def test_config(self):
+        from neural_compressor import conf
+        from neural_compressor.conf.config import Quantization_Conf, Pruning_Conf, \
+            Graph_Optimization_Conf, Benchmark_Conf, Distillation_Conf
+        
+        conf.tuning.accuracy_criterion.relative = 0.2
+        a = Quantization_Conf(conf)
+        self.assertEqual(a.usr_cfg.tuning.accuracy_criterion.relative, 0.2)
+
+        conf.quantization.op_wise = {
+            'op1': FP32,
+            'op2': {'activation': INT8_SYM_KL_PERTENSOR},
+            'op3': {'activation': INT8_SYM_KL_PERCHANNEL, 'weight': INT8_SYM_MINMAX_PERTENSOR}}
+        conf.quantization.model_wise = {
+            'activation': INT8_SYM_KL_PERTENSOR,
+            'weight': INT8_SYM_MINMAX_PERTENSOR}
+        a = Quantization_Conf(conf)
+        self.assertEqual(a.usr_cfg.quantization.model_wise.weight.scheme, ['sym'])
+ 
+        conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': '224,224,3'}}
+        conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': '224,224,3', 'low': '0.1'}}
+ 
+        conf.evaluation.performance.dataloader.transform = {
+            'Resize': {'size': [100, 100]},
+            'BilinearImagenet': {'height':300, 'width':300, 'mean_value':[0.2,0.2,0.2]}
+            }
+        conf.evaluation.performance.dataloader.batch_size = 6
+        conf.evaluation.accuracy.metric = {'RMSE': {}}
+        conf.tuning.strategy.name = 'mse'
+        a = Benchmark_Conf(conf)
+        self.assertEqual(a.usr_cfg.evaluation.performance.dataloader.batch_size, 6)
+        self.assertEqual(a.usr_cfg.evaluation.performance.dataloader.dataset, {'dummy': {'shape': (224,224,3)}})
+        self.assertEqual(a.usr_cfg.evaluation.accuracy.metric, {'RMSE': {}})
+        a = Quantization_Conf(conf)
+        self.assertEqual(a.usr_cfg.tuning.strategy.name, 'mse')
+ 
+        conf.evaluation.accuracy.metric = {'topk': 5}
+        conf.graph_optimization.precisions = 'bf16'
+        conf.pruning.train.criterion = {'CrossEntropyLoss': {}}
+        conf.pruning.train.optimizer = {}
+        a = Pruning_Conf(conf)
+        self.assertEqual(a.usr_cfg.pruning.train.criterion, {'CrossEntropyLoss': {'reduction': 'mean'}})
+
+        self.assertEqual(a.usr_cfg.evaluation.accuracy.metric, {'topk': 5})
+        conf.graph_optimization.op_wise = BF16
+        a = Graph_Optimization_Conf(conf)
+        self.assertEqual(a.usr_cfg.graph_optimization.op_wise, {'weight': {'dtype': ['bf16']}, 'activation': {'dtype': ['bf16']}})
+
+        conf.distillation.train.iteration = 900
+        a = Distillation_Conf(conf)
+        self.assertEqual(a.usr_cfg.distillation.train.iteration, 900)
 
 class TestConf(unittest.TestCase):
     @classmethod
