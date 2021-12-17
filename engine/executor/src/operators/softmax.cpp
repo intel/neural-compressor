@@ -13,7 +13,6 @@
 //  limitations under the License.
 
 #include "softmax.hpp"
-
 #include "common.hpp"
 
 namespace executor {
@@ -24,7 +23,8 @@ static unordered_map<string, dnnl::memory::data_type> type2mem{
     {"s8", dnnl::memory::data_type::s8},    {"bf16", dnnl::memory::data_type::bf16}};
 
 #if __AVX512F__
-static inline __m512 i_poly(__m512 z, __m512 src_f32, const float c[]) {
+static inline __m512 i_poly(
+    __m512 z, __m512 src_f32, const float c[]) {
   const auto c0 = _mm512_set1_ps(c[0]);
   const auto c1 = _mm512_set1_ps(c[1]);
   const auto c2 = _mm512_set1_ps(c[2]);
@@ -115,8 +115,8 @@ void softmax_u8(void* out, void* in, float oscale, int64_t ld, int N) {
 #pragma unroll N
     for (int i = 0; i < N; ++i) {
       auto exp_src_sub_max_f32 = _mm512_loadu_ps(&exp_out[i][d]);
-      auto softmax_f32 =
-          _mm512_mul_round_ps(exp_src_sub_max_f32, vsum[i], _MM_FROUND_NO_EXC | _MM_FROUND_TO_NEAREST_INT);
+      auto softmax_f32 = _mm512_mul_round_ps(
+          exp_src_sub_max_f32, vsum[i], _MM_FROUND_NO_EXC | _MM_FROUND_TO_NEAREST_INT);
 
       // Clip [0, 255]
       auto softmax_f32_clip_255 = _mm512_min_ps(softmax_f32, __255);
@@ -132,8 +132,8 @@ void softmax_u8(void* out, void* in, float oscale, int64_t ld, int N) {
 #pragma unroll N
     for (int i = 0; i < N; ++i) {
       auto exp_src_sub_max_f32 = _mm512_loadu_ps(&exp_out[i][d]);
-      auto softmax_f32 =
-          _mm512_mul_round_ps(exp_src_sub_max_f32, vsum[i], _MM_FROUND_NO_EXC | _MM_FROUND_TO_NEAREST_INT);
+      auto softmax_f32 = _mm512_mul_round_ps(
+          exp_src_sub_max_f32, vsum[i], _MM_FROUND_NO_EXC | _MM_FROUND_TO_NEAREST_INT);
       // clip
       auto softmax_f32_clip_255 = _mm512_min_ps(softmax_f32, __255);
       auto softmax_f32_clip_0 = _mm512_max_ps(softmax_f32_clip_255, __0);
@@ -222,16 +222,19 @@ void SoftmaxOperator::MapTensors(const vector<Tensor*>& input, const vector<Tens
 }
 
 void SoftmaxOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  if (output_dtype_ == "u8" && !__AVX512F__) {
-    LOG(ERROR) << "Output dtype u8 in Softmax only supports AVX512!";
-  }
+#ifndef __AVX512F__
+    if (output_dtype_== "u8") {
+      LOG(ERROR) << "Output dtype u8 in Softmax only supports AVX512!";
+    }
+#endif
 
-  MapTensors(input, output);
+    MapTensors(input, output);
 
-  dst_->set_dtype(output_dtype_);
-  if (dst_min_ != nullptr && dst_max_ != nullptr) {
-    dst_scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
-  }
+    dst_->set_dtype(output_dtype_);
+    if (dst_min_ != nullptr && dst_max_ != nullptr) {
+        dst_scales_ = GetScales(dst_min_->data(), dst_max_->data(),
+                                dst_min_->size(), dst_->dtype());
+    }
 }
 
 void SoftmaxOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
@@ -248,7 +251,9 @@ void SoftmaxOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*
   if (output_dtype_ == "fp32" || output_dtype_ == "bf16") {
     Forward_dnnl(input, output);
   } else if (output_dtype_ == "u8") {
+#if __AVX512F__
     Forward_u8(input, output);
+#endif
   } else {
     LOG(ERROR) << "Output dtype in Softmax is: " << output_dtype_ << ", not supported!";
   }
@@ -306,7 +311,8 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
   // Inplace Op
   Tensor* dst_ptr = output[0];
   vector<Tensor*> inputs(input);
-  if ((input.size() == 1) && (input[0] != nullptr) && (input[0]->size() >= dst_ptr->size())) {
+  if ((input.size() == 1) && (input[0] != nullptr) &&
+      (input[0]->size() >= dst_ptr->size())) {
     void* input_ptr = input[0]->mutable_data();
     input[0]->unref_data(true);
     dst_ptr->set_data(input_ptr);
@@ -331,7 +337,7 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
   // 6. unref tensors
   this->unref_tensors(inputs);
 }
-
+#if __AVX512F__
 void SoftmaxOperator::Forward_u8(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   float* src_f32 = static_cast<float*>(src_->mutable_data());
   uint8_t* dst_u8 = static_cast<uint8_t*>(dst_->mutable_data());
@@ -339,9 +345,11 @@ void SoftmaxOperator::Forward_u8(const vector<Tensor*>& input, const vector<Tens
   const vector<int64_t> src_shape = src_->shape();
 
   if (axis_ < 0) axis_ = src_shape.size() + axis_;
-  const int64_t dim0 = std::accumulate(src_shape.begin(), src_shape.begin() + axis_ - 1, 1, std::multiplies<int64_t>());
+  const int64_t dim0 = std::accumulate(src_shape.begin(), src_shape.begin() + axis_ - 1,
+                                       1, std::multiplies<int64_t>());
   const int64_t dim1 = *(src_shape.begin() + axis_ - 1);
-  const int64_t dim2 = std::accumulate(src_shape.begin() + axis_, src_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t dim2 = std::accumulate(src_shape.begin() + axis_, src_shape.end(),
+                                      1, std::multiplies<int64_t>());
 
 #pragma omp parallel for
   for (auto d0 = 0; d0 < dim0; ++d0) {
@@ -353,6 +361,7 @@ void SoftmaxOperator::Forward_u8(const vector<Tensor*>& input, const vector<Tens
   // unref tensors
   this->unref_tensors(input);
 }
+#endif
 
 REGISTER_OPERATOR_CLASS(Softmax);
 }  // namespace executor

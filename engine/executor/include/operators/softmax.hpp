@@ -60,7 +60,9 @@ class SoftmaxOperator : public Operator {
 
   void MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output);
   void Reshape_u8(const vector<Tensor*>& input, const vector<Tensor*>& output);
+#if __AVX512F__
   void Forward_u8(const vector<Tensor*>& input, const vector<Tensor*>& output);
+#endif
   void Reshape_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output);
   void Forward_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output);
 };
